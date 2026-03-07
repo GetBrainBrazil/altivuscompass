@@ -14,16 +14,501 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      campaigns: {
+        Row: {
+          channel: string | null
+          created_at: string
+          created_by: string | null
+          filters: Json | null
+          id: string
+          name: string
+          recipients_count: number | null
+          status: string | null
+          template: string | null
+          updated_at: string
+        }
+        Insert: {
+          channel?: string | null
+          created_at?: string
+          created_by?: string | null
+          filters?: Json | null
+          id?: string
+          name: string
+          recipients_count?: number | null
+          status?: string | null
+          template?: string | null
+          updated_at?: string
+        }
+        Update: {
+          channel?: string | null
+          created_at?: string
+          created_by?: string | null
+          filters?: Json | null
+          id?: string
+          name?: string
+          recipients_count?: number | null
+          status?: string | null
+          template?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      clients: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          full_name: string
+          id: string
+          notes: string | null
+          passport_status: string | null
+          phone: string | null
+          preferred_airports: string[] | null
+          region: string | null
+          state: string | null
+          tags: string[] | null
+          travel_preferences: string | null
+          travel_profile: Database["public"]["Enums"]["travel_profile"] | null
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          full_name: string
+          id?: string
+          notes?: string | null
+          passport_status?: string | null
+          phone?: string | null
+          preferred_airports?: string[] | null
+          region?: string | null
+          state?: string | null
+          tags?: string[] | null
+          travel_preferences?: string | null
+          travel_profile?: Database["public"]["Enums"]["travel_profile"] | null
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          notes?: string | null
+          passport_status?: string | null
+          phone?: string | null
+          preferred_airports?: string[] | null
+          region?: string | null
+          state?: string | null
+          tags?: string[] | null
+          travel_preferences?: string | null
+          travel_profile?: Database["public"]["Enums"]["travel_profile"] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      financial_parties: {
+        Row: {
+          billing_address: string | null
+          billing_email: string | null
+          created_at: string
+          document_number: string | null
+          id: string
+          name: string
+          notes: string | null
+          type: Database["public"]["Enums"]["financial_party_type"]
+          updated_at: string
+        }
+        Insert: {
+          billing_address?: string | null
+          billing_email?: string | null
+          created_at?: string
+          document_number?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          type?: Database["public"]["Enums"]["financial_party_type"]
+          updated_at?: string
+        }
+        Update: {
+          billing_address?: string | null
+          billing_email?: string | null
+          created_at?: string
+          document_number?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          type?: Database["public"]["Enums"]["financial_party_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      financial_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          date: string
+          description: string
+          id: string
+          quote_id: string | null
+          status: string | null
+          type: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          description: string
+          id?: string
+          quote_id?: string | null
+          status?: string | null
+          type: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          description?: string
+          id?: string
+          quote_id?: string | null
+          status?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_transactions_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      miles_programs: {
+        Row: {
+          airline: string
+          authorized_to_manage: boolean | null
+          client_id: string
+          created_at: string
+          expiration_date: string | null
+          id: string
+          login_email: string | null
+          login_password_encrypted: string | null
+          membership_number: string | null
+          miles_balance: number | null
+          program_name: string
+          updated_at: string
+        }
+        Insert: {
+          airline: string
+          authorized_to_manage?: boolean | null
+          client_id: string
+          created_at?: string
+          expiration_date?: string | null
+          id?: string
+          login_email?: string | null
+          login_password_encrypted?: string | null
+          membership_number?: string | null
+          miles_balance?: number | null
+          program_name: string
+          updated_at?: string
+        }
+        Update: {
+          airline?: string
+          authorized_to_manage?: boolean | null
+          client_id?: string
+          created_at?: string
+          expiration_date?: string | null
+          id?: string
+          login_email?: string | null
+          login_password_encrypted?: string | null
+          membership_number?: string | null
+          miles_balance?: number | null
+          program_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "miles_programs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      passengers: {
+        Row: {
+          birth_date: string | null
+          client_id: string | null
+          created_at: string
+          full_name: string
+          id: string
+          nationality: string | null
+          notes: string | null
+          passport_expiry: string | null
+          passport_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          birth_date?: string | null
+          client_id?: string | null
+          created_at?: string
+          full_name: string
+          id?: string
+          nationality?: string | null
+          notes?: string | null
+          passport_expiry?: string | null
+          passport_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          birth_date?: string | null
+          client_id?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          nationality?: string | null
+          notes?: string | null
+          passport_expiry?: string | null
+          passport_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "passengers_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      quote_financial_parties: {
+        Row: {
+          financial_party_id: string
+          id: string
+          quote_id: string
+          share_percentage: number | null
+        }
+        Insert: {
+          financial_party_id: string
+          id?: string
+          quote_id: string
+          share_percentage?: number | null
+        }
+        Update: {
+          financial_party_id?: string
+          id?: string
+          quote_id?: string
+          share_percentage?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_financial_parties_financial_party_id_fkey"
+            columns: ["financial_party_id"]
+            isOneToOne: false
+            referencedRelation: "financial_parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_financial_parties_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_passengers: {
+        Row: {
+          id: string
+          passenger_id: string
+          quote_id: string
+        }
+        Insert: {
+          id?: string
+          passenger_id: string
+          quote_id: string
+        }
+        Update: {
+          id?: string
+          passenger_id?: string
+          quote_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_passengers_passenger_id_fkey"
+            columns: ["passenger_id"]
+            isOneToOne: false
+            referencedRelation: "passengers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_passengers_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotes: {
+        Row: {
+          airline_options: string | null
+          assigned_to: string | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          departure_airport: string | null
+          departure_city: string | null
+          destination: string | null
+          destination_images: string[] | null
+          hotel_options: string | null
+          id: string
+          notes: string | null
+          price_breakdown: Json | null
+          quote_validity: string | null
+          stage: Database["public"]["Enums"]["quote_stage"]
+          total_value: number | null
+          travel_date_end: string | null
+          travel_date_start: string | null
+          updated_at: string
+        }
+        Insert: {
+          airline_options?: string | null
+          assigned_to?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          departure_airport?: string | null
+          departure_city?: string | null
+          destination?: string | null
+          destination_images?: string[] | null
+          hotel_options?: string | null
+          id?: string
+          notes?: string | null
+          price_breakdown?: Json | null
+          quote_validity?: string | null
+          stage?: Database["public"]["Enums"]["quote_stage"]
+          total_value?: number | null
+          travel_date_end?: string | null
+          travel_date_start?: string | null
+          updated_at?: string
+        }
+        Update: {
+          airline_options?: string | null
+          assigned_to?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          departure_airport?: string | null
+          departure_city?: string | null
+          destination?: string | null
+          destination_images?: string[] | null
+          hotel_options?: string | null
+          id?: string
+          notes?: string | null
+          price_breakdown?: Json | null
+          quote_validity?: string | null
+          stage?: Database["public"]["Enums"]["quote_stage"]
+          total_value?: number | null
+          travel_date_end?: string | null
+          travel_date_start?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "manager" | "sales_agent" | "operations"
+      financial_party_type: "individual" | "company"
+      quote_stage:
+        | "new"
+        | "sent"
+        | "negotiation"
+        | "confirmed"
+        | "issued"
+        | "completed"
+        | "post_sale"
+      travel_profile: "economic" | "opportunity" | "sophisticated"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +635,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "manager", "sales_agent", "operations"],
+      financial_party_type: ["individual", "company"],
+      quote_stage: [
+        "new",
+        "sent",
+        "negotiation",
+        "confirmed",
+        "issued",
+        "completed",
+        "post_sale",
+      ],
+      travel_profile: ["economic", "opportunity", "sophisticated"],
+    },
   },
 } as const
