@@ -16,7 +16,7 @@ import { NavLink } from "@/components/NavLink";
 
 const mainNav = [
   {
-    title: "Dashboard",
+    title: "Painel",
     url: "/",
     icon: () => (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
@@ -28,7 +28,7 @@ const mainNav = [
     ),
   },
   {
-    title: "Clients",
+    title: "Clientes",
     url: "/clients",
     icon: () => (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
@@ -38,7 +38,7 @@ const mainNav = [
     ),
   },
   {
-    title: "Quotes",
+    title: "Cotações",
     url: "/quotes",
     icon: () => (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
@@ -53,7 +53,7 @@ const mainNav = [
 
 const operationsNav = [
   {
-    title: "Campaigns",
+    title: "Campanhas",
     url: "/campaigns",
     icon: () => (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
@@ -62,7 +62,7 @@ const operationsNav = [
     ),
   },
   {
-    title: "Finance",
+    title: "Financeiro",
     url: "/finance",
     icon: () => (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
@@ -72,7 +72,7 @@ const operationsNav = [
     ),
   },
   {
-    title: "Miles",
+    title: "Milhas",
     url: "/miles",
     icon: () => (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
@@ -101,7 +101,7 @@ export function AppSidebar() {
                 ALTIVUS
               </h1>
               <p className="text-[10px] tracking-widest text-sidebar-foreground/50 uppercase font-body">
-                Travel Agency
+                Agência de Viagens
               </p>
             </div>
           )}
@@ -111,7 +111,7 @@ export function AppSidebar() {
       <SidebarContent className="px-3 py-4">
         <SidebarGroup>
           <SidebarGroupLabel className="text-[10px] tracking-widest uppercase text-sidebar-foreground/40 font-body px-3 mb-2">
-            Main
+            Principal
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -136,7 +136,7 @@ export function AppSidebar() {
 
         <SidebarGroup className="mt-4">
           <SidebarGroupLabel className="text-[10px] tracking-widest uppercase text-sidebar-foreground/40 font-body px-3 mb-2">
-            Operations
+            Operações
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
