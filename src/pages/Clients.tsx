@@ -1,4 +1,14 @@
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 
 const travelProfiles: Record<string, { label: string; color: string }> = {
   economic: { label: "Econômico", color: "bg-soft-blue/10 text-soft-blue" },
@@ -6,22 +16,99 @@ const travelProfiles: Record<string, { label: string; color: string }> = {
   sophisticated: { label: "Sofisticado", color: "bg-primary/10 text-primary" },
 };
 
-const mockClients = [
-  { id: 1, name: "Maria Silva", email: "maria@email.com", phone: "+55 21 99999-0001", city: "Rio de Janeiro", state: "RJ", profile: "sophisticated", airports: ["GIG", "SDU"], passportStatus: "Válido", milesPrograms: 2 },
-  { id: 2, name: "João Oliveira", email: "joao@email.com", phone: "+55 11 99999-0002", city: "São Paulo", state: "SP", profile: "opportunity", airports: ["GRU", "VCP"], passportStatus: "Válido", milesPrograms: 3 },
-  { id: 3, name: "Ana Costa", email: "ana@email.com", phone: "+55 21 99999-0003", city: "Rio de Janeiro", state: "RJ", profile: "economic", airports: ["GIG"], passportStatus: "Vencido", milesPrograms: 1 },
-  { id: 4, name: "Roberto Santos", email: "roberto@email.com", phone: "+55 11 99999-0004", city: "São Paulo", state: "SP", profile: "sophisticated", airports: ["GRU"], passportStatus: "Válido", milesPrograms: 4 },
-  { id: 5, name: "Lucia Mendes", email: "lucia@email.com", phone: "+55 31 99999-0005", city: "Belo Horizonte", state: "MG", profile: "opportunity", airports: ["CNF"], passportStatus: "Válido", milesPrograms: 1 },
-  { id: 6, name: "Carlos Ferreira", email: "carlos@email.com", phone: "+55 41 99999-0006", city: "Curitiba", state: "PR", profile: "sophisticated", airports: ["CWB"], passportStatus: "Válido", milesPrograms: 2 },
-];
+type Client = Tables<"clients">;
+
+const emptyClient: Partial<TablesInsert<"clients">> = {
+  full_name: "", email: "", phone: "", city: "", state: "", country: "Brasil",
+  travel_profile: "economic", passport_status: "none", notes: "",
+  preferred_airports: [], tags: [],
+};
 
 export default function Clients() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [profileFilter, setProfileFilter] = useState<string>("all");
+  const [profileFilter, setProfileFilter] = useState("all");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [form, setForm] = useState(emptyClient);
+  const [airportsInput, setAirportsInput] = useState("");
 
-  const filtered = mockClients.filter((c) => {
-    const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase()) || c.email.toLowerCase().includes(search.toLowerCase()) || c.city.toLowerCase().includes(search.toLowerCase());
-    const matchesProfile = profileFilter === "all" || c.profile === profileFilter;
+  const { data: clients = [], isLoading } = useQuery({
+    queryKey: ["clients"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as Client[];
+    },
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const payload = {
+        ...form,
+        preferred_airports: airportsInput.split(",").map(a => a.trim()).filter(Boolean),
+      } as TablesInsert<"clients">;
+
+      if (editingClient) {
+        const { error } = await supabase.from("clients").update(payload).eq("id", editingClient.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("clients").insert(payload);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast({ title: editingClient ? "Cliente atualizado" : "Cliente criado" });
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      closeDialog();
+    },
+    onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("clients").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Cliente removido" });
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+    },
+    onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
+  });
+
+  const openCreate = () => {
+    setEditingClient(null);
+    setForm(emptyClient);
+    setAirportsInput("");
+    setDialogOpen(true);
+  };
+
+  const openEdit = (c: Client) => {
+    setEditingClient(c);
+    setForm({
+      full_name: c.full_name, email: c.email ?? "", phone: c.phone ?? "",
+      city: c.city ?? "", state: c.state ?? "", country: c.country ?? "Brasil",
+      travel_profile: c.travel_profile ?? "economic", passport_status: c.passport_status ?? "none",
+      notes: c.notes ?? "",
+    });
+    setAirportsInput((c.preferred_airports ?? []).join(", "));
+    setDialogOpen(true);
+  };
+
+  const closeDialog = () => {
+    setDialogOpen(false);
+    setEditingClient(null);
+    setForm(emptyClient);
+    setAirportsInput("");
+  };
+
+  const filtered = clients.filter((c) => {
+    const matchesSearch = c.full_name.toLowerCase().includes(search.toLowerCase()) ||
+      (c.email ?? "").toLowerCase().includes(search.toLowerCase()) ||
+      (c.city ?? "").toLowerCase().includes(search.toLowerCase());
+    const matchesProfile = profileFilter === "all" || c.travel_profile === profileFilter;
     return matchesSearch && matchesProfile;
   });
 
@@ -30,39 +117,94 @@ export default function Clients() {
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-3xl font-display font-semibold text-foreground">Clientes</h1>
-          <p className="text-muted-foreground font-body mt-1">{mockClients.length} clientes cadastrados</p>
+          <p className="text-muted-foreground font-body mt-1">{clients.length} clientes cadastrados</p>
         </div>
-        <button className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium font-body hover:opacity-90 transition-opacity">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          Novo Cliente
-        </button>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={openCreate} className="font-body">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
+              Novo Cliente
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="font-display">{editingClient ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2 space-y-2">
+                  <Label className="font-body">Nome completo *</Label>
+                  <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-body">E-mail</Label>
+                  <Input type="email" value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-body">Telefone</Label>
+                  <Input value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-body">Cidade</Label>
+                  <Input value={form.city ?? ""} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-body">Estado</Label>
+                  <Input value={form.state ?? ""} onChange={(e) => setForm({ ...form, state: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-body">Perfil de viagem</Label>
+                  <Select value={form.travel_profile ?? "economic"} onValueChange={(v) => setForm({ ...form, travel_profile: v as any })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="economic">Econômico</SelectItem>
+                      <SelectItem value="opportunity">Oportunidade</SelectItem>
+                      <SelectItem value="sophisticated">Sofisticado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-body">Passaporte</Label>
+                  <Select value={form.passport_status ?? "none"} onValueChange={(v) => setForm({ ...form, passport_status: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sem passaporte</SelectItem>
+                      <SelectItem value="valid">Válido</SelectItem>
+                      <SelectItem value="expired">Vencido</SelectItem>
+                      <SelectItem value="processing">Em processo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-2 space-y-2">
+                  <Label className="font-body">Aeroportos preferidos (separados por vírgula)</Label>
+                  <Input value={airportsInput} onChange={(e) => setAirportsInput(e.target.value)} placeholder="GRU, GIG, VCP" />
+                </div>
+                <div className="col-span-2 space-y-2">
+                  <Label className="font-body">Observações</Label>
+                  <Textarea value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} />
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button type="button" variant="outline" onClick={closeDialog} className="font-body">Cancelar</Button>
+                <Button type="submit" disabled={saveMutation.isPending} className="font-body">
+                  {saveMutation.isPending ? "Salvando..." : "Salvar"}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-            <circle cx="11" cy="11" r="8" />
-            <path d="M21 21l-4.35-4.35" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Buscar clientes..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-card text-sm font-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/30"
-          />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
+          <input type="text" placeholder="Buscar clientes..." value={search} onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-card text-sm font-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/30" />
         </div>
         <div className="flex gap-1 p-1 rounded-lg bg-muted">
           {["all", "economic", "opportunity", "sophisticated"].map((p) => (
-            <button
-              key={p}
-              onClick={() => setProfileFilter(p)}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium font-body transition-colors ${
-                profileFilter === p ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
+            <button key={p} onClick={() => setProfileFilter(p)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium font-body transition-colors ${profileFilter === p ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
               {p === "all" ? "Todos" : travelProfiles[p].label}
             </button>
           ))}
@@ -70,56 +212,66 @@ export default function Clients() {
       </div>
 
       <div className="glass-card rounded-xl overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-border/50">
-              <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Cliente</th>
-              <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Localização</th>
-              <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Perfil</th>
-              <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Aeroportos</th>
-              <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Passaporte</th>
-              <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Milhas</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border/30">
-            {filtered.map((client) => (
-              <tr key={client.id} className="hover:bg-muted/30 transition-colors cursor-pointer">
-                <td className="p-4">
-                  <div>
-                    <p className="text-sm font-medium font-body text-foreground">{client.name}</p>
-                    <p className="text-xs text-muted-foreground font-body">{client.email}</p>
-                  </div>
-                </td>
-                <td className="p-4">
-                  <p className="text-sm font-body text-foreground">{client.city}</p>
-                  <p className="text-xs text-muted-foreground font-body">{client.state}</p>
-                </td>
-                <td className="p-4">
-                  <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${travelProfiles[client.profile].color}`}>
-                    {travelProfiles[client.profile].label}
-                  </span>
-                </td>
-                <td className="p-4">
-                  <div className="flex gap-1">
-                    {client.airports.map((a) => (
-                      <span key={a} className="text-[10px] font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground font-body">
-                        {a}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                <td className="p-4">
-                  <span className={`text-xs font-body ${client.passportStatus === 'Válido' ? 'text-success' : 'text-destructive'}`}>
-                    {client.passportStatus}
-                  </span>
-                </td>
-                <td className="p-4">
-                  <span className="text-sm font-body text-foreground">{client.milesPrograms} programa{client.milesPrograms > 1 ? 's' : ''}</span>
-                </td>
+        {isLoading ? (
+          <div className="p-8 text-center text-muted-foreground font-body">Carregando...</div>
+        ) : filtered.length === 0 ? (
+          <div className="p-8 text-center text-muted-foreground font-body">Nenhum cliente encontrado.</div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border/50">
+                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Cliente</th>
+                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Localização</th>
+                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Perfil</th>
+                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Aeroportos</th>
+                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Passaporte</th>
+                <th className="text-right p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Ações</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-border/30">
+              {filtered.map((client) => {
+                const passportLabel = { none: "Sem", valid: "Válido", expired: "Vencido", processing: "Em processo" }[client.passport_status ?? "none"] ?? client.passport_status;
+                return (
+                  <tr key={client.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="p-4">
+                      <p className="text-sm font-medium font-body text-foreground">{client.full_name}</p>
+                      <p className="text-xs text-muted-foreground font-body">{client.email}</p>
+                    </td>
+                    <td className="p-4">
+                      <p className="text-sm font-body text-foreground">{client.city}</p>
+                      <p className="text-xs text-muted-foreground font-body">{client.state}</p>
+                    </td>
+                    <td className="p-4">
+                      {client.travel_profile && travelProfiles[client.travel_profile] && (
+                        <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${travelProfiles[client.travel_profile].color}`}>
+                          {travelProfiles[client.travel_profile].label}
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      <div className="flex gap-1 flex-wrap">
+                        {(client.preferred_airports ?? []).map((a) => (
+                          <span key={a} className="text-[10px] font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground font-body">{a}</span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <span className={`text-xs font-body ${passportLabel === 'Válido' ? 'text-success' : passportLabel === 'Vencido' ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        {passportLabel}
+                      </span>
+                    </td>
+                    <td className="p-4 text-right">
+                      <div className="flex gap-1 justify-end">
+                        <Button variant="ghost" size="sm" className="font-body" onClick={() => openEdit(client)}>Editar</Button>
+                        <Button variant="ghost" size="sm" className="text-destructive font-body" onClick={() => { if (confirm("Remover cliente?")) deleteMutation.mutate(client.id); }}>Excluir</Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

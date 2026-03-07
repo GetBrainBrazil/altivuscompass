@@ -152,33 +152,42 @@ export type Database = {
       financial_transactions: {
         Row: {
           amount: number
+          category: string | null
           created_at: string
           created_by: string | null
           date: string
           description: string
+          due_date: string | null
           id: string
+          party_name: string | null
           quote_id: string | null
           status: string | null
           type: string
         }
         Insert: {
           amount: number
+          category?: string | null
           created_at?: string
           created_by?: string | null
           date?: string
           description: string
+          due_date?: string | null
           id?: string
+          party_name?: string | null
           quote_id?: string | null
           status?: string | null
           type: string
         }
         Update: {
           amount?: number
+          category?: string | null
           created_at?: string
           created_by?: string | null
           date?: string
           description?: string
+          due_date?: string | null
           id?: string
+          party_name?: string | null
           quote_id?: string | null
           status?: string | null
           type?: string
