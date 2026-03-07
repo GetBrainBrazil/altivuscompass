@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import logoAltivus from "@/assets/logo-altivus.png";
 import {
   Sidebar,
@@ -83,9 +84,25 @@ const operationsNav = [
   },
 ];
 
+const adminNav = [
+  {
+    title: "Usuários",
+    url: "/users",
+    icon: () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
+  },
+];
+
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  const { user, userRole, signOut } = useAuth();
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
@@ -111,12 +128,7 @@ export function AppSidebar() {
               {mainNav.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild className="h-10 rounded-lg">
-                    <NavLink
-                      to={item.url}
-                      end={item.url === "/"}
-                      className="flex items-center gap-3 px-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-lg"
-                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                    >
+                    <NavLink to={item.url} end={item.url === "/"} className="flex items-center gap-3 px-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-lg" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                       <item.icon />
                       {!collapsed && <span className="text-sm font-body">{item.title}</span>}
                     </NavLink>
@@ -136,11 +148,7 @@ export function AppSidebar() {
               {operationsNav.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild className="h-10 rounded-lg">
-                    <NavLink
-                      to={item.url}
-                      className="flex items-center gap-3 px-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-lg"
-                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                    >
+                    <NavLink to={item.url} className="flex items-center gap-3 px-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-lg" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                       <item.icon />
                       {!collapsed && <span className="text-sm font-body">{item.title}</span>}
                     </NavLink>
@@ -150,17 +158,43 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {userRole === "admin" && (
+          <SidebarGroup className="mt-4">
+            <SidebarGroupLabel className="text-[10px] tracking-widest uppercase text-sidebar-foreground/40 font-body px-3 mb-2">
+              Administração
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminNav.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild className="h-10 rounded-lg">
+                      <NavLink to={item.url} className="flex items-center gap-3 px-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-lg" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                        <item.icon />
+                        {!collapsed && <span className="text-sm font-body">{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-sidebar-border">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center">
-            <span className="text-xs font-medium text-sidebar-accent-foreground font-body">A</span>
+            <span className="text-xs font-medium text-sidebar-accent-foreground font-body">
+              {user?.email?.[0]?.toUpperCase() ?? "U"}
+            </span>
           </div>
           {!collapsed && (
-            <div>
-              <p className="text-xs font-medium text-sidebar-accent-foreground font-body">Admin</p>
-              <p className="text-[10px] text-sidebar-foreground/50 font-body">admin@altivus.com</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-sidebar-accent-foreground font-body truncate">{user?.email ?? ""}</p>
+              <button onClick={signOut} className="text-[10px] text-sidebar-foreground/50 font-body hover:text-sidebar-foreground transition-colors">
+                Sair
+              </button>
             </div>
           )}
         </div>
