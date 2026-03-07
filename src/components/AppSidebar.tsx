@@ -89,22 +89,14 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
-      <SidebarHeader className="p-5 border-b border-sidebar-border">
-        <Link to="/" className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--sidebar-primary-foreground))" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 2L2 8.5l7 3.5 3.5 7L22 2z" />
-            </svg>
-          </div>
-          {!collapsed && (
-            <div>
-              <h1 className="text-sm font-semibold tracking-wide text-sidebar-accent-foreground font-display">
-                ALTIVUS
-              </h1>
-              <p className="text-[10px] tracking-widest text-sidebar-foreground/50 uppercase font-body">
-                Agência de Viagens
-              </p>
+      <SidebarHeader className="p-4 border-b border-sidebar-border">
+        <Link to="/" className="flex items-center justify-center">
+          {collapsed ? (
+            <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
+              <span className="text-xs font-bold text-sidebar-primary-foreground font-display">A</span>
             </div>
+          ) : (
+            <img src={logoAltivus} alt="Altivus Turismo" className="h-10 object-contain" />
           )}
         </Link>
       </SidebarHeader>
