@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,8 +22,8 @@ Deno.serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user: caller } } = await supabaseAdmin.auth.getUser(token);
-    if (!caller) {
+    const { data: { user: caller }, error: userError } = await supabaseAdmin.auth.getUser(token);
+    if (userError || !caller) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -39,10 +39,11 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Acesso negado. Somente administradores." }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { action, ...payload } = await req.json();
+    const body = await req.json();
+    const { action } = body;
 
     if (action === "create") {
-      const { email, password, full_name, role } = payload;
+      const { email, password, full_name, role } = body;
 
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email,
@@ -55,7 +56,6 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: createError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      // Assign role
       if (newUser?.user && role) {
         await supabaseAdmin.from("user_roles").insert({ user_id: newUser.user.id, role });
       }
@@ -64,9 +64,8 @@ Deno.serve(async (req) => {
     }
 
     if (action === "delete") {
-      const { user_id } = payload;
+      const { user_id } = body;
 
-      // Prevent self-deletion
       if (user_id === caller.id) {
         return new Response(JSON.stringify({ error: "Você não pode remover a si mesmo." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
@@ -81,6 +80,7 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({ error: "Ação inválida" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    console.error("manage-users error:", err);
+    return new Response(JSON.stringify({ error: String(err?.message || err) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
