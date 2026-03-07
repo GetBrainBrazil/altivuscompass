@@ -91,25 +91,25 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
-      <div className="flex items-end justify-between">
+    <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-display font-semibold text-foreground">{greeting()}</h1>
-          <p className="text-muted-foreground font-body mt-1">Veja o que está acontecendo na Altivus hoje.</p>
+          <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">{greeting()}</h1>
+          <p className="text-muted-foreground font-body mt-1 text-sm">Veja o que está acontecendo na Altivus hoje.</p>
         </div>
-        <div className="flex gap-3">
-          <Link to="/quotes" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium font-body hover:opacity-90 transition-opacity">
+        <div className="flex gap-2 sm:gap-3">
+          <Link to="/quotes" className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-primary text-primary-foreground text-xs sm:text-sm font-medium font-body hover:opacity-90 transition-opacity">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
             Nova Cotação
           </Link>
-          <Link to="/clients" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border text-sm font-medium font-body text-foreground hover:bg-muted transition-colors">
+          <Link to="/clients" className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg border border-border text-xs sm:text-sm font-medium font-body text-foreground hover:bg-muted transition-colors">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M5 20c0-4 3.5-7 7-7s7 3 7 7" /></svg>
             Novo Cliente
           </Link>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <MetricCard title="Cotações em Andamento" value={String(activeQuotesCount)} icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-soft-blue"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" /><path d="M14 2v6h6" /></svg>
         } />
@@ -125,26 +125,28 @@ export default function Dashboard() {
       </div>
 
       <div className="glass-card rounded-xl">
-        <div className="p-5 border-b border-border/50 flex items-center justify-between">
-          <h2 className="font-display text-lg font-semibold">Cotações Recentes</h2>
+        <div className="p-4 sm:p-5 border-b border-border/50 flex items-center justify-between">
+          <h2 className="font-display text-base sm:text-lg font-semibold">Cotações Recentes</h2>
           <Link to="/quotes" className="text-xs text-soft-blue hover:underline font-body">Ver todas</Link>
         </div>
         {quotes.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground font-body">Nenhuma cotação ainda. Crie a primeira!</div>
+          <div className="p-8 text-center text-muted-foreground font-body text-sm">Nenhuma cotação ainda. Crie a primeira!</div>
         ) : (
           <div className="divide-y divide-border/30">
             {quotes.map((quote: any) => {
               const stage = stageLabels[quote.stage] ?? stageLabels.new;
               return (
-                <div key={quote.id} className="p-4 flex items-center gap-4 hover:bg-muted/30 transition-colors">
+                <div key={quote.id} className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 hover:bg-muted/30 transition-colors">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground font-body truncate">{quote.clients?.full_name ?? "Sem cliente"}</p>
                     <p className="text-xs text-muted-foreground font-body">{quote.destination ?? "Sem destino"}</p>
                   </div>
-                  <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${stage.color}`}>{stage.label}</span>
-                  <span className="text-sm font-medium text-foreground font-body w-24 text-right">
-                    {quote.total_value ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(quote.total_value) : "—"}
-                  </span>
+                  <div className="flex items-center gap-2 sm:gap-4">
+                    <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${stage.color}`}>{stage.label}</span>
+                    <span className="text-sm font-medium text-foreground font-body sm:w-24 text-right">
+                      {quote.total_value ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(quote.total_value) : "—"}
+                    </span>
+                  </div>
                 </div>
               );
             })}

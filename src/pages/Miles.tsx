@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
-import { Link } from "react-router-dom";
 
 type MilesProgram = Tables<"miles_programs"> & { client_name?: string };
 
@@ -24,10 +23,7 @@ export default function Miles() {
   const { data: miles = [], isLoading } = useQuery({
     queryKey: ["miles-programs"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("miles_programs")
-        .select("*, clients(full_name)")
-        .order("expiration_date", { ascending: true });
+      const { data, error } = await supabase.from("miles_programs").select("*, clients(full_name)").order("expiration_date", { ascending: true });
       if (error) throw error;
       return (data ?? []).map((m: any) => ({ ...m, client_name: m.clients?.full_name ?? "—" }));
     },
@@ -45,14 +41,10 @@ export default function Miles() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       const payload = {
-        client_id: form.client_id,
-        airline: form.airline,
-        program_name: form.program_name,
+        client_id: form.client_id, airline: form.airline, program_name: form.program_name,
         miles_balance: form.miles_balance ? Number(form.miles_balance) : 0,
-        expiration_date: form.expiration_date || null,
-        membership_number: form.membership_number || null,
-        login_email: form.login_email || null,
-        authorized_to_manage: form.authorized_to_manage ?? false,
+        expiration_date: form.expiration_date || null, membership_number: form.membership_number || null,
+        login_email: form.login_email || null, authorized_to_manage: form.authorized_to_manage ?? false,
       };
       if (editing) {
         const { error } = await supabase.from("miles_programs").update(payload).eq("id", editing.id);
@@ -82,12 +74,7 @@ export default function Miles() {
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
 
-  const openCreate = () => {
-    setEditing(null);
-    setForm({ authorized_to_manage: false });
-    setDialogOpen(true);
-  };
-
+  const openCreate = () => { setEditing(null); setForm({ authorized_to_manage: false }); setDialogOpen(true); };
   const openEdit = (m: MilesProgram) => {
     setEditing(m);
     setForm({
@@ -98,7 +85,6 @@ export default function Miles() {
     });
     setDialogOpen(true);
   };
-
   const closeDialog = () => { setDialogOpen(false); setEditing(null); };
 
   const now = new Date();
@@ -107,32 +93,30 @@ export default function Miles() {
   const totalMiles = miles.reduce((s, m) => s + (m.miles_balance ?? 0), 0);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex items-end justify-between">
+    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-display font-semibold text-foreground">Gestão de Milhas</h1>
-          <p className="text-muted-foreground font-body mt-1">{miles.length} programas cadastrados</p>
+          <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">Gestão de Milhas</h1>
+          <p className="text-muted-foreground font-body mt-1 text-sm">{miles.length} programas cadastrados</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={openCreate} className="font-body">
+            <Button onClick={openCreate} className="font-body w-full sm:w-auto">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
               Novo Programa
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-display">{editing ? "Editar Programa" : "Novo Programa de Milhas"}</DialogTitle>
             </DialogHeader>
             <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2 space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2 space-y-2">
                   <Label className="font-body">Cliente *</Label>
                   <Select value={form.client_id ?? ""} onValueChange={(v) => setForm({ ...form, client_id: v })}>
                     <SelectTrigger><SelectValue placeholder="Selecionar cliente" /></SelectTrigger>
-                    <SelectContent>
-                      {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}
-                    </SelectContent>
+                    <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
@@ -159,7 +143,7 @@ export default function Miles() {
                   <Label className="font-body">E-mail de login</Label>
                   <Input value={form.login_email ?? ""} onChange={(e) => setForm({ ...form, login_email: e.target.value })} />
                 </div>
-                <div className="col-span-2 flex items-center gap-2">
+                <div className="sm:col-span-2 flex items-center gap-2">
                   <Checkbox checked={form.authorized_to_manage ?? false} onCheckedChange={(v) => setForm({ ...form, authorized_to_manage: !!v })} />
                   <Label className="font-body text-sm">Autorizado a gerenciar</Label>
                 </div>
@@ -175,20 +159,20 @@ export default function Miles() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
         <MetricCard title="Total de Milhas" value={totalMiles.toLocaleString("pt-BR")} icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-gold"><path d="M22 2L2 8.5l7 3.5 3.5 7L22 2z" /></svg>
         } />
         <MetricCard title="Programas Ativos" value={String(miles.length)} icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-soft-blue"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
         } />
-        <MetricCard title="Expirando em 30 dias" value={String(expiring.length)} trend={expiring.length > 0 ? { value: "Alerta", positive: false } : undefined} icon={
+        <MetricCard title="Expirando em 30d" value={String(expiring.length)} trend={expiring.length > 0 ? { value: "Alerta", positive: false } : undefined} icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-destructive"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
         } />
       </div>
 
       {expiring.length > 0 && (
-        <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 flex items-start gap-3">
+        <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 sm:p-4 flex items-start gap-3">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-destructive mt-0.5 flex-shrink-0">
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
@@ -199,7 +183,8 @@ export default function Miles() {
         </div>
       )}
 
-      <div className="glass-card rounded-xl overflow-hidden">
+      {/* Desktop table */}
+      <div className="glass-card rounded-xl overflow-hidden hidden md:block">
         {isLoading ? (
           <div className="p-8 text-center text-muted-foreground font-body">Carregando...</div>
         ) : miles.length === 0 ? (
@@ -229,9 +214,7 @@ export default function Miles() {
                     <td className="p-4 text-sm font-medium font-body text-foreground text-right">{(m.miles_balance ?? 0).toLocaleString("pt-BR")}</td>
                     <td className="p-4 text-sm font-body text-muted-foreground text-right">{m.expiration_date ?? "—"}</td>
                     <td className="p-4 text-center">
-                      <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${
-                        isExpired ? "bg-muted text-muted-foreground" : isExpiring ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success"
-                      }`}>
+                      <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${isExpired ? "bg-muted text-muted-foreground" : isExpiring ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success"}`}>
                         {isExpired ? "Expirado" : isExpiring ? "Expirando" : "Ativo"}
                       </span>
                     </td>
@@ -246,6 +229,46 @@ export default function Miles() {
               })}
             </tbody>
           </table>
+        )}
+      </div>
+
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-3">
+        {isLoading ? (
+          <div className="p-8 text-center text-muted-foreground font-body">Carregando...</div>
+        ) : miles.length === 0 ? (
+          <div className="p-8 text-center text-muted-foreground font-body">Nenhum programa de milhas cadastrado.</div>
+        ) : (
+          miles.map((m) => {
+            const isExpiring = m.expiration_date && new Date(m.expiration_date) <= thirtyDays && new Date(m.expiration_date) >= now;
+            const isExpired = m.expiration_date && new Date(m.expiration_date) < now;
+            return (
+              <div key={m.id} className="glass-card rounded-xl p-4 space-y-2">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium font-body text-foreground">{m.client_name}</p>
+                    <p className="text-xs text-muted-foreground font-body">{m.airline} · {m.program_name}</p>
+                  </div>
+                  <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${isExpired ? "bg-muted text-muted-foreground" : isExpiring ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success"}`}>
+                    {isExpired ? "Expirado" : isExpiring ? "Expirando" : "Ativo"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm font-body">
+                  <span className="text-muted-foreground">Saldo:</span>
+                  <span className="font-medium text-foreground">{(m.miles_balance ?? 0).toLocaleString("pt-BR")}</span>
+                </div>
+                {m.expiration_date && (
+                  <div className="flex items-center justify-between text-xs font-body text-muted-foreground">
+                    <span>Expira: {m.expiration_date}</span>
+                  </div>
+                )}
+                <div className="flex gap-2 pt-1">
+                  <Button variant="outline" size="sm" className="font-body flex-1" onClick={() => openEdit(m)}>Editar</Button>
+                  <Button variant="ghost" size="sm" className="text-destructive font-body" onClick={() => { if (confirm("Remover?")) deleteMutation.mutate(m.id); }}>Excluir</Button>
+                </div>
+              </div>
+            );
+          })
         )}
       </div>
     </div>

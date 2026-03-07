@@ -7,28 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
 type Transaction = {
-  id: string;
-  description: string;
-  type: string;
-  amount: number;
-  date: string;
-  status: string | null;
-  category?: string | null;
-  due_date?: string | null;
-  party_name?: string | null;
-  created_at: string;
+  id: string; description: string; type: string; amount: number; date: string;
+  status: string | null; category?: string | null; due_date?: string | null;
+  party_name?: string | null; created_at: string;
 };
 
 const typeLabels: Record<string, string> = {
-  receivable: "A Receber",
-  payable: "A Pagar",
-  sale: "Venda",
-  expense: "Despesa",
-  commission: "Comissão",
+  receivable: "A Receber", payable: "A Pagar", sale: "Venda", expense: "Despesa", commission: "Comissão",
 };
 
 const statusLabels: Record<string, { label: string; color: string }> = {
@@ -50,10 +38,7 @@ export default function Finance() {
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ["financial-transactions"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("financial_transactions")
-        .select("*")
-        .order("date", { ascending: false });
+      const { data, error } = await supabase.from("financial_transactions").select("*").order("date", { ascending: false });
       if (error) throw error;
       return data as Transaction[];
     },
@@ -62,14 +47,10 @@ export default function Finance() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       const payload = {
-        description: form.description,
-        type: form.type || "receivable",
-        amount: Number(form.amount),
-        date: form.date || new Date().toISOString().split("T")[0],
-        status: form.status || "pending",
-        category: form.category || form.type || "receivable",
-        due_date: form.due_date || null,
-        party_name: form.party_name || null,
+        description: form.description, type: form.type || "receivable",
+        amount: Number(form.amount), date: form.date || new Date().toISOString().split("T")[0],
+        status: form.status || "pending", category: form.category || form.type || "receivable",
+        due_date: form.due_date || null, party_name: form.party_name || null,
       };
       if (editing) {
         const { error } = await supabase.from("financial_transactions").update(payload).eq("id", editing.id);
@@ -126,36 +107,34 @@ export default function Finance() {
   const totalReceived = receivables.filter(t => t.status === "received" || t.status === "paid").reduce((s, t) => s + Number(t.amount), 0);
   const totalPaid = payables.filter(t => t.status === "paid").reduce((s, t) => s + Number(t.amount), 0);
 
-  const filtered = filter === "all" ? transactions
-    : filter === "receivable" ? receivables
-    : payables;
+  const filtered = filter === "all" ? transactions : filter === "receivable" ? receivables : payables;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex items-end justify-between">
+    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-display font-semibold text-foreground">Financeiro</h1>
-          <p className="text-muted-foreground font-body mt-1">Contas a pagar e receber.</p>
+          <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">Financeiro</h1>
+          <p className="text-muted-foreground font-body mt-1 text-sm">Contas a pagar e receber.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => openCreate("payable")} className="font-body">
+          <Button variant="outline" onClick={() => openCreate("payable")} className="font-body flex-1 sm:flex-none text-xs sm:text-sm">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
-            Conta a Pagar
+            <span className="hidden sm:inline">Conta a </span>Pagar
           </Button>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => openCreate("receivable")} className="font-body">
+              <Button onClick={() => openCreate("receivable")} className="font-body flex-1 sm:flex-none text-xs sm:text-sm">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
-                Conta a Receber
+                <span className="hidden sm:inline">Conta a </span>Receber
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="font-display">{editing ? "Editar Transação" : "Nova Transação"}</DialogTitle>
               </DialogHeader>
               <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2 space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2 space-y-2">
                     <Label className="font-body">Descrição *</Label>
                     <Input value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
                   </div>
@@ -214,7 +193,7 @@ export default function Finance() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <MetricCard title="A Receber (Pendente)" value={formatCurrency(pendingReceivables)} icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-success"><path d="M2 17l4-4 4 4 4-6 4 2 4-4" /><path d="M2 21h20" /></svg>
         } />
@@ -230,11 +209,7 @@ export default function Finance() {
       </div>
 
       <div className="flex gap-1 p-1 rounded-lg bg-muted w-fit">
-        {[
-          { id: "all", label: "Todas" },
-          { id: "receivable", label: "A Receber" },
-          { id: "payable", label: "A Pagar" },
-        ].map((f) => (
+        {[{ id: "all", label: "Todas" }, { id: "receivable", label: "A Receber" }, { id: "payable", label: "A Pagar" }].map((f) => (
           <button key={f.id} onClick={() => setFilter(f.id)}
             className={`px-3 py-1.5 rounded-md text-xs font-medium font-body transition-colors ${filter === f.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
             {f.label}
@@ -242,8 +217,9 @@ export default function Finance() {
         ))}
       </div>
 
-      <div className="glass-card rounded-xl">
-        <div className="p-5 border-b border-border/50">
+      {/* Desktop list */}
+      <div className="glass-card rounded-xl hidden sm:block">
+        <div className="p-4 sm:p-5 border-b border-border/50">
           <h2 className="font-display text-lg font-semibold">Transações</h2>
         </div>
         {isLoading ? (
@@ -260,9 +236,7 @@ export default function Finance() {
                   <div className="flex-1">
                     <p className="text-sm font-medium font-body text-foreground">{t.description}</p>
                     <p className="text-xs text-muted-foreground font-body">
-                      {typeLabels[t.type] ?? t.type}
-                      {t.party_name ? ` · ${t.party_name}` : ""}
-                      {t.due_date ? ` · Venc: ${t.due_date}` : ""}
+                      {typeLabels[t.type] ?? t.type}{t.party_name ? ` · ${t.party_name}` : ""}{t.due_date ? ` · Venc: ${t.due_date}` : ""}
                     </p>
                   </div>
                   <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${st.color}`}>{st.label}</span>
@@ -275,6 +249,40 @@ export default function Finance() {
               );
             })}
           </div>
+        )}
+      </div>
+
+      {/* Mobile cards */}
+      <div className="sm:hidden space-y-3">
+        {isLoading ? (
+          <div className="p-8 text-center text-muted-foreground font-body">Carregando...</div>
+        ) : filtered.length === 0 ? (
+          <div className="p-8 text-center text-muted-foreground font-body">Nenhuma transação encontrada.</div>
+        ) : (
+          filtered.map((t) => {
+            const st = statusLabels[t.status ?? "pending"] ?? statusLabels.pending;
+            const isPayable = t.category === "payable" || t.type === "expense";
+            return (
+              <div key={t.id} className="glass-card rounded-xl p-4 space-y-2" onClick={() => openEdit(t)}>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium font-body text-foreground truncate">{t.description}</p>
+                    <p className="text-xs text-muted-foreground font-body">{typeLabels[t.type] ?? t.type}{t.party_name ? ` · ${t.party_name}` : ""}</p>
+                  </div>
+                  <span className={`text-sm font-semibold font-body ml-2 ${isPayable ? "text-destructive" : "text-foreground"}`}>
+                    {isPayable ? "-" : ""}{formatCurrency(Number(t.amount))}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${st.color}`}>{st.label}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground font-body">{t.date}</span>
+                    <Button variant="ghost" size="sm" className="text-destructive h-6 px-2 text-xs" onClick={(e) => { e.stopPropagation(); if (confirm("Remover?")) deleteMutation.mutate(t.id); }}>✕</Button>
+                  </div>
+                </div>
+              </div>
+            );
+          })
         )}
       </div>
     </div>

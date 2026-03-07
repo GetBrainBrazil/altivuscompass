@@ -38,11 +38,8 @@ export default function Campaigns() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       const payload = {
-        name: form.name,
-        channel: form.channel || null,
-        status: form.status || "draft",
-        template: form.template || null,
-        recipients_count: form.recipients_count ? Number(form.recipients_count) : 0,
+        name: form.name, channel: form.channel || null, status: form.status || "draft",
+        template: form.template || null, recipients_count: form.recipients_count ? Number(form.recipients_count) : 0,
       };
       if (editing) {
         const { error } = await supabase.from("campaigns").update(payload).eq("id", editing.id);
@@ -72,38 +69,29 @@ export default function Campaigns() {
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
 
-  const openCreate = () => {
-    setEditing(null);
-    setForm({ status: "draft", name: "", channel: "", template: "", recipients_count: "" });
-    setDialogOpen(true);
-  };
-
+  const openCreate = () => { setEditing(null); setForm({ status: "draft", name: "", channel: "", template: "", recipients_count: "" }); setDialogOpen(true); };
   const openEdit = (c: Campaign) => {
     setEditing(c);
-    setForm({
-      name: c.name, channel: c.channel ?? "", status: c.status ?? "draft",
-      template: c.template ?? "", recipients_count: c.recipients_count ?? "",
-    });
+    setForm({ name: c.name, channel: c.channel ?? "", status: c.status ?? "draft", template: c.template ?? "", recipients_count: c.recipients_count ?? "" });
     setDialogOpen(true);
   };
-
   const closeDialog = () => { setDialogOpen(false); setEditing(null); };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex items-end justify-between">
+    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-display font-semibold text-foreground">Campanhas</h1>
-          <p className="text-muted-foreground font-body mt-1">{campaigns.length} campanhas</p>
+          <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">Campanhas</h1>
+          <p className="text-muted-foreground font-body mt-1 text-sm">{campaigns.length} campanhas</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={openCreate} className="font-body">
+            <Button onClick={openCreate} className="font-body w-full sm:w-auto">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
               Nova Campanha
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-display">{editing ? "Editar Campanha" : "Nova Campanha"}</DialogTitle>
             </DialogHeader>
@@ -159,12 +147,12 @@ export default function Campaigns() {
       ) : campaigns.length === 0 ? (
         <div className="p-8 text-center text-muted-foreground font-body">Nenhuma campanha cadastrada.</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {campaigns.map((c) => {
             const st = statusLabels[c.status ?? "draft"] ?? statusLabels.draft;
             const channelLabel = { whatsapp: "WhatsApp", email: "E-mail", email_whatsapp: "E-mail + WhatsApp" }[c.channel ?? ""] ?? c.channel ?? "—";
             return (
-              <div key={c.id} className="glass-card rounded-xl p-5 cursor-pointer hover:shadow-md transition-shadow animate-fade-in" onClick={() => openEdit(c)}>
+              <div key={c.id} className="glass-card rounded-xl p-4 sm:p-5 cursor-pointer hover:shadow-md transition-shadow animate-fade-in" onClick={() => openEdit(c)}>
                 <div className="flex items-start justify-between mb-3">
                   <h3 className="text-sm font-semibold font-body text-foreground">{c.name}</h3>
                   <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${st.color}`}>{st.label}</span>

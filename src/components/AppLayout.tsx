@@ -11,9 +11,9 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-10 px-4">
+          <header className="h-14 flex items-center border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-10 px-3 sm:px-4">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
-            <div className="ml-auto flex items-center gap-3">
+            <div className="ml-auto flex items-center gap-2 sm:gap-3">
               <button className="relative p-2 rounded-lg hover:bg-muted transition-colors">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -29,7 +29,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               </button>
             </div>
           </header>
-          <main className="flex-1 p-6 lg:p-8">
+          <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8">
             {children}
           </main>
         </div>
