@@ -1,4 +1,5 @@
-import { useLocation, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
+import logoAltivus from "@/assets/logo-altivus.png";
 import {
   Sidebar,
   SidebarContent,
