@@ -1,140 +1,155 @@
 import { MetricCard } from "@/components/MetricCard";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
-const recentQuotes = [
-  { id: 1, client: "Maria Silva", destination: "Paris, França", status: "Negociação", value: "R$ 24.500", date: "5 Mar" },
-  { id: 2, client: "João Oliveira", destination: "Maldivas", status: "Cotação Enviada", value: "R$ 48.200", date: "4 Mar" },
-  { id: 3, client: "Ana Costa", destination: "Nova York, EUA", status: "Confirmada", value: "R$ 15.800", date: "3 Mar" },
-  { id: 4, client: "Roberto Santos", destination: "Tóquio, Japão", status: "Nova Cotação", value: "R$ 32.100", date: "2 Mar" },
-];
-
-const statusColors: Record<string, string> = {
-  "Nova Cotação": "bg-soft-blue/10 text-soft-blue",
-  "Cotação Enviada": "bg-gold/10 text-gold",
-  "Negociação": "bg-warning/10 text-warning",
-  "Confirmada": "bg-success/10 text-success",
+const stageLabels: Record<string, { label: string; color: string }> = {
+  new: { label: "Nova Cotação", color: "bg-soft-blue/10 text-soft-blue" },
+  sent: { label: "Cotação Enviada", color: "bg-gold/10 text-gold" },
+  negotiation: { label: "Negociação", color: "bg-warning/10 text-warning" },
+  confirmed: { label: "Confirmada", color: "bg-success/10 text-success" },
+  issued: { label: "Bilhete Emitido", color: "bg-primary/10 text-primary" },
+  completed: { label: "Concluída", color: "bg-muted text-muted-foreground" },
+  post_sale: { label: "Pós-Venda", color: "bg-soft-blue/10 text-soft-blue" },
 };
 
-const upcomingTrips = [
-  { client: "Lucia Mendes", destination: "Santorini", date: "15 Mar", passengers: 2 },
-  { client: "Carlos Ferreira", destination: "Dubai", date: "22 Mar", passengers: 4 },
-  { client: "Patricia Lima", destination: "Londres", date: "1 Abr", passengers: 1 },
-];
-
 export default function Dashboard() {
+  const { user } = useAuth();
+
+  const { data: quotes = [] } = useQuery({
+    queryKey: ["dashboard-quotes"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("quotes")
+        .select("*, clients(full_name)")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: clientCount = 0 } = useQuery({
+    queryKey: ["dashboard-client-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase.from("clients").select("*", { count: "exact", head: true });
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  const { data: activeQuotesCount = 0 } = useQuery({
+    queryKey: ["dashboard-active-quotes"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("quotes")
+        .select("*", { count: "exact", head: true })
+        .in("stage", ["new", "sent", "negotiation", "confirmed"]);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  const { data: expiringMiles = 0 } = useQuery({
+    queryKey: ["dashboard-expiring-miles"],
+    queryFn: async () => {
+      const thirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+      const today = new Date().toISOString().split("T")[0];
+      const { count, error } = await supabase
+        .from("miles_programs")
+        .select("*", { count: "exact", head: true })
+        .gte("expiration_date", today)
+        .lte("expiration_date", thirtyDays);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  const { data: totalSales = 0 } = useQuery({
+    queryKey: ["dashboard-total-sales"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("quotes")
+        .select("total_value")
+        .in("stage", ["confirmed", "issued", "completed"]);
+      if (error) throw error;
+      return (data ?? []).reduce((s, q) => s + (q.total_value ?? 0), 0);
+    },
+  });
+
+  const formatCurrency = (v: number) => {
+    if (v >= 1000) return `R$ ${(v / 1000).toFixed(1).replace(".", ",")}K`;
+    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+  };
+
+  const greeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return "Bom dia";
+    if (h < 18) return "Boa tarde";
+    return "Boa noite";
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-3xl font-display font-semibold text-foreground">Bom dia</h1>
+          <h1 className="text-3xl font-display font-semibold text-foreground">{greeting()}</h1>
           <p className="text-muted-foreground font-body mt-1">Veja o que está acontecendo na Altivus hoje.</p>
         </div>
         <div className="flex gap-3">
           <Link to="/quotes" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium font-body hover:opacity-90 transition-opacity">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
             Nova Cotação
           </Link>
           <Link to="/clients" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border text-sm font-medium font-body text-foreground hover:bg-muted transition-colors">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="8" r="4" />
-              <path d="M5 20c0-4 3.5-7 7-7s7 3 7 7" />
-            </svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M5 20c0-4 3.5-7 7-7s7 3 7 7" /></svg>
             Novo Cliente
           </Link>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          title="Cotações em Andamento"
-          value="12"
-          subtitle="4 aguardando resposta"
-          trend={{ value: "18%", positive: true }}
-          icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-soft-blue">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" />
-              <path d="M14 2v6h6" />
-            </svg>
-          }
-        />
-        <MetricCard
-          title="Vendas do Mês"
-          value="R$ 142,5K"
-          subtitle="8 viagens confirmadas"
-          trend={{ value: "24%", positive: true }}
-          icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-success">
-              <path d="M2 17l4-4 4 4 4-6 4 2 4-4" />
-              <path d="M2 21h20" />
-            </svg>
-          }
-        />
-        <MetricCard
-          title="Clientes Ativos"
-          value="247"
-          subtitle="12 novos este mês"
-          trend={{ value: "8%", positive: true }}
-          icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-gold">
-              <circle cx="12" cy="8" r="4" />
-              <path d="M5 20c0-4 3.5-7 7-7s7 3 7 7" />
-            </svg>
-          }
-        />
-        <MetricCard
-          title="Milhas Expirando"
-          value="3"
-          subtitle="Próximos 30 dias"
-          trend={{ value: "Alerta", positive: false }}
-          icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-destructive">
-              <path d="M22 2L2 8.5l7 3.5 3.5 7L22 2z" />
-            </svg>
-          }
-        />
+        <MetricCard title="Cotações em Andamento" value={String(activeQuotesCount)} icon={
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-soft-blue"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" /><path d="M14 2v6h6" /></svg>
+        } />
+        <MetricCard title="Vendas Confirmadas" value={formatCurrency(totalSales)} icon={
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-success"><path d="M2 17l4-4 4 4 4-6 4 2 4-4" /><path d="M2 21h20" /></svg>
+        } />
+        <MetricCard title="Clientes Ativos" value={String(clientCount)} icon={
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-gold"><circle cx="12" cy="8" r="4" /><path d="M5 20c0-4 3.5-7 7-7s7 3 7 7" /></svg>
+        } />
+        <MetricCard title="Milhas Expirando" value={String(expiringMiles)} trend={expiringMiles > 0 ? { value: "Alerta", positive: false } : undefined} icon={
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-destructive"><path d="M22 2L2 8.5l7 3.5 3.5 7L22 2z" /></svg>
+        } />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 glass-card rounded-xl">
-          <div className="p-5 border-b border-border/50 flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold">Cotações Recentes</h2>
-            <Link to="/quotes" className="text-xs text-soft-blue hover:underline font-body">Ver todas</Link>
-          </div>
+      <div className="glass-card rounded-xl">
+        <div className="p-5 border-b border-border/50 flex items-center justify-between">
+          <h2 className="font-display text-lg font-semibold">Cotações Recentes</h2>
+          <Link to="/quotes" className="text-xs text-soft-blue hover:underline font-body">Ver todas</Link>
+        </div>
+        {quotes.length === 0 ? (
+          <div className="p-8 text-center text-muted-foreground font-body">Nenhuma cotação ainda. Crie a primeira!</div>
+        ) : (
           <div className="divide-y divide-border/30">
-            {recentQuotes.map((quote) => (
-              <div key={quote.id} className="p-4 flex items-center gap-4 hover:bg-muted/30 transition-colors">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground font-body truncate">{quote.client}</p>
-                  <p className="text-xs text-muted-foreground font-body">{quote.destination}</p>
+            {quotes.map((quote: any) => {
+              const stage = stageLabels[quote.stage] ?? stageLabels.new;
+              return (
+                <div key={quote.id} className="p-4 flex items-center gap-4 hover:bg-muted/30 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground font-body truncate">{quote.clients?.full_name ?? "Sem cliente"}</p>
+                    <p className="text-xs text-muted-foreground font-body">{quote.destination ?? "Sem destino"}</p>
+                  </div>
+                  <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${stage.color}`}>{stage.label}</span>
+                  <span className="text-sm font-medium text-foreground font-body w-24 text-right">
+                    {quote.total_value ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(quote.total_value) : "—"}
+                  </span>
                 </div>
-                <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${statusColors[quote.status] || 'bg-muted text-muted-foreground'}`}>
-                  {quote.status}
-                </span>
-                <span className="text-sm font-medium text-foreground font-body w-24 text-right">{quote.value}</span>
-                <span className="text-xs text-muted-foreground font-body w-12 text-right">{quote.date}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
-        </div>
-
-        <div className="glass-card rounded-xl">
-          <div className="p-5 border-b border-border/50">
-            <h2 className="font-display text-lg font-semibold">Próximas Viagens</h2>
-          </div>
-          <div className="p-4 space-y-3">
-            {upcomingTrips.map((trip, i) => (
-              <div key={i} className="p-3 rounded-lg bg-muted/40 space-y-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium font-body text-foreground">{trip.destination}</p>
-                  <span className="text-xs text-muted-foreground font-body">{trip.date}</span>
-                </div>
-                <p className="text-xs text-muted-foreground font-body">{trip.client} · {trip.passengers} passageiro{trip.passengers > 1 ? 's' : ''}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
