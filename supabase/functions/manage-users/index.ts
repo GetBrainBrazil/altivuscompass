@@ -15,7 +15,6 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    // Verify caller is admin
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -27,7 +26,6 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Não autorizado" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Check admin role
     const { data: roleData } = await supabaseAdmin
       .from("user_roles")
       .select("role")
@@ -61,6 +59,35 @@ Deno.serve(async (req) => {
       }
 
       return new Response(JSON.stringify({ success: true, user_id: newUser?.user?.id }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (action === "update") {
+      const { user_id, full_name, role } = body;
+
+      // Update profile name
+      if (full_name) {
+        await supabaseAdmin.from("profiles").update({ full_name }).eq("user_id", user_id);
+        await supabaseAdmin.auth.admin.updateUserById(user_id, { user_metadata: { full_name } });
+      }
+
+      // Update role
+      if (role) {
+        await supabaseAdmin.from("user_roles").delete().eq("user_id", user_id);
+        await supabaseAdmin.from("user_roles").insert({ user_id, role });
+      }
+
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (action === "change_password") {
+      const { user_id, new_password } = body;
+
+      const { error: pwError } = await supabaseAdmin.auth.admin.updateUserById(user_id, { password: new_password });
+      if (pwError) {
+        return new Response(JSON.stringify({ error: pwError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     if (action === "delete") {
