@@ -35,61 +35,39 @@ export default function Login() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (captchaInput.trim() !== captcha.answer) {
       toast({ title: "Captcha incorreto", description: "Por favor, resolva a conta corretamente.", variant: "destructive" });
       refreshCaptcha();
       return;
     }
-
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setLoading(false);
-
     if (error) {
       toast({ title: "Erro ao entrar", description: "E-mail ou senha inválidos.", variant: "destructive" });
       refreshCaptcha();
       return;
     }
-
     navigate("/", { replace: true });
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm space-y-8">
-        <div className="flex flex-col items-center gap-4">
-          <img src={logoAltivus} alt="Altivus Turismo" className="h-12 object-contain" />
+      <div className="w-full max-w-sm space-y-6 sm:space-y-8">
+        <div className="flex flex-col items-center gap-3 sm:gap-4">
+          <img src={logoAltivus} alt="Altivus Turismo" className="h-10 sm:h-12 object-contain" />
           <p className="text-sm text-muted-foreground font-body">Entre com suas credenciais</p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-5">
+        <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
           <div className="space-y-2">
             <Label htmlFor="email" className="font-body">E-mail</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="seu@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
+            <Input id="email" type="email" placeholder="seu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="password" className="font-body">Senha</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-            />
+            <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
           </div>
-
           <div className="space-y-2">
             <Label className="font-body">Verificação de segurança</Label>
             <div className="flex items-center gap-3">
@@ -100,15 +78,8 @@ export default function Login() {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
               </button>
             </div>
-            <Input
-              placeholder="Sua resposta"
-              value={captchaInput}
-              onChange={(e) => setCaptchaInput(e.target.value)}
-              required
-              autoComplete="off"
-            />
+            <Input placeholder="Sua resposta" value={captchaInput} onChange={(e) => setCaptchaInput(e.target.value)} required autoComplete="off" />
           </div>
-
           <Button type="submit" className="w-full font-body" disabled={loading}>
             {loading ? "Entrando..." : "Entrar"}
           </Button>

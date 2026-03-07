@@ -28,6 +28,7 @@ export default function Quotes() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
   const [form, setForm] = useState<Record<string, any>>({});
+  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
 
   const { data: quotes = [], isLoading } = useQuery({
     queryKey: ["quotes"],
@@ -53,17 +54,11 @@ export default function Quotes() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       const payload = {
-        client_id: form.client_id || null,
-        destination: form.destination || null,
-        departure_city: form.departure_city || null,
-        departure_airport: form.departure_airport || null,
-        travel_date_start: form.travel_date_start || null,
-        travel_date_end: form.travel_date_end || null,
-        total_value: form.total_value ? Number(form.total_value) : 0,
-        stage: form.stage || "new",
-        airline_options: form.airline_options || null,
-        hotel_options: form.hotel_options || null,
-        notes: form.notes || null,
+        client_id: form.client_id || null, destination: form.destination || null,
+        departure_city: form.departure_city || null, departure_airport: form.departure_airport || null,
+        travel_date_start: form.travel_date_start || null, travel_date_end: form.travel_date_end || null,
+        total_value: form.total_value ? Number(form.total_value) : 0, stage: form.stage || "new",
+        airline_options: form.airline_options || null, hotel_options: form.hotel_options || null, notes: form.notes || null,
       };
       if (editingQuote) {
         const { error } = await supabase.from("quotes").update(payload).eq("id", editingQuote.id);
@@ -93,24 +88,17 @@ export default function Quotes() {
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
 
-  const openCreate = () => {
-    setEditingQuote(null);
-    setForm({ stage: "new", total_value: "" });
-    setDialogOpen(true);
-  };
-
+  const openCreate = () => { setEditingQuote(null); setForm({ stage: "new", total_value: "" }); setDialogOpen(true); };
   const openEdit = (q: Quote) => {
     setEditingQuote(q);
     setForm({
       client_id: q.client_id ?? "", destination: q.destination ?? "", departure_city: q.departure_city ?? "",
       departure_airport: q.departure_airport ?? "", travel_date_start: q.travel_date_start ?? "",
       travel_date_end: q.travel_date_end ?? "", total_value: q.total_value ?? "",
-      stage: q.stage, airline_options: q.airline_options ?? "", hotel_options: q.hotel_options ?? "",
-      notes: q.notes ?? "",
+      stage: q.stage, airline_options: q.airline_options ?? "", hotel_options: q.hotel_options ?? "", notes: q.notes ?? "",
     });
     setDialogOpen(true);
   };
-
   const closeDialog = () => { setDialogOpen(false); setEditingQuote(null); setForm({}); };
 
   const formatCurrency = (value: number | null) => {
@@ -119,128 +107,165 @@ export default function Quotes() {
   };
 
   return (
-    <div className="max-w-full mx-auto space-y-6">
-      <div className="flex items-end justify-between">
+    <div className="max-w-full mx-auto space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-display font-semibold text-foreground">Pipeline de Cotações</h1>
-          <p className="text-muted-foreground font-body mt-1">{quotes.length} cotações</p>
+          <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">Pipeline de Cotações</h1>
+          <p className="text-muted-foreground font-body mt-1 text-sm">{quotes.length} cotações</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openCreate} className="font-body">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
-              Nova Cotação
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="font-display">{editingQuote ? "Editar Cotação" : "Nova Cotação"}</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2 space-y-2">
-                  <Label className="font-body">Cliente</Label>
-                  <Select value={form.client_id ?? ""} onValueChange={(v) => setForm({ ...form, client_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Selecionar cliente" /></SelectTrigger>
-                    <SelectContent>
-                      {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+        <div className="flex gap-2 items-center">
+          {/* View toggle - mobile only shows list by default */}
+          <div className="flex gap-1 p-1 rounded-lg bg-muted sm:hidden">
+            <button onClick={() => setViewMode("list")} className={`px-2 py-1 rounded text-xs font-body ${viewMode === "list" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"}`}>Lista</button>
+            <button onClick={() => setViewMode("kanban")} className={`px-2 py-1 rounded text-xs font-body ${viewMode === "kanban" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"}`}>Kanban</button>
+          </div>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={openCreate} className="font-body">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
+                Nova Cotação
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="font-display">{editingQuote ? "Editar Cotação" : "Nova Cotação"}</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2 space-y-2">
+                    <Label className="font-body">Cliente</Label>
+                    <Select value={form.client_id ?? ""} onValueChange={(v) => setForm({ ...form, client_id: v })}>
+                      <SelectTrigger><SelectValue placeholder="Selecionar cliente" /></SelectTrigger>
+                      <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-body">Destino</Label>
+                    <Input value={form.destination ?? ""} onChange={(e) => setForm({ ...form, destination: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-body">Cidade de saída</Label>
+                    <Input value={form.departure_city ?? ""} onChange={(e) => setForm({ ...form, departure_city: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-body">Aeroporto de saída</Label>
+                    <Input value={form.departure_airport ?? ""} onChange={(e) => setForm({ ...form, departure_airport: e.target.value })} placeholder="GRU" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-body">Valor total (R$)</Label>
+                    <Input type="number" step="0.01" value={form.total_value ?? ""} onChange={(e) => setForm({ ...form, total_value: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-body">Data ida</Label>
+                    <Input type="date" value={form.travel_date_start ?? ""} onChange={(e) => setForm({ ...form, travel_date_start: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-body">Data volta</Label>
+                    <Input type="date" value={form.travel_date_end ?? ""} onChange={(e) => setForm({ ...form, travel_date_end: e.target.value })} />
+                  </div>
+                  <div className="sm:col-span-2 space-y-2">
+                    <Label className="font-body">Estágio</Label>
+                    <Select value={form.stage ?? "new"} onValueChange={(v) => setForm({ ...form, stage: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>{stages.map((s) => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div className="sm:col-span-2 space-y-2">
+                    <Label className="font-body">Opções de aéreas</Label>
+                    <Textarea value={form.airline_options ?? ""} onChange={(e) => setForm({ ...form, airline_options: e.target.value })} rows={2} />
+                  </div>
+                  <div className="sm:col-span-2 space-y-2">
+                    <Label className="font-body">Opções de hotel</Label>
+                    <Textarea value={form.hotel_options ?? ""} onChange={(e) => setForm({ ...form, hotel_options: e.target.value })} rows={2} />
+                  </div>
+                  <div className="sm:col-span-2 space-y-2">
+                    <Label className="font-body">Observações</Label>
+                    <Textarea value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="font-body">Destino</Label>
-                  <Input value={form.destination ?? ""} onChange={(e) => setForm({ ...form, destination: e.target.value })} />
+                <div className="flex gap-2 justify-end">
+                  <Button type="button" variant="outline" onClick={closeDialog} className="font-body">Cancelar</Button>
+                  <Button type="submit" disabled={saveMutation.isPending} className="font-body">
+                    {saveMutation.isPending ? "Salvando..." : "Salvar"}
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <Label className="font-body">Cidade de saída</Label>
-                  <Input value={form.departure_city ?? ""} onChange={(e) => setForm({ ...form, departure_city: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-body">Aeroporto de saída</Label>
-                  <Input value={form.departure_airport ?? ""} onChange={(e) => setForm({ ...form, departure_airport: e.target.value })} placeholder="GRU" />
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-body">Valor total (R$)</Label>
-                  <Input type="number" step="0.01" value={form.total_value ?? ""} onChange={(e) => setForm({ ...form, total_value: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-body">Data ida</Label>
-                  <Input type="date" value={form.travel_date_start ?? ""} onChange={(e) => setForm({ ...form, travel_date_start: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-body">Data volta</Label>
-                  <Input type="date" value={form.travel_date_end ?? ""} onChange={(e) => setForm({ ...form, travel_date_end: e.target.value })} />
-                </div>
-                <div className="col-span-2 space-y-2">
-                  <Label className="font-body">Estágio</Label>
-                  <Select value={form.stage ?? "new"} onValueChange={(v) => setForm({ ...form, stage: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {stages.map((s) => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="col-span-2 space-y-2">
-                  <Label className="font-body">Opções de aéreas</Label>
-                  <Textarea value={form.airline_options ?? ""} onChange={(e) => setForm({ ...form, airline_options: e.target.value })} rows={2} />
-                </div>
-                <div className="col-span-2 space-y-2">
-                  <Label className="font-body">Opções de hotel</Label>
-                  <Textarea value={form.hotel_options ?? ""} onChange={(e) => setForm({ ...form, hotel_options: e.target.value })} rows={2} />
-                </div>
-                <div className="col-span-2 space-y-2">
-                  <Label className="font-body">Observações</Label>
-                  <Textarea value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
-                </div>
-              </div>
-              <div className="flex gap-2 justify-end">
-                <Button type="button" variant="outline" onClick={closeDialog} className="font-body">Cancelar</Button>
-                <Button type="submit" disabled={saveMutation.isPending} className="font-body">
-                  {saveMutation.isPending ? "Salvando..." : "Salvar"}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {isLoading ? (
         <div className="p-8 text-center text-muted-foreground font-body">Carregando...</div>
       ) : (
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {stages.map((stage) => {
-            const stageQuotes = quotes.filter((q) => q.stage === stage.id);
-            return (
-              <div key={stage.id} className="min-w-[280px] flex-shrink-0">
-                <div className="flex items-center gap-2 mb-3 px-1">
-                  <div className={`w-2 h-2 rounded-full ${stage.color}`} />
-                  <span className="text-xs font-medium text-foreground font-body">{stage.label}</span>
-                  <span className="text-xs text-muted-foreground font-body ml-auto">{stageQuotes.length}</span>
+        <>
+          {/* Kanban - desktop always, mobile toggle */}
+          <div className={`${viewMode === "list" ? "hidden sm:flex" : "flex"} gap-3 sm:gap-4 overflow-x-auto pb-4 -mx-3 px-3 sm:mx-0 sm:px-0`}>
+            {stages.map((stage) => {
+              const stageQuotes = quotes.filter((q) => q.stage === stage.id);
+              return (
+                <div key={stage.id} className="min-w-[240px] sm:min-w-[280px] flex-shrink-0">
+                  <div className="flex items-center gap-2 mb-3 px-1">
+                    <div className={`w-2 h-2 rounded-full ${stage.color}`} />
+                    <span className="text-xs font-medium text-foreground font-body">{stage.label}</span>
+                    <span className="text-xs text-muted-foreground font-body ml-auto">{stageQuotes.length}</span>
+                  </div>
+                  <div className="space-y-3">
+                    {stageQuotes.map((quote) => (
+                      <div key={quote.id} className="glass-card rounded-xl p-3 sm:p-4 cursor-pointer hover:shadow-md transition-shadow animate-fade-in" onClick={() => openEdit(quote)}>
+                        <div className="flex items-start justify-between mb-2">
+                          <p className="text-sm font-medium font-body text-foreground">{quote.destination || "Sem destino"}</p>
+                          <span className="text-xs font-semibold text-foreground font-body ml-2">{formatCurrency(quote.total_value)}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground font-body mb-3">{quote.client_name}</p>
+                        <div className="flex items-center justify-between text-[10px] text-muted-foreground font-body">
+                          <span>{quote.travel_date_start ?? ""} {quote.travel_date_end ? `– ${quote.travel_date_end}` : ""}</span>
+                          <Button variant="ghost" size="sm" className="h-6 px-2 text-destructive text-[10px]" onClick={(e) => { e.stopPropagation(); if (confirm("Remover cotação?")) deleteMutation.mutate(quote.id); }}>✕</Button>
+                        </div>
+                      </div>
+                    ))}
+                    {stageQuotes.length === 0 && (
+                      <div className="rounded-xl border border-dashed border-border/50 p-4 sm:p-6 text-center">
+                        <p className="text-xs text-muted-foreground font-body">Sem cotações</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  {stageQuotes.map((quote) => (
-                    <div key={quote.id} className="glass-card rounded-xl p-4 cursor-pointer hover:shadow-md transition-shadow animate-fade-in" onClick={() => openEdit(quote)}>
-                      <div className="flex items-start justify-between mb-2">
+              );
+            })}
+          </div>
+
+          {/* List view - mobile only */}
+          <div className={`${viewMode === "kanban" ? "hidden" : "block"} sm:hidden space-y-3`}>
+            {quotes.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground font-body">Nenhuma cotação.</div>
+            ) : (
+              quotes.map((quote) => {
+                const stage = stages.find(s => s.id === quote.stage) ?? stages[0];
+                return (
+                  <div key={quote.id} className="glass-card rounded-xl p-4 space-y-2" onClick={() => openEdit(quote)}>
+                    <div className="flex items-start justify-between">
+                      <div>
                         <p className="text-sm font-medium font-body text-foreground">{quote.destination || "Sem destino"}</p>
-                        <span className="text-xs font-semibold text-foreground font-body">{formatCurrency(quote.total_value)}</span>
+                        <p className="text-xs text-muted-foreground font-body">{quote.client_name}</p>
                       </div>
-                      <p className="text-xs text-muted-foreground font-body mb-3">{quote.client_name}</p>
-                      <div className="flex items-center justify-between text-[10px] text-muted-foreground font-body">
-                        <span>{quote.travel_date_start ?? ""} {quote.travel_date_end ? `– ${quote.travel_date_end}` : ""}</span>
-                        <Button variant="ghost" size="sm" className="h-6 px-2 text-destructive text-[10px]" onClick={(e) => { e.stopPropagation(); if (confirm("Remover cotação?")) deleteMutation.mutate(quote.id); }}>✕</Button>
+                      <span className="text-sm font-semibold text-foreground font-body">{formatCurrency(quote.total_value)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${stage.color}`} />
+                        <span className="text-xs text-muted-foreground font-body">{stage.label}</span>
                       </div>
+                      <span className="text-[10px] text-muted-foreground font-body">
+                        {quote.travel_date_start ?? ""}
+                      </span>
                     </div>
-                  ))}
-                  {stageQuotes.length === 0 && (
-                    <div className="rounded-xl border border-dashed border-border/50 p-6 text-center">
-                      <p className="text-xs text-muted-foreground font-body">Sem cotações</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </>
       )}
     </div>
   );

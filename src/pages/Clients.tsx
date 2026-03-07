@@ -49,7 +49,6 @@ export default function Clients() {
         ...form,
         preferred_airports: airportsInput.split(",").map(a => a.trim()).filter(Boolean),
       } as TablesInsert<"clients">;
-
       if (editingClient) {
         const { error } = await supabase.from("clients").update(payload).eq("id", editingClient.id);
         if (error) throw error;
@@ -78,13 +77,7 @@ export default function Clients() {
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
 
-  const openCreate = () => {
-    setEditingClient(null);
-    setForm(emptyClient);
-    setAirportsInput("");
-    setDialogOpen(true);
-  };
-
+  const openCreate = () => { setEditingClient(null); setForm(emptyClient); setAirportsInput(""); setDialogOpen(true); };
   const openEdit = (c: Client) => {
     setEditingClient(c);
     setForm({
@@ -96,13 +89,7 @@ export default function Clients() {
     setAirportsInput((c.preferred_airports ?? []).join(", "));
     setDialogOpen(true);
   };
-
-  const closeDialog = () => {
-    setDialogOpen(false);
-    setEditingClient(null);
-    setForm(emptyClient);
-    setAirportsInput("");
-  };
+  const closeDialog = () => { setDialogOpen(false); setEditingClient(null); setForm(emptyClient); setAirportsInput(""); };
 
   const filtered = clients.filter((c) => {
     const matchesSearch = c.full_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -113,26 +100,26 @@ export default function Clients() {
   });
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex items-end justify-between">
+    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-display font-semibold text-foreground">Clientes</h1>
-          <p className="text-muted-foreground font-body mt-1">{clients.length} clientes cadastrados</p>
+          <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">Clientes</h1>
+          <p className="text-muted-foreground font-body mt-1 text-sm">{clients.length} clientes cadastrados</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={openCreate} className="font-body">
+            <Button onClick={openCreate} className="font-body w-full sm:w-auto">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
               Novo Cliente
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-display">{editingClient ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
             </DialogHeader>
             <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2 space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2 space-y-2">
                   <Label className="font-body">Nome completo *</Label>
                   <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
                 </div>
@@ -175,11 +162,11 @@ export default function Clients() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="col-span-2 space-y-2">
+                <div className="sm:col-span-2 space-y-2">
                   <Label className="font-body">Aeroportos preferidos (separados por vírgula)</Label>
                   <Input value={airportsInput} onChange={(e) => setAirportsInput(e.target.value)} placeholder="GRU, GIG, VCP" />
                 </div>
-                <div className="col-span-2 space-y-2">
+                <div className="sm:col-span-2 space-y-2">
                   <Label className="font-body">Observações</Label>
                   <Textarea value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} />
                 </div>
@@ -195,23 +182,24 @@ export default function Clients() {
         </Dialog>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <div className="relative flex-1 sm:max-w-sm">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
           <input type="text" placeholder="Buscar clientes..." value={search} onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-card text-sm font-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/30" />
         </div>
-        <div className="flex gap-1 p-1 rounded-lg bg-muted">
+        <div className="flex gap-1 p-1 rounded-lg bg-muted overflow-x-auto">
           {["all", "economic", "opportunity", "sophisticated"].map((p) => (
             <button key={p} onClick={() => setProfileFilter(p)}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium font-body transition-colors ${profileFilter === p ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+              className={`px-3 py-1.5 rounded-md text-xs font-medium font-body transition-colors whitespace-nowrap ${profileFilter === p ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
               {p === "all" ? "Todos" : travelProfiles[p].label}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="glass-card rounded-xl overflow-hidden">
+      {/* Desktop table */}
+      <div className="glass-card rounded-xl overflow-hidden hidden md:block">
         {isLoading ? (
           <div className="p-8 text-center text-muted-foreground font-body">Carregando...</div>
         ) : filtered.length === 0 ? (
@@ -271,6 +259,52 @@ export default function Clients() {
               })}
             </tbody>
           </table>
+        )}
+      </div>
+
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-3">
+        {isLoading ? (
+          <div className="p-8 text-center text-muted-foreground font-body">Carregando...</div>
+        ) : filtered.length === 0 ? (
+          <div className="p-8 text-center text-muted-foreground font-body">Nenhum cliente encontrado.</div>
+        ) : (
+          filtered.map((client) => {
+            const passportLabel = { none: "Sem", valid: "Válido", expired: "Vencido", processing: "Em processo" }[client.passport_status ?? "none"] ?? client.passport_status;
+            return (
+              <div key={client.id} className="glass-card rounded-xl p-4 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium font-body text-foreground">{client.full_name}</p>
+                    <p className="text-xs text-muted-foreground font-body">{client.email}</p>
+                  </div>
+                  {client.travel_profile && travelProfiles[client.travel_profile] && (
+                    <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${travelProfiles[client.travel_profile].color}`}>
+                      {travelProfiles[client.travel_profile].label}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground font-body">
+                  {client.city && <span>{client.city}{client.state ? `, ${client.state}` : ""}</span>}
+                  {client.phone && <span>{client.phone}</span>}
+                  <span className={passportLabel === 'Válido' ? 'text-success' : passportLabel === 'Vencido' ? 'text-destructive' : ''}>
+                    Passaporte: {passportLabel}
+                  </span>
+                </div>
+                {(client.preferred_airports ?? []).length > 0 && (
+                  <div className="flex gap-1 flex-wrap">
+                    {(client.preferred_airports ?? []).map((a) => (
+                      <span key={a} className="text-[10px] font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground font-body">{a}</span>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-2 pt-1">
+                  <Button variant="outline" size="sm" className="font-body flex-1" onClick={() => openEdit(client)}>Editar</Button>
+                  <Button variant="ghost" size="sm" className="text-destructive font-body" onClick={() => { if (confirm("Remover cliente?")) deleteMutation.mutate(client.id); }}>Excluir</Button>
+                </div>
+              </div>
+            );
+          })
         )}
       </div>
     </div>
