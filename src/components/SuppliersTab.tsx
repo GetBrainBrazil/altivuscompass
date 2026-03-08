@@ -18,7 +18,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { logAuditEvent } from "@/lib/audit";
-import { ArrowUp, ArrowDown, ArrowUpDown, Info } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, Info, Plus, X } from "lucide-react";
+import { COUNTRY_CODES, applyPhoneMask, stripMask } from "@/lib/phone-masks";
+
+type SupplierPhone = { id?: string; phone: string; country_code: string; description: string };
+type SupplierEmail = { id?: string; email: string; description: string };
 
 type SortDir = "asc" | "desc";
 type SortState = { key: string; dir: SortDir } | null;
@@ -98,6 +102,8 @@ export default function SuppliersTab() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({ ...emptyForm });
+  const [phones, setPhones] = useState<SupplierPhone[]>([]);
+  const [emails, setEmails] = useState<SupplierEmail[]>([]);
   const [sort, setSort] = useState<SortState>(null);
   const [loadingCep, setLoadingCep] = useState(false);
 
@@ -134,14 +140,35 @@ export default function SuppliersTab() {
         notes: form.notes || null,
         category: form.categories.length > 0 ? form.categories : null,
       };
+      let supplierId: string;
       if (editing) {
         const { error } = await supabase.from("suppliers").update(payload as any).eq("id", editing.id);
         if (error) throw error;
+        supplierId = editing.id;
         await logAuditEvent({ action: "update", tableName: "suppliers", recordId: editing.id, recordLabel: payload.name, oldData: editing, newData: payload });
       } else {
         const { data, error } = await supabase.from("suppliers").insert(payload as any).select("id").single();
         if (error) throw error;
+        supplierId = data.id;
         await logAuditEvent({ action: "create", tableName: "suppliers", recordId: data.id, recordLabel: payload.name, newData: payload });
+      }
+      // Save phones
+      await supabase.from("supplier_phones").delete().eq("supplier_id", supplierId);
+      const validPhones = phones.filter(p => stripMask(p.phone).length > 0);
+      if (validPhones.length > 0) {
+        const { error } = await supabase.from("supplier_phones").insert(
+          validPhones.map(p => ({ supplier_id: supplierId, phone: stripMask(p.phone), country_code: p.country_code, description: p.description || null })) as any
+        );
+        if (error) throw error;
+      }
+      // Save emails
+      await supabase.from("supplier_emails").delete().eq("supplier_id", supplierId);
+      const validEmails = emails.filter(e => e.email.trim().length > 0);
+      if (validEmails.length > 0) {
+        const { error } = await supabase.from("supplier_emails").insert(
+          validEmails.map(e => ({ supplier_id: supplierId, email: e.email.trim(), description: e.description || null })) as any
+        );
+        if (error) throw error;
       }
     },
     onSuccess: () => {
@@ -167,9 +194,9 @@ export default function SuppliersTab() {
     onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
 
-  const closeDialog = () => { setDialogOpen(false); setEditing(null); setForm({ ...emptyForm }); };
+  const closeDialog = () => { setDialogOpen(false); setEditing(null); setForm({ ...emptyForm }); setPhones([]); setEmails([]); };
 
-  const openEdit = (s: any) => {
+  const openEdit = async (s: any) => {
     setEditing(s);
     setForm({
       name: s.name ?? "", legal_name: s.legal_name ?? "", trade_name: s.trade_name ?? "", document_number: s.document_number ?? "",
@@ -181,6 +208,13 @@ export default function SuppliersTab() {
       city: s.city ?? "", state: s.state ?? "", country: s.country ?? "Brasil",
       notes: s.notes ?? "", is_active: s.is_active ?? true,
     });
+    // Load phones & emails
+    const [phonesRes, emailsRes] = await Promise.all([
+      supabase.from("supplier_phones").select("*").eq("supplier_id", s.id).order("created_at"),
+      supabase.from("supplier_emails").select("*").eq("supplier_id", s.id).order("created_at"),
+    ]);
+    setPhones((phonesRes.data ?? []).map((p: any) => ({ id: p.id, phone: p.phone, country_code: p.country_code || "+55", description: p.description || "" })));
+    setEmails((emailsRes.data ?? []).map((e: any) => ({ id: e.id, email: e.email, description: e.description || "" })));
     setDialogOpen(true);
   };
 
@@ -314,25 +348,85 @@ export default function SuppliersTab() {
                   <TabsTrigger value="endereco" className="font-body text-xs">Endereço</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="contato" className="space-y-3 mt-3">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    <div className="space-y-1 col-span-2">
-                      <Label className="font-body text-xs">E-mail</Label>
-                      <Input type="email" value={form.email} onChange={set("email")} className="h-9" />
+                <TabsContent value="contato" className="space-y-4 mt-3">
+                  {/* Telefones */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-semibold font-body text-foreground">Telefones</h4>
+                      <Button type="button" variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => setPhones(p => [...p, { phone: "", country_code: "+55", description: "" }])}>
+                        <Plus className="h-3 w-3" /> Telefone
+                      </Button>
                     </div>
-                    <div className="space-y-1 col-span-2">
-                      <Label className="font-body text-xs">Telefone</Label>
-                      <Input value={formatPhone(form.phone)} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value.replace(/\D/g, "").slice(0, 11) }))} placeholder="(11) 99999-9999" className="h-9" />
-                    </div>
+                    {phones.length === 0 && <p className="text-xs text-muted-foreground">Nenhum telefone cadastrado.</p>}
+                    {phones.map((p, i) => {
+                      const cc = COUNTRY_CODES.find(c => c.dial === p.country_code) || COUNTRY_CODES[0];
+                      return (
+                        <div key={i} className="grid grid-cols-[80px_1fr_2fr_28px] gap-2 items-end">
+                          <div className="space-y-1">
+                            <Label className="font-body text-[10px]">DDI</Label>
+                            <Select value={p.country_code} onValueChange={(v) => setPhones(ps => ps.map((x, j) => j === i ? { ...x, country_code: v } : x))}>
+                              <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                {COUNTRY_CODES.map(c => <SelectItem key={c.code} value={c.dial}>{c.flag} {c.dial}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="font-body text-[10px]">Número</Label>
+                            <Input
+                              className="h-9 text-xs"
+                              placeholder={cc.mask.replace(/#/g, "0")}
+                              value={applyPhoneMask(p.phone, cc.mask)}
+                              onChange={(e) => setPhones(ps => ps.map((x, j) => j === i ? { ...x, phone: stripMask(e.target.value) } : x))}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="font-body text-[10px]">Descrição</Label>
+                            <Input className="h-9 text-xs" placeholder="Ex: Comercial" value={p.description} onChange={(e) => setPhones(ps => ps.map((x, j) => j === i ? { ...x, description: e.target.value } : x))} />
+                          </div>
+                          <Button type="button" variant="ghost" size="icon" className="h-9 w-7 text-muted-foreground hover:text-destructive" onClick={() => setPhones(ps => ps.filter((_, j) => j !== i))}>
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
+
+                  {/* Emails */}
+                  <div className="space-y-2 border-t pt-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-semibold font-body text-foreground">E-mails</h4>
+                      <Button type="button" variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => setEmails(e => [...e, { email: "", description: "" }])}>
+                        <Plus className="h-3 w-3" /> E-mail
+                      </Button>
+                    </div>
+                    {emails.length === 0 && <p className="text-xs text-muted-foreground">Nenhum e-mail cadastrado.</p>}
+                    {emails.map((em, i) => (
+                      <div key={i} className="grid grid-cols-[1fr_2fr_28px] gap-2 items-end">
+                        <div className="space-y-1">
+                          <Label className="font-body text-[10px]">E-mail</Label>
+                          <Input type="email" className="h-9 text-xs" value={em.email} onChange={(e) => setEmails(es => es.map((x, j) => j === i ? { ...x, email: e.target.value } : x))} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="font-body text-[10px]">Descrição</Label>
+                          <Input className="h-9 text-xs" placeholder="Ex: Financeiro" value={em.description} onChange={(e) => setEmails(es => es.map((x, j) => j === i ? { ...x, description: e.target.value } : x))} />
+                        </div>
+                        <Button type="button" variant="ghost" size="icon" className="h-9 w-7 text-muted-foreground hover:text-destructive" onClick={() => setEmails(es => es.filter((_, j) => j !== i))}>
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Pessoa de Contato */}
                   <div className="border-t pt-3 space-y-3">
                     <h4 className="text-xs font-semibold font-body text-foreground">Pessoa de Contato</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      <div className="space-y-1 col-span-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
                         <Label className="font-body text-xs">Nome</Label>
                         <Input value={form.contact_person} onChange={set("contact_person")} className="h-9" />
                       </div>
-                      <div className="space-y-1 col-span-2">
+                      <div className="space-y-1">
                         <Label className="font-body text-xs">Telefone</Label>
                         <Input value={formatPhone(form.contact_phone)} onChange={(e) => setForm(f => ({ ...f, contact_phone: e.target.value.replace(/\D/g, "").slice(0, 11) }))} placeholder="(11) 99999-9999" className="h-9" />
                       </div>
