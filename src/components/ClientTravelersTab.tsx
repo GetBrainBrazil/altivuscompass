@@ -330,22 +330,18 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       }
       const { data: allPassengerRecords } = await matchQuery;
 
-      // Collect unique client IDs that had this passenger
-      const linkedClientIds = new Set<string>();
-      linkedClientIds.add(clientId);
+      // Collect unique client IDs that had this passenger (for cleanup)
       const passengerIdsToDelete: string[] = [];
       (allPassengerRecords ?? []).forEach((rec: any) => {
-        if (rec.client_id) linkedClientIds.add(rec.client_id);
         passengerIdsToDelete.push(rec.id);
       });
 
-      // Create relationship with each client
-      const relationshipInserts = Array.from(linkedClientIds).map((cid) => ({
-        client_id_a: cid,
+      // Create relationship ONLY with the current client (the one initiating the promotion)
+      await supabase.from("client_relationships").insert({
+        client_id_a: clientId,
         client_id_b: newClient.id,
         relationship_type: promoteRelType as any,
-      }));
-      await supabase.from("client_relationships").insert(relationshipInserts);
+      });
 
       // Delete all matched passenger records
       if (passengerIdsToDelete.length > 0) {
