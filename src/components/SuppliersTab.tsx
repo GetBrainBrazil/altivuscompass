@@ -173,9 +173,9 @@ export default function SuppliersTab() {
     onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
 
-  const closeDialog = () => { setDialogOpen(false); setEditing(null); setForm({ ...emptyForm }); };
+  const closeDialog = () => { setDialogOpen(false); setEditing(null); setForm({ ...emptyForm }); setPhones([]); setEmails([]); };
 
-  const openEdit = (s: any) => {
+  const openEdit = async (s: any) => {
     setEditing(s);
     setForm({
       name: s.name ?? "", legal_name: s.legal_name ?? "", trade_name: s.trade_name ?? "", document_number: s.document_number ?? "",
@@ -187,6 +187,13 @@ export default function SuppliersTab() {
       city: s.city ?? "", state: s.state ?? "", country: s.country ?? "Brasil",
       notes: s.notes ?? "", is_active: s.is_active ?? true,
     });
+    // Load phones & emails
+    const [phonesRes, emailsRes] = await Promise.all([
+      supabase.from("supplier_phones").select("*").eq("supplier_id", s.id).order("created_at"),
+      supabase.from("supplier_emails").select("*").eq("supplier_id", s.id).order("created_at"),
+    ]);
+    setPhones((phonesRes.data ?? []).map((p: any) => ({ id: p.id, phone: p.phone, country_code: p.country_code || "+55", description: p.description || "" })));
+    setEmails((emailsRes.data ?? []).map((e: any) => ({ id: e.id, email: e.email, description: e.description || "" })));
     setDialogOpen(true);
   };
 
