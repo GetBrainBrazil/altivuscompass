@@ -809,7 +809,11 @@ export default function Clients() {
                           <Plus className="h-3 w-3" />Adicionar
                           <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => {
                             const files = Array.from(e.target.files || []);
-                            if (files.length > 0) { const n = [...passports]; n[pi]._imageFiles = [...(n[pi]._imageFiles || []), ...files]; setPassports([...n]); }
+                            if (files.length === 1) {
+                              openEditor(files[0], (edited) => { const n = [...passports]; n[pi]._imageFiles = [...(n[pi]._imageFiles || []), edited]; setPassports([...n]); });
+                            } else if (files.length > 1) {
+                              const n = [...passports]; n[pi]._imageFiles = [...(n[pi]._imageFiles || []), ...files]; setPassports([...n]);
+                            }
                             e.target.value = "";
                           }} />
                         </label>
