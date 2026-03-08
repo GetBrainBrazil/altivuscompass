@@ -494,13 +494,13 @@ export default function Clients() {
                     </Button>
                   </div>
                   {phones.map((p, i) => {
-                    const cc = COUNTRY_CODES.find((c) => c.dial === p.country_code) || COUNTRY_CODES[0];
+                    const cc = COUNTRY_CODES.find((c) => c.code === p.country_code) || COUNTRY_CODES[0];
                     return (
                       <div key={i} className="flex gap-2 items-start">
                         <Select value={p.country_code} onValueChange={(v) => { const n = [...phones]; n[i].country_code = v; n[i].phone = ""; setPhones(n); }}>
                           <SelectTrigger className="w-28 h-9 shrink-0 text-xs"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            {COUNTRY_CODES.map((c) => <SelectItem key={c.code} value={c.dial}>{c.flag} {c.dial}</SelectItem>)}
+                            {COUNTRY_CODES.map((c) => <SelectItem key={c.code} value={c.code}>{c.flag} {c.dial}</SelectItem>)}
                           </SelectContent>
                         </Select>
                         <Input className="w-40 h-9 shrink-0" placeholder={cc.mask.replace(/#/g, "0")} value={p.phone} onChange={(e) => { const n = [...phones]; n[i].phone = applyPhoneMask(e.target.value, cc.mask); setPhones(n); }} />
