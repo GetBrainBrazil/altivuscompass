@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Pencil, Trash2, Building2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Building2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 type BankAccount = {
@@ -129,7 +129,7 @@ export default function BankAccounts() {
         ) : (
           <div className="divide-y divide-border/30">
             {accounts.map((a) => (
-              <div key={a.id} className="p-4 flex items-center gap-4 hover:bg-muted/30 transition-colors">
+              <div key={a.id} className="p-4 flex items-center gap-4 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEdit(a)}>
                 <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                   <Building2 size={18} className="text-primary" />
                 </div>
@@ -146,28 +146,6 @@ export default function BankAccounts() {
                     {a.account_number ? ` · Cc: ${a.account_number}` : ""}
                     {a.pix_key ? ` · PIX: ${a.pix_key}` : ""}
                   </p>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => openEdit(a)}>
-                    <Pencil size={14} />
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive">
-                        <Trash2 size={14} />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Remover conta bancária?</AlertDialogTitle>
-                        <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => deleteMutation.mutate(a.id)}>Remover</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
                 </div>
               </div>
             ))}
@@ -240,11 +218,32 @@ export default function BankAccounts() {
                 <Label className="font-body">Conta ativa</Label>
               </div>
             </div>
-            <div className="flex gap-2 justify-end">
-              <Button type="button" variant="outline" onClick={closeDialog} className="font-body">Cancelar</Button>
-              <Button type="submit" disabled={saveMutation.isPending} className="font-body">
-                {saveMutation.isPending ? "Salvando..." : "Salvar"}
-              </Button>
+            <div className="flex items-center justify-between">
+              {editing ? (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button type="button" variant="ghost" className="font-body text-destructive hover:text-destructive hover:bg-destructive/10">
+                      <Trash2 size={14} className="mr-1" /> Excluir Conta
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Remover conta bancária?</AlertDialogTitle>
+                      <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => { deleteMutation.mutate(editing.id); closeDialog(); }}>Remover</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              ) : <span />}
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={closeDialog} className="font-body">Cancelar</Button>
+                <Button type="submit" disabled={saveMutation.isPending} className="font-body">
+                  {saveMutation.isPending ? "Salvando..." : "Salvar"}
+                </Button>
+              </div>
             </div>
           </form>
         </DialogContent>
