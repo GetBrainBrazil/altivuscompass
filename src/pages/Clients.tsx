@@ -22,6 +22,7 @@ import { ImageEditor } from "@/components/ImageEditor";
 import { ClientTravelersTab } from "@/components/ClientTravelersTab";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccessFeature } from "@/lib/permissions";
+import { logAuditEvent } from "@/lib/audit";
 
 type SortDir = "asc" | "desc";
 type SortState = { key: string; dir: SortDir } | null;
@@ -417,12 +418,16 @@ export default function Clients() {
 
       let clientId = editingId;
       if (editingId) {
+        // Fetch old data for audit
+        const { data: oldClient } = await supabase.from("clients").select("*").eq("id", editingId).single();
         const { error } = await supabase.from("clients").update(payload).eq("id", editingId);
         if (error) throw error;
+        logAuditEvent({ action: "update", tableName: "clients", recordId: editingId, oldData: oldClient, newData: payload });
       } else {
         const { data, error } = await supabase.from("clients").insert(payload).select("id").single();
         if (error) throw error;
         clientId = data.id;
+        logAuditEvent({ action: "create", tableName: "clients", recordId: data.id, newData: payload });
       }
 
       // Save multi-value records
@@ -510,8 +515,10 @@ export default function Clients() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      const { data: oldClient } = await supabase.from("clients").select("*").eq("id", id).single();
       const { error } = await supabase.from("clients").delete().eq("id", id);
       if (error) throw error;
+      logAuditEvent({ action: "delete", tableName: "clients", recordId: id, oldData: oldClient });
     },
     onSuccess: () => {
       toast({ title: "Cliente removido" });
