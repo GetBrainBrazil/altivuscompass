@@ -87,6 +87,7 @@ export default function Clients() {
   const [view, setView] = useState<"list" | "form">("list");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [activeTab, setActiveTab] = useState("contact");
 
   // Multi-value entries
   const [phones, setPhones] = useState<PhoneEntry[]>([]);
@@ -141,27 +142,26 @@ export default function Clients() {
         const primaryEmail = c.client_emails?.find((e: any) => e.is_primary) || c.client_emails?.[0];
 
         // Compute alerts
-        const alerts: { label: string; level: "urgent" | "critical" | "warning" }[] = [];
+        const alerts: { label: string; level: "urgent" | "critical" | "warning"; months: number; tab: string }[] = [];
         const passportsList = c.client_passports ?? [];
         for (const pp of passportsList) {
           if (pp.expiry_date) {
-            const months = (new Date(pp.expiry_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30);
-            if (months <= 0) alerts.push({ label: "Passaporte vencido", level: "urgent" });
-            else if (months <= 3) alerts.push({ label: "Passaporte - urgência", level: "urgent" });
-            else if (months <= 6) alerts.push({ label: "Passaporte - crítico", level: "critical" });
-            else if (months <= 12) alerts.push({ label: "Passaporte - renovação", level: "warning" });
+            const months = Math.round((new Date(pp.expiry_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30));
+            if (months <= 0) alerts.push({ label: "Passaporte vencido", level: "urgent", months, tab: "documents" });
+            else if (months <= 3) alerts.push({ label: `Passaporte - urgência (${months}m)`, level: "urgent", months, tab: "documents" });
+            else if (months <= 6) alerts.push({ label: `Passaporte - crítico (${months}m)`, level: "critical", months, tab: "documents" });
+            else if (months <= 12) alerts.push({ label: `Passaporte - renovação (${months}m)`, level: "warning", months, tab: "documents" });
           }
           for (const v of (pp.client_visas ?? [])) {
             if (v.validity_date) {
-              const vMonths = (new Date(v.validity_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30);
-              if (vMonths <= 0) alerts.push({ label: `Visto ${v.visa_type} vencido`, level: "urgent" });
-              else if (vMonths <= 3) alerts.push({ label: `Visto ${v.visa_type} - urgência`, level: "urgent" });
-              else if (vMonths <= 6) alerts.push({ label: `Visto ${v.visa_type} - renovar`, level: "critical" });
-              else if (vMonths <= 9) alerts.push({ label: `Visto ${v.visa_type} - alerta`, level: "warning" });
+              const vMonths = Math.round((new Date(v.validity_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30));
+              if (vMonths <= 0) alerts.push({ label: `Visto ${v.visa_type} vencido`, level: "urgent", months: vMonths, tab: "documents" });
+              else if (vMonths <= 3) alerts.push({ label: `Visto ${v.visa_type} - urgência (${vMonths}m)`, level: "urgent", months: vMonths, tab: "documents" });
+              else if (vMonths <= 6) alerts.push({ label: `Visto ${v.visa_type} - renovar (${vMonths}m)`, level: "critical", months: vMonths, tab: "documents" });
+              else if (vMonths <= 9) alerts.push({ label: `Visto ${v.visa_type} - alerta (${vMonths}m)`, level: "warning", months: vMonths, tab: "documents" });
             }
           }
         }
-        // Sort: urgent first, then critical, then warning
         const levelOrder = { urgent: 0, critical: 1, warning: 2 };
         alerts.sort((a, b) => levelOrder[a.level] - levelOrder[b.level]);
 
@@ -338,12 +338,12 @@ export default function Clients() {
   });
 
   const goToList = () => {
-    setView("list"); setEditingId(null); setForm(emptyForm);
+    setView("list"); setEditingId(null); setForm(emptyForm); setActiveTab("contact");
     setSelectedAirports([]); setPhones([]); setEmails([]); setSocials([]); setPassports([]);
   };
 
   const openCreate = () => {
-    setEditingId(null); setForm(emptyForm); setSelectedAirports([]);
+    setEditingId(null); setForm(emptyForm); setSelectedAirports([]); setActiveTab("contact");
     setPhones([]); setEmails([]); setSocials([]); setPassports([]); 
     setView("form");
   };
@@ -506,7 +506,7 @@ export default function Clients() {
 
           {/* ====== LOWER SECTION: Tabs ====== */}
           <div className="glass-card rounded-xl p-4">
-            <Tabs defaultValue="contact">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="w-full justify-start">
                 <TabsTrigger value="contact" className="font-body text-xs">Contato</TabsTrigger>
                 <TabsTrigger value="preferences" className="font-body text-xs">Preferências</TabsTrigger>
@@ -985,7 +985,7 @@ export default function Clients() {
                         {(client.alerts ?? []).length === 0 ? (
                           <span className="text-xs text-muted-foreground font-body">—</span>
                         ) : (
-                          (client.alerts as { label: string; level: string }[]).slice(0, 3).map((alert, idx) => {
+                          (client.alerts as { label: string; level: string; months: number; tab: string }[]).slice(0, 3).map((alert, idx) => {
                             const styles = {
                               urgent: "bg-destructive/10 text-destructive",
                               critical: "bg-amber-500/10 text-amber-600",
@@ -993,10 +993,15 @@ export default function Clients() {
                             }[alert.level] ?? "bg-muted text-muted-foreground";
                             const Icon = alert.level === "urgent" ? ShieldAlert : alert.level === "critical" ? AlertCircle : AlertTriangle;
                             return (
-                              <span key={idx} className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full font-body ${styles}`}>
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setActiveTab(alert.tab); openEdit(client); }}
+                                className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full font-body cursor-pointer hover:opacity-80 transition-opacity ${styles}`}
+                              >
                                 <Icon className="h-3 w-3" />
                                 {alert.label}
-                              </span>
+                              </button>
                             );
                           })
                         )}
