@@ -47,6 +47,10 @@ export default function Finance() {
   const [accountFilter, setAccountFilter] = useState<Set<string>>(new Set());
   const [accountFilterOpen, setAccountFilterOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [search, setSearch] = useState("");
+  const [datePreset, setDatePreset] = useState("all");
+  const [customDateFrom, setCustomDateFrom] = useState("");
+  const [customDateTo, setCustomDateTo] = useState("");
 
   const { data: clients = [] } = useQuery({
     queryKey: ["clients-list"],
