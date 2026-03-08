@@ -1335,6 +1335,84 @@ export type Database = {
           },
         ]
       }
+      suppliers: {
+        Row: {
+          address_complement: string | null
+          address_number: string | null
+          address_street: string | null
+          category: string | null
+          cep: string | null
+          city: string | null
+          contact_person: string | null
+          contact_phone: string | null
+          country: string | null
+          created_at: string
+          document_number: string | null
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          neighborhood: string | null
+          notes: string | null
+          phone: string | null
+          state: string | null
+          supplier_type: string | null
+          trade_name: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address_complement?: string | null
+          address_number?: string | null
+          address_street?: string | null
+          category?: string | null
+          cep?: string | null
+          city?: string | null
+          contact_person?: string | null
+          contact_phone?: string | null
+          country?: string | null
+          created_at?: string
+          document_number?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          neighborhood?: string | null
+          notes?: string | null
+          phone?: string | null
+          state?: string | null
+          supplier_type?: string | null
+          trade_name?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address_complement?: string | null
+          address_number?: string | null
+          address_street?: string | null
+          category?: string | null
+          cep?: string | null
+          city?: string | null
+          contact_person?: string | null
+          contact_phone?: string | null
+          country?: string | null
+          created_at?: string
+          document_number?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          neighborhood?: string | null
+          notes?: string | null
+          phone?: string | null
+          state?: string | null
+          supplier_type?: string | null
+          trade_name?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       tags: {
         Row: {
           color: string | null
