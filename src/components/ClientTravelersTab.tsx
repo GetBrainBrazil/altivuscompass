@@ -164,10 +164,20 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       // Fetch linked client details
       if (allRels.length === 0) return [];
       const ids = allRels.map((r) => r.linked_client_id);
-      const { data: clientsData } = await supabase.from("clients").select("id, full_name, birth_date, nationality, passport_number, city, state").in("id", ids);
+      const { data: clientsData } = await supabase.from("clients").select("id, full_name, birth_date, nationality, city, state").in("id", ids);
+      
+      // Fetch valid passports for linked clients
+      const today = new Date().toISOString().slice(0, 10);
+      const { data: passportsData } = await supabase
+        .from("client_passports")
+        .select("client_id, passport_number, expiry_date, nationality")
+        .in("client_id", ids)
+        .gte("expiry_date", today);
+
       return allRels.map((r) => ({
         ...r,
         client: (clientsData ?? []).find((c: any) => c.id === r.linked_client_id),
+        passports: (passportsData ?? []).filter((p: any) => p.client_id === r.linked_client_id),
       }));
     },
     enabled: !!clientId,
