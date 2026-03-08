@@ -111,6 +111,32 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     enabled: !!clientId,
   });
 
+  // Fetch other clients linked to the currently editing passenger
+  const { data: passengerLinkedClients = [] } = useQuery({
+    queryKey: ["passenger-linked-clients", editingPassenger?.id, editingPassenger?.passport_number, editingPassenger?.full_name, editingPassenger?.birth_date],
+    queryFn: async () => {
+      if (!editingPassenger?.id) return [];
+      let query = supabase.from("passengers").select("client_id, clients!passengers_client_id_fkey(id, full_name)");
+      if (editingPassenger.passport_number) {
+        query = query.eq("passport_number", editingPassenger.passport_number);
+      } else if (editingPassenger.birth_date) {
+        query = query.eq("full_name", editingPassenger.full_name).eq("birth_date", editingPassenger.birth_date);
+      } else {
+        query = query.eq("full_name", editingPassenger.full_name);
+      }
+      query = query.neq("client_id", clientId!);
+      const { data } = await query;
+      // Deduplicate by client_id
+      const seen = new Set<string>();
+      return (data ?? []).filter((r: any) => {
+        if (!r.client_id || seen.has(r.client_id)) return false;
+        seen.add(r.client_id);
+        return true;
+      }).map((r: any) => ({ id: r.client_id, full_name: (r.clients as any)?.full_name ?? "—" }));
+    },
+    enabled: !!editingPassenger?.id && passengerDialog,
+  });
+
   // Fetch relationships (bidirectional)
   const { data: relationships = [] } = useQuery({
     queryKey: ["client-relationships", clientId],
