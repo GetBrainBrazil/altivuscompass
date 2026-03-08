@@ -646,6 +646,7 @@ export type Database = {
           id: string
           login_email: string | null
           login_password_encrypted: string | null
+          login_username: string | null
           membership_number: string | null
           miles_balance: number | null
           program_name: string
@@ -660,6 +661,7 @@ export type Database = {
           id?: string
           login_email?: string | null
           login_password_encrypted?: string | null
+          login_username?: string | null
           membership_number?: string | null
           miles_balance?: number | null
           program_name: string
@@ -674,6 +676,7 @@ export type Database = {
           id?: string
           login_email?: string | null
           login_password_encrypted?: string | null
+          login_username?: string | null
           membership_number?: string | null
           miles_balance?: number | null
           program_name?: string
