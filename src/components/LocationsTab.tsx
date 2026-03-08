@@ -830,10 +830,12 @@ function DiversosSubTab() {
         const { error } = await supabase.from("custom_destinations").update({ name: formName, description: formDesc }).eq("id", editing.id);
         if (error) throw error;
         destId = editing.id;
+        await logAuditEvent({ action: "update", tableName: "custom_destinations", recordId: editing.id, recordLabel: formName, oldData: { name: editing.name, description: editing.description }, newData: { name: formName, description: formDesc } });
       } else {
         const { data, error } = await supabase.from("custom_destinations").insert({ name: formName, description: formDesc }).select("id").single();
         if (error) throw error;
         destId = data.id;
+        await logAuditEvent({ action: "create", tableName: "custom_destinations", recordId: data.id, recordLabel: formName, newData: { name: formName, description: formDesc } });
       }
       await supabase.from("custom_destination_items").delete().eq("custom_destination_id", destId);
       if (selectedItems.length > 0) {
