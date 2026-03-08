@@ -974,7 +974,7 @@ export default function Clients() {
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground font-body">
                 {client.city && <span>{client.city}{client.state ? `, ${client.state}` : ""}</span>}
-                {client.primary_phone && <span>{client.primary_phone}</span>}
+                {client.primary_phone && <a href={`https://wa.me/${client.primary_phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-primary hover:underline">{client.primary_phone}</a>}
                 {client.primary_email && <span>{client.primary_email}</span>}
               </div>
             </div>
