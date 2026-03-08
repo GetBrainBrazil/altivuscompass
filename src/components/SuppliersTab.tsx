@@ -183,7 +183,8 @@ export default function SuppliersTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["suppliers"] });
       toast({ title: editing ? "Fornecedor atualizado" : "Fornecedor adicionado" });
-      goBack();
+      if (shouldGoBack) goBack();
+      setShouldGoBack(false);
     },
     onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
