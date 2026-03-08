@@ -546,6 +546,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
               <thead>
                 <tr className="border-b border-border/50 bg-muted/30">
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => togglePassengerSort("full_name")}>Nome<SortIcon columnKey="full_name" sort={passengerSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => togglePassengerSort("relationship_type")}>Vínculo<SortIcon columnKey="relationship_type" sort={passengerSort} /></th>
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => togglePassengerSort("birth_date")}>Nascimento<SortIcon columnKey="birth_date" sort={passengerSort} /></th>
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => togglePassengerSort("nationality")}>Nacionalidade<SortIcon columnKey="nationality" sort={passengerSort} /></th>
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => togglePassengerSort("passport_number")}>Passaporte<SortIcon columnKey="passport_number" sort={passengerSort} /></th>
