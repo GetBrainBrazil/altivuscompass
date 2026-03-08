@@ -781,18 +781,20 @@ export default function Clients() {
                     <Label className="font-body text-xs">Bairro</Label>
                     <Input value={form.neighborhood} onChange={(e) => upd("neighborhood", e.target.value)} />
                   </div>
-                  <div className="sm:col-span-2 space-y-1.5">
-                    <Label className="font-body text-xs">Endereço</Label>
-                    <Input value={form.address_street} onChange={(e) => upd("address_street", e.target.value)} />
                   </div>
-                  <div className="space-y-1.5">
-                    <Label className="font-body text-xs">Número</Label>
-                    <Input value={form.address_number} onChange={(e) => upd("address_number", e.target.value)} />
-                  </div>
-                  <div className="sm:col-span-2 space-y-1.5">
-                    <Label className="font-body text-xs">Complemento</Label>
-                    <Input value={form.address_complement} onChange={(e) => upd("address_complement", e.target.value)} />
-                  </div>
+                  <div className="grid grid-cols-12 gap-4 col-span-full">
+                    <div className="col-span-12 sm:col-span-6 space-y-1.5">
+                      <Label className="font-body text-xs">Endereço</Label>
+                      <Input value={form.address_street} onChange={(e) => upd("address_street", e.target.value)} />
+                    </div>
+                    <div className="col-span-6 sm:col-span-2 space-y-1.5">
+                      <Label className="font-body text-xs">Número</Label>
+                      <Input value={form.address_number} onChange={(e) => upd("address_number", e.target.value)} />
+                    </div>
+                    <div className="col-span-6 sm:col-span-4 space-y-1.5">
+                      <Label className="font-body text-xs">Complemento</Label>
+                      <Input value={form.address_complement} onChange={(e) => upd("address_complement", e.target.value)} />
+                    </div>
                 </div>
               </TabsContent>
 
