@@ -373,7 +373,10 @@ export default function Clients() {
     onSuccess: () => {
       toast({ title: editingId ? "Cliente atualizado" : "Cliente criado" });
       qc.invalidateQueries({ queryKey: ["clients"] });
-      goToList();
+      if (shouldGoBackRef.current) {
+        goToList();
+      }
+      shouldGoBackRef.current = false;
     },
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
