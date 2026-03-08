@@ -1099,29 +1099,65 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address_complement: string | null
+          address_number: string | null
+          address_street: string | null
           avatar_url: string | null
+          cep: string | null
+          city: string | null
+          country: string | null
           created_at: string
           email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
           full_name: string
+          health_plan: string | null
           id: string
+          neighborhood: string | null
+          phone: string | null
+          state: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          address_complement?: string | null
+          address_number?: string | null
+          address_street?: string | null
           avatar_url?: string | null
+          cep?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           full_name: string
+          health_plan?: string | null
           id?: string
+          neighborhood?: string | null
+          phone?: string | null
+          state?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          address_complement?: string | null
+          address_number?: string | null
+          address_street?: string | null
           avatar_url?: string | null
+          cep?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           full_name?: string
+          health_plan?: string | null
           id?: string
+          neighborhood?: string | null
+          phone?: string | null
+          state?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1320,6 +1356,112 @@ export type Database = {
         }
         Relationships: []
       }
+      user_contract_compensations: {
+        Row: {
+          amount: number | null
+          contract_id: string
+          created_at: string
+          description: string
+          end_date: string | null
+          id: string
+          start_date: string
+        }
+        Insert: {
+          amount?: number | null
+          contract_id: string
+          created_at?: string
+          description: string
+          end_date?: string | null
+          id?: string
+          start_date: string
+        }
+        Update: {
+          amount?: number | null
+          contract_id?: string
+          created_at?: string
+          description?: string
+          end_date?: string | null
+          id?: string
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_contract_compensations_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "user_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_contract_documents: {
+        Row: {
+          contract_id: string
+          created_at: string
+          file_name: string
+          file_url: string
+          id: string
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          file_name: string
+          file_url: string
+          id?: string
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          file_name?: string
+          file_url?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_contract_documents_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "user_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_contracts: {
+        Row: {
+          contract_type: Database["public"]["Enums"]["contract_type"]
+          created_at: string
+          end_date: string | null
+          id: string
+          notes: string | null
+          signed_contract_url: string | null
+          start_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contract_type?: Database["public"]["Enums"]["contract_type"]
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          signed_contract_url?: string | null
+          start_date: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contract_type?: Database["public"]["Enums"]["contract_type"]
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          signed_contract_url?: string | null
+          start_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -1353,6 +1495,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "manager" | "sales_agent" | "operations"
+      contract_type:
+        | "clt"
+        | "pj"
+        | "estagio"
+        | "temporario"
+        | "freelancer"
+        | "outro"
       financial_party_type: "individual" | "company"
       quote_stage:
         | "new"
@@ -1499,6 +1648,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "manager", "sales_agent", "operations"],
+      contract_type: [
+        "clt",
+        "pj",
+        "estagio",
+        "temporario",
+        "freelancer",
+        "outro",
+      ],
       financial_party_type: ["individual", "company"],
       quote_stage: [
         "new",
