@@ -80,7 +80,7 @@ const SUPPLIER_CATEGORIES = [
 ];
 
 const emptyForm = {
-  name: "", trade_name: "", document_number: "", supplier_type: "company", category: "",
+  name: "", trade_name: "", document_number: "", supplier_type: "company", categories: [] as string[],
   email: "", phone: "", website: "", contact_person: "", contact_phone: "",
   cep: "", address_street: "", address_number: "", address_complement: "",
   neighborhood: "", city: "", state: "", country: "Brasil", notes: "", is_active: true,
