@@ -377,12 +377,27 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         passengerIdsToDelete.push(rec.id);
       });
 
-      // Create relationship ONLY with the current client (the one initiating the promotion)
+      // Create relationship with the current client (the one initiating the promotion)
       await supabase.from("client_relationships").insert({
         client_id_a: clientId,
         client_id_b: newClient.id,
         relationship_type: promoteRelType as any,
       });
+
+      // Create relationships with OTHER clients that also had this passenger, with type 'other' (não definido)
+      const otherClientIds = [...new Set(
+        (allPassengerRecords ?? [])
+          .map((rec: any) => rec.client_id)
+          .filter((cid: string) => cid && cid !== clientId)
+      )];
+      if (otherClientIds.length > 0) {
+        const otherRelInserts = otherClientIds.map((cid: string) => ({
+          client_id_a: cid,
+          client_id_b: newClient.id,
+          relationship_type: 'other' as any,
+        }));
+        await supabase.from("client_relationships").insert(otherRelInserts);
+      }
 
       // Delete all matched passenger records
       if (passengerIdsToDelete.length > 0) {
