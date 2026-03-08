@@ -386,9 +386,11 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border/50 bg-muted/30">
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_name")}>Cliente<SortIcon columnKey="_name" sort={relSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_name")}>Nome<SortIcon columnKey="_name" sort={relSort} /></th>
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_type")}>Vínculo<SortIcon columnKey="_type" sort={relSort} /></th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_location")}>Localização<SortIcon columnKey="_location" sort={relSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_birth_date")}>Nascimento<SortIcon columnKey="_birth_date" sort={relSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_nationality")}>Nacionalidade<SortIcon columnKey="_nationality" sort={relSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_passport")}>Passaporte<SortIcon columnKey="_passport" sort={relSort} /></th>
                   <th className="p-3 w-20"></th>
                 </tr>
               </thead>
@@ -406,9 +408,9 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                         {RELATIONSHIP_TYPES[r.relationship_type] || r.relationship_label || r.relationship_type}
                       </span>
                     </td>
-                    <td className="p-3 text-sm font-body text-foreground">
-                      {r.client?.city ? `${r.client.city}${r.client.state ? `, ${r.client.state}` : ""}` : "—"}
-                    </td>
+                    <td className="p-3 text-sm font-body text-foreground">{r.client?.birth_date ? new Date(r.client.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
+                    <td className="p-3 text-sm font-body text-foreground">{r.client?.nationality || "—"}</td>
+                    <td className="p-3 text-sm font-body text-foreground">{r.client?.passport_number || "—"}</td>
                     <td className="p-3">
                       <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive"
                         onClick={(e) => { e.stopPropagation(); setDeleteRelId(r.id); }}>
