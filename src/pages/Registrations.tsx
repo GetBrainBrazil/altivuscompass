@@ -214,6 +214,7 @@ function AirlinesTab() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({ name: "", iata_code: "", country: "", mileage_program_name: "" });
+  const [sort, setSort] = useState<SortState>({ key: "name", dir: "asc" });
 
   const { data: airlines = [], isLoading } = useQuery({
     queryKey: ["airlines"],
