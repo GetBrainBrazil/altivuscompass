@@ -99,7 +99,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: '#e8e6e3' }}>
       <div className="w-full max-w-sm space-y-6 sm:space-y-8">
         <div className="flex flex-col items-center gap-3 sm:gap-4">
           <img src={logoAltivusLogin} alt="Altivus Turismo" className="h-16 sm:h-20 object-contain" />
