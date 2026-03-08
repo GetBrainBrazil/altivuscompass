@@ -162,6 +162,9 @@ export default function Clients() {
   const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
   const [destPopoverOpen, setDestPopoverOpen] = useState(false);
   const [destSearch, setDestSearch] = useState("");
+  // Collapsible passports/visas
+  const [collapsedPassports, setCollapsedPassports] = useState<Set<number>>(new Set());
+  const [collapsedVisas, setCollapsedVisas] = useState<Set<string>>(new Set());
 
   // Quick-add location
   const [quickAddType, setQuickAddType] = useState<"country" | "state" | "city" | null>(null);
@@ -1041,14 +1044,33 @@ export default function Clients() {
                     </Button>
                   </div>
                   {passports.length === 0 && <p className="text-xs text-muted-foreground font-body">Nenhum passaporte cadastrado.</p>}
-                  {passports.map((pp, pi) => (
-                    <div key={pi} className="border border-border/50 rounded-lg p-3 mb-3 space-y-3 bg-muted/20">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-body font-medium text-foreground">Passaporte {pi + 1}</span>
-                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setPassports(passports.filter((_, j) => j !== pi))}>
+                  {passports.map((pp, pi) => {
+                    const ppCollapsed = collapsedPassports.has(pi);
+                    const togglePp = () => setCollapsedPassports(prev => { const s = new Set(prev); s.has(pi) ? s.delete(pi) : s.add(pi); return s; });
+                    const ppStatus = (() => {
+                      if (!pp.expiry_date) return null;
+                      const today = new Date();
+                      const expiry = new Date(pp.expiry_date + "T00:00:00");
+                      const diffMs = expiry.getTime() - today.getTime();
+                      const diffMonths = diffMs / (1000 * 60 * 60 * 24 * 30);
+                      if (diffMs < 0) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-destructive/10 text-destructive">Vencido</span>;
+                      if (diffMonths <= 12) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-600">Vencendo ({Math.ceil(diffMonths)}m)</span>;
+                      return <span className="text-xs font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600">Válido</span>;
+                    })();
+                    return (
+                    <div key={pi} className="border border-border/50 rounded-lg mb-3 bg-muted/20">
+                      <div className="flex items-center justify-between px-3 py-2 cursor-pointer select-none" onClick={togglePp}>
+                        <div className="flex items-center gap-2">
+                          <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${!ppCollapsed ? "rotate-90" : ""}`} />
+                          <span className="text-xs font-body font-medium text-foreground">Passaporte {pi + 1}{pp.passport_number ? ` — ${pp.passport_number}` : ""}</span>
+                          {ppStatus}
+                        </div>
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); setPassports(passports.filter((_, j) => j !== pi)); }}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
+                      {!ppCollapsed && (
+                      <div className="px-3 pb-3 space-y-3">
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                         <div className="space-y-1">
                           <Label className="font-body text-xs">Número</Label>
@@ -1106,19 +1128,6 @@ export default function Clients() {
                           }} />
                         </label>
                       </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Label className="font-body text-xs">Status:</Label>
-                        {(() => {
-                          if (!pp.expiry_date) return <span className="text-xs text-muted-foreground">Informe o vencimento</span>;
-                          const today = new Date();
-                          const expiry = new Date(pp.expiry_date + "T00:00:00");
-                          const diffMs = expiry.getTime() - today.getTime();
-                          const diffMonths = diffMs / (1000 * 60 * 60 * 24 * 30);
-                          if (diffMs < 0) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-destructive/10 text-destructive">Vencido</span>;
-                          if (diffMonths <= 12) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-600">Vencendo ({Math.ceil(diffMonths)}m)</span>;
-                          return <span className="text-xs font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600">Válido</span>;
-                        })()}
-                      </div>
 
                       {/* Visas for this passport */}
                       <div className="border-t border-border/30 pt-2">
@@ -1131,16 +1140,37 @@ export default function Clients() {
                           </Button>
                         </div>
                         {pp.visas.length === 0 && <p className="text-xs text-muted-foreground font-body">Nenhum visto.</p>}
-                        {pp.visas.map((v, vi) => (
-                          <div key={vi} className="border border-border/30 rounded-md p-3 mb-2 space-y-2 bg-background/50">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-body font-medium text-foreground">Visto {vi + 1}</span>
-                              <Button type="button" variant="ghost" size="icon" className="shrink-0 h-7 w-7 text-destructive" onClick={() => {
+                        {pp.visas.map((v, vi) => {
+                          const visaKey = `${pi}-${vi}`;
+                          const visaCollapsed = collapsedVisas.has(visaKey);
+                          const toggleVisa = () => setCollapsedVisas(prev => { const s = new Set(prev); s.has(visaKey) ? s.delete(visaKey) : s.add(visaKey); return s; });
+                          const visaStatus = (() => {
+                            if (!v.validity_date) return null;
+                            const today = new Date();
+                            const expiry = new Date(v.validity_date + "T00:00:00");
+                            const diffMs = expiry.getTime() - today.getTime();
+                            const diffMonths = diffMs / (1000 * 60 * 60 * 24 * 30);
+                            if (diffMs < 0) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-destructive/10 text-destructive">Vencido</span>;
+                            if (diffMonths <= 12) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-600">Vencendo ({Math.ceil(diffMonths)}m)</span>;
+                            return <span className="text-xs font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600">Válido</span>;
+                          })();
+                          return (
+                          <div key={vi} className="border border-border/30 rounded-md mb-2 bg-background/50">
+                            <div className="flex items-center justify-between px-3 py-1.5 cursor-pointer select-none" onClick={toggleVisa}>
+                              <div className="flex items-center gap-2">
+                                <ChevronRight className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${!visaCollapsed ? "rotate-90" : ""}`} />
+                                <span className="text-xs font-body font-medium text-foreground">Visto {vi + 1}{v.country_region ? ` — ${v.country_region}` : ""}{v.visa_type ? ` (${v.visa_type})` : ""}</span>
+                                {visaStatus}
+                              </div>
+                              <Button type="button" variant="ghost" size="icon" className="shrink-0 h-7 w-7 text-destructive" onClick={(e) => {
+                                e.stopPropagation();
                                 const n = [...passports]; n[pi].visas = n[pi].visas.filter((_, j) => j !== vi); setPassports(n);
                               }}>
                                 <Trash2 className="h-3.5 w-3.5" />
                               </Button>
                             </div>
+                            {!visaCollapsed && (
+                            <div className="px-3 pb-3 space-y-2">
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                               <div className="space-y-1">
                                 <Label className="font-body text-xs">País / Região *</Label>
@@ -1213,25 +1243,17 @@ export default function Clients() {
                                 </div>
                               </div>
                             </div>
-                            {/* Row 3: Status */}
-                            <div className="flex items-center gap-1.5">
-                              <Label className="font-body text-xs">Status:</Label>
-                              {(() => {
-                                if (!v.validity_date) return <span className="text-xs text-muted-foreground">—</span>;
-                                const today = new Date();
-                                const expiry = new Date(v.validity_date + "T00:00:00");
-                                const diffMs = expiry.getTime() - today.getTime();
-                                const diffMonths = diffMs / (1000 * 60 * 60 * 24 * 30);
-                                if (diffMs < 0) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-destructive/10 text-destructive">Vencido</span>;
-                                if (diffMonths <= 12) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-600">Vencendo ({Math.ceil(diffMonths)}m)</span>;
-                                return <span className="text-xs font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600">Válido</span>;
-                              })()}
                             </div>
+                            )}
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
+                      </div>
+                      )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </TabsContent>
 
