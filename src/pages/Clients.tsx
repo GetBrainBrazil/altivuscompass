@@ -696,12 +696,7 @@ export default function Clients() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {/* Country */}
                   <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <Label className="font-body text-xs">País</Label>
-                      <Button type="button" variant="ghost" size="sm" className="h-5 px-1 text-xs" onClick={() => { setQuickAddType("country"); setQuickAddName(""); }}>
-                        <Plus className="h-3 w-3 mr-1" />Novo
-                      </Button>
-                    </div>
+                    <Label className="font-body text-xs">País</Label>
                     <Select value={form.country || "Brasil"} onValueChange={(v) => upd("country", v)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent className="max-h-60">
@@ -720,14 +715,7 @@ export default function Clients() {
 
                   {/* State */}
                   <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <Label className="font-body text-xs">Estado / Região</Label>
-                      {selectedCountryObj && (
-                        <Button type="button" variant="ghost" size="sm" className="h-5 px-1 text-xs" onClick={() => { setQuickAddType("state"); setQuickAddName(""); }}>
-                          <Plus className="h-3 w-3 mr-1" />Novo
-                        </Button>
-                      )}
-                    </div>
+                    <Label className="font-body text-xs">Estado / Região</Label>
                     <Select value={form.state || "_none"} onValueChange={(v) => { upd("state", v === "_none" ? "" : v); upd("city", ""); }}>
                       <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent className="max-h-60">
@@ -739,14 +727,7 @@ export default function Clients() {
 
                   {/* City */}
                   <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <Label className="font-body text-xs">Cidade</Label>
-                      {selectedCountryObj && (
-                        <Button type="button" variant="ghost" size="sm" className="h-5 px-1 text-xs" onClick={() => { setQuickAddType("city"); setQuickAddName(""); }}>
-                          <Plus className="h-3 w-3 mr-1" />Nova
-                        </Button>
-                      )}
-                    </div>
+                    <Label className="font-body text-xs">Cidade</Label>
                     <Select value={form.city || "_none"} onValueChange={(v) => upd("city", v === "_none" ? "" : v)}>
                       <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent className="max-h-60">
