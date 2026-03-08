@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -17,7 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { logAuditEvent } from "@/lib/audit";
-import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, Info } from "lucide-react";
 
 type SortDir = "asc" | "desc";
 type SortState = { key: string; dir: SortDir } | null;
@@ -70,15 +71,15 @@ async function fetchCep(cep: string) {
   } catch { return null; }
 }
 
-const SUPPLIER_CATEGORIES = [
-  "Transporte",
-  "Hospedagem",
-  "Passeios e Experiências",
-  "Documentação de Viagem",
-  "Seguros e Assistência",
-  "Serviços no Destino",
-  "Tecnologia e Distribuição",
-  "Outro",
+const SUPPLIER_CATEGORIES: { label: string; description: string }[] = [
+  { label: "Transporte", description: "Passagens aéreas, trem, ônibus, cruzeiros, transfer e aluguel de carros." },
+  { label: "Hospedagem", description: "Hotéis, resorts, pousadas, apartamentos, villas e cruzeiros." },
+  { label: "Passeios e Experiências", description: "Tours, guias, ingressos para atrações, eventos, atividades e experiências locais." },
+  { label: "Documentação de Viagem", description: "Vistos, passaporte, traduções e assessoria migratória." },
+  { label: "Seguros e Assistência", description: "Seguro viagem, assistência médica internacional e coberturas adicionais." },
+  { label: "Serviços no Destino", description: "Receptivo, concierge, transfers locais, apoio ao viajante." },
+  { label: "Tecnologia e Distribuição", description: "GDS, consolidadores de passagens, plataformas de reservas." },
+  { label: "Outro", description: "Outros serviços não listados." },
 ];
 
 const emptyForm = {
@@ -235,7 +236,19 @@ export default function SuppliersTab() {
                       <Input value={form.document_number} onChange={set("document_number")} />
                     </div>
                     <div className="space-y-2">
-                      <Label className="font-body">Serviços</Label>
+                      <div className="flex items-center gap-1.5">
+                        <Label className="font-body">Serviços</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-xs text-xs font-body space-y-1 p-3">
+                            {SUPPLIER_CATEGORIES.filter(c => c.label !== "Outro").map(c => (
+                              <div key={c.label}><span className="font-semibold">{c.label}:</span> {c.description}</div>
+                            ))}
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button variant="outline" className="w-full justify-start font-normal h-auto min-h-10 text-left">
@@ -246,17 +259,17 @@ export default function SuppliersTab() {
                         </PopoverTrigger>
                         <PopoverContent className="w-72 p-2" align="start">
                           {SUPPLIER_CATEGORIES.map(c => (
-                            <label key={c} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm font-body">
+                            <label key={c.label} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm font-body">
                               <Checkbox
-                                checked={form.categories.includes(c)}
+                                checked={form.categories.includes(c.label)}
                                 onCheckedChange={(checked) => {
                                   setForm(f => ({
                                     ...f,
-                                    categories: checked ? [...f.categories, c] : f.categories.filter(x => x !== c),
+                                    categories: checked ? [...f.categories, c.label] : f.categories.filter(x => x !== c.label),
                                   }));
                                 }}
                               />
-                              {c}
+                              {c.label}
                             </label>
                           ))}
                         </PopoverContent>
