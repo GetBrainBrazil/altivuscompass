@@ -46,7 +46,19 @@ const travelProfiles: Record<string, { label: string; color: string }> = {
 type PhoneEntry = { id?: string; phone: string; description: string; country_code: string; is_primary: boolean };
 type EmailEntry = { id?: string; email: string; description: string; is_primary: boolean };
 type SocialEntry = { id?: string; network: string; handle: string };
-type VisaEntry = { id?: string; visa_type: string; validity_date: string };
+type VisaEntry = { id?: string; visa_type: string; validity_date: string; country_region: string; visa_number: string; issue_date: string; entry_type: string };
+
+const VISA_TYPES = [
+  "Turismo", "Negócios", "Estudo", "Trabalho", "Trânsito", "Diplomático",
+  "Oficial", "Jornalista", "Religioso", "Pesquisa", "Investidor",
+  "Nômade Digital", "Tratamento Médico", "Reunião Familiar", "Au Pair", "Outro"
+];
+
+const VISA_REGIONS = [
+  "EUA", "Schengen Area", "Reino Unido", "Canadá", "Austrália", "Japão",
+  "China", "Índia", "Emirados Árabes", "Brasil", "Argentina", "México",
+  "Nova Zelândia", "Coreia do Sul", "Singapura", "Turquia", "Rússia", "Outro"
+];
 type PassportEntry = {
   id?: string; passport_number: string; issue_date: string; expiry_date: string;
   nationality: string; status: string; visas: VisaEntry[];
