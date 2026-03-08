@@ -38,6 +38,19 @@ export function AppLayout({ children }: AppLayoutProps) {
   const isRealAdmin = realRole === "admin";
   const [userSearch, setUserSearch] = useState("");
 
+  const { data: headerProfile } = useQuery({
+    queryKey: ["header-profile", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("avatar_url, full_name").eq("user_id", user!.id).single();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const headerAvatarUrl = headerProfile?.avatar_url
+    ? supabase.storage.from("avatars").getPublicUrl(headerProfile.avatar_url).data.publicUrl
+    : null;
+
   const handleInactivityLogout = useCallback(async () => {
     if (!session) return;
     await signOut("inactivity");
