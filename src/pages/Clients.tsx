@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus, ArrowLeft } from "lucide-react";
 import { useCountries, useStates, useCities } from "@/components/LocationsTab";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 
@@ -55,7 +55,9 @@ export default function Clients() {
   const [search, setSearch] = useState("");
   const [profileFilter, setProfileFilter] = useState("all");
   const [sort, setSort] = useState<SortState>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+
+  // View mode: "list" or "form"
+  const [view, setView] = useState<"list" | "form">("list");
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [form, setForm] = useState(emptyClient);
   const [selectedAirports, setSelectedAirports] = useState<string[]>([]);
@@ -116,7 +118,7 @@ export default function Clients() {
     onSuccess: () => {
       toast({ title: editingClient ? "Cliente atualizado" : "Cliente criado" });
       queryClient.invalidateQueries({ queryKey: ["clients"] });
-      closeDialog();
+      goToList();
     },
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
@@ -133,7 +135,15 @@ export default function Clients() {
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
 
-  const openCreate = () => { setEditingClient(null); setForm(emptyClient); setSelectedAirports([]); setDialogOpen(true); };
+  const goToList = () => { setView("list"); setEditingClient(null); setForm(emptyClient); setSelectedAirports([]); };
+
+  const openCreate = () => {
+    setEditingClient(null);
+    setForm(emptyClient);
+    setSelectedAirports([]);
+    setView("form");
+  };
+
   const openEdit = (c: Client) => {
     setEditingClient(c);
     setForm({
@@ -143,9 +153,8 @@ export default function Clients() {
       notes: c.notes ?? "",
     });
     setSelectedAirports(c.preferred_airports ?? []);
-    setDialogOpen(true);
+    setView("form");
   };
-  const closeDialog = () => { setDialogOpen(false); setEditingClient(null); setForm(emptyClient); setSelectedAirports([]); };
 
   // Quick-add location mutation
   const quickAddMutation = useMutation({
@@ -199,6 +208,213 @@ export default function Clients() {
     );
   };
 
+  // ========== FORM VIEW ==========
+  if (view === "form") {
+    return (
+      <div className="max-w-3xl mx-auto space-y-6">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={goToList} className="shrink-0">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-display font-semibold text-foreground">
+              {editingClient ? "Editar Cliente" : "Novo Cliente"}
+            </h1>
+            {editingClient && (
+              <p className="text-sm text-muted-foreground font-body">{editingClient.full_name}</p>
+            )}
+          </div>
+        </div>
+
+        <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="glass-card rounded-xl p-6 space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2 space-y-2">
+              <Label className="font-body">Nome completo *</Label>
+              <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
+            </div>
+            <div className="space-y-2">
+              <Label className="font-body">E-mail</Label>
+              <Input type="email" value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label className="font-body">Telefone</Label>
+              <Input value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="font-body">País</Label>
+                <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => { setQuickAddType("country"); setQuickAddName(""); }}>
+                  <Plus className="h-3 w-3 mr-1" />Novo
+                </Button>
+              </div>
+              <Select value={form.country ?? "Brasil"} onValueChange={(v) => setForm({ ...form, country: v, state: "", city: "" })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent className="max-h-60">
+                  {dbCountries.map((c: any) => (
+                    <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="font-body">Estado / Região</Label>
+                {selectedCountryObj && (
+                  <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => { setQuickAddType("state"); setQuickAddName(""); }}>
+                    <Plus className="h-3 w-3 mr-1" />Novo
+                  </Button>
+                )}
+              </div>
+              <Select value={form.state ?? ""} onValueChange={(v) => setForm({ ...form, state: v, city: "" })}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent className="max-h-60">
+                  {(dbStates as any[]).map((s: any) => (
+                    <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="font-body">Cidade</Label>
+                {selectedCountryObj && (
+                  <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => { setQuickAddType("city"); setQuickAddName(""); }}>
+                    <Plus className="h-3 w-3 mr-1" />Nova
+                  </Button>
+                )}
+              </div>
+              <Select value={form.city ?? ""} onValueChange={(v) => setForm({ ...form, city: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent className="max-h-60">
+                  {(dbCities as any[]).map((c: any) => (
+                    <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="font-body">Perfil de viagem</Label>
+              <Select value={form.travel_profile ?? "economic"} onValueChange={(v) => setForm({ ...form, travel_profile: v as any })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="economic">Econômico</SelectItem>
+                  <SelectItem value="opportunity">Oportunidade</SelectItem>
+                  <SelectItem value="sophisticated">Sofisticado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="font-body">Passaporte</Label>
+              <Select value={form.passport_status ?? "none"} onValueChange={(v) => setForm({ ...form, passport_status: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sem passaporte</SelectItem>
+                  <SelectItem value="valid">Válido</SelectItem>
+                  <SelectItem value="expired">Vencido</SelectItem>
+                  <SelectItem value="processing">Em processo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="sm:col-span-2 space-y-2">
+              <Label className="font-body">Aeroportos preferidos</Label>
+              <Popover open={airportPopoverOpen} onOpenChange={setAirportPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" type="button" className="w-full justify-between font-normal">
+                    {selectedAirports.length > 0
+                      ? `${selectedAirports.length} aeroporto(s) selecionado(s)`
+                      : "Selecione aeroportos"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0" align="start">
+                  <div className="p-2 border-b">
+                    <Input
+                      placeholder="Buscar por código, nome ou cidade..."
+                      value={airportSearch}
+                      onChange={(e) => setAirportSearch(e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div className="max-h-52 overflow-y-auto p-1">
+                    {filteredAirports.slice(0, 50).map((a) => (
+                      <label key={a.iata_code} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                        <Checkbox
+                          checked={selectedAirports.includes(a.iata_code)}
+                          onCheckedChange={(checked) => {
+                            setSelectedAirports((prev) =>
+                              checked ? [...prev, a.iata_code] : prev.filter((c) => c !== a.iata_code)
+                            );
+                          }}
+                        />
+                        <span className="font-mono font-bold text-primary">{a.iata_code}</span>
+                        <span className="text-muted-foreground truncate">{a.city} - {a.name}</span>
+                      </label>
+                    ))}
+                    {filteredAirports.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-3">Nenhum aeroporto encontrado</p>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+              {selectedAirports.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {selectedAirports.map((code) => (
+                    <span key={code} className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                      {code}
+                      <button type="button" onClick={() => setSelectedAirports((prev) => prev.filter((c) => c !== code))} className="hover:text-destructive">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="sm:col-span-2 space-y-2">
+              <Label className="font-body">Observações</Label>
+              <Textarea value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} />
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end pt-2 border-t border-border/50">
+            <Button type="button" variant="outline" onClick={goToList} className="font-body">
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Voltar
+            </Button>
+            <Button type="submit" disabled={saveMutation.isPending} className="font-body">
+              {saveMutation.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </form>
+
+        {/* Quick-add location dialog */}
+        <Dialog open={quickAddType !== null} onOpenChange={(o) => { if (!o) { setQuickAddType(null); setQuickAddName(""); } }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {quickAddType === "country" ? "Novo País" : quickAddType === "state" ? "Novo Estado/Região" : "Nova Cidade"}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-2">
+              {quickAddType === "state" && <p className="text-sm text-muted-foreground">País: {form.country}</p>}
+              {quickAddType === "city" && (
+                <p className="text-sm text-muted-foreground">
+                  {form.country}{form.state ? ` → ${form.state}` : ""}
+                </p>
+              )}
+              <div>
+                <Label>Nome <span className="text-destructive">*</span></Label>
+                <Input value={quickAddName} onChange={(e) => setQuickAddName(e.target.value)} placeholder={`Nome ${quickAddType === "country" ? "do país" : quickAddType === "state" ? "do estado/região" : "da cidade"}`} />
+              </div>
+              <Button onClick={() => quickAddMutation.mutate()} disabled={!quickAddName || quickAddMutation.isPending}>
+                {quickAddMutation.isPending ? "Adicionando..." : "Adicionar"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
+  // ========== LIST VIEW ==========
   return (
     <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
@@ -206,201 +422,11 @@ export default function Clients() {
           <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">Clientes</h1>
           <p className="text-muted-foreground font-body mt-1 text-sm">{clients.length} clientes cadastrados</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openCreate} className="font-body w-full sm:w-auto">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
-              Novo Cliente
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="font-display">{editingClient ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2 space-y-2">
-                  <Label className="font-body">Nome completo *</Label>
-                  <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-body">E-mail</Label>
-                  <Input type="email" value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-body">Telefone</Label>
-                  <Input value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="font-body">País</Label>
-                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => { setQuickAddType("country"); setQuickAddName(""); }}>
-                      <Plus className="h-3 w-3 mr-1" />Novo
-                    </Button>
-                  </div>
-                  <Select value={form.country ?? "Brasil"} onValueChange={(v) => setForm({ ...form, country: v, state: "", city: "" })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent className="max-h-60">
-                      {dbCountries.map((c: any) => (
-                        <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="font-body">Estado / Região</Label>
-                    {selectedCountryObj && (
-                      <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => { setQuickAddType("state"); setQuickAddName(""); }}>
-                        <Plus className="h-3 w-3 mr-1" />Novo
-                      </Button>
-                    )}
-                  </div>
-                  <Select value={form.state ?? ""} onValueChange={(v) => setForm({ ...form, state: v, city: "" })}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent className="max-h-60">
-                      {(dbStates as any[]).map((s: any) => (
-                        <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="font-body">Cidade</Label>
-                    {selectedCountryObj && (
-                      <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => { setQuickAddType("city"); setQuickAddName(""); }}>
-                        <Plus className="h-3 w-3 mr-1" />Nova
-                      </Button>
-                    )}
-                  </div>
-                  <Select value={form.city ?? ""} onValueChange={(v) => setForm({ ...form, city: v })}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent className="max-h-60">
-                      {(dbCities as any[]).map((c: any) => (
-                        <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-body">Perfil de viagem</Label>
-                  <Select value={form.travel_profile ?? "economic"} onValueChange={(v) => setForm({ ...form, travel_profile: v as any })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="economic">Econômico</SelectItem>
-                      <SelectItem value="opportunity">Oportunidade</SelectItem>
-                      <SelectItem value="sophisticated">Sofisticado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-body">Passaporte</Label>
-                  <Select value={form.passport_status ?? "none"} onValueChange={(v) => setForm({ ...form, passport_status: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Sem passaporte</SelectItem>
-                      <SelectItem value="valid">Válido</SelectItem>
-                      <SelectItem value="expired">Vencido</SelectItem>
-                      <SelectItem value="processing">Em processo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="sm:col-span-2 space-y-2">
-                  <Label className="font-body">Aeroportos preferidos</Label>
-                  <Popover open={airportPopoverOpen} onOpenChange={setAirportPopoverOpen}>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" type="button" className="w-full justify-between font-normal">
-                        {selectedAirports.length > 0
-                          ? `${selectedAirports.length} aeroporto(s) selecionado(s)`
-                          : "Selecione aeroportos"}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-0" align="start">
-                      <div className="p-2 border-b">
-                        <Input
-                          placeholder="Buscar por código, nome ou cidade..."
-                          value={airportSearch}
-                          onChange={(e) => setAirportSearch(e.target.value)}
-                          className="h-8 text-sm"
-                        />
-                      </div>
-                      <div className="max-h-52 overflow-y-auto p-1">
-                        {filteredAirports.slice(0, 50).map((a) => (
-                          <label key={a.iata_code} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
-                            <Checkbox
-                              checked={selectedAirports.includes(a.iata_code)}
-                              onCheckedChange={(checked) => {
-                                setSelectedAirports((prev) =>
-                                  checked ? [...prev, a.iata_code] : prev.filter((c) => c !== a.iata_code)
-                                );
-                              }}
-                            />
-                            <span className="font-mono font-bold text-primary">{a.iata_code}</span>
-                            <span className="text-muted-foreground truncate">{a.city} - {a.name}</span>
-                          </label>
-                        ))}
-                        {filteredAirports.length === 0 && (
-                          <p className="text-sm text-muted-foreground text-center py-3">Nenhum aeroporto encontrado</p>
-                        )}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                  {selectedAirports.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {selectedAirports.map((code) => (
-                        <span key={code} className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground">
-                          {code}
-                          <button type="button" onClick={() => setSelectedAirports((prev) => prev.filter((c) => c !== code))} className="hover:text-destructive">
-                            <X className="h-3 w-3" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="sm:col-span-2 space-y-2">
-                  <Label className="font-body">Observações</Label>
-                  <Textarea value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} />
-                </div>
-              </div>
-              <div className="flex gap-2 justify-end">
-                <Button type="button" variant="outline" onClick={closeDialog} className="font-body">Cancelar</Button>
-                <Button type="submit" disabled={saveMutation.isPending} className="font-body">
-                  {saveMutation.isPending ? "Salvando..." : "Salvar"}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={openCreate} className="font-body w-full sm:w-auto">
+          <Plus className="h-4 w-4" />
+          Novo Cliente
+        </Button>
       </div>
-
-      {/* Quick-add location dialog */}
-      <Dialog open={quickAddType !== null} onOpenChange={(o) => { if (!o) { setQuickAddType(null); setQuickAddName(""); } }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {quickAddType === "country" ? "Novo País" : quickAddType === "state" ? "Novo Estado/Região" : "Nova Cidade"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-2">
-            {quickAddType === "state" && <p className="text-sm text-muted-foreground">País: {form.country}</p>}
-            {quickAddType === "city" && (
-              <p className="text-sm text-muted-foreground">
-                {form.country}{form.state ? ` → ${form.state}` : ""}
-              </p>
-            )}
-            <div>
-              <Label>Nome <span className="text-destructive">*</span></Label>
-              <Input value={quickAddName} onChange={(e) => setQuickAddName(e.target.value)} placeholder={`Nome ${quickAddType === "country" ? "do país" : quickAddType === "state" ? "do estado/região" : "da cidade"}`} />
-            </div>
-            <Button onClick={() => quickAddMutation.mutate()} disabled={!quickAddName || quickAddMutation.isPending}>
-              {quickAddMutation.isPending ? "Adicionando..." : "Adicionar"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <div className="relative flex-1 sm:max-w-sm">
@@ -440,7 +466,7 @@ export default function Clients() {
               {filtered.map((client) => {
                 const passportLabel = { none: "Sem", valid: "Válido", expired: "Vencido", processing: "Em processo" }[client.passport_status ?? "none"] ?? client.passport_status;
                 return (
-                  <tr key={client.id} className="hover:bg-muted/30 transition-colors">
+                  <tr key={client.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEdit(client)}>
                     <td className="p-4">
                       <p className="text-sm font-medium font-body text-foreground">{client.full_name}</p>
                       <p className="text-xs text-muted-foreground font-body">{client.email}</p>
@@ -470,8 +496,7 @@ export default function Clients() {
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex gap-1 justify-end">
-                        <Button variant="ghost" size="sm" className="font-body" onClick={() => openEdit(client)}>Editar</Button>
-                        <Button variant="ghost" size="sm" className="text-destructive font-body" onClick={() => { if (confirm("Remover cliente?")) deleteMutation.mutate(client.id); }}>Excluir</Button>
+                        <Button variant="ghost" size="sm" className="text-destructive font-body" onClick={(e) => { e.stopPropagation(); if (confirm("Remover cliente?")) deleteMutation.mutate(client.id); }}>Excluir</Button>
                       </div>
                     </td>
                   </tr>
@@ -492,7 +517,7 @@ export default function Clients() {
           filtered.map((client) => {
             const passportLabel = { none: "Sem", valid: "Válido", expired: "Vencido", processing: "Em processo" }[client.passport_status ?? "none"] ?? client.passport_status;
             return (
-              <div key={client.id} className="glass-card rounded-xl p-4 space-y-3">
+              <div key={client.id} className="glass-card rounded-xl p-4 space-y-3 cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => openEdit(client)}>
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-sm font-medium font-body text-foreground">{client.full_name}</p>
@@ -519,8 +544,7 @@ export default function Clients() {
                   </div>
                 )}
                 <div className="flex gap-2 pt-1">
-                  <Button variant="outline" size="sm" className="font-body flex-1" onClick={() => openEdit(client)}>Editar</Button>
-                  <Button variant="ghost" size="sm" className="text-destructive font-body" onClick={() => { if (confirm("Remover cliente?")) deleteMutation.mutate(client.id); }}>Excluir</Button>
+                  <Button variant="ghost" size="sm" className="text-destructive font-body" onClick={(e) => { e.stopPropagation(); if (confirm("Remover cliente?")) deleteMutation.mutate(client.id); }}>Excluir</Button>
                 </div>
               </div>
             );
