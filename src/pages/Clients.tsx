@@ -840,7 +840,7 @@ export default function Clients() {
                 <SortableHeader label="Perfil" sortKey="travel_profile" />
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Aeroportos</th>
                 <SortableHeader label="Passaporte" sortKey="passport_status" />
-                <th className="text-right p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Ações</th>
+                
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
@@ -880,9 +880,6 @@ export default function Clients() {
                         {passportLabel}
                       </span>
                     </td>
-                    <td className="p-4 text-right">
-                      <Button variant="ghost" size="sm" className="text-destructive font-body" onClick={(e) => { e.stopPropagation(); if (confirm("Remover cliente?")) deleteMutation.mutate(client.id); }}>Excluir</Button>
-                    </td>
                   </tr>
                 );
               })}
@@ -917,9 +914,6 @@ export default function Clients() {
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground font-body">
                 {client.city && <span>{client.city}{client.state ? `, ${client.state}` : ""}</span>}
                 {client.phone && <span>{client.phone}</span>}
-              </div>
-              <div className="flex gap-2 pt-1">
-                <Button variant="ghost" size="sm" className="text-destructive font-body" onClick={(e) => { e.stopPropagation(); if (confirm("Remover cliente?")) deleteMutation.mutate(client.id); }}>Excluir</Button>
               </div>
             </div>
           ))
