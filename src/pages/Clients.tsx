@@ -296,6 +296,8 @@ export default function Clients() {
     } catch { /* ignore */ }
   };
 
+  const shouldGoBackRef = React.useRef(false);
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       const { preferred_airports: _pa, tags: _t, ...rest } = form;
