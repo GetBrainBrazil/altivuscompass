@@ -314,8 +314,10 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
 
   // Update relationship type mutation
   const updateRelMutation = useMutation({
-    mutationFn: async ({ id, type }: { id: string; type: string }) => {
-      const { error } = await supabase.from("client_relationships").update({ relationship_type: type as any }).eq("id", id);
+    mutationFn: async ({ id, type, inverted }: { id: string; type: string; inverted: boolean }) => {
+      // If viewing from the inverted side, store the inverse type in DB
+      const dbType = inverted ? (INVERSE_RELATIONSHIP[type] || type) : type;
+      const { error } = await supabase.from("client_relationships").update({ relationship_type: dbType as any }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
