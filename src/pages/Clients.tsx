@@ -46,7 +46,7 @@ const travelProfiles: Record<string, { label: string; color: string }> = {
 type PhoneEntry = { id?: string; phone: string; description: string; country_code: string; is_primary: boolean };
 type EmailEntry = { id?: string; email: string; description: string; is_primary: boolean };
 type SocialEntry = { id?: string; network: string; handle: string };
-type VisaEntry = { id?: string; visa_type: string; validity_date: string; country_region: string; visa_number: string; issue_date: string; entry_type: string; description: string };
+type VisaEntry = { id?: string; visa_type: string; validity_date: string; country_region: string; visa_number: string; issue_date: string; entry_type: string; description: string; image_url: string; _imageFile?: File };
 
 const VISA_TYPES = [
   "Turismo", "Negócios", "Estudo", "Trabalho", "Trânsito", "Diplomático",
