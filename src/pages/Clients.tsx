@@ -133,9 +133,13 @@ export default function Clients() {
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ["clients"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("clients").select("*, client_phones(*), client_emails(*)").order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data.map((c: any) => {
+        const primaryPhone = c.client_phones?.find((p: any) => p.is_primary) || c.client_phones?.[0];
+        const primaryEmail = c.client_emails?.find((e: any) => e.is_primary) || c.client_emails?.[0];
+        return { ...c, primary_phone: primaryPhone?.phone ?? null, primary_email: primaryEmail?.email ?? null };
+      });
     },
   });
 
