@@ -4,12 +4,14 @@ export async function logAuditEvent({
   action,
   tableName,
   recordId,
+  recordLabel,
   oldData,
   newData,
 }: {
   action: "create" | "update" | "delete";
   tableName: string;
   recordId?: string;
+  recordLabel?: string;
   oldData?: Record<string, any> | null;
   newData?: Record<string, any> | null;
 }) {
@@ -17,7 +19,6 @@ export async function logAuditEvent({
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // Get user name from profile
     const { data: profile } = await supabase
       .from("profiles")
       .select("full_name")
@@ -38,10 +39,14 @@ export async function logAuditEvent({
           changedNew[key] = newData[key];
         }
       }
-      // Only log if there are actual changes
       if (Object.keys(changedNew).length === 0) return;
       filteredOldData = changedOld;
       filteredNewData = changedNew;
+    }
+
+    // Inject record label for identification
+    if (recordLabel) {
+      filteredNewData = { _label: recordLabel, ...(filteredNewData ?? {}) };
     }
 
     await supabase.from("audit_logs").insert({
