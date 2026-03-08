@@ -496,7 +496,8 @@ export default function Clients() {
                   {phones.map((p, i) => {
                     const cc = COUNTRY_CODES.find((c) => c.code === p.country_code) || COUNTRY_CODES[0];
                     return (
-                      <div key={i} className="flex gap-2 items-start">
+                      <div key={i} className="flex gap-2 items-center">
+                        <Checkbox checked={phones.length === 1 || p.is_primary} onCheckedChange={() => { const n = phones.map((ph, j) => ({ ...ph, is_primary: j === i })); setPhones(n); }} className="shrink-0" title="Principal" />
                         <Select value={p.country_code} onValueChange={(v) => { const n = [...phones]; n[i].country_code = v; n[i].phone = ""; setPhones(n); }}>
                           <SelectTrigger className="w-28 h-9 shrink-0 text-xs"><SelectValue /></SelectTrigger>
                           <SelectContent>
