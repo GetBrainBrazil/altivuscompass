@@ -322,9 +322,19 @@ export default function Clients() {
           }).select("id").single();
           if (ppErr) throw ppErr;
           if (pp.visas.length > 0) {
-            await supabase.from("client_visas").insert(
-              pp.visas.filter(v => v.visa_type).map(v => ({ passport_id: ppData.id, visa_type: v.visa_type, validity_date: v.validity_date || null, country_region: v.country_region || null, visa_number: v.visa_number || null, issue_date: v.issue_date || null, entry_type: v.entry_type || "single", description: v.description || null }))
-            );
+            for (const v of pp.visas.filter(v => v.visa_type)) {
+              let imageUrl = v.image_url || null;
+              if (v._imageFile) {
+                const ext = v._imageFile.name.split('.').pop();
+                const filePath = `${clientId}/${crypto.randomUUID()}.${ext}`;
+                const { error: upErr } = await supabase.storage.from("visa-images").upload(filePath, v._imageFile);
+                if (!upErr) {
+                  const { data: urlData } = supabase.storage.from("visa-images").getPublicUrl(filePath);
+                  imageUrl = urlData.publicUrl;
+                }
+              }
+              await supabase.from("client_visas").insert({ passport_id: ppData.id, visa_type: v.visa_type, validity_date: v.validity_date || null, country_region: v.country_region || null, visa_number: v.visa_number || null, issue_date: v.issue_date || null, entry_type: v.entry_type || "single", description: v.description || null, image_url: imageUrl });
+            }
           }
         }
       }
