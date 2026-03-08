@@ -114,13 +114,29 @@ export default function Clients() {
   };
   const closeDialog = () => { setDialogOpen(false); setEditingClient(null); setForm(emptyClient); setAirportsInput(""); };
 
-  const filtered = clients.filter((c) => {
-    const matchesSearch = c.full_name.toLowerCase().includes(search.toLowerCase()) ||
-      (c.email ?? "").toLowerCase().includes(search.toLowerCase()) ||
-      (c.city ?? "").toLowerCase().includes(search.toLowerCase());
-    const matchesProfile = profileFilter === "all" || c.travel_profile === profileFilter;
-    return matchesSearch && matchesProfile;
-  });
+  const filtered = sortData(
+    clients.filter((c) => {
+      const matchesSearch = c.full_name.toLowerCase().includes(search.toLowerCase()) ||
+        (c.email ?? "").toLowerCase().includes(search.toLowerCase()) ||
+        (c.city ?? "").toLowerCase().includes(search.toLowerCase());
+      const matchesProfile = profileFilter === "all" || c.travel_profile === profileFilter;
+      return matchesSearch && matchesProfile;
+    }),
+    sort
+  );
+
+  const SortableHeader = ({ label, sortKey, className }: { label: string; sortKey: string; className?: string }) => {
+    const active = sort?.key === sortKey;
+    return (
+      <th className={`text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium cursor-pointer select-none hover:text-foreground ${className || ""}`}
+        onClick={() => setSort(toggleSort(sort, sortKey))}>
+        <span className="inline-flex items-center gap-1">
+          {label}
+          {active ? (sort.dir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 opacity-40" />}
+        </span>
+      </th>
+    );
+  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
