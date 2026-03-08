@@ -723,9 +723,27 @@ export default function Clients() {
                           <Input type="date" className="h-9" value={pp.expiry_date} onChange={(e) => { const n = [...passports]; n[pi].expiry_date = e.target.value; setPassports(n); }} />
                         </div>
                         <div className="space-y-1">
-                          <Label className="font-body text-xs">Nacionalidade</Label>
-                          <Input className="h-9" value={pp.nationality} onChange={(e) => { const n = [...passports]; n[pi].nationality = e.target.value; setPassports(n); }} />
+                          <Label className="font-body text-xs">País Emissor</Label>
+                          <Select value={pp.nationality || ""} onValueChange={(v) => { const n = [...passports]; n[pi].nationality = v; setPassports(n); }}>
+                            <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                            <SelectContent className="max-h-60">
+                              {dbCountries.map((c: any) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
                         </div>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Label className="font-body text-xs">Status:</Label>
+                        {(() => {
+                          if (!pp.expiry_date) return <span className="text-xs text-muted-foreground">Informe o vencimento</span>;
+                          const today = new Date();
+                          const expiry = new Date(pp.expiry_date + "T00:00:00");
+                          const diffMs = expiry.getTime() - today.getTime();
+                          const diffMonths = diffMs / (1000 * 60 * 60 * 24 * 30);
+                          if (diffMs < 0) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-destructive/10 text-destructive">Vencido</span>;
+                          if (diffMonths <= 12) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-600">Vencendo ({Math.ceil(diffMonths)}m)</span>;
+                          return <span className="text-xs font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600">Válido</span>;
+                        })()}
                       </div>
 
                       {/* Visas for this passport */}
