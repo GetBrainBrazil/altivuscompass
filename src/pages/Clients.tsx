@@ -296,7 +296,7 @@ export default function Clients() {
     } catch { /* ignore */ }
   };
 
-  const shouldGoBackRef = React.useRef(false);
+  const shouldGoBackRef = useRef(false);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
