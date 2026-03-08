@@ -477,9 +477,11 @@ export default function Clients() {
 
   const filtered = sortData(
     clients.filter((c: any) => {
-      const matchesSearch = c.full_name.toLowerCase().includes(search.toLowerCase()) ||
-        (c.email ?? "").toLowerCase().includes(search.toLowerCase()) ||
-        (c.city ?? "").toLowerCase().includes(search.toLowerCase());
+      const q = search.toLowerCase();
+      const matchesSearch = c.full_name.toLowerCase().includes(q) ||
+        (c.email ?? "").toLowerCase().includes(q) ||
+        (c.city ?? "").toLowerCase().includes(q) ||
+        (passengerNamesByClient[c.id] ?? "").includes(q);
       const matchesProfile = profileFilter === "all" || c.travel_profile === profileFilter;
       return matchesSearch && matchesProfile;
     }),
