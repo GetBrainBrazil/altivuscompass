@@ -485,6 +485,7 @@ export default function Clients() {
       address_complement: c.address_complement ?? "",
     });
     setSelectedAirports(c.preferred_airports ?? []);
+    setSelectedTags(c.tags ?? []);
     setView("form");
   };
 
