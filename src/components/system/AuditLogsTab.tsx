@@ -408,7 +408,7 @@ export default function AuditLogsTab() {
                               {!isSession && !changes && log.new_data && (
                                 <div className="text-xs font-body text-muted-foreground space-y-0.5">
                                   {Object.entries(log.new_data)
-                                    .filter(([k]) => !["id", "created_at", "updated_at"].includes(k))
+                                    .filter(([k]) => !["id", "created_at", "updated_at", "_label"].includes(k))
                                     .map(([k, v]) => (
                                       <div key={k}><span className="font-medium text-foreground">{k}</span>: {String(v ?? "—")}</div>
                                     ))}
