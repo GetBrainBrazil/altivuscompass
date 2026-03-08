@@ -18,7 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { logAuditEvent } from "@/lib/audit";
-import { ArrowUp, ArrowDown, ArrowUpDown, Info, Plus, X } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, Info, Plus, Trash2 } from "lucide-react";
 import { COUNTRY_CODES, applyPhoneMask, stripMask } from "@/lib/phone-masks";
 
 type SupplierPhone = { id?: string; phone: string; country_code: string; description: string };
@@ -156,8 +156,9 @@ export default function SuppliersTab() {
       await supabase.from("supplier_phones").delete().eq("supplier_id", supplierId);
       const validPhones = phones.filter(p => stripMask(p.phone).length > 0);
       if (validPhones.length > 0) {
+        const cc_map = (code: string) => COUNTRY_CODES.find(c => c.code === code)?.dial || "+55";
         const { error } = await supabase.from("supplier_phones").insert(
-          validPhones.map(p => ({ supplier_id: supplierId, phone: stripMask(p.phone), country_code: p.country_code, description: p.description || null })) as any
+          validPhones.map(p => ({ supplier_id: supplierId, phone: stripMask(p.phone), country_code: cc_map(p.country_code), description: p.description || null })) as any
         );
         if (error) throw error;
       }
@@ -213,7 +214,7 @@ export default function SuppliersTab() {
       supabase.from("supplier_phones").select("*").eq("supplier_id", s.id).order("created_at"),
       supabase.from("supplier_emails").select("*").eq("supplier_id", s.id).order("created_at"),
     ]);
-    setPhones((phonesRes.data ?? []).map((p: any) => ({ id: p.id, phone: p.phone, country_code: p.country_code || "+55", description: p.description || "" })));
+    setPhones((phonesRes.data ?? []).map((p: any) => ({ id: p.id, phone: p.phone, country_code: COUNTRY_CODES.find(c => c.dial === p.country_code)?.code || "BR", description: p.description || "", is_primary: false })));
     setEmails((emailsRes.data ?? []).map((e: any) => ({ id: e.id, email: e.email, description: e.description || "" })));
     setDialogOpen(true);
   };
@@ -348,44 +349,35 @@ export default function SuppliersTab() {
                   <TabsTrigger value="endereco" className="font-body text-xs">Endereço</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="contato" className="space-y-4 mt-3">
+               <TabsContent value="contato" className="space-y-4 mt-3">
                   {/* Telefones */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-semibold font-body text-foreground">Telefones</h4>
-                      <Button type="button" variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => setPhones(p => [...p, { phone: "", country_code: "+55", description: "" }])}>
-                        <Plus className="h-3 w-3" /> Telefone
+                      <Label className="font-body text-xs font-medium">Celulares / Telefones</Label>
+                      <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setPhones(p => [...p, { phone: "", country_code: "BR", description: "" }])}>
+                        <Plus className="h-3 w-3 mr-1" />Adicionar
                       </Button>
                     </div>
-                    {phones.length === 0 && <p className="text-xs text-muted-foreground">Nenhum telefone cadastrado.</p>}
                     {phones.map((p, i) => {
-                      const cc = COUNTRY_CODES.find(c => c.dial === p.country_code) || COUNTRY_CODES[0];
+                      const cc = COUNTRY_CODES.find(c => c.code === p.country_code) || COUNTRY_CODES[0];
                       return (
-                        <div key={i} className="grid grid-cols-[80px_1fr_2fr_28px] gap-2 items-end">
-                          <div className="space-y-1">
-                            <Label className="font-body text-[10px]">DDI</Label>
-                            <Select value={p.country_code} onValueChange={(v) => setPhones(ps => ps.map((x, j) => j === i ? { ...x, country_code: v } : x))}>
-                              <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                {COUNTRY_CODES.map(c => <SelectItem key={c.code} value={c.dial}>{c.flag} {c.dial}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="font-body text-[10px]">Número</Label>
-                            <Input
-                              className="h-9 text-xs"
-                              placeholder={cc.mask.replace(/#/g, "0")}
-                              value={applyPhoneMask(p.phone, cc.mask)}
-                              onChange={(e) => setPhones(ps => ps.map((x, j) => j === i ? { ...x, phone: stripMask(e.target.value) } : x))}
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="font-body text-[10px]">Descrição</Label>
-                            <Input className="h-9 text-xs" placeholder="Ex: Comercial" value={p.description} onChange={(e) => setPhones(ps => ps.map((x, j) => j === i ? { ...x, description: e.target.value } : x))} />
-                          </div>
-                          <Button type="button" variant="ghost" size="icon" className="h-9 w-7 text-muted-foreground hover:text-destructive" onClick={() => setPhones(ps => ps.filter((_, j) => j !== i))}>
-                            <X className="h-3.5 w-3.5" />
+                        <div key={i} className="flex gap-2 items-center">
+                          <Checkbox checked={phones.length === 1 || (p as any).is_primary} onCheckedChange={() => setPhones(ps => ps.map((x, j) => ({ ...x, is_primary: j === i } as any)))} className="shrink-0" title="Principal" />
+                          <Select value={p.country_code} onValueChange={(v) => setPhones(ps => ps.map((x, j) => j === i ? { ...x, country_code: v, phone: "" } : x))}>
+                            <SelectTrigger className="w-28 h-9 shrink-0 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {COUNTRY_CODES.map(c => <SelectItem key={c.code} value={c.code}>{c.flag} {c.dial}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            className="w-40 h-9 shrink-0"
+                            placeholder={cc.mask.replace(/#/g, "0")}
+                            value={applyPhoneMask(p.phone, cc.mask)}
+                            onChange={(e) => setPhones(ps => ps.map((x, j) => j === i ? { ...x, phone: stripMask(e.target.value) } : x))}
+                          />
+                          <Input className="flex-1 h-9" placeholder="Descrição" value={p.description} onChange={(e) => setPhones(ps => ps.map((x, j) => j === i ? { ...x, description: e.target.value } : x))} />
+                          <Button type="button" variant="ghost" size="icon" className="shrink-0 h-9 w-9 text-destructive" onClick={() => setPhones(ps => ps.filter((_, j) => j !== i))}>
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       );
@@ -393,26 +385,20 @@ export default function SuppliersTab() {
                   </div>
 
                   {/* Emails */}
-                  <div className="space-y-2 border-t pt-3">
+                  <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-semibold font-body text-foreground">E-mails</h4>
-                      <Button type="button" variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => setEmails(e => [...e, { email: "", description: "" }])}>
-                        <Plus className="h-3 w-3" /> E-mail
+                      <Label className="font-body text-xs font-medium">E-mails</Label>
+                      <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setEmails(e => [...e, { email: "", description: "" }])}>
+                        <Plus className="h-3 w-3 mr-1" />Adicionar
                       </Button>
                     </div>
-                    {emails.length === 0 && <p className="text-xs text-muted-foreground">Nenhum e-mail cadastrado.</p>}
                     {emails.map((em, i) => (
-                      <div key={i} className="grid grid-cols-[1fr_2fr_28px] gap-2 items-end">
-                        <div className="space-y-1">
-                          <Label className="font-body text-[10px]">E-mail</Label>
-                          <Input type="email" className="h-9 text-xs" value={em.email} onChange={(e) => setEmails(es => es.map((x, j) => j === i ? { ...x, email: e.target.value } : x))} />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="font-body text-[10px]">Descrição</Label>
-                          <Input className="h-9 text-xs" placeholder="Ex: Financeiro" value={em.description} onChange={(e) => setEmails(es => es.map((x, j) => j === i ? { ...x, description: e.target.value } : x))} />
-                        </div>
-                        <Button type="button" variant="ghost" size="icon" className="h-9 w-7 text-muted-foreground hover:text-destructive" onClick={() => setEmails(es => es.filter((_, j) => j !== i))}>
-                          <X className="h-3.5 w-3.5" />
+                      <div key={i} className="flex gap-2 items-center">
+                        <Checkbox checked={emails.length === 1 || (em as any).is_primary} onCheckedChange={() => setEmails(es => es.map((x, j) => ({ ...x, is_primary: j === i } as any)))} className="shrink-0" title="Principal" />
+                        <Input className="w-72 h-9 shrink-0" type="email" placeholder="E-mail" value={em.email} onChange={(e) => setEmails(es => es.map((x, j) => j === i ? { ...x, email: e.target.value } : x))} />
+                        <Input className="flex-1 h-9" placeholder="Descrição" value={em.description} onChange={(e) => setEmails(es => es.map((x, j) => j === i ? { ...x, description: e.target.value } : x))} />
+                        <Button type="button" variant="ghost" size="icon" className="shrink-0 h-9 w-9 text-destructive" onClick={() => setEmails(es => es.filter((_, j) => j !== i))}>
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     ))}
