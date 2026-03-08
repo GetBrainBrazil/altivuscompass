@@ -218,8 +218,8 @@ export default function SuppliersTab() {
               <div className="space-y-3">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   <div className="space-y-1 col-span-2">
-                    <Label className="font-body text-xs">Razão Social <span className="text-destructive">*</span></Label>
-                    <Input value={form.name} onChange={set("name")} placeholder="Nome da empresa" className="h-9" />
+                    <Label className="font-body text-xs">Nome <span className="text-destructive">*</span></Label>
+                    <Input value={form.name} onChange={set("name")} placeholder="Nome do fornecedor" className="h-9" />
                   </div>
                   <div className="space-y-1">
                     <Label className="font-body text-xs">Nome Fantasia</Label>
