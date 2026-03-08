@@ -8,10 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { ROLE_LABELS, PAGE_PERMISSIONS } from "@/lib/permissions";
+import { ROLE_LABELS } from "@/lib/permissions";
 import type { Tables } from "@/integrations/supabase/types";
 
 const roleBadgeVariant: Record<string, "default" | "secondary" | "outline"> = {
