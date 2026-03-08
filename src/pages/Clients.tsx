@@ -98,6 +98,7 @@ export default function Clients() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
   const [profileFilter, setProfileFilter] = useState("all");
   const [sort, setSort] = useState<SortState>(null);
   const [view, setView] = useState<"list" | "form">("list");
