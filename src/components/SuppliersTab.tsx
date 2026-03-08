@@ -127,7 +127,7 @@ export default function SuppliersTab() {
         state: form.state || null,
         country: form.country || null,
         notes: form.notes || null,
-        category: form.category || null,
+        category: form.categories.length > 0 ? form.categories : null,
       };
       if (editing) {
         const { error } = await supabase.from("suppliers").update(payload as any).eq("id", editing.id);
