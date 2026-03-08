@@ -259,21 +259,7 @@ export default function SuppliersTab() {
                     </div>
                   ) : <div />}
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  <div className="space-y-1">
-                    <Label className="font-body text-xs">Tipo</Label>
-                    <Select value={form.supplier_type} onValueChange={(v) => setForm(f => ({ ...f, supplier_type: v }))}>
-                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="company">Pessoa Jurídica</SelectItem>
-                        <SelectItem value="individual">Pessoa Física</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="font-body text-xs">Website</Label>
-                    <Input value={form.website} onChange={set("website")} placeholder="https://" className="h-9" />
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div className="space-y-1">
                     <div className="flex items-center gap-1">
                       <Label className="font-body text-xs">Serviços</Label>
@@ -314,16 +300,10 @@ export default function SuppliersTab() {
                       </PopoverContent>
                     </Popover>
                   </div>
-                  {editing ? (
-                    <div className="flex items-center gap-2 pt-5">
-                      <Switch checked={form.is_active} onCheckedChange={(v) => setForm(f => ({ ...f, is_active: v }))} />
-                      <Label className="font-body text-xs">{form.is_active ? "Ativo" : "Inativo"}</Label>
-                    </div>
-                  ) : <div />}
-                </div>
-                <div className="space-y-1">
-                  <Label className="font-body text-xs">Observações</Label>
-                  <Textarea value={form.notes} onChange={set("notes")} rows={2} className="text-sm" />
+                  <div className="space-y-1">
+                    <Label className="font-body text-xs">Observações</Label>
+                    <Textarea value={form.notes} onChange={set("notes")} rows={2} className="text-sm" />
+                  </div>
                 </div>
               </div>
 
