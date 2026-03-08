@@ -985,7 +985,7 @@ export default function Clients() {
                         {(client.alerts ?? []).length === 0 ? (
                           <span className="text-xs text-muted-foreground font-body">—</span>
                         ) : (
-                          (client.alerts as { label: string; level: string }[]).slice(0, 3).map((alert, idx) => {
+                          (client.alerts as { label: string; level: string; months: number; tab: string }[]).slice(0, 3).map((alert, idx) => {
                             const styles = {
                               urgent: "bg-destructive/10 text-destructive",
                               critical: "bg-amber-500/10 text-amber-600",
@@ -993,10 +993,15 @@ export default function Clients() {
                             }[alert.level] ?? "bg-muted text-muted-foreground";
                             const Icon = alert.level === "urgent" ? ShieldAlert : alert.level === "critical" ? AlertCircle : AlertTriangle;
                             return (
-                              <span key={idx} className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full font-body ${styles}`}>
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setActiveTab(alert.tab); openEdit(client); }}
+                                className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full font-body cursor-pointer hover:opacity-80 transition-opacity ${styles}`}
+                              >
                                 <Icon className="h-3 w-3" />
                                 {alert.label}
-                              </span>
+                              </button>
                             );
                           })
                         )}
