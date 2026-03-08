@@ -218,11 +218,32 @@ export default function BankAccounts() {
                 <Label className="font-body">Conta ativa</Label>
               </div>
             </div>
-            <div className="flex gap-2 justify-end">
-              <Button type="button" variant="outline" onClick={closeDialog} className="font-body">Cancelar</Button>
-              <Button type="submit" disabled={saveMutation.isPending} className="font-body">
-                {saveMutation.isPending ? "Salvando..." : "Salvar"}
-              </Button>
+            <div className="flex items-center justify-between">
+              {editing ? (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button type="button" variant="ghost" className="font-body text-destructive hover:text-destructive hover:bg-destructive/10">
+                      <Trash2 size={14} className="mr-1" /> Excluir Conta
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Remover conta bancária?</AlertDialogTitle>
+                      <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => { deleteMutation.mutate(editing.id); closeDialog(); }}>Remover</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              ) : <span />}
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={closeDialog} className="font-body">Cancelar</Button>
+                <Button type="submit" disabled={saveMutation.isPending} className="font-body">
+                  {saveMutation.isPending ? "Salvando..." : "Salvar"}
+                </Button>
+              </div>
             </div>
           </form>
         </DialogContent>
