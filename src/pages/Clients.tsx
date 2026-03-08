@@ -573,7 +573,7 @@ export default function Clients() {
               </TabsContent>
 
               {/* Documents Tab */}
-              <TabsContent value="documents" className="space-y-4 pt-4">
+              <TabsContent value="documents" className="space-y-4 pt-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
                     <Label className="font-body text-xs">CPF / CNPJ</Label>
