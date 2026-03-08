@@ -4,9 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
-import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Search, Filter, ArrowUp, ArrowDown, ArrowUpDown, CalendarIcon } from "lucide-react";
+import { format, startOfDay, endOfDay, subDays, startOfWeek, startOfMonth, subMonths, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 type AuditLog = {
   id: string;
@@ -22,6 +26,7 @@ type AuditLog = {
 
 type SortDir = "asc" | "desc";
 type SortState = { key: string; dir: SortDir } | null;
+type DatePreset = "all" | "today" | "yesterday" | "this_week" | "this_month" | "last_month" | "custom";
 
 const ACTION_LABELS: Record<string, string> = {
   INSERT: "Criação", UPDATE: "Alteração", DELETE: "Remoção",
@@ -46,6 +51,29 @@ const SESSION_EVENT_LABELS: Record<string, string> = {
   LOGIN: "Login", LOGOUT: "Logout", LOGOUT_INACTIVITY: "Logout (inatividade)",
 };
 
+const DATE_PRESET_LABELS: Record<DatePreset, string> = {
+  all: "Todas as datas",
+  today: "Hoje",
+  yesterday: "Ontem",
+  this_week: "Esta semana",
+  this_month: "Este mês",
+  last_month: "Mês passado",
+  custom: "Personalizado",
+};
+
+function getDateRange(preset: DatePreset, customFrom?: Date, customTo?: Date): { from: Date | null; to: Date | null } {
+  const now = new Date();
+  switch (preset) {
+    case "today": return { from: startOfDay(now), to: endOfDay(now) };
+    case "yesterday": { const y = subDays(now, 1); return { from: startOfDay(y), to: endOfDay(y) }; }
+    case "this_week": return { from: startOfWeek(now, { locale: ptBR }), to: endOfDay(now) };
+    case "this_month": return { from: startOfMonth(now), to: endOfDay(now) };
+    case "last_month": { const lm = subMonths(now, 1); return { from: startOfMonth(lm), to: endOfMonth(lm) }; }
+    case "custom": return { from: customFrom ? startOfDay(customFrom) : null, to: customTo ? endOfDay(customTo) : null };
+    default: return { from: null, to: null };
+  }
+}
+
 function toggleSort(sort: SortState, key: string): SortState {
   if (sort?.key === key) {
     if (sort.dir === "asc") return { key, dir: "desc" };
@@ -64,6 +92,9 @@ export default function AuditLogsTab() {
   const [tableFilter, setTableFilter] = useState("all");
   const [actionFilter, setActionFilter] = useState("all");
   const [userFilter, setUserFilter] = useState("all");
+  const [datePreset, setDatePreset] = useState<DatePreset>("all");
+  const [customFrom, setCustomFrom] = useState<Date | undefined>();
+  const [customTo, setCustomTo] = useState<Date | undefined>();
   const [sort, setSort] = useState<SortState>({ key: "created_at", dir: "desc" });
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
@@ -94,10 +125,18 @@ export default function AuditLogsTab() {
   }, [logs]);
 
   const filtered = useMemo(() => {
+    const { from: dateFrom, to: dateTo } = getDateRange(datePreset, customFrom, customTo);
+
     let result = logs.filter((log) => {
       if (tableFilter !== "all" && log.table_name !== tableFilter) return false;
       if (actionFilter !== "all" && log.action !== actionFilter) return false;
       if (userFilter !== "all" && log.user_id !== userFilter) return false;
+      // Date filter
+      if (dateFrom || dateTo) {
+        const logDate = new Date(log.created_at);
+        if (dateFrom && logDate < dateFrom) return false;
+        if (dateTo && logDate > dateTo) return false;
+      }
       if (search.trim()) {
         const q = search.toLowerCase();
         const matchesUser = log.user_name?.toLowerCase().includes(q);
@@ -126,7 +165,7 @@ export default function AuditLogsTab() {
     }
 
     return result;
-  }, [logs, tableFilter, actionFilter, userFilter, search, sort]);
+  }, [logs, tableFilter, actionFilter, userFilter, search, sort, datePreset, customFrom, customTo]);
 
   const getChangedFields = (oldData: Record<string, any> | null, newData: Record<string, any> | null) => {
     if (!oldData || !newData) return null;
@@ -171,9 +210,17 @@ export default function AuditLogsTab() {
       .join(" | ");
   };
 
+  const handleDatePresetChange = (value: string) => {
+    setDatePreset(value as DatePreset);
+    if (value !== "custom") {
+      setCustomFrom(undefined);
+      setCustomTo(undefined);
+    }
+  };
+
   return (
     <div className="space-y-4">
-      {/* Filters */}
+      {/* Filters row 1 */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -215,6 +262,49 @@ export default function AuditLogsTab() {
         </Select>
       </div>
 
+      {/* Filters row 2 - date */}
+      <div className="flex flex-col sm:flex-row gap-3 items-start">
+        <Select value={datePreset} onValueChange={handleDatePresetChange}>
+          <SelectTrigger className="w-full sm:w-48 h-9 text-sm">
+            <CalendarIcon size={14} className="mr-1" />
+            <SelectValue placeholder="Período" />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(DATE_PRESET_LABELS).map(([key, label]) => (
+              <SelectItem key={key} value={key}>{label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {datePreset === "custom" && (
+          <div className="flex gap-2 items-center">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("h-9 text-sm justify-start gap-2 w-36", !customFrom && "text-muted-foreground")}>
+                  <CalendarIcon size={14} />
+                  {customFrom ? format(customFrom, "dd/MM/yyyy") : "De"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={customFrom} onSelect={setCustomFrom} initialFocus className={cn("p-3 pointer-events-auto")} locale={ptBR} />
+              </PopoverContent>
+            </Popover>
+            <span className="text-xs text-muted-foreground">até</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("h-9 text-sm justify-start gap-2 w-36", !customTo && "text-muted-foreground")}>
+                  <CalendarIcon size={14} />
+                  {customTo ? format(customTo, "dd/MM/yyyy") : "Até"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={customTo} onSelect={setCustomTo} initialFocus className={cn("p-3 pointer-events-auto")} locale={ptBR} />
+              </PopoverContent>
+            </Popover>
+          </div>
+        )}
+      </div>
+
       {/* Table */}
       {isLoading ? (
         <div className="p-8 text-center text-muted-foreground font-body">Carregando logs...</div>
@@ -248,92 +338,92 @@ export default function AuditLogsTab() {
                   const isSession = log.table_name === "sessions";
 
                   return (
-                    <tr
-                      key={log.id}
-                      className="border-b border-border/50 hover:bg-muted/30 cursor-pointer transition-colors last:border-b-0"
-                      onClick={() => setExpandedRow(isExpanded ? null : log.id)}
-                    >
-                      <td className="p-3 whitespace-nowrap font-body text-xs text-muted-foreground">
-                        {format(new Date(log.created_at), "dd/MM/yy HH:mm:ss", { locale: ptBR })}
-                      </td>
-                      <td className="p-3 font-body text-sm text-foreground whitespace-nowrap">
-                        {log.user_name ?? "Sistema"}
-                      </td>
-                      <td className="p-3">
-                        <Badge variant="outline" className={`text-[10px] font-body ${getActionColor(log)}`}>
-                          {getActionLabel(log)}
-                        </Badge>
-                      </td>
-                      <td className="p-3 font-body text-xs text-muted-foreground whitespace-nowrap">
-                        {isSession ? "" : (TABLE_LABELS[log.table_name] ?? log.table_name)}
-                      </td>
-                      <td className="p-3 font-body text-xs text-muted-foreground truncate max-w-[300px] hidden md:table-cell">
-                        {getSummary(log)}
-                      </td>
-                    </tr>
+                    <>
+                      <tr
+                        key={log.id}
+                        className={cn(
+                          "border-b border-border/50 hover:bg-muted/30 cursor-pointer transition-colors",
+                          isExpanded && "bg-muted/20"
+                        )}
+                        onClick={() => setExpandedRow(isExpanded ? null : log.id)}
+                      >
+                        <td className="p-3 whitespace-nowrap font-body text-xs text-muted-foreground">
+                          {format(new Date(log.created_at), "dd/MM/yy HH:mm:ss", { locale: ptBR })}
+                        </td>
+                        <td className="p-3 font-body text-sm text-foreground whitespace-nowrap">
+                          {log.user_name ?? "Sistema"}
+                        </td>
+                        <td className="p-3">
+                          <Badge variant="outline" className={`text-[10px] font-body ${getActionColor(log)}`}>
+                            {getActionLabel(log)}
+                          </Badge>
+                        </td>
+                        <td className="p-3 font-body text-xs text-muted-foreground whitespace-nowrap">
+                          {isSession ? "" : (TABLE_LABELS[log.table_name] ?? log.table_name)}
+                        </td>
+                        <td className="p-3 font-body text-xs text-muted-foreground truncate max-w-[300px] hidden md:table-cell">
+                          {getSummary(log)}
+                        </td>
+                      </tr>
+                      {isExpanded && (
+                        <tr key={`${log.id}-detail`}>
+                          <td colSpan={5} className="p-0">
+                            <div className="bg-muted/20 border-b border-border px-4 py-3 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-body font-medium text-foreground">Detalhes do registro</span>
+                                <span className="text-[10px] font-body text-muted-foreground">
+                                  {format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}
+                                </span>
+                              </div>
+
+                              {isSession && (
+                                <p className="text-xs font-body text-muted-foreground">
+                                  E-mail: {(log.new_data as any)?.email ?? "—"}
+                                </p>
+                              )}
+
+                              {changes && changes.length > 0 && (
+                                <div className="space-y-1">
+                                  {changes.map((c, i) => (
+                                    <div key={i} className="text-xs font-body text-muted-foreground">
+                                      <span className="font-medium text-foreground">{c.field}</span>:{" "}
+                                      <span className="line-through text-destructive/70">{String(c.from ?? "—")}</span>
+                                      {" → "}
+                                      <span className="text-success">{String(c.to ?? "—")}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {!isSession && !changes && log.new_data && (
+                                <div className="text-xs font-body text-muted-foreground space-y-0.5">
+                                  {Object.entries(log.new_data)
+                                    .filter(([k]) => !["id", "created_at", "updated_at"].includes(k))
+                                    .map(([k, v]) => (
+                                      <div key={k}><span className="font-medium text-foreground">{k}</span>: {String(v ?? "—")}</div>
+                                    ))}
+                                </div>
+                              )}
+
+                              {!isSession && log.action === "DELETE" && log.old_data && (
+                                <div className="text-xs font-body text-muted-foreground space-y-0.5">
+                                  {Object.entries(log.old_data)
+                                    .filter(([k]) => !["id", "created_at", "updated_at"].includes(k))
+                                    .map(([k, v]) => (
+                                      <div key={k}><span className="font-medium text-foreground">{k}</span>: {String(v ?? "—")}</div>
+                                    ))}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
                   );
                 })}
               </tbody>
             </table>
           </div>
-
-          {/* Expanded detail panel */}
-          {expandedRow && (() => {
-            const log = filtered.find(l => l.id === expandedRow);
-            if (!log) return null;
-            const changes = log.action === "UPDATE" ? getChangedFields(log.old_data, log.new_data) : null;
-            const isSession = log.table_name === "sessions";
-
-            return (
-              <div className="border-t border-border bg-muted/20 p-4 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-body font-medium text-foreground">Detalhes do registro</span>
-                  <span className="text-[10px] font-body text-muted-foreground">
-                    {format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}
-                  </span>
-                </div>
-
-                {isSession && (
-                  <p className="text-xs font-body text-muted-foreground">
-                    E-mail: {(log.new_data as any)?.email ?? "—"}
-                  </p>
-                )}
-
-                {changes && changes.length > 0 && (
-                  <div className="space-y-1">
-                    {changes.map((c, i) => (
-                      <div key={i} className="text-xs font-body text-muted-foreground">
-                        <span className="font-medium text-foreground">{c.field}</span>:{" "}
-                        <span className="line-through text-destructive/70">{String(c.from ?? "—")}</span>
-                        {" → "}
-                        <span className="text-success">{String(c.to ?? "—")}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {!isSession && !changes && log.new_data && (
-                  <div className="text-xs font-body text-muted-foreground space-y-0.5">
-                    {Object.entries(log.new_data)
-                      .filter(([k]) => !["id", "created_at", "updated_at"].includes(k))
-                      .map(([k, v]) => (
-                        <div key={k}><span className="font-medium text-foreground">{k}</span>: {String(v ?? "—")}</div>
-                      ))}
-                  </div>
-                )}
-
-                {!isSession && log.action === "DELETE" && log.old_data && (
-                  <div className="text-xs font-body text-muted-foreground space-y-0.5">
-                    {Object.entries(log.old_data)
-                      .filter(([k]) => !["id", "created_at", "updated_at"].includes(k))
-                      .map(([k, v]) => (
-                        <div key={k}><span className="font-medium text-foreground">{k}</span>: {String(v ?? "—")}</div>
-                      ))}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
         </div>
       )}
 
