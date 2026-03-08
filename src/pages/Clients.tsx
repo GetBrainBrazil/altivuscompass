@@ -87,6 +87,7 @@ export default function Clients() {
   const [view, setView] = useState<"list" | "form">("list");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [activeTab, setActiveTab] = useState("contact");
 
   // Multi-value entries
   const [phones, setPhones] = useState<PhoneEntry[]>([]);
