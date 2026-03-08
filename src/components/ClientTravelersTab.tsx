@@ -781,7 +781,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={() => editingRel && updateRelMutation.mutate({ id: editingRel.id, type: editRelType })} disabled={updateRelMutation.isPending} className="font-body">
+            <Button onClick={() => editingRel && updateRelMutation.mutate({ id: editingRel.id, type: editRelType, inverted: !!editingRel.inverted })} disabled={updateRelMutation.isPending} className="font-body">
               {updateRelMutation.isPending ? "Salvando..." : "Salvar"}
             </Button>
           </div>
