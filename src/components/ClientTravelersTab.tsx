@@ -324,6 +324,17 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         relationship_type: linkRelType as any,
       });
       if (error) throw error;
+      // Find the linked client name for audit
+      const linkedClient = allClients.find((c: any) => c.id === selectedLinkClient);
+      await logAuditEvent({
+        action: "create",
+        tableName: "client_relationships",
+        recordLabel: linkedClient?.full_name ?? "Desconhecido",
+        newData: {
+          relationship_type: linkRelType,
+          linked_client: linkedClient?.full_name,
+        },
+      });
     },
     onSuccess: () => {
       toast({ title: "Vínculo criado" });
