@@ -771,6 +771,36 @@ export default function Clients() {
                           </Select>
                         </div>
                       </div>
+                      {/* Passport images */}
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <Label className="font-body text-xs">Fotos:</Label>
+                        {(pp.image_urls || []).map((url, imgIdx) => (
+                          <div key={imgIdx} className="relative group">
+                            <a href={url} target="_blank" rel="noopener noreferrer">
+                              <img src={url} alt={`Passaporte ${pi + 1} foto ${imgIdx + 1}`} className="h-10 w-14 object-cover rounded border border-border" />
+                            </a>
+                            <button type="button" className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => {
+                              const n = [...passports]; n[pi].image_urls = n[pi].image_urls.filter((_, j) => j !== imgIdx); setPassports([...n]);
+                            }}>×</button>
+                          </div>
+                        ))}
+                        {(pp._imageFiles || []).map((file, fIdx) => (
+                          <div key={`new-${fIdx}`} className="relative group">
+                            <img src={URL.createObjectURL(file)} alt={file.name} className="h-10 w-14 object-cover rounded border border-primary" />
+                            <button type="button" className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => {
+                              const n = [...passports]; n[pi]._imageFiles = (n[pi]._imageFiles || []).filter((_, j) => j !== fIdx); setPassports([...n]);
+                            }}>×</button>
+                          </div>
+                        ))}
+                        <label className="cursor-pointer inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-input bg-background hover:bg-accent text-foreground">
+                          <Plus className="h-3 w-3" />Adicionar
+                          <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => {
+                            const files = Array.from(e.target.files || []);
+                            if (files.length > 0) { const n = [...passports]; n[pi]._imageFiles = [...(n[pi]._imageFiles || []), ...files]; setPassports([...n]); }
+                            e.target.value = "";
+                          }} />
+                        </label>
+                      </div>
                       <div className="flex items-center gap-2 mt-1">
                         <Label className="font-body text-xs">Status:</Label>
                         {(() => {
