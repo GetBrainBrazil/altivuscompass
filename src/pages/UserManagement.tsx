@@ -426,7 +426,7 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
               <form onSubmit={(e) => { e.preventDefault(); updateUserMutation.mutate(); }} className="space-y-4">
                 <AvatarUpload currentUrl={editUser?.avatar_url ? getAvatarUrl(editUser.avatar_url) : null} onFileSelect={setEditAvatarFile} />
                 <div className="space-y-2"><Label className="font-body">Nome completo</Label><Input value={editName} onChange={(e) => setEditName(e.target.value)} required /></div>
-                <div className="space-y-2"><Label className="font-body">Celular</Label><Input value={editForm.phone ?? ""} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} placeholder="(11) 99999-9999" /></div>
+                <div className="space-y-2"><Label className="font-body">Celular</Label><Input value={formatPhone(editForm.phone ?? "")} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value.replace(/\D/g, "").slice(0, 11) })} placeholder="(11) 99999-9999" /></div>
                 <div className="space-y-2">
                   <Label className="font-body">Função</Label>
                   <Select value={editRole} onValueChange={setEditRole}>
@@ -434,7 +434,6 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
                     <SelectContent>{Object.entries(ROLE_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2"><Label className="font-body">Plano de Saúde</Label><Input value={editForm.health_plan ?? ""} onChange={(e) => setEditForm({ ...editForm, health_plan: e.target.value })} placeholder="Ex: Unimed, SulAmérica" /></div>
                 <Button type="submit" className="w-full font-body" disabled={updateUserMutation.isPending}>
                   {updateUserMutation.isPending ? "Salvando..." : "Salvar Alterações"}
                 </Button>
