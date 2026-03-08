@@ -458,7 +458,7 @@ export default function Clients() {
 
   const goToList = () => {
     setView("list"); setEditingId(null); setForm(emptyForm); setActiveTab("contact");
-    setSelectedAirports([]); setPhones([]); setEmails([]); setSocials([]); setPassports([]);
+    setSelectedAirports([]); setSelectedTags([]); setPhones([]); setEmails([]); setSocials([]); setPassports([]);
   };
 
   const openCreate = () => {
