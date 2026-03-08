@@ -165,12 +165,18 @@ export default function Clients() {
     },
     enabled: !!editingId,
   });
-  const { data: clientVisas = [] } = useQuery({
-    queryKey: ["client-visas", editingId],
+  const { data: clientPassports = [] } = useQuery({
+    queryKey: ["client-passports", editingId],
     queryFn: async () => {
       if (!editingId) return [];
-      const { data } = await supabase.from("client_visas").select("*").eq("client_id", editingId);
-      return data ?? [];
+      const { data: pData } = await supabase.from("client_passports").select("*").eq("client_id", editingId);
+      if (!pData || pData.length === 0) return [];
+      const passportIds = pData.map((p: any) => p.id);
+      const { data: vData } = await supabase.from("client_visas").select("*").in("passport_id", passportIds);
+      return pData.map((p: any) => ({
+        ...p,
+        visas: (vData ?? []).filter((v: any) => v.passport_id === p.id),
+      }));
     },
     enabled: !!editingId,
   });
@@ -193,9 +199,13 @@ export default function Clients() {
   }, [clientSocials, editingId]);
   useEffect(() => {
     if (editingId) {
-      setVisas(clientVisas.map((v: any) => ({ id: v.id, visa_type: v.visa_type, validity_date: v.validity_date ?? "" })));
+      setPassports(clientPassports.map((p: any) => ({
+        id: p.id, passport_number: p.passport_number ?? "", issue_date: p.issue_date ?? "",
+        expiry_date: p.expiry_date ?? "", nationality: p.nationality ?? "", status: p.status ?? "valid",
+        visas: (p.visas ?? []).map((v: any) => ({ id: v.id, visa_type: v.visa_type, validity_date: v.validity_date ?? "" })),
+      })));
     }
-  }, [clientVisas, editingId]);
+  }, [clientPassports, editingId]);
 
   // CEP auto-fill
   const handleCepBlur = async () => {
