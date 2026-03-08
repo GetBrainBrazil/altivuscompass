@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,9 +22,17 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import type { Tables } from "@/integrations/supabase/types";
+
+
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -37,6 +46,8 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { toast } = useToast();
   const isRealAdmin = realRole === "admin";
   const [userSearch, setUserSearch] = useState("");
+  const [impersonateDialogOpen, setImpersonateDialogOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const { data: headerProfile } = useQuery({
     queryKey: ["header-profile", user?.id],
@@ -180,92 +191,100 @@ export function AppLayout({ children }: AppLayoutProps) {
                   {isRealAdmin && (
                     <>
                       <DropdownMenuSeparator />
-                      <DropdownMenuSub>
-                        <DropdownMenuSubTrigger className="flex items-center gap-2 cursor-pointer">
+                      {isMobile ? (
+                        <DropdownMenuItem
+                          onClick={() => setImpersonateDialogOpen(true)}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                             <circle cx="12" cy="12" r="3"/>
                           </svg>
                           Ver como...
-                        </DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent className="w-64">
-                          {isImpersonating && (
-                            <>
-                              <DropdownMenuItem onClick={clearImpersonation} className="cursor-pointer font-medium text-primary">
-                                ✓ Voltar ao Admin
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                            </>
-                          )}
-
-                          {/* By role */}
-                          <DropdownMenuItem disabled className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold py-1">
-                            Por Função
-                          </DropdownMenuItem>
-                          {!impersonatingRole && !impersonatingUser && (
-                            <DropdownMenuItem disabled className="text-xs text-muted-foreground">
-                              Administrador (atual)
-                            </DropdownMenuItem>
-                          )}
-                          {IMPERSONATABLE_ROLES.map((role) => (
-                            <DropdownMenuItem
-                              key={role}
-                              onClick={() => setImpersonatingRole(role)}
-                              className={`cursor-pointer ${impersonatingRole === role ? "font-medium text-primary" : ""}`}
-                            >
-                              {impersonatingRole === role && "✓ "}
-                              {ROLE_LABELS[role]}
-                            </DropdownMenuItem>
-                          ))}
-
-                          <DropdownMenuSeparator />
-
-                          {/* By user */}
-                          <DropdownMenuItem disabled className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold py-1">
-                            Por Usuário
-                          </DropdownMenuItem>
-                          <div className="px-2 py-1.5" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-                            <div className="relative">
-                              <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                              <Input
-                                placeholder="Buscar usuário..."
-                                value={userSearch}
-                                onChange={(e) => setUserSearch(e.target.value)}
-                                className="h-7 text-xs pl-7"
-                              />
-                            </div>
-                          </div>
-                          <div className="max-h-40 overflow-y-auto">
-                            {filteredUsers.length === 0 ? (
-                              <DropdownMenuItem disabled className="text-xs text-muted-foreground">
-                                Nenhum usuário encontrado
-                              </DropdownMenuItem>
-                            ) : (
-                              filteredUsers.map((u) => {
-                                const isActive = impersonatingUser?.userId === u.user_id;
-                                const roleLabel = ROLE_LABELS[u.role] ?? u.role;
-                                return (
-                                  <DropdownMenuItem
-                                    key={u.user_id}
-                                    onClick={() => setImpersonatingUser({
-                                      userId: u.user_id,
-                                      fullName: u.full_name,
-                                      role: u.role,
-                                    })}
-                                    className={`cursor-pointer text-xs ${isActive ? "font-medium text-primary" : ""}`}
-                                  >
-                                    {isActive && "✓ "}
-                                    {u.full_name}
-                                    {roleLabel && (
-                                      <span className="text-muted-foreground ml-1">— {roleLabel}</span>
-                                    )}
-                                  </DropdownMenuItem>
-                                );
-                              })
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger className="flex items-center gap-2 cursor-pointer">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                              <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            Ver como...
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuSubContent className="w-64">
+                            {isImpersonating && (
+                              <>
+                                <DropdownMenuItem onClick={clearImpersonation} className="cursor-pointer font-medium text-primary">
+                                  ✓ Voltar ao Admin
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                              </>
                             )}
-                          </div>
-                        </DropdownMenuSubContent>
-                      </DropdownMenuSub>
+                            <DropdownMenuItem disabled className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold py-1">
+                              Por Função
+                            </DropdownMenuItem>
+                            {!impersonatingRole && !impersonatingUser && (
+                              <DropdownMenuItem disabled className="text-xs text-muted-foreground">
+                                Administrador (atual)
+                              </DropdownMenuItem>
+                            )}
+                            {IMPERSONATABLE_ROLES.map((role) => (
+                              <DropdownMenuItem
+                                key={role}
+                                onClick={() => setImpersonatingRole(role)}
+                                className={`cursor-pointer ${impersonatingRole === role ? "font-medium text-primary" : ""}`}
+                              >
+                                {impersonatingRole === role && "✓ "}
+                                {ROLE_LABELS[role]}
+                              </DropdownMenuItem>
+                            ))}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem disabled className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold py-1">
+                              Por Usuário
+                            </DropdownMenuItem>
+                            <div className="px-2 py-1.5" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                              <div className="relative">
+                                <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                  placeholder="Buscar usuário..."
+                                  value={userSearch}
+                                  onChange={(e) => setUserSearch(e.target.value)}
+                                  className="h-7 text-xs pl-7"
+                                />
+                              </div>
+                            </div>
+                            <div className="max-h-40 overflow-y-auto">
+                              {filteredUsers.length === 0 ? (
+                                <DropdownMenuItem disabled className="text-xs text-muted-foreground">
+                                  Nenhum usuário encontrado
+                                </DropdownMenuItem>
+                              ) : (
+                                filteredUsers.map((u) => {
+                                  const isActive = impersonatingUser?.userId === u.user_id;
+                                  const roleLabel = ROLE_LABELS[u.role] ?? u.role;
+                                  return (
+                                    <DropdownMenuItem
+                                      key={u.user_id}
+                                      onClick={() => setImpersonatingUser({
+                                        userId: u.user_id,
+                                        fullName: u.full_name,
+                                        role: u.role,
+                                      })}
+                                      className={`cursor-pointer text-xs ${isActive ? "font-medium text-primary" : ""}`}
+                                    >
+                                      {isActive && "✓ "}
+                                      {u.full_name}
+                                      {roleLabel && (
+                                        <span className="text-muted-foreground ml-1">— {roleLabel}</span>
+                                      )}
+                                    </DropdownMenuItem>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </DropdownMenuSubContent>
+                        </DropdownMenuSub>
+                      )}
                     </>
                   )}
 
@@ -287,6 +306,79 @@ export function AppLayout({ children }: AppLayoutProps) {
           </main>
         </div>
       </div>
+
+      {/* Mobile impersonation dialog */}
+      {isRealAdmin && (
+        <Dialog open={impersonateDialogOpen} onOpenChange={setImpersonateDialogOpen}>
+          <DialogContent className="max-w-sm max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="font-display text-lg">Ver como...</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 pt-2">
+              {isImpersonating && (
+                <button
+                  onClick={() => { clearImpersonation(); setImpersonateDialogOpen(false); }}
+                  className="w-full text-left px-3 py-2 rounded-lg font-medium text-primary hover:bg-muted transition-colors text-sm font-body"
+                >
+                  ✓ Voltar ao Admin
+                </button>
+              )}
+
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold px-3">Por Função</p>
+              {!impersonatingRole && !impersonatingUser && (
+                <p className="text-xs text-muted-foreground px-3">Administrador (atual)</p>
+              )}
+              {IMPERSONATABLE_ROLES.map((role) => (
+                <button
+                  key={role}
+                  onClick={() => { setImpersonatingRole(role); setImpersonateDialogOpen(false); }}
+                  className={`w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors text-sm font-body ${impersonatingRole === role ? "font-medium text-primary" : "text-foreground"}`}
+                >
+                  {impersonatingRole === role && "✓ "}{ROLE_LABELS[role]}
+                </button>
+              ))}
+
+              <div className="border-t border-border my-2" />
+
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold px-3">Por Usuário</p>
+              <div className="px-3">
+                <div className="relative">
+                  <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar usuário..."
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    className="h-8 text-xs pl-7"
+                  />
+                </div>
+              </div>
+              <div className="max-h-48 overflow-y-auto space-y-0.5">
+                {filteredUsers.length === 0 ? (
+                  <p className="text-xs text-muted-foreground px-3 py-2">Nenhum usuário encontrado</p>
+                ) : (
+                  filteredUsers.map((u) => {
+                    const isActive = impersonatingUser?.userId === u.user_id;
+                    const roleLabel = ROLE_LABELS[u.role] ?? u.role;
+                    return (
+                      <button
+                        key={u.user_id}
+                        onClick={() => {
+                          setImpersonatingUser({ userId: u.user_id, fullName: u.full_name, role: u.role });
+                          setImpersonateDialogOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors text-xs font-body ${isActive ? "font-medium text-primary" : "text-foreground"}`}
+                      >
+                        {isActive && "✓ "}{u.full_name}
+                        {roleLabel && <span className="text-muted-foreground ml-1">— {roleLabel}</span>}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </SidebarProvider>
   );
 }
