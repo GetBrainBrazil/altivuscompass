@@ -15,6 +15,7 @@ import Miles from "./pages/Miles";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
 import UserManagement from "./pages/UserManagement";
+import Permissions from "./pages/Permissions";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
