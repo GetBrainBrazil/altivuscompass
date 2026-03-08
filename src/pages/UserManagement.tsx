@@ -232,34 +232,6 @@ export default function UserManagement() {
         </Dialog>
       </div>
 
-      {/* Permissions Matrix */}
-      <div className="glass-card rounded-xl p-3 sm:p-4">
-        <h3 className="text-sm font-display font-semibold text-foreground mb-3">Matriz de Permissões</h3>
-        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="font-body text-xs min-w-[100px]">Página</TableHead>
-                {Object.entries(ROLE_LABELS).map(([role, label]) => (
-                  <TableHead key={role} className="font-body text-xs text-center min-w-[80px]">{label}</TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {PAGE_PERMISSIONS.map((page) => (
-                <TableRow key={page.path}>
-                  <TableCell className="font-body text-sm">{page.label}</TableCell>
-                  {Object.keys(ROLE_LABELS).map((role) => (
-                    <TableCell key={role} className="text-center">
-                      {role === "admin" || page.allowedRoles.includes(role as any) ? <span className="text-primary">✓</span> : <span className="text-muted-foreground/40">—</span>}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
 
       {/* Desktop table */}
       <div className="glass-card rounded-xl overflow-hidden hidden md:block">
