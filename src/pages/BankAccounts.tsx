@@ -154,7 +154,7 @@ export default function BankAccounts() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle className="font-display">{editing ? "Editar Conta" : "Nova Conta Bancária"}</DialogTitle>
           </DialogHeader>
