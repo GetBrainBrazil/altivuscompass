@@ -241,6 +241,12 @@ export default function BankAccountsTab() {
                 <Label className="font-body">Conta ativa</Label>
               </div>
             </div>
+
+            {editing && (
+              <div className="border-t border-border/50 pt-4">
+                <BankAccountCredentials bankAccountId={editing.id} />
+              </div>
+            )}
             <div className="flex items-center justify-between">
               {editing ? (
                 <AlertDialog>
