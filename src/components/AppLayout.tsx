@@ -149,8 +149,8 @@ export function AppLayout({ children }: AppLayoutProps) {
                     </Link>
                   </DropdownMenuItem>
 
-                  {/* Sistema - admin only */}
-                  {isRealAdmin && (
+                  {/* Sistema - only for roles with /system access */}
+                  {canAccess(userRole, "/system") && (
                     <DropdownMenuItem asChild>
                       <Link to="/system" className="flex items-center gap-2 cursor-pointer">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
