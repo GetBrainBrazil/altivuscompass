@@ -225,6 +225,9 @@ export default function ChartOfAccountsTab() {
                       <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${tp.color}`}>{tp.label}</span>
                     </td>
                     <td className="p-4">
+                      {(() => { const nt = natureLabels[cat.account_nature] ?? natureLabels.analytic; return <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${nt.color}`}>{nt.label}</span>; })()}
+                    </td>
+                    <td className="p-4">
                       {cat.is_active ? (
                         <span className="text-[10px] font-medium px-2.5 py-1 rounded-full bg-success/10 text-success font-body">Ativa</span>
                       ) : (
