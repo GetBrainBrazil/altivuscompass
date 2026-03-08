@@ -19,7 +19,7 @@ interface AuthContextType {
   setImpersonatingRole: (role: string | null) => void;
   setImpersonatingUser: (user: ImpersonatingUser | null) => void;
   loading: boolean;
-  signOut: () => Promise<void>;
+  signOut: (reason?: "manual" | "inactivity") => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
