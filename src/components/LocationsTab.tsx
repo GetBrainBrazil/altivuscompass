@@ -388,12 +388,15 @@ function CitiesSubTab() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       const payload = { name: form.name, country_id: form.country_id, state_id: form.state_id || null };
+      const countryName = countries.find((c: any) => c.id === form.country_id)?.name ?? "";
       if (editing) {
         const { error } = await supabase.from("cities").update(payload).eq("id", editing.id);
         if (error) throw error;
+        await logAuditEvent({ action: "update", tableName: "cities", recordId: editing.id, recordLabel: `${form.name} (${countryName})`, oldData: editing, newData: payload });
       } else {
-        const { error } = await supabase.from("cities").insert(payload);
+        const { data, error } = await supabase.from("cities").insert(payload).select("id").single();
         if (error) throw error;
+        await logAuditEvent({ action: "create", tableName: "cities", recordId: data.id, recordLabel: `${form.name} (${countryName})`, newData: payload });
       }
     },
     onSuccess: () => {
