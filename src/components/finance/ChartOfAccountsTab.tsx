@@ -15,6 +15,7 @@ import { Plus, Pencil, Trash2, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } f
 type FinancialCategory = {
   id: string; name: string; code: string | null; type: string;
   parent_id: string | null; description: string | null; is_active: boolean;
+  account_nature: string;
   created_at: string; updated_at: string;
 };
 
