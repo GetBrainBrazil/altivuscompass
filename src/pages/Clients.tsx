@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus, ArrowLeft, Star, Trash2 } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus, ArrowLeft, Star, Trash2, AlertTriangle, AlertCircle, ShieldAlert } from "lucide-react";
 import { useCountries, useStates, useCities } from "@/components/LocationsTab";
 import { COUNTRY_CODES, applyPhoneMask } from "@/lib/phone-masks";
 
@@ -133,12 +133,39 @@ export default function Clients() {
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ["clients"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("clients").select("*, client_phones(*), client_emails(*)").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("clients").select("*, client_phones(*), client_emails(*), client_passports(*, client_visas(*))").order("created_at", { ascending: false });
       if (error) throw error;
+      const now = new Date();
       return data.map((c: any) => {
         const primaryPhone = c.client_phones?.find((p: any) => p.is_primary) || c.client_phones?.[0];
         const primaryEmail = c.client_emails?.find((e: any) => e.is_primary) || c.client_emails?.[0];
-        return { ...c, primary_phone: primaryPhone?.phone ?? null, primary_email: primaryEmail?.email ?? null };
+
+        // Compute alerts
+        const alerts: { label: string; level: "urgent" | "critical" | "warning" }[] = [];
+        const passportsList = c.client_passports ?? [];
+        for (const pp of passportsList) {
+          if (pp.expiry_date) {
+            const months = (new Date(pp.expiry_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30);
+            if (months <= 0) alerts.push({ label: "Passaporte vencido", level: "urgent" });
+            else if (months <= 3) alerts.push({ label: "Passaporte - urgência", level: "urgent" });
+            else if (months <= 6) alerts.push({ label: "Passaporte - crítico", level: "critical" });
+            else if (months <= 12) alerts.push({ label: "Passaporte - renovação", level: "warning" });
+          }
+          for (const v of (pp.client_visas ?? [])) {
+            if (v.validity_date) {
+              const vMonths = (new Date(v.validity_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30);
+              if (vMonths <= 0) alerts.push({ label: `Visto ${v.visa_type} vencido`, level: "urgent" });
+              else if (vMonths <= 3) alerts.push({ label: `Visto ${v.visa_type} - urgência`, level: "urgent" });
+              else if (vMonths <= 6) alerts.push({ label: `Visto ${v.visa_type} - renovar`, level: "critical" });
+              else if (vMonths <= 9) alerts.push({ label: `Visto ${v.visa_type} - alerta`, level: "warning" });
+            }
+          }
+        }
+        // Sort: urgent first, then critical, then warning
+        const levelOrder = { urgent: 0, critical: 1, warning: 2 };
+        alerts.sort((a, b) => levelOrder[a.level] - levelOrder[b.level]);
+
+        return { ...c, primary_phone: primaryPhone?.phone ?? null, primary_email: primaryEmail?.email ?? null, alerts };
       });
     },
   });
@@ -910,13 +937,12 @@ export default function Clients() {
                 <SortableHeader label="Localização" sortKey="city" />
                 <SortableHeader label="Perfil" sortKey="travel_profile" />
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Aeroportos</th>
-                <SortableHeader label="Passaporte" sortKey="passport_status" />
+                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Alertas</th>
                 
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
               {filtered.map((client: any) => {
-                const passportLabel = { none: "Sem", valid: "Válido", expired: "Vencido", processing: "Em processo" }[client.passport_status ?? "none"] ?? client.passport_status;
                 return (
                   <tr key={client.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEdit(client)}>
                     <td className="p-4">
@@ -955,9 +981,26 @@ export default function Clients() {
                       </div>
                     </td>
                     <td className="p-4">
-                      <span className={`text-xs font-body ${passportLabel === 'Válido' ? 'text-success' : passportLabel === 'Vencido' ? 'text-destructive' : 'text-muted-foreground'}`}>
-                        {passportLabel}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        {(client.alerts ?? []).length === 0 ? (
+                          <span className="text-xs text-muted-foreground font-body">—</span>
+                        ) : (
+                          (client.alerts as { label: string; level: string }[]).slice(0, 3).map((alert, idx) => {
+                            const styles = {
+                              urgent: "bg-destructive/10 text-destructive",
+                              critical: "bg-amber-500/10 text-amber-600",
+                              warning: "bg-amber-400/10 text-amber-500",
+                            }[alert.level] ?? "bg-muted text-muted-foreground";
+                            const Icon = alert.level === "urgent" ? ShieldAlert : alert.level === "critical" ? AlertCircle : AlertTriangle;
+                            return (
+                              <span key={idx} className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full font-body ${styles}`}>
+                                <Icon className="h-3 w-3" />
+                                {alert.label}
+                              </span>
+                            );
+                          })
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
