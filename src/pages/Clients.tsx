@@ -46,7 +46,19 @@ const travelProfiles: Record<string, { label: string; color: string }> = {
 type PhoneEntry = { id?: string; phone: string; description: string; country_code: string; is_primary: boolean };
 type EmailEntry = { id?: string; email: string; description: string; is_primary: boolean };
 type SocialEntry = { id?: string; network: string; handle: string };
-type VisaEntry = { id?: string; visa_type: string; validity_date: string };
+type VisaEntry = { id?: string; visa_type: string; validity_date: string; country_region: string; visa_number: string; issue_date: string; entry_type: string };
+
+const VISA_TYPES = [
+  "Turismo", "Negócios", "Estudo", "Trabalho", "Trânsito", "Diplomático",
+  "Oficial", "Jornalista", "Religioso", "Pesquisa", "Investidor",
+  "Nômade Digital", "Tratamento Médico", "Reunião Familiar", "Au Pair", "Outro"
+];
+
+const VISA_REGIONS = [
+  "EUA", "Schengen Area", "Reino Unido", "Canadá", "Austrália", "Japão",
+  "China", "Índia", "Emirados Árabes", "Brasil", "Argentina", "México",
+  "Nova Zelândia", "Coreia do Sul", "Singapura", "Turquia", "Rússia", "Outro"
+];
 type PassportEntry = {
   id?: string; passport_number: string; issue_date: string; expiry_date: string;
   nationality: string; status: string; visas: VisaEntry[];
@@ -155,10 +167,11 @@ export default function Clients() {
           for (const v of (pp.client_visas ?? [])) {
             if (v.validity_date) {
               const vMonths = Math.round((new Date(v.validity_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30));
-              if (vMonths <= 0) alerts.push({ label: `Visto ${v.visa_type} vencido`, level: "urgent", months: vMonths, tab: "documents" });
-              else if (vMonths <= 3) alerts.push({ label: `Visto ${v.visa_type} - urgência (${vMonths}m)`, level: "urgent", months: vMonths, tab: "documents" });
-              else if (vMonths <= 6) alerts.push({ label: `Visto ${v.visa_type} - renovar (${vMonths}m)`, level: "critical", months: vMonths, tab: "documents" });
-              else if (vMonths <= 9) alerts.push({ label: `Visto ${v.visa_type} - alerta (${vMonths}m)`, level: "warning", months: vMonths, tab: "documents" });
+              const vLabel = v.country_region ? `${v.visa_type} ${v.country_region}` : v.visa_type;
+              if (vMonths <= 0) alerts.push({ label: `Visto ${vLabel} vencido`, level: "urgent", months: vMonths, tab: "documents" });
+              else if (vMonths <= 3) alerts.push({ label: `Visto ${vLabel} - urgência (${vMonths}m)`, level: "urgent", months: vMonths, tab: "documents" });
+              else if (vMonths <= 6) alerts.push({ label: `Visto ${vLabel} - renovar (${vMonths}m)`, level: "critical", months: vMonths, tab: "documents" });
+              else if (vMonths <= 9) alerts.push({ label: `Visto ${vLabel} - alerta (${vMonths}m)`, level: "warning", months: vMonths, tab: "documents" });
             }
           }
         }
@@ -243,7 +256,7 @@ export default function Clients() {
       setPassports(clientPassports.map((p: any) => ({
         id: p.id, passport_number: p.passport_number ?? "", issue_date: p.issue_date ?? "",
         expiry_date: p.expiry_date ?? "", nationality: p.nationality ?? "", status: p.status ?? "valid",
-        visas: (p.visas ?? []).map((v: any) => ({ id: v.id, visa_type: v.visa_type, validity_date: v.validity_date ?? "" })),
+        visas: (p.visas ?? []).map((v: any) => ({ id: v.id, visa_type: v.visa_type, validity_date: v.validity_date ?? "", country_region: v.country_region ?? "", visa_number: v.visa_number ?? "", issue_date: v.issue_date ?? "", entry_type: v.entry_type ?? "single" })),
       })));
     }
   }, [clientPassports, editingId]);
@@ -310,7 +323,7 @@ export default function Clients() {
           if (ppErr) throw ppErr;
           if (pp.visas.length > 0) {
             await supabase.from("client_visas").insert(
-              pp.visas.filter(v => v.visa_type).map(v => ({ passport_id: ppData.id, visa_type: v.visa_type, validity_date: v.validity_date || null }))
+              pp.visas.filter(v => v.visa_type).map(v => ({ passport_id: ppData.id, visa_type: v.visa_type, validity_date: v.validity_date || null, country_region: v.country_region || null, visa_number: v.visa_number || null, issue_date: v.issue_date || null, entry_type: v.entry_type || "single" }))
             );
           }
         }
@@ -751,25 +764,77 @@ export default function Clients() {
                         <div className="flex items-center justify-between mb-2">
                           <Label className="font-body text-xs font-medium">Vistos deste passaporte</Label>
                           <Button type="button" variant="ghost" size="sm" className="h-5 px-1 text-xs" onClick={() => {
-                            const n = [...passports]; n[pi].visas = [...n[pi].visas, { visa_type: "", validity_date: "" }]; setPassports(n);
+                            const n = [...passports]; n[pi].visas = [...n[pi].visas, { visa_type: "", validity_date: "", country_region: "", visa_number: "", issue_date: "", entry_type: "single" }]; setPassports(n);
                           }}>
                             <Plus className="h-3 w-3 mr-1" />Visto
                           </Button>
                         </div>
                         {pp.visas.length === 0 && <p className="text-xs text-muted-foreground font-body">Nenhum visto.</p>}
                         {pp.visas.map((v, vi) => (
-                          <div key={vi} className="flex gap-2 items-start mb-1.5">
-                            <Input className="flex-1 h-8 text-sm" placeholder="Tipo (ex: B1/B2 EUA)" value={v.visa_type} onChange={(e) => {
-                              const n = [...passports]; n[pi].visas[vi].visa_type = e.target.value; setPassports(n);
-                            }} />
-                            <Input type="date" className="w-36 h-8 text-sm" value={v.validity_date} onChange={(e) => {
-                              const n = [...passports]; n[pi].visas[vi].validity_date = e.target.value; setPassports(n);
-                            }} />
-                            <Button type="button" variant="ghost" size="icon" className="shrink-0 h-8 w-8 text-destructive" onClick={() => {
-                              const n = [...passports]; n[pi].visas = n[pi].visas.filter((_, j) => j !== vi); setPassports(n);
-                            }}>
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
+                          <div key={vi} className="border border-border/30 rounded-md p-3 mb-2 space-y-2 bg-background/50">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-body font-medium text-foreground">Visto {vi + 1}</span>
+                              <Button type="button" variant="ghost" size="icon" className="shrink-0 h-7 w-7 text-destructive" onClick={() => {
+                                const n = [...passports]; n[pi].visas = n[pi].visas.filter((_, j) => j !== vi); setPassports(n);
+                              }}>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                              <div className="space-y-1">
+                                <Label className="font-body text-xs">País / Região *</Label>
+                                <Select value={v.country_region || ""} onValueChange={(val) => { const n = [...passports]; n[pi].visas[vi].country_region = val; setPassports(n); }}>
+                                  <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                  <SelectContent className="max-h-60">
+                                    {VISA_REGIONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="font-body text-xs">Tipo de Visto *</Label>
+                                <Select value={v.visa_type || ""} onValueChange={(val) => { const n = [...passports]; n[pi].visas[vi].visa_type = val; setPassports(n); }}>
+                                  <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                  <SelectContent className="max-h-60">
+                                    {VISA_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="font-body text-xs">Número do Visto</Label>
+                                <Input className="h-8 text-sm" value={v.visa_number} onChange={(e) => { const n = [...passports]; n[pi].visas[vi].visa_number = e.target.value; setPassports(n); }} />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="font-body text-xs">Data de Emissão</Label>
+                                <Input type="date" className="h-8 text-sm" value={v.issue_date} onChange={(e) => { const n = [...passports]; n[pi].visas[vi].issue_date = e.target.value; setPassports(n); }} />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="font-body text-xs">Data de Validade</Label>
+                                <Input type="date" className="h-8 text-sm" value={v.validity_date} onChange={(e) => { const n = [...passports]; n[pi].visas[vi].validity_date = e.target.value; setPassports(n); }} />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="font-body text-xs">Entradas Permitidas</Label>
+                                <Select value={v.entry_type || "single"} onValueChange={(val) => { const n = [...passports]; n[pi].visas[vi].entry_type = val; setPassports(n); }}>
+                                  <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="single">Single Entry</SelectItem>
+                                    <SelectItem value="multiple">Multiple Entry</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Label className="font-body text-xs">Status:</Label>
+                              {(() => {
+                                if (!v.validity_date) return <span className="text-xs text-muted-foreground">Informe a validade</span>;
+                                const today = new Date();
+                                const expiry = new Date(v.validity_date + "T00:00:00");
+                                const diffMs = expiry.getTime() - today.getTime();
+                                const diffMonths = diffMs / (1000 * 60 * 60 * 24 * 30);
+                                if (diffMs < 0) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-destructive/10 text-destructive">Vencido</span>;
+                                if (diffMonths <= 12) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-600">Vencendo ({Math.ceil(diffMonths)}m)</span>;
+                                return <span className="text-xs font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600">Válido</span>;
+                              })()}
+                            </div>
                           </div>
                         ))}
                       </div>
