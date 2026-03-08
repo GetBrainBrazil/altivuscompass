@@ -247,11 +247,11 @@ export default function Clients() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border/50">
-                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Cliente</th>
-                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Localização</th>
-                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Perfil</th>
+                <SortableHeader label="Cliente" sortKey="full_name" />
+                <SortableHeader label="Localização" sortKey="city" />
+                <SortableHeader label="Perfil" sortKey="travel_profile" />
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Aeroportos</th>
-                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Passaporte</th>
+                <SortableHeader label="Passaporte" sortKey="passport_status" />
                 <th className="text-right p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Ações</th>
               </tr>
             </thead>
