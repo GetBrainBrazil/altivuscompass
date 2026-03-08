@@ -85,6 +85,8 @@ export default function Login() {
           </Button>
         </form>
 
+        <ForgotPasswordDialog />
+
         <p className="text-center text-xs text-muted-foreground font-body">
           Acesso restrito a usuários autorizados.
         </p>
