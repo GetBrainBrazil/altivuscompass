@@ -17,6 +17,14 @@ import { ROLE_LABELS } from "@/lib/permissions";
 import UserContractsTab from "@/components/users/UserContractsTab";
 import type { Tables } from "@/integrations/supabase/types";
 
+function formatPhone(digits: string): string {
+  const d = digits.replace(/\D/g, "");
+  if (d.length <= 2) return d.length ? `(${d}` : "";
+  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7, 11)}`;
+}
+
 const roleBadgeVariant: Record<string, "default" | "secondary" | "outline"> = {
   admin: "default", manager: "secondary", sales_agent: "outline", operations: "outline",
 };
