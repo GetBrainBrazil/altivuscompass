@@ -10,8 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Trash2, Building2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Plus, Trash2, Building2 } from "lucide-react";
 
 type BankAccount = {
   id: string; bank_name: string; agency: string | null; account_number: string | null;
@@ -24,11 +23,7 @@ const accountTypeLabels: Record<string, string> = {
   checking: "Conta Corrente", savings: "Conta Poupança", salary: "Conta Salário", payment: "Conta Pagamento",
 };
 
-const pixKeyTypeLabels: Record<string, string> = {
-  cpf: "CPF", cnpj: "CNPJ", cpf_cnpj: "CPF/CNPJ", email: "E-mail", phone: "Telefone", random: "Chave Aleatória",
-};
-
-export default function BankAccounts() {
+export default function BankAccountsTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -76,6 +71,7 @@ export default function BankAccounts() {
     onSuccess: () => {
       toast({ title: "Conta removida" });
       queryClient.invalidateQueries({ queryKey: ["bank-accounts"] });
+      closeDialog();
     },
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
@@ -100,19 +96,8 @@ export default function BankAccounts() {
   const closeDialog = () => { setDialogOpen(false); setEditing(null); setForm({}); };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Link to="/finance">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <ArrowLeft size={18} />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">Contas Bancárias</h1>
-            <p className="text-muted-foreground font-body mt-1 text-sm">Contas bancárias da empresa.</p>
-          </div>
-        </div>
+    <div className="space-y-4">
+      <div className="flex justify-end">
         <Button onClick={openCreate} className="font-body text-xs sm:text-sm">
           <Plus size={16} /> Nova Conta
         </Button>
@@ -224,7 +209,7 @@ export default function BankAccounts() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => { deleteMutation.mutate(editing.id); closeDialog(); }}>Remover</AlertDialogAction>
+                      <AlertDialogAction onClick={() => { deleteMutation.mutate(editing.id); }}>Remover</AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>

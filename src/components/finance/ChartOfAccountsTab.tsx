@@ -10,8 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Pencil, Trash2, FolderTree, ChevronRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Plus, Pencil, Trash2, ChevronRight } from "lucide-react";
 
 type FinancialCategory = {
   id: string; name: string; code: string | null; type: string;
@@ -32,7 +31,7 @@ function buildTree(categories: FinancialCategory[], parentId: string | null = nu
     .map(c => ({ ...c, children: buildTree(categories, c.id) }));
 }
 
-export default function ChartOfAccounts() {
+export default function ChartOfAccountsTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -110,7 +109,6 @@ export default function ChartOfAccounts() {
   };
 
   const tree = buildTree(categories);
-  const rootCategories = categories.filter(c => !c.parent_id);
 
   const renderCategory = (cat: FinancialCategory & { children: any[] }, depth: number = 0) => {
     const hasChildren = cat.children.length > 0;
@@ -175,19 +173,8 @@ export default function ChartOfAccounts() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Link to="/finance">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <ArrowLeft size={18} />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">Plano de Contas</h1>
-            <p className="text-muted-foreground font-body mt-1 text-sm">Categorias financeiras hierárquicas.</p>
-          </div>
-        </div>
+    <div className="space-y-4">
+      <div className="flex justify-end">
         <Button onClick={() => openCreate()} className="font-body text-xs sm:text-sm">
           <Plus size={16} /> Nova Categoria
         </Button>

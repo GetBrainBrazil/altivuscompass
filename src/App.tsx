@@ -11,8 +11,7 @@ import Clients from "./pages/Clients";
 import Quotes from "./pages/Quotes";
 import Campaigns from "./pages/Campaigns";
 import Finance from "./pages/Finance";
-import BankAccounts from "./pages/BankAccounts";
-import ChartOfAccounts from "./pages/ChartOfAccounts";
+import FinancialRegistrations from "./pages/FinancialRegistrations";
 import Miles from "./pages/Miles";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
@@ -38,8 +37,7 @@ const App = () => (
             <Route path="/quotes" element={<ProtectedRoute><AppLayout><Quotes /></AppLayout></ProtectedRoute>} />
             <Route path="/campaigns" element={<ProtectedRoute><AppLayout><Campaigns /></AppLayout></ProtectedRoute>} />
             <Route path="/finance" element={<ProtectedRoute><AppLayout><Finance /></AppLayout></ProtectedRoute>} />
-            <Route path="/finance/bank-accounts" element={<ProtectedRoute><AppLayout><BankAccounts /></AppLayout></ProtectedRoute>} />
-            <Route path="/finance/chart-of-accounts" element={<ProtectedRoute><AppLayout><ChartOfAccounts /></AppLayout></ProtectedRoute>} />
+            <Route path="/finance/registrations" element={<ProtectedRoute><AppLayout><FinancialRegistrations /></AppLayout></ProtectedRoute>} />
             <Route path="/miles" element={<ProtectedRoute><AppLayout><Miles /></AppLayout></ProtectedRoute>} />
             <Route path="/users" element={<ProtectedRoute><AppLayout><UserManagement /></AppLayout></ProtectedRoute>} />
             <Route path="/permissions" element={<ProtectedRoute><AppLayout><Permissions /></AppLayout></ProtectedRoute>} />
