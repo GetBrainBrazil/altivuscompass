@@ -18,7 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { logAuditEvent } from "@/lib/audit";
-import { ArrowUp, ArrowDown, ArrowUpDown, Info, Plus, X } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, Info, Plus, Trash2 } from "lucide-react";
 import { COUNTRY_CODES, applyPhoneMask, stripMask } from "@/lib/phone-masks";
 
 type SupplierPhone = { id?: string; phone: string; country_code: string; description: string };
