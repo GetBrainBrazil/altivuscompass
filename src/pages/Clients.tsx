@@ -489,19 +489,28 @@ export default function Clients() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label className="font-body text-xs font-medium">Celulares / Telefones</Label>
-                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setPhones([...phones, { phone: "", description: "" }])}>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setPhones([...phones, { phone: "", description: "", country_code: "+55" }])}>
                       <Plus className="h-3 w-3 mr-1" />Adicionar
                     </Button>
                   </div>
-                  {phones.map((p, i) => (
-                    <div key={i} className="flex gap-2 items-start">
-                      <Input className="flex-1 h-9" placeholder="Número" value={p.phone} onChange={(e) => { const n = [...phones]; n[i].phone = e.target.value; setPhones(n); }} />
-                      <Input className="w-32 sm:w-40 h-9" placeholder="Descrição" value={p.description} onChange={(e) => { const n = [...phones]; n[i].description = e.target.value; setPhones(n); }} />
-                      <Button type="button" variant="ghost" size="icon" className="shrink-0 h-9 w-9 text-destructive" onClick={() => setPhones(phones.filter((_, j) => j !== i))}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                  {phones.map((p, i) => {
+                    const cc = COUNTRY_CODES.find((c) => c.dial === p.country_code) || COUNTRY_CODES[0];
+                    return (
+                      <div key={i} className="flex gap-2 items-start">
+                        <Select value={p.country_code} onValueChange={(v) => { const n = [...phones]; n[i].country_code = v; n[i].phone = ""; setPhones(n); }}>
+                          <SelectTrigger className="w-28 h-9 shrink-0 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {COUNTRY_CODES.map((c) => <SelectItem key={c.code} value={c.dial}>{c.flag} {c.dial}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <Input className="w-40 h-9 shrink-0" placeholder={cc.mask.replace(/#/g, "0")} value={p.phone} onChange={(e) => { const n = [...phones]; n[i].phone = applyPhoneMask(e.target.value, cc.mask); setPhones(n); }} />
+                        <Input className="flex-1 h-9" placeholder="Descrição" value={p.description} onChange={(e) => { const n = [...phones]; n[i].description = e.target.value; setPhones(n); }} />
+                        <Button type="button" variant="ghost" size="icon" className="shrink-0 h-9 w-9 text-destructive" onClick={() => setPhones(phones.filter((_, j) => j !== i))}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {/* Emails */}
