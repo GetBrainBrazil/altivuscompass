@@ -138,7 +138,7 @@ export default function ChartOfAccountsTab() {
 
   const openCreate = (parentId?: string) => {
     setEditing(null);
-    setForm({ type: "expense", is_active: true, parent_id: parentId || null });
+    setForm({ type: "expense", is_active: true, parent_id: parentId || null, account_nature: "analytic" });
     setDialogOpen(true);
   };
 
