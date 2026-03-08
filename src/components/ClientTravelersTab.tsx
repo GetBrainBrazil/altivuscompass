@@ -142,14 +142,26 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     enabled: !!clientId,
   });
 
-  // Fetch all clients for linking (excluding current)
+  // Fetch all clients for linking/copy (excluding current)
   const { data: allClients = [] } = useQuery({
     queryKey: ["all-clients-for-link"],
     queryFn: async () => {
       const { data } = await supabase.from("clients").select("id, full_name, city, state").order("full_name");
       return data ?? [];
     },
-    enabled: linkDialog,
+    enabled: linkDialog || copyDialog,
+  });
+
+  // Fetch passengers of selected copy client
+  const { data: copyClientPassengers = [] } = useQuery({
+    queryKey: ["copy-client-passengers", selectedCopyClient],
+    queryFn: async () => {
+      if (!selectedCopyClient) return [];
+      const { data, error } = await supabase.from("passengers").select("*").eq("client_id", selectedCopyClient).order("full_name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedCopyClient && copyDialog,
   });
 
   const filteredLinkClients = allClients.filter((c: any) => {
@@ -157,6 +169,12 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     if (relationships.some((r: any) => r.linked_client_id === c.id)) return false;
     if (!linkSearch) return true;
     return c.full_name.toLowerCase().includes(linkSearch.toLowerCase());
+  });
+
+  const filteredCopyClients = allClients.filter((c: any) => {
+    if (c.id === clientId) return false;
+    if (!copyClientSearch) return true;
+    return c.full_name.toLowerCase().includes(copyClientSearch.toLowerCase());
   });
 
   // Save passenger mutation
