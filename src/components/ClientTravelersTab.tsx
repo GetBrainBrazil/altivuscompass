@@ -251,7 +251,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         const { data: oldData } = await supabase.from("passengers").select("*").eq("id", editingPassenger.id).single();
         const { error } = await supabase.from("passengers").update(updatedData).eq("id", editingPassenger.id);
         if (error) throw error;
-        logAuditEvent({ action: "update", tableName: "passengers", recordId: editingPassenger.id, oldData, newData: updatedData });
+        logAuditEvent({ action: "update", tableName: "passengers", recordId: editingPassenger.id, recordLabel: updatedData.full_name, oldData, newData: updatedData });
 
         // Sync copies across other clients
         const oldPassport = editingPassenger.passport_number;
@@ -287,7 +287,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
           ...updatedData,
         }).select("id").single();
         if (error) throw error;
-        logAuditEvent({ action: "create", tableName: "passengers", recordId: data.id, newData: { client_id: clientId, ...updatedData } });
+        logAuditEvent({ action: "create", tableName: "passengers", recordId: data.id, recordLabel: updatedData.full_name, newData: { client_id: clientId, ...updatedData } });
       }
     },
     onSuccess: () => {
@@ -305,7 +305,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       const { data: oldData } = await supabase.from("passengers").select("*").eq("id", id).single();
       const { error } = await supabase.from("passengers").delete().eq("id", id);
       if (error) throw error;
-      logAuditEvent({ action: "delete", tableName: "passengers", recordId: id, oldData });
+      logAuditEvent({ action: "delete", tableName: "passengers", recordId: id, recordLabel: oldData?.full_name, oldData });
     },
     onSuccess: () => {
       toast({ title: "Passageiro removido" });
@@ -381,7 +381,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         notes: notesText,
       }).select("id").single();
       if (clientErr) throw clientErr;
-      logAuditEvent({ action: "create", tableName: "clients", recordId: newClient.id, newData: { full_name: promotePassenger.full_name, promoted_from_passenger: promotePassenger.id, birth_date: promotePassenger.birth_date, nationality: promotePassenger.nationality } });
+      logAuditEvent({ action: "create", tableName: "clients", recordId: newClient.id, recordLabel: promotePassenger.full_name, newData: { full_name: promotePassenger.full_name, promoted_from_passenger: promotePassenger.id, birth_date: promotePassenger.birth_date, nationality: promotePassenger.nationality } });
 
       // Create passport record if passenger had passport data
       if (promotePassenger.passport_number) {

@@ -422,12 +422,12 @@ export default function Clients() {
         const { data: oldClient } = await supabase.from("clients").select("*").eq("id", editingId).single();
         const { error } = await supabase.from("clients").update(payload).eq("id", editingId);
         if (error) throw error;
-        logAuditEvent({ action: "update", tableName: "clients", recordId: editingId, oldData: oldClient, newData: payload });
+        logAuditEvent({ action: "update", tableName: "clients", recordId: editingId, recordLabel: oldClient?.full_name ?? payload.full_name, oldData: oldClient, newData: payload });
       } else {
         const { data, error } = await supabase.from("clients").insert(payload).select("id").single();
         if (error) throw error;
         clientId = data.id;
-        logAuditEvent({ action: "create", tableName: "clients", recordId: data.id, newData: payload });
+        logAuditEvent({ action: "create", tableName: "clients", recordId: data.id, recordLabel: payload.full_name, newData: payload });
       }
 
       // Save multi-value records
@@ -518,7 +518,7 @@ export default function Clients() {
       const { data: oldClient } = await supabase.from("clients").select("*").eq("id", id).single();
       const { error } = await supabase.from("clients").delete().eq("id", id);
       if (error) throw error;
-      logAuditEvent({ action: "delete", tableName: "clients", recordId: id, oldData: oldClient });
+      logAuditEvent({ action: "delete", tableName: "clients", recordId: id, recordLabel: oldClient?.full_name, oldData: oldClient });
     },
     onSuccess: () => {
       toast({ title: "Cliente removido" });

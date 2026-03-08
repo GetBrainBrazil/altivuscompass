@@ -171,12 +171,16 @@ export default function AuditLogsTab() {
     if (!oldData || !newData) return null;
     const changes: { field: string; from: any; to: any }[] = [];
     for (const key of Object.keys(newData)) {
-      if (["updated_at", "created_at"].includes(key)) continue;
+      if (["updated_at", "created_at", "_label"].includes(key)) continue;
       if (JSON.stringify(oldData[key]) !== JSON.stringify(newData[key])) {
         changes.push({ field: key, from: oldData[key], to: newData[key] });
       }
     }
     return changes.length > 0 ? changes : null;
+  };
+
+  const getRecordLabel = (log: AuditLog): string | null => {
+    return (log.new_data as any)?._label ?? (log.old_data as any)?._label ?? (log.old_data as any)?.full_name ?? (log.new_data as any)?.full_name ?? (log.old_data as any)?.bank_name ?? (log.new_data as any)?.bank_name ?? (log.old_data as any)?.name ?? (log.new_data as any)?.name ?? null;
   };
 
   const getActionLabel = (log: AuditLog) => {
@@ -204,7 +208,7 @@ export default function AuditLogsTab() {
     const data = log.new_data ?? log.old_data;
     if (!data) return "";
     return Object.entries(data)
-      .filter(([k]) => !["id", "created_at", "updated_at"].includes(k))
+      .filter(([k]) => !["id", "created_at", "updated_at", "_label"].includes(k))
       .slice(0, 2)
       .map(([k, v]) => `${k}: ${String(v ?? "—").substring(0, 30)}`)
       .join(" | ");
@@ -336,6 +340,7 @@ export default function AuditLogsTab() {
                   const isExpanded = expandedRow === log.id;
                   const changes = log.action === "UPDATE" ? getChangedFields(log.old_data, log.new_data) : null;
                   const isSession = log.table_name === "sessions";
+                  const label = getRecordLabel(log);
 
                   return (
                     <>
@@ -359,7 +364,12 @@ export default function AuditLogsTab() {
                           </Badge>
                         </td>
                         <td className="p-3 font-body text-xs text-muted-foreground whitespace-nowrap">
-                          {isSession ? "" : (TABLE_LABELS[log.table_name] ?? log.table_name)}
+                          {isSession ? "" : (
+                            <span>
+                              {TABLE_LABELS[log.table_name] ?? log.table_name}
+                              {label && <span className="font-medium text-foreground ml-1">— {label}</span>}
+                            </span>
+                          )}
                         </td>
                         <td className="p-3 font-body text-xs text-muted-foreground truncate max-w-[300px] hidden md:table-cell">
                           {getSummary(log)}
@@ -398,7 +408,7 @@ export default function AuditLogsTab() {
                               {!isSession && !changes && log.new_data && (
                                 <div className="text-xs font-body text-muted-foreground space-y-0.5">
                                   {Object.entries(log.new_data)
-                                    .filter(([k]) => !["id", "created_at", "updated_at"].includes(k))
+                                    .filter(([k]) => !["id", "created_at", "updated_at", "_label"].includes(k))
                                     .map(([k, v]) => (
                                       <div key={k}><span className="font-medium text-foreground">{k}</span>: {String(v ?? "—")}</div>
                                     ))}
@@ -408,7 +418,7 @@ export default function AuditLogsTab() {
                               {!isSession && log.action === "DELETE" && log.old_data && (
                                 <div className="text-xs font-body text-muted-foreground space-y-0.5">
                                   {Object.entries(log.old_data)
-                                    .filter(([k]) => !["id", "created_at", "updated_at"].includes(k))
+                                    .filter(([k]) => !["id", "created_at", "updated_at", "_label"].includes(k))
                                     .map(([k, v]) => (
                                       <div key={k}><span className="font-medium text-foreground">{k}</span>: {String(v ?? "—")}</div>
                                     ))}

@@ -83,11 +83,11 @@ export default function BankAccountsTab() {
       if (editing) {
         const { error } = await supabase.from("bank_accounts").update(payload).eq("id", editing.id);
         if (error) throw error;
-        logAuditEvent({ action: "update", tableName: "bank_accounts", recordId: editing.id, oldData: editing, newData: payload });
+        logAuditEvent({ action: "update", tableName: "bank_accounts", recordId: editing.id, recordLabel: editing.bank_name, oldData: editing, newData: payload });
       } else {
         const { data, error } = await supabase.from("bank_accounts").insert(payload).select("id").single();
         if (error) throw error;
-        logAuditEvent({ action: "create", tableName: "bank_accounts", recordId: data.id, newData: payload });
+        logAuditEvent({ action: "create", tableName: "bank_accounts", recordId: data.id, recordLabel: payload.bank_name, newData: payload });
       }
     },
     onSuccess: () => {
@@ -103,7 +103,7 @@ export default function BankAccountsTab() {
       const account = accounts.find((a) => a.id === id);
       const { error } = await supabase.from("bank_accounts").delete().eq("id", id);
       if (error) throw error;
-      logAuditEvent({ action: "delete", tableName: "bank_accounts", recordId: id, oldData: account });
+      logAuditEvent({ action: "delete", tableName: "bank_accounts", recordId: id, recordLabel: account?.bank_name, oldData: account });
     },
     onSuccess: () => {
       toast({ title: "Conta removida" });
