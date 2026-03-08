@@ -43,6 +43,8 @@ export default function Finance() {
   const [form, setForm] = useState<Record<string, any>>({});
   const [filter, setFilter] = useState("all");
   const [partyPopoverOpen, setPartyPopoverOpen] = useState(false);
+  const [accountFilter, setAccountFilter] = useState<Set<string>>(new Set());
+  const [accountFilterOpen, setAccountFilterOpen] = useState(false);
 
   const { data: clients = [] } = useQuery({
     queryKey: ["clients-list"],
