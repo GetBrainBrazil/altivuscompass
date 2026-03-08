@@ -228,17 +228,19 @@ export default function BankAccountCredentials({ bankAccountId }: { bankAccountI
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <Label className="font-body font-semibold text-sm">Acessos</Label>
-        <Button type="button" variant="outline" size="sm" onClick={openCreate} className="font-body text-xs h-7">
-          <Plus size={12} className="mr-1" /> Novo Acesso
-        </Button>
+        {!impersonatingUser && (
+          <Button type="button" variant="outline" size="sm" onClick={openCreate} className="font-body text-xs h-7">
+            <Plus size={12} className="mr-1" /> Novo Acesso
+          </Button>
+        )}
       </div>
 
-      {credentials.length === 0 && !formOpen && (
+      {visibleCredentials.length === 0 && !formOpen && (
         <p className="text-xs text-muted-foreground font-body">Nenhum acesso cadastrado.</p>
       )}
 
       {/* List existing credentials */}
-      {credentials.map((cred) => (
+      {visibleCredentials.map((cred) => (
         <div key={cred.id} className="border border-border/50 rounded-lg p-3 space-y-2 bg-muted/20">
           <div className="flex items-center justify-between">
             <button
