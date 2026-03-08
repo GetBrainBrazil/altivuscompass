@@ -106,7 +106,7 @@ export default function ChartOfAccountsTab() {
       const payload = {
         name: form.name, code: form.code || null, type: form.type || "expense",
         parent_id: form.parent_id || null, description: form.description || null,
-        is_active: form.is_active ?? true,
+        is_active: form.is_active ?? true, account_nature: form.account_nature || "analytic",
       };
       if (editing) {
         const { error } = await supabase.from("financial_categories").update(payload).eq("id", editing.id);
