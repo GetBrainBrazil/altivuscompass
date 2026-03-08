@@ -193,7 +193,7 @@ export default function Clients() {
         const match = sorted.find((c) => stored.startsWith(c.dial));
         const cc = match || COUNTRY_CODES[0];
         const localPart = match ? stored.slice(match.dial.length).trim() : stored;
-        return { id: p.id, phone: applyPhoneMask(localPart, cc.mask), description: p.description ?? "", country_code: cc.code };
+        return { id: p.id, phone: applyPhoneMask(localPart, cc.mask), description: p.description ?? "", country_code: cc.code, is_primary: p.is_primary ?? false };
       }));
     }
   }, [clientPhones, editingId]);
