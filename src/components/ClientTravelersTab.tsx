@@ -271,11 +271,20 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         full_name: promotePassenger.full_name,
         birth_date: promotePassenger.birth_date || null,
         nationality: promotePassenger.nationality || null,
-        passport_number: promotePassenger.passport_number || null,
-        passport_status: promotePassenger.passport_number ? "valid" : "none",
         notes: notesText,
       }).select("id").single();
       if (clientErr) throw clientErr;
+
+      // Create passport record if passenger had passport data
+      if (promotePassenger.passport_number) {
+        await supabase.from("client_passports").insert({
+          client_id: newClient.id,
+          passport_number: promotePassenger.passport_number,
+          nationality: promotePassenger.nationality || null,
+          expiry_date: promotePassenger.passport_expiry || null,
+          status: "valid",
+        });
+      }
 
       // Create relationship
       await supabase.from("client_relationships").insert({
