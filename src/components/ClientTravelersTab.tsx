@@ -287,7 +287,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
           ...updatedData,
         }).select("id").single();
         if (error) throw error;
-        logAuditEvent({ action: "create", tableName: "passengers", recordId: data.id, newData: { client_id: clientId, ...updatedData } });
+        logAuditEvent({ action: "create", tableName: "passengers", recordId: data.id, recordLabel: updatedData.full_name, newData: { client_id: clientId, ...updatedData } });
       }
     },
     onSuccess: () => {
