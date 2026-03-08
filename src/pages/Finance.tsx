@@ -505,7 +505,7 @@ export default function Finance() {
                 <th className="p-3 text-right font-medium">Valor</th>
                 <th className="p-3 text-right font-medium">Saldo</th>
                 <th className="p-3 text-left font-medium">Obs</th>
-                <th className="p-3 w-8"></th>
+                
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
