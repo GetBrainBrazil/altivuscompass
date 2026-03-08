@@ -516,8 +516,13 @@ export default function Finance() {
 
       {/* Desktop table */}
       <div className="glass-card rounded-xl hidden sm:block overflow-x-auto">
-        <div className="p-4 sm:p-5 border-b border-border/50">
+        <div className="p-4 sm:p-5 border-b border-border/50 flex items-center justify-between">
           <h2 className="font-display text-lg font-semibold">Transações</h2>
+          {selectedIds.size > 0 && (
+            <button onClick={() => setSelectedIds(new Set())} className="text-xs text-muted-foreground hover:text-foreground font-body">
+              Limpar seleção ({selectedIds.size})
+            </button>
+          )}
         </div>
         {isLoading ? (
           <div className="p-8 text-center text-muted-foreground font-body">Carregando...</div>
