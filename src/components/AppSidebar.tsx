@@ -31,8 +31,7 @@ const navItems = [
     title: "Financeiro", url: "/finance",
     icon: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 17l4-4 4 4 4-6 4 2 4-4" /><path d="M2 21h20" /></svg>,
     subItems: [
-      { title: "Contas Bancárias", url: "/finance/bank-accounts" },
-      { title: "Plano de Contas", url: "/finance/chart-of-accounts" },
+      { title: "Cadastros Financeiros", url: "/finance/registrations" },
     ],
   },
   { title: "Milhas", url: "/miles", icon: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L2 8.5l7 3.5 3.5 7L22 2z" /></svg> },
