@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { useAuth } from "@/contexts/AuthContext";
