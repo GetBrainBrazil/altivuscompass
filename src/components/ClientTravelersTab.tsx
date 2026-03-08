@@ -578,6 +578,24 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
               <Label className="font-body text-xs">Observações</Label>
               <Input value={passengerForm.notes} onChange={(e) => setPassengerForm({ ...passengerForm, notes: e.target.value })} className="h-9" placeholder="Vistos, restrições, etc." />
             </div>
+            {editingPassenger?.id && passengerLinkedClients.length > 0 && (
+              <div className="border-t border-border/50 pt-3 mt-1">
+                <Label className="font-body text-xs text-muted-foreground">Também vinculado a:</Label>
+                <div className="flex flex-wrap gap-2 mt-1.5">
+                  {passengerLinkedClients.map((c: any) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      className="inline-flex items-center gap-1 text-xs font-body text-primary hover:underline"
+                      onClick={() => { setPassengerDialog(false); setEditingPassenger(null); onNavigateToClient(c.id); }}
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      {c.full_name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <Button onClick={() => savePassengerMutation.mutate()} disabled={!passengerForm.full_name || savePassengerMutation.isPending} className="font-body">
               {savePassengerMutation.isPending ? "Salvando..." : "Salvar"}
             </Button>
