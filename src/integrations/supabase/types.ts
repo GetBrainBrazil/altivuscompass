@@ -190,6 +190,7 @@ export type Database = {
           created_at: string
           expiry_date: string | null
           id: string
+          image_urls: string[] | null
           issue_date: string | null
           nationality: string | null
           passport_number: string | null
@@ -200,6 +201,7 @@ export type Database = {
           created_at?: string
           expiry_date?: string | null
           id?: string
+          image_urls?: string[] | null
           issue_date?: string | null
           nationality?: string | null
           passport_number?: string | null
@@ -210,6 +212,7 @@ export type Database = {
           created_at?: string
           expiry_date?: string | null
           id?: string
+          image_urls?: string[] | null
           issue_date?: string | null
           nationality?: string | null
           passport_number?: string | null
