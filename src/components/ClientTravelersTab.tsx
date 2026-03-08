@@ -530,6 +530,8 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                 <tr className="border-b border-border/50 bg-muted/30">
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_name")}>Nome<SortIcon columnKey="_name" sort={relSort} /></th>
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_type")}>Vínculo<SortIcon columnKey="_type" sort={relSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_birth_date")}>Nascimento<SortIcon columnKey="_birth_date" sort={relSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_nationality")}>Nacionalidade<SortIcon columnKey="_nationality" sort={relSort} /></th>
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_passports")}>Passaporte(s) válido(s)<SortIcon columnKey="_passports" sort={relSort} /></th>
                   <th className="p-3 w-20"></th>
                 </tr>
@@ -554,6 +556,8 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                         {RELATIONSHIP_TYPES[r.relationship_type] || r.relationship_label || r.relationship_type}
                       </span>
                     </td>
+                    <td className="p-3 text-sm font-body text-foreground">{r.client?.birth_date ? new Date(r.client.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
+                    <td className="p-3 text-sm font-body text-foreground">{r.client?.nationality || "—"}</td>
                     <td className="p-3 text-sm font-body text-foreground">{r._passports || "—"}</td>
                     <td className="p-3">
                       <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive"
