@@ -80,6 +80,15 @@ export default function Finance() {
     return build(null);
   }, [financialCategories]);
 
+  const { data: bankAccounts = [] } = useQuery({
+    queryKey: ["bank-accounts-active"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("bank_accounts").select("id, bank_name, agency, account_number").eq("is_active", true).order("bank_name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const partyOptions = useMemo(() => {
     const clientOpts = clients.map(c => ({ value: c.full_name, label: c.full_name, group: "Clientes" }));
     const supplierOpts = suppliers.map(s => ({ value: s.trade_name || s.name, label: s.trade_name ? `${s.name} (${s.trade_name})` : s.name, group: "Fornecedores" }));
@@ -103,7 +112,6 @@ export default function Finance() {
         status: form.status || "pending", category: form.category || form.type || "receivable",
         due_date: form.due_date || null, party_name: form.party_name || null,
         is_reconciled: form.is_reconciled ?? false,
-        virtual_account_owner: form.virtual_account_owner || null,
         observations: form.observations || null,
         payment_account: form.payment_account || null,
       };
@@ -148,7 +156,6 @@ export default function Finance() {
       status: t.status ?? "pending", category: t.category ?? t.type,
       due_date: t.due_date ?? "", party_name: t.party_name ?? "",
       is_reconciled: t.is_reconciled ?? false,
-      virtual_account_owner: t.virtual_account_owner ?? "",
       observations: t.observations ?? "",
       payment_account: t.payment_account ?? "",
     });
@@ -346,11 +353,17 @@ export default function Finance() {
                   </div>
                   <div className="space-y-2">
                     <Label className="font-body">Conta</Label>
-                    <Input value={form.payment_account ?? ""} onChange={(e) => setForm({ ...form, payment_account: e.target.value })} placeholder="Ex: Virtual" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-body">Conta Virtual (Sócio)</Label>
-                    <Input value={form.virtual_account_owner ?? ""} onChange={(e) => setForm({ ...form, virtual_account_owner: e.target.value })} placeholder="Ex: Rodrigo, Camile" />
+                    <Select value={form.payment_account ?? ""} onValueChange={(v) => setForm({ ...form, payment_account: v === "none" ? null : v })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione a conta..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Nenhuma</SelectItem>
+                        {bankAccounts.map(ba => (
+                          <SelectItem key={ba.id} value={ba.id}>
+                            {ba.bank_name}{ba.agency ? ` - Ag ${ba.agency}` : ""}{ba.account_number ? ` / ${ba.account_number}` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label className="font-body">Observações</Label>
