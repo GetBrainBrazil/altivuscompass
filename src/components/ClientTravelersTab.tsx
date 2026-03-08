@@ -305,7 +305,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       const { data: oldData } = await supabase.from("passengers").select("*").eq("id", id).single();
       const { error } = await supabase.from("passengers").delete().eq("id", id);
       if (error) throw error;
-      logAuditEvent({ action: "delete", tableName: "passengers", recordId: id, oldData });
+      logAuditEvent({ action: "delete", tableName: "passengers", recordId: id, recordLabel: oldData?.full_name, oldData });
     },
     onSuccess: () => {
       toast({ title: "Passageiro removido" });
