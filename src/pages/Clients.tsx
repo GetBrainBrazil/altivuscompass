@@ -122,7 +122,7 @@ export default function Clients() {
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
 
-  const openCreate = () => { setEditingClient(null); setForm(emptyClient); setAirportsInput(""); setDialogOpen(true); };
+  const openCreate = () => { setEditingClient(null); setForm(emptyClient); setSelectedAirports([]); setDialogOpen(true); };
   const openEdit = (c: Client) => {
     setEditingClient(c);
     setForm({
@@ -131,10 +131,10 @@ export default function Clients() {
       travel_profile: c.travel_profile ?? "economic", passport_status: c.passport_status ?? "none",
       notes: c.notes ?? "",
     });
-    setAirportsInput((c.preferred_airports ?? []).join(", "));
+    setSelectedAirports(c.preferred_airports ?? []);
     setDialogOpen(true);
   };
-  const closeDialog = () => { setDialogOpen(false); setEditingClient(null); setForm(emptyClient); setAirportsInput(""); };
+  const closeDialog = () => { setDialogOpen(false); setEditingClient(null); setForm(emptyClient); setSelectedAirports([]); };
 
   const filtered = sortData(
     clients.filter((c) => {
