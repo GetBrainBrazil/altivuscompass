@@ -600,6 +600,7 @@ export type Database = {
           cpf_cnpj: string | null
           created_at: string
           created_by: string | null
+          desired_destinations: string[] | null
           email: string | null
           foreign_id: string | null
           full_name: string
@@ -642,6 +643,7 @@ export type Database = {
           cpf_cnpj?: string | null
           created_at?: string
           created_by?: string | null
+          desired_destinations?: string[] | null
           email?: string | null
           foreign_id?: string | null
           full_name: string
@@ -684,6 +686,7 @@ export type Database = {
           cpf_cnpj?: string | null
           created_at?: string
           created_by?: string | null
+          desired_destinations?: string[] | null
           email?: string | null
           foreign_id?: string | null
           full_name?: string
@@ -715,6 +718,60 @@ export type Database = {
         }
         Relationships: []
       }
+      continent_countries: {
+        Row: {
+          continent_id: string
+          country_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          continent_id: string
+          country_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          continent_id?: string
+          country_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "continent_countries_continent_id_fkey"
+            columns: ["continent_id"]
+            isOneToOne: false
+            referencedRelation: "continents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "continent_countries_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      continents: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       countries: {
         Row: {
           created_at: string
@@ -730,6 +787,62 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      custom_destination_items: {
+        Row: {
+          created_at: string
+          custom_destination_id: string
+          id: string
+          item_id: string
+          item_type: string
+        }
+        Insert: {
+          created_at?: string
+          custom_destination_id: string
+          id?: string
+          item_id: string
+          item_type: string
+        }
+        Update: {
+          created_at?: string
+          custom_destination_id?: string
+          id?: string
+          item_id?: string
+          item_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_destination_items_custom_destination_id_fkey"
+            columns: ["custom_destination_id"]
+            isOneToOne: false
+            referencedRelation: "custom_destinations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_destinations: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }

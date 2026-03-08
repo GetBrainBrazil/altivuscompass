@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus, ArrowLeft, Star, Trash2, AlertTriangle, AlertCircle, ShieldAlert, Info, ChevronRight, ChevronDown, Users, Eye, EyeOff, ExternalLink, Check, Search } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useCountries, useStates, useCities } from "@/components/LocationsTab";
+import { useCountries, useStates, useCities, useContinents, useCustomDestinations, useCustomDestinationItems } from "@/components/LocationsTab";
 import { COUNTRY_CODES, applyPhoneMask } from "@/lib/phone-masks";
 import { ImageEditor } from "@/components/ImageEditor";
 import { ClientTravelersTab } from "@/components/ClientTravelersTab";
@@ -158,6 +158,11 @@ export default function Clients() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
 
+  // Destination selection
+  const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
+  const [destPopoverOpen, setDestPopoverOpen] = useState(false);
+  const [destSearch, setDestSearch] = useState("");
+
   // Quick-add location
   const [quickAddType, setQuickAddType] = useState<"country" | "state" | "city" | null>(null);
   const [quickAddName, setQuickAddName] = useState("");
@@ -206,6 +211,32 @@ export default function Clients() {
       a.iata_code.toLowerCase().includes(q) || a.name.toLowerCase().includes(q) || a.city.toLowerCase().includes(q)
     );
   }, [airportsList, airportSearch]);
+
+  // Destination options for preferences
+  const { data: destContinents = [] } = useContinents();
+  const { data: destCustom = [] } = useCustomDestinations();
+
+  const destAllOptions = useMemo(() => {
+    const opts: { type: string; id: string; label: string; group: string }[] = [];
+    for (const d of destCustom) opts.push({ type: "custom", id: d.id, label: d.name, group: "Diversos" });
+    for (const c of destContinents) opts.push({ type: "continent", id: c.id, label: c.name, group: "Continentes" });
+    for (const c of dbCountries) opts.push({ type: "country", id: c.id, label: c.name, group: "Países" });
+    for (const s of dbStates as any[]) opts.push({ type: "state", id: s.id, label: `${s.name} (${s.countries?.name ?? ""})`, group: "Estados/Regiões" });
+    for (const c of dbCities as any[]) opts.push({ type: "city", id: c.id, label: `${c.name} (${c.countries?.name ?? ""})`, group: "Cidades" });
+    return opts;
+  }, [destCustom, destContinents, dbCountries, dbStates, dbCities]);
+
+  const destFilteredOptions = useMemo(() => {
+    if (!destSearch) return destAllOptions.slice(0, 80);
+    const q = destSearch.toLowerCase();
+    return destAllOptions.filter(o => o.label.toLowerCase().includes(q)).slice(0, 80);
+  }, [destAllOptions, destSearch]);
+
+  const destLabelMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const o of destAllOptions) map[`${o.type}:${o.id}`] = o.label;
+    return map;
+  }, [destAllOptions]);
 
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ["clients"],
@@ -413,6 +444,7 @@ export default function Clients() {
         ...rest,
         preferred_airports: selectedAirports,
         tags: selectedTags,
+        desired_destinations: selectedDestinations,
         birth_date: form.birth_date || null,
       };
 
@@ -530,11 +562,11 @@ export default function Clients() {
 
   const goToList = () => {
     setView("list"); setEditingId(null); setForm(emptyForm); setActiveTab("contact");
-    setSelectedAirports([]); setSelectedTags([]); setPhones([]); setEmails([]); setSocials([]); setPassports([]); setMilesPrograms([]); setShowPasswords({});
+    setSelectedAirports([]); setSelectedTags([]); setSelectedDestinations([]); setPhones([]); setEmails([]); setSocials([]); setPassports([]); setMilesPrograms([]); setShowPasswords({});
   };
 
   const openCreate = () => {
-    setEditingId(null); setForm(emptyForm); setSelectedAirports([]); setSelectedTags([]); setActiveTab("contact");
+    setEditingId(null); setForm(emptyForm); setSelectedAirports([]); setSelectedTags([]); setSelectedDestinations([]); setActiveTab("contact");
     setPhones([]); setEmails([]); setSocials([]); setPassports([]); setMilesPrograms([]); setShowPasswords({});
     setView("form");
   };
@@ -558,6 +590,7 @@ export default function Clients() {
     });
     setSelectedAirports(c.preferred_airports ?? []);
     setSelectedTags(c.tags ?? []);
+    setSelectedDestinations((c as any).desired_destinations ?? []);
     setView("form");
   };
 
@@ -904,6 +937,57 @@ export default function Clients() {
                           <button type="button" onClick={() => setSelectedAirports((prev) => prev.filter((c) => c !== code))} className="hover:text-destructive"><X className="h-3 w-3" /></button>
                         </span>
                       ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Desired destinations */}
+                <div className="space-y-1">
+                  <Label className="font-body text-xs font-medium">Destinos desejados</Label>
+                  <Popover open={destPopoverOpen} onOpenChange={setDestPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" type="button" className="w-full justify-between font-normal h-9 text-sm">
+                        {selectedDestinations.length > 0 ? `${selectedDestinations.length} destino(s)` : "Selecione destinos desejados"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-96 p-0" align="start">
+                      <div className="p-2 border-b"><Input placeholder="Buscar destino..." value={destSearch} onChange={(e) => setDestSearch(e.target.value)} className="h-8 text-sm" /></div>
+                      <div className="max-h-60 overflow-y-auto p-1">
+                        {destFilteredOptions.length === 0 && <p className="text-xs text-muted-foreground p-3 text-center">Nenhum resultado</p>}
+                        {["Diversos", "Continentes", "Países", "Estados/Regiões", "Cidades"].map(group => {
+                          const items = destFilteredOptions.filter(o => o.group === group);
+                          if (items.length === 0) return null;
+                          return (
+                            <div key={group}>
+                              <p className="text-[10px] font-semibold text-muted-foreground uppercase px-2 pt-2 pb-1">{group}</p>
+                              {items.map(o => {
+                                const key = `${o.type}:${o.id}`;
+                                const isSelected = selectedDestinations.includes(key);
+                                return (
+                                  <label key={key} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                                    <Checkbox checked={isSelected} onCheckedChange={(checked) => setSelectedDestinations(prev => checked ? [...prev, key] : prev.filter(k => k !== key))} />
+                                    <span className="truncate">{o.label}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  {selectedDestinations.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedDestinations.map((key) => {
+                        const label = destLabelMap[key] ?? key;
+                        return (
+                          <span key={key} className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                            {label}
+                            <button type="button" onClick={() => setSelectedDestinations(prev => prev.filter(k => k !== key))} className="hover:text-destructive"><X className="h-3 w-3" /></button>
+                          </span>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

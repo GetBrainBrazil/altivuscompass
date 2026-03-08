@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type SortDir = "asc" | "desc";
 type SortState = { key: string; dir: SortDir } | null;
@@ -531,19 +532,465 @@ function CitiesSubTab() {
   );
 }
 
+// ── Continents Sub-Tab ──
+
+export function useContinents() {
+  return useQuery({
+    queryKey: ["locations-continents"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("continents").select("*").order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useContinentCountries(continentId?: string) {
+  return useQuery({
+    queryKey: ["continent-countries", continentId],
+    queryFn: async () => {
+      let q = supabase.from("continent_countries").select("*, continents(name), countries(name)").order("created_at");
+      if (continentId) q = q.eq("continent_id", continentId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+function ContinentsSubTab() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { userRole } = useAuth();
+  const isAdmin = userRole === "admin";
+  const [search, setSearch] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
+  const [name, setName] = useState("");
+  const [selectedCountryIds, setSelectedCountryIds] = useState<string[]>([]);
+  const [countrySearch, setCountrySearch] = useState("");
+  const [sort, setSort] = useState<SortState>(null);
+
+  const { data: continents = [], isLoading } = useContinents();
+  const { data: countries = [] } = useCountries();
+  const { data: allContinentCountries = [] } = useContinentCountries();
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      let continentId: string;
+      if (editing) {
+        const { error } = await supabase.from("continents").update({ name }).eq("id", editing.id);
+        if (error) throw error;
+        continentId = editing.id;
+      } else {
+        const { data, error } = await supabase.from("continents").insert({ name }).select("id").single();
+        if (error) throw error;
+        continentId = data.id;
+      }
+      // Sync countries
+      await supabase.from("continent_countries").delete().eq("continent_id", continentId);
+      if (selectedCountryIds.length > 0) {
+        const { error } = await supabase.from("continent_countries").insert(
+          selectedCountryIds.map(cid => ({ continent_id: continentId, country_id: cid }))
+        );
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["locations-continents"] });
+      queryClient.invalidateQueries({ queryKey: ["continent-countries"] });
+      toast({ title: editing ? "Continente atualizado" : "Continente adicionado" });
+      closeDialog();
+    },
+    onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("continents").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["locations-continents"] });
+      queryClient.invalidateQueries({ queryKey: ["continent-countries"] });
+      toast({ title: "Continente removido" });
+    },
+    onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+  const closeDialog = () => { setDialogOpen(false); setEditing(null); setName(""); setSelectedCountryIds([]); setCountrySearch(""); };
+  const openEdit = (c: any) => {
+    setEditing(c);
+    setName(c.name);
+    const linked = allContinentCountries.filter((cc: any) => cc.continent_id === c.id).map((cc: any) => cc.country_id);
+    setSelectedCountryIds(linked);
+    setDialogOpen(true);
+  };
+
+  const countriesPerContinent = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const cc of allContinentCountries as any[]) {
+      if (!map[cc.continent_id]) map[cc.continent_id] = [];
+      map[cc.continent_id].push(cc.countries?.name ?? "");
+    }
+    return map;
+  }, [allContinentCountries]);
+
+  const filtered = sortData(
+    continents.filter((c: any) => c.name.toLowerCase().includes(search.toLowerCase())),
+    sort
+  );
+
+  const filteredCountriesForDialog = countries.filter((c: any) =>
+    !countrySearch || c.name.toLowerCase().includes(countrySearch.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+        <Input placeholder="Buscar continente..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" />
+        {isAdmin && (
+          <>
+            <Button size="sm" onClick={() => setDialogOpen(true)}>+ Continente</Button>
+            <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) closeDialog(); else setDialogOpen(true); }}>
+              <DialogContent className="max-w-lg">
+                <DialogHeader><DialogTitle>{editing ? "Editar Continente" : "Novo Continente"}</DialogTitle></DialogHeader>
+                <div className="grid gap-4 py-2">
+                  <div><Label>Nome <span className="text-destructive">*</span></Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do continente" /></div>
+                  <div>
+                    <Label>Países do continente</Label>
+                    <Input placeholder="Buscar país..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)} className="mt-1 mb-2" />
+                    <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-1">
+                      {filteredCountriesForDialog.map((c: any) => (
+                        <label key={c.id} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-muted cursor-pointer text-sm">
+                          <Checkbox
+                            checked={selectedCountryIds.includes(c.id)}
+                            onCheckedChange={(checked) => setSelectedCountryIds(prev => checked ? [...prev, c.id] : prev.filter(id => id !== c.id))}
+                          />
+                          {c.name}
+                        </label>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">{selectedCountryIds.length} país(es) selecionado(s)</p>
+                  </div>
+                  <Button onClick={() => saveMutation.mutate()} disabled={!name}>{editing ? "Salvar" : "Adicionar"}</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </>
+        )}
+      </div>
+      <div className="text-sm text-muted-foreground">{filtered.length} continente(s)</div>
+      {isLoading ? <p className="text-muted-foreground text-sm">Carregando...</p> : (
+        <div className="rounded-lg border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <SortableHead label="Nome" sortKey="name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
+                <TableHead>Países</TableHead>
+                {isAdmin && <TableHead className="w-24">Ações</TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((c: any) => (
+                <TableRow key={c.id}>
+                  <TableCell className="font-medium">{c.name}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{(countriesPerContinent[c.id] ?? []).join(", ") || "—"}</TableCell>
+                  {isAdmin && (
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => openEdit(c)}>✏️</Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild><Button variant="ghost" size="sm">🗑️</Button></AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir continente?</AlertDialogTitle>
+                              <AlertDialogDescription>Excluir {c.name}? Os vínculos com países serão removidos.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => deleteMutation.mutate(c.id)}>Excluir</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Custom Destinations (Diversos) Sub-Tab ──
+
+export function useCustomDestinations() {
+  return useQuery({
+    queryKey: ["custom-destinations"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("custom_destinations").select("*").order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useCustomDestinationItems(customDestId?: string) {
+  return useQuery({
+    queryKey: ["custom-destination-items", customDestId],
+    queryFn: async () => {
+      let q = supabase.from("custom_destination_items").select("*");
+      if (customDestId) q = q.eq("custom_destination_id", customDestId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+function DiversosSubTab() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { userRole } = useAuth();
+  const isAdmin = userRole === "admin";
+  const [search, setSearch] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
+  const [formName, setFormName] = useState("");
+  const [formDesc, setFormDesc] = useState("");
+  const [selectedItems, setSelectedItems] = useState<{ type: string; id: string; label: string }[]>([]);
+  const [itemSearch, setItemSearch] = useState("");
+  const [sort, setSort] = useState<SortState>(null);
+
+  const { data: customDests = [], isLoading } = useCustomDestinations();
+  const { data: allItems = [] } = useCustomDestinationItems();
+  const { data: continents = [] } = useContinents();
+  const { data: countries = [] } = useCountries();
+  const { data: states = [] } = useStates();
+  const { data: cities = [] } = useCities();
+
+  // Build searchable options
+  const allOptions = useMemo(() => {
+    const opts: { type: string; id: string; label: string; group: string }[] = [];
+    for (const c of continents) opts.push({ type: "continent", id: c.id, label: c.name, group: "Continentes" });
+    for (const c of countries) opts.push({ type: "country", id: c.id, label: c.name, group: "Países" });
+    for (const s of states as any[]) opts.push({ type: "state", id: s.id, label: `${s.name} (${s.countries?.name ?? ""})`, group: "Estados/Regiões" });
+    for (const c of cities as any[]) opts.push({ type: "city", id: c.id, label: `${c.name} (${c.countries?.name ?? ""})`, group: "Cidades" });
+    return opts;
+  }, [continents, countries, states, cities]);
+
+  const filteredOptions = useMemo(() => {
+    if (!itemSearch) return allOptions.slice(0, 50);
+    const q = itemSearch.toLowerCase();
+    return allOptions.filter(o => o.label.toLowerCase().includes(q)).slice(0, 50);
+  }, [allOptions, itemSearch]);
+
+  // Build label map
+  const labelMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const o of allOptions) map[`${o.type}:${o.id}`] = o.label;
+    return map;
+  }, [allOptions]);
+
+  const itemsPerDest = useMemo(() => {
+    const map: Record<string, { type: string; id: string }[]> = {};
+    for (const item of allItems as any[]) {
+      if (!map[item.custom_destination_id]) map[item.custom_destination_id] = [];
+      map[item.custom_destination_id].push({ type: item.item_type, id: item.item_id });
+    }
+    return map;
+  }, [allItems]);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      let destId: string;
+      if (editing) {
+        const { error } = await supabase.from("custom_destinations").update({ name: formName, description: formDesc }).eq("id", editing.id);
+        if (error) throw error;
+        destId = editing.id;
+      } else {
+        const { data, error } = await supabase.from("custom_destinations").insert({ name: formName, description: formDesc }).select("id").single();
+        if (error) throw error;
+        destId = data.id;
+      }
+      await supabase.from("custom_destination_items").delete().eq("custom_destination_id", destId);
+      if (selectedItems.length > 0) {
+        const { error } = await supabase.from("custom_destination_items").insert(
+          selectedItems.map(si => ({ custom_destination_id: destId, item_type: si.type, item_id: si.id }))
+        );
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["custom-destinations"] });
+      queryClient.invalidateQueries({ queryKey: ["custom-destination-items"] });
+      toast({ title: editing ? "Destino atualizado" : "Destino adicionado" });
+      closeDialog();
+    },
+    onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("custom_destinations").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["custom-destinations"] });
+      queryClient.invalidateQueries({ queryKey: ["custom-destination-items"] });
+      toast({ title: "Destino removido" });
+    },
+    onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+  const closeDialog = () => { setDialogOpen(false); setEditing(null); setFormName(""); setFormDesc(""); setSelectedItems([]); setItemSearch(""); };
+  const openEdit = (d: any) => {
+    setEditing(d);
+    setFormName(d.name);
+    setFormDesc(d.description ?? "");
+    const items = (itemsPerDest[d.id] ?? []).map(i => ({
+      type: i.type, id: i.id, label: labelMap[`${i.type}:${i.id}`] ?? "Desconhecido"
+    }));
+    setSelectedItems(items);
+    setDialogOpen(true);
+  };
+
+  const toggleItem = (opt: { type: string; id: string; label: string }) => {
+    const exists = selectedItems.some(si => si.type === opt.type && si.id === opt.id);
+    if (exists) setSelectedItems(selectedItems.filter(si => !(si.type === opt.type && si.id === opt.id)));
+    else setSelectedItems([...selectedItems, { type: opt.type, id: opt.id, label: opt.label }]);
+  };
+
+  const typeLabels: Record<string, string> = { continent: "Continente", country: "País", state: "Estado", city: "Cidade" };
+
+  const filtered = sortData(
+    customDests.filter((d: any) => d.name.toLowerCase().includes(search.toLowerCase())),
+    sort
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+        <Input placeholder="Buscar destino..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" />
+        {isAdmin && (
+          <>
+            <Button size="sm" onClick={() => setDialogOpen(true)}>+ Destino</Button>
+            <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) closeDialog(); else setDialogOpen(true); }}>
+              <DialogContent className="max-w-lg">
+                <DialogHeader><DialogTitle>{editing ? "Editar Destino" : "Novo Destino"}</DialogTitle></DialogHeader>
+                <div className="grid gap-4 py-2">
+                  <div><Label>Nome <span className="text-destructive">*</span></Label><Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Ex: Praias do Caribe" /></div>
+                  <div><Label>Descrição</Label><Input value={formDesc} onChange={(e) => setFormDesc(e.target.value)} placeholder="Descrição opcional" /></div>
+                  <div>
+                    <Label>Localidades incluídas</Label>
+                    <Input placeholder="Buscar continente, país, estado ou cidade..." value={itemSearch} onChange={(e) => setItemSearch(e.target.value)} className="mt-1 mb-2" />
+                    <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-1">
+                      {filteredOptions.map((o) => {
+                        const isSelected = selectedItems.some(si => si.type === o.type && si.id === o.id);
+                        return (
+                          <label key={`${o.type}-${o.id}`} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-muted cursor-pointer text-sm">
+                            <Checkbox checked={isSelected} onCheckedChange={() => toggleItem(o)} />
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{typeLabels[o.type]}</span>
+                            {o.label}
+                          </label>
+                        );
+                      })}
+                    </div>
+                    {selectedItems.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {selectedItems.map((si) => (
+                          <span key={`${si.type}-${si.id}`} className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                            {si.label}
+                            <button type="button" onClick={() => toggleItem(si)} className="hover:text-destructive"><X className="h-3 w-3" /></button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <Button onClick={() => saveMutation.mutate()} disabled={!formName}>{editing ? "Salvar" : "Adicionar"}</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </>
+        )}
+      </div>
+      <div className="text-sm text-muted-foreground">{filtered.length} destino(s)</div>
+      {isLoading ? <p className="text-muted-foreground text-sm">Carregando...</p> : (
+        <div className="rounded-lg border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <SortableHead label="Nome" sortKey="name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
+                <TableHead>Descrição</TableHead>
+                <TableHead>Itens</TableHead>
+                {isAdmin && <TableHead className="w-24">Ações</TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.length === 0 ? (
+                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground text-sm py-8">Nenhum destino cadastrado.</TableCell></TableRow>
+              ) : (
+                filtered.map((d: any) => {
+                  const items = itemsPerDest[d.id] ?? [];
+                  const labels = items.map(i => labelMap[`${i.type}:${i.id}`] ?? "?").join(", ");
+                  return (
+                    <TableRow key={d.id}>
+                      <TableCell className="font-medium">{d.name}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{d.description || "—"}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground max-w-xs truncate">{labels || "—"}</TableCell>
+                      {isAdmin && (
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="sm" onClick={() => openEdit(d)}>✏️</Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild><Button variant="ghost" size="sm">🗑️</Button></AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Excluir destino?</AlertDialogTitle>
+                                  <AlertDialogDescription>Excluir "{d.name}"? Esta ação não pode ser desfeita.</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => deleteMutation.mutate(d.id)}>Excluir</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main Locations Tab ──
 
 export default function LocationsTab() {
   return (
-    <Tabs defaultValue="countries" className="space-y-4">
+    <Tabs defaultValue="continents" className="space-y-4">
       <TabsList>
+        <TabsTrigger value="continents">Continentes</TabsTrigger>
         <TabsTrigger value="countries">Países</TabsTrigger>
         <TabsTrigger value="states">Estados/Regiões</TabsTrigger>
         <TabsTrigger value="cities">Cidades</TabsTrigger>
+        <TabsTrigger value="diversos">Diversos</TabsTrigger>
       </TabsList>
+      <TabsContent value="continents"><ContinentsSubTab /></TabsContent>
       <TabsContent value="countries"><CountriesSubTab /></TabsContent>
       <TabsContent value="states"><StatesSubTab /></TabsContent>
       <TabsContent value="cities"><CitiesSubTab /></TabsContent>
+      <TabsContent value="diversos"><DiversosSubTab /></TabsContent>
     </Tabs>
   );
 }
