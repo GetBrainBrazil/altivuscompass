@@ -911,6 +911,12 @@ export default function Clients() {
                       </div>
                     </td>
                     <td className="p-4">
+                      <p className="text-sm font-body text-foreground whitespace-nowrap">{client.primary_phone || "—"}</p>
+                    </td>
+                    <td className="p-4">
+                      <p className="text-sm font-body text-foreground truncate max-w-[200px]">{client.primary_email || "—"}</p>
+                    </td>
+                    <td className="p-4">
                       <p className="text-sm font-body text-foreground">{client.city}</p>
                       <p className="text-xs text-muted-foreground font-body">{client.state}</p>
                     </td>
