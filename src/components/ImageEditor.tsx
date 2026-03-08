@@ -107,13 +107,12 @@ export function ImageEditor({ open, imageSrc, onClose, onSave, aspectRatio }: Im
           <DialogTitle className="text-sm font-display">Editar Imagem</DialogTitle>
         </DialogHeader>
 
-        <div className="relative w-full h-[300px] bg-muted rounded-lg overflow-hidden">
+        <div className="relative w-full h-[350px] bg-muted rounded-lg overflow-hidden">
           <Cropper
             image={imageSrc}
             crop={crop}
             zoom={zoom}
             rotation={rotation}
-            aspect={aspectRatio}
             onCropChange={setCrop}
             onZoomChange={setZoom}
             onRotationChange={setRotation}
