@@ -3,21 +3,29 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccess } from "@/lib/permissions";
+import { ROLE_LABELS } from "@/lib/permissions";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
+const IMPERSONATABLE_ROLES = ["manager", "sales_agent", "operations"] as const;
+
 export function AppLayout({ children }: AppLayoutProps) {
-  const { user, userRole, signOut } = useAuth();
+  const { user, userRole, realRole, impersonatingRole, setImpersonatingRole, signOut } = useAuth();
+  const isRealAdmin = realRole === "admin";
 
   return (
     <SidebarProvider>
@@ -26,6 +34,26 @@ export function AppLayout({ children }: AppLayoutProps) {
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 flex items-center border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-10 px-3 sm:px-4">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+
+            {/* Impersonation banner */}
+            {impersonatingRole && (
+              <div className="ml-3 flex items-center gap-2">
+                <Badge variant="destructive" className="font-body text-xs gap-1.5 py-1">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  Visualizando como: {ROLE_LABELS[impersonatingRole] ?? impersonatingRole}
+                </Badge>
+                <button
+                  onClick={() => setImpersonatingRole(null)}
+                  className="text-xs font-body font-medium text-destructive hover:underline"
+                >
+                  Voltar ao Admin
+                </button>
+              </div>
+            )}
+
             <div className="ml-auto flex items-center gap-2 sm:gap-3">
               <button className="relative p-2 rounded-lg hover:bg-muted transition-colors">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
@@ -45,7 +73,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-muted transition-colors">
                     <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-primary text-primary-foreground text-xs font-medium">
+                      <AvatarFallback className={`text-xs font-medium ${impersonatingRole ? "bg-destructive text-destructive-foreground" : "bg-primary text-primary-foreground"}`}>
                         {user?.email?.[0]?.toUpperCase() ?? "U"}
                       </AvatarFallback>
                     </Avatar>
@@ -54,8 +82,8 @@ export function AppLayout({ children }: AppLayoutProps) {
                     </span>
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  {canAccess(userRole, "/users") && (
+                <DropdownMenuContent align="end" className="w-52">
+                  {canAccess(realRole, "/users") && (
                     <DropdownMenuItem asChild>
                       <Link to="/users" className="flex items-center gap-2 cursor-pointer">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -68,7 +96,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  {canAccess(userRole, "/permissions") && (
+                  {canAccess(realRole, "/permissions") && (
                     <DropdownMenuItem asChild>
                       <Link to="/permissions" className="flex items-center gap-2 cursor-pointer">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -79,7 +107,47 @@ export function AppLayout({ children }: AppLayoutProps) {
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  {(canAccess(userRole, "/users") || canAccess(userRole, "/permissions")) && (
+
+                  {/* Impersonate role - admin only */}
+                  {isRealAdmin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger className="flex items-center gap-2 cursor-pointer">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                          </svg>
+                          Ver como...
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent>
+                          {impersonatingRole && (
+                            <DropdownMenuItem onClick={() => setImpersonatingRole(null)} className="cursor-pointer font-medium text-primary">
+                              ✓ Voltar ao Admin
+                            </DropdownMenuItem>
+                          )}
+                          {!impersonatingRole && (
+                            <DropdownMenuItem disabled className="text-xs text-muted-foreground">
+                              Administrador (atual)
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          {IMPERSONATABLE_ROLES.map((role) => (
+                            <DropdownMenuItem
+                              key={role}
+                              onClick={() => setImpersonatingRole(role)}
+                              className={`cursor-pointer ${impersonatingRole === role ? "font-medium text-primary" : ""}`}
+                            >
+                              {impersonatingRole === role && "✓ "}
+                              {ROLE_LABELS[role]}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                    </>
+                  )}
+
+                  {(canAccess(realRole, "/users") || canAccess(realRole, "/permissions") || isRealAdmin) && (
                     <DropdownMenuSeparator />
                   )}
                   <DropdownMenuItem onClick={signOut} className="cursor-pointer text-destructive focus:text-destructive">
