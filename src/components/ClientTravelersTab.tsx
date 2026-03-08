@@ -235,25 +235,53 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
   // Save passenger mutation
   const savePassengerMutation = useMutation({
     mutationFn: async () => {
+      const updatedData = {
+        full_name: passengerForm.full_name,
+        birth_date: passengerForm.birth_date || null,
+        nationality: passengerForm.nationality || null,
+        passport_number: passengerForm.passport_number || null,
+        passport_expiry: passengerForm.passport_expiry || null,
+        notes: passengerForm.notes || null,
+      };
+
       if (editingPassenger?.id) {
-        const { error } = await supabase.from("passengers").update({
-          full_name: passengerForm.full_name,
-          birth_date: passengerForm.birth_date || null,
-          nationality: passengerForm.nationality || null,
-          passport_number: passengerForm.passport_number || null,
-          passport_expiry: passengerForm.passport_expiry || null,
-          notes: passengerForm.notes || null,
-        }).eq("id", editingPassenger.id);
+        // Save current passenger
+        const { error } = await supabase.from("passengers").update(updatedData).eq("id", editingPassenger.id);
         if (error) throw error;
+
+        // Sync copies across other clients: find matching passengers by passport or name+birth_date
+        const oldPassport = editingPassenger.passport_number;
+        const oldName = editingPassenger.full_name;
+        const oldBirth = editingPassenger.birth_date;
+
+        let matchQuery = supabase.from("passengers").select("id").neq("id", editingPassenger.id);
+        if (oldPassport) {
+          matchQuery = matchQuery.eq("passport_number", oldPassport);
+        } else if (oldBirth) {
+          matchQuery = matchQuery.eq("full_name", oldName).eq("birth_date", oldBirth);
+        } else {
+          // No reliable match — skip sync
+          matchQuery = null as any;
+        }
+
+        if (matchQuery) {
+          const { data: matches } = await matchQuery;
+          if (matches && matches.length > 0) {
+            const ids = matches.map((m: any) => m.id);
+            // Update all copies with the same data (except notes which may differ per client)
+            await supabase.from("passengers").update({
+              full_name: updatedData.full_name,
+              birth_date: updatedData.birth_date,
+              nationality: updatedData.nationality,
+              passport_number: updatedData.passport_number,
+              passport_expiry: updatedData.passport_expiry,
+            }).in("id", ids);
+          }
+        }
       } else {
         const { error } = await supabase.from("passengers").insert({
           client_id: clientId!,
-          full_name: passengerForm.full_name,
-          birth_date: passengerForm.birth_date || null,
-          nationality: passengerForm.nationality || null,
-          passport_number: passengerForm.passport_number || null,
-          passport_expiry: passengerForm.passport_expiry || null,
-          notes: passengerForm.notes || null,
+          ...updatedData,
         });
         if (error) throw error;
       }
@@ -261,6 +289,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     onSuccess: () => {
       toast({ title: editingPassenger?.id ? "Passageiro atualizado" : "Passageiro adicionado" });
       qc.invalidateQueries({ queryKey: ["client-passengers", clientId] });
+      qc.invalidateQueries({ queryKey: ["all-passengers-for-search"] });
       setPassengerDialog(false);
       setEditingPassenger(null);
     },
