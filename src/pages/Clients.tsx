@@ -199,6 +199,27 @@ export default function Clients() {
     },
   });
 
+  // Fetch passengers to enable searching clients by passenger name
+  const { data: allPassengers = [] } = useQuery({
+    queryKey: ["all-passengers-for-search"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("passengers").select("id, full_name, client_id");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Build a map: client_id -> passenger names (lowercase, joined)
+  const passengerNamesByClient = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const p of allPassengers) {
+      if (!p.client_id) continue;
+      const existing = map[p.client_id] || "";
+      map[p.client_id] = existing + " " + p.full_name.toLowerCase();
+    }
+    return map;
+  }, [allPassengers]);
+
   // Fetch related data when editing
   const { data: clientPhones = [] } = useQuery({
     queryKey: ["client-phones", editingId],
