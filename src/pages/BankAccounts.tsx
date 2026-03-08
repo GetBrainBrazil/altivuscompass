@@ -189,8 +189,7 @@ export default function BankAccounts() {
                 <Select value={form.pix_key_type ?? ""} onValueChange={(v) => setForm({ ...form, pix_key_type: v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cpf">CPF</SelectItem>
-                    <SelectItem value="cnpj">CNPJ</SelectItem>
+                    <SelectItem value="cpf_cnpj">CPF/CNPJ</SelectItem>
                     <SelectItem value="email">E-mail</SelectItem>
                     <SelectItem value="phone">Telefone</SelectItem>
                     <SelectItem value="random">Chave Aleatória</SelectItem>
