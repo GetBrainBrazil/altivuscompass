@@ -22,6 +22,7 @@ import { ImageEditor } from "@/components/ImageEditor";
 import { ClientTravelersTab } from "@/components/ClientTravelersTab";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccessFeature } from "@/lib/permissions";
+import { logAuditEvent } from "@/lib/audit";
 
 type SortDir = "asc" | "desc";
 type SortState = { key: string; dir: SortDir } | null;
