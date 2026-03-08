@@ -848,6 +848,7 @@ export type Database = {
       }
       financial_categories: {
         Row: {
+          account_nature: string
           code: string | null
           created_at: string
           description: string | null
@@ -859,6 +860,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          account_nature?: string
           code?: string | null
           created_at?: string
           description?: string | null
@@ -870,6 +872,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          account_nature?: string
           code?: string | null
           created_at?: string
           description?: string | null
