@@ -50,16 +50,27 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
+            <TooltipProvider delayDuration={0}>
               {visibleItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className="h-10 rounded-lg">
-                    <NavLink to={item.url} end={item.url === "/"} className="flex items-center gap-3 px-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-lg" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                      <item.icon />
-                      {!collapsed && <span className="text-sm font-body">{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton asChild className="h-10 rounded-lg">
+                        <NavLink to={item.url} end={item.url === "/"} className="flex items-center gap-3 px-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-lg" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                          <item.icon />
+                          {!collapsed && <span className="text-sm font-body">{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    {collapsed && (
+                      <TooltipContent side="right" className="font-body">
+                        {item.title}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
                 </SidebarMenuItem>
               ))}
+            </TooltipProvider>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
