@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus, ArrowLeft, Star, Trash2, AlertTriangle, AlertCircle, ShieldAlert, Info, ChevronRight, ChevronDown, Users, Eye, EyeOff, ExternalLink, Check, Search } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useCountries, useStates, useCities } from "@/components/LocationsTab";
+import { useCountries, useStates, useCities, useContinents, useCustomDestinations, useCustomDestinationItems } from "@/components/LocationsTab";
 import { COUNTRY_CODES, applyPhoneMask } from "@/lib/phone-masks";
 import { ImageEditor } from "@/components/ImageEditor";
 import { ClientTravelersTab } from "@/components/ClientTravelersTab";
