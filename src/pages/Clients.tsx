@@ -46,7 +46,7 @@ const travelProfiles: Record<string, { label: string; color: string }> = {
 type PhoneEntry = { id?: string; phone: string; description: string; country_code: string; is_primary: boolean };
 type EmailEntry = { id?: string; email: string; description: string; is_primary: boolean };
 type SocialEntry = { id?: string; network: string; handle: string };
-type VisaEntry = { id?: string; visa_type: string; validity_date: string; country_region: string; visa_number: string; issue_date: string; entry_type: string; description: string };
+type VisaEntry = { id?: string; visa_type: string; validity_date: string; country_region: string; visa_number: string; issue_date: string; entry_type: string; description: string; image_url: string; _imageFile?: File };
 
 const VISA_TYPES = [
   "Turismo", "Negócios", "Estudo", "Trabalho", "Trânsito", "Diplomático",
@@ -256,7 +256,7 @@ export default function Clients() {
       setPassports(clientPassports.map((p: any) => ({
         id: p.id, passport_number: p.passport_number ?? "", issue_date: p.issue_date ?? "",
         expiry_date: p.expiry_date ?? "", nationality: p.nationality ?? "", status: p.status ?? "valid",
-        visas: (p.visas ?? []).map((v: any) => ({ id: v.id, visa_type: v.visa_type, validity_date: v.validity_date ?? "", country_region: v.country_region ?? "", visa_number: v.visa_number ?? "", issue_date: v.issue_date ?? "", entry_type: v.entry_type ?? "single", description: v.description ?? "" })),
+        visas: (p.visas ?? []).map((v: any) => ({ id: v.id, visa_type: v.visa_type, validity_date: v.validity_date ?? "", country_region: v.country_region ?? "", visa_number: v.visa_number ?? "", issue_date: v.issue_date ?? "", entry_type: v.entry_type ?? "single", description: v.description ?? "", image_url: v.image_url ?? "" })),
       })));
     }
   }, [clientPassports, editingId]);
@@ -322,9 +322,19 @@ export default function Clients() {
           }).select("id").single();
           if (ppErr) throw ppErr;
           if (pp.visas.length > 0) {
-            await supabase.from("client_visas").insert(
-              pp.visas.filter(v => v.visa_type).map(v => ({ passport_id: ppData.id, visa_type: v.visa_type, validity_date: v.validity_date || null, country_region: v.country_region || null, visa_number: v.visa_number || null, issue_date: v.issue_date || null, entry_type: v.entry_type || "single", description: v.description || null }))
-            );
+            for (const v of pp.visas.filter(v => v.visa_type)) {
+              let imageUrl = v.image_url || null;
+              if (v._imageFile) {
+                const ext = v._imageFile.name.split('.').pop();
+                const filePath = `${clientId}/${crypto.randomUUID()}.${ext}`;
+                const { error: upErr } = await supabase.storage.from("visa-images").upload(filePath, v._imageFile);
+                if (!upErr) {
+                  const { data: urlData } = supabase.storage.from("visa-images").getPublicUrl(filePath);
+                  imageUrl = urlData.publicUrl;
+                }
+              }
+              await supabase.from("client_visas").insert({ passport_id: ppData.id, visa_type: v.visa_type, validity_date: v.validity_date || null, country_region: v.country_region || null, visa_number: v.visa_number || null, issue_date: v.issue_date || null, entry_type: v.entry_type || "single", description: v.description || null, image_url: imageUrl });
+            }
           }
         }
       }
@@ -764,7 +774,7 @@ export default function Clients() {
                         <div className="flex items-center justify-between mb-2">
                           <Label className="font-body text-xs font-medium">Vistos deste passaporte</Label>
                           <Button type="button" variant="ghost" size="sm" className="h-5 px-1 text-xs" onClick={() => {
-                            const n = [...passports]; n[pi].visas = [...n[pi].visas, { visa_type: "", validity_date: "", country_region: "", visa_number: "", issue_date: "", entry_type: "single", description: "" }]; setPassports(n);
+                            const n = [...passports]; n[pi].visas = [...n[pi].visas, { visa_type: "", validity_date: "", country_region: "", visa_number: "", issue_date: "", entry_type: "single", description: "", image_url: "" }]; setPassports(n);
                           }}>
                             <Plus className="h-3 w-3 mr-1" />Visto
                           </Button>
@@ -827,21 +837,42 @@ export default function Clients() {
                                 <Label className="font-body text-xs">Descrição</Label>
                                 <Input className="h-8 text-sm" placeholder="Observações do visto" value={v.description} onChange={(e) => { const n = [...passports]; n[pi].visas[vi].description = e.target.value; setPassports(n); }} />
                               </div>
-                              <div className="flex items-end pb-0.5">
-                                <div className="flex items-center gap-1.5">
-                                  <Label className="font-body text-xs">Status:</Label>
-                                  {(() => {
-                                    if (!v.validity_date) return <span className="text-xs text-muted-foreground">—</span>;
-                                    const today = new Date();
-                                    const expiry = new Date(v.validity_date + "T00:00:00");
-                                    const diffMs = expiry.getTime() - today.getTime();
-                                    const diffMonths = diffMs / (1000 * 60 * 60 * 24 * 30);
-                                    if (diffMs < 0) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-destructive/10 text-destructive">Vencido</span>;
-                                    if (diffMonths <= 12) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-600">Vencendo ({Math.ceil(diffMonths)}m)</span>;
-                                    return <span className="text-xs font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600">Válido</span>;
-                                  })()}
+                              <div className="space-y-1">
+                                <Label className="font-body text-xs">Imagem do Visto</Label>
+                                <div className="flex items-center gap-2">
+                                  {(v.image_url || v._imageFile) && (
+                                    <a href={v._imageFile ? URL.createObjectURL(v._imageFile) : v.image_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline truncate max-w-[80px]">
+                                      {v._imageFile ? v._imageFile.name : "Ver"}
+                                    </a>
+                                  )}
+                                  <label className="cursor-pointer inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-input bg-background hover:bg-accent text-foreground">
+                                    {v.image_url || v._imageFile ? "Trocar" : "Upload"}
+                                    <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) { const n = [...passports]; n[pi].visas[vi]._imageFile = file; setPassports([...n]); }
+                                    }} />
+                                  </label>
+                                  {(v.image_url || v._imageFile) && (
+                                    <button type="button" className="text-destructive" onClick={() => { const n = [...passports]; n[pi].visas[vi].image_url = ""; n[pi].visas[vi]._imageFile = undefined; setPassports([...n]); }}>
+                                      <X className="h-3.5 w-3.5" />
+                                    </button>
+                                  )}
                                 </div>
                               </div>
+                            </div>
+                            {/* Row 3: Status */}
+                            <div className="flex items-center gap-1.5">
+                              <Label className="font-body text-xs">Status:</Label>
+                              {(() => {
+                                if (!v.validity_date) return <span className="text-xs text-muted-foreground">—</span>;
+                                const today = new Date();
+                                const expiry = new Date(v.validity_date + "T00:00:00");
+                                const diffMs = expiry.getTime() - today.getTime();
+                                const diffMonths = diffMs / (1000 * 60 * 60 * 24 * 30);
+                                if (diffMs < 0) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-destructive/10 text-destructive">Vencido</span>;
+                                if (diffMonths <= 12) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-600">Vencendo ({Math.ceil(diffMonths)}m)</span>;
+                                return <span className="text-xs font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600">Válido</span>;
+                              })()}
                             </div>
                           </div>
                         ))}
