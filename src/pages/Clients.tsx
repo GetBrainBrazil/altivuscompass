@@ -167,10 +167,11 @@ export default function Clients() {
           for (const v of (pp.client_visas ?? [])) {
             if (v.validity_date) {
               const vMonths = Math.round((new Date(v.validity_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30));
-              if (vMonths <= 0) alerts.push({ label: `Visto ${v.visa_type} vencido`, level: "urgent", months: vMonths, tab: "documents" });
-              else if (vMonths <= 3) alerts.push({ label: `Visto ${v.visa_type} - urgência (${vMonths}m)`, level: "urgent", months: vMonths, tab: "documents" });
-              else if (vMonths <= 6) alerts.push({ label: `Visto ${v.visa_type} - renovar (${vMonths}m)`, level: "critical", months: vMonths, tab: "documents" });
-              else if (vMonths <= 9) alerts.push({ label: `Visto ${v.visa_type} - alerta (${vMonths}m)`, level: "warning", months: vMonths, tab: "documents" });
+              const vLabel = v.country_region ? `${v.visa_type} ${v.country_region}` : v.visa_type;
+              if (vMonths <= 0) alerts.push({ label: `Visto ${vLabel} vencido`, level: "urgent", months: vMonths, tab: "documents" });
+              else if (vMonths <= 3) alerts.push({ label: `Visto ${vLabel} - urgência (${vMonths}m)`, level: "urgent", months: vMonths, tab: "documents" });
+              else if (vMonths <= 6) alerts.push({ label: `Visto ${vLabel} - renovar (${vMonths}m)`, level: "critical", months: vMonths, tab: "documents" });
+              else if (vMonths <= 9) alerts.push({ label: `Visto ${vLabel} - alerta (${vMonths}m)`, level: "warning", months: vMonths, tab: "documents" });
             }
           }
         }
