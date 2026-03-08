@@ -193,12 +193,34 @@ export default function Clients() {
                   <Input value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                 </div>
                 <div className="space-y-2">
+                  <Label className="font-body">País</Label>
+                  <Select value={form.country ?? "Brasil"} onValueChange={(v) => setForm({ ...form, country: v, state: "" })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {COUNTRY_LIST.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
                   <Label className="font-body">Cidade</Label>
                   <Input value={form.city ?? ""} onChange={(e) => setForm({ ...form, city: e.target.value })} />
                 </div>
                 <div className="space-y-2">
-                  <Label className="font-body">Estado</Label>
-                  <Input value={form.state ?? ""} onChange={(e) => setForm({ ...form, state: e.target.value })} />
+                  <Label className="font-body">Estado / Região</Label>
+                  {(COUNTRIES_STATES[form.country ?? "Brasil"] ?? []).length > 0 ? (
+                    <Select value={form.state ?? ""} onValueChange={(v) => setForm({ ...form, state: v })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        {(COUNTRIES_STATES[form.country ?? "Brasil"] ?? []).map((s) => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input value={form.state ?? ""} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="Digite o estado/região" />
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label className="font-body">Perfil de viagem</Label>
@@ -224,8 +246,58 @@ export default function Clients() {
                   </Select>
                 </div>
                 <div className="sm:col-span-2 space-y-2">
-                  <Label className="font-body">Aeroportos preferidos (separados por vírgula)</Label>
-                  <Input value={airportsInput} onChange={(e) => setAirportsInput(e.target.value)} placeholder="GRU, GIG, VCP" />
+                  <Label className="font-body">Aeroportos preferidos</Label>
+                  <Popover open={airportPopoverOpen} onOpenChange={setAirportPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" type="button" className="w-full justify-between font-normal">
+                        {selectedAirports.length > 0
+                          ? `${selectedAirports.length} aeroporto(s) selecionado(s)`
+                          : "Selecione aeroportos"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 p-0" align="start">
+                      <div className="p-2 border-b">
+                        <Input
+                          placeholder="Buscar por código, nome ou cidade..."
+                          value={airportSearch}
+                          onChange={(e) => setAirportSearch(e.target.value)}
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <div className="max-h-52 overflow-y-auto p-1">
+                        {filteredAirports.slice(0, 50).map((a) => (
+                          <label key={a.iata_code} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                            <Checkbox
+                              checked={selectedAirports.includes(a.iata_code)}
+                              onCheckedChange={(checked) => {
+                                setSelectedAirports((prev) =>
+                                  checked ? [...prev, a.iata_code] : prev.filter((c) => c !== a.iata_code)
+                                );
+                              }}
+                            />
+                            <span className="font-mono font-bold text-primary">{a.iata_code}</span>
+                            <span className="text-muted-foreground truncate">{a.city} - {a.name}</span>
+                          </label>
+                        ))}
+                        {filteredAirports.length === 0 && (
+                          <p className="text-sm text-muted-foreground text-center py-3">Nenhum aeroporto encontrado</p>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  {selectedAirports.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedAirports.map((code) => (
+                        <span key={code} className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                          {code}
+                          <button type="button" onClick={() => setSelectedAirports((prev) => prev.filter((c) => c !== code))} className="hover:text-destructive">
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="sm:col-span-2 space-y-2">
                   <Label className="font-body">Observações</Label>
