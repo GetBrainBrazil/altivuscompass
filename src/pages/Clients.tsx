@@ -1279,31 +1279,6 @@ export default function Clients() {
                 />
               </TabsContent>
 
-  // Destination options for preferences
-  const { data: destContinents = [] } = useContinents();
-  const { data: destCustom = [] } = useCustomDestinations();
-
-  const destAllOptions = useMemo(() => {
-    const opts: { type: string; id: string; label: string; group: string }[] = [];
-    for (const d of destCustom) opts.push({ type: "custom", id: d.id, label: d.name, group: "Diversos" });
-    for (const c of destContinents) opts.push({ type: "continent", id: c.id, label: c.name, group: "Continentes" });
-    for (const c of dbCountries) opts.push({ type: "country", id: c.id, label: c.name, group: "Países" });
-    for (const s of dbStates as any[]) opts.push({ type: "state", id: s.id, label: `${s.name} (${s.countries?.name ?? ""})`, group: "Estados/Regiões" });
-    for (const c of dbCities as any[]) opts.push({ type: "city", id: c.id, label: `${c.name} (${c.countries?.name ?? ""})`, group: "Cidades" });
-    return opts;
-  }, [destCustom, destContinents, dbCountries, dbStates, dbCities]);
-
-  const destFilteredOptions = useMemo(() => {
-    if (!destSearch) return destAllOptions.slice(0, 80);
-    const q = destSearch.toLowerCase();
-    return destAllOptions.filter(o => o.label.toLowerCase().includes(q)).slice(0, 80);
-  }, [destAllOptions, destSearch]);
-
-  const destLabelMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    for (const o of destAllOptions) map[`${o.type}:${o.id}`] = o.label;
-    return map;
-  }, [destAllOptions]);
 
               {/* Miles Tab */}
               {canAccessFeature(userRole, "client_miles_tab") && (
