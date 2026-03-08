@@ -374,9 +374,14 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
             <h3 className="text-sm font-semibold font-body text-foreground">Passageiros</h3>
             <p className="text-xs text-muted-foreground font-body">Viajantes vinculados a este cliente (sem ficha própria)</p>
           </div>
-          <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => openPassengerForm()}>
-            <Plus className="h-3 w-3 mr-1" />Adicionar
-          </Button>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => { setCopyDialog(true); setCopyClientSearch(""); setSelectedCopyClient(null); setCopyPassengerIds(new Set()); }}>
+              <Copy className="h-3 w-3 mr-1" />Copiar de outro cliente
+            </Button>
+            <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => openPassengerForm()}>
+              <Plus className="h-3 w-3 mr-1" />Adicionar
+            </Button>
+          </div>
         </div>
 
         {passengers.length === 0 ? (
