@@ -11,23 +11,25 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
+import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+
 type SortDir = "asc" | "desc";
-type SortState = { key: string; dir: SortDir };
+type SortState = { key: string; dir: SortDir } | null;
 
 function SortableHead({ label, sortKey, sort, onSort, className }: { label: string; sortKey: string; sort: SortState; onSort: (k: string) => void; className?: string }) {
-  const active = sort.key === sortKey;
+  const active = sort?.key === sortKey;
   return (
     <TableHead className={`cursor-pointer select-none hover:text-foreground ${className || ""}`} onClick={() => onSort(sortKey)}>
       <span className="inline-flex items-center gap-1">
         {label}
-        {active ? (sort.dir === "asc" ? " ↑" : " ↓") : ""}
+        {active ? (sort.dir === "asc" ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />) : <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/50" />}
       </span>
     </TableHead>
   );
 }
 
 function sortData<T extends Record<string, any>>(data: T[], sort: SortState): T[] {
-  if (!sort.key) return data;
+  if (!sort) return data;
   return [...data].sort((a, b) => {
     const va = (a[sort.key] ?? "").toString().toLowerCase();
     const vb = (b[sort.key] ?? "").toString().toLowerCase();
@@ -37,7 +39,10 @@ function sortData<T extends Record<string, any>>(data: T[], sort: SortState): T[
 }
 
 function toggleSort(sort: SortState, key: string): SortState {
-  if (sort.key === key) return { key, dir: sort.dir === "asc" ? "desc" : "asc" };
+  if (sort?.key === key) {
+    if (sort.dir === "asc") return { key, dir: "desc" };
+    return null; // third click → reset
+  }
   return { key, dir: "asc" };
 }
 
