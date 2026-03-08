@@ -415,10 +415,11 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader><DialogTitle className="font-display">Editar Usuário</DialogTitle></DialogHeader>
           <Tabs defaultValue="dados" className="w-full">
-            <TabsList className="w-full grid grid-cols-3">
+            <TabsList className="w-full grid grid-cols-4">
               <TabsTrigger value="dados" className="font-body text-xs">Dados Pessoais</TabsTrigger>
               <TabsTrigger value="endereco" className="font-body text-xs">Endereço & Emergência</TabsTrigger>
               <TabsTrigger value="contratos" className="font-body text-xs">Contratos</TabsTrigger>
+              <TabsTrigger value="senha" className="font-body text-xs">Senha</TabsTrigger>
             </TabsList>
 
             <TabsContent value="dados">
@@ -465,26 +466,50 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
             <TabsContent value="contratos">
               {editUser && <UserContractsTab userId={editUser.user_id} />}
             </TabsContent>
-          </Tabs>
-        </DialogContent>
-      </Dialog>
 
-      {/* Password dialog */}
-      <Dialog open={pwOpen} onOpenChange={setPwOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle className="font-display">Alterar Senha</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground font-body">Alterando senha de: <strong>{pwUser?.email}</strong></p>
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            if (newPw !== confirmPw) { toast({ title: "Senhas não coincidem", variant: "destructive" }); return; }
-            changePasswordMutation.mutate();
-          }} className="space-y-4">
-            <div className="space-y-2"><Label className="font-body">Nova senha</Label><Input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} required minLength={6} /></div>
-            <div className="space-y-2"><Label className="font-body">Confirmar nova senha</Label><Input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} required minLength={6} /></div>
-            <Button type="submit" className="w-full font-body" disabled={changePasswordMutation.isPending}>
-              {changePasswordMutation.isPending ? "Alterando..." : "Alterar Senha"}
-            </Button>
-          </form>
+            <TabsContent value="senha">
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground font-body">Alterando senha de: <strong>{editUser?.email}</strong></p>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  if (newPw !== confirmPw) { toast({ title: "Senhas não coincidem", variant: "destructive" }); return; }
+                  setPwUser(editUser);
+                  changePasswordMutation.mutate();
+                }} className="space-y-4">
+                  <div className="space-y-2"><Label className="font-body">Nova senha</Label><Input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} required minLength={6} /></div>
+                  <div className="space-y-2"><Label className="font-body">Confirmar nova senha</Label><Input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} required minLength={6} /></div>
+                  <Button type="submit" className="w-full font-body" disabled={changePasswordMutation.isPending}>
+                    {changePasswordMutation.isPending ? "Alterando..." : "Alterar Senha"}
+                  </Button>
+                </form>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          {/* Delete user */}
+          {editUser && (
+            <div className="border-t pt-4 mt-2">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button type="button" variant="ghost" className="w-full text-destructive hover:text-destructive font-body">
+                    Excluir Usuário
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir usuário?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Isso removerá permanentemente <strong>{editUser.full_name}</strong> ({editUser.email}). Esta ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => { deleteUserMutation.mutate(editUser.user_id); setEditOpen(false); }}>Excluir</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
