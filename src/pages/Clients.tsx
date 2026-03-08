@@ -532,9 +532,14 @@ export default function Clients() {
                 <Select value={form.travel_profile} onValueChange={(v) => upd("travel_profile", v)}>
                   <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="economic">Econômico</SelectItem>
-                    <SelectItem value="opportunity">Oportunidade</SelectItem>
-                    <SelectItem value="sophisticated">Sofisticado</SelectItem>
+                    {Object.entries(travelProfiles).map(([key, prof]) => (
+                      <SelectItem key={key} value={key}>
+                        <div className="flex flex-col">
+                          <span>{prof.label}</span>
+                          <span className="text-[10px] text-muted-foreground">{prof.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
