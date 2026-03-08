@@ -333,7 +333,7 @@ export default function Clients() {
       preferred_airports: c.preferred_airports ?? [], tags: c.tags ?? [],
       cpf_cnpj: c.cpf_cnpj ?? "", rg: c.rg ?? "", rg_issuer: c.rg_issuer ?? "",
       foreign_id: c.foreign_id ?? "", nationality: c.nationality ?? "",
-      marital_status: c.marital_status ?? "",
+      marital_status: c.marital_status ?? "", seat_preference: (c as any).seat_preference ?? "",
       cep: c.cep ?? "", neighborhood: c.neighborhood ?? "",
       address_street: c.address_street ?? "", address_number: c.address_number ?? "",
       address_complement: c.address_complement ?? "",
