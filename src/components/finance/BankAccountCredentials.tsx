@@ -214,6 +214,14 @@ export default function BankAccountCredentials({ bankAccountId }: { bankAccountI
       .join(", ");
   };
 
+  // When impersonating a user, filter credentials to only those the user can see
+  const visibleCredentials = useMemo(() => {
+    if (!impersonatingUser) return credentials;
+    return credentials.filter((cred) =>
+      allViewers.some((v) => v.credential_id === cred.id && v.user_id === impersonatingUser.userId)
+    );
+  }, [credentials, allViewers, impersonatingUser]);
+
   if (isLoading) return <p className="text-xs text-muted-foreground font-body">Carregando acessos...</p>;
 
   return (
