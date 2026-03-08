@@ -249,13 +249,11 @@ export default function BankAccountCredentials({ bankAccountId }: { bankAccountI
               {expandedId === cred.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               {cred.login_username || "Acesso sem usuário"}
             </button>
-            {!impersonatingUser && (
-              <div className="flex items-center gap-1">
-                <Button type="button" variant="ghost" size="sm" onClick={() => openEdit(cred)} className="h-7 text-xs font-body">
-                  Editar
-                </Button>
-              </div>
-            )}
+            <div className="flex items-center gap-1">
+              <Button type="button" variant="ghost" size="sm" onClick={() => openEdit(cred)} className="h-7 text-xs font-body">
+                Editar
+              </Button>
+            </div>
           </div>
 
           {expandedId === cred.id && (
