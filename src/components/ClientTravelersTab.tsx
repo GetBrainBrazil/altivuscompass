@@ -91,7 +91,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
   const [passengerDialog, setPassengerDialog] = useState(false);
   const [editingPassenger, setEditingPassenger] = useState<Passenger | null>(null);
   const [passengerForm, setPassengerForm] = useState<Passenger>({
-    full_name: "", birth_date: "", nationality: "", passport_number: "", passport_expiry: "", notes: "",
+    full_name: "", birth_date: "", nationality: "", passport_number: "", passport_expiry: "", notes: "", relationship_type: "",
   });
   const [deletePassengerId, setDeletePassengerId] = useState<string | null>(null);
 
