@@ -10,8 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X } from "lucide-react";
-import { COUNTRY_LIST, COUNTRIES_STATES } from "@/lib/countries-states";
+import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus } from "lucide-react";
+import { useCountries, useStates, useCities } from "@/components/LocationsTab";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 
 type SortDir = "asc" | "desc";
