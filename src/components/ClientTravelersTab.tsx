@@ -89,6 +89,11 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
   const [linkRelType, setLinkRelType] = useState<string>("other");
   const [deleteRelId, setDeleteRelId] = useState<string | null>(null);
 
+  // Edit relationship state
+  const [editRelDialog, setEditRelDialog] = useState(false);
+  const [editingRel, setEditingRel] = useState<any>(null);
+  const [editRelType, setEditRelType] = useState<string>("other");
+
   // Promote state
   const [promotePassenger, setPromotePassenger] = useState<Passenger | null>(null);
   const [promoteRelType, setPromoteRelType] = useState<string>("child");
@@ -159,10 +164,20 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       // Fetch linked client details
       if (allRels.length === 0) return [];
       const ids = allRels.map((r) => r.linked_client_id);
-      const { data: clientsData } = await supabase.from("clients").select("id, full_name, birth_date, nationality, passport_number, city, state").in("id", ids);
+      const { data: clientsData } = await supabase.from("clients").select("id, full_name, birth_date, nationality, city, state").in("id", ids);
+      
+      // Fetch valid passports for linked clients
+      const today = new Date().toISOString().slice(0, 10);
+      const { data: passportsData } = await supabase
+        .from("client_passports")
+        .select("client_id, passport_number, expiry_date, nationality")
+        .in("client_id", ids)
+        .gte("expiry_date", today);
+
       return allRels.map((r) => ({
         ...r,
         client: (clientsData ?? []).find((c: any) => c.id === r.linked_client_id),
+        passports: (passportsData ?? []).filter((p: any) => p.client_id === r.linked_client_id),
       }));
     },
     enabled: !!clientId,
@@ -283,7 +298,22 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     },
   });
 
-  // Promote passenger to client
+  // Update relationship type mutation
+  const updateRelMutation = useMutation({
+    mutationFn: async ({ id, type }: { id: string; type: string }) => {
+      const { error } = await supabase.from("client_relationships").update({ relationship_type: type as any }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Vínculo atualizado" });
+      qc.invalidateQueries({ queryKey: ["client-relationships", clientId] });
+      setEditRelDialog(false);
+      setEditingRel(null);
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+
   const promoteMutation = useMutation({
     mutationFn: async () => {
       if (!promotePassenger || !clientId) return;
@@ -325,22 +355,18 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       }
       const { data: allPassengerRecords } = await matchQuery;
 
-      // Collect unique client IDs that had this passenger
-      const linkedClientIds = new Set<string>();
-      linkedClientIds.add(clientId);
+      // Collect unique client IDs that had this passenger (for cleanup)
       const passengerIdsToDelete: string[] = [];
       (allPassengerRecords ?? []).forEach((rec: any) => {
-        if (rec.client_id) linkedClientIds.add(rec.client_id);
         passengerIdsToDelete.push(rec.id);
       });
 
-      // Create relationship with each client
-      const relationshipInserts = Array.from(linkedClientIds).map((cid) => ({
-        client_id_a: cid,
+      // Create relationship ONLY with the current client (the one initiating the promotion)
+      await supabase.from("client_relationships").insert({
+        client_id_a: clientId,
         client_id_b: newClient.id,
         relationship_type: promoteRelType as any,
-      }));
-      await supabase.from("client_relationships").insert(relationshipInserts);
+      });
 
       // Delete all matched passenger records
       if (passengerIdsToDelete.length > 0) {
@@ -406,9 +432,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       ...r,
       _name: r.client?.full_name ?? "",
       _type: RELATIONSHIP_TYPES[r.relationship_type] || r.relationship_type,
-      _birth_date: r.client?.birth_date ?? "",
-      _nationality: r.client?.nationality ?? "",
-      _passport: r.client?.passport_number ?? "",
+      _passports: (r.passports ?? []).map((p: any) => p.passport_number).filter(Boolean).join(", "),
     }));
   }, [relationships]);
 
@@ -504,18 +528,22 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                 <tr className="border-b border-border/50 bg-muted/30">
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_name")}>Nome<SortIcon columnKey="_name" sort={relSort} /></th>
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_type")}>Vínculo<SortIcon columnKey="_type" sort={relSort} /></th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_birth_date")}>Nascimento<SortIcon columnKey="_birth_date" sort={relSort} /></th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_nationality")}>Nacionalidade<SortIcon columnKey="_nationality" sort={relSort} /></th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_passport")}>Passaporte<SortIcon columnKey="_passport" sort={relSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_passports")}>Passaporte(s) válido(s)<SortIcon columnKey="_passports" sort={relSort} /></th>
                   <th className="p-3 w-20"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/30">
                 {sortedRels.map((r: any) => (
-                  <tr key={r.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => onNavigateToClient(r.linked_client_id)}>
+                  <tr key={r.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => { setEditingRel(r); setEditRelType(r.relationship_type); setEditRelDialog(true); }}>
                     <td className="p-3">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-body font-medium text-foreground">{r.client?.full_name ?? "—"}</p>
+                        <button
+                          type="button"
+                          className="text-sm font-body font-medium text-primary hover:underline"
+                          onClick={(e) => { e.stopPropagation(); onNavigateToClient(r.linked_client_id); }}
+                        >
+                          {r.client?.full_name ?? "—"}
+                        </button>
                         <ExternalLink className="h-3 w-3 text-muted-foreground" />
                       </div>
                     </td>
@@ -524,9 +552,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                         {RELATIONSHIP_TYPES[r.relationship_type] || r.relationship_label || r.relationship_type}
                       </span>
                     </td>
-                    <td className="p-3 text-sm font-body text-foreground">{r.client?.birth_date ? new Date(r.client.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
-                    <td className="p-3 text-sm font-body text-foreground">{r.client?.nationality || "—"}</td>
-                    <td className="p-3 text-sm font-body text-foreground">{r.client?.passport_number || "—"}</td>
+                    <td className="p-3 text-sm font-body text-foreground">{r._passports || "—"}</td>
                     <td className="p-3">
                       <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive"
                         onClick={(e) => { e.stopPropagation(); setDeleteRelId(r.id); }}>
@@ -706,7 +732,35 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Copy passengers dialog */}
+      {/* Edit relationship dialog */}
+      <Dialog open={editRelDialog} onOpenChange={(o) => { if (!o) { setEditRelDialog(false); setEditingRel(null); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display">Editar Vínculo</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <p className="text-sm font-body text-muted-foreground">
+              Vínculo com <strong className="text-foreground">{editingRel?.client?.full_name}</strong>
+            </p>
+            <div>
+              <Label className="font-body text-xs">Tipo de vínculo</Label>
+              <Select value={editRelType} onValueChange={setEditRelType}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(RELATIONSHIP_TYPES).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={() => editingRel && updateRelMutation.mutate({ id: editingRel.id, type: editRelType })} disabled={updateRelMutation.isPending} className="font-body">
+              {updateRelMutation.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+
       <Dialog open={copyDialog} onOpenChange={(o) => { if (!o) { setCopyDialog(false); setSelectedCopyClient(null); setCopyPassengerIds(new Set()); } }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
