@@ -327,7 +327,7 @@ export default function BankAccountCredentials({ bankAccountId }: { bankAccountI
               <Label className="font-body text-xs">Facial</Label>
             </div>
 
-            <div className="sm:col-span-2 space-y-1.5">
+            <div className="sm:col-span-4 space-y-1.5">
               <Label className="font-body text-xs">Observações</Label>
               <Textarea
                 value={form.notes ?? ""}
