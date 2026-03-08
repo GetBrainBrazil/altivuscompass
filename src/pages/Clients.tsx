@@ -292,6 +292,7 @@ export default function Clients() {
     onSuccess: () => {
       toast({ title: "Cliente removido" });
       qc.invalidateQueries({ queryKey: ["clients"] });
+      goToList();
     },
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
