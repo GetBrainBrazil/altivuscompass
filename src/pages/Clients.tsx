@@ -73,6 +73,17 @@ const RELATIONSHIP_LABELS: Record<string, string> = {
   partner: "Sócio(a)", sibling: "Irmão(ã)", other: "Outro",
 };
 
+const TAG_COLORS: Record<string, string> = {
+  blue: "bg-blue-500/15 text-blue-600",
+  green: "bg-green-500/15 text-green-600",
+  red: "bg-red-500/15 text-red-600",
+  yellow: "bg-yellow-500/15 text-yellow-700",
+  purple: "bg-purple-500/15 text-purple-600",
+  orange: "bg-orange-500/15 text-orange-600",
+  pink: "bg-pink-500/15 text-pink-600",
+  gray: "bg-muted text-muted-foreground",
+};
+
 const SOCIAL_NETWORKS = ["Instagram", "Facebook", "LinkedIn", "Twitter/X", "TikTok", "YouTube", "Outro"];
 const MARITAL_STATUSES = ["Solteiro(a)", "Casado(a)", "Separado(a)", "Divorciado(a)", "Viúvo(a)"];
 
@@ -134,6 +145,10 @@ export default function Clients() {
   const [airportSearch, setAirportSearch] = useState("");
   const [airportPopoverOpen, setAirportPopoverOpen] = useState(false);
 
+  // Tags selection
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
+
   // Quick-add location
   const [quickAddType, setQuickAddType] = useState<"country" | "state" | "city" | null>(null);
   const [quickAddName, setQuickAddName] = useState("");
@@ -152,6 +167,15 @@ export default function Clients() {
     queryKey: ["airports-list"],
     queryFn: async () => {
       const { data, error } = await supabase.from("airports").select("iata_code, name, city, country").order("iata_code");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: availableTags = [] } = useQuery({
+    queryKey: ["tags"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("tags").select("*").order("name");
       if (error) throw error;
       return data;
     },
@@ -350,6 +374,7 @@ export default function Clients() {
       const payload: any = {
         ...rest,
         preferred_airports: selectedAirports,
+        tags: selectedTags,
         birth_date: form.birth_date || null,
       };
 
@@ -444,11 +469,11 @@ export default function Clients() {
 
   const goToList = () => {
     setView("list"); setEditingId(null); setForm(emptyForm); setActiveTab("contact");
-    setSelectedAirports([]); setPhones([]); setEmails([]); setSocials([]); setPassports([]);
+    setSelectedAirports([]); setSelectedTags([]); setPhones([]); setEmails([]); setSocials([]); setPassports([]);
   };
 
   const openCreate = () => {
-    setEditingId(null); setForm(emptyForm); setSelectedAirports([]); setActiveTab("contact");
+    setEditingId(null); setForm(emptyForm); setSelectedAirports([]); setSelectedTags([]); setActiveTab("contact");
     setPhones([]); setEmails([]); setSocials([]); setPassports([]); 
     setView("form");
   };
@@ -471,6 +496,7 @@ export default function Clients() {
       address_complement: c.address_complement ?? "",
     });
     setSelectedAirports(c.preferred_airports ?? []);
+    setSelectedTags(c.tags ?? []);
     setView("form");
   };
 
@@ -609,6 +635,57 @@ export default function Clients() {
               <div className="col-span-6 sm:col-span-3 space-y-1">
                 <Label className="font-body text-xs">Site</Label>
                 <Input value={form.website} onChange={(e) => upd("website", e.target.value)} placeholder="https://" className="h-9" />
+              </div>
+              <div className="col-span-12 sm:col-span-6 space-y-1">
+                <Label className="font-body text-xs">Etiquetas</Label>
+                <Popover open={tagPopoverOpen} onOpenChange={setTagPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button type="button" variant="outline" className="w-full h-auto min-h-9 justify-start font-normal px-3 py-1.5">
+                      {selectedTags.length === 0 ? (
+                        <span className="text-muted-foreground text-sm">Selecionar etiquetas...</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {selectedTags.map((tag) => {
+                            const tagObj = availableTags.find((t: any) => t.name === tag);
+                            const colorClass = TAG_COLORS[tagObj?.color ?? ""] ?? "bg-primary/10 text-primary";
+                            return (
+                              <span key={tag} className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${colorClass}`}>
+                                {tag}
+                                <button type="button" className="ml-1 hover:opacity-70" onClick={(e) => { e.stopPropagation(); setSelectedTags(selectedTags.filter(t => t !== tag)); }}>×</button>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
+                      <ChevronsUpDown className="h-3.5 w-3.5 ml-auto shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-2" align="start">
+                    <div className="space-y-1 max-h-48 overflow-y-auto">
+                      {availableTags.length === 0 ? (
+                        <p className="text-xs text-muted-foreground p-2">Nenhuma etiqueta cadastrada. Crie em Cadastros → Etiquetas.</p>
+                      ) : (
+                        availableTags.map((t: any) => {
+                          const isSelected = selectedTags.includes(t.name);
+                          const colorClass = TAG_COLORS[t.color ?? ""] ?? "bg-primary/10 text-primary";
+                          return (
+                            <button
+                              key={t.id}
+                              type="button"
+                              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm font-body hover:bg-muted/50 transition-colors ${isSelected ? "bg-muted/30" : ""}`}
+                              onClick={() => {
+                                setSelectedTags(isSelected ? selectedTags.filter(tag => tag !== t.name) : [...selectedTags, t.name]);
+                              }}
+                            >
+                              <Checkbox checked={isSelected} className="pointer-events-none" />
+                              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${colorClass}`}>{t.name}</span>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
           </div>
