@@ -856,8 +856,10 @@ function DiversosSubTab() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      const item = customDests.find((d: any) => d.id === id);
       const { error } = await supabase.from("custom_destinations").delete().eq("id", id);
       if (error) throw error;
+      await logAuditEvent({ action: "delete", tableName: "custom_destinations", recordId: id, recordLabel: item?.name ?? id, oldData: item });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["custom-destinations"] });
