@@ -62,12 +62,18 @@ Deno.serve(async (req) => {
     }
 
     if (action === "update") {
-      const { user_id, full_name, role } = body;
+      const { user_id, full_name, role, avatar_url } = body;
 
-      // Update profile name
-      if (full_name) {
-        await supabaseAdmin.from("profiles").update({ full_name }).eq("user_id", user_id);
-        await supabaseAdmin.auth.admin.updateUserById(user_id, { user_metadata: { full_name } });
+      // Update profile name and/or avatar
+      const profileUpdate: Record<string, string> = {};
+      if (full_name) profileUpdate.full_name = full_name;
+      if (avatar_url !== undefined) profileUpdate.avatar_url = avatar_url;
+      
+      if (Object.keys(profileUpdate).length > 0) {
+        await supabaseAdmin.from("profiles").update(profileUpdate).eq("user_id", user_id);
+        if (full_name) {
+          await supabaseAdmin.auth.admin.updateUserById(user_id, { user_metadata: { full_name } });
+        }
       }
 
       // Update role
