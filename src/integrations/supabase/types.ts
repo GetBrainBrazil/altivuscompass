@@ -369,6 +369,7 @@ export type Database = {
           region: string | null
           rg: string | null
           rg_issuer: string | null
+          seat_preference: string | null
           state: string | null
           tags: string[] | null
           travel_preferences: string | null
@@ -410,6 +411,7 @@ export type Database = {
           region?: string | null
           rg?: string | null
           rg_issuer?: string | null
+          seat_preference?: string | null
           state?: string | null
           tags?: string[] | null
           travel_preferences?: string | null
@@ -451,6 +453,7 @@ export type Database = {
           region?: string | null
           rg?: string | null
           rg_issuer?: string | null
+          seat_preference?: string | null
           state?: string | null
           tags?: string[] | null
           travel_preferences?: string | null

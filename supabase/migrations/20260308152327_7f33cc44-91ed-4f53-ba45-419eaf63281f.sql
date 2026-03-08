@@ -1,0 +1,1 @@
+ALTER TABLE public.clients ADD COLUMN seat_preference text DEFAULT NULL;
