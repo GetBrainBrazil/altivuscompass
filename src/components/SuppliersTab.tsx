@@ -394,7 +394,7 @@ export default function SuppliersTab() {
             <TableHeader>
               <TableRow>
                 <SortableHead label="Nome" sortKey="name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
-                <SortableHead label="Categoria" sortKey="category" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
+                <TableHead>Serviços</TableHead>
                 <SortableHead label="Cidade" sortKey="city" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} className="hidden sm:table-cell" />
                 <SortableHead label="Contato" sortKey="contact_person" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} className="hidden md:table-cell" />
                 <TableHead className="w-20">Status</TableHead>
