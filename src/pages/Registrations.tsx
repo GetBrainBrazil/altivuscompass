@@ -134,12 +134,36 @@ function AirportsTab() {
               <div className="grid gap-4 py-2">
                 <div className="grid grid-cols-2 gap-3">
                   <div><Label>Código IATA <span className="text-destructive">*</span></Label><Input value={form.iata_code} onChange={(e) => setForm({ ...form, iata_code: e.target.value })} maxLength={4} placeholder="GRU" /></div>
-                  <div><Label>País <span className="text-destructive">*</span></Label><Input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} placeholder="Brasil" /></div>
+                  <div>
+                    <Label>País <span className="text-destructive">*</span></Label>
+                    <Select value={form.country} onValueChange={(v) => setForm({ ...form, country: v, state: "", city: "" })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione o país" /></SelectTrigger>
+                      <SelectContent>
+                        {COUNTRY_LIST.map((c) => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div><Label>Nome <span className="text-destructive">*</span></Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Aeroporto Internacional de Guarulhos" /></div>
                 <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Estado/Região</Label>
+                    {form.country && COUNTRIES_STATES[form.country]?.length > 0 ? (
+                      <Select value={form.state} onValueChange={(v) => setForm({ ...form, state: v })}>
+                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          {COUNTRIES_STATES[form.country].map((s) => (
+                            <SelectItem key={s} value={s}>{s}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="Estado/Região" />
+                    )}
+                  </div>
                   <div><Label>Cidade <span className="text-destructive">*</span></Label><Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="São Paulo" /></div>
-                  <div><Label>Estado/Região</Label><Input value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="SP" /></div>
                 </div>
                 <Button onClick={() => saveMutation.mutate()} disabled={!form.iata_code || !form.name || !form.city || !form.country}>
                   {editing ? "Salvar" : "Adicionar"}
