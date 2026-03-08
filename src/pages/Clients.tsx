@@ -1077,6 +1077,13 @@ export default function Clients() {
             </div>
           </DialogContent>
         </Dialog>
+
+        <ImageEditor
+          open={editorOpen}
+          imageSrc={editorSrc}
+          onClose={() => { setEditorOpen(false); setEditorSrc(""); setEditorCallback(null); }}
+          onSave={(file) => { editorCallback?.(file); setEditorOpen(false); setEditorSrc(""); setEditorCallback(null); }}
+        />
       </div>
     );
   }
