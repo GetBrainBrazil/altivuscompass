@@ -187,13 +187,13 @@ export default function Clients() {
   useEffect(() => {
     if (editingId) {
       setPhones(clientPhones.map((p: any) => {
-        // Try to detect country code from stored phone
         const stored = p.phone ?? "";
-        const match = COUNTRY_CODES.find((c) => stored.startsWith(c.dial));
-        const dialCode = match ? match.dial : "+55";
+        // Match longest dial code first
+        const sorted = [...COUNTRY_CODES].sort((a, b) => b.dial.length - a.dial.length);
+        const match = sorted.find((c) => stored.startsWith(c.dial));
+        const cc = match || COUNTRY_CODES[0];
         const localPart = match ? stored.slice(match.dial.length).trim() : stored;
-        const cc = COUNTRY_CODES.find((c) => c.dial === dialCode);
-        return { id: p.id, phone: cc ? applyPhoneMask(localPart, cc.mask) : localPart, description: p.description ?? "", country_code: dialCode };
+        return { id: p.id, phone: applyPhoneMask(localPart, cc.mask), description: p.description ?? "", country_code: cc.code };
       }));
     }
   }, [clientPhones, editingId]);
@@ -258,7 +258,7 @@ export default function Clients() {
       if (clientId) {
         await supabase.from("client_phones").delete().eq("client_id", clientId);
         if (phones.length > 0) {
-          await supabase.from("client_phones").insert(phones.filter(p => p.phone).map(p => ({ client_id: clientId!, phone: `${p.country_code} ${p.phone}`, description: p.description || null })));
+          await supabase.from("client_phones").insert(phones.filter(p => p.phone).map(p => { const cc = COUNTRY_CODES.find(c => c.code === p.country_code); return { client_id: clientId!, phone: `${cc?.dial || "+55"} ${p.phone}`, description: p.description || null }; }));
         }
         await supabase.from("client_emails").delete().eq("client_id", clientId);
         if (emails.length > 0) {
@@ -489,18 +489,18 @@ export default function Clients() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label className="font-body text-xs font-medium">Celulares / Telefones</Label>
-                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setPhones([...phones, { phone: "", description: "", country_code: "+55" }])}>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setPhones([...phones, { phone: "", description: "", country_code: "BR" }])}>
                       <Plus className="h-3 w-3 mr-1" />Adicionar
                     </Button>
                   </div>
                   {phones.map((p, i) => {
-                    const cc = COUNTRY_CODES.find((c) => c.dial === p.country_code) || COUNTRY_CODES[0];
+                    const cc = COUNTRY_CODES.find((c) => c.code === p.country_code) || COUNTRY_CODES[0];
                     return (
                       <div key={i} className="flex gap-2 items-start">
                         <Select value={p.country_code} onValueChange={(v) => { const n = [...phones]; n[i].country_code = v; n[i].phone = ""; setPhones(n); }}>
                           <SelectTrigger className="w-28 h-9 shrink-0 text-xs"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            {COUNTRY_CODES.map((c) => <SelectItem key={c.code} value={c.dial}>{c.flag} {c.dial}</SelectItem>)}
+                            {COUNTRY_CODES.map((c) => <SelectItem key={c.code} value={c.code}>{c.flag} {c.dial}</SelectItem>)}
                           </SelectContent>
                         </Select>
                         <Input className="w-40 h-9 shrink-0" placeholder={cc.mask.replace(/#/g, "0")} value={p.phone} onChange={(e) => { const n = [...phones]; n[i].phone = applyPhoneMask(e.target.value, cc.mask); setPhones(n); }} />
