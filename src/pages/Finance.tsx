@@ -170,6 +170,12 @@ export default function Finance() {
 
   const formatCurrency = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
+  const formatDate = (d: string) => {
+    if (!d) return "-";
+    const [y, m, day] = d.split("-");
+    return `${day}/${m}/${y}`;
+  };
+
   const categoryPathMap = useMemo(() => {
     const map = new Map<string, string>();
     const buildPath = (id: string): string => {
@@ -192,10 +198,15 @@ export default function Finance() {
 
   const receivables = transactions.filter(t => t.category?.startsWith("RECEITAS") || t.type === "receivable" || t.type === "sale" || t.type === "commission");
   const payables = transactions.filter(t => t.category?.startsWith("DESPESAS") || t.category?.startsWith("IMPOSTOS") || t.type === "expense" || t.type === "payable");
-  const pendingReceivables = receivables.filter(t => t.status === "pending").reduce((s, t) => s + Number(t.amount), 0);
-  const pendingPayables = payables.filter(t => t.status === "pending").reduce((s, t) => s + Number(t.amount), 0);
-  const totalReceived = receivables.filter(t => t.status === "received" || t.status === "paid").reduce((s, t) => s + Number(t.amount), 0);
-  const totalPaid = payables.filter(t => t.status === "paid").reduce((s, t) => s + Number(t.amount), 0);
+
+  // Metrics: use selected items if any, otherwise all
+  const metricsSource = selectedIds.size > 0 ? transactions.filter(t => selectedIds.has(t.id)) : transactions;
+  const metricsReceivables = metricsSource.filter(t => t.category?.startsWith("RECEITAS") || t.type === "receivable" || t.type === "sale" || t.type === "commission");
+  const metricsPayables = metricsSource.filter(t => t.category?.startsWith("DESPESAS") || t.category?.startsWith("IMPOSTOS") || t.type === "expense" || t.type === "payable");
+  const pendingReceivables = metricsReceivables.filter(t => t.status === "pending").reduce((s, t) => s + Number(t.amount), 0);
+  const pendingPayables = metricsPayables.filter(t => t.status === "pending").reduce((s, t) => s + Number(t.amount), 0);
+  const totalReceived = metricsReceivables.filter(t => t.status === "received" || t.status === "paid").reduce((s, t) => s + Number(t.amount), 0);
+  const totalPaid = metricsPayables.filter(t => t.status === "paid").reduce((s, t) => s + Number(t.amount), 0);
 
   const typeFiltered = filter === "all" ? transactions : filter === "receivable" ? receivables : payables;
   const filtered = accountFilter.size === 0 ? typeFiltered : typeFiltered.filter(t => t.payment_account && accountFilter.has(t.payment_account));
