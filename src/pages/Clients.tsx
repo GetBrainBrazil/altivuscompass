@@ -73,6 +73,17 @@ const RELATIONSHIP_LABELS: Record<string, string> = {
   partner: "Sócio(a)", sibling: "Irmão(ã)", other: "Outro",
 };
 
+const TAG_COLORS: Record<string, string> = {
+  blue: "bg-blue-500/15 text-blue-600",
+  green: "bg-green-500/15 text-green-600",
+  red: "bg-red-500/15 text-red-600",
+  yellow: "bg-yellow-500/15 text-yellow-700",
+  purple: "bg-purple-500/15 text-purple-600",
+  orange: "bg-orange-500/15 text-orange-600",
+  pink: "bg-pink-500/15 text-pink-600",
+  gray: "bg-muted text-muted-foreground",
+};
+
 const SOCIAL_NETWORKS = ["Instagram", "Facebook", "LinkedIn", "Twitter/X", "TikTok", "YouTube", "Outro"];
 const MARITAL_STATUSES = ["Solteiro(a)", "Casado(a)", "Separado(a)", "Divorciado(a)", "Viúvo(a)"];
 
