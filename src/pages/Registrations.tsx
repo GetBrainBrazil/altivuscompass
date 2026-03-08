@@ -11,6 +11,36 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
+type SortDir = "asc" | "desc";
+type SortState = { key: string; dir: SortDir };
+
+function SortableHead({ label, sortKey, sort, onSort, className }: { label: string; sortKey: string; sort: SortState; onSort: (k: string) => void; className?: string }) {
+  const active = sort.key === sortKey;
+  return (
+    <TableHead className={`cursor-pointer select-none hover:text-foreground ${className || ""}`} onClick={() => onSort(sortKey)}>
+      <span className="inline-flex items-center gap-1">
+        {label}
+        {active ? (sort.dir === "asc" ? " ↑" : " ↓") : ""}
+      </span>
+    </TableHead>
+  );
+}
+
+function sortData<T extends Record<string, any>>(data: T[], sort: SortState): T[] {
+  if (!sort.key) return data;
+  return [...data].sort((a, b) => {
+    const va = (a[sort.key] ?? "").toString().toLowerCase();
+    const vb = (b[sort.key] ?? "").toString().toLowerCase();
+    const cmp = va.localeCompare(vb);
+    return sort.dir === "asc" ? cmp : -cmp;
+  });
+}
+
+function toggleSort(sort: SortState, key: string): SortState {
+  if (sort.key === key) return { key, dir: sort.dir === "asc" ? "desc" : "asc" };
+  return { key, dir: "asc" };
+}
+
 // ── Airports Tab ──
 
 function AirportsTab() {
@@ -22,6 +52,7 @@ function AirportsTab() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({ iata_code: "", name: "", city: "", state: "", country: "" });
+  const [sort, setSort] = useState<SortState>({ key: "iata_code", dir: "asc" });
 
   const { data: airports = [], isLoading } = useQuery({
     queryKey: ["airports"],
@@ -75,8 +106,11 @@ function AirportsTab() {
     setDialogOpen(true);
   };
 
-  const filtered = airports.filter((a: any) =>
-    [a.iata_code, a.name, a.city, a.country].some((f) => f?.toLowerCase().includes(search.toLowerCase()))
+  const filtered = sortData(
+    airports.filter((a: any) =>
+      [a.iata_code, a.name, a.city, a.country].some((f) => f?.toLowerCase().includes(search.toLowerCase()))
+    ),
+    sort
   );
 
   return (
@@ -118,11 +152,11 @@ function AirportsTab() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-20">IATA</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Cidade</TableHead>
-                <TableHead className="hidden sm:table-cell">Estado</TableHead>
-                <TableHead>País</TableHead>
+                <SortableHead label="IATA" sortKey="iata_code" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} className="w-20" />
+                <SortableHead label="Nome" sortKey="name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
+                <SortableHead label="Cidade" sortKey="city" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
+                <SortableHead label="Estado" sortKey="state" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} className="hidden sm:table-cell" />
+                <SortableHead label="País" sortKey="country" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
                 {isAdmin && <TableHead className="w-24">Ações</TableHead>}
               </TableRow>
             </TableHeader>
@@ -180,6 +214,7 @@ function AirlinesTab() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({ name: "", iata_code: "", country: "", mileage_program_name: "" });
+  const [sort, setSort] = useState<SortState>({ key: "name", dir: "asc" });
 
   const { data: airlines = [], isLoading } = useQuery({
     queryKey: ["airlines"],
@@ -233,8 +268,11 @@ function AirlinesTab() {
     setDialogOpen(true);
   };
 
-  const filtered = airlines.filter((a: any) =>
-    [a.name, a.iata_code, a.country, a.mileage_program_name].some((f) => f?.toLowerCase().includes(search.toLowerCase()))
+  const filtered = sortData(
+    airlines.filter((a: any) =>
+      [a.name, a.iata_code, a.country, a.mileage_program_name].some((f) => f?.toLowerCase().includes(search.toLowerCase()))
+    ),
+    sort
   );
 
   return (
@@ -275,10 +313,10 @@ function AirlinesTab() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-20">IATA</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead className="hidden sm:table-cell">País</TableHead>
-                <TableHead>Programa de Milhagem</TableHead>
+                <SortableHead label="IATA" sortKey="iata_code" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} className="w-20" />
+                <SortableHead label="Nome" sortKey="name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
+                <SortableHead label="País" sortKey="country" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} className="hidden sm:table-cell" />
+                <SortableHead label="Programa de Milhagem" sortKey="mileage_program_name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
                 {isAdmin && <TableHead className="w-24">Ações</TableHead>}
               </TableRow>
             </TableHeader>
