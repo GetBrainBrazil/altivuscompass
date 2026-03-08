@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +37,7 @@ type ProfileWithRole = Tables<"profiles"> & { role?: string };
 
 export default function BankAccountCredentials({ bankAccountId }: { bankAccountId: string }) {
   const { toast } = useToast();
+  const { impersonatingUser } = useAuth();
   const queryClient = useQueryClient();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -212,23 +214,33 @@ export default function BankAccountCredentials({ bankAccountId }: { bankAccountI
       .join(", ");
   };
 
+  // When impersonating a user, filter credentials to only those the user can see
+  const visibleCredentials = useMemo(() => {
+    if (!impersonatingUser) return credentials;
+    return credentials.filter((cred) =>
+      allViewers.some((v) => v.credential_id === cred.id && v.user_id === impersonatingUser.userId)
+    );
+  }, [credentials, allViewers, impersonatingUser]);
+
   if (isLoading) return <p className="text-xs text-muted-foreground font-body">Carregando acessos...</p>;
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <Label className="font-body font-semibold text-sm">Acessos</Label>
-        <Button type="button" variant="outline" size="sm" onClick={openCreate} className="font-body text-xs h-7">
-          <Plus size={12} className="mr-1" /> Novo Acesso
-        </Button>
+        {!impersonatingUser && (
+          <Button type="button" variant="outline" size="sm" onClick={openCreate} className="font-body text-xs h-7">
+            <Plus size={12} className="mr-1" /> Novo Acesso
+          </Button>
+        )}
       </div>
 
-      {credentials.length === 0 && !formOpen && (
+      {visibleCredentials.length === 0 && !formOpen && (
         <p className="text-xs text-muted-foreground font-body">Nenhum acesso cadastrado.</p>
       )}
 
       {/* List existing credentials */}
-      {credentials.map((cred) => (
+      {visibleCredentials.map((cred) => (
         <div key={cred.id} className="border border-border/50 rounded-lg p-3 space-y-2 bg-muted/20">
           <div className="flex items-center justify-between">
             <button
@@ -239,11 +251,13 @@ export default function BankAccountCredentials({ bankAccountId }: { bankAccountI
               {expandedId === cred.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               {cred.login_username || "Acesso sem usuário"}
             </button>
-            <div className="flex items-center gap-1">
-              <Button type="button" variant="ghost" size="sm" onClick={() => openEdit(cred)} className="h-7 text-xs font-body">
-                Editar
-              </Button>
-            </div>
+            {!impersonatingUser && (
+              <div className="flex items-center gap-1">
+                <Button type="button" variant="ghost" size="sm" onClick={() => openEdit(cred)} className="h-7 text-xs font-body">
+                  Editar
+                </Button>
+              </div>
+            )}
           </div>
 
           {expandedId === cred.id && (
