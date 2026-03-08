@@ -95,8 +95,10 @@ function AirportsTab() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      const item = airports.find((a: any) => a.id === id);
       const { error } = await supabase.from("airports").delete().eq("id", id);
       if (error) throw error;
+      await logAuditEvent({ action: "delete", tableName: "airports", recordId: id, recordLabel: item ? `${item.iata_code} - ${item.name}` : id, oldData: item });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["airports"] });
