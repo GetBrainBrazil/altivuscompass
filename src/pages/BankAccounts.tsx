@@ -25,7 +25,7 @@ const accountTypeLabels: Record<string, string> = {
 };
 
 const pixKeyTypeLabels: Record<string, string> = {
-  cpf: "CPF", cnpj: "CNPJ", email: "E-mail", phone: "Telefone", random: "Chave Aleatória",
+  cpf: "CPF", cnpj: "CNPJ", cpf_cnpj: "CPF/CNPJ", email: "E-mail", phone: "Telefone", random: "Chave Aleatória",
 };
 
 export default function BankAccounts() {
