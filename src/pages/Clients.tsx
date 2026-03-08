@@ -1232,7 +1232,7 @@ export default function Clients() {
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b border-border/50">
-                            <th className="text-left py-2 px-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Cia Aérea</th>
+                            <th className="text-left py-2 px-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Programa de Milhagem</th>
                             <th className="text-left py-2 px-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Nº Membro</th>
                             <th className="text-left py-2 px-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Usuário</th>
                             <th className="text-left py-2 px-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">E-mail</th>
