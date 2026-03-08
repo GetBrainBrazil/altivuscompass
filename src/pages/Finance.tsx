@@ -484,7 +484,6 @@ export default function Finance() {
                 <th className="p-3 text-left font-medium">Cliente/Fornecedor</th>
                 <th className="p-3 text-right font-medium">Valor</th>
                 <th className="p-3 text-right font-medium">Saldo</th>
-                <th className="p-3 text-left font-medium">Conta Virtual</th>
                 <th className="p-3 text-left font-medium">Obs</th>
                 <th className="p-3 w-8"></th>
               </tr>
