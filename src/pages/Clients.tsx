@@ -1197,6 +1197,7 @@ export default function Clients() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border/50">
+                <th className="p-2 w-10"></th>
                 <SortableHeader label="Cliente" sortKey="full_name" />
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Telefone</th>
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">E-mail</th>
@@ -1204,76 +1205,137 @@ export default function Clients() {
                 <SortableHeader label="Perfil" sortKey="travel_profile" />
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Aeroportos</th>
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Alertas</th>
-                
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
               {filtered.map((client: any) => {
+                const clientPassengersList = passengersByClient[client.id] ?? [];
+                const isExpanded = expandedClients.has(client.id);
+                const hasPassengers = clientPassengersList.length > 0;
                 return (
-                  <tr key={client.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEdit(client)}>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <div>
-                          <p className="text-sm font-medium font-body text-foreground">{client.full_name}</p>
-                          {client.rating > 0 && <div className="flex gap-0.5">{[1,2,3,4,5].map(i => <Star key={i} className={`h-3 w-3 ${i <= client.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"}`} />)}</div>}
-                        </div>
-                        {client.is_active === false && <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-body">Inativo</span>}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      {client.primary_phone ? (
-                        <a href={`https://wa.me/${client.primary_phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-sm font-body text-primary hover:underline whitespace-nowrap">{client.primary_phone}</a>
-                      ) : <p className="text-sm font-body text-foreground">—</p>}
-                    </td>
-                    <td className="p-4">
-                      <p className="text-sm font-body text-foreground truncate max-w-[200px]">{client.primary_email || "—"}</p>
-                    </td>
-                    <td className="p-4">
-                      <p className="text-sm font-body text-foreground">{client.city}</p>
-                      <p className="text-xs text-muted-foreground font-body">{client.state}</p>
-                    </td>
-                    <td className="p-4">
-                      {client.travel_profile && travelProfiles[client.travel_profile] && (
-                        <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${travelProfiles[client.travel_profile].color}`}>
-                          {travelProfiles[client.travel_profile].label}
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      <div className="flex gap-1 flex-wrap">
-                        {(client.preferred_airports ?? []).map((a: string) => (
-                          <span key={a} className="text-[10px] font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground font-body">{a}</span>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex flex-col gap-1">
-                        {(client.alerts ?? []).length === 0 ? (
-                          <span className="text-xs text-muted-foreground font-body">—</span>
+                  <React.Fragment key={client.id}>
+                    <tr className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEdit(client)}>
+                      <td className="p-2 text-center">
+                        {hasPassengers ? (
+                          <button
+                            type="button"
+                            className="p-1 rounded hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
+                            onClick={(e) => { e.stopPropagation(); toggleExpand(client.id); }}
+                            title={`${clientPassengersList.length} passageiro(s)`}
+                          >
+                            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                          </button>
                         ) : (
-                          (client.alerts as { label: string; level: string; months: number; tab: string }[]).slice(0, 3).map((alert, idx) => {
-                            const styles = {
-                              urgent: "bg-destructive/10 text-destructive",
-                              critical: "bg-amber-500/10 text-amber-600",
-                              warning: "bg-amber-400/10 text-amber-500",
-                            }[alert.level] ?? "bg-muted text-muted-foreground";
-                            const Icon = alert.level === "urgent" ? ShieldAlert : alert.level === "critical" ? AlertCircle : AlertTriangle;
-                            return (
-                              <button
-                                key={idx}
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); setActiveTab(alert.tab); openEdit(client); }}
-                                className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full font-body cursor-pointer hover:opacity-80 transition-opacity ${styles}`}
-                              >
-                                <Icon className="h-3 w-3" />
-                                {alert.label}
-                              </button>
-                            );
-                          })
+                          <span className="p-1 inline-block"><span className="h-4 w-4 block" /></span>
                         )}
-                      </div>
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-sm font-medium font-body text-foreground">{client.full_name}</p>
+                              {hasPassengers && (
+                                <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground font-body">
+                                  <Users className="h-3 w-3" />{clientPassengersList.length}
+                                </span>
+                              )}
+                            </div>
+                            {client.rating > 0 && <div className="flex gap-0.5">{[1,2,3,4,5].map(i => <Star key={i} className={`h-3 w-3 ${i <= client.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"}`} />)}</div>}
+                          </div>
+                          {client.is_active === false && <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-body">Inativo</span>}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        {client.primary_phone ? (
+                          <a href={`https://wa.me/${client.primary_phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-sm font-body text-primary hover:underline whitespace-nowrap">{client.primary_phone}</a>
+                        ) : <p className="text-sm font-body text-foreground">—</p>}
+                      </td>
+                      <td className="p-4">
+                        <p className="text-sm font-body text-foreground truncate max-w-[200px]">{client.primary_email || "—"}</p>
+                      </td>
+                      <td className="p-4">
+                        <p className="text-sm font-body text-foreground">{client.city}</p>
+                        <p className="text-xs text-muted-foreground font-body">{client.state}</p>
+                      </td>
+                      <td className="p-4">
+                        {client.travel_profile && travelProfiles[client.travel_profile] && (
+                          <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${travelProfiles[client.travel_profile].color}`}>
+                            {travelProfiles[client.travel_profile].label}
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex gap-1 flex-wrap">
+                          {(client.preferred_airports ?? []).map((a: string) => (
+                            <span key={a} className="text-[10px] font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground font-body">{a}</span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex flex-col gap-1">
+                          {(client.alerts ?? []).length === 0 ? (
+                            <span className="text-xs text-muted-foreground font-body">—</span>
+                          ) : (
+                            (client.alerts as { label: string; level: string; months: number; tab: string }[]).slice(0, 3).map((alert, idx) => {
+                              const styles = {
+                                urgent: "bg-destructive/10 text-destructive",
+                                critical: "bg-amber-500/10 text-amber-600",
+                                warning: "bg-amber-400/10 text-amber-500",
+                              }[alert.level] ?? "bg-muted text-muted-foreground";
+                              const Icon = alert.level === "urgent" ? ShieldAlert : alert.level === "critical" ? AlertCircle : AlertTriangle;
+                              return (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setActiveTab(alert.tab); openEdit(client); }}
+                                  className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full font-body cursor-pointer hover:opacity-80 transition-opacity ${styles}`}
+                                >
+                                  <Icon className="h-3 w-3" />
+                                  {alert.label}
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                    {isExpanded && clientPassengersList.length > 0 && (
+                      <tr className="bg-muted/10">
+                        <td colSpan={9} className="p-0">
+                          <div className="pl-12 pr-4 py-2">
+                            <table className="w-full">
+                              <thead>
+                                <tr className="border-b border-border/30">
+                                  <th className="text-left py-1.5 px-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Passageiro</th>
+                                  <th className="text-left py-1.5 px-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Vínculo</th>
+                                  <th className="text-left py-1.5 px-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Nascimento</th>
+                                  <th className="text-left py-1.5 px-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Nacionalidade</th>
+                                  <th className="text-left py-1.5 px-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Passaporte</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-border/20">
+                                {clientPassengersList.map((p: any) => (
+                                  <tr key={p.id} className="hover:bg-muted/20 cursor-pointer" onClick={(e) => { e.stopPropagation(); setActiveTab("travelers"); openEdit(client); }}>
+                                    <td className="py-1.5 px-3 text-xs font-body text-foreground">{p.full_name}</td>
+                                    <td className="py-1.5 px-3">
+                                      {p.relationship_type ? (
+                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary font-body">
+                                          {RELATIONSHIP_LABELS[p.relationship_type] || p.relationship_type}
+                                        </span>
+                                      ) : <span className="text-xs text-muted-foreground">—</span>}
+                                    </td>
+                                    <td className="py-1.5 px-3 text-xs font-body text-foreground">{p.birth_date ? new Date(p.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
+                                    <td className="py-1.5 px-3 text-xs font-body text-foreground">{p.nationality || "—"}</td>
+                                    <td className="py-1.5 px-3 text-xs font-body text-foreground">{p.passport_number || "—"}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 );
               })}
             </tbody>
