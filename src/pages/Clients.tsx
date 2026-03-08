@@ -297,12 +297,12 @@ export default function Clients() {
 
   const goToList = () => {
     setView("list"); setEditingId(null); setForm(emptyForm);
-    setSelectedAirports([]); setPhones([]); setEmails([]); setSocials([]); setVisas([]);
+    setSelectedAirports([]); setPhones([]); setEmails([]); setSocials([]); setPassports([]);
   };
 
   const openCreate = () => {
     setEditingId(null); setForm(emptyForm); setSelectedAirports([]);
-    setPhones([]); setEmails([]); setSocials([]); setVisas([]);
+    setPhones([]); setEmails([]); setSocials([]); setPassports([]);
     setView("form");
   };
 
@@ -318,9 +318,7 @@ export default function Clients() {
       preferred_airports: c.preferred_airports ?? [], tags: c.tags ?? [],
       cpf_cnpj: c.cpf_cnpj ?? "", rg: c.rg ?? "", rg_issuer: c.rg_issuer ?? "",
       foreign_id: c.foreign_id ?? "", nationality: c.nationality ?? "",
-      marital_status: c.marital_status ?? "", passport_number: c.passport_number ?? "",
-      passport_issue_date: c.passport_issue_date ?? "", passport_expiry_date: c.passport_expiry_date ?? "",
-      passport_nationality: c.passport_nationality ?? "",
+      marital_status: c.marital_status ?? "",
       cep: c.cep ?? "", neighborhood: c.neighborhood ?? "",
       address_street: c.address_street ?? "", address_number: c.address_number ?? "",
       address_complement: c.address_complement ?? "",
