@@ -705,13 +705,11 @@ export default function Clients() {
                     </Select>
                   </div>
 
-                  {/* CEP (only Brasil) */}
-                  {form.country === "Brasil" && (
-                    <div className="space-y-1.5">
-                      <Label className="font-body text-xs">CEP</Label>
-                      <Input value={form.cep} onChange={(e) => upd("cep", e.target.value)} onBlur={handleCepBlur} placeholder="00000-000" />
-                    </div>
-                  )}
+                  {/* CEP / Postal Code */}
+                  <div className="space-y-1.5">
+                    <Label className="font-body text-xs">{form.country === "Brasil" ? "CEP" : "Postal Code"}</Label>
+                    <Input value={form.cep} onChange={(e) => upd("cep", e.target.value)} onBlur={form.country === "Brasil" ? handleCepBlur : undefined} placeholder={form.country === "Brasil" ? "00000-000" : ""} />
+                  </div>
 
                   {/* State */}
                   <div className="space-y-1.5">
