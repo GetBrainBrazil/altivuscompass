@@ -324,15 +324,19 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         relationship_type: linkRelType as any,
       });
       if (error) throw error;
-      // Find the linked client name for audit
+      // Fetch current client name for audit
+      const { data: currentClient } = await supabase.from("clients").select("full_name").eq("id", clientId).single();
       const linkedClient = allClients.find((c: any) => c.id === selectedLinkClient);
+      const currentName = currentClient?.full_name ?? "Desconhecido";
+      const linkedName = linkedClient?.full_name ?? "Desconhecido";
       await logAuditEvent({
         action: "create",
         tableName: "client_relationships",
-        recordLabel: linkedClient?.full_name ?? "Desconhecido",
+        recordLabel: `${currentName} ↔ ${linkedName}`,
         newData: {
-          relationship_type: linkRelType,
-          linked_client: linkedClient?.full_name,
+          vínculo: `${currentName} ↔ ${linkedName}`,
+          tipo_relacionamento: linkRelType,
+          ficha_origem: currentName,
         },
       });
     },
@@ -348,20 +352,22 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
 
   const deleteRelMutation = useMutation({
     mutationFn: async (id: string) => {
-      // Find the relationship details before deleting for audit
       const rel = relationships.find((r: any) => r.id === id);
+      // Fetch current client name for audit
+      const { data: currentClient } = await supabase.from("clients").select("full_name").eq("id", clientId!).single();
       const { error } = await supabase.from("client_relationships").delete().eq("id", id);
       if (error) throw error;
-      // Log audit event with both client names
+      const currentName = currentClient?.full_name ?? "Desconhecido";
       const linkedName = rel?.client?.full_name ?? "Desconhecido";
       await logAuditEvent({
         action: "delete",
         tableName: "client_relationships",
         recordId: id,
-        recordLabel: linkedName,
+        recordLabel: `${currentName} ↔ ${linkedName}`,
         oldData: {
-          relationship_type: rel?.relationship_type,
-          linked_client: linkedName,
+          vínculo: `${currentName} ↔ ${linkedName}`,
+          tipo_relacionamento: rel?.relationship_type,
+          ficha_origem: currentName,
         },
       });
     },
