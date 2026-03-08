@@ -887,6 +887,8 @@ export default function Clients() {
             <thead>
               <tr className="border-b border-border/50">
                 <SortableHeader label="Cliente" sortKey="full_name" />
+                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Telefone</th>
+                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">E-mail</th>
                 <SortableHeader label="Localização" sortKey="city" />
                 <SortableHeader label="Perfil" sortKey="travel_profile" />
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Aeroportos</th>
