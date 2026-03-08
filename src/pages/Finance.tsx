@@ -625,8 +625,7 @@ export default function Finance() {
                     <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${st.color}`}>{st.label}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground font-body">{t.date}</span>
-                    <Button variant="ghost" size="sm" className="text-destructive h-6 px-2 text-xs" onClick={(e) => { e.stopPropagation(); if (confirm("Remover?")) deleteMutation.mutate(t.id); }}>✕</Button>
+                    <span className="text-xs text-muted-foreground font-body">{formatDate(t.date)}</span>
                   </div>
                 </div>
               </div>
