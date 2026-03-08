@@ -529,9 +529,6 @@ export default function Finance() {
                       {balance < 0 ? `(${formatCurrency(Math.abs(balance))})` : formatCurrency(balance)}
                     </td>
                     <td className="p-3 font-body text-xs text-muted-foreground max-w-[120px] truncate">{t.observations || "-"}</td>
-                    <td className="p-3">
-                      <Button variant="ghost" size="sm" className="text-destructive h-6 px-2" onClick={(e) => { e.stopPropagation(); if (confirm("Remover transação?")) deleteMutation.mutate(t.id); }}>✕</Button>
-                    </td>
                   </tr>
                 );
               })}
