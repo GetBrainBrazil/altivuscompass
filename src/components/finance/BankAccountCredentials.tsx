@@ -203,9 +203,12 @@ export default function BankAccountCredentials({ bankAccountId }: { bankAccountI
 
   const getViewerNames = (credId: string) => {
     const viewerIds = allViewers.filter((v) => v.credential_id === credId).map((v) => v.user_id);
-    return profiles
+    return profilesWithRoles
       .filter((p) => viewerIds.includes(p.user_id))
-      .map((p) => p.full_name)
+      .map((p) => {
+        const roleLabel = ROLE_LABELS[p.role] ?? p.role;
+        return `${p.full_name}${roleLabel ? ` (${roleLabel})` : ""}`;
+      })
       .join(", ");
   };
 
