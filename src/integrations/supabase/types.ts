@@ -156,6 +156,7 @@ export type Database = {
           description: string | null
           email: string
           id: string
+          is_primary: boolean
         }
         Insert: {
           client_id: string
@@ -163,6 +164,7 @@ export type Database = {
           description?: string | null
           email: string
           id?: string
+          is_primary?: boolean
         }
         Update: {
           client_id?: string
@@ -170,6 +172,7 @@ export type Database = {
           description?: string | null
           email?: string
           id?: string
+          is_primary?: boolean
         }
         Relationships: [
           {
@@ -228,6 +231,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_primary: boolean
           phone: string
         }
         Insert: {
@@ -235,6 +239,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_primary?: boolean
           phone: string
         }
         Update: {
@@ -242,6 +247,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_primary?: boolean
           phone?: string
         }
         Relationships: [

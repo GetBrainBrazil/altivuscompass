@@ -43,8 +43,8 @@ const travelProfiles: Record<string, { label: string; color: string }> = {
   sophisticated: { label: "Sofisticado", color: "bg-primary/10 text-primary" },
 };
 
-type PhoneEntry = { id?: string; phone: string; description: string; country_code: string };
-type EmailEntry = { id?: string; email: string; description: string };
+type PhoneEntry = { id?: string; phone: string; description: string; country_code: string; is_primary: boolean };
+type EmailEntry = { id?: string; email: string; description: string; is_primary: boolean };
 type SocialEntry = { id?: string; network: string; handle: string };
 type VisaEntry = { id?: string; visa_type: string; validity_date: string };
 type PassportEntry = {
@@ -133,9 +133,13 @@ export default function Clients() {
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ["clients"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("clients").select("*, client_phones(*), client_emails(*)").order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data.map((c: any) => {
+        const primaryPhone = c.client_phones?.find((p: any) => p.is_primary) || c.client_phones?.[0];
+        const primaryEmail = c.client_emails?.find((e: any) => e.is_primary) || c.client_emails?.[0];
+        return { ...c, primary_phone: primaryPhone?.phone ?? null, primary_email: primaryEmail?.email ?? null };
+      });
     },
   });
 
@@ -193,13 +197,13 @@ export default function Clients() {
         const match = sorted.find((c) => stored.startsWith(c.dial));
         const cc = match || COUNTRY_CODES[0];
         const localPart = match ? stored.slice(match.dial.length).trim() : stored;
-        return { id: p.id, phone: applyPhoneMask(localPart, cc.mask), description: p.description ?? "", country_code: cc.code };
+        return { id: p.id, phone: applyPhoneMask(localPart, cc.mask), description: p.description ?? "", country_code: cc.code, is_primary: p.is_primary ?? false };
       }));
     }
   }, [clientPhones, editingId]);
   useEffect(() => {
     if (editingId) {
-      setEmails(clientEmails.map((e: any) => ({ id: e.id, email: e.email, description: e.description ?? "" })));
+      setEmails(clientEmails.map((e: any) => ({ id: e.id, email: e.email, description: e.description ?? "", is_primary: e.is_primary ?? false })));
     }
   }, [clientEmails, editingId]);
   useEffect(() => {
@@ -258,11 +262,11 @@ export default function Clients() {
       if (clientId) {
         await supabase.from("client_phones").delete().eq("client_id", clientId);
         if (phones.length > 0) {
-          await supabase.from("client_phones").insert(phones.filter(p => p.phone).map(p => { const cc = COUNTRY_CODES.find(c => c.code === p.country_code); return { client_id: clientId!, phone: `${cc?.dial || "+55"} ${p.phone}`, description: p.description || null }; }));
+          await supabase.from("client_phones").insert(phones.filter(p => p.phone).map((p, i, arr) => { const cc = COUNTRY_CODES.find(c => c.code === p.country_code); const isPrimary = arr.length === 1 ? true : p.is_primary; return { client_id: clientId!, phone: `${cc?.dial || "+55"} ${p.phone}`, description: p.description || null, is_primary: isPrimary }; }));
         }
         await supabase.from("client_emails").delete().eq("client_id", clientId);
         if (emails.length > 0) {
-          await supabase.from("client_emails").insert(emails.filter(e => e.email).map(e => ({ client_id: clientId!, email: e.email, description: e.description || null })));
+          await supabase.from("client_emails").insert(emails.filter(e => e.email).map((e, i, arr) => ({ client_id: clientId!, email: e.email, description: e.description || null, is_primary: arr.length === 1 ? true : e.is_primary })));
         }
         await supabase.from("client_social_media").delete().eq("client_id", clientId);
         if (socials.length > 0) {
@@ -489,14 +493,15 @@ export default function Clients() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label className="font-body text-xs font-medium">Celulares / Telefones</Label>
-                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setPhones([...phones, { phone: "", description: "", country_code: "BR" }])}>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setPhones([...phones, { phone: "", description: "", country_code: "BR", is_primary: false }])}>
                       <Plus className="h-3 w-3 mr-1" />Adicionar
                     </Button>
                   </div>
                   {phones.map((p, i) => {
                     const cc = COUNTRY_CODES.find((c) => c.code === p.country_code) || COUNTRY_CODES[0];
                     return (
-                      <div key={i} className="flex gap-2 items-start">
+                      <div key={i} className="flex gap-2 items-center">
+                        <Checkbox checked={phones.length === 1 || p.is_primary} onCheckedChange={() => { const n = phones.map((ph, j) => ({ ...ph, is_primary: j === i })); setPhones(n); }} className="shrink-0" title="Principal" />
                         <Select value={p.country_code} onValueChange={(v) => { const n = [...phones]; n[i].country_code = v; n[i].phone = ""; setPhones(n); }}>
                           <SelectTrigger className="w-28 h-9 shrink-0 text-xs"><SelectValue /></SelectTrigger>
                           <SelectContent>
@@ -517,12 +522,13 @@ export default function Clients() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label className="font-body text-xs font-medium">E-mails</Label>
-                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setEmails([...emails, { email: "", description: "" }])}>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setEmails([...emails, { email: "", description: "", is_primary: false }])}>
                       <Plus className="h-3 w-3 mr-1" />Adicionar
                     </Button>
                   </div>
                   {emails.map((e, i) => (
-                    <div key={i} className="flex gap-2 items-start">
+                    <div key={i} className="flex gap-2 items-center">
+                      <Checkbox checked={emails.length === 1 || e.is_primary} onCheckedChange={() => { const n = emails.map((em, j) => ({ ...em, is_primary: j === i })); setEmails(n); }} className="shrink-0" title="Principal" />
                       <Input className="w-72 h-9 shrink-0" type="email" placeholder="E-mail" value={e.email} onChange={(ev) => { const n = [...emails]; n[i].email = ev.target.value; setEmails(n); }} />
                       <Input className="flex-1 h-9" placeholder="Descrição" value={e.description} onChange={(ev) => { const n = [...emails]; n[i].description = ev.target.value; setEmails(n); }} />
                       <Button type="button" variant="ghost" size="icon" className="shrink-0 h-9 w-9 text-destructive" onClick={() => setEmails(emails.filter((_, j) => j !== i))}>
@@ -881,6 +887,8 @@ export default function Clients() {
             <thead>
               <tr className="border-b border-border/50">
                 <SortableHeader label="Cliente" sortKey="full_name" />
+                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Telefone</th>
+                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">E-mail</th>
                 <SortableHeader label="Localização" sortKey="city" />
                 <SortableHeader label="Perfil" sortKey="travel_profile" />
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Aeroportos</th>
@@ -901,6 +909,12 @@ export default function Clients() {
                         </div>
                         {client.is_active === false && <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-body">Inativo</span>}
                       </div>
+                    </td>
+                    <td className="p-4">
+                      <p className="text-sm font-body text-foreground whitespace-nowrap">{client.primary_phone || "—"}</p>
+                    </td>
+                    <td className="p-4">
+                      <p className="text-sm font-body text-foreground truncate max-w-[200px]">{client.primary_email || "—"}</p>
                     </td>
                     <td className="p-4">
                       <p className="text-sm font-body text-foreground">{client.city}</p>
@@ -958,7 +972,8 @@ export default function Clients() {
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground font-body">
                 {client.city && <span>{client.city}{client.state ? `, ${client.state}` : ""}</span>}
-                {client.phone && <span>{client.phone}</span>}
+                {client.primary_phone && <span>{client.primary_phone}</span>}
+                {client.primary_email && <span>{client.primary_email}</span>}
               </div>
             </div>
           ))
