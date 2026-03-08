@@ -247,7 +247,63 @@ export default function Finance() {
                   </div>
                   <div className="space-y-2">
                     <Label className="font-body">Categoria</Label>
-                    <Input value={form.category ?? ""} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Ex: DESPESAS - Taxas - Taxas" />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                          {form.category ? (
+                            (() => {
+                              const cat = financialCategories.find(c => c.id === form.category);
+                              return cat ? `${cat.code ? cat.code + " - " : ""}${cat.name}` : form.category;
+                            })()
+                          ) : <span className="text-muted-foreground">Selecione a categoria...</span>}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar categoria..." />
+                          <CommandList>
+                            <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
+                            {(() => {
+                              const renderItems = (cats: typeof categoryTree, depth = 0): React.ReactNode[] =>
+                                cats.flatMap(cat => {
+                                  const isSynthetic = cat.account_nature === "synthetic";
+                                  const prefix = cat.code ? `${cat.code} - ` : "";
+                                  const nodes: React.ReactNode[] = [];
+                                  if (isSynthetic) {
+                                    nodes.push(
+                                      <CommandGroup key={cat.id} heading={
+                                        <span style={{ paddingLeft: `${depth * 12}px` }} className="text-xs font-semibold text-muted-foreground">
+                                          {prefix}{cat.name}
+                                        </span>
+                                      }>
+                                        {renderItems(cat.children, depth + 1)}
+                                      </CommandGroup>
+                                    );
+                                  } else {
+                                    nodes.push(
+                                      <CommandItem
+                                        key={cat.id}
+                                        value={`${prefix}${cat.name}`}
+                                        onSelect={() => setForm({ ...form, category: cat.id })}
+                                        style={{ paddingLeft: `${depth * 12 + 8}px` }}
+                                      >
+                                        <Check className={cn("mr-2 h-4 w-4", form.category === cat.id ? "opacity-100" : "opacity-0")} />
+                                        {prefix}{cat.name}
+                                      </CommandItem>
+                                    );
+                                    if (cat.children.length > 0) {
+                                      nodes.push(...renderItems(cat.children, depth + 1));
+                                    }
+                                  }
+                                  return nodes;
+                                });
+                              return renderItems(categoryTree);
+                            })()}
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <div className="space-y-2">
                     <Label className="font-body">Cliente / Fornecedor</Label>
