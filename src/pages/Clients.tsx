@@ -515,8 +515,10 @@ export default function Clients() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      const { data: oldClient } = await supabase.from("clients").select("*").eq("id", id).single();
       const { error } = await supabase.from("clients").delete().eq("id", id);
       if (error) throw error;
+      logAuditEvent({ action: "delete", tableName: "clients", recordId: id, oldData: oldClient });
     },
     onSuccess: () => {
       toast({ title: "Cliente removido" });
