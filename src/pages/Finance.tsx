@@ -232,7 +232,42 @@ export default function Finance() {
                   </div>
                   <div className="space-y-2">
                     <Label className="font-body">Cliente / Fornecedor</Label>
-                    <Input value={form.party_name ?? ""} onChange={(e) => setForm({ ...form, party_name: e.target.value })} />
+                    <Popover open={partyPopoverOpen} onOpenChange={setPartyPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                          {form.party_name || <span className="text-muted-foreground">Selecione...</span>}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar cliente ou fornecedor..." />
+                          <CommandList>
+                            <CommandEmpty>Nenhum resultado.</CommandEmpty>
+                            {partyOptions.clients.length > 0 && (
+                              <CommandGroup heading="Clientes">
+                                {partyOptions.clients.map(o => (
+                                  <CommandItem key={`c-${o.value}`} value={o.label} onSelect={() => { setForm({ ...form, party_name: o.value }); setPartyPopoverOpen(false); }}>
+                                    <Check className={cn("mr-2 h-4 w-4", form.party_name === o.value ? "opacity-100" : "opacity-0")} />
+                                    {o.label}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            )}
+                            {partyOptions.suppliers.length > 0 && (
+                              <CommandGroup heading="Fornecedores">
+                                {partyOptions.suppliers.map(o => (
+                                  <CommandItem key={`s-${o.value}`} value={o.label} onSelect={() => { setForm({ ...form, party_name: o.value }); setPartyPopoverOpen(false); }}>
+                                    <Check className={cn("mr-2 h-4 w-4", form.party_name === o.value ? "opacity-100" : "opacity-0")} />
+                                    {o.label}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            )}
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <div className="space-y-2">
                     <Label className="font-body">Conta</Label>
