@@ -199,7 +199,7 @@ export default function Clients() {
   }, [clientPhones, editingId]);
   useEffect(() => {
     if (editingId) {
-      setEmails(clientEmails.map((e: any) => ({ id: e.id, email: e.email, description: e.description ?? "" })));
+      setEmails(clientEmails.map((e: any) => ({ id: e.id, email: e.email, description: e.description ?? "", is_primary: e.is_primary ?? false })));
     }
   }, [clientEmails, editingId]);
   useEffect(() => {
