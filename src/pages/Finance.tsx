@@ -156,7 +156,6 @@ export default function Finance() {
       status: t.status ?? "pending", category: t.category ?? t.type,
       due_date: t.due_date ?? "", party_name: t.party_name ?? "",
       is_reconciled: t.is_reconciled ?? false,
-      virtual_account_owner: t.virtual_account_owner ?? "",
       observations: t.observations ?? "",
       payment_account: t.payment_account ?? "",
     });
