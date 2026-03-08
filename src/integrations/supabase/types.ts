@@ -74,6 +74,35 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_account_access: {
+        Row: {
+          bank_account_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          bank_account_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          bank_account_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_account_access_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bank_accounts: {
         Row: {
           account_number: string | null
