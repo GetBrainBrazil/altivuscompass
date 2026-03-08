@@ -112,8 +112,9 @@ export default function SuppliersTab() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      const { categories, ...rest } = form;
       const payload = {
-        ...form,
+        ...rest,
         phone: form.phone.replace(/\D/g, "") || null,
         contact_phone: form.contact_phone.replace(/\D/g, "") || null,
         document_number: form.document_number || null,
