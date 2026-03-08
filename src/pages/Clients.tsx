@@ -188,6 +188,15 @@ export default function Clients() {
     },
   });
 
+  const { data: airlinesList = [] } = useQuery({
+    queryKey: ["airlines-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("airlines").select("id, name, iata_code, mileage_program_name").order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const filteredAirports = useMemo(() => {
     if (!airportSearch) return airportsList;
     const q = airportSearch.toLowerCase();
