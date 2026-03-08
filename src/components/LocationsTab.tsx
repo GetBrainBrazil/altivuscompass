@@ -597,12 +597,13 @@ function ContinentsSubTab() {
         const { error } = await supabase.from("continents").update({ name }).eq("id", editing.id);
         if (error) throw error;
         continentId = editing.id;
+        await logAuditEvent({ action: "update", tableName: "continents", recordId: editing.id, recordLabel: name, oldData: { name: editing.name }, newData: { name } });
       } else {
         const { data, error } = await supabase.from("continents").insert({ name }).select("id").single();
         if (error) throw error;
         continentId = data.id;
+        await logAuditEvent({ action: "create", tableName: "continents", recordId: data.id, recordLabel: name, newData: { name } });
       }
-      // Sync countries
       await supabase.from("continent_countries").delete().eq("continent_id", continentId);
       if (selectedCountryIds.length > 0) {
         const { error } = await supabase.from("continent_countries").insert(
