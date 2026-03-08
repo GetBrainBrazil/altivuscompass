@@ -354,11 +354,17 @@ export default function Finance() {
                   </div>
                   <div className="space-y-2">
                     <Label className="font-body">Conta</Label>
-                    <Input value={form.payment_account ?? ""} onChange={(e) => setForm({ ...form, payment_account: e.target.value })} placeholder="Ex: Virtual" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-body">Conta Virtual (Sócio)</Label>
-                    <Input value={form.virtual_account_owner ?? ""} onChange={(e) => setForm({ ...form, virtual_account_owner: e.target.value })} placeholder="Ex: Rodrigo, Camile" />
+                    <Select value={form.payment_account ?? ""} onValueChange={(v) => setForm({ ...form, payment_account: v === "none" ? null : v })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione a conta..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Nenhuma</SelectItem>
+                        {bankAccounts.map(ba => (
+                          <SelectItem key={ba.id} value={ba.id}>
+                            {ba.bank_name}{ba.agency ? ` - Ag ${ba.agency}` : ""}{ba.account_number ? ` / ${ba.account_number}` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label className="font-body">Observações</Label>
