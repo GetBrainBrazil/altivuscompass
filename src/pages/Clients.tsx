@@ -1014,6 +1014,17 @@ export default function Clients() {
                 </div>
               </TabsContent>
 
+              {/* Travelers Tab */}
+              <TabsContent value="travelers">
+                <ClientTravelersTab
+                  clientId={editingId}
+                  onNavigateToClient={(id) => {
+                    const target = clients.find((c: any) => c.id === id);
+                    if (target) openEdit(target);
+                  }}
+                />
+              </TabsContent>
+
               {/* Observations Tab */}
               <TabsContent value="observations" className="pt-3">
                 <div className="space-y-1">
