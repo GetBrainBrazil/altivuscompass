@@ -107,7 +107,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signOut = async () => {
+  const signOut = async (reason: "manual" | "inactivity" = "manual") => {
+    const logoutEvent = reason === "inactivity" ? "LOGOUT_INACTIVITY" : "LOGOUT";
+    await logAuditEvent({
+      action: "create",
+      tableName: "sessions",
+      newData: { event: logoutEvent, email: user?.email },
+    });
+    hasLoggedLoginRef.current = false;
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
