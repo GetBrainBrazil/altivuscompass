@@ -347,17 +347,16 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
               <TableHead className="font-body">E-mail</TableHead>
               <TableHead className="font-body">Celular</TableHead>
               <TableHead className="font-body">Função</TableHead>
-              <TableHead className="font-body text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground font-body py-8">Carregando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground font-body py-8">Carregando...</TableCell></TableRow>
             ) : profiles?.length === 0 ? (
-              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground font-body py-8">Nenhum usuário encontrado.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground font-body py-8">Nenhum usuário encontrado.</TableCell></TableRow>
             ) : (
               profiles?.map((profile: any) => (
-                <TableRow key={profile.id}>
+                <TableRow key={profile.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(profile)}>
                   <TableCell>
                     <Avatar className="h-9 w-9">
                       {profile.avatar_url ? <AvatarImage src={getAvatarUrl(profile.avatar_url)!} /> : null}
@@ -373,11 +372,6 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
                     <Badge variant={roleBadgeVariant[profile.role] ?? "outline"} className="font-body">
                       {ROLE_LABELS[profile.role] ?? profile.role}
                     </Badge>
-                  </TableCell>
-                  <TableCell className="text-right space-x-1">
-                    <Button variant="ghost" size="sm" className="font-body" onClick={() => openEdit(profile)}>Editar</Button>
-                    <Button variant="ghost" size="sm" className="font-body" onClick={() => openPasswordChange(profile)}>Senha</Button>
-                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive font-body" onClick={() => { if (confirm("Remover?")) deleteUserMutation.mutate(profile.user_id); }}>Remover</Button>
                   </TableCell>
                 </TableRow>
               ))
