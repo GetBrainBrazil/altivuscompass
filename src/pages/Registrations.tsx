@@ -268,8 +268,11 @@ function AirlinesTab() {
     setDialogOpen(true);
   };
 
-  const filtered = airlines.filter((a: any) =>
-    [a.name, a.iata_code, a.country, a.mileage_program_name].some((f) => f?.toLowerCase().includes(search.toLowerCase()))
+  const filtered = sortData(
+    airlines.filter((a: any) =>
+      [a.name, a.iata_code, a.country, a.mileage_program_name].some((f) => f?.toLowerCase().includes(search.toLowerCase()))
+    ),
+    sort
   );
 
   return (
