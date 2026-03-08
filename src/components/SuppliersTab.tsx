@@ -233,13 +233,32 @@ export default function SuppliersTab() {
                       <Input value={form.document_number} onChange={set("document_number")} />
                     </div>
                     <div className="space-y-2">
-                      <Label className="font-body">Categoria</Label>
-                      <Select value={form.category} onValueChange={(v) => setForm(f => ({ ...f, category: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
-                          {SUPPLIER_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
+                      <Label className="font-body">Serviços</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="w-full justify-start font-normal h-auto min-h-10 text-left">
+                            {form.categories.length > 0
+                              ? <div className="flex flex-wrap gap-1">{form.categories.map(c => <Badge key={c} variant="secondary" className="text-xs font-body">{c}</Badge>)}</div>
+                              : <span className="text-muted-foreground">Selecione os serviços</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-72 p-2" align="start">
+                          {SUPPLIER_CATEGORIES.map(c => (
+                            <label key={c} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm font-body">
+                              <Checkbox
+                                checked={form.categories.includes(c)}
+                                onCheckedChange={(checked) => {
+                                  setForm(f => ({
+                                    ...f,
+                                    categories: checked ? [...f.categories, c] : f.categories.filter(x => x !== c),
+                                  }));
+                                }}
+                              />
+                              {c}
+                            </label>
+                          ))}
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   </div>
                   <div className="space-y-2">
