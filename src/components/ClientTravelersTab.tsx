@@ -89,6 +89,11 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
   const [linkRelType, setLinkRelType] = useState<string>("other");
   const [deleteRelId, setDeleteRelId] = useState<string | null>(null);
 
+  // Edit relationship state
+  const [editRelDialog, setEditRelDialog] = useState(false);
+  const [editingRel, setEditingRel] = useState<any>(null);
+  const [editRelType, setEditRelType] = useState<string>("other");
+
   // Promote state
   const [promotePassenger, setPromotePassenger] = useState<Passenger | null>(null);
   const [promoteRelType, setPromoteRelType] = useState<string>("child");
