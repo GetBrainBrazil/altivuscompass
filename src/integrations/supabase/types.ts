@@ -295,26 +295,38 @@ export type Database = {
       client_visas: {
         Row: {
           client_id: string | null
+          country_region: string | null
           created_at: string
+          entry_type: string | null
           id: string
+          issue_date: string | null
           passport_id: string | null
           validity_date: string | null
+          visa_number: string | null
           visa_type: string
         }
         Insert: {
           client_id?: string | null
+          country_region?: string | null
           created_at?: string
+          entry_type?: string | null
           id?: string
+          issue_date?: string | null
           passport_id?: string | null
           validity_date?: string | null
+          visa_number?: string | null
           visa_type: string
         }
         Update: {
           client_id?: string | null
+          country_region?: string | null
           created_at?: string
+          entry_type?: string | null
           id?: string
+          issue_date?: string | null
           passport_id?: string | null
           validity_date?: string | null
+          visa_number?: string | null
           visa_type?: string
         }
         Relationships: [
