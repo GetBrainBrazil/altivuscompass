@@ -57,6 +57,13 @@ const TABLE_LABELS: Record<string, string> = {
   airports: "Aeroportos",
   airlines: "Companhias Aéreas",
   tags: "Tags",
+  sessions: "Sessão",
+};
+
+const SESSION_EVENT_LABELS: Record<string, string> = {
+  LOGIN: "Login",
+  LOGOUT: "Logout",
+  LOGOUT_INACTIVITY: "Logout por inatividade",
 };
 
 export default function AuditLogsTab() {
