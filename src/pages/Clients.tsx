@@ -39,10 +39,10 @@ function toggleSort(sort: SortState, key: string): SortState {
   return { key, dir: "asc" };
 }
 
-const travelProfiles: Record<string, { label: string; color: string }> = {
-  economic: { label: "Econômico", color: "bg-soft-blue/10 text-soft-blue" },
-  opportunity: { label: "Oportunidade", color: "bg-gold/10 text-gold" },
-  sophisticated: { label: "Sofisticado", color: "bg-primary/10 text-primary" },
+const travelProfiles: Record<string, { label: string; color: string; description: string }> = {
+  economic: { label: "Econômico", color: "bg-soft-blue/10 text-soft-blue", description: "Prefere viajar de econômica e busca menores preços" },
+  opportunity: { label: "Conforto", color: "bg-gold/10 text-gold", description: "Se tiver oportunidade de executiva ou premium, prefere pagar um pouco a mais" },
+  sophisticated: { label: "Premium", color: "bg-primary/10 text-primary", description: "Prefere executiva" },
 };
 
 type PhoneEntry = { id?: string; phone: string; description: string; country_code: string; is_primary: boolean };
@@ -532,9 +532,14 @@ export default function Clients() {
                 <Select value={form.travel_profile} onValueChange={(v) => upd("travel_profile", v)}>
                   <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="economic">Econômico</SelectItem>
-                    <SelectItem value="opportunity">Oportunidade</SelectItem>
-                    <SelectItem value="sophisticated">Sofisticado</SelectItem>
+                    {Object.entries(travelProfiles).map(([key, prof]) => (
+                      <SelectItem key={key} value={key}>
+                        <div className="flex flex-col">
+                          <span>{prof.label}</span>
+                          <span className="text-[10px] text-muted-foreground">{prof.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
