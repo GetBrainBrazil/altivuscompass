@@ -489,7 +489,7 @@ export default function Clients() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label className="font-body text-xs font-medium">Celulares / Telefones</Label>
-                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setPhones([...phones, { phone: "", description: "", country_code: "+55" }])}>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setPhones([...phones, { phone: "", description: "", country_code: "BR" }])}>
                       <Plus className="h-3 w-3 mr-1" />Adicionar
                     </Button>
                   </div>
