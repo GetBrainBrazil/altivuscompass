@@ -895,52 +895,54 @@ export default function Clients() {
 
               {/* Preferences Tab */}
               <TabsContent value="preferences" className="space-y-4 pt-3">
-                {/* Seat preference */}
-                <div className="space-y-1.5">
-                  <Label className="font-body text-xs font-medium">Assento preferencial</Label>
-                  <Select value={form.seat_preference || "_none"} onValueChange={(v) => upd("seat_preference", v === "_none" ? "" : v)}>
-                    <SelectTrigger className="w-56 h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="_none">Sem preferência</SelectItem>
-                      <SelectItem value="window">Janela</SelectItem>
-                      <SelectItem value="aisle">Corredor</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Seat preference */}
+                  <div className="space-y-1.5">
+                    <Label className="font-body text-xs font-medium">Assento preferencial</Label>
+                    <Select value={form.seat_preference || "_none"} onValueChange={(v) => upd("seat_preference", v === "_none" ? "" : v)}>
+                      <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_none">Sem preferência</SelectItem>
+                        <SelectItem value="window">Janela</SelectItem>
+                        <SelectItem value="aisle">Corredor</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                {/* Preferred origin airports */}
-                <div className="space-y-1">
-                  <Label className="font-body text-xs font-medium">Aeroportos de origem preferidos</Label>
-                  <Popover open={airportPopoverOpen} onOpenChange={setAirportPopoverOpen}>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" type="button" className="w-full justify-between font-normal h-9 text-sm">
-                        {selectedAirports.length > 0 ? `${selectedAirports.length} aeroporto(s)` : "Selecione aeroportos"}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-0" align="start">
-                      <div className="p-2 border-b"><Input placeholder="Buscar..." value={airportSearch} onChange={(e) => setAirportSearch(e.target.value)} className="h-8 text-sm" /></div>
-                      <div className="max-h-52 overflow-y-auto p-1">
-                        {filteredAirports.slice(0, 50).map((a) => (
-                          <label key={a.iata_code} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
-                            <Checkbox checked={selectedAirports.includes(a.iata_code)} onCheckedChange={(checked) => setSelectedAirports((prev) => checked ? [...prev, a.iata_code] : prev.filter((c) => c !== a.iata_code))} />
-                            <span className="font-mono font-bold text-primary">{a.iata_code}</span>
-                            <span className="text-muted-foreground truncate">{a.city} - {a.name}</span>
-                          </label>
+                  {/* Preferred origin airports */}
+                  <div className="space-y-1">
+                    <Label className="font-body text-xs font-medium">Aeroportos de origem preferidos</Label>
+                    <Popover open={airportPopoverOpen} onOpenChange={setAirportPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" type="button" className="w-full justify-between font-normal h-9 text-sm">
+                          {selectedAirports.length > 0 ? `${selectedAirports.length} aeroporto(s)` : "Selecione aeroportos"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-0" align="start">
+                        <div className="p-2 border-b"><Input placeholder="Buscar..." value={airportSearch} onChange={(e) => setAirportSearch(e.target.value)} className="h-8 text-sm" /></div>
+                        <div className="max-h-52 overflow-y-auto p-1">
+                          {filteredAirports.slice(0, 50).map((a) => (
+                            <label key={a.iata_code} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                              <Checkbox checked={selectedAirports.includes(a.iata_code)} onCheckedChange={(checked) => setSelectedAirports((prev) => checked ? [...prev, a.iata_code] : prev.filter((c) => c !== a.iata_code))} />
+                              <span className="font-mono font-bold text-primary">{a.iata_code}</span>
+                              <span className="text-muted-foreground truncate">{a.city} - {a.name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    {selectedAirports.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {selectedAirports.map((code) => (
+                          <span key={code} className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                            {code}
+                            <button type="button" onClick={() => setSelectedAirports((prev) => prev.filter((c) => c !== code))} className="hover:text-destructive"><X className="h-3 w-3" /></button>
+                          </span>
                         ))}
                       </div>
-                    </PopoverContent>
-                  </Popover>
-                  {selectedAirports.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {selectedAirports.map((code) => (
-                        <span key={code} className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground">
-                          {code}
-                          <button type="button" onClick={() => setSelectedAirports((prev) => prev.filter((c) => c !== code))} className="hover:text-destructive"><X className="h-3 w-3" /></button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
                 {/* Desired destinations */}
