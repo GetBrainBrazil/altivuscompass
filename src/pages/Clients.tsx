@@ -623,47 +623,71 @@ export default function Clients() {
                   </div>
                 </div>
 
-                <div className="border-t border-border/50 pt-4">
-                  <h3 className="text-sm font-display font-medium text-foreground mb-3">Passaporte</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div className="space-y-1.5">
-                      <Label className="font-body text-xs">Número do Passaporte</Label>
-                      <Input value={form.passport_number} onChange={(e) => upd("passport_number", e.target.value)} />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="font-body text-xs">Data de Emissão</Label>
-                      <Input type="date" value={form.passport_issue_date} onChange={(e) => upd("passport_issue_date", e.target.value)} />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="font-body text-xs">Data de Vencimento</Label>
-                      <Input type="date" value={form.passport_expiry_date} onChange={(e) => upd("passport_expiry_date", e.target.value)} />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="font-body text-xs">Nacionalidade do Passaporte</Label>
-                      <Input value={form.passport_nationality} onChange={(e) => upd("passport_nationality", e.target.value)} />
-                    </div>
-                  </div>
-                </div>
-
+                {/* Passports */}
                 <div className="border-t border-border/50 pt-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-display font-medium text-foreground">Vistos</h3>
-                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setVisas([...visas, { visa_type: "", validity_date: "" }])}>
-                      <Plus className="h-3 w-3 mr-1" />Adicionar Visto
+                    <h3 className="text-sm font-display font-medium text-foreground">Passaportes</h3>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setPassports([...passports, { passport_number: "", issue_date: "", expiry_date: "", nationality: "", status: "valid", visas: [] }])}>
+                      <Plus className="h-3 w-3 mr-1" />Adicionar Passaporte
                     </Button>
                   </div>
-                  {visas.map((v, i) => (
-                    <div key={i} className="flex gap-2 items-start mb-2">
-                      <Input className="flex-1" placeholder="Tipo de visto (ex: B1/B2 EUA)" value={v.visa_type} onChange={(e) => { const n = [...visas]; n[i].visa_type = e.target.value; setVisas(n); }} />
-                      <div className="space-y-0">
-                        <Input type="date" className="w-40" value={v.validity_date} onChange={(e) => { const n = [...visas]; n[i].validity_date = e.target.value; setVisas(n); }} />
+                  {passports.length === 0 && <p className="text-xs text-muted-foreground font-body">Nenhum passaporte cadastrado.</p>}
+                  {passports.map((pp, pi) => (
+                    <div key={pi} className="border border-border/50 rounded-lg p-3 mb-3 space-y-3 bg-muted/20">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-body font-medium text-foreground">Passaporte {pi + 1}</span>
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setPassports(passports.filter((_, j) => j !== pi))}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button type="button" variant="ghost" size="icon" className="shrink-0 h-10 w-10 text-destructive" onClick={() => setVisas(visas.filter((_, j) => j !== i))}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div className="space-y-1">
+                          <Label className="font-body text-xs">Número</Label>
+                          <Input className="h-9" value={pp.passport_number} onChange={(e) => { const n = [...passports]; n[pi].passport_number = e.target.value; setPassports(n); }} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="font-body text-xs">Emissão</Label>
+                          <Input type="date" className="h-9" value={pp.issue_date} onChange={(e) => { const n = [...passports]; n[pi].issue_date = e.target.value; setPassports(n); }} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="font-body text-xs">Vencimento</Label>
+                          <Input type="date" className="h-9" value={pp.expiry_date} onChange={(e) => { const n = [...passports]; n[pi].expiry_date = e.target.value; setPassports(n); }} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="font-body text-xs">Nacionalidade</Label>
+                          <Input className="h-9" value={pp.nationality} onChange={(e) => { const n = [...passports]; n[pi].nationality = e.target.value; setPassports(n); }} />
+                        </div>
+                      </div>
+
+                      {/* Visas for this passport */}
+                      <div className="border-t border-border/30 pt-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <Label className="font-body text-xs font-medium">Vistos deste passaporte</Label>
+                          <Button type="button" variant="ghost" size="sm" className="h-5 px-1 text-xs" onClick={() => {
+                            const n = [...passports]; n[pi].visas = [...n[pi].visas, { visa_type: "", validity_date: "" }]; setPassports(n);
+                          }}>
+                            <Plus className="h-3 w-3 mr-1" />Visto
+                          </Button>
+                        </div>
+                        {pp.visas.length === 0 && <p className="text-xs text-muted-foreground font-body">Nenhum visto.</p>}
+                        {pp.visas.map((v, vi) => (
+                          <div key={vi} className="flex gap-2 items-start mb-1.5">
+                            <Input className="flex-1 h-8 text-sm" placeholder="Tipo (ex: B1/B2 EUA)" value={v.visa_type} onChange={(e) => {
+                              const n = [...passports]; n[pi].visas[vi].visa_type = e.target.value; setPassports(n);
+                            }} />
+                            <Input type="date" className="w-36 h-8 text-sm" value={v.validity_date} onChange={(e) => {
+                              const n = [...passports]; n[pi].visas[vi].validity_date = e.target.value; setPassports(n);
+                            }} />
+                            <Button type="button" variant="ghost" size="icon" className="shrink-0 h-8 w-8 text-destructive" onClick={() => {
+                              const n = [...passports]; n[pi].visas = n[pi].visas.filter((_, j) => j !== vi); setPassports(n);
+                            }}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))}
-                  {visas.length === 0 && <p className="text-xs text-muted-foreground font-body">Nenhum visto cadastrado.</p>}
                 </div>
               </TabsContent>
 
