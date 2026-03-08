@@ -212,7 +212,7 @@ export default function BankAccountsTab() {
                 <Input value={form.agency ?? ""} onChange={(e) => setForm({ ...form, agency: e.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label className="font-body">Nº da Conta</Label>
+                <Label className="font-body">Nº da Conta com dígito</Label>
                 <Input value={form.account_number ?? ""} onChange={(e) => setForm({ ...form, account_number: e.target.value })} />
               </div>
               <div className="space-y-2">
