@@ -248,6 +248,7 @@ function StatesSubTab() {
 
   const { data: countries = [] } = useCountries();
   const { data: states = [], isLoading } = useStates();
+  const { data: continentMap = {} } = useContinentMap();
 
   const saveMutation = useMutation({
     mutationFn: async () => {
