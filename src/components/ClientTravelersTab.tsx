@@ -392,7 +392,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
 
       // Find ALL clients that have this same passenger (copies)
       // Use passport_number as primary identifier; fallback to name + birth_date
-      let matchQuery = supabase.from("passengers").select("id, client_id");
+      let matchQuery = supabase.from("passengers").select("id, client_id, relationship_type");
       if (promotePassenger.passport_number) {
         matchQuery = matchQuery.eq("passport_number", promotePassenger.passport_number);
       } else if (promotePassenger.birth_date) {
