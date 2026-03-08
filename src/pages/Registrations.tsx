@@ -11,6 +11,36 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
+type SortDir = "asc" | "desc";
+type SortState = { key: string; dir: SortDir };
+
+function SortableHead({ label, sortKey, sort, onSort, className }: { label: string; sortKey: string; sort: SortState; onSort: (k: string) => void; className?: string }) {
+  const active = sort.key === sortKey;
+  return (
+    <TableHead className={`cursor-pointer select-none hover:text-foreground ${className || ""}`} onClick={() => onSort(sortKey)}>
+      <span className="inline-flex items-center gap-1">
+        {label}
+        {active ? (sort.dir === "asc" ? " ↑" : " ↓") : ""}
+      </span>
+    </TableHead>
+  );
+}
+
+function sortData<T extends Record<string, any>>(data: T[], sort: SortState): T[] {
+  if (!sort.key) return data;
+  return [...data].sort((a, b) => {
+    const va = (a[sort.key] ?? "").toString().toLowerCase();
+    const vb = (b[sort.key] ?? "").toString().toLowerCase();
+    const cmp = va.localeCompare(vb);
+    return sort.dir === "asc" ? cmp : -cmp;
+  });
+}
+
+function toggleSort(sort: SortState, key: string): SortState {
+  if (sort.key === key) return { key, dir: sort.dir === "asc" ? "desc" : "asc" };
+  return { key, dir: "asc" };
+}
+
 // ── Airports Tab ──
 
 function AirportsTab() {
