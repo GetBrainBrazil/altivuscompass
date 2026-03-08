@@ -156,8 +156,9 @@ export default function SuppliersTab() {
       await supabase.from("supplier_phones").delete().eq("supplier_id", supplierId);
       const validPhones = phones.filter(p => stripMask(p.phone).length > 0);
       if (validPhones.length > 0) {
+        const cc_map = (code: string) => COUNTRY_CODES.find(c => c.code === code)?.dial || "+55";
         const { error } = await supabase.from("supplier_phones").insert(
-          validPhones.map(p => ({ supplier_id: supplierId, phone: stripMask(p.phone), country_code: p.country_code, description: p.description || null })) as any
+          validPhones.map(p => ({ supplier_id: supplierId, phone: stripMask(p.phone), country_code: cc_map(p.country_code), description: p.description || null })) as any
         );
         if (error) throw error;
       }
