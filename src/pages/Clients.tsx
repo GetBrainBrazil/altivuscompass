@@ -62,6 +62,7 @@ const VISA_REGIONS = [
 type PassportEntry = {
   id?: string; passport_number: string; issue_date: string; expiry_date: string;
   nationality: string; status: string; visas: VisaEntry[];
+  image_urls: string[]; _imageFiles?: File[];
 };
 
 const SOCIAL_NETWORKS = ["Instagram", "Facebook", "LinkedIn", "Twitter/X", "TikTok", "YouTube", "Outro"];
