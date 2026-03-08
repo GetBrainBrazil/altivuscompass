@@ -7,12 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { CheckCircle2 } from "lucide-react";
 
 type Transaction = {
   id: string; description: string; type: string; amount: number; date: string;
   status: string | null; category?: string | null; due_date?: string | null;
   party_name?: string | null; created_at: string;
+  is_reconciled?: boolean; virtual_account_owner?: string | null;
+  observations?: string | null; payment_account?: string | null;
 };
 
 const typeLabels: Record<string, string> = {
@@ -51,6 +55,10 @@ export default function Finance() {
         amount: Number(form.amount), date: form.date || new Date().toISOString().split("T")[0],
         status: form.status || "pending", category: form.category || form.type || "receivable",
         due_date: form.due_date || null, party_name: form.party_name || null,
+        is_reconciled: form.is_reconciled ?? false,
+        virtual_account_owner: form.virtual_account_owner || null,
+        observations: form.observations || null,
+        payment_account: form.payment_account || null,
       };
       if (editing) {
         const { error } = await supabase.from("financial_transactions").update(payload).eq("id", editing.id);
@@ -82,7 +90,7 @@ export default function Finance() {
 
   const openCreate = (type: string = "receivable") => {
     setEditing(null);
-    setForm({ type, category: type, status: "pending", date: new Date().toISOString().split("T")[0] });
+    setForm({ type, category: type, status: "pending", date: new Date().toISOString().split("T")[0], is_reconciled: false });
     setDialogOpen(true);
   };
 
@@ -92,6 +100,10 @@ export default function Finance() {
       description: t.description, type: t.type, amount: t.amount, date: t.date,
       status: t.status ?? "pending", category: t.category ?? t.type,
       due_date: t.due_date ?? "", party_name: t.party_name ?? "",
+      is_reconciled: t.is_reconciled ?? false,
+      virtual_account_owner: t.virtual_account_owner ?? "",
+      observations: t.observations ?? "",
+      payment_account: t.payment_account ?? "",
     });
     setDialogOpen(true);
   };
@@ -100,14 +112,24 @@ export default function Finance() {
 
   const formatCurrency = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
-  const receivables = transactions.filter(t => t.category === "receivable" || t.type === "sale" || t.type === "commission");
-  const payables = transactions.filter(t => t.category === "payable" || t.type === "expense");
+  const receivables = transactions.filter(t => t.category?.startsWith("RECEITAS") || t.type === "receivable" || t.type === "sale" || t.type === "commission");
+  const payables = transactions.filter(t => t.category?.startsWith("DESPESAS") || t.category?.startsWith("IMPOSTOS") || t.type === "expense" || t.type === "payable");
   const pendingReceivables = receivables.filter(t => t.status === "pending").reduce((s, t) => s + Number(t.amount), 0);
   const pendingPayables = payables.filter(t => t.status === "pending").reduce((s, t) => s + Number(t.amount), 0);
   const totalReceived = receivables.filter(t => t.status === "received" || t.status === "paid").reduce((s, t) => s + Number(t.amount), 0);
   const totalPaid = payables.filter(t => t.status === "paid").reduce((s, t) => s + Number(t.amount), 0);
 
   const filtered = filter === "all" ? transactions : filter === "receivable" ? receivables : payables;
+
+  // Calculate running balance
+  const sortedFiltered = [...filtered].sort((a, b) => a.date.localeCompare(b.date) || a.created_at.localeCompare(b.created_at));
+  let runningBalance = 0;
+  const balanceMap = new Map<string, number>();
+  sortedFiltered.forEach(t => {
+    const isExpense = t.category?.startsWith("DESPESAS") || t.category?.startsWith("IMPOSTOS") || t.type === "expense" || t.type === "payable";
+    runningBalance += isExpense ? -Number(t.amount) : Number(t.amount);
+    balanceMap.set(t.id, runningBalance);
+  });
 
   return (
     <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
@@ -117,7 +139,7 @@ export default function Finance() {
           <p className="text-muted-foreground font-body mt-1 text-sm">Contas a pagar e receber.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => openCreate("payable")} className="font-body flex-1 sm:flex-none text-xs sm:text-sm">
+          <Button variant="outline" onClick={() => openCreate("expense")} className="font-body flex-1 sm:flex-none text-xs sm:text-sm">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
             <span className="hidden sm:inline">Conta a </span>Pagar
           </Button>
@@ -128,7 +150,7 @@ export default function Finance() {
                 <span className="hidden sm:inline">Conta a </span>Receber
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
               <DialogHeader>
                 <DialogTitle className="font-display">{editing ? "Editar Transação" : "Nova Transação"}</DialogTitle>
               </DialogHeader>
@@ -140,7 +162,7 @@ export default function Finance() {
                   </div>
                   <div className="space-y-2">
                     <Label className="font-body">Tipo</Label>
-                    <Select value={form.type ?? "receivable"} onValueChange={(v) => setForm({ ...form, type: v, category: v })}>
+                    <Select value={form.type ?? "receivable"} onValueChange={(v) => setForm({ ...form, type: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="receivable">A Receber</SelectItem>
@@ -177,8 +199,31 @@ export default function Finance() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="font-body">Parte / Fornecedor</Label>
+                    <Label className="font-body">Categoria</Label>
+                    <Input value={form.category ?? ""} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Ex: DESPESAS - Taxas - Taxas" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-body">Cliente / Fornecedor</Label>
                     <Input value={form.party_name ?? ""} onChange={(e) => setForm({ ...form, party_name: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-body">Conta</Label>
+                    <Input value={form.payment_account ?? ""} onChange={(e) => setForm({ ...form, payment_account: e.target.value })} placeholder="Ex: Virtual" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-body">Conta Virtual (Sócio)</Label>
+                    <Input value={form.virtual_account_owner ?? ""} onChange={(e) => setForm({ ...form, virtual_account_owner: e.target.value })} placeholder="Ex: Rodrigo, Camile" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-body">Observações</Label>
+                    <Input value={form.observations ?? ""} onChange={(e) => setForm({ ...form, observations: e.target.value })} />
+                  </div>
+                  <div className="flex items-center gap-2 pt-6">
+                    <Checkbox
+                      checked={form.is_reconciled ?? false}
+                      onCheckedChange={(v) => setForm({ ...form, is_reconciled: !!v })}
+                    />
+                    <Label className="font-body">Conciliado</Label>
                   </div>
                 </div>
                 <div className="flex gap-2 justify-end">
@@ -209,7 +254,7 @@ export default function Finance() {
       </div>
 
       <div className="flex gap-1 p-1 rounded-lg bg-muted w-fit">
-        {[{ id: "all", label: "Todas" }, { id: "receivable", label: "A Receber" }, { id: "payable", label: "A Pagar" }].map((f) => (
+        {[{ id: "all", label: "Todas" }, { id: "receivable", label: "Receitas" }, { id: "payable", label: "Despesas" }].map((f) => (
           <button key={f.id} onClick={() => setFilter(f.id)}
             className={`px-3 py-1.5 rounded-md text-xs font-medium font-body transition-colors ${filter === f.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
             {f.label}
@@ -217,8 +262,8 @@ export default function Finance() {
         ))}
       </div>
 
-      {/* Desktop list */}
-      <div className="glass-card rounded-xl hidden sm:block">
+      {/* Desktop table */}
+      <div className="glass-card rounded-xl hidden sm:block overflow-x-auto">
         <div className="p-4 sm:p-5 border-b border-border/50">
           <h2 className="font-display text-lg font-semibold">Transações</h2>
         </div>
@@ -227,28 +272,52 @@ export default function Finance() {
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground font-body">Nenhuma transação encontrada.</div>
         ) : (
-          <div className="divide-y divide-border/30">
-            {filtered.map((t) => {
-              const st = statusLabels[t.status ?? "pending"] ?? statusLabels.pending;
-              const isPayable = t.category === "payable" || t.type === "expense";
-              return (
-                <div key={t.id} className="p-4 flex items-center gap-4 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEdit(t)}>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium font-body text-foreground">{t.description}</p>
-                    <p className="text-xs text-muted-foreground font-body">
-                      {typeLabels[t.type] ?? t.type}{t.party_name ? ` · ${t.party_name}` : ""}{t.due_date ? ` · Venc: ${t.due_date}` : ""}
-                    </p>
-                  </div>
-                  <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${st.color}`}>{st.label}</span>
-                  <span className={`text-sm font-medium font-body w-28 text-right ${isPayable ? "text-destructive" : "text-foreground"}`}>
-                    {isPayable ? "- " : ""}{formatCurrency(Number(t.amount))}
-                  </span>
-                  <span className="text-xs text-muted-foreground font-body w-24 text-right">{t.date}</span>
-                  <Button variant="ghost" size="sm" className="text-destructive h-6 px-2" onClick={(e) => { e.stopPropagation(); if (confirm("Remover transação?")) deleteMutation.mutate(t.id); }}>✕</Button>
-                </div>
-              );
-            })}
-          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border/50 text-muted-foreground font-body text-xs">
+                <th className="p-3 text-left font-medium">Data</th>
+                <th className="p-3 text-center font-medium w-8">C</th>
+                <th className="p-3 text-left font-medium">Descrição</th>
+                <th className="p-3 text-left font-medium">Conta</th>
+                <th className="p-3 text-left font-medium">Categoria</th>
+                <th className="p-3 text-left font-medium">Cliente/Fornecedor</th>
+                <th className="p-3 text-right font-medium">Valor</th>
+                <th className="p-3 text-right font-medium">Saldo</th>
+                <th className="p-3 text-left font-medium">Conta Virtual</th>
+                <th className="p-3 text-left font-medium">Obs</th>
+                <th className="p-3 w-8"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/30">
+              {[...filtered].sort((a, b) => a.date.localeCompare(b.date) || a.created_at.localeCompare(b.created_at)).map((t) => {
+                const isExpense = t.category?.startsWith("DESPESAS") || t.category?.startsWith("IMPOSTOS") || t.type === "expense" || t.type === "payable";
+                const balance = balanceMap.get(t.id) ?? 0;
+                return (
+                  <tr key={t.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEdit(t)}>
+                    <td className="p-3 font-body text-xs text-muted-foreground whitespace-nowrap">{t.date}</td>
+                    <td className="p-3 text-center">
+                      {t.is_reconciled && <CheckCircle2 size={14} className="text-success mx-auto" />}
+                    </td>
+                    <td className="p-3 font-body font-medium text-foreground">{t.description}</td>
+                    <td className="p-3 font-body text-xs text-muted-foreground">{t.payment_account || "-"}</td>
+                    <td className="p-3 font-body text-xs text-muted-foreground max-w-[200px] truncate">{t.category || "-"}</td>
+                    <td className="p-3 font-body text-xs text-muted-foreground">{t.party_name || "-"}</td>
+                    <td className={`p-3 font-body text-sm font-medium text-right whitespace-nowrap ${isExpense ? "text-destructive" : "text-success"}`}>
+                      {isExpense ? `(${formatCurrency(Number(t.amount))})` : formatCurrency(Number(t.amount))}
+                    </td>
+                    <td className={`p-3 font-body text-xs text-right whitespace-nowrap ${balance < 0 ? "text-destructive" : "text-foreground"}`}>
+                      {balance < 0 ? `(${formatCurrency(Math.abs(balance))})` : formatCurrency(balance)}
+                    </td>
+                    <td className="p-3 font-body text-xs text-muted-foreground">{t.virtual_account_owner || "-"}</td>
+                    <td className="p-3 font-body text-xs text-muted-foreground max-w-[120px] truncate">{t.observations || "-"}</td>
+                    <td className="p-3">
+                      <Button variant="ghost" size="sm" className="text-destructive h-6 px-2" onClick={(e) => { e.stopPropagation(); if (confirm("Remover transação?")) deleteMutation.mutate(t.id); }}>✕</Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         )}
       </div>
 
@@ -260,21 +329,29 @@ export default function Finance() {
           <div className="p-8 text-center text-muted-foreground font-body">Nenhuma transação encontrada.</div>
         ) : (
           filtered.map((t) => {
+            const isExpense = t.category?.startsWith("DESPESAS") || t.category?.startsWith("IMPOSTOS") || t.type === "expense" || t.type === "payable";
             const st = statusLabels[t.status ?? "pending"] ?? statusLabels.pending;
-            const isPayable = t.category === "payable" || t.type === "expense";
             return (
               <div key={t.id} className="glass-card rounded-xl p-4 space-y-2" onClick={() => openEdit(t)}>
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium font-body text-foreground truncate">{t.description}</p>
-                    <p className="text-xs text-muted-foreground font-body">{typeLabels[t.type] ?? t.type}{t.party_name ? ` · ${t.party_name}` : ""}</p>
+                    <div className="flex items-center gap-1.5">
+                      {t.is_reconciled && <CheckCircle2 size={12} className="text-success shrink-0" />}
+                      <p className="text-sm font-medium font-body text-foreground truncate">{t.description}</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground font-body">{t.category || t.type}{t.party_name ? ` · ${t.party_name}` : ""}</p>
                   </div>
-                  <span className={`text-sm font-semibold font-body ml-2 ${isPayable ? "text-destructive" : "text-foreground"}`}>
-                    {isPayable ? "-" : ""}{formatCurrency(Number(t.amount))}
+                  <span className={`text-sm font-semibold font-body ml-2 ${isExpense ? "text-destructive" : "text-success"}`}>
+                    {isExpense ? "-" : ""}{formatCurrency(Number(t.amount))}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${st.color}`}>{st.label}</span>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${st.color}`}>{st.label}</span>
+                    {t.virtual_account_owner && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-body">{t.virtual_account_owner}</span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground font-body">{t.date}</span>
                     <Button variant="ghost" size="sm" className="text-destructive h-6 px-2 text-xs" onClick={(e) => { e.stopPropagation(); if (confirm("Remover?")) deleteMutation.mutate(t.id); }}>✕</Button>
