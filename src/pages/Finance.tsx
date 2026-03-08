@@ -532,6 +532,18 @@ export default function Finance() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/50 text-muted-foreground font-body text-xs">
+                <th className="p-3 w-8">
+                  <Checkbox
+                    checked={filtered.length > 0 && filtered.every(t => selectedIds.has(t.id))}
+                    onCheckedChange={(v) => {
+                      if (v) {
+                        setSelectedIds(new Set(filtered.map(t => t.id)));
+                      } else {
+                        setSelectedIds(new Set());
+                      }
+                    }}
+                  />
+                </th>
                 <th className="p-3 text-left font-medium">Data</th>
                 <th className="p-3 text-center font-medium w-8">C</th>
                 <th className="p-3 text-left font-medium">Descrição</th>
@@ -541,7 +553,6 @@ export default function Finance() {
                 <th className="p-3 text-right font-medium">Valor</th>
                 <th className="p-3 text-right font-medium">Saldo</th>
                 <th className="p-3 text-left font-medium">Obs</th>
-                
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
