@@ -90,7 +90,7 @@ export default function Clients() {
   const [phones, setPhones] = useState<PhoneEntry[]>([]);
   const [emails, setEmails] = useState<EmailEntry[]>([]);
   const [socials, setSocials] = useState<SocialEntry[]>([]);
-  const [visas, setVisas] = useState<VisaEntry[]>([]);
+  const [passports, setPassports] = useState<PassportEntry[]>([]);
 
   // Airport selection
   const [selectedAirports, setSelectedAirports] = useState<string[]>([]);
