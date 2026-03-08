@@ -43,7 +43,8 @@ export default function BankAccountCredentials({ bankAccountId }: { bankAccountI
   const [form, setForm] = useState<Record<string, any>>({});
   const [selectedViewers, setSelectedViewers] = useState<string[]>([]);
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
-
+  const [viewerSearch, setViewerSearch] = useState("");
+  const [viewerDropdownOpen, setViewerDropdownOpen] = useState(false);
   const { data: credentials = [], isLoading } = useQuery({
     queryKey: ["bank-credentials", bankAccountId],
     queryFn: async () => {
