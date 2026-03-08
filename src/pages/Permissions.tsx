@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { PAGE_PERMISSIONS, ROLE_LABELS, type AppRole, type PagePermission } from "@/lib/permissions";
+import { PAGE_PERMISSIONS, FEATURE_PERMISSIONS, ROLE_LABELS, type AppRole, type PagePermission, type FeaturePermission } from "@/lib/permissions";
 
 export default function Permissions() {
   const { toast } = useToast();
