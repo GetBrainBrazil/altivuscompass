@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -346,17 +347,16 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
               <TableHead className="font-body">E-mail</TableHead>
               <TableHead className="font-body">Celular</TableHead>
               <TableHead className="font-body">Função</TableHead>
-              <TableHead className="font-body text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground font-body py-8">Carregando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground font-body py-8">Carregando...</TableCell></TableRow>
             ) : profiles?.length === 0 ? (
-              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground font-body py-8">Nenhum usuário encontrado.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground font-body py-8">Nenhum usuário encontrado.</TableCell></TableRow>
             ) : (
               profiles?.map((profile: any) => (
-                <TableRow key={profile.id}>
+                <TableRow key={profile.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(profile)}>
                   <TableCell>
                     <Avatar className="h-9 w-9">
                       {profile.avatar_url ? <AvatarImage src={getAvatarUrl(profile.avatar_url)!} /> : null}
@@ -373,11 +373,6 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
                       {ROLE_LABELS[profile.role] ?? profile.role}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right space-x-1">
-                    <Button variant="ghost" size="sm" className="font-body" onClick={() => openEdit(profile)}>Editar</Button>
-                    <Button variant="ghost" size="sm" className="font-body" onClick={() => openPasswordChange(profile)}>Senha</Button>
-                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive font-body" onClick={() => { if (confirm("Remover?")) deleteUserMutation.mutate(profile.user_id); }}>Remover</Button>
-                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -393,7 +388,7 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
           <div className="p-8 text-center text-muted-foreground font-body">Nenhum usuário encontrado.</div>
         ) : (
           profiles?.map((profile: any) => (
-            <div key={profile.id} className="glass-card rounded-xl p-4 space-y-3">
+            <div key={profile.id} className="glass-card rounded-xl p-4 space-y-3 cursor-pointer hover:bg-muted/50" onClick={() => openEdit(profile)}>
               <div className="flex items-start gap-3">
                 <Avatar className="h-10 w-10">
                   {profile.avatar_url ? <AvatarImage src={getAvatarUrl(profile.avatar_url)!} /> : null}
@@ -410,11 +405,6 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
                   {ROLE_LABELS[profile.role] ?? profile.role}
                 </Badge>
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="font-body flex-1" onClick={() => openEdit(profile)}>Editar</Button>
-                <Button variant="outline" size="sm" className="font-body flex-1" onClick={() => openPasswordChange(profile)}>Senha</Button>
-                <Button variant="ghost" size="sm" className="text-destructive font-body" onClick={() => { if (confirm("Remover?")) deleteUserMutation.mutate(profile.user_id); }}>✕</Button>
-              </div>
             </div>
           ))
         )}
@@ -425,10 +415,11 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader><DialogTitle className="font-display">Editar Usuário</DialogTitle></DialogHeader>
           <Tabs defaultValue="dados" className="w-full">
-            <TabsList className="w-full grid grid-cols-3">
+            <TabsList className="w-full grid grid-cols-4">
               <TabsTrigger value="dados" className="font-body text-xs">Dados Pessoais</TabsTrigger>
               <TabsTrigger value="endereco" className="font-body text-xs">Endereço & Emergência</TabsTrigger>
               <TabsTrigger value="contratos" className="font-body text-xs">Contratos</TabsTrigger>
+              <TabsTrigger value="senha" className="font-body text-xs">Senha</TabsTrigger>
             </TabsList>
 
             <TabsContent value="dados">
@@ -475,26 +466,50 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
             <TabsContent value="contratos">
               {editUser && <UserContractsTab userId={editUser.user_id} />}
             </TabsContent>
-          </Tabs>
-        </DialogContent>
-      </Dialog>
 
-      {/* Password dialog */}
-      <Dialog open={pwOpen} onOpenChange={setPwOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle className="font-display">Alterar Senha</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground font-body">Alterando senha de: <strong>{pwUser?.email}</strong></p>
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            if (newPw !== confirmPw) { toast({ title: "Senhas não coincidem", variant: "destructive" }); return; }
-            changePasswordMutation.mutate();
-          }} className="space-y-4">
-            <div className="space-y-2"><Label className="font-body">Nova senha</Label><Input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} required minLength={6} /></div>
-            <div className="space-y-2"><Label className="font-body">Confirmar nova senha</Label><Input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} required minLength={6} /></div>
-            <Button type="submit" className="w-full font-body" disabled={changePasswordMutation.isPending}>
-              {changePasswordMutation.isPending ? "Alterando..." : "Alterar Senha"}
-            </Button>
-          </form>
+            <TabsContent value="senha">
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground font-body">Alterando senha de: <strong>{editUser?.email}</strong></p>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  if (newPw !== confirmPw) { toast({ title: "Senhas não coincidem", variant: "destructive" }); return; }
+                  setPwUser(editUser);
+                  changePasswordMutation.mutate();
+                }} className="space-y-4">
+                  <div className="space-y-2"><Label className="font-body">Nova senha</Label><Input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} required minLength={6} /></div>
+                  <div className="space-y-2"><Label className="font-body">Confirmar nova senha</Label><Input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} required minLength={6} /></div>
+                  <Button type="submit" className="w-full font-body" disabled={changePasswordMutation.isPending}>
+                    {changePasswordMutation.isPending ? "Alterando..." : "Alterar Senha"}
+                  </Button>
+                </form>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          {/* Delete user */}
+          {editUser && (
+            <div className="border-t pt-4 mt-2">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button type="button" variant="ghost" className="w-full text-destructive hover:text-destructive font-body">
+                    Excluir Usuário
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir usuário?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Isso removerá permanentemente <strong>{editUser.full_name}</strong> ({editUser.email}). Esta ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => { deleteUserMutation.mutate(editUser.user_id); setEditOpen(false); }}>Excluir</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
