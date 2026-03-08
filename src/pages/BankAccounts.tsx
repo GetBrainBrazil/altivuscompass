@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Pencil, Trash2, Building2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Building2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 type BankAccount = {
