@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus, ArrowLeft, Star, Trash2 } from "lucide-react";
 import { useCountries, useStates, useCities } from "@/components/LocationsTab";
+import { COUNTRY_CODES, applyPhoneMask } from "@/lib/phone-masks";
 
 type SortDir = "asc" | "desc";
 type SortState = { key: string; dir: SortDir } | null;
@@ -42,7 +43,7 @@ const travelProfiles: Record<string, { label: string; color: string }> = {
   sophisticated: { label: "Sofisticado", color: "bg-primary/10 text-primary" },
 };
 
-type PhoneEntry = { id?: string; phone: string; description: string };
+type PhoneEntry = { id?: string; phone: string; description: string; country_code: string };
 type EmailEntry = { id?: string; email: string; description: string };
 type SocialEntry = { id?: string; network: string; handle: string };
 type VisaEntry = { id?: string; visa_type: string; validity_date: string };
@@ -185,7 +186,15 @@ export default function Clients() {
   // Populate multi-value state when editing data loads
   useEffect(() => {
     if (editingId) {
-      setPhones(clientPhones.map((p: any) => ({ id: p.id, phone: p.phone, description: p.description ?? "" })));
+      setPhones(clientPhones.map((p: any) => {
+        // Try to detect country code from stored phone
+        const stored = p.phone ?? "";
+        const match = COUNTRY_CODES.find((c) => stored.startsWith(c.dial));
+        const dialCode = match ? match.dial : "+55";
+        const localPart = match ? stored.slice(match.dial.length).trim() : stored;
+        const cc = COUNTRY_CODES.find((c) => c.dial === dialCode);
+        return { id: p.id, phone: cc ? applyPhoneMask(localPart, cc.mask) : localPart, description: p.description ?? "", country_code: dialCode };
+      }));
     }
   }, [clientPhones, editingId]);
   useEffect(() => {
@@ -249,7 +258,7 @@ export default function Clients() {
       if (clientId) {
         await supabase.from("client_phones").delete().eq("client_id", clientId);
         if (phones.length > 0) {
-          await supabase.from("client_phones").insert(phones.filter(p => p.phone).map(p => ({ client_id: clientId!, phone: p.phone, description: p.description || null })));
+          await supabase.from("client_phones").insert(phones.filter(p => p.phone).map(p => ({ client_id: clientId!, phone: `${p.country_code} ${p.phone}`, description: p.description || null })));
         }
         await supabase.from("client_emails").delete().eq("client_id", clientId);
         if (emails.length > 0) {
@@ -304,7 +313,7 @@ export default function Clients() {
 
   const openCreate = () => {
     setEditingId(null); setForm(emptyForm); setSelectedAirports([]);
-    setPhones([]); setEmails([]); setSocials([]); setPassports([]);
+    setPhones([]); setEmails([]); setSocials([]); setPassports([]); 
     setView("form");
   };
 
@@ -480,19 +489,28 @@ export default function Clients() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label className="font-body text-xs font-medium">Celulares / Telefones</Label>
-                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setPhones([...phones, { phone: "", description: "" }])}>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setPhones([...phones, { phone: "", description: "", country_code: "+55" }])}>
                       <Plus className="h-3 w-3 mr-1" />Adicionar
                     </Button>
                   </div>
-                  {phones.map((p, i) => (
-                    <div key={i} className="flex gap-2 items-start">
-                      <Input className="flex-1 h-9" placeholder="Número" value={p.phone} onChange={(e) => { const n = [...phones]; n[i].phone = e.target.value; setPhones(n); }} />
-                      <Input className="w-32 sm:w-40 h-9" placeholder="Descrição" value={p.description} onChange={(e) => { const n = [...phones]; n[i].description = e.target.value; setPhones(n); }} />
-                      <Button type="button" variant="ghost" size="icon" className="shrink-0 h-9 w-9 text-destructive" onClick={() => setPhones(phones.filter((_, j) => j !== i))}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                  {phones.map((p, i) => {
+                    const cc = COUNTRY_CODES.find((c) => c.dial === p.country_code) || COUNTRY_CODES[0];
+                    return (
+                      <div key={i} className="flex gap-2 items-start">
+                        <Select value={p.country_code} onValueChange={(v) => { const n = [...phones]; n[i].country_code = v; n[i].phone = ""; setPhones(n); }}>
+                          <SelectTrigger className="w-28 h-9 shrink-0 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {COUNTRY_CODES.map((c) => <SelectItem key={c.code} value={c.dial}>{c.flag} {c.dial}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <Input className="w-40 h-9 shrink-0" placeholder={cc.mask.replace(/#/g, "0")} value={p.phone} onChange={(e) => { const n = [...phones]; n[i].phone = applyPhoneMask(e.target.value, cc.mask); setPhones(n); }} />
+                        <Input className="flex-1 h-9" placeholder="Descrição" value={p.description} onChange={(e) => { const n = [...phones]; n[i].description = e.target.value; setPhones(n); }} />
+                        <Button type="button" variant="ghost" size="icon" className="shrink-0 h-9 w-9 text-destructive" onClick={() => setPhones(phones.filter((_, j) => j !== i))}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {/* Emails */}
@@ -505,8 +523,8 @@ export default function Clients() {
                   </div>
                   {emails.map((e, i) => (
                     <div key={i} className="flex gap-2 items-start">
-                      <Input className="flex-1 h-9" type="email" placeholder="E-mail" value={e.email} onChange={(ev) => { const n = [...emails]; n[i].email = ev.target.value; setEmails(n); }} />
-                      <Input className="w-32 sm:w-40 h-9" placeholder="Descrição" value={e.description} onChange={(ev) => { const n = [...emails]; n[i].description = ev.target.value; setEmails(n); }} />
+                      <Input className="w-56 h-9 shrink-0" type="email" placeholder="E-mail" value={e.email} onChange={(ev) => { const n = [...emails]; n[i].email = ev.target.value; setEmails(n); }} />
+                      <Input className="flex-1 h-9" placeholder="Descrição" value={e.description} onChange={(ev) => { const n = [...emails]; n[i].description = ev.target.value; setEmails(n); }} />
                       <Button type="button" variant="ghost" size="icon" className="shrink-0 h-9 w-9 text-destructive" onClick={() => setEmails(emails.filter((_, j) => j !== i))}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
