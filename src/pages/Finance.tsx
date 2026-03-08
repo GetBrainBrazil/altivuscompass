@@ -400,7 +400,25 @@ export default function Finance() {
                     <Label className="font-body">Conciliado</Label>
                   </div>
                 </div>
-                <div className="flex gap-2 justify-end">
+                <div className="flex items-center gap-2">
+                  {editing && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button type="button" variant="ghost" className="text-destructive font-body">Excluir Transação</Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir transação?</AlertDialogTitle>
+                          <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => { deleteMutation.mutate(editing.id); closeDialog(); }}>Excluir</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                  <div className="flex-1" />
                   <Button type="button" variant="outline" onClick={closeDialog} className="font-body">Cancelar</Button>
                   <Button type="submit" disabled={saveMutation.isPending} className="font-body">
                     {saveMutation.isPending ? "Salvando..." : "Salvar"}
