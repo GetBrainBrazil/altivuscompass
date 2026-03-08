@@ -13,7 +13,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus, ArrowLeft, Star, Trash2, AlertTriangle, AlertCircle, ShieldAlert } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus, ArrowLeft, Star, Trash2, AlertTriangle, AlertCircle, ShieldAlert, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCountries, useStates, useCities } from "@/components/LocationsTab";
 import { COUNTRY_CODES, applyPhoneMask } from "@/lib/phone-masks";
 import { ImageEditor } from "@/components/ImageEditor";
@@ -528,17 +529,26 @@ export default function Clients() {
             {/* Row 2: Travel profile, Site, Passport status */}
             <div className="grid grid-cols-12 gap-3 items-end">
               <div className="col-span-6 sm:col-span-3 space-y-1">
-                <Label className="font-body text-xs">Perfil de viagem</Label>
+                <div className="flex items-center gap-1">
+                  <Label className="font-body text-xs">Perfil de viagem</Label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs text-xs space-y-1.5 p-3">
+                        {Object.values(travelProfiles).map((prof) => (
+                          <div key={prof.label}><span className="font-semibold">{prof.label}:</span> {prof.description}</div>
+                        ))}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
                 <Select value={form.travel_profile} onValueChange={(v) => upd("travel_profile", v)}>
                   <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {Object.entries(travelProfiles).map(([key, prof]) => (
-                      <SelectItem key={key} value={key}>
-                        <div className="flex flex-col">
-                          <span>{prof.label}</span>
-                          <span className="text-[10px] text-muted-foreground">{prof.description}</span>
-                        </div>
-                      </SelectItem>
+                      <SelectItem key={key} value={key}>{prof.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
