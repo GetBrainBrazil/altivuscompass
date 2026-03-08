@@ -468,6 +468,23 @@ export default function Clients() {
             }
           }
         }
+
+        // Save miles programs
+        if (canAccessFeature(userRole, "client_miles_tab")) {
+          await supabase.from("miles_programs").delete().eq("client_id", clientId);
+          for (const m of milesPrograms.filter(m => m.program_name || m.airline)) {
+            await supabase.from("miles_programs").insert({
+              client_id: clientId!,
+              program_name: m.program_name || m.airline,
+              airline: m.airline,
+              membership_number: m.membership_number || null,
+              login_username: m.login_username || null,
+              login_email: m.login_email || null,
+              login_password_encrypted: m.login_password_encrypted || null,
+              miles_balance: m.miles_balance ?? 0,
+            } as any);
+          }
+        }
       }
     },
     onSuccess: () => {
