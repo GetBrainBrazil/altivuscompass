@@ -535,7 +535,8 @@ export default function Clients() {
         (c.city ?? "").toLowerCase().includes(q) ||
         (passengerNamesByClient[c.id] ?? "").includes(q);
       const matchesProfile = profileFilter === "all" || c.travel_profile === profileFilter;
-      return matchesSearch && matchesProfile;
+      const matchesTags = tagFilter.length === 0 || tagFilter.every(t => (c.tags ?? []).includes(t));
+      return matchesSearch && matchesProfile && matchesTags;
     }),
     sort
   );
