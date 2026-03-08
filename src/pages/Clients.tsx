@@ -62,6 +62,7 @@ const VISA_REGIONS = [
 type PassportEntry = {
   id?: string; passport_number: string; issue_date: string; expiry_date: string;
   nationality: string; status: string; visas: VisaEntry[];
+  image_urls: string[]; _imageFiles?: File[];
 };
 
 const SOCIAL_NETWORKS = ["Instagram", "Facebook", "LinkedIn", "Twitter/X", "TikTok", "YouTube", "Outro"];
@@ -256,6 +257,7 @@ export default function Clients() {
       setPassports(clientPassports.map((p: any) => ({
         id: p.id, passport_number: p.passport_number ?? "", issue_date: p.issue_date ?? "",
         expiry_date: p.expiry_date ?? "", nationality: p.nationality ?? "", status: p.status ?? "valid",
+        image_urls: p.image_urls ?? [], _imageFiles: [] as File[],
         visas: (p.visas ?? []).map((v: any) => ({ id: v.id, visa_type: v.visa_type, validity_date: v.validity_date ?? "", country_region: v.country_region ?? "", visa_number: v.visa_number ?? "", issue_date: v.issue_date ?? "", entry_type: v.entry_type ?? "single", description: v.description ?? "", image_url: v.image_url ?? "" })),
       })));
     }
@@ -315,10 +317,24 @@ export default function Clients() {
         // Passports & Visas: delete old passports (cascades to visas), insert new
         await supabase.from("client_passports").delete().eq("client_id", clientId);
         for (const pp of passports.filter(p => p.passport_number)) {
+          // Upload passport images
+          const allImageUrls: string[] = [...(pp.image_urls || [])];
+          if (pp._imageFiles && pp._imageFiles.length > 0) {
+            for (const file of pp._imageFiles) {
+              const ext = file.name.split('.').pop();
+              const filePath = `${clientId}/${crypto.randomUUID()}.${ext}`;
+              const { error: upErr } = await supabase.storage.from("passport-images").upload(filePath, file);
+              if (!upErr) {
+                const { data: urlData } = supabase.storage.from("passport-images").getPublicUrl(filePath);
+                allImageUrls.push(urlData.publicUrl);
+              }
+            }
+          }
           const { data: ppData, error: ppErr } = await supabase.from("client_passports").insert({
             client_id: clientId!, passport_number: pp.passport_number,
             issue_date: pp.issue_date || null, expiry_date: pp.expiry_date || null,
             nationality: pp.nationality || null, status: pp.status || "valid",
+            image_urls: allImageUrls.length > 0 ? allImageUrls : null,
           }).select("id").single();
           if (ppErr) throw ppErr;
           if (pp.visas.length > 0) {
@@ -719,7 +735,7 @@ export default function Clients() {
                 <div className="border-t border-border/50 pt-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-display font-medium text-foreground">Passaportes</h3>
-                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setPassports([...passports, { passport_number: "", issue_date: "", expiry_date: "", nationality: "", status: "valid", visas: [] }])}>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setPassports([...passports, { passport_number: "", issue_date: "", expiry_date: "", nationality: "", status: "valid", visas: [], image_urls: [], _imageFiles: [] }])}>
                       <Plus className="h-3 w-3 mr-1" />Adicionar Passaporte
                     </Button>
                   </div>
@@ -754,6 +770,36 @@ export default function Clients() {
                             </SelectContent>
                           </Select>
                         </div>
+                      </div>
+                      {/* Passport images */}
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <Label className="font-body text-xs">Fotos:</Label>
+                        {(pp.image_urls || []).map((url, imgIdx) => (
+                          <div key={imgIdx} className="relative group">
+                            <a href={url} target="_blank" rel="noopener noreferrer">
+                              <img src={url} alt={`Passaporte ${pi + 1} foto ${imgIdx + 1}`} className="h-10 w-14 object-cover rounded border border-border" />
+                            </a>
+                            <button type="button" className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => {
+                              const n = [...passports]; n[pi].image_urls = n[pi].image_urls.filter((_, j) => j !== imgIdx); setPassports([...n]);
+                            }}>×</button>
+                          </div>
+                        ))}
+                        {(pp._imageFiles || []).map((file, fIdx) => (
+                          <div key={`new-${fIdx}`} className="relative group">
+                            <img src={URL.createObjectURL(file)} alt={file.name} className="h-10 w-14 object-cover rounded border border-primary" />
+                            <button type="button" className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => {
+                              const n = [...passports]; n[pi]._imageFiles = (n[pi]._imageFiles || []).filter((_, j) => j !== fIdx); setPassports([...n]);
+                            }}>×</button>
+                          </div>
+                        ))}
+                        <label className="cursor-pointer inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-input bg-background hover:bg-accent text-foreground">
+                          <Plus className="h-3 w-3" />Adicionar
+                          <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => {
+                            const files = Array.from(e.target.files || []);
+                            if (files.length > 0) { const n = [...passports]; n[pi]._imageFiles = [...(n[pi]._imageFiles || []), ...files]; setPassports([...n]); }
+                            e.target.value = "";
+                          }} />
+                        </label>
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <Label className="font-body text-xs">Status:</Label>
