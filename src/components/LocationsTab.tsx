@@ -360,8 +360,10 @@ function CitiesSubTab() {
   const [form, setForm] = useState({ name: "", country_id: "", state_id: "" });
   const [sort, setSort] = useState<SortState>(null);
   const [filterCountry, setFilterCountry] = useState("all");
+  const [filterState, setFilterState] = useState("all");
 
   const { data: countries = [] } = useCountries();
+  const { data: statesForFilter = [] } = useStates(filterCountry !== "all" ? filterCountry : undefined);
   const { data: statesForForm = [] } = useStates(form.country_id || undefined);
   const { data: cities = [], isLoading } = useQuery({
     queryKey: ["locations-cities-all"],
@@ -417,7 +419,8 @@ function CitiesSubTab() {
     enriched.filter((c: any) => {
       const matchSearch = c.name.toLowerCase().includes(search.toLowerCase()) || c.country_name.toLowerCase().includes(search.toLowerCase()) || c.state_name.toLowerCase().includes(search.toLowerCase());
       const matchCountry = filterCountry === "all" || c.country_id === filterCountry;
-      return matchSearch && matchCountry;
+      const matchState = filterState === "all" || c.state_id === filterState;
+      return matchSearch && matchCountry && matchState;
     }),
     sort
   );
@@ -427,13 +430,22 @@ function CitiesSubTab() {
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <div className="flex gap-2 flex-1 max-w-lg">
           <Input placeholder="Buscar cidade..." value={search} onChange={(e) => setSearch(e.target.value)} className="flex-1" />
-          <Select value={filterCountry} onValueChange={setFilterCountry}>
+          <Select value={filterCountry} onValueChange={(v) => { setFilterCountry(v); setFilterState("all"); }}>
             <SelectTrigger className="w-44"><SelectValue placeholder="Filtrar país" /></SelectTrigger>
             <SelectContent className="max-h-60">
               <SelectItem value="all">Todos os países</SelectItem>
               {countries.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
             </SelectContent>
           </Select>
+          {filterCountry !== "all" && (statesForFilter as any[]).length > 0 && (
+            <Select value={filterState} onValueChange={setFilterState}>
+              <SelectTrigger className="w-44"><SelectValue placeholder="Filtrar estado" /></SelectTrigger>
+              <SelectContent className="max-h-60">
+                <SelectItem value="all">Todos os estados</SelectItem>
+                {(statesForFilter as any[]).map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
         </div>
         {isAdmin && (
           <>
