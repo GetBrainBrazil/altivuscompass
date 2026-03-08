@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { logAuditEvent } from "@/lib/audit";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowUp, ArrowDown, ArrowUpDown, X } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, X, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 type SortDir = "asc" | "desc";
@@ -87,6 +87,29 @@ export function useCities(countryId?: string, stateId?: string) {
   });
 }
 
+// ── Delete button inside dialog ──
+function DialogDeleteButton({ onDelete, itemName, description }: { onDelete: () => void; itemName: string; description: string }) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive gap-1.5">
+          <Trash2 className="h-4 w-4" />Excluir {itemName}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir {itemName}?</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={onDelete}>Excluir</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 // ── Countries Sub-Tab ──
 
 function CountriesSubTab() {
@@ -132,6 +155,7 @@ function CountriesSubTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["locations-countries"] });
       toast({ title: "País removido" });
+      closeDialog();
     },
     onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
@@ -148,21 +172,24 @@ function CountriesSubTab() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <Input placeholder="Buscar país..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" />
-        {isAdmin && (
-          <>
-            <Button size="sm" onClick={() => setDialogOpen(true)}>+ País</Button>
-            <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) closeDialog(); else setDialogOpen(true); }}>
-              <DialogContent>
-                <DialogHeader><DialogTitle>{editing ? "Editar País" : "Novo País"}</DialogTitle></DialogHeader>
-                <div className="grid gap-4 py-2">
-                  <div><Label>Nome <span className="text-destructive">*</span></Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do país" /></div>
-                  <Button onClick={() => saveMutation.mutate()} disabled={!name}>{editing ? "Salvar" : "Adicionar"}</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </>
-        )}
+        {isAdmin && <Button size="sm" onClick={() => setDialogOpen(true)}>+ País</Button>}
       </div>
+      {isAdmin && (
+        <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) closeDialog(); else setDialogOpen(true); }}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>{editing ? "Editar País" : "Novo País"}</DialogTitle></DialogHeader>
+            <div className="grid gap-4 py-2">
+              <div><Label>Nome <span className="text-destructive">*</span></Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do país" /></div>
+              <Button onClick={() => saveMutation.mutate()} disabled={!name}>{editing ? "Salvar" : "Adicionar"}</Button>
+            </div>
+            {editing && (
+              <div className="border-t pt-3 mt-2">
+                <DialogDeleteButton onDelete={() => deleteMutation.mutate(editing.id)} itemName={editing.name} description="Excluir este país também removerá todos os estados e cidades associados." />
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
       <div className="text-sm text-muted-foreground">{filtered.length} país(es)</div>
       {isLoading ? <p className="text-muted-foreground text-sm">Carregando...</p> : (
         <div className="rounded-lg border bg-card">
@@ -170,33 +197,12 @@ function CountriesSubTab() {
             <TableHeader>
               <TableRow>
                 <SortableHead label="Nome" sortKey="name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
-                {isAdmin && <TableHead className="w-24">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((c: any) => (
-                <TableRow key={c.id}>
+                <TableRow key={c.id} className={isAdmin ? "cursor-pointer hover:bg-muted/50" : ""} onClick={() => isAdmin && openEdit(c)}>
                   <TableCell>{c.name}</TableCell>
-                  {isAdmin && (
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(c)}>✏️</Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild><Button variant="ghost" size="sm">🗑️</Button></AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Excluir país?</AlertDialogTitle>
-                              <AlertDialogDescription>Excluir {c.name} também removerá todos os estados e cidades associados.</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => deleteMutation.mutate(c.id)}>Excluir</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  )}
                 </TableRow>
               ))}
             </TableBody>
@@ -255,6 +261,7 @@ function StatesSubTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["locations-states"] });
       toast({ title: "Estado removido" });
+      closeDialog();
     },
     onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
@@ -285,30 +292,33 @@ function StatesSubTab() {
             </SelectContent>
           </Select>
         </div>
-        {isAdmin && (
-          <>
-            <Button size="sm" onClick={() => setDialogOpen(true)}>+ Estado/Região</Button>
-            <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) closeDialog(); else setDialogOpen(true); }}>
-              <DialogContent>
-                <DialogHeader><DialogTitle>{editing ? "Editar Estado/Região" : "Novo Estado/Região"}</DialogTitle></DialogHeader>
-                <div className="grid gap-4 py-2">
-                  <div>
-                    <Label>País <span className="text-destructive">*</span></Label>
-                    <Select value={form.country_id} onValueChange={(v) => setForm({ ...form, country_id: v })}>
-                      <SelectTrigger><SelectValue placeholder="Selecione o país" /></SelectTrigger>
-                      <SelectContent className="max-h-60">
-                        {countries.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div><Label>Nome <span className="text-destructive">*</span></Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nome do estado/região" /></div>
-                  <Button onClick={() => saveMutation.mutate()} disabled={!form.name || !form.country_id}>{editing ? "Salvar" : "Adicionar"}</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </>
-        )}
+        {isAdmin && <Button size="sm" onClick={() => setDialogOpen(true)}>+ Estado/Região</Button>}
       </div>
+      {isAdmin && (
+        <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) closeDialog(); else setDialogOpen(true); }}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>{editing ? "Editar Estado/Região" : "Novo Estado/Região"}</DialogTitle></DialogHeader>
+            <div className="grid gap-4 py-2">
+              <div>
+                <Label>País <span className="text-destructive">*</span></Label>
+                <Select value={form.country_id} onValueChange={(v) => setForm({ ...form, country_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o país" /></SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {countries.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><Label>Nome <span className="text-destructive">*</span></Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nome do estado/região" /></div>
+              <Button onClick={() => saveMutation.mutate()} disabled={!form.name || !form.country_id}>{editing ? "Salvar" : "Adicionar"}</Button>
+            </div>
+            {editing && (
+              <div className="border-t pt-3 mt-2">
+                <DialogDeleteButton onDelete={() => deleteMutation.mutate(editing.id)} itemName={editing.name} description="Excluir este estado pode afetar cidades associadas." />
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
       <div className="text-sm text-muted-foreground">{filtered.length} estado(s)/região(ões)</div>
       {isLoading ? <p className="text-muted-foreground text-sm">Carregando...</p> : (
         <div className="rounded-lg border bg-card">
@@ -317,38 +327,17 @@ function StatesSubTab() {
               <TableRow>
                 <SortableHead label="Nome" sortKey="name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
                 <SortableHead label="País" sortKey="country_name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
-                {isAdmin && <TableHead className="w-24">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.slice(0, 100).map((s: any) => (
-                <TableRow key={s.id}>
+                <TableRow key={s.id} className={isAdmin ? "cursor-pointer hover:bg-muted/50" : ""} onClick={() => isAdmin && openEdit(s)}>
                   <TableCell>{s.name}</TableCell>
                   <TableCell>{s.country_name}</TableCell>
-                  {isAdmin && (
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(s)}>✏️</Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild><Button variant="ghost" size="sm">🗑️</Button></AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Excluir estado/região?</AlertDialogTitle>
-                              <AlertDialogDescription>Excluir {s.name} pode afetar cidades associadas.</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => deleteMutation.mutate(s.id)}>Excluir</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  )}
                 </TableRow>
               ))}
               {filtered.length > 100 && (
-                <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground text-sm">Mostrando 100 de {filtered.length}. Use a busca para refinar.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={2} className="text-center text-muted-foreground text-sm">Mostrando 100 de {filtered.length}. Use a busca para refinar.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -419,6 +408,7 @@ function CitiesSubTab() {
       queryClient.invalidateQueries({ queryKey: ["locations-cities"] });
       queryClient.invalidateQueries({ queryKey: ["locations-cities-all"] });
       toast({ title: "Cidade removida" });
+      closeDialog();
     },
     onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
@@ -463,39 +453,42 @@ function CitiesSubTab() {
             </Select>
           )}
         </div>
-        {isAdmin && (
-          <>
-            <Button size="sm" onClick={() => setDialogOpen(true)}>+ Cidade</Button>
-            <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) closeDialog(); else setDialogOpen(true); }}>
-              <DialogContent>
-                <DialogHeader><DialogTitle>{editing ? "Editar Cidade" : "Nova Cidade"}</DialogTitle></DialogHeader>
-                <div className="grid gap-4 py-2">
-                  <div>
-                    <Label>País <span className="text-destructive">*</span></Label>
-                    <Select value={form.country_id} onValueChange={(v) => setForm({ ...form, country_id: v, state_id: "" })}>
-                      <SelectTrigger><SelectValue placeholder="Selecione o país" /></SelectTrigger>
-                      <SelectContent className="max-h-60">
-                        {countries.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Estado/Região</Label>
-                    <Select value={form.state_id} onValueChange={(v) => setForm({ ...form, state_id: v })}>
-                      <SelectTrigger><SelectValue placeholder="Selecione (opcional)" /></SelectTrigger>
-                      <SelectContent className="max-h-60">
-                        {statesForForm.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div><Label>Nome <span className="text-destructive">*</span></Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nome da cidade" /></div>
-                  <Button onClick={() => saveMutation.mutate()} disabled={!form.name || !form.country_id}>{editing ? "Salvar" : "Adicionar"}</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </>
-        )}
+        {isAdmin && <Button size="sm" onClick={() => setDialogOpen(true)}>+ Cidade</Button>}
       </div>
+      {isAdmin && (
+        <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) closeDialog(); else setDialogOpen(true); }}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>{editing ? "Editar Cidade" : "Nova Cidade"}</DialogTitle></DialogHeader>
+            <div className="grid gap-4 py-2">
+              <div>
+                <Label>País <span className="text-destructive">*</span></Label>
+                <Select value={form.country_id} onValueChange={(v) => setForm({ ...form, country_id: v, state_id: "" })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o país" /></SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {countries.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Estado/Região</Label>
+                <Select value={form.state_id} onValueChange={(v) => setForm({ ...form, state_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione (opcional)" /></SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {statesForForm.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><Label>Nome <span className="text-destructive">*</span></Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nome da cidade" /></div>
+              <Button onClick={() => saveMutation.mutate()} disabled={!form.name || !form.country_id}>{editing ? "Salvar" : "Adicionar"}</Button>
+            </div>
+            {editing && (
+              <div className="border-t pt-3 mt-2">
+                <DialogDeleteButton onDelete={() => deleteMutation.mutate(editing.id)} itemName={editing.name} description="Tem certeza que deseja excluir esta cidade?" />
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
       <div className="text-sm text-muted-foreground">{filtered.length} cidade(s)</div>
       {isLoading ? <p className="text-muted-foreground text-sm">Carregando...</p> : (
         <div className="rounded-lg border bg-card">
@@ -505,39 +498,18 @@ function CitiesSubTab() {
                 <SortableHead label="Nome" sortKey="name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
                 <SortableHead label="Estado/Região" sortKey="state_name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
                 <SortableHead label="País" sortKey="country_name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
-                {isAdmin && <TableHead className="w-24">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.slice(0, 100).map((c: any) => (
-                <TableRow key={c.id}>
+                <TableRow key={c.id} className={isAdmin ? "cursor-pointer hover:bg-muted/50" : ""} onClick={() => isAdmin && openEdit(c)}>
                   <TableCell>{c.name}</TableCell>
                   <TableCell>{c.state_name || "—"}</TableCell>
                   <TableCell>{c.country_name}</TableCell>
-                  {isAdmin && (
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(c)}>✏️</Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild><Button variant="ghost" size="sm">🗑️</Button></AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Excluir cidade?</AlertDialogTitle>
-                              <AlertDialogDescription>Tem certeza que deseja excluir {c.name}?</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => deleteMutation.mutate(c.id)}>Excluir</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  )}
                 </TableRow>
               ))}
               {filtered.length > 100 && (
-                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground text-sm">Mostrando 100 de {filtered.length}. Use a busca para refinar.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground text-sm">Mostrando 100 de {filtered.length}. Use a busca para refinar.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -632,6 +604,7 @@ function ContinentsSubTab() {
       queryClient.invalidateQueries({ queryKey: ["locations-continents"] });
       queryClient.invalidateQueries({ queryKey: ["continent-countries"] });
       toast({ title: "Continente removido" });
+      closeDialog();
     },
     onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
@@ -667,37 +640,40 @@ function ContinentsSubTab() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <Input placeholder="Buscar continente..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" />
-        {isAdmin && (
-          <>
-            <Button size="sm" onClick={() => setDialogOpen(true)}>+ Continente</Button>
-            <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) closeDialog(); else setDialogOpen(true); }}>
-              <DialogContent className="max-w-lg">
-                <DialogHeader><DialogTitle>{editing ? "Editar Continente" : "Novo Continente"}</DialogTitle></DialogHeader>
-                <div className="grid gap-4 py-2">
-                  <div><Label>Nome <span className="text-destructive">*</span></Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do continente" /></div>
-                  <div>
-                    <Label>Países do continente</Label>
-                    <Input placeholder="Buscar país..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)} className="mt-1 mb-2" />
-                    <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-1">
-                      {filteredCountriesForDialog.map((c: any) => (
-                        <label key={c.id} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-muted cursor-pointer text-sm">
-                          <Checkbox
-                            checked={selectedCountryIds.includes(c.id)}
-                            onCheckedChange={(checked) => setSelectedCountryIds(prev => checked ? [...prev, c.id] : prev.filter(id => id !== c.id))}
-                          />
-                          {c.name}
-                        </label>
-                      ))}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">{selectedCountryIds.length} país(es) selecionado(s)</p>
-                  </div>
-                  <Button onClick={() => saveMutation.mutate()} disabled={!name}>{editing ? "Salvar" : "Adicionar"}</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </>
-        )}
+        {isAdmin && <Button size="sm" onClick={() => setDialogOpen(true)}>+ Continente</Button>}
       </div>
+      {isAdmin && (
+        <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) closeDialog(); else setDialogOpen(true); }}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader><DialogTitle>{editing ? "Editar Continente" : "Novo Continente"}</DialogTitle></DialogHeader>
+            <div className="grid gap-4 py-2">
+              <div><Label>Nome <span className="text-destructive">*</span></Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do continente" /></div>
+              <div>
+                <Label>Países do continente</Label>
+                <Input placeholder="Buscar país..." value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)} className="mt-1 mb-2" />
+                <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-1">
+                  {filteredCountriesForDialog.map((c: any) => (
+                    <label key={c.id} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-muted cursor-pointer text-sm">
+                      <Checkbox
+                        checked={selectedCountryIds.includes(c.id)}
+                        onCheckedChange={(checked) => setSelectedCountryIds(prev => checked ? [...prev, c.id] : prev.filter(id => id !== c.id))}
+                      />
+                      {c.name}
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">{selectedCountryIds.length} país(es) selecionado(s)</p>
+              </div>
+              <Button onClick={() => saveMutation.mutate()} disabled={!name}>{editing ? "Salvar" : "Adicionar"}</Button>
+            </div>
+            {editing && (
+              <div className="border-t pt-3 mt-2">
+                <DialogDeleteButton onDelete={() => deleteMutation.mutate(editing.id)} itemName={editing.name} description="Excluir este continente? Os vínculos com países serão removidos." />
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
       <div className="text-sm text-muted-foreground">{filtered.length} continente(s)</div>
       {isLoading ? <p className="text-muted-foreground text-sm">Carregando...</p> : (
         <div className="rounded-lg border bg-card">
@@ -706,34 +682,13 @@ function ContinentsSubTab() {
               <TableRow>
                 <SortableHead label="Nome" sortKey="name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
                 <TableHead>Países</TableHead>
-                {isAdmin && <TableHead className="w-24">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((c: any) => (
-                <TableRow key={c.id}>
+                <TableRow key={c.id} className={isAdmin ? "cursor-pointer hover:bg-muted/50" : ""} onClick={() => isAdmin && openEdit(c)}>
                   <TableCell className="font-medium">{c.name}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{(countriesPerContinent[c.id] ?? []).join(", ") || "—"}</TableCell>
-                  {isAdmin && (
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(c)}>✏️</Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild><Button variant="ghost" size="sm">🗑️</Button></AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Excluir continente?</AlertDialogTitle>
-                              <AlertDialogDescription>Excluir {c.name}? Os vínculos com países serão removidos.</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => deleteMutation.mutate(c.id)}>Excluir</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  )}
                 </TableRow>
               ))}
             </TableBody>
@@ -791,7 +746,6 @@ function DiversosSubTab() {
   const { data: states = [] } = useStates();
   const { data: cities = [] } = useCities();
 
-  // Build searchable options
   const allOptions = useMemo(() => {
     const opts: { type: string; id: string; label: string; group: string }[] = [];
     for (const c of continents) opts.push({ type: "continent", id: c.id, label: c.name, group: "Continentes" });
@@ -807,7 +761,6 @@ function DiversosSubTab() {
     return allOptions.filter(o => o.label.toLowerCase().includes(q)).slice(0, 50);
   }, [allOptions, itemSearch]);
 
-  // Build label map
   const labelMap = useMemo(() => {
     const map: Record<string, string> = {};
     for (const o of allOptions) map[`${o.type}:${o.id}`] = o.label;
@@ -865,6 +818,7 @@ function DiversosSubTab() {
       queryClient.invalidateQueries({ queryKey: ["custom-destinations"] });
       queryClient.invalidateQueries({ queryKey: ["custom-destination-items"] });
       toast({ title: "Destino removido" });
+      closeDialog();
     },
     onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
@@ -898,48 +852,51 @@ function DiversosSubTab() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <Input placeholder="Buscar destino..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" />
-        {isAdmin && (
-          <>
-            <Button size="sm" onClick={() => setDialogOpen(true)}>+ Destino</Button>
-            <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) closeDialog(); else setDialogOpen(true); }}>
-              <DialogContent className="max-w-lg">
-                <DialogHeader><DialogTitle>{editing ? "Editar Destino" : "Novo Destino"}</DialogTitle></DialogHeader>
-                <div className="grid gap-4 py-2">
-                  <div><Label>Nome <span className="text-destructive">*</span></Label><Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Ex: Praias do Caribe" /></div>
-                  <div><Label>Descrição</Label><Input value={formDesc} onChange={(e) => setFormDesc(e.target.value)} placeholder="Descrição opcional" /></div>
-                  <div>
-                    <Label>Localidades incluídas</Label>
-                    <Input placeholder="Buscar continente, país, estado ou cidade..." value={itemSearch} onChange={(e) => setItemSearch(e.target.value)} className="mt-1 mb-2" />
-                    <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-1">
-                      {filteredOptions.map((o) => {
-                        const isSelected = selectedItems.some(si => si.type === o.type && si.id === o.id);
-                        return (
-                          <label key={`${o.type}-${o.id}`} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-muted cursor-pointer text-sm">
-                            <Checkbox checked={isSelected} onCheckedChange={() => toggleItem(o)} />
-                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{typeLabels[o.type]}</span>
-                            {o.label}
-                          </label>
-                        );
-                      })}
-                    </div>
-                    {selectedItems.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {selectedItems.map((si) => (
-                          <span key={`${si.type}-${si.id}`} className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground">
-                            {si.label}
-                            <button type="button" onClick={() => toggleItem(si)} className="hover:text-destructive"><X className="h-3 w-3" /></button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <Button onClick={() => saveMutation.mutate()} disabled={!formName}>{editing ? "Salvar" : "Adicionar"}</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </>
-        )}
+        {isAdmin && <Button size="sm" onClick={() => setDialogOpen(true)}>+ Destino</Button>}
       </div>
+      {isAdmin && (
+        <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) closeDialog(); else setDialogOpen(true); }}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader><DialogTitle>{editing ? "Editar Destino" : "Novo Destino"}</DialogTitle></DialogHeader>
+            <div className="grid gap-4 py-2">
+              <div><Label>Nome <span className="text-destructive">*</span></Label><Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Ex: Praias do Caribe" /></div>
+              <div><Label>Descrição</Label><Input value={formDesc} onChange={(e) => setFormDesc(e.target.value)} placeholder="Descrição opcional" /></div>
+              <div>
+                <Label>Localidades incluídas</Label>
+                <Input placeholder="Buscar continente, país, estado ou cidade..." value={itemSearch} onChange={(e) => setItemSearch(e.target.value)} className="mt-1 mb-2" />
+                <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-1">
+                  {filteredOptions.map((o) => {
+                    const isSelected = selectedItems.some(si => si.type === o.type && si.id === o.id);
+                    return (
+                      <label key={`${o.type}-${o.id}`} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-muted cursor-pointer text-sm">
+                        <Checkbox checked={isSelected} onCheckedChange={() => toggleItem(o)} />
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{typeLabels[o.type]}</span>
+                        {o.label}
+                      </label>
+                    );
+                  })}
+                </div>
+                {selectedItems.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {selectedItems.map((si) => (
+                      <span key={`${si.type}-${si.id}`} className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                        {si.label}
+                        <button type="button" onClick={() => toggleItem(si)} className="hover:text-destructive"><X className="h-3 w-3" /></button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <Button onClick={() => saveMutation.mutate()} disabled={!formName}>{editing ? "Salvar" : "Adicionar"}</Button>
+            </div>
+            {editing && (
+              <div className="border-t pt-3 mt-2">
+                <DialogDeleteButton onDelete={() => deleteMutation.mutate(editing.id)} itemName={`"${editing.name}"`} description="Esta ação não pode ser desfeita." />
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
       <div className="text-sm text-muted-foreground">{filtered.length} destino(s)</div>
       {isLoading ? <p className="text-muted-foreground text-sm">Carregando...</p> : (
         <div className="rounded-lg border bg-card">
@@ -949,41 +906,20 @@ function DiversosSubTab() {
                 <SortableHead label="Nome" sortKey="name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
                 <TableHead>Descrição</TableHead>
                 <TableHead>Itens</TableHead>
-                {isAdmin && <TableHead className="w-24">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground text-sm py-8">Nenhum destino cadastrado.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground text-sm py-8">Nenhum destino cadastrado.</TableCell></TableRow>
               ) : (
                 filtered.map((d: any) => {
                   const items = itemsPerDest[d.id] ?? [];
                   const labels = items.map(i => labelMap[`${i.type}:${i.id}`] ?? "?").join(", ");
                   return (
-                    <TableRow key={d.id}>
+                    <TableRow key={d.id} className={isAdmin ? "cursor-pointer hover:bg-muted/50" : ""} onClick={() => isAdmin && openEdit(d)}>
                       <TableCell className="font-medium">{d.name}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{d.description || "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground max-w-xs truncate">{labels || "—"}</TableCell>
-                      {isAdmin && (
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="sm" onClick={() => openEdit(d)}>✏️</Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild><Button variant="ghost" size="sm">🗑️</Button></AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Excluir destino?</AlertDialogTitle>
-                                  <AlertDialogDescription>Excluir "{d.name}"? Esta ação não pode ser desfeita.</AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => deleteMutation.mutate(d.id)}>Excluir</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </TableCell>
-                      )}
                     </TableRow>
                   );
                 })
