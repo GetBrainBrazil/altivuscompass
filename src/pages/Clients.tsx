@@ -17,6 +17,7 @@ import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus, ArrowLeft, St
 import { useCountries, useStates, useCities } from "@/components/LocationsTab";
 import { COUNTRY_CODES, applyPhoneMask } from "@/lib/phone-masks";
 import { ImageEditor } from "@/components/ImageEditor";
+import { ClientTravelersTab } from "@/components/ClientTravelersTab";
 
 type SortDir = "asc" | "desc";
 type SortState = { key: string; dir: SortDir } | null;
