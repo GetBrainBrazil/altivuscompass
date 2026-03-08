@@ -911,7 +911,9 @@ export default function Clients() {
                       </div>
                     </td>
                     <td className="p-4">
-                      <p className="text-sm font-body text-foreground whitespace-nowrap">{client.primary_phone || "—"}</p>
+                      {client.primary_phone ? (
+                        <a href={`https://wa.me/${client.primary_phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-sm font-body text-primary hover:underline whitespace-nowrap">{client.primary_phone}</a>
+                      ) : <p className="text-sm font-body text-foreground">—</p>}
                     </td>
                     <td className="p-4">
                       <p className="text-sm font-body text-foreground truncate max-w-[200px]">{client.primary_email || "—"}</p>
