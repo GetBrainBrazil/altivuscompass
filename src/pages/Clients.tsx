@@ -363,6 +363,7 @@ export default function Clients() {
       const payload: any = {
         ...rest,
         preferred_airports: selectedAirports,
+        tags: selectedTags,
         birth_date: form.birth_date || null,
       };
 
