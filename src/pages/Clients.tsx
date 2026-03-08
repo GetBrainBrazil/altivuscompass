@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -291,6 +292,7 @@ export default function Clients() {
     onSuccess: () => {
       toast({ title: "Cliente removido" });
       qc.invalidateQueries({ queryKey: ["clients"] });
+      goToList();
     },
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
@@ -765,13 +767,38 @@ export default function Clients() {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2 justify-end">
-            <Button type="button" variant="outline" onClick={goToList} className="font-body">
-              <ArrowLeft className="h-4 w-4 mr-1" />Voltar
-            </Button>
-            <Button type="submit" disabled={saveMutation.isPending} className="font-body">
-              {saveMutation.isPending ? "Salvando..." : "Salvar"}
-            </Button>
+          <div className="flex gap-2 justify-between">
+            {editingId ? (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button type="button" variant="ghost" className="text-destructive font-body">
+                    <Trash2 className="h-4 w-4 mr-1" />Excluir Cliente
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="font-display">Excluir cliente</AlertDialogTitle>
+                    <AlertDialogDescription className="font-body">
+                      Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="font-body">Cancelar</AlertDialogCancel>
+                    <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-body" onClick={() => deleteMutation.mutate(editingId)}>
+                      Excluir
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : <div />}
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={goToList} className="font-body">
+                <ArrowLeft className="h-4 w-4 mr-1" />Voltar
+              </Button>
+              <Button type="submit" disabled={saveMutation.isPending} className="font-body">
+                {saveMutation.isPending ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
           </div>
         </form>
 
