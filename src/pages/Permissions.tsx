@@ -13,15 +13,25 @@ import { PAGE_PERMISSIONS, FEATURE_PERMISSIONS, ROLE_LABELS, type AppRole, type 
 export default function Permissions() {
   const { toast } = useToast();
   const [permissions, setPermissions] = useState<PagePermission[]>(PAGE_PERMISSIONS);
+  const [featurePermissions, setFeaturePermissions] = useState<FeaturePermission[]>(FEATURE_PERMISSIONS);
   const [editOpen, setEditOpen] = useState(false);
   const [editingPage, setEditingPage] = useState<PagePermission | null>(null);
+  const [editingFeature, setEditingFeature] = useState<FeaturePermission | null>(null);
   const [editRoles, setEditRoles] = useState<AppRole[]>([]);
 
   const allRoles: AppRole[] = ["admin", "manager", "sales_agent", "operations"];
 
   const openEdit = (page: PagePermission) => {
     setEditingPage(page);
+    setEditingFeature(null);
     setEditRoles([...page.allowedRoles]);
+    setEditOpen(true);
+  };
+
+  const openFeatureEdit = (feature: FeaturePermission) => {
+    setEditingFeature(feature);
+    setEditingPage(null);
+    setEditRoles([...feature.allowedRoles]);
     setEditOpen(true);
   };
 
@@ -33,17 +43,27 @@ export default function Permissions() {
   };
 
   const savePermission = () => {
-    if (!editingPage) return;
-    const updated = permissions.map((p) =>
-      p.path === editingPage.path ? { ...p, allowedRoles: editRoles } : p
-    );
-    setPermissions(updated);
-    // Update the global PAGE_PERMISSIONS array in-place
-    const original = PAGE_PERMISSIONS.find((p) => p.path === editingPage.path);
-    if (original) {
-      original.allowedRoles = [...editRoles];
+    if (editingPage) {
+      const updated = permissions.map((p) =>
+        p.path === editingPage.path ? { ...p, allowedRoles: editRoles } : p
+      );
+      setPermissions(updated);
+      const original = PAGE_PERMISSIONS.find((p) => p.path === editingPage.path);
+      if (original) {
+        original.allowedRoles = [...editRoles];
+      }
+      toast({ title: "Permissões atualizadas", description: `Permissões de "${editingPage.label}" foram salvas.` });
+    } else if (editingFeature) {
+      const updated = featurePermissions.map((f) =>
+        f.key === editingFeature.key ? { ...f, allowedRoles: editRoles } : f
+      );
+      setFeaturePermissions(updated);
+      const original = FEATURE_PERMISSIONS.find((f) => f.key === editingFeature.key);
+      if (original) {
+        original.allowedRoles = [...editRoles];
+      }
+      toast({ title: "Permissões atualizadas", description: `Permissões de "${editingFeature.label}" foram salvas.` });
     }
-    toast({ title: "Permissões atualizadas", description: `Permissões de "${editingPage.label}" foram salvas.` });
     setEditOpen(false);
   };
 
