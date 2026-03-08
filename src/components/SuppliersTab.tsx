@@ -258,17 +258,17 @@ export default function SuppliersTab() {
                         </PopoverTrigger>
                         <PopoverContent className="w-72 p-2" align="start">
                           {SUPPLIER_CATEGORIES.map(c => (
-                            <label key={c} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm font-body">
+                            <label key={c.label} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm font-body">
                               <Checkbox
-                                checked={form.categories.includes(c)}
+                                checked={form.categories.includes(c.label)}
                                 onCheckedChange={(checked) => {
                                   setForm(f => ({
                                     ...f,
-                                    categories: checked ? [...f.categories, c] : f.categories.filter(x => x !== c),
+                                    categories: checked ? [...f.categories, c.label] : f.categories.filter(x => x !== c.label),
                                   }));
                                 }}
                               />
-                              {c}
+                              {c.label}
                             </label>
                           ))}
                         </PopoverContent>
