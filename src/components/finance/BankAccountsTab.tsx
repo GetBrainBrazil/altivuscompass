@@ -83,7 +83,7 @@ export default function BankAccountsTab() {
       if (editing) {
         const { error } = await supabase.from("bank_accounts").update(payload).eq("id", editing.id);
         if (error) throw error;
-        logAuditEvent({ action: "update", tableName: "bank_accounts", recordId: editing.id, oldData: editing, newData: payload });
+        logAuditEvent({ action: "update", tableName: "bank_accounts", recordId: editing.id, recordLabel: editing.bank_name, oldData: editing, newData: payload });
       } else {
         const { data, error } = await supabase.from("bank_accounts").insert(payload).select("id").single();
         if (error) throw error;
