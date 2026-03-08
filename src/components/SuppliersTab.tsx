@@ -168,7 +168,7 @@ export default function SuppliersTab() {
     setEditing(s);
     setForm({
       name: s.name ?? "", trade_name: s.trade_name ?? "", document_number: s.document_number ?? "",
-      supplier_type: s.supplier_type ?? "company", category: s.category ?? "",
+      supplier_type: s.supplier_type ?? "company", categories: Array.isArray(s.category) ? s.category : (s.category ? [s.category] : []),
       email: s.email ?? "", phone: s.phone ?? "", website: s.website ?? "",
       contact_person: s.contact_person ?? "", contact_phone: s.contact_phone ?? "",
       cep: s.cep ?? "", address_street: s.address_street ?? "", address_number: s.address_number ?? "",
