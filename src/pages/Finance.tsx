@@ -519,8 +519,8 @@ export default function Finance() {
                       {t.is_reconciled && <CheckCircle2 size={14} className="text-success mx-auto" />}
                     </td>
                     <td className="p-3 font-body font-medium text-foreground">{t.description}</td>
-                    <td className="p-3 font-body text-xs text-muted-foreground">{t.payment_account || "-"}</td>
-                    <td className="p-3 font-body text-xs text-muted-foreground max-w-[200px] truncate">{t.category || "-"}</td>
+                    <td className="p-3 font-body text-xs text-muted-foreground">{(t.payment_account && bankAccountMap.get(t.payment_account)) || t.payment_account || "-"}</td>
+                    <td className="p-3 font-body text-xs text-muted-foreground max-w-[200px] truncate" title={categoryPathMap.get(t.category || "") || t.category || ""}>{categoryPathMap.get(t.category || "") || t.category || "-"}</td>
                     <td className="p-3 font-body text-xs text-muted-foreground">{t.party_name || "-"}</td>
                     <td className={`p-3 font-body text-sm font-medium text-right whitespace-nowrap ${isExpense ? "text-destructive" : "text-success"}`}>
                       {isExpense ? `(${formatCurrency(Number(t.amount))})` : formatCurrency(Number(t.amount))}
