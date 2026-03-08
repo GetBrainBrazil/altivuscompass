@@ -314,20 +314,6 @@ export default function UserManagement() {
                 <SelectContent>{Object.entries(ROLE_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label className="font-body font-medium">Permissões resultantes</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {PAGE_PERMISSIONS.map((page) => {
-                  const hasAccess = editRole === "admin" || page.allowedRoles.includes(editRole as any);
-                  return (
-                    <div key={page.path} className="flex items-center gap-2">
-                      <Checkbox checked={hasAccess} disabled className="pointer-events-none" />
-                      <span className={`text-sm font-body ${hasAccess ? "text-foreground" : "text-muted-foreground"}`}>{page.label}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
             <Button type="submit" className="w-full font-body" disabled={updateUserMutation.isPending}>
               {updateUserMutation.isPending ? "Salvando..." : "Salvar Alterações"}
             </Button>
