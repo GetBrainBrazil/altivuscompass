@@ -500,6 +500,7 @@ export default function Finance() {
             </button>
           ))}
         </div>
+
         <Popover open={accountFilterOpen} onOpenChange={setAccountFilterOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="font-body text-xs gap-1.5">
@@ -545,6 +546,39 @@ export default function Finance() {
             )}
           </PopoverContent>
         </Popover>
+
+        <Select value={datePreset} onValueChange={(v) => { setDatePreset(v); if (v !== "custom") { setCustomDateFrom(""); setCustomDateTo(""); } }}>
+          <SelectTrigger className="w-auto h-8 text-xs font-body gap-1.5">
+            <SelectValue placeholder="Período" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todo período</SelectItem>
+            <SelectItem value="today">Hoje</SelectItem>
+            <SelectItem value="yesterday">Ontem</SelectItem>
+            <SelectItem value="this_week">Esta semana</SelectItem>
+            <SelectItem value="last_week">Semana passada</SelectItem>
+            <SelectItem value="this_month">Este mês</SelectItem>
+            <SelectItem value="last_month">Mês passado</SelectItem>
+            <SelectItem value="this_year">Este ano</SelectItem>
+            <SelectItem value="custom">Personalizado</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {datePreset === "custom" && (
+          <div className="flex items-center gap-2">
+            <Input type="date" className="h-8 text-xs w-36" value={customDateFrom} onChange={(e) => setCustomDateFrom(e.target.value)} placeholder="De" />
+            <span className="text-xs text-muted-foreground">até</span>
+            <Input type="date" className="h-8 text-xs w-36" value={customDateTo} onChange={(e) => setCustomDateTo(e.target.value)} placeholder="Até" />
+          </div>
+        )}
+
+        <div className="flex-1" />
+        <Input
+          placeholder="Buscar transação..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="h-8 text-xs w-48 sm:w-64"
+        />
       </div>
 
       {/* Desktop table */}
