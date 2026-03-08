@@ -258,7 +258,7 @@ export default function Clients() {
       if (clientId) {
         await supabase.from("client_phones").delete().eq("client_id", clientId);
         if (phones.length > 0) {
-          await supabase.from("client_phones").insert(phones.filter(p => p.phone).map(p => ({ client_id: clientId!, phone: `${p.country_code} ${p.phone}`, description: p.description || null })));
+          await supabase.from("client_phones").insert(phones.filter(p => p.phone).map(p => { const cc = COUNTRY_CODES.find(c => c.code === p.country_code); return { client_id: clientId!, phone: `${cc?.dial || "+55"} ${p.phone}`, description: p.description || null }; }));
         }
         await supabase.from("client_emails").delete().eq("client_id", clientId);
         if (emails.length > 0) {
