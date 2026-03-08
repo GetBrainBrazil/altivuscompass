@@ -735,7 +735,7 @@ export default function Clients() {
                 <div className="border-t border-border/50 pt-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-display font-medium text-foreground">Passaportes</h3>
-                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setPassports([...passports, { passport_number: "", issue_date: "", expiry_date: "", nationality: "", status: "valid", visas: [] }])}>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setPassports([...passports, { passport_number: "", issue_date: "", expiry_date: "", nationality: "", status: "valid", visas: [], image_urls: [], _imageFiles: [] }])}>
                       <Plus className="h-3 w-3 mr-1" />Adicionar Passaporte
                     </Button>
                   </div>
