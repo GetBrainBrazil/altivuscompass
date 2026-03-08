@@ -8,8 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
-import { Building2, FolderTree } from "lucide-react";
 
 type Transaction = {
   id: string; description: string; type: string; amount: number; date: string;
@@ -208,27 +206,6 @@ export default function Finance() {
         <MetricCard title="Total Pago" value={formatCurrency(totalPaid)} icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-soft-blue"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7l3-7z" /></svg>
         } />
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        <Link to="/finance/bank-accounts" className="glass-card rounded-xl p-4 flex items-center gap-4 hover:bg-muted/30 transition-colors group">
-          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-            <Building2 size={18} className="text-primary" />
-          </div>
-          <div>
-            <p className="text-sm font-medium font-body text-foreground">Dados Bancários</p>
-            <p className="text-xs text-muted-foreground font-body">Contas bancárias da empresa</p>
-          </div>
-        </Link>
-        <Link to="/finance/chart-of-accounts" className="glass-card rounded-xl p-4 flex items-center gap-4 hover:bg-muted/30 transition-colors group">
-          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-            <FolderTree size={18} className="text-primary" />
-          </div>
-          <div>
-            <p className="text-sm font-medium font-body text-foreground">Plano de Contas</p>
-            <p className="text-xs text-muted-foreground font-body">Categorias financeiras hierárquicas</p>
-          </div>
-        </Link>
       </div>
 
       <div className="flex gap-1 p-1 rounded-lg bg-muted w-fit">
