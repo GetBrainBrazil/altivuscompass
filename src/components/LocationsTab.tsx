@@ -623,8 +623,10 @@ function ContinentsSubTab() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      const item = continents.find((c: any) => c.id === id);
       const { error } = await supabase.from("continents").delete().eq("id", id);
       if (error) throw error;
+      await logAuditEvent({ action: "delete", tableName: "continents", recordId: id, recordLabel: item?.name ?? id, oldData: item });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["locations-continents"] });
