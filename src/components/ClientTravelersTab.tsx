@@ -301,6 +301,34 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
 
+  // Copy passengers mutation
+  const copyPassengersMutation = useMutation({
+    mutationFn: async () => {
+      if (!clientId || copyPassengerIds.size === 0) return;
+      const toCopy = copyClientPassengers.filter((p: any) => copyPassengerIds.has(p.id));
+      const inserts = toCopy.map((p: any) => ({
+        client_id: clientId,
+        full_name: p.full_name,
+        birth_date: p.birth_date || null,
+        nationality: p.nationality || null,
+        passport_number: p.passport_number || null,
+        passport_expiry: p.passport_expiry || null,
+        notes: p.notes || null,
+      }));
+      const { error } = await supabase.from("passengers").insert(inserts);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: `${copyPassengerIds.size} passageiro(s) copiado(s)` });
+      qc.invalidateQueries({ queryKey: ["client-passengers", clientId] });
+      setCopyDialog(false);
+      setSelectedCopyClient(null);
+      setCopyPassengerIds(new Set());
+      setCopyClientSearch("");
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
   const openPassengerForm = (p?: any) => {
     if (p) {
       setEditingPassenger(p);
