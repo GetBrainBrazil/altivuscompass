@@ -1,0 +1,1 @@
+ALTER TABLE public.client_visas ADD COLUMN IF NOT EXISTS description text;

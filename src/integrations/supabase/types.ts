@@ -297,6 +297,7 @@ export type Database = {
           client_id: string | null
           country_region: string | null
           created_at: string
+          description: string | null
           entry_type: string | null
           id: string
           issue_date: string | null
@@ -309,6 +310,7 @@ export type Database = {
           client_id?: string | null
           country_region?: string | null
           created_at?: string
+          description?: string | null
           entry_type?: string | null
           id?: string
           issue_date?: string | null
@@ -321,6 +323,7 @@ export type Database = {
           client_id?: string | null
           country_region?: string | null
           created_at?: string
+          description?: string | null
           entry_type?: string | null
           id?: string
           issue_date?: string | null
