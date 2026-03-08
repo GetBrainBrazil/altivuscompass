@@ -132,6 +132,8 @@ export default function Clients() {
   const [emails, setEmails] = useState<EmailEntry[]>([]);
   const [socials, setSocials] = useState<SocialEntry[]>([]);
   const [passports, setPassports] = useState<PassportEntry[]>([]);
+  const [milesPrograms, setMilesPrograms] = useState<MilesEntry[]>([]);
+  const [showPasswords, setShowPasswords] = useState<Record<number, boolean>>({});
 
   // Image editor state
   const [editorOpen, setEditorOpen] = useState(false);
