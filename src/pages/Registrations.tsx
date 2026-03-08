@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { COUNTRIES_STATES, COUNTRY_LIST } from "@/lib/countries-states";
+import { logAuditEvent } from "@/lib/audit";
 import LocationsTab from "@/components/LocationsTab";
 
 import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
@@ -77,9 +78,11 @@ function AirportsTab() {
       if (editing) {
         const { error } = await supabase.from("airports").update(payload).eq("id", editing.id);
         if (error) throw error;
+        await logAuditEvent({ action: "update", tableName: "airports", recordId: editing.id, recordLabel: `${payload.iata_code} - ${payload.name}`, oldData: editing, newData: payload });
       } else {
-        const { error } = await supabase.from("airports").insert(payload);
+        const { data, error } = await supabase.from("airports").insert(payload).select("id").single();
         if (error) throw error;
+        await logAuditEvent({ action: "create", tableName: "airports", recordId: data.id, recordLabel: `${payload.iata_code} - ${payload.name}`, newData: payload });
       }
     },
     onSuccess: () => {
@@ -92,8 +95,10 @@ function AirportsTab() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      const item = airports.find((a: any) => a.id === id);
       const { error } = await supabase.from("airports").delete().eq("id", id);
       if (error) throw error;
+      await logAuditEvent({ action: "delete", tableName: "airports", recordId: id, recordLabel: item ? `${item.iata_code} - ${item.name}` : id, oldData: item });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["airports"] });
@@ -263,9 +268,11 @@ function AirlinesTab() {
       if (editing) {
         const { error } = await supabase.from("airlines").update(payload).eq("id", editing.id);
         if (error) throw error;
+        await logAuditEvent({ action: "update", tableName: "airlines", recordId: editing.id, recordLabel: payload.name, oldData: editing, newData: payload });
       } else {
-        const { error } = await supabase.from("airlines").insert(payload);
+        const { data, error } = await supabase.from("airlines").insert(payload).select("id").single();
         if (error) throw error;
+        await logAuditEvent({ action: "create", tableName: "airlines", recordId: data.id, recordLabel: payload.name, newData: payload });
       }
     },
     onSuccess: () => {
@@ -278,8 +285,10 @@ function AirlinesTab() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      const item = airlines.find((a: any) => a.id === id);
       const { error } = await supabase.from("airlines").delete().eq("id", id);
       if (error) throw error;
+      await logAuditEvent({ action: "delete", tableName: "airlines", recordId: id, recordLabel: item?.name ?? id, oldData: item });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["airlines"] });
@@ -456,7 +465,6 @@ function TagsTab() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (editing) {
-        // If name changed, update clients that use the old tag name
         if (editing.name !== form.name) {
           const affectedClients = clientsWithTags.filter((c: any) => (c.tags ?? []).includes(editing.name));
           for (const client of affectedClients) {
@@ -466,9 +474,11 @@ function TagsTab() {
         }
         const { error } = await supabase.from("tags").update({ name: form.name, color: form.color }).eq("id", editing.id);
         if (error) throw error;
+        await logAuditEvent({ action: "update", tableName: "tags", recordId: editing.id, recordLabel: form.name, oldData: { name: editing.name, color: editing.color }, newData: { name: form.name, color: form.color } });
       } else {
-        const { error } = await supabase.from("tags").insert({ name: form.name, color: form.color });
+        const { data, error } = await supabase.from("tags").insert({ name: form.name, color: form.color }).select("id").single();
         if (error) throw error;
+        await logAuditEvent({ action: "create", tableName: "tags", recordId: data.id, recordLabel: form.name, newData: { name: form.name, color: form.color } });
       }
     },
     onSuccess: () => {
@@ -483,7 +493,6 @@ function TagsTab() {
 
   const deleteMutation = useMutation({
     mutationFn: async (tag: any) => {
-      // Remove tag from all clients that use it
       const affectedClients = clientsWithTags.filter((c: any) => (c.tags ?? []).includes(tag.name));
       for (const client of affectedClients) {
         const newTags = (client.tags as string[]).filter((t: string) => t !== tag.name);
@@ -491,6 +500,7 @@ function TagsTab() {
       }
       const { error } = await supabase.from("tags").delete().eq("id", tag.id);
       if (error) throw error;
+      await logAuditEvent({ action: "delete", tableName: "tags", recordId: tag.id, recordLabel: tag.name, oldData: { name: tag.name, color: tag.color } });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tags"] });

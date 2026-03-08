@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { logAuditEvent } from "@/lib/audit";
 import { useAuth } from "@/contexts/AuthContext";
 import { ArrowUp, ArrowDown, ArrowUpDown, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -106,9 +107,11 @@ function CountriesSubTab() {
       if (editing) {
         const { error } = await supabase.from("countries").update({ name }).eq("id", editing.id);
         if (error) throw error;
+        await logAuditEvent({ action: "update", tableName: "countries", recordId: editing.id, recordLabel: name, oldData: { name: editing.name }, newData: { name } });
       } else {
-        const { error } = await supabase.from("countries").insert({ name });
+        const { data, error } = await supabase.from("countries").insert({ name }).select("id").single();
         if (error) throw error;
+        await logAuditEvent({ action: "create", tableName: "countries", recordId: data.id, recordLabel: name, newData: { name } });
       }
     },
     onSuccess: () => {
@@ -121,8 +124,10 @@ function CountriesSubTab() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      const item = countries.find((c: any) => c.id === id);
       const { error } = await supabase.from("countries").delete().eq("id", id);
       if (error) throw error;
+      await logAuditEvent({ action: "delete", tableName: "countries", recordId: id, recordLabel: item?.name ?? id, oldData: item });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["locations-countries"] });
@@ -221,12 +226,15 @@ function StatesSubTab() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      const countryName = countries.find((c: any) => c.id === form.country_id)?.name ?? "";
       if (editing) {
         const { error } = await supabase.from("states").update({ name: form.name, country_id: form.country_id }).eq("id", editing.id);
         if (error) throw error;
+        await logAuditEvent({ action: "update", tableName: "states", recordId: editing.id, recordLabel: `${form.name} (${countryName})`, oldData: editing, newData: { name: form.name, country_id: form.country_id } });
       } else {
-        const { error } = await supabase.from("states").insert({ name: form.name, country_id: form.country_id });
+        const { data, error } = await supabase.from("states").insert({ name: form.name, country_id: form.country_id }).select("id").single();
         if (error) throw error;
+        await logAuditEvent({ action: "create", tableName: "states", recordId: data.id, recordLabel: `${form.name} (${countryName})`, newData: { name: form.name, country_id: form.country_id } });
       }
     },
     onSuccess: () => {
@@ -239,8 +247,10 @@ function StatesSubTab() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      const item = states.find((s: any) => s.id === id);
       const { error } = await supabase.from("states").delete().eq("id", id);
       if (error) throw error;
+      await logAuditEvent({ action: "delete", tableName: "states", recordId: id, recordLabel: item?.name ?? id, oldData: item });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["locations-states"] });
@@ -378,12 +388,15 @@ function CitiesSubTab() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       const payload = { name: form.name, country_id: form.country_id, state_id: form.state_id || null };
+      const countryName = countries.find((c: any) => c.id === form.country_id)?.name ?? "";
       if (editing) {
         const { error } = await supabase.from("cities").update(payload).eq("id", editing.id);
         if (error) throw error;
+        await logAuditEvent({ action: "update", tableName: "cities", recordId: editing.id, recordLabel: `${form.name} (${countryName})`, oldData: editing, newData: payload });
       } else {
-        const { error } = await supabase.from("cities").insert(payload);
+        const { data, error } = await supabase.from("cities").insert(payload).select("id").single();
         if (error) throw error;
+        await logAuditEvent({ action: "create", tableName: "cities", recordId: data.id, recordLabel: `${form.name} (${countryName})`, newData: payload });
       }
     },
     onSuccess: () => {
@@ -397,8 +410,10 @@ function CitiesSubTab() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      const item = (cities ?? []).find((c: any) => c.id === id);
       const { error } = await supabase.from("cities").delete().eq("id", id);
       if (error) throw error;
+      await logAuditEvent({ action: "delete", tableName: "cities", recordId: id, recordLabel: item?.name ?? id, oldData: item });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["locations-cities"] });
@@ -582,12 +597,13 @@ function ContinentsSubTab() {
         const { error } = await supabase.from("continents").update({ name }).eq("id", editing.id);
         if (error) throw error;
         continentId = editing.id;
+        await logAuditEvent({ action: "update", tableName: "continents", recordId: editing.id, recordLabel: name, oldData: { name: editing.name }, newData: { name } });
       } else {
         const { data, error } = await supabase.from("continents").insert({ name }).select("id").single();
         if (error) throw error;
         continentId = data.id;
+        await logAuditEvent({ action: "create", tableName: "continents", recordId: data.id, recordLabel: name, newData: { name } });
       }
-      // Sync countries
       await supabase.from("continent_countries").delete().eq("continent_id", continentId);
       if (selectedCountryIds.length > 0) {
         const { error } = await supabase.from("continent_countries").insert(
@@ -607,8 +623,10 @@ function ContinentsSubTab() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      const item = continents.find((c: any) => c.id === id);
       const { error } = await supabase.from("continents").delete().eq("id", id);
       if (error) throw error;
+      await logAuditEvent({ action: "delete", tableName: "continents", recordId: id, recordLabel: item?.name ?? id, oldData: item });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["locations-continents"] });
@@ -812,10 +830,12 @@ function DiversosSubTab() {
         const { error } = await supabase.from("custom_destinations").update({ name: formName, description: formDesc }).eq("id", editing.id);
         if (error) throw error;
         destId = editing.id;
+        await logAuditEvent({ action: "update", tableName: "custom_destinations", recordId: editing.id, recordLabel: formName, oldData: { name: editing.name, description: editing.description }, newData: { name: formName, description: formDesc } });
       } else {
         const { data, error } = await supabase.from("custom_destinations").insert({ name: formName, description: formDesc }).select("id").single();
         if (error) throw error;
         destId = data.id;
+        await logAuditEvent({ action: "create", tableName: "custom_destinations", recordId: data.id, recordLabel: formName, newData: { name: formName, description: formDesc } });
       }
       await supabase.from("custom_destination_items").delete().eq("custom_destination_id", destId);
       if (selectedItems.length > 0) {
@@ -836,8 +856,10 @@ function DiversosSubTab() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      const item = customDests.find((d: any) => d.id === id);
       const { error } = await supabase.from("custom_destinations").delete().eq("id", id);
       if (error) throw error;
+      await logAuditEvent({ action: "delete", tableName: "custom_destinations", recordId: id, recordLabel: item?.name ?? id, oldData: item });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["custom-destinations"] });
