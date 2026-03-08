@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, ExternalLink, UserPlus, Link2, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { Plus, Trash2, ExternalLink, UserPlus, Link2, ArrowUp, ArrowDown, ArrowUpDown, Copy, Check } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 type SortDirection = "asc" | "desc" | null;
@@ -92,6 +93,12 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
   const [promotePassenger, setPromotePassenger] = useState<Passenger | null>(null);
   const [promoteRelType, setPromoteRelType] = useState<string>("child");
 
+  // Copy passengers state
+  const [copyDialog, setCopyDialog] = useState(false);
+  const [copyClientSearch, setCopyClientSearch] = useState("");
+  const [selectedCopyClient, setSelectedCopyClient] = useState<string | null>(null);
+  const [copyPassengerIds, setCopyPassengerIds] = useState<Set<string>>(new Set());
+
   // Fetch passengers
   const { data: passengers = [] } = useQuery({
     queryKey: ["client-passengers", clientId],
@@ -135,14 +142,26 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     enabled: !!clientId,
   });
 
-  // Fetch all clients for linking (excluding current)
+  // Fetch all clients for linking/copy (excluding current)
   const { data: allClients = [] } = useQuery({
     queryKey: ["all-clients-for-link"],
     queryFn: async () => {
       const { data } = await supabase.from("clients").select("id, full_name, city, state").order("full_name");
       return data ?? [];
     },
-    enabled: linkDialog,
+    enabled: linkDialog || copyDialog,
+  });
+
+  // Fetch passengers of selected copy client
+  const { data: copyClientPassengers = [] } = useQuery({
+    queryKey: ["copy-client-passengers", selectedCopyClient],
+    queryFn: async () => {
+      if (!selectedCopyClient) return [];
+      const { data, error } = await supabase.from("passengers").select("*").eq("client_id", selectedCopyClient).order("full_name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedCopyClient && copyDialog,
   });
 
   const filteredLinkClients = allClients.filter((c: any) => {
@@ -150,6 +169,12 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     if (relationships.some((r: any) => r.linked_client_id === c.id)) return false;
     if (!linkSearch) return true;
     return c.full_name.toLowerCase().includes(linkSearch.toLowerCase());
+  });
+
+  const filteredCopyClients = allClients.filter((c: any) => {
+    if (c.id === clientId) return false;
+    if (!copyClientSearch) return true;
+    return c.full_name.toLowerCase().includes(copyClientSearch.toLowerCase());
   });
 
   // Save passenger mutation
@@ -276,6 +301,34 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
 
+  // Copy passengers mutation
+  const copyPassengersMutation = useMutation({
+    mutationFn: async () => {
+      if (!clientId || copyPassengerIds.size === 0) return;
+      const toCopy = copyClientPassengers.filter((p: any) => copyPassengerIds.has(p.id));
+      const inserts = toCopy.map((p: any) => ({
+        client_id: clientId,
+        full_name: p.full_name,
+        birth_date: p.birth_date || null,
+        nationality: p.nationality || null,
+        passport_number: p.passport_number || null,
+        passport_expiry: p.passport_expiry || null,
+        notes: p.notes || null,
+      }));
+      const { error } = await supabase.from("passengers").insert(inserts);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: `${copyPassengerIds.size} passageiro(s) copiado(s)` });
+      qc.invalidateQueries({ queryKey: ["client-passengers", clientId] });
+      setCopyDialog(false);
+      setSelectedCopyClient(null);
+      setCopyPassengerIds(new Set());
+      setCopyClientSearch("");
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
   const openPassengerForm = (p?: any) => {
     if (p) {
       setEditingPassenger(p);
@@ -321,9 +374,14 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
             <h3 className="text-sm font-semibold font-body text-foreground">Passageiros</h3>
             <p className="text-xs text-muted-foreground font-body">Viajantes vinculados a este cliente (sem ficha própria)</p>
           </div>
-          <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => openPassengerForm()}>
-            <Plus className="h-3 w-3 mr-1" />Adicionar
-          </Button>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => { setCopyDialog(true); setCopyClientSearch(""); setSelectedCopyClient(null); setCopyPassengerIds(new Set()); }}>
+              <Copy className="h-3 w-3 mr-1" />Copiar de outro cliente
+            </Button>
+            <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => openPassengerForm()}>
+              <Plus className="h-3 w-3 mr-1" />Adicionar
+            </Button>
+          </div>
         </div>
 
         {passengers.length === 0 ? (
@@ -571,6 +629,108 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Copy passengers dialog */}
+      <Dialog open={copyDialog} onOpenChange={(o) => { if (!o) { setCopyDialog(false); setSelectedCopyClient(null); setCopyPassengerIds(new Set()); } }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display">Copiar Passageiros de Outro Cliente</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3">
+            {!selectedCopyClient ? (
+              <>
+                <div>
+                  <Label className="font-body text-xs">Buscar cliente de origem</Label>
+                  <Input value={copyClientSearch} onChange={(e) => setCopyClientSearch(e.target.value)} placeholder="Nome do cliente..." className="h-9" />
+                </div>
+                <div className="max-h-48 overflow-y-auto border border-border/50 rounded-lg">
+                  {filteredCopyClients.length === 0 ? (
+                    <p className="p-3 text-xs text-muted-foreground font-body">Nenhum cliente encontrado.</p>
+                  ) : (
+                    filteredCopyClients.slice(0, 20).map((c: any) => (
+                      <button key={c.id} type="button"
+                        className="w-full text-left px-3 py-2 text-sm font-body hover:bg-muted/50 transition-colors text-foreground"
+                        onClick={() => { setSelectedCopyClient(c.id); setCopyPassengerIds(new Set()); }}>
+                        <span className="font-medium">{c.full_name}</span>
+                        {c.city && <span className="text-xs text-muted-foreground ml-2">{c.city}{c.state ? `, ${c.state}` : ""}</span>}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-body text-muted-foreground">
+                    Passageiros de <strong className="text-foreground">{allClients.find((c: any) => c.id === selectedCopyClient)?.full_name}</strong>
+                  </p>
+                  <Button type="button" variant="ghost" size="sm" className="font-body text-xs" onClick={() => { setSelectedCopyClient(null); setCopyPassengerIds(new Set()); }}>
+                    Trocar cliente
+                  </Button>
+                </div>
+                {copyClientPassengers.length === 0 ? (
+                  <p className="text-xs text-muted-foreground font-body italic p-3">Este cliente não possui passageiros.</p>
+                ) : (
+                  <div className="border border-border/50 rounded-lg overflow-hidden max-h-64 overflow-y-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border/50 bg-muted/30">
+                          <th className="p-2 w-8">
+                            <Checkbox
+                              checked={copyPassengerIds.size === copyClientPassengers.length && copyClientPassengers.length > 0}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setCopyPassengerIds(new Set(copyClientPassengers.map((p: any) => p.id)));
+                                } else {
+                                  setCopyPassengerIds(new Set());
+                                }
+                              }}
+                            />
+                          </th>
+                          <th className="text-left p-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Nome</th>
+                          <th className="text-left p-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Nascimento</th>
+                          <th className="text-left p-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Passaporte</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/30">
+                        {copyClientPassengers.map((p: any) => (
+                          <tr key={p.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => {
+                            setCopyPassengerIds(prev => {
+                              const next = new Set(prev);
+                              if (next.has(p.id)) next.delete(p.id); else next.add(p.id);
+                              return next;
+                            });
+                          }}>
+                            <td className="p-2">
+                              <Checkbox checked={copyPassengerIds.has(p.id)} onCheckedChange={() => {
+                                setCopyPassengerIds(prev => {
+                                  const next = new Set(prev);
+                                  if (next.has(p.id)) next.delete(p.id); else next.add(p.id);
+                                  return next;
+                                });
+                              }} />
+                            </td>
+                            <td className="p-2 text-sm font-body text-foreground">{p.full_name}</td>
+                            <td className="p-2 text-sm font-body text-foreground">{p.birth_date ? new Date(p.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
+                            <td className="p-2 text-sm font-body text-foreground">{p.passport_number || "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                <Button
+                  onClick={() => copyPassengersMutation.mutate()}
+                  disabled={copyPassengerIds.size === 0 || copyPassengersMutation.isPending}
+                  className="font-body"
+                >
+                  {copyPassengersMutation.isPending ? "Copiando..." : `Copiar ${copyPassengerIds.size} passageiro(s)`}
+                </Button>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
