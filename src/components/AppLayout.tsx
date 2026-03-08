@@ -141,8 +141,9 @@ export function AppLayout({ children }: AppLayoutProps) {
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-muted transition-colors">
                     <Avatar className="h-8 w-8">
+                      {headerAvatarUrl && <AvatarImage src={headerAvatarUrl} />}
                       <AvatarFallback className={`text-xs font-medium ${isImpersonating ? "bg-destructive text-destructive-foreground" : "bg-primary text-primary-foreground"}`}>
-                        {user?.email?.[0]?.toUpperCase() ?? "U"}
+                        {headerProfile?.full_name?.[0]?.toUpperCase() ?? user?.email?.[0]?.toUpperCase() ?? "U"}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-sm font-medium text-foreground hidden sm:inline max-w-[150px] truncate">
