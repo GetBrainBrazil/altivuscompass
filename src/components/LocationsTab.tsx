@@ -360,6 +360,7 @@ function CitiesSubTab() {
   const [form, setForm] = useState({ name: "", country_id: "", state_id: "" });
   const [sort, setSort] = useState<SortState>(null);
   const [filterCountry, setFilterCountry] = useState("all");
+  const [filterState, setFilterState] = useState("all");
 
   const { data: countries = [] } = useCountries();
   const { data: statesForForm = [] } = useStates(form.country_id || undefined);
