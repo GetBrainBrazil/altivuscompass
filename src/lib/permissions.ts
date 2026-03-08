@@ -22,6 +22,8 @@ export const PAGE_PERMISSIONS: PagePermission[] = [
   { path: "/users", label: "Usuários", allowedRoles: ["admin"] },
   { path: "/permissions", label: "Permissões", allowedRoles: ["admin"] },
   { path: "/registrations", label: "Cadastros", allowedRoles: ["admin", "manager", "sales_agent", "operations"] },
+  { path: "/system", label: "Sistema", allowedRoles: ["admin"] },
+  { path: "/profile", label: "Meu Perfil", allowedRoles: ["admin", "manager", "sales_agent", "operations"] },
 ];
 
 // Feature-level permissions (not page routes, but specific UI features)
