@@ -744,6 +744,9 @@ export default function Clients() {
                 <TabsTrigger value="documents" className="font-body text-xs">Documentos</TabsTrigger>
                 <TabsTrigger value="address" className="font-body text-xs">Endereço</TabsTrigger>
                 <TabsTrigger value="travelers" className="font-body text-xs">Viajantes</TabsTrigger>
+                {canAccessFeature(userRole, "client_miles_tab") && (
+                  <TabsTrigger value="miles" className="font-body text-xs">Milhas</TabsTrigger>
+                )}
                 <TabsTrigger value="observations" className="font-body text-xs">Observações</TabsTrigger>
               </TabsList>
 
