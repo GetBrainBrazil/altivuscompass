@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { PAGE_PERMISSIONS, FEATURE_PERMISSIONS, ROLE_LABELS, type AppRole, type PagePermission, type FeaturePermission } from "@/lib/permissions";
 
-export default function Permissions() {
+export default function Permissions({ embedded = false }: { embedded?: boolean }) {
   const { toast } = useToast();
   const [permissions, setPermissions] = useState<PagePermission[]>(PAGE_PERMISSIONS);
   const [featurePermissions, setFeaturePermissions] = useState<FeaturePermission[]>(FEATURE_PERMISSIONS);
