@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -296,6 +296,8 @@ export default function Clients() {
     } catch { /* ignore */ }
   };
 
+  const shouldGoBackRef = useRef(false);
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       const { preferred_airports: _pa, tags: _t, ...rest } = form;
@@ -373,7 +375,10 @@ export default function Clients() {
     onSuccess: () => {
       toast({ title: editingId ? "Cliente atualizado" : "Cliente criado" });
       qc.invalidateQueries({ queryKey: ["clients"] });
-      goToList();
+      if (shouldGoBackRef.current) {
+        goToList();
+      }
+      shouldGoBackRef.current = false;
     },
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
@@ -1067,8 +1072,11 @@ export default function Clients() {
               <Button type="button" variant="outline" onClick={goToList} className="font-body">
                 <ArrowLeft className="h-4 w-4 mr-1" />Voltar
               </Button>
-              <Button type="submit" disabled={saveMutation.isPending} className="font-body">
+              <Button type="button" disabled={saveMutation.isPending} className="font-body" onClick={() => { shouldGoBackRef.current = false; saveMutation.mutate(); }}>
                 {saveMutation.isPending ? "Salvando..." : "Salvar"}
+              </Button>
+              <Button type="button" disabled={saveMutation.isPending} className="font-body" variant="secondary" onClick={() => { shouldGoBackRef.current = true; saveMutation.mutate(); }}>
+                {saveMutation.isPending ? "Salvando..." : "Salvar e Voltar"}
               </Button>
             </div>
           </div>
