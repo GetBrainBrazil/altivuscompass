@@ -147,6 +147,34 @@ export default function Clients() {
   };
   const closeDialog = () => { setDialogOpen(false); setEditingClient(null); setForm(emptyClient); setSelectedAirports([]); };
 
+  // Quick-add location mutation
+  const quickAddMutation = useMutation({
+    mutationFn: async () => {
+      if (quickAddType === "country") {
+        const { error } = await supabase.from("countries").insert({ name: quickAddName });
+        if (error) throw error;
+        setForm({ ...form, country: quickAddName, state: "", city: "" });
+      } else if (quickAddType === "state" && selectedCountryObj) {
+        const { error } = await supabase.from("states").insert({ name: quickAddName, country_id: selectedCountryObj.id });
+        if (error) throw error;
+        setForm({ ...form, state: quickAddName, city: "" });
+      } else if (quickAddType === "city" && selectedCountryObj) {
+        const { error } = await supabase.from("cities").insert({ name: quickAddName, country_id: selectedCountryObj.id, state_id: selectedStateObj?.id || null });
+        if (error) throw error;
+        setForm({ ...form, city: quickAddName });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["locations-countries"] });
+      queryClient.invalidateQueries({ queryKey: ["locations-states"] });
+      queryClient.invalidateQueries({ queryKey: ["locations-cities"] });
+      toast({ title: "Localidade adicionada" });
+      setQuickAddType(null);
+      setQuickAddName("");
+    },
+    onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
   const filtered = sortData(
     clients.filter((c) => {
       const matchesSearch = c.full_name.toLowerCase().includes(search.toLowerCase()) ||
