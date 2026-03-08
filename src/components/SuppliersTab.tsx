@@ -235,7 +235,19 @@ export default function SuppliersTab() {
                       <Input value={form.document_number} onChange={set("document_number")} />
                     </div>
                     <div className="space-y-2">
-                      <Label className="font-body">Serviços</Label>
+                      <div className="flex items-center gap-1.5">
+                        <Label className="font-body">Serviços</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-xs text-xs font-body space-y-1 p-3">
+                            {SUPPLIER_CATEGORIES.filter(c => c.label !== "Outro").map(c => (
+                              <div key={c.label}><span className="font-semibold">{c.label}:</span> {c.description}</div>
+                            ))}
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button variant="outline" className="w-full justify-start font-normal h-auto min-h-10 text-left">
