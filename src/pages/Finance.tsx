@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -400,7 +401,25 @@ export default function Finance() {
                     <Label className="font-body">Conciliado</Label>
                   </div>
                 </div>
-                <div className="flex gap-2 justify-end">
+                <div className="flex items-center gap-2">
+                  {editing && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button type="button" variant="ghost" className="text-destructive font-body">Excluir Transação</Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir transação?</AlertDialogTitle>
+                          <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => { deleteMutation.mutate(editing.id); closeDialog(); }}>Excluir</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                  <div className="flex-1" />
                   <Button type="button" variant="outline" onClick={closeDialog} className="font-body">Cancelar</Button>
                   <Button type="submit" disabled={saveMutation.isPending} className="font-body">
                     {saveMutation.isPending ? "Salvando..." : "Salvar"}
@@ -505,7 +524,7 @@ export default function Finance() {
                 <th className="p-3 text-right font-medium">Valor</th>
                 <th className="p-3 text-right font-medium">Saldo</th>
                 <th className="p-3 text-left font-medium">Obs</th>
-                <th className="p-3 w-8"></th>
+                
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
@@ -529,9 +548,6 @@ export default function Finance() {
                       {balance < 0 ? `(${formatCurrency(Math.abs(balance))})` : formatCurrency(balance)}
                     </td>
                     <td className="p-3 font-body text-xs text-muted-foreground max-w-[120px] truncate">{t.observations || "-"}</td>
-                    <td className="p-3">
-                      <Button variant="ghost" size="sm" className="text-destructive h-6 px-2" onClick={(e) => { e.stopPropagation(); if (confirm("Remover transação?")) deleteMutation.mutate(t.id); }}>✕</Button>
-                    </td>
                   </tr>
                 );
               })}
