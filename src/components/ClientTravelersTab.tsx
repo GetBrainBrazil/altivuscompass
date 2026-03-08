@@ -55,6 +55,18 @@ const RELATIONSHIP_TYPES: Record<string, string> = {
   other: "Outro",
 };
 
+// When viewing from the "other side" of a relationship, invert the label
+const INVERSE_RELATIONSHIP: Record<string, string> = {
+  child: "parent",
+  parent: "child",
+  employee: "partner",
+  // symmetric relationships stay the same
+  spouse: "spouse",
+  partner: "partner",
+  sibling: "sibling",
+  other: "other",
+};
+
 type Passenger = {
   id?: string;
   full_name: string;
@@ -157,8 +169,10 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         .eq("client_id_b", clientId);
 
       const allRels = [
-        ...(relA ?? []).map((r: any) => ({ id: r.id, linked_client_id: r.client_id_b, relationship_type: r.relationship_type, relationship_label: r.relationship_label })),
-        ...(relB ?? []).map((r: any) => ({ id: r.id, linked_client_id: r.client_id_a, relationship_type: r.relationship_type, relationship_label: r.relationship_label })),
+        // relA: current client is client_id_a, so relationship_type describes client_id_b → use as-is
+        ...(relA ?? []).map((r: any) => ({ id: r.id, linked_client_id: r.client_id_b, relationship_type: r.relationship_type, relationship_label: r.relationship_label, inverted: false })),
+        // relB: current client is client_id_b, so we need the inverse label
+        ...(relB ?? []).map((r: any) => ({ id: r.id, linked_client_id: r.client_id_a, relationship_type: r.relationship_type, relationship_label: r.relationship_label, inverted: true })),
       ];
 
       // Fetch linked client details
@@ -300,8 +314,10 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
 
   // Update relationship type mutation
   const updateRelMutation = useMutation({
-    mutationFn: async ({ id, type }: { id: string; type: string }) => {
-      const { error } = await supabase.from("client_relationships").update({ relationship_type: type as any }).eq("id", id);
+    mutationFn: async ({ id, type, inverted }: { id: string; type: string; inverted: boolean }) => {
+      // If viewing from the inverted side, store the inverse type in DB
+      const dbType = inverted ? (INVERSE_RELATIONSHIP[type] || type) : type;
+      const { error } = await supabase.from("client_relationships").update({ relationship_type: dbType as any }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -428,14 +444,20 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
   };
 
   const sortedRelationships = useMemo(() => {
-    return relationships.map((r: any) => ({
-      ...r,
-      _name: r.client?.full_name ?? "",
-      _type: RELATIONSHIP_TYPES[r.relationship_type] || r.relationship_type,
-      _birth_date: r.client?.birth_date ?? "",
-      _nationality: r.client?.nationality ?? "",
-      _passports: (r.passports ?? []).map((p: any) => p.passport_number).filter(Boolean).join(", "),
-    }));
+    return relationships.map((r: any) => {
+      const displayType = r.inverted
+        ? (INVERSE_RELATIONSHIP[r.relationship_type] || r.relationship_type)
+        : r.relationship_type;
+      return {
+        ...r,
+        _name: r.client?.full_name ?? "",
+        _display_type: displayType,
+        _type: RELATIONSHIP_TYPES[displayType] || displayType,
+        _birth_date: r.client?.birth_date ?? "",
+        _nationality: r.client?.nationality ?? "",
+        _passports: (r.passports ?? []).map((p: any) => p.passport_number).filter(Boolean).join(", "),
+      };
+    });
   }, [relationships]);
 
   const { sorted: sortedPassengers, sort: passengerSort, toggleSort: togglePassengerSort } = useSortableData(passengers);
@@ -538,7 +560,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
               </thead>
               <tbody className="divide-y divide-border/30">
                 {sortedRels.map((r: any) => (
-                  <tr key={r.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => { setEditingRel(r); setEditRelType(r.relationship_type); setEditRelDialog(true); }}>
+                  <tr key={r.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => { setEditingRel(r); setEditRelType(r._display_type); setEditRelDialog(true); }}>
                     <td className="p-3">
                       <div className="flex items-center gap-2">
                         <button
@@ -553,7 +575,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                     </td>
                     <td className="p-3">
                       <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary font-body">
-                        {RELATIONSHIP_TYPES[r.relationship_type] || r.relationship_label || r.relationship_type}
+                        {r._type}
                       </span>
                     </td>
                     <td className="p-3 text-sm font-body text-foreground">{r.client?.birth_date ? new Date(r.client.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
@@ -759,7 +781,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={() => editingRel && updateRelMutation.mutate({ id: editingRel.id, type: editRelType })} disabled={updateRelMutation.isPending} className="font-body">
+            <Button onClick={() => editingRel && updateRelMutation.mutate({ id: editingRel.id, type: editRelType, inverted: !!editingRel.inverted })} disabled={updateRelMutation.isPending} className="font-body">
               {updateRelMutation.isPending ? "Salvando..." : "Salvar"}
             </Button>
           </div>
