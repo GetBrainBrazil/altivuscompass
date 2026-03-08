@@ -70,15 +70,15 @@ async function fetchCep(cep: string) {
   } catch { return null; }
 }
 
-const SUPPLIER_CATEGORIES = [
-  "Transporte",
-  "Hospedagem",
-  "Passeios e Experiências",
-  "Documentação de Viagem",
-  "Seguros e Assistência",
-  "Serviços no Destino",
-  "Tecnologia e Distribuição",
-  "Outro",
+const SUPPLIER_CATEGORIES: { label: string; description: string }[] = [
+  { label: "Transporte", description: "Passagens aéreas, trem, ônibus, cruzeiros, transfer e aluguel de carros." },
+  { label: "Hospedagem", description: "Hotéis, resorts, pousadas, apartamentos, villas e cruzeiros." },
+  { label: "Passeios e Experiências", description: "Tours, guias, ingressos para atrações, eventos, atividades e experiências locais." },
+  { label: "Documentação de Viagem", description: "Vistos, passaporte, traduções e assessoria migratória." },
+  { label: "Seguros e Assistência", description: "Seguro viagem, assistência médica internacional e coberturas adicionais." },
+  { label: "Serviços no Destino", description: "Receptivo, concierge, transfers locais, apoio ao viajante." },
+  { label: "Tecnologia e Distribuição", description: "GDS, consolidadores de passagens, plataformas de reservas." },
+  { label: "Outro", description: "Outros serviços não listados." },
 ];
 
 const emptyForm = {
