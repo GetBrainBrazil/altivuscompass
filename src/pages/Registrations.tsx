@@ -293,11 +293,11 @@ function AirlinesTab() {
               <DialogHeader><DialogTitle>{editing ? "Editar Cia Aérea" : "Nova Cia Aérea"}</DialogTitle></DialogHeader>
               <div className="grid gap-4 py-2">
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Nome</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="LATAM Airlines" /></div>
+                  <div><Label>Nome <span className="text-destructive">*</span></Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="LATAM Airlines" /></div>
                   <div><Label>Código IATA</Label><Input value={form.iata_code} onChange={(e) => setForm({ ...form, iata_code: e.target.value })} maxLength={3} placeholder="LA" /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>País</Label><Input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} placeholder="Brasil" /></div>
+                  <div><Label>País <span className="text-destructive">*</span></Label><Input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} placeholder="Brasil" /></div>
                   <div><Label>Programa de Milhagem</Label><Input value={form.mileage_program_name} onChange={(e) => setForm({ ...form, mileage_program_name: e.target.value })} placeholder="LATAM Pass" /></div>
                 </div>
                 <Button onClick={() => saveMutation.mutate()} disabled={!form.name || !form.country}>
