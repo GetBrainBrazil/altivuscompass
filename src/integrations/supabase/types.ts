@@ -1335,6 +1335,73 @@ export type Database = {
           },
         ]
       }
+      supplier_emails: {
+        Row: {
+          created_at: string
+          description: string | null
+          email: string
+          id: string
+          supplier_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          email: string
+          id?: string
+          supplier_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          email?: string
+          id?: string
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_emails_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_phones: {
+        Row: {
+          country_code: string
+          created_at: string
+          description: string | null
+          id: string
+          phone: string
+          supplier_id: string
+        }
+        Insert: {
+          country_code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          phone: string
+          supplier_id: string
+        }
+        Update: {
+          country_code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          phone?: string
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_phones_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           address_complement: string | null
