@@ -484,7 +484,6 @@ export default function Finance() {
                 <th className="p-3 text-left font-medium">Cliente/Fornecedor</th>
                 <th className="p-3 text-right font-medium">Valor</th>
                 <th className="p-3 text-right font-medium">Saldo</th>
-                <th className="p-3 text-left font-medium">Conta Virtual</th>
                 <th className="p-3 text-left font-medium">Obs</th>
                 <th className="p-3 w-8"></th>
               </tr>
@@ -509,7 +508,6 @@ export default function Finance() {
                     <td className={`p-3 font-body text-xs text-right whitespace-nowrap ${balance < 0 ? "text-destructive" : "text-foreground"}`}>
                       {balance < 0 ? `(${formatCurrency(Math.abs(balance))})` : formatCurrency(balance)}
                     </td>
-                    <td className="p-3 font-body text-xs text-muted-foreground">{t.virtual_account_owner || "-"}</td>
                     <td className="p-3 font-body text-xs text-muted-foreground max-w-[120px] truncate">{t.observations || "-"}</td>
                     <td className="p-3">
                       <Button variant="ghost" size="sm" className="text-destructive h-6 px-2" onClick={(e) => { e.stopPropagation(); if (confirm("Remover transação?")) deleteMutation.mutate(t.id); }}>✕</Button>
@@ -549,9 +547,6 @@ export default function Finance() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${st.color}`}>{st.label}</span>
-                    {t.virtual_account_owner && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-body">{t.virtual_account_owner}</span>
-                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground font-body">{t.date}</span>
