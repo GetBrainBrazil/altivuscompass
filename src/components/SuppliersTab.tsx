@@ -404,20 +404,6 @@ export default function SuppliersTab() {
                     ))}
                   </div>
 
-                  {/* Pessoa de Contato */}
-                  <div className="border-t pt-3 space-y-3">
-                    <h4 className="text-xs font-semibold font-body text-foreground">Pessoa de Contato</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                        <Label className="font-body text-xs">Nome</Label>
-                        <Input value={form.contact_person} onChange={set("contact_person")} className="h-9" />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="font-body text-xs">Telefone</Label>
-                        <Input value={formatPhone(form.contact_phone)} onChange={(e) => setForm(f => ({ ...f, contact_phone: e.target.value.replace(/\D/g, "").slice(0, 11) }))} placeholder="(11) 99999-9999" className="h-9" />
-                      </div>
-                    </div>
-                  </div>
                 </TabsContent>
 
                 <TabsContent value="endereco" className="space-y-3 mt-3">
