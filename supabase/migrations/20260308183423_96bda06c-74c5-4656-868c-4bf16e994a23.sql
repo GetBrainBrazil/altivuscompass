@@ -1,0 +1,1 @@
+ALTER TABLE public.passengers ADD COLUMN relationship_type text DEFAULT NULL;

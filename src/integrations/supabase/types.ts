@@ -697,6 +697,7 @@ export type Database = {
           notes: string | null
           passport_expiry: string | null
           passport_number: string | null
+          relationship_type: string | null
           updated_at: string
         }
         Insert: {
@@ -709,6 +710,7 @@ export type Database = {
           notes?: string | null
           passport_expiry?: string | null
           passport_number?: string | null
+          relationship_type?: string | null
           updated_at?: string
         }
         Update: {
@@ -721,6 +723,7 @@ export type Database = {
           notes?: string | null
           passport_expiry?: string | null
           passport_number?: string | null
+          relationship_type?: string | null
           updated_at?: string
         }
         Relationships: [
