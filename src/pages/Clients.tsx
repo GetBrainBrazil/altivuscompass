@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus, ArrowLeft, Star, Trash2, AlertTriangle, AlertCircle, ShieldAlert } from "lucide-react";
 import { useCountries, useStates, useCities } from "@/components/LocationsTab";
 import { COUNTRY_CODES, applyPhoneMask } from "@/lib/phone-masks";
+import { ImageEditor } from "@/components/ImageEditor";
 
 type SortDir = "asc" | "desc";
 type SortState = { key: string; dir: SortDir } | null;
