@@ -140,14 +140,35 @@ export default function SuppliersTab() {
         notes: form.notes || null,
         category: form.categories.length > 0 ? form.categories : null,
       };
+      let supplierId: string;
       if (editing) {
         const { error } = await supabase.from("suppliers").update(payload as any).eq("id", editing.id);
         if (error) throw error;
+        supplierId = editing.id;
         await logAuditEvent({ action: "update", tableName: "suppliers", recordId: editing.id, recordLabel: payload.name, oldData: editing, newData: payload });
       } else {
         const { data, error } = await supabase.from("suppliers").insert(payload as any).select("id").single();
         if (error) throw error;
+        supplierId = data.id;
         await logAuditEvent({ action: "create", tableName: "suppliers", recordId: data.id, recordLabel: payload.name, newData: payload });
+      }
+      // Save phones
+      await supabase.from("supplier_phones").delete().eq("supplier_id", supplierId);
+      const validPhones = phones.filter(p => stripMask(p.phone).length > 0);
+      if (validPhones.length > 0) {
+        const { error } = await supabase.from("supplier_phones").insert(
+          validPhones.map(p => ({ supplier_id: supplierId, phone: stripMask(p.phone), country_code: p.country_code, description: p.description || null })) as any
+        );
+        if (error) throw error;
+      }
+      // Save emails
+      await supabase.from("supplier_emails").delete().eq("supplier_id", supplierId);
+      const validEmails = emails.filter(e => e.email.trim().length > 0);
+      if (validEmails.length > 0) {
+        const { error } = await supabase.from("supplier_emails").insert(
+          validEmails.map(e => ({ supplier_id: supplierId, email: e.email.trim(), description: e.description || null })) as any
+        );
+        if (error) throw error;
       }
     },
     onSuccess: () => {
