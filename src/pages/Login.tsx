@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import logoAltivus from "@/assets/logo-altivus.png";
+import logoAltivusLogin from "@/assets/logo-altivus-login.jpg";
 
 function ForgotPasswordDialog() {
   const { toast } = useToast();
@@ -102,7 +102,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm space-y-6 sm:space-y-8">
         <div className="flex flex-col items-center gap-3 sm:gap-4">
-          <img src={logoAltivus} alt="Altivus Turismo" className="h-10 sm:h-12 object-contain" />
+          <img src={logoAltivusLogin} alt="Altivus Turismo" className="h-16 sm:h-20 object-contain" />
           <p className="text-sm text-muted-foreground font-body">Entre com suas credenciais</p>
         </div>
 
