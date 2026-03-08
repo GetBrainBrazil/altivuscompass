@@ -268,13 +268,14 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
           const { data: matches } = await matchQuery;
           if (matches && matches.length > 0) {
             const ids = matches.map((m: any) => m.id);
-            // Update all copies with the same data (except notes which may differ per client)
+            // Update all copies with the same data
             await supabase.from("passengers").update({
               full_name: updatedData.full_name,
               birth_date: updatedData.birth_date,
               nationality: updatedData.nationality,
               passport_number: updatedData.passport_number,
               passport_expiry: updatedData.passport_expiry,
+              notes: updatedData.notes,
             }).in("id", ids);
           }
         }
