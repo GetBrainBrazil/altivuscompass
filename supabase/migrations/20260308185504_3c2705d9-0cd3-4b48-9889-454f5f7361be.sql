@@ -1,0 +1,1 @@
+ALTER TABLE public.airlines ADD COLUMN program_url text DEFAULT NULL;

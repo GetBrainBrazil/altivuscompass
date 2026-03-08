@@ -364,6 +364,9 @@ function AirlinesTab() {
                   <TableCell>{a.name}</TableCell>
                   <TableCell className="hidden sm:table-cell">{a.country || "—"}</TableCell>
                   <TableCell>{a.mileage_program_name || "—"}</TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {a.program_url ? <a href={a.program_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs truncate max-w-[200px] inline-block">Acessar ↗</a> : "—"}
+                  </TableCell>
                   {isAdmin && (
                     <TableCell>
                       <div className="flex gap-1">

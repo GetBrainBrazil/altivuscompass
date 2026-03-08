@@ -22,6 +22,7 @@ export type Database = {
           id: string
           mileage_program_name: string | null
           name: string
+          program_url: string | null
         }
         Insert: {
           country?: string | null
@@ -30,6 +31,7 @@ export type Database = {
           id?: string
           mileage_program_name?: string | null
           name: string
+          program_url?: string | null
         }
         Update: {
           country?: string | null
@@ -38,6 +40,7 @@ export type Database = {
           id?: string
           mileage_program_name?: string | null
           name?: string
+          program_url?: string | null
         }
         Relationships: []
       }
