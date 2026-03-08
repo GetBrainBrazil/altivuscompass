@@ -111,6 +111,32 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     enabled: !!clientId,
   });
 
+  // Fetch other clients linked to the currently editing passenger
+  const { data: passengerLinkedClients = [] } = useQuery({
+    queryKey: ["passenger-linked-clients", editingPassenger?.id, editingPassenger?.passport_number, editingPassenger?.full_name, editingPassenger?.birth_date],
+    queryFn: async () => {
+      if (!editingPassenger?.id) return [];
+      let query = supabase.from("passengers").select("client_id, clients!passengers_client_id_fkey(id, full_name)");
+      if (editingPassenger.passport_number) {
+        query = query.eq("passport_number", editingPassenger.passport_number);
+      } else if (editingPassenger.birth_date) {
+        query = query.eq("full_name", editingPassenger.full_name).eq("birth_date", editingPassenger.birth_date);
+      } else {
+        query = query.eq("full_name", editingPassenger.full_name);
+      }
+      query = query.neq("client_id", clientId!);
+      const { data } = await query;
+      // Deduplicate by client_id
+      const seen = new Set<string>();
+      return (data ?? []).filter((r: any) => {
+        if (!r.client_id || seen.has(r.client_id)) return false;
+        seen.add(r.client_id);
+        return true;
+      }).map((r: any) => ({ id: r.client_id, full_name: (r.clients as any)?.full_name ?? "—" }));
+    },
+    enabled: !!editingPassenger?.id && passengerDialog,
+  });
+
   // Fetch relationships (bidirectional)
   const { data: relationships = [] } = useQuery({
     queryKey: ["client-relationships", clientId],
@@ -552,6 +578,24 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
               <Label className="font-body text-xs">Observações</Label>
               <Input value={passengerForm.notes} onChange={(e) => setPassengerForm({ ...passengerForm, notes: e.target.value })} className="h-9" placeholder="Vistos, restrições, etc." />
             </div>
+            {editingPassenger?.id && passengerLinkedClients.length > 0 && (
+              <div className="border-t border-border/50 pt-3 mt-1">
+                <Label className="font-body text-xs text-muted-foreground">Também vinculado a:</Label>
+                <div className="flex flex-wrap gap-2 mt-1.5">
+                  {passengerLinkedClients.map((c: any) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      className="inline-flex items-center gap-1 text-xs font-body text-primary hover:underline"
+                      onClick={() => { setPassengerDialog(false); setEditingPassenger(null); onNavigateToClient(c.id); }}
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      {c.full_name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <Button onClick={() => savePassengerMutation.mutate()} disabled={!passengerForm.full_name || savePassengerMutation.isPending} className="font-body">
               {savePassengerMutation.isPending ? "Salvando..." : "Salvar"}
             </Button>

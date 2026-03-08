@@ -1028,7 +1028,7 @@ export default function Clients() {
                   clientId={editingId}
                   onNavigateToClient={(id) => {
                     const target = clients.find((c: any) => c.id === id);
-                    if (target) openEdit(target);
+                    if (target) { openEdit(target); setActiveTab("travelers"); }
                   }}
                 />
               </TabsContent>
