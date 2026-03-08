@@ -221,6 +221,25 @@ export default function Clients() {
     return map;
   }, [allPassengers]);
 
+  // Build a map: client_id -> passenger list
+  const passengersByClient = useMemo(() => {
+    const map: Record<string, typeof allPassengers> = {};
+    for (const p of allPassengers) {
+      if (!p.client_id) continue;
+      if (!map[p.client_id]) map[p.client_id] = [];
+      map[p.client_id].push(p);
+    }
+    return map;
+  }, [allPassengers]);
+
+  const toggleExpand = (clientId: string) => {
+    setExpandedClients(prev => {
+      const next = new Set(prev);
+      if (next.has(clientId)) next.delete(clientId); else next.add(clientId);
+      return next;
+    });
+  };
+
   // Fetch related data when editing
   const { data: clientPhones = [] } = useQuery({
     queryKey: ["client-phones", editingId],
