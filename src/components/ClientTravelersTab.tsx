@@ -286,16 +286,36 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         });
       }
 
-      // Create relationship
-      await supabase.from("client_relationships").insert({
-        client_id_a: clientId,
-        client_id_b: newClient.id,
-        relationship_type: promoteRelType as any,
+      // Find ALL clients that have this passenger (by passenger id)
+      const { data: allPassengerRecords } = await supabase
+        .from("passengers")
+        .select("client_id")
+        .eq("full_name", promotePassenger.full_name);
+
+      // Collect unique client IDs that had this passenger
+      const linkedClientIds = new Set<string>();
+      linkedClientIds.add(clientId); // current client always gets the relationship
+      (allPassengerRecords ?? []).forEach((rec: any) => {
+        if (rec.client_id) linkedClientIds.add(rec.client_id);
       });
 
-      // Delete the passenger record
+      // Create relationship with each client
+      const relationshipInserts = Array.from(linkedClientIds).map((cid) => ({
+        client_id_a: cid,
+        client_id_b: newClient.id,
+        relationship_type: promoteRelType as any,
+      }));
+      await supabase.from("client_relationships").insert(relationshipInserts);
+
+      // Delete ALL passenger records with same id (could exist as copies)
       if (promotePassenger.id) {
-        await supabase.from("passengers").delete().eq("id", promotePassenger.id);
+        // Delete by name + passport to catch copies across clients
+        const deleteQuery = supabase.from("passengers").delete().eq("full_name", promotePassenger.full_name);
+        if (promotePassenger.passport_number) {
+          await deleteQuery.eq("passport_number", promotePassenger.passport_number);
+        } else {
+          await deleteQuery;
+        }
       }
 
       return newClient.id;
