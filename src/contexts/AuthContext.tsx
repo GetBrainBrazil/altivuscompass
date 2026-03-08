@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { logAuditEvent } from "@/lib/audit";
 
 interface ImpersonatingUser {
   userId: string;
@@ -18,7 +19,7 @@ interface AuthContextType {
   setImpersonatingRole: (role: string | null) => void;
   setImpersonatingUser: (user: ImpersonatingUser | null) => void;
   loading: boolean;
-  signOut: () => Promise<void>;
+  signOut: (reason?: "manual" | "inactivity") => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -66,6 +67,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRealRole(data?.role ?? null);
   };
 
+  const hasLoggedLoginRef = useRef(false);
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
@@ -73,10 +76,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
         if (session?.user) {
           setTimeout(() => fetchUserRole(session.user.id), 0);
+          // Log login event once per session
+          if (!hasLoggedLoginRef.current) {
+            hasLoggedLoginRef.current = true;
+            logAuditEvent({
+              action: "create",
+              tableName: "sessions",
+              newData: { event: "LOGIN", email: session.user.email },
+            });
+          }
         } else {
           setRealRole(null);
           setImpersonatingRoleState(null);
           setImpersonatingUserState(null);
+          hasLoggedLoginRef.current = false;
         }
         setLoading(false);
       }
@@ -94,7 +107,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signOut = async () => {
+  const signOut = async (reason: "manual" | "inactivity" = "manual") => {
+    const logoutEvent = reason === "inactivity" ? "LOGOUT_INACTIVITY" : "LOGOUT";
+    await logAuditEvent({
+      action: "create",
+      tableName: "sessions",
+      newData: { event: logoutEvent, email: user?.email },
+    });
+    hasLoggedLoginRef.current = false;
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);

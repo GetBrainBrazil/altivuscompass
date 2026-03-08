@@ -1,7 +1,9 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { useInactivityLogout } from "@/hooks/useInactivityLogout";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccess } from "@/lib/permissions";
 import { ROLE_LABELS } from "@/lib/permissions";
@@ -30,9 +32,20 @@ interface AppLayoutProps {
 const IMPERSONATABLE_ROLES = ["manager", "sales_agent", "operations"] as const;
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { user, userRole, realRole, impersonatingRole, impersonatingUser, setImpersonatingRole, setImpersonatingUser, signOut } = useAuth();
+  const { user, userRole, realRole, impersonatingRole, impersonatingUser, setImpersonatingRole, setImpersonatingUser, signOut, session } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const isRealAdmin = realRole === "admin";
   const [userSearch, setUserSearch] = useState("");
+
+  const handleInactivityLogout = useCallback(async () => {
+    if (!session) return;
+    await signOut("inactivity");
+    toast({ title: "Sessão encerrada", description: "Você foi desconectado por inatividade (2 horas).", variant: "destructive" });
+    navigate("/login", { replace: true });
+  }, [session, signOut, toast, navigate]);
+
+  useInactivityLogout(handleInactivityLogout);
 
   const { data: usersWithRoles = [] } = useQuery({
     queryKey: ["impersonate-users-list"],
@@ -243,7 +256,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                   )}
 
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={signOut} className="cursor-pointer text-destructive focus:text-destructive">
+                  <DropdownMenuItem onClick={() => signOut("manual")} className="cursor-pointer text-destructive focus:text-destructive">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
                       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                       <polyline points="16 17 21 12 16 7" />
