@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus, ArrowLeft, Star, Trash2, AlertTriangle, AlertCircle, ShieldAlert } from "lucide-react";
 import { useCountries, useStates, useCities } from "@/components/LocationsTab";
 import { COUNTRY_CODES, applyPhoneMask } from "@/lib/phone-masks";
+import { ImageEditor } from "@/components/ImageEditor";
 
 type SortDir = "asc" | "desc";
 type SortState = { key: string; dir: SortDir } | null;
@@ -107,6 +108,18 @@ export default function Clients() {
   const [emails, setEmails] = useState<EmailEntry[]>([]);
   const [socials, setSocials] = useState<SocialEntry[]>([]);
   const [passports, setPassports] = useState<PassportEntry[]>([]);
+
+  // Image editor state
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorSrc, setEditorSrc] = useState("");
+  const [editorCallback, setEditorCallback] = useState<((file: File) => void) | null>(null);
+
+  const openEditor = (file: File, callback: (editedFile: File) => void) => {
+    const url = URL.createObjectURL(file);
+    setEditorSrc(url);
+    setEditorCallback(() => callback);
+    setEditorOpen(true);
+  };
 
   // Airport selection
   const [selectedAirports, setSelectedAirports] = useState<string[]>([]);
@@ -796,7 +809,11 @@ export default function Clients() {
                           <Plus className="h-3 w-3" />Adicionar
                           <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => {
                             const files = Array.from(e.target.files || []);
-                            if (files.length > 0) { const n = [...passports]; n[pi]._imageFiles = [...(n[pi]._imageFiles || []), ...files]; setPassports([...n]); }
+                            if (files.length === 1) {
+                              openEditor(files[0], (edited) => { const n = [...passports]; n[pi]._imageFiles = [...(n[pi]._imageFiles || []), edited]; setPassports([...n]); });
+                            } else if (files.length > 1) {
+                              const n = [...passports]; n[pi]._imageFiles = [...(n[pi]._imageFiles || []), ...files]; setPassports([...n]);
+                            }
                             e.target.value = "";
                           }} />
                         </label>
@@ -895,7 +912,9 @@ export default function Clients() {
                                     {v.image_url || v._imageFile ? "Trocar" : "Upload"}
                                     <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                                       const file = e.target.files?.[0];
-                                      if (file) { const n = [...passports]; n[pi].visas[vi]._imageFile = file; setPassports([...n]); }
+                                      if (file) {
+                                        openEditor(file, (edited) => { const n = [...passports]; n[pi].visas[vi]._imageFile = edited; setPassports([...n]); });
+                                      }
                                     }} />
                                   </label>
                                   {(v.image_url || v._imageFile) && (
@@ -1058,6 +1077,13 @@ export default function Clients() {
             </div>
           </DialogContent>
         </Dialog>
+
+        <ImageEditor
+          open={editorOpen}
+          imageSrc={editorSrc}
+          onClose={() => { setEditorOpen(false); setEditorSrc(""); setEditorCallback(null); }}
+          onSave={(file) => { editorCallback?.(file); setEditorOpen(false); setEditorSrc(""); setEditorCallback(null); }}
+        />
       </div>
     );
   }
