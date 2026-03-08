@@ -685,10 +685,14 @@ export type Database = {
           description: string
           due_date: string | null
           id: string
+          is_reconciled: boolean
+          observations: string | null
           party_name: string | null
+          payment_account: string | null
           quote_id: string | null
           status: string | null
           type: string
+          virtual_account_owner: string | null
         }
         Insert: {
           amount: number
@@ -699,10 +703,14 @@ export type Database = {
           description: string
           due_date?: string | null
           id?: string
+          is_reconciled?: boolean
+          observations?: string | null
           party_name?: string | null
+          payment_account?: string | null
           quote_id?: string | null
           status?: string | null
           type: string
+          virtual_account_owner?: string | null
         }
         Update: {
           amount?: number
@@ -713,10 +721,14 @@ export type Database = {
           description?: string
           due_date?: string | null
           id?: string
+          is_reconciled?: boolean
+          observations?: string | null
           party_name?: string | null
+          payment_account?: string | null
           quote_id?: string | null
           status?: string | null
           type?: string
+          virtual_account_owner?: string | null
         }
         Relationships: [
           {
