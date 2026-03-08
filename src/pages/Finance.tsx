@@ -577,14 +577,6 @@ export default function Finance() {
             <Input type="date" className="h-8 text-xs w-36" value={customDateTo} onChange={(e) => setCustomDateTo(e.target.value)} placeholder="Até" />
           </div>
         )}
-
-        <div className="flex-1" />
-        <Input
-          placeholder="Buscar transação..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="h-8 text-xs w-48 sm:w-64"
-        />
       </div>
 
       {/* Desktop table */}
