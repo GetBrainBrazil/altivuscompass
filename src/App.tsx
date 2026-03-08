@@ -11,6 +11,8 @@ import Clients from "./pages/Clients";
 import Quotes from "./pages/Quotes";
 import Campaigns from "./pages/Campaigns";
 import Finance from "./pages/Finance";
+import BankAccounts from "./pages/BankAccounts";
+import ChartOfAccounts from "./pages/ChartOfAccounts";
 import Miles from "./pages/Miles";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
