@@ -74,7 +74,7 @@ const emptyForm = {
   notes: "", country: "Brasil", state: "", city: "",
   preferred_airports: [] as string[], tags: [] as string[],
   cpf_cnpj: "", rg: "", rg_issuer: "", foreign_id: "", nationality: "",
-  marital_status: "",
+  marital_status: "", seat_preference: "",
   cep: "", neighborhood: "", address_street: "", address_number: "", address_complement: "",
 };
 
