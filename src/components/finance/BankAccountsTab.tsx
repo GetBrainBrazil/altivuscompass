@@ -87,7 +87,7 @@ export default function BankAccountsTab() {
       } else {
         const { data, error } = await supabase.from("bank_accounts").insert(payload).select("id").single();
         if (error) throw error;
-        logAuditEvent({ action: "create", tableName: "bank_accounts", recordId: data.id, newData: payload });
+        logAuditEvent({ action: "create", tableName: "bank_accounts", recordId: data.id, recordLabel: payload.bank_name, newData: payload });
       }
     },
     onSuccess: () => {
