@@ -69,8 +69,15 @@ async function fetchCep(cep: string) {
 }
 
 const SUPPLIER_CATEGORIES = [
-  "Hotelaria", "Cia Aérea", "Receptivo", "Seguro Viagem", "Locadora", "Transfer",
-  "Cruzeiro", "Trem", "Câmbio", "Documentação", "Consultoria", "Tecnologia", "Outro",
+  "Transporte",
+  "Hospedagem",
+  "Passeios e Experiências",
+  "Documentação de Viagem",
+  "Seguros e Assistência",
+  "Serviços no Destino",
+  "Tecnologia e Distribuição",
+  "Outro",
+];
 ];
 
 const emptyForm = {
