@@ -93,6 +93,12 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
   const [promotePassenger, setPromotePassenger] = useState<Passenger | null>(null);
   const [promoteRelType, setPromoteRelType] = useState<string>("child");
 
+  // Copy passengers state
+  const [copyDialog, setCopyDialog] = useState(false);
+  const [copyClientSearch, setCopyClientSearch] = useState("");
+  const [selectedCopyClient, setSelectedCopyClient] = useState<string | null>(null);
+  const [copyPassengerIds, setCopyPassengerIds] = useState<Set<string>>(new Set());
+
   // Fetch passengers
   const { data: passengers = [] } = useQuery({
     queryKey: ["client-passengers", clientId],
