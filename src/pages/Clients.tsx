@@ -972,7 +972,8 @@ export default function Clients() {
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground font-body">
                 {client.city && <span>{client.city}{client.state ? `, ${client.state}` : ""}</span>}
-                {client.phone && <span>{client.phone}</span>}
+                {client.primary_phone && <span>{client.primary_phone}</span>}
+                {client.primary_email && <span>{client.primary_email}</span>}
               </div>
             </div>
           ))
