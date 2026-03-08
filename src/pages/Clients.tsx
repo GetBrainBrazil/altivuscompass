@@ -943,7 +943,6 @@ export default function Clients() {
             </thead>
             <tbody className="divide-y divide-border/30">
               {filtered.map((client: any) => {
-                const passportLabel = { none: "Sem", valid: "Válido", expired: "Vencido", processing: "Em processo" }[client.passport_status ?? "none"] ?? client.passport_status;
                 return (
                   <tr key={client.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEdit(client)}>
                     <td className="p-4">
@@ -982,9 +981,26 @@ export default function Clients() {
                       </div>
                     </td>
                     <td className="p-4">
-                      <span className={`text-xs font-body ${passportLabel === 'Válido' ? 'text-success' : passportLabel === 'Vencido' ? 'text-destructive' : 'text-muted-foreground'}`}>
-                        {passportLabel}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        {(client.alerts ?? []).length === 0 ? (
+                          <span className="text-xs text-muted-foreground font-body">—</span>
+                        ) : (
+                          (client.alerts as { label: string; level: string }[]).slice(0, 3).map((alert, idx) => {
+                            const styles = {
+                              urgent: "bg-destructive/10 text-destructive",
+                              critical: "bg-amber-500/10 text-amber-600",
+                              warning: "bg-amber-400/10 text-amber-500",
+                            }[alert.level] ?? "bg-muted text-muted-foreground";
+                            const Icon = alert.level === "urgent" ? ShieldAlert : alert.level === "critical" ? AlertCircle : AlertTriangle;
+                            return (
+                              <span key={idx} className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full font-body ${styles}`}>
+                                <Icon className="h-3 w-3" />
+                                {alert.label}
+                              </span>
+                            );
+                          })
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
