@@ -17,6 +17,7 @@ import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus, ArrowLeft, St
 import { useCountries, useStates, useCities } from "@/components/LocationsTab";
 import { COUNTRY_CODES, applyPhoneMask } from "@/lib/phone-masks";
 import { ImageEditor } from "@/components/ImageEditor";
+import { ClientTravelersTab } from "@/components/ClientTravelersTab";
 
 type SortDir = "asc" | "desc";
 type SortState = { key: string; dir: SortDir } | null;
@@ -564,6 +565,7 @@ export default function Clients() {
                 <TabsTrigger value="preferences" className="font-body text-xs">Preferências</TabsTrigger>
                 <TabsTrigger value="documents" className="font-body text-xs">Documentos</TabsTrigger>
                 <TabsTrigger value="address" className="font-body text-xs">Endereço</TabsTrigger>
+                <TabsTrigger value="travelers" className="font-body text-xs">Viajantes</TabsTrigger>
                 <TabsTrigger value="observations" className="font-body text-xs">Observações</TabsTrigger>
               </TabsList>
 
@@ -1010,6 +1012,17 @@ export default function Clients() {
                       <Input value={form.address_complement} onChange={(e) => upd("address_complement", e.target.value)} />
                     </div>
                 </div>
+              </TabsContent>
+
+              {/* Travelers Tab */}
+              <TabsContent value="travelers">
+                <ClientTravelersTab
+                  clientId={editingId}
+                  onNavigateToClient={(id) => {
+                    const target = clients.find((c: any) => c.id === id);
+                    if (target) openEdit(target);
+                  }}
+                />
               </TabsContent>
 
               {/* Observations Tab */}

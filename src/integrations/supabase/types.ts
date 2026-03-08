@@ -263,6 +263,48 @@ export type Database = {
           },
         ]
       }
+      client_relationships: {
+        Row: {
+          client_id_a: string
+          client_id_b: string
+          created_at: string
+          id: string
+          relationship_label: string | null
+          relationship_type: Database["public"]["Enums"]["relationship_type"]
+        }
+        Insert: {
+          client_id_a: string
+          client_id_b: string
+          created_at?: string
+          id?: string
+          relationship_label?: string | null
+          relationship_type?: Database["public"]["Enums"]["relationship_type"]
+        }
+        Update: {
+          client_id_a?: string
+          client_id_b?: string
+          created_at?: string
+          id?: string
+          relationship_label?: string | null
+          relationship_type?: Database["public"]["Enums"]["relationship_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_relationships_client_id_a_fkey"
+            columns: ["client_id_a"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_relationships_client_id_b_fkey"
+            columns: ["client_id_b"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_social_media: {
         Row: {
           client_id: string
@@ -935,6 +977,14 @@ export type Database = {
         | "issued"
         | "completed"
         | "post_sale"
+      relationship_type:
+        | "spouse"
+        | "child"
+        | "parent"
+        | "employee"
+        | "partner"
+        | "sibling"
+        | "other"
       travel_profile: "economic" | "opportunity" | "sophisticated"
     }
     CompositeTypes: {
@@ -1073,6 +1123,15 @@ export const Constants = {
         "issued",
         "completed",
         "post_sale",
+      ],
+      relationship_type: [
+        "spouse",
+        "child",
+        "parent",
+        "employee",
+        "partner",
+        "sibling",
+        "other",
       ],
       travel_profile: ["economic", "opportunity", "sophisticated"],
     },
