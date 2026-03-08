@@ -1350,29 +1350,59 @@ export default function Clients() {
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground font-body">Nenhum cliente encontrado.</div>
         ) : (
-          filtered.map((client: any) => (
-            <div key={client.id} className="glass-card rounded-xl p-4 space-y-3 cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => openEdit(client)}>
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium font-body text-foreground">{client.full_name}</p>
-                  {client.rating > 0 && <div className="flex gap-0.5 mt-0.5">{[1,2,3,4,5].map(i => <Star key={i} className={`h-3 w-3 ${i <= client.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"}`} />)}</div>}
+          filtered.map((client: any) => {
+            const clientPassengersList = passengersByClient[client.id] ?? [];
+            const isExpanded = expandedClients.has(client.id);
+            const hasPassengers = clientPassengersList.length > 0;
+            return (
+              <div key={client.id} className="glass-card rounded-xl p-4 space-y-3 cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => openEdit(client)}>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-medium font-body text-foreground">{client.full_name}</p>
+                      {hasPassengers && (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground font-body">
+                          <Users className="h-3 w-3" />{clientPassengersList.length}
+                        </span>
+                      )}
+                    </div>
+                    {client.rating > 0 && <div className="flex gap-0.5 mt-0.5">{[1,2,3,4,5].map(i => <Star key={i} className={`h-3 w-3 ${i <= client.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"}`} />)}</div>}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {hasPassengers && (
+                      <button type="button" className="p-1 rounded hover:bg-muted/50 text-muted-foreground" onClick={(e) => { e.stopPropagation(); toggleExpand(client.id); }}>
+                        {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                      </button>
+                    )}
+                    {client.is_active === false && <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-body">Inativo</span>}
+                    {client.travel_profile && travelProfiles[client.travel_profile] && (
+                      <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${travelProfiles[client.travel_profile].color}`}>
+                        {travelProfiles[client.travel_profile].label}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  {client.is_active === false && <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-body">Inativo</span>}
-                  {client.travel_profile && travelProfiles[client.travel_profile] && (
-                    <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${travelProfiles[client.travel_profile].color}`}>
-                      {travelProfiles[client.travel_profile].label}
-                    </span>
-                  )}
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground font-body">
+                  {client.city && <span>{client.city}{client.state ? `, ${client.state}` : ""}</span>}
+                  {client.primary_phone && <a href={`https://wa.me/${client.primary_phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-primary hover:underline">{client.primary_phone}</a>}
+                  {client.primary_email && <span>{client.primary_email}</span>}
                 </div>
+                {isExpanded && clientPassengersList.length > 0 && (
+                  <div className="border-t border-border/30 pt-2 mt-1 space-y-1" onClick={(e) => e.stopPropagation()}>
+                    {clientPassengersList.map((p: any) => (
+                      <div key={p.id} className="flex items-center gap-2 text-xs font-body text-foreground py-0.5">
+                        <Users className="h-3 w-3 text-muted-foreground shrink-0" />
+                        <span>{p.full_name}</span>
+                        {p.relationship_type && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">{RELATIONSHIP_LABELS[p.relationship_type] || p.relationship_type}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground font-body">
-                {client.city && <span>{client.city}{client.state ? `, ${client.state}` : ""}</span>}
-                {client.primary_phone && <a href={`https://wa.me/${client.primary_phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-primary hover:underline">{client.primary_phone}</a>}
-                {client.primary_email && <span>{client.primary_email}</span>}
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
