@@ -1340,7 +1340,7 @@ export type Database = {
           address_complement: string | null
           address_number: string | null
           address_street: string | null
-          category: string | null
+          category: string[] | null
           cep: string | null
           city: string | null
           contact_person: string | null
@@ -1365,7 +1365,7 @@ export type Database = {
           address_complement?: string | null
           address_number?: string | null
           address_street?: string | null
-          category?: string | null
+          category?: string[] | null
           cep?: string | null
           city?: string | null
           contact_person?: string | null
@@ -1390,7 +1390,7 @@ export type Database = {
           address_complement?: string | null
           address_number?: string | null
           address_street?: string | null
-          category?: string | null
+          category?: string[] | null
           cep?: string | null
           city?: string | null
           contact_person?: string | null

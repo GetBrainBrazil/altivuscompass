@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -80,7 +82,7 @@ const SUPPLIER_CATEGORIES = [
 ];
 
 const emptyForm = {
-  name: "", trade_name: "", document_number: "", supplier_type: "company", category: "",
+  name: "", trade_name: "", document_number: "", supplier_type: "company", categories: [] as string[],
   email: "", phone: "", website: "", contact_person: "", contact_phone: "",
   cep: "", address_street: "", address_number: "", address_complement: "",
   neighborhood: "", city: "", state: "", country: "Brasil", notes: "", is_active: true,
@@ -127,7 +129,7 @@ export default function SuppliersTab() {
         state: form.state || null,
         country: form.country || null,
         notes: form.notes || null,
-        category: form.category || null,
+        category: form.categories.length > 0 ? form.categories : null,
       };
       if (editing) {
         const { error } = await supabase.from("suppliers").update(payload as any).eq("id", editing.id);
@@ -168,7 +170,7 @@ export default function SuppliersTab() {
     setEditing(s);
     setForm({
       name: s.name ?? "", trade_name: s.trade_name ?? "", document_number: s.document_number ?? "",
-      supplier_type: s.supplier_type ?? "company", category: s.category ?? "",
+      supplier_type: s.supplier_type ?? "company", categories: Array.isArray(s.category) ? s.category : (s.category ? [s.category] : []),
       email: s.email ?? "", phone: s.phone ?? "", website: s.website ?? "",
       contact_person: s.contact_person ?? "", contact_phone: s.contact_phone ?? "",
       cep: s.cep ?? "", address_street: s.address_street ?? "", address_number: s.address_number ?? "",
@@ -233,13 +235,32 @@ export default function SuppliersTab() {
                       <Input value={form.document_number} onChange={set("document_number")} />
                     </div>
                     <div className="space-y-2">
-                      <Label className="font-body">Categoria</Label>
-                      <Select value={form.category} onValueChange={(v) => setForm(f => ({ ...f, category: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
-                          {SUPPLIER_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
+                      <Label className="font-body">Serviços</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="w-full justify-start font-normal h-auto min-h-10 text-left">
+                            {form.categories.length > 0
+                              ? <div className="flex flex-wrap gap-1">{form.categories.map(c => <Badge key={c} variant="secondary" className="text-xs font-body">{c}</Badge>)}</div>
+                              : <span className="text-muted-foreground">Selecione os serviços</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-72 p-2" align="start">
+                          {SUPPLIER_CATEGORIES.map(c => (
+                            <label key={c} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm font-body">
+                              <Checkbox
+                                checked={form.categories.includes(c)}
+                                onCheckedChange={(checked) => {
+                                  setForm(f => ({
+                                    ...f,
+                                    categories: checked ? [...f.categories, c] : f.categories.filter(x => x !== c),
+                                  }));
+                                }}
+                              />
+                              {c}
+                            </label>
+                          ))}
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -373,7 +394,7 @@ export default function SuppliersTab() {
             <TableHeader>
               <TableRow>
                 <SortableHead label="Nome" sortKey="name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
-                <SortableHead label="Categoria" sortKey="category" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
+                <TableHead>Serviços</TableHead>
                 <SortableHead label="Cidade" sortKey="city" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} className="hidden sm:table-cell" />
                 <SortableHead label="Contato" sortKey="contact_person" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} className="hidden md:table-cell" />
                 <TableHead className="w-20">Status</TableHead>
@@ -392,7 +413,10 @@ export default function SuppliersTab() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {s.category ? <Badge variant="secondary" className="font-body text-xs">{s.category}</Badge> : <span className="text-muted-foreground">—</span>}
+                      {Array.isArray(s.category) && s.category.length > 0
+                        ? <div className="flex flex-wrap gap-1">{s.category.map((c: string) => <Badge key={c} variant="secondary" className="font-body text-xs">{c}</Badge>)}</div>
+                        : <span className="text-muted-foreground">—</span>}
+
                     </TableCell>
                     <TableCell className="hidden sm:table-cell text-muted-foreground">{s.city || "—"}</TableCell>
                     <TableCell className="hidden md:table-cell text-muted-foreground">{s.contact_person || "—"}</TableCell>
