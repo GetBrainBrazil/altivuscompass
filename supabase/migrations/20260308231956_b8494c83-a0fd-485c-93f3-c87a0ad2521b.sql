@@ -1,0 +1,1 @@
+ALTER TABLE public.financial_categories ADD COLUMN account_nature text NOT NULL DEFAULT 'analytic';

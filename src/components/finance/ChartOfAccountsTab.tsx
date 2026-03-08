@@ -15,6 +15,7 @@ import { Plus, Pencil, Trash2, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } f
 type FinancialCategory = {
   id: string; name: string; code: string | null; type: string;
   parent_id: string | null; description: string | null; is_active: boolean;
+  account_nature: string;
   created_at: string; updated_at: string;
 };
 
@@ -23,6 +24,11 @@ const typeLabels: Record<string, { label: string; color: string }> = {
   expense: { label: "Despesa", color: "bg-destructive/10 text-destructive" },
   cost: { label: "Custo", color: "bg-gold/10 text-gold" },
   transfer: { label: "Transferência", color: "bg-muted text-muted-foreground" },
+};
+
+const natureLabels: Record<string, { label: string; color: string }> = {
+  analytic: { label: "Analítica", color: "bg-soft-blue/10 text-soft-blue" },
+  synthetic: { label: "Sintética", color: "bg-muted text-muted-foreground" },
 };
 
 type SortDir = "asc" | "desc" | null;
@@ -100,7 +106,7 @@ export default function ChartOfAccountsTab() {
       const payload = {
         name: form.name, code: form.code || null, type: form.type || "expense",
         parent_id: form.parent_id || null, description: form.description || null,
-        is_active: form.is_active ?? true,
+        is_active: form.is_active ?? true, account_nature: form.account_nature || "analytic",
       };
       if (editing) {
         const { error } = await supabase.from("financial_categories").update(payload).eq("id", editing.id);
@@ -132,7 +138,7 @@ export default function ChartOfAccountsTab() {
 
   const openCreate = (parentId?: string) => {
     setEditing(null);
-    setForm({ type: "expense", is_active: true, parent_id: parentId || null });
+    setForm({ type: "expense", is_active: true, parent_id: parentId || null, account_nature: "analytic" });
     setDialogOpen(true);
   };
 
@@ -140,7 +146,7 @@ export default function ChartOfAccountsTab() {
     setEditing(c);
     setForm({
       name: c.name, code: c.code ?? "", type: c.type, parent_id: c.parent_id ?? "",
-      description: c.description ?? "", is_active: c.is_active,
+      description: c.description ?? "", is_active: c.is_active, account_nature: c.account_nature || "analytic",
     });
     setDialogOpen(true);
   };
@@ -183,6 +189,7 @@ export default function ChartOfAccountsTab() {
                 <th className="p-4 text-left">
                   <SortHeader label="Tipo" active={sortKey === "type"} direction={sortKey === "type" ? sortDir : null} onClick={() => toggleSort("type")} />
                 </th>
+                <th className="p-4 text-left font-medium text-xs uppercase tracking-wider text-muted-foreground">Natureza</th>
                 <th className="p-4 text-left font-medium text-xs uppercase tracking-wider text-muted-foreground">Status</th>
                 <th className="p-4 text-right font-medium text-xs uppercase tracking-wider text-muted-foreground">Ações</th>
               </tr>
@@ -216,6 +223,9 @@ export default function ChartOfAccountsTab() {
                     </td>
                     <td className="p-4">
                       <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${tp.color}`}>{tp.label}</span>
+                    </td>
+                    <td className="p-4">
+                      {(() => { const nt = natureLabels[cat.account_nature] ?? natureLabels.analytic; return <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${nt.color}`}>{nt.label}</span>; })()}
                     </td>
                     <td className="p-4">
                       {cat.is_active ? (
@@ -289,12 +299,22 @@ export default function ChartOfAccountsTab() {
                 </Select>
               </div>
               <div className="space-y-2">
+                <Label className="font-body">Natureza</Label>
+                <Select value={form.account_nature ?? "analytic"} onValueChange={(v) => setForm({ ...form, account_nature: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="analytic">Analítica (aceita lançamentos)</SelectItem>
+                    <SelectItem value="synthetic">Sintética (consolidadora)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label className="font-body">Categoria Pai</Label>
                 <Select value={form.parent_id ?? "none"} onValueChange={(v) => setForm({ ...form, parent_id: v === "none" ? null : v })}>
                   <SelectTrigger><SelectValue placeholder="Nenhuma (raiz)" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Nenhuma (raiz)</SelectItem>
-                    {categories.filter(c => c.id !== editing?.id).map(c => (
+                    {categories.filter(c => c.id !== editing?.id && c.account_nature === "synthetic").map(c => (
                       <SelectItem key={c.id} value={c.id}>
                         {c.code ? `${c.code} - ` : ""}{c.name}
                       </SelectItem>
