@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import BankAccountCredentials from "./BankAccountCredentials";
 
 type BankAccount = {
   id: string; bank_name: string; agency: string | null; account_number: string | null;
