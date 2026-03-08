@@ -49,6 +49,21 @@ function SortableHead({ label, sortKey, sort, onSort, className }: { label: stri
 
 // ── Hooks for shared data ──
 
+function useContinentMap() {
+  return useQuery({
+    queryKey: ["continent-countries-map"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("continent_countries").select("country_id, continents(name)");
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      (data ?? []).forEach((cc: any) => {
+        if (cc.continents?.name) map[cc.country_id] = cc.continents.name;
+      });
+      return map;
+    },
+  });
+}
+
 export function useCountries() {
   return useQuery({
     queryKey: ["locations-countries"],
@@ -124,6 +139,7 @@ function CountriesSubTab() {
   const [sort, setSort] = useState<SortState>(null);
 
   const { data: countries = [], isLoading } = useCountries();
+  const { data: continentMap = {} } = useContinentMap();
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -163,8 +179,9 @@ function CountriesSubTab() {
   const closeDialog = () => { setDialogOpen(false); setEditing(null); setName(""); };
   const openEdit = (c: any) => { setEditing(c); setName(c.name); setDialogOpen(true); };
 
+  const enriched = countries.map((c: any) => ({ ...c, continent_name: (continentMap as Record<string, string>)[c.id] ?? "" }));
   const filtered = sortData(
-    countries.filter((c: any) => c.name.toLowerCase().includes(search.toLowerCase())),
+    enriched.filter((c: any) => c.name.toLowerCase().includes(search.toLowerCase()) || c.continent_name.toLowerCase().includes(search.toLowerCase())),
     sort
   );
 
@@ -197,12 +214,14 @@ function CountriesSubTab() {
             <TableHeader>
               <TableRow>
                 <SortableHead label="Nome" sortKey="name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
+                <SortableHead label="Continente" sortKey="continent_name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((c: any) => (
                 <TableRow key={c.id} className={isAdmin ? "cursor-pointer hover:bg-muted/50" : ""} onClick={() => isAdmin && openEdit(c)}>
                   <TableCell>{c.name}</TableCell>
+                  <TableCell>{c.continent_name || "—"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -229,6 +248,7 @@ function StatesSubTab() {
 
   const { data: countries = [] } = useCountries();
   const { data: states = [], isLoading } = useStates();
+  const { data: continentMap = {} } = useContinentMap();
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -269,7 +289,7 @@ function StatesSubTab() {
   const closeDialog = () => { setDialogOpen(false); setEditing(null); setForm({ name: "", country_id: "" }); };
   const openEdit = (s: any) => { setEditing(s); setForm({ name: s.name, country_id: s.country_id }); setDialogOpen(true); };
 
-  const enriched = states.map((s: any) => ({ ...s, country_name: s.countries?.name ?? "" }));
+  const enriched = states.map((s: any) => ({ ...s, country_name: s.countries?.name ?? "", continent_name: (continentMap as Record<string, string>)[s.country_id] ?? "" }));
   const filtered = sortData(
     enriched.filter((s: any) => {
       const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.country_name.toLowerCase().includes(search.toLowerCase());
@@ -327,6 +347,7 @@ function StatesSubTab() {
               <TableRow>
                 <SortableHead label="Nome" sortKey="name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
                 <SortableHead label="País" sortKey="country_name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
+                <SortableHead label="Continente" sortKey="continent_name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -334,10 +355,11 @@ function StatesSubTab() {
                 <TableRow key={s.id} className={isAdmin ? "cursor-pointer hover:bg-muted/50" : ""} onClick={() => isAdmin && openEdit(s)}>
                   <TableCell>{s.name}</TableCell>
                   <TableCell>{s.country_name}</TableCell>
+                  <TableCell>{s.continent_name || "—"}</TableCell>
                 </TableRow>
               ))}
               {filtered.length > 100 && (
-                <TableRow><TableCell colSpan={2} className="text-center text-muted-foreground text-sm">Mostrando 100 de {filtered.length}. Use a busca para refinar.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground text-sm">Mostrando 100 de {filtered.length}. Use a busca para refinar.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -363,6 +385,7 @@ function CitiesSubTab() {
   const [filterState, setFilterState] = useState("all");
 
   const { data: countries = [] } = useCountries();
+  const { data: continentMap = {} } = useContinentMap();
   const { data: statesForFilter = [] } = useStates(filterCountry !== "all" ? filterCountry : undefined);
   const { data: statesForForm = [] } = useStates(form.country_id || undefined);
   const { data: cities = [], isLoading } = useQuery({
@@ -420,6 +443,7 @@ function CitiesSubTab() {
     ...c,
     country_name: c.countries?.name ?? "",
     state_name: c.states?.name ?? "",
+    continent_name: (continentMap as Record<string, string>)[c.country_id] ?? "",
   }));
   const filtered = sortData(
     enriched.filter((c: any) => {
@@ -498,6 +522,7 @@ function CitiesSubTab() {
                 <SortableHead label="Nome" sortKey="name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
                 <SortableHead label="Estado/Região" sortKey="state_name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
                 <SortableHead label="País" sortKey="country_name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
+                <SortableHead label="Continente" sortKey="continent_name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -506,10 +531,11 @@ function CitiesSubTab() {
                   <TableCell>{c.name}</TableCell>
                   <TableCell>{c.state_name || "—"}</TableCell>
                   <TableCell>{c.country_name}</TableCell>
+                  <TableCell>{c.continent_name || "—"}</TableCell>
                 </TableRow>
               ))}
               {filtered.length > 100 && (
-                <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground text-sm">Mostrando 100 de {filtered.length}. Use a busca para refinar.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground text-sm">Mostrando 100 de {filtered.length}. Use a busca para refinar.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
