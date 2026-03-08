@@ -69,7 +69,7 @@ async function uploadAvatar(file: File, userId: string): Promise<string> {
   return path;
 }
 
-export default function UserManagement() {
+export default function UserManagement({ embedded = false }: { embedded?: boolean }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
