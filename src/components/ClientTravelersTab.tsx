@@ -251,7 +251,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         const { data: oldData } = await supabase.from("passengers").select("*").eq("id", editingPassenger.id).single();
         const { error } = await supabase.from("passengers").update(updatedData).eq("id", editingPassenger.id);
         if (error) throw error;
-        logAuditEvent({ action: "update", tableName: "passengers", recordId: editingPassenger.id, oldData, newData: updatedData });
+        logAuditEvent({ action: "update", tableName: "passengers", recordId: editingPassenger.id, recordLabel: updatedData.full_name, oldData, newData: updatedData });
 
         // Sync copies across other clients
         const oldPassport = editingPassenger.passport_number;
