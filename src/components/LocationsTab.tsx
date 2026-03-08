@@ -226,12 +226,15 @@ function StatesSubTab() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      const countryName = countries.find((c: any) => c.id === form.country_id)?.name ?? "";
       if (editing) {
         const { error } = await supabase.from("states").update({ name: form.name, country_id: form.country_id }).eq("id", editing.id);
         if (error) throw error;
+        await logAuditEvent({ action: "update", tableName: "states", recordId: editing.id, recordLabel: `${form.name} (${countryName})`, oldData: editing, newData: { name: form.name, country_id: form.country_id } });
       } else {
-        const { error } = await supabase.from("states").insert({ name: form.name, country_id: form.country_id });
+        const { data, error } = await supabase.from("states").insert({ name: form.name, country_id: form.country_id }).select("id").single();
         if (error) throw error;
+        await logAuditEvent({ action: "create", tableName: "states", recordId: data.id, recordLabel: `${form.name} (${countryName})`, newData: { name: form.name, country_id: form.country_id } });
       }
     },
     onSuccess: () => {
