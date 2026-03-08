@@ -322,7 +322,7 @@ export default function Clients() {
           if (ppErr) throw ppErr;
           if (pp.visas.length > 0) {
             await supabase.from("client_visas").insert(
-              pp.visas.filter(v => v.visa_type).map(v => ({ passport_id: ppData.id, visa_type: v.visa_type, validity_date: v.validity_date || null }))
+              pp.visas.filter(v => v.visa_type).map(v => ({ passport_id: ppData.id, visa_type: v.visa_type, validity_date: v.validity_date || null, country_region: v.country_region || null, visa_number: v.visa_number || null, issue_date: v.issue_date || null, entry_type: v.entry_type || "single" }))
             );
           }
         }
