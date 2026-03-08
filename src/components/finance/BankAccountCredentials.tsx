@@ -337,7 +337,7 @@ export default function BankAccountCredentials({ bankAccountId }: { bankAccountI
               />
             </div>
 
-            <div className="sm:col-span-2 space-y-2">
+            <div className="sm:col-span-4 space-y-2">
               <Label className="font-body text-xs font-semibold flex items-center gap-1">
                 <Users size={12} /> Visível para
               </Label>
