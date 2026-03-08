@@ -20,7 +20,7 @@ type BankAccount = {
 };
 
 const accountTypeLabels: Record<string, string> = {
-  checking: "Conta Corrente", savings: "Conta Poupança", salary: "Conta Salário", payment: "Conta Pagamento",
+  checking: "Conta Corrente", savings: "Conta Poupança", salary: "Conta Salário", payment: "Conta Pagamento", petty_cash: "Caixinha",
 };
 
 type SortDir = "asc" | "desc" | null;
@@ -203,6 +203,7 @@ export default function BankAccountsTab() {
                     <SelectItem value="savings">Conta Poupança</SelectItem>
                     <SelectItem value="salary">Conta Salário</SelectItem>
                     <SelectItem value="payment">Conta Pagamento</SelectItem>
+                    <SelectItem value="petty_cash">Caixinha</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
