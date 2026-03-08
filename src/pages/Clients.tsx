@@ -907,6 +907,57 @@ export default function Clients() {
                     </div>
                   )}
                 </div>
+
+                {/* Desired destinations */}
+                <div className="space-y-1">
+                  <Label className="font-body text-xs font-medium">Destinos desejados</Label>
+                  <Popover open={destPopoverOpen} onOpenChange={setDestPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" type="button" className="w-full justify-between font-normal h-9 text-sm">
+                        {selectedDestinations.length > 0 ? `${selectedDestinations.length} destino(s)` : "Selecione destinos desejados"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-96 p-0" align="start">
+                      <div className="p-2 border-b"><Input placeholder="Buscar destino..." value={destSearch} onChange={(e) => setDestSearch(e.target.value)} className="h-8 text-sm" /></div>
+                      <div className="max-h-60 overflow-y-auto p-1">
+                        {destFilteredOptions.length === 0 && <p className="text-xs text-muted-foreground p-3 text-center">Nenhum resultado</p>}
+                        {["Diversos", "Continentes", "Países", "Estados/Regiões", "Cidades"].map(group => {
+                          const items = destFilteredOptions.filter(o => o.group === group);
+                          if (items.length === 0) return null;
+                          return (
+                            <div key={group}>
+                              <p className="text-[10px] font-semibold text-muted-foreground uppercase px-2 pt-2 pb-1">{group}</p>
+                              {items.map(o => {
+                                const key = `${o.type}:${o.id}`;
+                                const isSelected = selectedDestinations.includes(key);
+                                return (
+                                  <label key={key} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                                    <Checkbox checked={isSelected} onCheckedChange={(checked) => setSelectedDestinations(prev => checked ? [...prev, key] : prev.filter(k => k !== key))} />
+                                    <span className="truncate">{o.label}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  {selectedDestinations.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedDestinations.map((key) => {
+                        const label = destLabelMap[key] ?? key;
+                        return (
+                          <span key={key} className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                            {label}
+                            <button type="button" onClick={() => setSelectedDestinations(prev => prev.filter(k => k !== key))} className="hover:text-destructive"><X className="h-3 w-3" /></button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </TabsContent>
 
               {/* Documents Tab */}
