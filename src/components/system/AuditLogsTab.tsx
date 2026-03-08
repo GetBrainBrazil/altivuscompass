@@ -171,12 +171,16 @@ export default function AuditLogsTab() {
     if (!oldData || !newData) return null;
     const changes: { field: string; from: any; to: any }[] = [];
     for (const key of Object.keys(newData)) {
-      if (["updated_at", "created_at"].includes(key)) continue;
+      if (["updated_at", "created_at", "_label"].includes(key)) continue;
       if (JSON.stringify(oldData[key]) !== JSON.stringify(newData[key])) {
         changes.push({ field: key, from: oldData[key], to: newData[key] });
       }
     }
     return changes.length > 0 ? changes : null;
+  };
+
+  const getRecordLabel = (log: AuditLog): string | null => {
+    return (log.new_data as any)?._label ?? (log.old_data as any)?._label ?? (log.old_data as any)?.full_name ?? (log.new_data as any)?.full_name ?? (log.old_data as any)?.bank_name ?? (log.new_data as any)?.bank_name ?? (log.old_data as any)?.name ?? (log.new_data as any)?.name ?? null;
   };
 
   const getActionLabel = (log: AuditLog) => {
