@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import logoAltivus from "@/assets/logo-altivus.png";
+import logoAltivusLogin from "@/assets/logo-altivus-login.jpg";
 
 function ForgotPasswordDialog() {
   const { toast } = useToast();
