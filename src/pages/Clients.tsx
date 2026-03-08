@@ -109,6 +109,18 @@ export default function Clients() {
   const [socials, setSocials] = useState<SocialEntry[]>([]);
   const [passports, setPassports] = useState<PassportEntry[]>([]);
 
+  // Image editor state
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorSrc, setEditorSrc] = useState("");
+  const [editorCallback, setEditorCallback] = useState<((file: File) => void) | null>(null);
+
+  const openEditor = (file: File, callback: (editedFile: File) => void) => {
+    const url = URL.createObjectURL(file);
+    setEditorSrc(url);
+    setEditorCallback(() => callback);
+    setEditorOpen(true);
+  };
+
   // Airport selection
   const [selectedAirports, setSelectedAirports] = useState<string[]>([]);
   const [airportSearch, setAirportSearch] = useState("");
