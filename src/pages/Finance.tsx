@@ -560,8 +560,20 @@ export default function Finance() {
                 const isExpense = t.category?.startsWith("DESPESAS") || t.category?.startsWith("IMPOSTOS") || t.type === "expense" || t.type === "payable";
                 const balance = balanceMap.get(t.id) ?? 0;
                 return (
-                  <tr key={t.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEdit(t)}>
-                    <td className="p-3 font-body text-xs text-muted-foreground whitespace-nowrap">{t.date}</td>
+                  <tr key={t.id} className={cn("hover:bg-muted/30 transition-colors cursor-pointer", selectedIds.has(t.id) && "bg-primary/5")} onClick={() => openEdit(t)}>
+                    <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedIds.has(t.id)}
+                        onCheckedChange={(v) => {
+                          setSelectedIds(prev => {
+                            const next = new Set(prev);
+                            v ? next.add(t.id) : next.delete(t.id);
+                            return next;
+                          });
+                        }}
+                      />
+                    </td>
+                    <td className="p-3 font-body text-xs text-muted-foreground whitespace-nowrap">{formatDate(t.date)}</td>
                     <td className="p-3 text-center">
                       {t.is_reconciled && <CheckCircle2 size={14} className="text-success mx-auto" />}
                     </td>
