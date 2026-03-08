@@ -1,0 +1,2 @@
+ALTER TABLE public.suppliers ALTER COLUMN category TYPE text[] USING CASE WHEN category IS NOT NULL THEN ARRAY[category] ELSE '{}'::text[] END;
+ALTER TABLE public.suppliers ALTER COLUMN category SET DEFAULT '{}'::text[];
