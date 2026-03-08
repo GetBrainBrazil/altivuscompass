@@ -248,11 +248,12 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       };
 
       if (editingPassenger?.id) {
-        // Save current passenger
+        const { data: oldData } = await supabase.from("passengers").select("*").eq("id", editingPassenger.id).single();
         const { error } = await supabase.from("passengers").update(updatedData).eq("id", editingPassenger.id);
         if (error) throw error;
+        logAuditEvent({ action: "update", tableName: "passengers", recordId: editingPassenger.id, oldData, newData: updatedData });
 
-        // Sync copies across other clients: find matching passengers by passport or name+birth_date
+        // Sync copies across other clients
         const oldPassport = editingPassenger.passport_number;
         const oldName = editingPassenger.full_name;
         const oldBirth = editingPassenger.birth_date;
@@ -263,7 +264,6 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         } else if (oldBirth) {
           matchQuery = matchQuery.eq("full_name", oldName).eq("birth_date", oldBirth);
         } else {
-          // No reliable match — skip sync
           matchQuery = null as any;
         }
 
@@ -271,7 +271,6 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
           const { data: matches } = await matchQuery;
           if (matches && matches.length > 0) {
             const ids = matches.map((m: any) => m.id);
-            // Update all copies with the same data
             await supabase.from("passengers").update({
               full_name: updatedData.full_name,
               birth_date: updatedData.birth_date,
@@ -283,11 +282,12 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
           }
         }
       } else {
-        const { error } = await supabase.from("passengers").insert({
+        const { data, error } = await supabase.from("passengers").insert({
           client_id: clientId!,
           ...updatedData,
-        });
+        }).select("id").single();
         if (error) throw error;
+        logAuditEvent({ action: "create", tableName: "passengers", recordId: data.id, newData: { client_id: clientId, ...updatedData } });
       }
     },
     onSuccess: () => {
