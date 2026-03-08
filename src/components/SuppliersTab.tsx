@@ -78,7 +78,6 @@ const SUPPLIER_CATEGORIES = [
   "Tecnologia e Distribuição",
   "Outro",
 ];
-];
 
 const emptyForm = {
   name: "", trade_name: "", document_number: "", supplier_type: "company", category: "",
