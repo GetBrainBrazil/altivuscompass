@@ -262,7 +262,7 @@ export default function Clients() {
         }
         await supabase.from("client_emails").delete().eq("client_id", clientId);
         if (emails.length > 0) {
-          await supabase.from("client_emails").insert(emails.filter(e => e.email).map(e => ({ client_id: clientId!, email: e.email, description: e.description || null })));
+          await supabase.from("client_emails").insert(emails.filter(e => e.email).map((e, i, arr) => ({ client_id: clientId!, email: e.email, description: e.description || null, is_primary: arr.length === 1 ? true : e.is_primary })));
         }
         await supabase.from("client_social_media").delete().eq("client_id", clientId);
         if (socials.length > 0) {
