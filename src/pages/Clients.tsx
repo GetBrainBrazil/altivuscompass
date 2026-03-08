@@ -1225,75 +1225,88 @@ export default function Clients() {
                       <Plus className="h-3 w-3 mr-1" />Adicionar Programa
                     </Button>
                   </div>
-                  {milesPrograms.length === 0 && <p className="text-xs text-muted-foreground font-body">Nenhum programa de milhagem cadastrado.</p>}
-                  {milesPrograms.map((m, mi) => (
-                    <div key={mi} className="border border-border/50 rounded-lg p-3 space-y-3 bg-muted/20">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-body font-medium text-foreground">Programa {mi + 1}</span>
-                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setMilesPrograms(milesPrograms.filter((_, j) => j !== mi))}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        <div className="space-y-1">
-                          <Label className="font-body text-xs">Cia Aérea / Programa</Label>
-                          <Select value={m.airline || ""} onValueChange={(v) => {
-                            const n = [...milesPrograms];
-                            n[mi].airline = v;
-                            const airline = airlinesList.find((a: any) => a.name === v);
-                            if (airline?.mileage_program_name) n[mi].program_name = airline.mileage_program_name;
-                            setMilesPrograms(n);
-                          }}>
-                            <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                            <SelectContent className="max-h-60">
-                              {airlinesList.map((a: any) => (
-                                <SelectItem key={a.id} value={a.name}>
-                                  {a.iata_code ? `${a.iata_code} - ` : ""}{a.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="font-body text-xs">Nº de Membro</Label>
-                          <Input className="h-9" placeholder="Número de associado" value={m.membership_number} onChange={(e) => { const n = [...milesPrograms]; n[mi].membership_number = e.target.value; setMilesPrograms(n); }} />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="font-body text-xs">Nome de Usuário</Label>
-                          <Input className="h-9" placeholder="Username do programa" value={m.login_username} onChange={(e) => { const n = [...milesPrograms]; n[mi].login_username = e.target.value; setMilesPrograms(n); }} />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="font-body text-xs">E-mail de Cadastro</Label>
-                          <Input className="h-9" type="email" placeholder="E-mail do programa" value={m.login_email} onChange={(e) => { const n = [...milesPrograms]; n[mi].login_email = e.target.value; setMilesPrograms(n); }} />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="font-body text-xs">Pontos / Milhas</Label>
-                          <Input className="h-9" type="number" placeholder="0" value={m.miles_balance ?? ""} onChange={(e) => { const n = [...milesPrograms]; n[mi].miles_balance = e.target.value ? parseInt(e.target.value) : null; setMilesPrograms(n); }} />
-                        </div>
-                        {canAccessFeature(userRole, "client_miles_access_data") && (
-                          <div className="space-y-1">
-                            <Label className="font-body text-xs">Dados de Acesso (Senha)</Label>
-                            <div className="relative">
-                              <Input
-                                className="h-9 pr-9"
-                                type={showPasswords[mi] ? "text" : "password"}
-                                placeholder="Senha do programa"
-                                value={m.login_password_encrypted}
-                                onChange={(e) => { const n = [...milesPrograms]; n[mi].login_password_encrypted = e.target.value; setMilesPrograms(n); }}
-                              />
-                              <button
-                                type="button"
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                onClick={() => setShowPasswords(prev => ({ ...prev, [mi]: !prev[mi] }))}
-                              >
-                                {showPasswords[mi] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                  {milesPrograms.length === 0 ? (
+                    <p className="text-xs text-muted-foreground font-body">Nenhum programa de milhagem cadastrado.</p>
+                  ) : (
+                    <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-border/50">
+                            <th className="text-left py-2 px-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Cia Aérea</th>
+                            <th className="text-left py-2 px-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Nº Membro</th>
+                            <th className="text-left py-2 px-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Usuário</th>
+                            <th className="text-left py-2 px-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">E-mail</th>
+                            <th className="text-left py-2 px-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Pontos</th>
+                            {canAccessFeature(userRole, "client_miles_access_data") && (
+                              <th className="text-left py-2 px-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Dados de Acesso</th>
+                            )}
+                            <th className="py-2 px-1 w-8"></th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border/30">
+                          {milesPrograms.map((m, mi) => (
+                            <tr key={mi} className="group">
+                              <td className="py-2 px-2">
+                                <Select value={m.airline || ""} onValueChange={(v) => {
+                                  const n = [...milesPrograms];
+                                  n[mi].airline = v;
+                                  const airline = airlinesList.find((a: any) => a.name === v);
+                                  if (airline?.mileage_program_name) n[mi].program_name = airline.mileage_program_name;
+                                  setMilesPrograms(n);
+                                }}>
+                                  <SelectTrigger className="h-8 text-xs min-w-[140px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                  <SelectContent className="max-h-60">
+                                    {airlinesList.map((a: any) => (
+                                      <SelectItem key={a.id} value={a.name}>
+                                        {a.iata_code ? `${a.iata_code} - ` : ""}{a.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </td>
+                              <td className="py-2 px-2">
+                                <Input className="h-8 text-xs min-w-[110px]" placeholder="Nº associado" value={m.membership_number} onChange={(e) => { const n = [...milesPrograms]; n[mi].membership_number = e.target.value; setMilesPrograms(n); }} />
+                              </td>
+                              <td className="py-2 px-2">
+                                <Input className="h-8 text-xs min-w-[100px]" placeholder="Username" value={m.login_username} onChange={(e) => { const n = [...milesPrograms]; n[mi].login_username = e.target.value; setMilesPrograms(n); }} />
+                              </td>
+                              <td className="py-2 px-2">
+                                <Input className="h-8 text-xs min-w-[140px]" type="email" placeholder="E-mail" value={m.login_email} onChange={(e) => { const n = [...milesPrograms]; n[mi].login_email = e.target.value; setMilesPrograms(n); }} />
+                              </td>
+                              <td className="py-2 px-2">
+                                <Input className="h-8 text-xs w-24" type="number" placeholder="0" value={m.miles_balance ?? ""} onChange={(e) => { const n = [...milesPrograms]; n[mi].miles_balance = e.target.value ? parseInt(e.target.value) : null; setMilesPrograms(n); }} />
+                              </td>
+                              {canAccessFeature(userRole, "client_miles_access_data") && (
+                                <td className="py-2 px-2">
+                                  <div className="relative min-w-[120px]">
+                                    <Input
+                                      className="h-8 text-xs pr-8"
+                                      type={showPasswords[mi] ? "text" : "password"}
+                                      placeholder="Senha"
+                                      value={m.login_password_encrypted}
+                                      onChange={(e) => { const n = [...milesPrograms]; n[mi].login_password_encrypted = e.target.value; setMilesPrograms(n); }}
+                                    />
+                                    <button
+                                      type="button"
+                                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                      onClick={() => setShowPasswords(prev => ({ ...prev, [mi]: !prev[mi] }))}
+                                    >
+                                      {showPasswords[mi] ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                                    </button>
+                                  </div>
+                                </td>
+                              )}
+                              <td className="py-2 px-1">
+                                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setMilesPrograms(milesPrograms.filter((_, j) => j !== mi))}>
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                  ))}
+                  )}
                 </TabsContent>
               )}
 
