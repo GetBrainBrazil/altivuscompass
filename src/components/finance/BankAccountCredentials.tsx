@@ -37,6 +37,7 @@ type ProfileWithRole = Tables<"profiles"> & { role?: string };
 
 export default function BankAccountCredentials({ bankAccountId }: { bankAccountId: string }) {
   const { toast } = useToast();
+  const { impersonatingUser } = useAuth();
   const queryClient = useQueryClient();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
