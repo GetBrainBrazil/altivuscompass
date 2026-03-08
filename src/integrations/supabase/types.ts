@@ -300,6 +300,7 @@ export type Database = {
           description: string | null
           entry_type: string | null
           id: string
+          image_url: string | null
           issue_date: string | null
           passport_id: string | null
           validity_date: string | null
@@ -313,6 +314,7 @@ export type Database = {
           description?: string | null
           entry_type?: string | null
           id?: string
+          image_url?: string | null
           issue_date?: string | null
           passport_id?: string | null
           validity_date?: string | null
@@ -326,6 +328,7 @@ export type Database = {
           description?: string | null
           entry_type?: string | null
           id?: string
+          image_url?: string | null
           issue_date?: string | null
           passport_id?: string | null
           validity_date?: string | null
