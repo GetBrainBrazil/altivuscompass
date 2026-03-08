@@ -210,107 +210,121 @@ export default function SuppliersTab() {
             <DialogTrigger asChild>
               <Button size="sm">+ Fornecedor</Button>
             </DialogTrigger>
-            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
               <DialogHeader><DialogTitle className="font-display">{editing ? "Editar Fornecedor" : "Novo Fornecedor"}</DialogTitle></DialogHeader>
-              <Tabs defaultValue="dados" className="w-full">
-                <TabsList className="w-full grid grid-cols-3">
-                  <TabsTrigger value="dados" className="font-body text-xs">Dados</TabsTrigger>
-                  <TabsTrigger value="contato" className="font-body text-xs">Contato</TabsTrigger>
-                  <TabsTrigger value="endereco" className="font-body text-xs">Endereço</TabsTrigger>
-                </TabsList>
 
-                <TabsContent value="dados" className="space-y-4 mt-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label className="font-body">Razão Social <span className="text-destructive">*</span></Label>
-                      <Input value={form.name} onChange={set("name")} placeholder="Nome da empresa" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="font-body">Nome Fantasia</Label>
-                      <Input value={form.trade_name} onChange={set("trade_name")} />
-                    </div>
+              {/* ── Dados Principais (topo, 4 colunas) ── */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="space-y-2 col-span-2">
+                    <Label className="font-body">Razão Social <span className="text-destructive">*</span></Label>
+                    <Input value={form.name} onChange={set("name")} placeholder="Nome da empresa" />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label className="font-body">CNPJ/CPF</Label>
-                      <Input value={form.document_number} onChange={set("document_number")} />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-1.5">
-                        <Label className="font-body">Serviços</Label>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className="max-w-xs text-xs font-body space-y-1 p-3">
-                            {SUPPLIER_CATEGORIES.filter(c => c.label !== "Outro").map(c => (
-                              <div key={c.label}><span className="font-semibold">{c.label}:</span> {c.description}</div>
-                            ))}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start font-normal h-auto min-h-10 text-left">
-                            {form.categories.length > 0
-                              ? <div className="flex flex-wrap gap-1">{form.categories.map(c => <Badge key={c} variant="secondary" className="text-xs font-body">{c}</Badge>)}</div>
-                              : <span className="text-muted-foreground">Selecione os serviços</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-72 p-2" align="start">
-                          {SUPPLIER_CATEGORIES.map(c => (
-                            <label key={c.label} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm font-body">
-                              <Checkbox
-                                checked={form.categories.includes(c.label)}
-                                onCheckedChange={(checked) => {
-                                  setForm(f => ({
-                                    ...f,
-                                    categories: checked ? [...f.categories, c.label] : f.categories.filter(x => x !== c.label),
-                                  }));
-                                }}
-                              />
-                              {c.label}
-                            </label>
-                          ))}
-                        </PopoverContent>
-                      </Popover>
-                    </div>
+                  <div className="space-y-2 col-span-2">
+                    <Label className="font-body">Nome Fantasia</Label>
+                    <Input value={form.trade_name} onChange={set("trade_name")} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="space-y-2">
+                    <Label className="font-body">CNPJ/CPF</Label>
+                    <Input value={form.document_number} onChange={set("document_number")} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-body">Tipo</Label>
+                    <Select value={form.supplier_type} onValueChange={(v) => setForm(f => ({ ...f, supplier_type: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="company">Pessoa Jurídica</SelectItem>
+                        <SelectItem value="individual">Pessoa Física</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label className="font-body">Website</Label>
                     <Input value={form.website} onChange={set("website")} placeholder="https://" />
                   </div>
-                  <div className="space-y-2">
-                    <Label className="font-body">Observações</Label>
-                    <Textarea value={form.notes} onChange={set("notes")} rows={3} />
-                  </div>
-                  {editing && (
-                    <div className="flex items-center gap-3">
+                  {editing ? (
+                    <div className="flex items-center gap-3 pt-6">
                       <Switch checked={form.is_active} onCheckedChange={(v) => setForm(f => ({ ...f, is_active: v }))} />
                       <Label className="font-body">{form.is_active ? "Ativo" : "Inativo"}</Label>
                     </div>
-                  )}
-                </TabsContent>
+                  ) : <div />}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5">
+                      <Label className="font-body">Serviços</Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-xs text-xs font-body space-y-1 p-3">
+                          {SUPPLIER_CATEGORIES.filter(c => c.label !== "Outro").map(c => (
+                            <div key={c.label}><span className="font-semibold">{c.label}:</span> {c.description}</div>
+                          ))}
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start font-normal h-auto min-h-10 text-left">
+                          {form.categories.length > 0
+                            ? <div className="flex flex-wrap gap-1">{form.categories.map(c => <Badge key={c} variant="secondary" className="text-xs font-body">{c}</Badge>)}</div>
+                            : <span className="text-muted-foreground">Selecione os serviços</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-72 p-2" align="start">
+                        {SUPPLIER_CATEGORIES.map(c => (
+                          <label key={c.label} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm font-body">
+                            <Checkbox
+                              checked={form.categories.includes(c.label)}
+                              onCheckedChange={(checked) => {
+                                setForm(f => ({
+                                  ...f,
+                                  categories: checked ? [...f.categories, c.label] : f.categories.filter(x => x !== c.label),
+                                }));
+                              }}
+                            />
+                            {c.label}
+                          </label>
+                        ))}
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-body">Observações</Label>
+                    <Textarea value={form.notes} onChange={set("notes")} rows={2} />
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Abas (Contato + Endereço) ── */}
+              <Tabs defaultValue="contato" className="w-full mt-2">
+                <TabsList className="w-full grid grid-cols-2">
+                  <TabsTrigger value="contato" className="font-body text-xs">Contato</TabsTrigger>
+                  <TabsTrigger value="endereco" className="font-body text-xs">Endereço</TabsTrigger>
+                </TabsList>
 
                 <TabsContent value="contato" className="space-y-4 mt-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="space-y-2 col-span-2">
                       <Label className="font-body">E-mail</Label>
                       <Input type="email" value={form.email} onChange={set("email")} />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 col-span-2">
                       <Label className="font-body">Telefone</Label>
                       <Input value={formatPhone(form.phone)} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value.replace(/\D/g, "").slice(0, 11) }))} placeholder="(11) 99999-9999" />
                     </div>
                   </div>
                   <div className="border-t pt-4 space-y-4">
                     <h4 className="text-sm font-semibold font-body text-foreground">Pessoa de Contato</h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="space-y-2 col-span-2">
                         <Label className="font-body">Nome</Label>
                         <Input value={form.contact_person} onChange={set("contact_person")} />
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-2 col-span-2">
                         <Label className="font-body">Telefone</Label>
                         <Input value={formatPhone(form.contact_phone)} onChange={(e) => setForm(f => ({ ...f, contact_phone: e.target.value.replace(/\D/g, "").slice(0, 11) }))} placeholder="(11) 99999-9999" />
                       </div>
@@ -319,7 +333,7 @@ export default function SuppliersTab() {
                 </TabsContent>
 
                 <TabsContent value="endereco" className="space-y-4 mt-4">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="space-y-2">
                       <Label className="font-body">CEP</Label>
                       <Input value={form.cep} onChange={set("cep")} onBlur={handleCepBlur} placeholder="00000-000" maxLength={9} />
@@ -329,8 +343,16 @@ export default function SuppliersTab() {
                       <Label className="font-body">País</Label>
                       <Input value={form.country} onChange={set("country")} />
                     </div>
+                    <div className="space-y-2">
+                      <Label className="font-body">Estado</Label>
+                      <Input value={form.state} onChange={set("state")} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="font-body">Cidade</Label>
+                      <Input value={form.city} onChange={set("city")} />
+                    </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="space-y-2 col-span-2">
                       <Label className="font-body">Endereço</Label>
                       <Input value={form.address_street} onChange={set("address_street")} />
@@ -339,25 +361,15 @@ export default function SuppliersTab() {
                       <Label className="font-body">Número</Label>
                       <Input value={form.address_number} onChange={set("address_number")} />
                     </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
                       <Label className="font-body">Complemento</Label>
                       <Input value={form.address_complement} onChange={set("address_complement")} />
                     </div>
-                    <div className="space-y-2">
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="space-y-2 col-span-2">
                       <Label className="font-body">Bairro</Label>
                       <Input value={form.neighborhood} onChange={set("neighborhood")} />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label className="font-body">Cidade</Label>
-                      <Input value={form.city} onChange={set("city")} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="font-body">Estado</Label>
-                      <Input value={form.state} onChange={set("state")} />
                     </div>
                   </div>
                 </TabsContent>
