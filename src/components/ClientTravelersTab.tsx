@@ -528,18 +528,22 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                 <tr className="border-b border-border/50 bg-muted/30">
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_name")}>Nome<SortIcon columnKey="_name" sort={relSort} /></th>
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_type")}>Vínculo<SortIcon columnKey="_type" sort={relSort} /></th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_birth_date")}>Nascimento<SortIcon columnKey="_birth_date" sort={relSort} /></th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_nationality")}>Nacionalidade<SortIcon columnKey="_nationality" sort={relSort} /></th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_passport")}>Passaporte<SortIcon columnKey="_passport" sort={relSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_passports")}>Passaporte(s) válido(s)<SortIcon columnKey="_passports" sort={relSort} /></th>
                   <th className="p-3 w-20"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/30">
                 {sortedRels.map((r: any) => (
-                  <tr key={r.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => onNavigateToClient(r.linked_client_id)}>
+                  <tr key={r.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => { setEditingRel(r); setEditRelType(r.relationship_type); setEditRelDialog(true); }}>
                     <td className="p-3">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-body font-medium text-foreground">{r.client?.full_name ?? "—"}</p>
+                        <button
+                          type="button"
+                          className="text-sm font-body font-medium text-primary hover:underline"
+                          onClick={(e) => { e.stopPropagation(); onNavigateToClient(r.linked_client_id); }}
+                        >
+                          {r.client?.full_name ?? "—"}
+                        </button>
                         <ExternalLink className="h-3 w-3 text-muted-foreground" />
                       </div>
                     </td>
@@ -548,9 +552,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                         {RELATIONSHIP_TYPES[r.relationship_type] || r.relationship_label || r.relationship_type}
                       </span>
                     </td>
-                    <td className="p-3 text-sm font-body text-foreground">{r.client?.birth_date ? new Date(r.client.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
-                    <td className="p-3 text-sm font-body text-foreground">{r.client?.nationality || "—"}</td>
-                    <td className="p-3 text-sm font-body text-foreground">{r.client?.passport_number || "—"}</td>
+                    <td className="p-3 text-sm font-body text-foreground">{r._passports || "—"}</td>
                     <td className="p-3">
                       <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive"
                         onClick={(e) => { e.stopPropagation(); setDeleteRelId(r.id); }}>
