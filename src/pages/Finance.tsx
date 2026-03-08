@@ -175,7 +175,8 @@ export default function Finance() {
   const totalReceived = receivables.filter(t => t.status === "received" || t.status === "paid").reduce((s, t) => s + Number(t.amount), 0);
   const totalPaid = payables.filter(t => t.status === "paid").reduce((s, t) => s + Number(t.amount), 0);
 
-  const filtered = filter === "all" ? transactions : filter === "receivable" ? receivables : payables;
+  const typeFiltered = filter === "all" ? transactions : filter === "receivable" ? receivables : payables;
+  const filtered = accountFilter.size === 0 ? typeFiltered : typeFiltered.filter(t => t.payment_account && accountFilter.has(t.payment_account));
 
   // Calculate running balance
   const sortedFiltered = [...filtered].sort((a, b) => a.date.localeCompare(b.date) || a.created_at.localeCompare(b.created_at));
