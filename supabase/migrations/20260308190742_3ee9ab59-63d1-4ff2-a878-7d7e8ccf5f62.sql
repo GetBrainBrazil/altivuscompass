@@ -1,0 +1,1 @@
+ALTER TABLE public.miles_programs ADD COLUMN login_username text DEFAULT NULL;

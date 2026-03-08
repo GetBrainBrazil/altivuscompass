@@ -23,6 +23,27 @@ export const PAGE_PERMISSIONS: PagePermission[] = [
   { path: "/registrations", label: "Cadastros", allowedRoles: ["admin", "manager", "sales_agent", "operations"] },
 ];
 
+// Feature-level permissions (not page routes, but specific UI features)
+export interface FeaturePermission {
+  key: string;
+  label: string;
+  description: string;
+  allowedRoles: AppRole[];
+}
+
+export const FEATURE_PERMISSIONS: FeaturePermission[] = [
+  { key: "client_miles_tab", label: "Aba Milhas (Ficha do Cliente)", description: "Acesso à aba de milhas na ficha do cliente", allowedRoles: ["admin", "manager"] },
+  { key: "client_miles_access_data", label: "Dados de Acesso (Milhas)", description: "Visualizar dados de acesso (senha) dos programas de milhas", allowedRoles: ["admin"] },
+];
+
+export function canAccessFeature(userRole: string | null, featureKey: string): boolean {
+  if (!userRole) return false;
+  if (userRole === "admin") return true;
+  const feature = FEATURE_PERMISSIONS.find((f) => f.key === featureKey);
+  if (!feature) return false;
+  return feature.allowedRoles.includes(userRole as AppRole);
+}
+
 export function canAccess(userRole: string | null, path: string): boolean {
   if (!userRole) return false;
   if (userRole === "admin") return true;

@@ -13,12 +13,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus, ArrowLeft, Star, Trash2, AlertTriangle, AlertCircle, ShieldAlert, Info, ChevronRight, ChevronDown, Users } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus, ArrowLeft, Star, Trash2, AlertTriangle, AlertCircle, ShieldAlert, Info, ChevronRight, ChevronDown, Users, Eye, EyeOff } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCountries, useStates, useCities } from "@/components/LocationsTab";
 import { COUNTRY_CODES, applyPhoneMask } from "@/lib/phone-masks";
 import { ImageEditor } from "@/components/ImageEditor";
 import { ClientTravelersTab } from "@/components/ClientTravelersTab";
+import { useAuth } from "@/contexts/AuthContext";
+import { canAccessFeature } from "@/lib/permissions";
 
 type SortDir = "asc" | "desc";
 type SortState = { key: string; dir: SortDir } | null;
@@ -50,6 +52,7 @@ type PhoneEntry = { id?: string; phone: string; description: string; country_cod
 type EmailEntry = { id?: string; email: string; description: string; is_primary: boolean };
 type SocialEntry = { id?: string; network: string; handle: string };
 type VisaEntry = { id?: string; visa_type: string; validity_date: string; country_region: string; visa_number: string; issue_date: string; entry_type: string; description: string; image_url: string; _imageFile?: File };
+type MilesEntry = { id?: string; program_name: string; airline: string; membership_number: string; login_username: string; login_email: string; login_password_encrypted: string; miles_balance: number | null };
 
 const VISA_TYPES = [
   "Turismo", "Negócios", "Estudo", "Trabalho", "Trânsito", "Diplomático",
@@ -112,6 +115,7 @@ const emptyForm = {
 
 export default function Clients() {
   const { toast } = useToast();
+  const { userRole } = useAuth();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
@@ -128,6 +132,8 @@ export default function Clients() {
   const [emails, setEmails] = useState<EmailEntry[]>([]);
   const [socials, setSocials] = useState<SocialEntry[]>([]);
   const [passports, setPassports] = useState<PassportEntry[]>([]);
+  const [milesPrograms, setMilesPrograms] = useState<MilesEntry[]>([]);
+  const [showPasswords, setShowPasswords] = useState<Record<number, boolean>>({});
 
   // Image editor state
   const [editorOpen, setEditorOpen] = useState(false);
@@ -177,6 +183,15 @@ export default function Clients() {
     queryKey: ["tags"],
     queryFn: async () => {
       const { data, error } = await supabase.from("tags").select("*").order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: airlinesList = [] } = useQuery({
+    queryKey: ["airlines-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("airlines").select("id, name, iata_code, mileage_program_name").order("name");
       if (error) throw error;
       return data;
     },
@@ -313,6 +328,15 @@ export default function Clients() {
     },
     enabled: !!editingId,
   });
+  const { data: clientMiles = [] } = useQuery({
+    queryKey: ["client-miles", editingId],
+    queryFn: async () => {
+      if (!editingId) return [];
+      const { data } = await supabase.from("miles_programs").select("*").eq("client_id", editingId);
+      return data ?? [];
+    },
+    enabled: !!editingId,
+  });
 
   // Populate multi-value state when editing data loads
   useEffect(() => {
@@ -348,6 +372,17 @@ export default function Clients() {
       })));
     }
   }, [clientPassports, editingId]);
+  useEffect(() => {
+    if (editingId) {
+      setMilesPrograms(clientMiles.map((m: any) => ({
+        id: m.id, program_name: m.program_name ?? "", airline: m.airline ?? "",
+        membership_number: m.membership_number ?? "", login_username: (m as any).login_username ?? "",
+        login_email: m.login_email ?? "", login_password_encrypted: m.login_password_encrypted ?? "",
+        miles_balance: m.miles_balance ?? null,
+      })));
+      setShowPasswords({});
+    }
+  }, [clientMiles, editingId]);
 
   // CEP auto-fill
   const handleCepBlur = async () => {
@@ -442,6 +477,23 @@ export default function Clients() {
             }
           }
         }
+
+        // Save miles programs
+        if (canAccessFeature(userRole, "client_miles_tab")) {
+          await supabase.from("miles_programs").delete().eq("client_id", clientId);
+          for (const m of milesPrograms.filter(m => m.program_name || m.airline)) {
+            await supabase.from("miles_programs").insert({
+              client_id: clientId!,
+              program_name: m.program_name || m.airline,
+              airline: m.airline,
+              membership_number: m.membership_number || null,
+              login_username: m.login_username || null,
+              login_email: m.login_email || null,
+              login_password_encrypted: m.login_password_encrypted || null,
+              miles_balance: m.miles_balance ?? 0,
+            } as any);
+          }
+        }
       }
     },
     onSuccess: () => {
@@ -470,12 +522,12 @@ export default function Clients() {
 
   const goToList = () => {
     setView("list"); setEditingId(null); setForm(emptyForm); setActiveTab("contact");
-    setSelectedAirports([]); setSelectedTags([]); setPhones([]); setEmails([]); setSocials([]); setPassports([]);
+    setSelectedAirports([]); setSelectedTags([]); setPhones([]); setEmails([]); setSocials([]); setPassports([]); setMilesPrograms([]); setShowPasswords({});
   };
 
   const openCreate = () => {
     setEditingId(null); setForm(emptyForm); setSelectedAirports([]); setSelectedTags([]); setActiveTab("contact");
-    setPhones([]); setEmails([]); setSocials([]); setPassports([]); 
+    setPhones([]); setEmails([]); setSocials([]); setPassports([]); setMilesPrograms([]); setShowPasswords({});
     setView("form");
   };
 
@@ -701,6 +753,9 @@ export default function Clients() {
                 <TabsTrigger value="documents" className="font-body text-xs">Documentos</TabsTrigger>
                 <TabsTrigger value="address" className="font-body text-xs">Endereço</TabsTrigger>
                 <TabsTrigger value="travelers" className="font-body text-xs">Viajantes</TabsTrigger>
+                {canAccessFeature(userRole, "client_miles_tab") && (
+                  <TabsTrigger value="miles" className="font-body text-xs">Milhas</TabsTrigger>
+                )}
                 <TabsTrigger value="observations" className="font-body text-xs">Observações</TabsTrigger>
               </TabsList>
 
@@ -1159,6 +1214,88 @@ export default function Clients() {
                   }}
                 />
               </TabsContent>
+
+
+              {/* Miles Tab */}
+              {canAccessFeature(userRole, "client_miles_tab") && (
+                <TabsContent value="miles" className="space-y-4 pt-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-display font-medium text-foreground">Programas de Milhagem</h3>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setMilesPrograms([...milesPrograms, { program_name: "", airline: "", membership_number: "", login_username: "", login_email: "", login_password_encrypted: "", miles_balance: null }])}>
+                      <Plus className="h-3 w-3 mr-1" />Adicionar Programa
+                    </Button>
+                  </div>
+                  {milesPrograms.length === 0 && <p className="text-xs text-muted-foreground font-body">Nenhum programa de milhagem cadastrado.</p>}
+                  {milesPrograms.map((m, mi) => (
+                    <div key={mi} className="border border-border/50 rounded-lg p-3 space-y-3 bg-muted/20">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-body font-medium text-foreground">Programa {mi + 1}</span>
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setMilesPrograms(milesPrograms.filter((_, j) => j !== mi))}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                          <Label className="font-body text-xs">Cia Aérea / Programa</Label>
+                          <Select value={m.airline || ""} onValueChange={(v) => {
+                            const n = [...milesPrograms];
+                            n[mi].airline = v;
+                            const airline = airlinesList.find((a: any) => a.name === v);
+                            if (airline?.mileage_program_name) n[mi].program_name = airline.mileage_program_name;
+                            setMilesPrograms(n);
+                          }}>
+                            <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                            <SelectContent className="max-h-60">
+                              {airlinesList.map((a: any) => (
+                                <SelectItem key={a.id} value={a.name}>
+                                  {a.iata_code ? `${a.iata_code} - ` : ""}{a.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="font-body text-xs">Nº de Membro</Label>
+                          <Input className="h-9" placeholder="Número de associado" value={m.membership_number} onChange={(e) => { const n = [...milesPrograms]; n[mi].membership_number = e.target.value; setMilesPrograms(n); }} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="font-body text-xs">Nome de Usuário</Label>
+                          <Input className="h-9" placeholder="Username do programa" value={m.login_username} onChange={(e) => { const n = [...milesPrograms]; n[mi].login_username = e.target.value; setMilesPrograms(n); }} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="font-body text-xs">E-mail de Cadastro</Label>
+                          <Input className="h-9" type="email" placeholder="E-mail do programa" value={m.login_email} onChange={(e) => { const n = [...milesPrograms]; n[mi].login_email = e.target.value; setMilesPrograms(n); }} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="font-body text-xs">Pontos / Milhas</Label>
+                          <Input className="h-9" type="number" placeholder="0" value={m.miles_balance ?? ""} onChange={(e) => { const n = [...milesPrograms]; n[mi].miles_balance = e.target.value ? parseInt(e.target.value) : null; setMilesPrograms(n); }} />
+                        </div>
+                        {canAccessFeature(userRole, "client_miles_access_data") && (
+                          <div className="space-y-1">
+                            <Label className="font-body text-xs">Dados de Acesso (Senha)</Label>
+                            <div className="relative">
+                              <Input
+                                className="h-9 pr-9"
+                                type={showPasswords[mi] ? "text" : "password"}
+                                placeholder="Senha do programa"
+                                value={m.login_password_encrypted}
+                                onChange={(e) => { const n = [...milesPrograms]; n[mi].login_password_encrypted = e.target.value; setMilesPrograms(n); }}
+                              />
+                              <button
+                                type="button"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                onClick={() => setShowPasswords(prev => ({ ...prev, [mi]: !prev[mi] }))}
+                              >
+                                {showPasswords[mi] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </TabsContent>
+              )}
 
               {/* Observations Tab */}
               <TabsContent value="observations" className="pt-3">
