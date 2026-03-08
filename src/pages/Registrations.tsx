@@ -52,6 +52,7 @@ function AirportsTab() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({ iata_code: "", name: "", city: "", state: "", country: "" });
+  const [sort, setSort] = useState<SortState>({ key: "iata_code", dir: "asc" });
 
   const { data: airports = [], isLoading } = useQuery({
     queryKey: ["airports"],
