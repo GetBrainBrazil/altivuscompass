@@ -278,18 +278,19 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     setPassengerDialog(true);
   };
 
-  const { sorted: sortedPassengers, sort: passengerSort, toggleSort: togglePassengerSort } = useSortableData(passengers);
   const sortedRelationships = useMemo(() => {
-    const flatRels = relationships.map((r: any) => ({
+    return relationships.map((r: any) => ({
       ...r,
       _name: r.client?.full_name ?? "",
       _type: RELATIONSHIP_TYPES[r.relationship_type] || r.relationship_type,
       _location: r.client?.city ? `${r.client.city}${r.client.state ? `, ${r.client.state}` : ""}` : "",
     }));
-    return flatRels;
   }, [relationships]);
+
+  const { sorted: sortedPassengers, sort: passengerSort, toggleSort: togglePassengerSort } = useSortableData(passengers);
   const { sorted: sortedRels, sort: relSort, toggleSort: toggleRelSort } = useSortableData(sortedRelationships);
 
+  if (!clientId) {
     return (
       <div className="text-center text-muted-foreground font-body py-8">
         Salve o cliente primeiro para gerenciar viajantes.
