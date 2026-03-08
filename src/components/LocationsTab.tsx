@@ -214,12 +214,14 @@ function CountriesSubTab() {
             <TableHeader>
               <TableRow>
                 <SortableHead label="Nome" sortKey="name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
+                <SortableHead label="Continente" sortKey="continent_name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((c: any) => (
                 <TableRow key={c.id} className={isAdmin ? "cursor-pointer hover:bg-muted/50" : ""} onClick={() => isAdmin && openEdit(c)}>
                   <TableCell>{c.name}</TableCell>
+                  <TableCell>{c.continent_name || "—"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
