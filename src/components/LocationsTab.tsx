@@ -289,7 +289,7 @@ function StatesSubTab() {
   const closeDialog = () => { setDialogOpen(false); setEditing(null); setForm({ name: "", country_id: "" }); };
   const openEdit = (s: any) => { setEditing(s); setForm({ name: s.name, country_id: s.country_id }); setDialogOpen(true); };
 
-  const enriched = states.map((s: any) => ({ ...s, country_name: s.countries?.name ?? "" }));
+  const enriched = states.map((s: any) => ({ ...s, country_name: s.countries?.name ?? "", continent_name: (continentMap as Record<string, string>)[s.country_id] ?? "" }));
   const filtered = sortData(
     enriched.filter((s: any) => {
       const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.country_name.toLowerCase().includes(search.toLowerCase());
