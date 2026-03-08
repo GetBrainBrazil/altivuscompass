@@ -340,6 +340,7 @@ export default function AuditLogsTab() {
                   const isExpanded = expandedRow === log.id;
                   const changes = log.action === "UPDATE" ? getChangedFields(log.old_data, log.new_data) : null;
                   const isSession = log.table_name === "sessions";
+                  const label = getRecordLabel(log);
 
                   return (
                     <>
@@ -363,7 +364,12 @@ export default function AuditLogsTab() {
                           </Badge>
                         </td>
                         <td className="p-3 font-body text-xs text-muted-foreground whitespace-nowrap">
-                          {isSession ? "" : (TABLE_LABELS[log.table_name] ?? log.table_name)}
+                          {isSession ? "" : (
+                            <span>
+                              {TABLE_LABELS[log.table_name] ?? log.table_name}
+                              {label && <span className="font-medium text-foreground ml-1">— {label}</span>}
+                            </span>
+                          )}
                         </td>
                         <td className="p-3 font-body text-xs text-muted-foreground truncate max-w-[300px] hidden md:table-cell">
                           {getSummary(log)}
