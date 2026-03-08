@@ -105,6 +105,7 @@ export default function SuppliersTab() {
   const [emails, setEmails] = useState<SupplierEmail[]>([]);
   const [sort, setSort] = useState<SortState>(null);
   const [loadingCep, setLoadingCep] = useState(false);
+  const [shouldGoBack, setShouldGoBack] = useState(false);
 
   const { data: suppliers = [], isLoading } = useQuery({
     queryKey: ["suppliers"],
@@ -182,7 +183,8 @@ export default function SuppliersTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["suppliers"] });
       toast({ title: editing ? "Fornecedor atualizado" : "Fornecedor adicionado" });
-      goBack();
+      if (shouldGoBack) goBack();
+      setShouldGoBack(false);
     },
     onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
@@ -485,10 +487,10 @@ export default function SuppliersTab() {
               </AlertDialog>
               <div className="flex-1" />
               <Button variant="outline" onClick={goBack} className="font-body">Voltar</Button>
-              <Button variant="outline" onClick={() => saveMutation.mutate()} disabled={!form.name || saveMutation.isPending} className="font-body">
+              <Button variant="outline" onClick={() => { setShouldGoBack(true); saveMutation.mutate(); }} disabled={!form.name || saveMutation.isPending} className="font-body">
                 Salvar e Voltar
               </Button>
-              <Button onClick={() => saveMutation.mutate()} disabled={!form.name || saveMutation.isPending} className="font-body">
+              <Button onClick={() => { setShouldGoBack(false); saveMutation.mutate(); }} disabled={!form.name || saveMutation.isPending} className="font-body">
                 {saveMutation.isPending ? "Salvando..." : "Salvar"}
               </Button>
             </>
@@ -496,7 +498,7 @@ export default function SuppliersTab() {
             <>
               <div className="flex-1" />
               <Button variant="outline" onClick={goBack} className="font-body">Voltar</Button>
-              <Button onClick={() => saveMutation.mutate()} disabled={!form.name || saveMutation.isPending} className="font-body">
+              <Button onClick={() => { setShouldGoBack(true); saveMutation.mutate(); }} disabled={!form.name || saveMutation.isPending} className="font-body">
                 {saveMutation.isPending ? "Salvando..." : "Adicionar Fornecedor"}
               </Button>
             </>
