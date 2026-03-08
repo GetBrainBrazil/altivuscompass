@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logAuditEvent } from "@/lib/audit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -247,11 +248,12 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       };
 
       if (editingPassenger?.id) {
-        // Save current passenger
+        const { data: oldData } = await supabase.from("passengers").select("*").eq("id", editingPassenger.id).single();
         const { error } = await supabase.from("passengers").update(updatedData).eq("id", editingPassenger.id);
         if (error) throw error;
+        logAuditEvent({ action: "update", tableName: "passengers", recordId: editingPassenger.id, oldData, newData: updatedData });
 
-        // Sync copies across other clients: find matching passengers by passport or name+birth_date
+        // Sync copies across other clients
         const oldPassport = editingPassenger.passport_number;
         const oldName = editingPassenger.full_name;
         const oldBirth = editingPassenger.birth_date;
@@ -262,7 +264,6 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         } else if (oldBirth) {
           matchQuery = matchQuery.eq("full_name", oldName).eq("birth_date", oldBirth);
         } else {
-          // No reliable match — skip sync
           matchQuery = null as any;
         }
 
@@ -270,7 +271,6 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
           const { data: matches } = await matchQuery;
           if (matches && matches.length > 0) {
             const ids = matches.map((m: any) => m.id);
-            // Update all copies with the same data
             await supabase.from("passengers").update({
               full_name: updatedData.full_name,
               birth_date: updatedData.birth_date,
@@ -282,11 +282,12 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
           }
         }
       } else {
-        const { error } = await supabase.from("passengers").insert({
+        const { data, error } = await supabase.from("passengers").insert({
           client_id: clientId!,
           ...updatedData,
-        });
+        }).select("id").single();
         if (error) throw error;
+        logAuditEvent({ action: "create", tableName: "passengers", recordId: data.id, newData: { client_id: clientId, ...updatedData } });
       }
     },
     onSuccess: () => {
@@ -301,8 +302,10 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
 
   const deletePassengerMutation = useMutation({
     mutationFn: async (id: string) => {
+      const { data: oldData } = await supabase.from("passengers").select("*").eq("id", id).single();
       const { error } = await supabase.from("passengers").delete().eq("id", id);
       if (error) throw error;
+      logAuditEvent({ action: "delete", tableName: "passengers", recordId: id, oldData });
     },
     onSuccess: () => {
       toast({ title: "Passageiro removido" });
@@ -378,6 +381,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         notes: notesText,
       }).select("id").single();
       if (clientErr) throw clientErr;
+      logAuditEvent({ action: "create", tableName: "clients", recordId: newClient.id, newData: { full_name: promotePassenger.full_name, promoted_from_passenger: promotePassenger.id, birth_date: promotePassenger.birth_date, nationality: promotePassenger.nationality } });
 
       // Create passport record if passenger had passport data
       if (promotePassenger.passport_number) {
