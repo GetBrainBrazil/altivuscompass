@@ -62,6 +62,17 @@ export default function Clients() {
   const [airportSearch, setAirportSearch] = useState("");
   const [airportPopoverOpen, setAirportPopoverOpen] = useState(false);
 
+  // Quick-add dialogs
+  const [quickAddType, setQuickAddType] = useState<"country" | "state" | "city" | null>(null);
+  const [quickAddName, setQuickAddName] = useState("");
+
+  // DB-backed location data
+  const { data: dbCountries = [] } = useCountries();
+  const selectedCountryObj = dbCountries.find((c: any) => c.name === form.country);
+  const { data: dbStates = [] } = useStates(selectedCountryObj?.id);
+  const selectedStateObj = (dbStates as any[]).find((s: any) => s.name === form.state);
+  const { data: dbCities = [] } = useCities(selectedCountryObj?.id, selectedStateObj?.id || undefined);
+
   const { data: airportsList = [] } = useQuery({
     queryKey: ["airports-list"],
     queryFn: async () => {
