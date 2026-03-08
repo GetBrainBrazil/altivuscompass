@@ -880,9 +880,6 @@ export default function Clients() {
                         {passportLabel}
                       </span>
                     </td>
-                    <td className="p-4 text-right">
-                      <Button variant="ghost" size="sm" className="text-destructive font-body" onClick={(e) => { e.stopPropagation(); if (confirm("Remover cliente?")) deleteMutation.mutate(client.id); }}>Excluir</Button>
-                    </td>
                   </tr>
                 );
               })}
