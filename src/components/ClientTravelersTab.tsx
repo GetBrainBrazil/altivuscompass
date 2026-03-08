@@ -75,6 +75,7 @@ type Passenger = {
   passport_number: string;
   passport_expiry: string;
   notes: string;
+  relationship_type: string;
 };
 
 interface ClientTravelersTabProps {
