@@ -187,13 +187,13 @@ export default function Clients() {
   useEffect(() => {
     if (editingId) {
       setPhones(clientPhones.map((p: any) => {
-        // Try to detect country code from stored phone
         const stored = p.phone ?? "";
-        const match = COUNTRY_CODES.find((c) => stored.startsWith(c.dial));
-        const dialCode = match ? match.dial : "+55";
+        // Match longest dial code first
+        const sorted = [...COUNTRY_CODES].sort((a, b) => b.dial.length - a.dial.length);
+        const match = sorted.find((c) => stored.startsWith(c.dial));
+        const cc = match || COUNTRY_CODES[0];
         const localPart = match ? stored.slice(match.dial.length).trim() : stored;
-        const cc = COUNTRY_CODES.find((c) => c.dial === dialCode);
-        return { id: p.id, phone: cc ? applyPhoneMask(localPart, cc.mask) : localPart, description: p.description ?? "", country_code: dialCode };
+        return { id: p.id, phone: applyPhoneMask(localPart, cc.mask), description: p.description ?? "", country_code: cc.code };
       }));
     }
   }, [clientPhones, editingId]);
