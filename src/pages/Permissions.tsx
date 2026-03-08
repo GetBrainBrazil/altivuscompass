@@ -214,12 +214,12 @@ export default function Permissions() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="font-display">
-              Editar Permissões — {editingPage?.label}
+              Editar Permissões — {editingPage?.label || editingFeature?.label}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground font-body">
-              Selecione quais funções podem acessar a página <strong>{editingPage?.label}</strong>.
+              Selecione quais funções podem acessar <strong>{editingPage?.label || editingFeature?.label}</strong>.
             </p>
             <div className="space-y-3">
               {allRoles.map((role) => {
