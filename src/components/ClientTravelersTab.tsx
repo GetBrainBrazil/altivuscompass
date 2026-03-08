@@ -55,6 +55,18 @@ const RELATIONSHIP_TYPES: Record<string, string> = {
   other: "Outro",
 };
 
+// When viewing from the "other side" of a relationship, invert the label
+const INVERSE_RELATIONSHIP: Record<string, string> = {
+  child: "parent",
+  parent: "child",
+  employee: "partner",
+  // symmetric relationships stay the same
+  spouse: "spouse",
+  partner: "partner",
+  sibling: "sibling",
+  other: "other",
+};
+
 type Passenger = {
   id?: string;
   full_name: string;
