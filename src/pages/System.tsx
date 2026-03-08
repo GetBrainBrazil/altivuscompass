@@ -24,7 +24,7 @@ export default function System() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">Sistema</h1>
+          <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">Admin</h1>
           <p className="text-muted-foreground font-body mt-1 text-sm">Usuários, permissões e logs de auditoria.</p>
         </div>
       </div>

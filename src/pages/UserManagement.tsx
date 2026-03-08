@@ -388,7 +388,7 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
           <div className="p-8 text-center text-muted-foreground font-body">Nenhum usuário encontrado.</div>
         ) : (
           profiles?.map((profile: any) => (
-            <div key={profile.id} className="glass-card rounded-xl p-4 space-y-3">
+            <div key={profile.id} className="glass-card rounded-xl p-4 space-y-3 cursor-pointer hover:bg-muted/50" onClick={() => openEdit(profile)}>
               <div className="flex items-start gap-3">
                 <Avatar className="h-10 w-10">
                   {profile.avatar_url ? <AvatarImage src={getAvatarUrl(profile.avatar_url)!} /> : null}
@@ -404,11 +404,6 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
                 <Badge variant={roleBadgeVariant[profile.role] ?? "outline"} className="font-body">
                   {ROLE_LABELS[profile.role] ?? profile.role}
                 </Badge>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="font-body flex-1" onClick={() => openEdit(profile)}>Editar</Button>
-                <Button variant="outline" size="sm" className="font-body flex-1" onClick={() => openPasswordChange(profile)}>Senha</Button>
-                <Button variant="ghost" size="sm" className="text-destructive font-body" onClick={() => { if (confirm("Remover?")) deleteUserMutation.mutate(profile.user_id); }}>✕</Button>
               </div>
             </div>
           ))
