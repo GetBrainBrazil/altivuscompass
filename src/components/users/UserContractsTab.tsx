@@ -106,7 +106,7 @@ export default function UserContractsTab({ userId }: Props) {
 
       const payload = {
         user_id: userId,
-        contract_type: form.contract_type,
+        contract_type: form.contract_type as "clt" | "pj" | "estagio" | "temporario" | "freelancer" | "outro",
         start_date: form.start_date,
         end_date: form.end_date || null,
         notes: form.notes || null,
