@@ -780,7 +780,7 @@ export default function Clients() {
                                 <Trash2 className="h-3.5 w-3.5" />
                               </Button>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                               <div className="space-y-1">
                                 <Label className="font-body text-xs">País / Região *</Label>
                                 <Select value={v.country_region || ""} onValueChange={(val) => { const n = [...passports]; n[pi].visas[vi].country_region = val; setPassports(n); }}>
@@ -804,15 +804,7 @@ export default function Clients() {
                                 <Input className="h-8 text-sm" value={v.visa_number} onChange={(e) => { const n = [...passports]; n[pi].visas[vi].visa_number = e.target.value; setPassports(n); }} />
                               </div>
                               <div className="space-y-1">
-                                <Label className="font-body text-xs">Data de Emissão</Label>
-                                <Input type="date" className="h-8 text-sm" value={v.issue_date} onChange={(e) => { const n = [...passports]; n[pi].visas[vi].issue_date = e.target.value; setPassports(n); }} />
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="font-body text-xs">Data de Validade</Label>
-                                <Input type="date" className="h-8 text-sm" value={v.validity_date} onChange={(e) => { const n = [...passports]; n[pi].visas[vi].validity_date = e.target.value; setPassports(n); }} />
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="font-body text-xs">Entradas Permitidas</Label>
+                                <Label className="font-body text-xs">Entradas</Label>
                                 <Select value={v.entry_type || "single"} onValueChange={(val) => { const n = [...passports]; n[pi].visas[vi].entry_type = val; setPassports(n); }}>
                                   <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
                                   <SelectContent>
@@ -822,18 +814,34 @@ export default function Clients() {
                                 </Select>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Label className="font-body text-xs">Status:</Label>
-                              {(() => {
-                                if (!v.validity_date) return <span className="text-xs text-muted-foreground">Informe a validade</span>;
-                                const today = new Date();
-                                const expiry = new Date(v.validity_date + "T00:00:00");
-                                const diffMs = expiry.getTime() - today.getTime();
-                                const diffMonths = diffMs / (1000 * 60 * 60 * 24 * 30);
-                                if (diffMs < 0) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-destructive/10 text-destructive">Vencido</span>;
-                                if (diffMonths <= 12) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-600">Vencendo ({Math.ceil(diffMonths)}m)</span>;
-                                return <span className="text-xs font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600">Válido</span>;
-                              })()}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                              <div className="space-y-1">
+                                <Label className="font-body text-xs">Data de Emissão</Label>
+                                <Input type="date" className="h-8 text-sm" value={v.issue_date} onChange={(e) => { const n = [...passports]; n[pi].visas[vi].issue_date = e.target.value; setPassports(n); }} />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="font-body text-xs">Data de Validade</Label>
+                                <Input type="date" className="h-8 text-sm" value={v.validity_date} onChange={(e) => { const n = [...passports]; n[pi].visas[vi].validity_date = e.target.value; setPassports(n); }} />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="font-body text-xs">Descrição</Label>
+                                <Input className="h-8 text-sm" placeholder="Observações do visto" value={v.description} onChange={(e) => { const n = [...passports]; n[pi].visas[vi].description = e.target.value; setPassports(n); }} />
+                              </div>
+                              <div className="flex items-end pb-0.5">
+                                <div className="flex items-center gap-1.5">
+                                  <Label className="font-body text-xs">Status:</Label>
+                                  {(() => {
+                                    if (!v.validity_date) return <span className="text-xs text-muted-foreground">—</span>;
+                                    const today = new Date();
+                                    const expiry = new Date(v.validity_date + "T00:00:00");
+                                    const diffMs = expiry.getTime() - today.getTime();
+                                    const diffMonths = diffMs / (1000 * 60 * 60 * 24 * 30);
+                                    if (diffMs < 0) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-destructive/10 text-destructive">Vencido</span>;
+                                    if (diffMonths <= 12) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-600">Vencendo ({Math.ceil(diffMonths)}m)</span>;
+                                    return <span className="text-xs font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600">Válido</span>;
+                                  })()}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         ))}
