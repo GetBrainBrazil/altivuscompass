@@ -126,7 +126,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       // Fetch linked client details
       if (allRels.length === 0) return [];
       const ids = allRels.map((r) => r.linked_client_id);
-      const { data: clientsData } = await supabase.from("clients").select("id, full_name, phone, email, city, state").in("id", ids);
+      const { data: clientsData } = await supabase.from("clients").select("id, full_name, birth_date, nationality, passport_number, city, state").in("id", ids);
       return allRels.map((r) => ({
         ...r,
         client: (clientsData ?? []).find((c: any) => c.id === r.linked_client_id),
@@ -236,6 +236,11 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
   const promoteMutation = useMutation({
     mutationFn: async () => {
       if (!promotePassenger || !clientId) return;
+      // Build notes for the new client
+      const notesText = promotePassenger.notes
+        ? `[Obs. de passageiro]: ${promotePassenger.notes}`
+        : null;
+
       // Create new client
       const { data: newClient, error: clientErr } = await supabase.from("clients").insert({
         full_name: promotePassenger.full_name,
@@ -243,6 +248,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         nationality: promotePassenger.nationality || null,
         passport_number: promotePassenger.passport_number || null,
         passport_status: promotePassenger.passport_number ? "valid" : "none",
+        notes: notesText,
       }).select("id").single();
       if (clientErr) throw clientErr;
 
@@ -253,10 +259,16 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         relationship_type: promoteRelType as any,
       });
 
+      // Delete the passenger record
+      if (promotePassenger.id) {
+        await supabase.from("passengers").delete().eq("id", promotePassenger.id);
+      }
+
       return newClient.id;
     },
     onSuccess: () => {
       toast({ title: "Passageiro promovido a cliente com sucesso!" });
+      qc.invalidateQueries({ queryKey: ["client-passengers", clientId] });
       qc.invalidateQueries({ queryKey: ["client-relationships", clientId] });
       qc.invalidateQueries({ queryKey: ["clients"] });
       setPromotePassenger(null);
@@ -283,7 +295,9 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       ...r,
       _name: r.client?.full_name ?? "",
       _type: RELATIONSHIP_TYPES[r.relationship_type] || r.relationship_type,
-      _location: r.client?.city ? `${r.client.city}${r.client.state ? `, ${r.client.state}` : ""}` : "",
+      _birth_date: r.client?.birth_date ?? "",
+      _nationality: r.client?.nationality ?? "",
+      _passport: r.client?.passport_number ?? "",
     }));
   }, [relationships]);
 
@@ -372,9 +386,11 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border/50 bg-muted/30">
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_name")}>Cliente<SortIcon columnKey="_name" sort={relSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_name")}>Nome<SortIcon columnKey="_name" sort={relSort} /></th>
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_type")}>Vínculo<SortIcon columnKey="_type" sort={relSort} /></th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_location")}>Localização<SortIcon columnKey="_location" sort={relSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_birth_date")}>Nascimento<SortIcon columnKey="_birth_date" sort={relSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_nationality")}>Nacionalidade<SortIcon columnKey="_nationality" sort={relSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_passport")}>Passaporte<SortIcon columnKey="_passport" sort={relSort} /></th>
                   <th className="p-3 w-20"></th>
                 </tr>
               </thead>
@@ -392,9 +408,9 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                         {RELATIONSHIP_TYPES[r.relationship_type] || r.relationship_label || r.relationship_type}
                       </span>
                     </td>
-                    <td className="p-3 text-sm font-body text-foreground">
-                      {r.client?.city ? `${r.client.city}${r.client.state ? `, ${r.client.state}` : ""}` : "—"}
-                    </td>
+                    <td className="p-3 text-sm font-body text-foreground">{r.client?.birth_date ? new Date(r.client.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
+                    <td className="p-3 text-sm font-body text-foreground">{r.client?.nationality || "—"}</td>
+                    <td className="p-3 text-sm font-body text-foreground">{r.client?.passport_number || "—"}</td>
                     <td className="p-3">
                       <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive"
                         onClick={(e) => { e.stopPropagation(); setDeleteRelId(r.id); }}>
