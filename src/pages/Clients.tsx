@@ -840,7 +840,7 @@ export default function Clients() {
                 <SortableHeader label="Perfil" sortKey="travel_profile" />
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Aeroportos</th>
                 <SortableHeader label="Passaporte" sortKey="passport_status" />
-                <th className="text-right p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Ações</th>
+                
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
