@@ -268,9 +268,11 @@ function AirlinesTab() {
       if (editing) {
         const { error } = await supabase.from("airlines").update(payload).eq("id", editing.id);
         if (error) throw error;
+        await logAuditEvent({ action: "update", tableName: "airlines", recordId: editing.id, recordLabel: payload.name, oldData: editing, newData: payload });
       } else {
-        const { error } = await supabase.from("airlines").insert(payload);
+        const { data, error } = await supabase.from("airlines").insert(payload).select("id").single();
         if (error) throw error;
+        await logAuditEvent({ action: "create", tableName: "airlines", recordId: data.id, recordLabel: payload.name, newData: payload });
       }
     },
     onSuccess: () => {
