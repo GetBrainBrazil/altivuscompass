@@ -465,7 +465,6 @@ function TagsTab() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (editing) {
-        // If name changed, update clients that use the old tag name
         if (editing.name !== form.name) {
           const affectedClients = clientsWithTags.filter((c: any) => (c.tags ?? []).includes(editing.name));
           for (const client of affectedClients) {
@@ -475,9 +474,11 @@ function TagsTab() {
         }
         const { error } = await supabase.from("tags").update({ name: form.name, color: form.color }).eq("id", editing.id);
         if (error) throw error;
+        await logAuditEvent({ action: "update", tableName: "tags", recordId: editing.id, recordLabel: form.name, oldData: { name: editing.name, color: editing.color }, newData: { name: form.name, color: form.color } });
       } else {
-        const { error } = await supabase.from("tags").insert({ name: form.name, color: form.color });
+        const { data, error } = await supabase.from("tags").insert({ name: form.name, color: form.color }).select("id").single();
         if (error) throw error;
+        await logAuditEvent({ action: "create", tableName: "tags", recordId: data.id, recordLabel: form.name, newData: { name: form.name, color: form.color } });
       }
     },
     onSuccess: () => {
