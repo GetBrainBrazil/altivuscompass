@@ -317,10 +317,24 @@ export default function Clients() {
         // Passports & Visas: delete old passports (cascades to visas), insert new
         await supabase.from("client_passports").delete().eq("client_id", clientId);
         for (const pp of passports.filter(p => p.passport_number)) {
+          // Upload passport images
+          const allImageUrls: string[] = [...(pp.image_urls || [])];
+          if (pp._imageFiles && pp._imageFiles.length > 0) {
+            for (const file of pp._imageFiles) {
+              const ext = file.name.split('.').pop();
+              const filePath = `${clientId}/${crypto.randomUUID()}.${ext}`;
+              const { error: upErr } = await supabase.storage.from("passport-images").upload(filePath, file);
+              if (!upErr) {
+                const { data: urlData } = supabase.storage.from("passport-images").getPublicUrl(filePath);
+                allImageUrls.push(urlData.publicUrl);
+              }
+            }
+          }
           const { data: ppData, error: ppErr } = await supabase.from("client_passports").insert({
             client_id: clientId!, passport_number: pp.passport_number,
             issue_date: pp.issue_date || null, expiry_date: pp.expiry_date || null,
             nationality: pp.nationality || null, status: pp.status || "valid",
+            image_urls: allImageUrls.length > 0 ? allImageUrls : null,
           }).select("id").single();
           if (ppErr) throw ppErr;
           if (pp.visas.length > 0) {
