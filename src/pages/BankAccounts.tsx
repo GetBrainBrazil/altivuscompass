@@ -109,7 +109,7 @@ export default function BankAccounts() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">Dados Bancários</h1>
+            <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">Contas Bancárias</h1>
             <p className="text-muted-foreground font-body mt-1 text-sm">Contas bancárias da empresa.</p>
           </div>
         </div>
