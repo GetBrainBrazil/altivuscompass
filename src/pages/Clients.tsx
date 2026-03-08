@@ -204,7 +204,7 @@ export default function Clients() {
   const { data: allPassengers = [] } = useQuery({
     queryKey: ["all-passengers-for-search"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("passengers").select("id, full_name, client_id");
+      const { data, error } = await supabase.from("passengers").select("id, full_name, client_id, birth_date, nationality, passport_number, relationship_type");
       if (error) throw error;
       return data;
     },
