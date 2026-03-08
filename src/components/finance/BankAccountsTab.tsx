@@ -103,7 +103,7 @@ export default function BankAccountsTab() {
       const account = accounts.find((a) => a.id === id);
       const { error } = await supabase.from("bank_accounts").delete().eq("id", id);
       if (error) throw error;
-      logAuditEvent({ action: "delete", tableName: "bank_accounts", recordId: id, oldData: account });
+      logAuditEvent({ action: "delete", tableName: "bank_accounts", recordId: id, recordLabel: account?.bank_name, oldData: account });
     },
     onSuccess: () => {
       toast({ title: "Conta removida" });

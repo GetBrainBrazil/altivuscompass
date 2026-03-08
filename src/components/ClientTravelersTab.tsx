@@ -381,7 +381,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         notes: notesText,
       }).select("id").single();
       if (clientErr) throw clientErr;
-      logAuditEvent({ action: "create", tableName: "clients", recordId: newClient.id, newData: { full_name: promotePassenger.full_name, promoted_from_passenger: promotePassenger.id, birth_date: promotePassenger.birth_date, nationality: promotePassenger.nationality } });
+      logAuditEvent({ action: "create", tableName: "clients", recordId: newClient.id, recordLabel: promotePassenger.full_name, newData: { full_name: promotePassenger.full_name, promoted_from_passenger: promotePassenger.id, birth_date: promotePassenger.birth_date, nationality: promotePassenger.nationality } });
 
       // Create passport record if passenger had passport data
       if (promotePassenger.passport_number) {
