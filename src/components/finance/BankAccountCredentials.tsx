@@ -341,20 +341,82 @@ export default function BankAccountCredentials({ bankAccountId }: { bankAccountI
               <Label className="font-body text-xs font-semibold flex items-center gap-1">
                 <Users size={12} /> Visível para
               </Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-32 overflow-y-auto border border-border/50 rounded-md p-2 bg-background">
-                {profiles.map((p) => (
-                  <label key={p.user_id} className="flex items-center gap-2 cursor-pointer hover:bg-muted/30 rounded px-1.5 py-1">
-                    <Checkbox
-                      checked={selectedViewers.includes(p.user_id)}
-                      onCheckedChange={() => toggleViewer(p.user_id)}
-                    />
-                    <span className="text-xs font-body">{p.full_name}</span>
-                  </label>
-                ))}
-                {profiles.length === 0 && (
-                  <span className="text-xs text-muted-foreground font-body">Nenhum usuário encontrado.</span>
-                )}
-              </div>
+              <Popover open={viewerDropdownOpen} onOpenChange={setViewerDropdownOpen}>
+                <PopoverTrigger asChild>
+                  <Button type="button" variant="outline" className="w-full justify-between h-auto min-h-[2rem] text-xs font-body font-normal px-3 py-1.5">
+                    <span className="text-left truncate">
+                      {selectedViewers.length === 0
+                        ? "Selecione usuários..."
+                        : `${selectedViewers.length} usuário(s) selecionado(s)`}
+                    </span>
+                    <ChevronDown size={14} className="shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[320px] p-0" align="start">
+                  <div className="p-2 border-b border-border/50">
+                    <div className="relative">
+                      <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Buscar usuário ou função..."
+                        value={viewerSearch}
+                        onChange={(e) => setViewerSearch(e.target.value)}
+                        className="h-8 text-xs pl-7 pr-7"
+                      />
+                      {viewerSearch && (
+                        <button
+                          type="button"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          onClick={() => setViewerSearch("")}
+                        >
+                          <X size={12} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto p-1">
+                    {filteredProfiles.length === 0 ? (
+                      <p className="text-xs text-muted-foreground font-body text-center py-3">Nenhum usuário encontrado.</p>
+                    ) : (
+                      filteredProfiles.map((p) => {
+                        const roleLabel = ROLE_LABELS[p.role] ?? p.role;
+                        return (
+                          <label
+                            key={p.user_id}
+                            className="flex items-center gap-2 cursor-pointer hover:bg-muted/30 rounded px-2 py-1.5"
+                          >
+                            <Checkbox
+                              checked={selectedViewers.includes(p.user_id)}
+                              onCheckedChange={() => toggleViewer(p.user_id)}
+                            />
+                            <span className="text-xs font-body">
+                              {p.full_name}
+                              {roleLabel && (
+                                <span className="text-muted-foreground"> — {roleLabel}</span>
+                              )}
+                            </span>
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+              {selectedViewers.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {selectedViewers.map((uid) => {
+                    const p = profilesWithRoles.find((pr) => pr.user_id === uid);
+                    if (!p) return null;
+                    return (
+                      <span key={uid} className="inline-flex items-center gap-1 text-[10px] font-body bg-muted rounded-full px-2 py-0.5">
+                        {p.full_name}
+                        <button type="button" onClick={() => toggleViewer(uid)} className="hover:text-destructive">
+                          <X size={10} />
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
