@@ -41,6 +41,31 @@ export default function Finance() {
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [form, setForm] = useState<Record<string, any>>({});
   const [filter, setFilter] = useState("all");
+  const [partyPopoverOpen, setPartyPopoverOpen] = useState(false);
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["clients-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("clients").select("id, full_name").eq("is_active", true).order("full_name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: suppliers = [] } = useQuery({
+    queryKey: ["suppliers-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("suppliers").select("id, name, trade_name").eq("is_active", true).order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const partyOptions = useMemo(() => {
+    const clientOpts = clients.map(c => ({ value: c.full_name, label: c.full_name, group: "Clientes" }));
+    const supplierOpts = suppliers.map(s => ({ value: s.trade_name || s.name, label: s.trade_name ? `${s.name} (${s.trade_name})` : s.name, group: "Fornecedores" }));
+    return { clients: clientOpts, suppliers: supplierOpts };
+  }, [clients, suppliers]);
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ["financial-transactions"],
