@@ -218,18 +218,46 @@ export default function SuppliersTab() {
               {/* ── Dados Principais ── */}
               <div className="space-y-3">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <div className="space-y-1">
+                    <Label className="font-body text-xs">Tipo</Label>
+                    <Select value={form.supplier_type} onValueChange={(v) => setForm(f => ({ ...f, supplier_type: v }))}>
+                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="company">Pessoa Jurídica</SelectItem>
+                        <SelectItem value="individual">Pessoa Física</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="space-y-1 col-span-2">
                     <Label className="font-body text-xs">Nome <span className="text-destructive">*</span></Label>
                     <Input value={form.name} onChange={set("name")} placeholder="Nome do fornecedor" className="h-9" />
                   </div>
                   <div className="space-y-1">
-                    <Label className="font-body text-xs">Nome Fantasia</Label>
-                    <Input value={form.trade_name} onChange={set("trade_name")} className="h-9" />
+                    <Label className="font-body text-xs">{form.supplier_type === "company" ? "CNPJ" : "CPF"}</Label>
+                    <Input value={form.document_number} onChange={set("document_number")} placeholder={form.supplier_type === "company" ? "00.000.000/0000-00" : "000.000.000-00"} className="h-9" />
                   </div>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   <div className="space-y-1">
-                    <Label className="font-body text-xs">CNPJ/CPF</Label>
-                    <Input value={form.document_number} onChange={set("document_number")} className="h-9" />
+                    <Label className="font-body text-xs">{form.supplier_type === "company" ? "Razão Social" : "Nome Social"}</Label>
+                    <Input value={form.legal_name} onChange={set("legal_name")} className="h-9" />
                   </div>
+                  {form.supplier_type === "company" && (
+                    <div className="space-y-1">
+                      <Label className="font-body text-xs">Nome Fantasia</Label>
+                      <Input value={form.trade_name} onChange={set("trade_name")} className="h-9" />
+                    </div>
+                  )}
+                  <div className="space-y-1">
+                    <Label className="font-body text-xs">Website</Label>
+                    <Input value={form.website} onChange={set("website")} placeholder="https://" className="h-9" />
+                  </div>
+                  {editing ? (
+                    <div className="flex items-center gap-2 pt-5">
+                      <Switch checked={form.is_active} onCheckedChange={(v) => setForm(f => ({ ...f, is_active: v }))} />
+                      <Label className="font-body text-xs">{form.is_active ? "Ativo" : "Inativo"}</Label>
+                    </div>
+                  ) : <div />}
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   <div className="space-y-1">
