@@ -418,12 +418,16 @@ export default function Clients() {
 
       let clientId = editingId;
       if (editingId) {
+        // Fetch old data for audit
+        const { data: oldClient } = await supabase.from("clients").select("*").eq("id", editingId).single();
         const { error } = await supabase.from("clients").update(payload).eq("id", editingId);
         if (error) throw error;
+        logAuditEvent({ action: "update", tableName: "clients", recordId: editingId, oldData: oldClient, newData: payload });
       } else {
         const { data, error } = await supabase.from("clients").insert(payload).select("id").single();
         if (error) throw error;
         clientId = data.id;
+        logAuditEvent({ action: "create", tableName: "clients", recordId: data.id, newData: payload });
       }
 
       // Save multi-value records
