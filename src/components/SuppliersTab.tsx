@@ -105,6 +105,7 @@ export default function SuppliersTab() {
   const [emails, setEmails] = useState<SupplierEmail[]>([]);
   const [sort, setSort] = useState<SortState>(null);
   const [loadingCep, setLoadingCep] = useState(false);
+  const [shouldGoBack, setShouldGoBack] = useState(false);
 
   const { data: suppliers = [], isLoading } = useQuery({
     queryKey: ["suppliers"],
