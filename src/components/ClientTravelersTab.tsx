@@ -629,6 +629,108 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Copy passengers dialog */}
+      <Dialog open={copyDialog} onOpenChange={(o) => { if (!o) { setCopyDialog(false); setSelectedCopyClient(null); setCopyPassengerIds(new Set()); } }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display">Copiar Passageiros de Outro Cliente</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3">
+            {!selectedCopyClient ? (
+              <>
+                <div>
+                  <Label className="font-body text-xs">Buscar cliente de origem</Label>
+                  <Input value={copyClientSearch} onChange={(e) => setCopyClientSearch(e.target.value)} placeholder="Nome do cliente..." className="h-9" />
+                </div>
+                <div className="max-h-48 overflow-y-auto border border-border/50 rounded-lg">
+                  {filteredCopyClients.length === 0 ? (
+                    <p className="p-3 text-xs text-muted-foreground font-body">Nenhum cliente encontrado.</p>
+                  ) : (
+                    filteredCopyClients.slice(0, 20).map((c: any) => (
+                      <button key={c.id} type="button"
+                        className="w-full text-left px-3 py-2 text-sm font-body hover:bg-muted/50 transition-colors text-foreground"
+                        onClick={() => { setSelectedCopyClient(c.id); setCopyPassengerIds(new Set()); }}>
+                        <span className="font-medium">{c.full_name}</span>
+                        {c.city && <span className="text-xs text-muted-foreground ml-2">{c.city}{c.state ? `, ${c.state}` : ""}</span>}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-body text-muted-foreground">
+                    Passageiros de <strong className="text-foreground">{allClients.find((c: any) => c.id === selectedCopyClient)?.full_name}</strong>
+                  </p>
+                  <Button type="button" variant="ghost" size="sm" className="font-body text-xs" onClick={() => { setSelectedCopyClient(null); setCopyPassengerIds(new Set()); }}>
+                    Trocar cliente
+                  </Button>
+                </div>
+                {copyClientPassengers.length === 0 ? (
+                  <p className="text-xs text-muted-foreground font-body italic p-3">Este cliente não possui passageiros.</p>
+                ) : (
+                  <div className="border border-border/50 rounded-lg overflow-hidden max-h-64 overflow-y-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border/50 bg-muted/30">
+                          <th className="p-2 w-8">
+                            <Checkbox
+                              checked={copyPassengerIds.size === copyClientPassengers.length && copyClientPassengers.length > 0}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setCopyPassengerIds(new Set(copyClientPassengers.map((p: any) => p.id)));
+                                } else {
+                                  setCopyPassengerIds(new Set());
+                                }
+                              }}
+                            />
+                          </th>
+                          <th className="text-left p-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Nome</th>
+                          <th className="text-left p-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Nascimento</th>
+                          <th className="text-left p-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Passaporte</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/30">
+                        {copyClientPassengers.map((p: any) => (
+                          <tr key={p.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => {
+                            setCopyPassengerIds(prev => {
+                              const next = new Set(prev);
+                              if (next.has(p.id)) next.delete(p.id); else next.add(p.id);
+                              return next;
+                            });
+                          }}>
+                            <td className="p-2">
+                              <Checkbox checked={copyPassengerIds.has(p.id)} onCheckedChange={() => {
+                                setCopyPassengerIds(prev => {
+                                  const next = new Set(prev);
+                                  if (next.has(p.id)) next.delete(p.id); else next.add(p.id);
+                                  return next;
+                                });
+                              }} />
+                            </td>
+                            <td className="p-2 text-sm font-body text-foreground">{p.full_name}</td>
+                            <td className="p-2 text-sm font-body text-foreground">{p.birth_date ? new Date(p.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
+                            <td className="p-2 text-sm font-body text-foreground">{p.passport_number || "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                <Button
+                  onClick={() => copyPassengersMutation.mutate()}
+                  disabled={copyPassengerIds.size === 0 || copyPassengersMutation.isPending}
+                  className="font-body"
+                >
+                  {copyPassengersMutation.isPending ? "Copiando..." : `Copiar ${copyPassengerIds.size} passageiro(s)`}
+                </Button>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
