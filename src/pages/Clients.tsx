@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,8 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X } from "lucide-react";
+import { COUNTRY_LIST, COUNTRIES_STATES } from "@/lib/countries-states";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 
 type SortDir = "asc" | "desc";
@@ -55,7 +58,26 @@ export default function Clients() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [form, setForm] = useState(emptyClient);
-  const [airportsInput, setAirportsInput] = useState("");
+  const [selectedAirports, setSelectedAirports] = useState<string[]>([]);
+  const [airportSearch, setAirportSearch] = useState("");
+  const [airportPopoverOpen, setAirportPopoverOpen] = useState(false);
+
+  const { data: airportsList = [] } = useQuery({
+    queryKey: ["airports-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("airports").select("iata_code, name, city, country").order("iata_code");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const filteredAirports = useMemo(() => {
+    if (!airportSearch) return airportsList;
+    const q = airportSearch.toLowerCase();
+    return airportsList.filter((a) =>
+      a.iata_code.toLowerCase().includes(q) || a.name.toLowerCase().includes(q) || a.city.toLowerCase().includes(q)
+    );
+  }, [airportsList, airportSearch]);
 
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ["clients"],
@@ -70,7 +92,7 @@ export default function Clients() {
     mutationFn: async () => {
       const payload = {
         ...form,
-        preferred_airports: airportsInput.split(",").map(a => a.trim()).filter(Boolean),
+        preferred_airports: selectedAirports,
       } as TablesInsert<"clients">;
       if (editingClient) {
         const { error } = await supabase.from("clients").update(payload).eq("id", editingClient.id);
@@ -100,7 +122,7 @@ export default function Clients() {
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
 
-  const openCreate = () => { setEditingClient(null); setForm(emptyClient); setAirportsInput(""); setDialogOpen(true); };
+  const openCreate = () => { setEditingClient(null); setForm(emptyClient); setSelectedAirports([]); setDialogOpen(true); };
   const openEdit = (c: Client) => {
     setEditingClient(c);
     setForm({
@@ -109,10 +131,10 @@ export default function Clients() {
       travel_profile: c.travel_profile ?? "economic", passport_status: c.passport_status ?? "none",
       notes: c.notes ?? "",
     });
-    setAirportsInput((c.preferred_airports ?? []).join(", "));
+    setSelectedAirports(c.preferred_airports ?? []);
     setDialogOpen(true);
   };
-  const closeDialog = () => { setDialogOpen(false); setEditingClient(null); setForm(emptyClient); setAirportsInput(""); };
+  const closeDialog = () => { setDialogOpen(false); setEditingClient(null); setForm(emptyClient); setSelectedAirports([]); };
 
   const filtered = sortData(
     clients.filter((c) => {
@@ -171,12 +193,34 @@ export default function Clients() {
                   <Input value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                 </div>
                 <div className="space-y-2">
+                  <Label className="font-body">País</Label>
+                  <Select value={form.country ?? "Brasil"} onValueChange={(v) => setForm({ ...form, country: v, state: "" })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {COUNTRY_LIST.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
                   <Label className="font-body">Cidade</Label>
                   <Input value={form.city ?? ""} onChange={(e) => setForm({ ...form, city: e.target.value })} />
                 </div>
                 <div className="space-y-2">
-                  <Label className="font-body">Estado</Label>
-                  <Input value={form.state ?? ""} onChange={(e) => setForm({ ...form, state: e.target.value })} />
+                  <Label className="font-body">Estado / Região</Label>
+                  {(COUNTRIES_STATES[form.country ?? "Brasil"] ?? []).length > 0 ? (
+                    <Select value={form.state ?? ""} onValueChange={(v) => setForm({ ...form, state: v })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        {(COUNTRIES_STATES[form.country ?? "Brasil"] ?? []).map((s) => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input value={form.state ?? ""} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="Digite o estado/região" />
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label className="font-body">Perfil de viagem</Label>
@@ -202,8 +246,58 @@ export default function Clients() {
                   </Select>
                 </div>
                 <div className="sm:col-span-2 space-y-2">
-                  <Label className="font-body">Aeroportos preferidos (separados por vírgula)</Label>
-                  <Input value={airportsInput} onChange={(e) => setAirportsInput(e.target.value)} placeholder="GRU, GIG, VCP" />
+                  <Label className="font-body">Aeroportos preferidos</Label>
+                  <Popover open={airportPopoverOpen} onOpenChange={setAirportPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" type="button" className="w-full justify-between font-normal">
+                        {selectedAirports.length > 0
+                          ? `${selectedAirports.length} aeroporto(s) selecionado(s)`
+                          : "Selecione aeroportos"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 p-0" align="start">
+                      <div className="p-2 border-b">
+                        <Input
+                          placeholder="Buscar por código, nome ou cidade..."
+                          value={airportSearch}
+                          onChange={(e) => setAirportSearch(e.target.value)}
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <div className="max-h-52 overflow-y-auto p-1">
+                        {filteredAirports.slice(0, 50).map((a) => (
+                          <label key={a.iata_code} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                            <Checkbox
+                              checked={selectedAirports.includes(a.iata_code)}
+                              onCheckedChange={(checked) => {
+                                setSelectedAirports((prev) =>
+                                  checked ? [...prev, a.iata_code] : prev.filter((c) => c !== a.iata_code)
+                                );
+                              }}
+                            />
+                            <span className="font-mono font-bold text-primary">{a.iata_code}</span>
+                            <span className="text-muted-foreground truncate">{a.city} - {a.name}</span>
+                          </label>
+                        ))}
+                        {filteredAirports.length === 0 && (
+                          <p className="text-sm text-muted-foreground text-center py-3">Nenhum aeroporto encontrado</p>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  {selectedAirports.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedAirports.map((code) => (
+                        <span key={code} className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                          {code}
+                          <button type="button" onClick={() => setSelectedAirports((prev) => prev.filter((c) => c !== code))} className="hover:text-destructive">
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="sm:col-span-2 space-y-2">
                   <Label className="font-body">Observações</Label>
