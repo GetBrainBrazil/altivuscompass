@@ -492,6 +492,12 @@ export default function Finance() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
+        <Input
+          placeholder="Buscar transação..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="h-8 text-xs w-48 sm:w-64 bg-white dark:bg-card"
+        />
         <div className="flex gap-1 p-1 rounded-lg bg-muted w-fit">
           {[{ id: "all", label: "Todas" }, { id: "receivable", label: "Receitas" }, { id: "payable", label: "Despesas" }].map((f) => (
             <button key={f.id} onClick={() => setFilter(f.id)}
