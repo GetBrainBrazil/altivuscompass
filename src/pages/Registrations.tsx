@@ -493,7 +493,6 @@ function TagsTab() {
 
   const deleteMutation = useMutation({
     mutationFn: async (tag: any) => {
-      // Remove tag from all clients that use it
       const affectedClients = clientsWithTags.filter((c: any) => (c.tags ?? []).includes(tag.name));
       for (const client of affectedClients) {
         const newTags = (client.tags as string[]).filter((t: string) => t !== tag.name);
@@ -501,6 +500,7 @@ function TagsTab() {
       }
       const { error } = await supabase.from("tags").delete().eq("id", tag.id);
       if (error) throw error;
+      await logAuditEvent({ action: "delete", tableName: "tags", recordId: tag.id, recordLabel: tag.name, oldData: { name: tag.name, color: tag.color } });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tags"] });
