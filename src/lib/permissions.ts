@@ -19,6 +19,7 @@ export const PAGE_PERMISSIONS: PagePermission[] = [
   { path: "/finance", label: "Financeiro", allowedRoles: ["admin", "manager"] },
   { path: "/miles", label: "Milhas", allowedRoles: ["admin", "manager", "sales_agent", "operations"] },
   { path: "/users", label: "Usuários", allowedRoles: ["admin"] },
+  { path: "/permissions", label: "Permissões", allowedRoles: ["admin"] },
 ];
 
 export function canAccess(userRole: string | null, path: string): boolean {

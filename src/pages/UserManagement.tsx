@@ -8,10 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { ROLE_LABELS, PAGE_PERMISSIONS } from "@/lib/permissions";
+import { ROLE_LABELS } from "@/lib/permissions";
 import type { Tables } from "@/integrations/supabase/types";
 
 const roleBadgeVariant: Record<string, "default" | "secondary" | "outline"> = {
@@ -210,20 +209,6 @@ export default function UserManagement() {
                   <SelectContent>{Object.entries(ROLE_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label className="font-body font-medium">Permissões de Página</Label>
-                <div className="grid grid-cols-2 gap-2 mt-1">
-                  {PAGE_PERMISSIONS.map((page) => {
-                    const hasAccess = newRole === "admin" || page.allowedRoles.includes(newRole as any);
-                    return (
-                      <div key={page.path} className="flex items-center gap-2">
-                        <Checkbox checked={hasAccess} disabled className="pointer-events-none" />
-                        <span className={`text-sm font-body ${hasAccess ? "text-foreground" : "text-muted-foreground"}`}>{page.label}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
               <Button type="submit" className="w-full font-body" disabled={createUserMutation.isPending}>
                 {createUserMutation.isPending ? "Criando..." : "Criar Usuário"}
               </Button>
@@ -232,34 +217,6 @@ export default function UserManagement() {
         </Dialog>
       </div>
 
-      {/* Permissions Matrix */}
-      <div className="glass-card rounded-xl p-3 sm:p-4">
-        <h3 className="text-sm font-display font-semibold text-foreground mb-3">Matriz de Permissões</h3>
-        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="font-body text-xs min-w-[100px]">Página</TableHead>
-                {Object.entries(ROLE_LABELS).map(([role, label]) => (
-                  <TableHead key={role} className="font-body text-xs text-center min-w-[80px]">{label}</TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {PAGE_PERMISSIONS.map((page) => (
-                <TableRow key={page.path}>
-                  <TableCell className="font-body text-sm">{page.label}</TableCell>
-                  {Object.keys(ROLE_LABELS).map((role) => (
-                    <TableCell key={role} className="text-center">
-                      {role === "admin" || page.allowedRoles.includes(role as any) ? <span className="text-primary">✓</span> : <span className="text-muted-foreground/40">—</span>}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
 
       {/* Desktop table */}
       <div className="glass-card rounded-xl overflow-hidden hidden md:block">
@@ -355,20 +312,6 @@ export default function UserManagement() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{Object.entries(ROLE_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
               </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="font-body font-medium">Permissões resultantes</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {PAGE_PERMISSIONS.map((page) => {
-                  const hasAccess = editRole === "admin" || page.allowedRoles.includes(editRole as any);
-                  return (
-                    <div key={page.path} className="flex items-center gap-2">
-                      <Checkbox checked={hasAccess} disabled className="pointer-events-none" />
-                      <span className={`text-sm font-body ${hasAccess ? "text-foreground" : "text-muted-foreground"}`}>{page.label}</span>
-                    </div>
-                  );
-                })}
-              </div>
             </div>
             <Button type="submit" className="w-full font-body" disabled={updateUserMutation.isPending}>
               {updateUserMutation.isPending ? "Salvando..." : "Salvar Alterações"}
