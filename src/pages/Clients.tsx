@@ -10,8 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X } from "lucide-react";
-import { COUNTRY_LIST, COUNTRIES_STATES } from "@/lib/countries-states";
+import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus } from "lucide-react";
+import { useCountries, useStates, useCities } from "@/components/LocationsTab";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 
 type SortDir = "asc" | "desc";
@@ -61,6 +61,17 @@ export default function Clients() {
   const [selectedAirports, setSelectedAirports] = useState<string[]>([]);
   const [airportSearch, setAirportSearch] = useState("");
   const [airportPopoverOpen, setAirportPopoverOpen] = useState(false);
+
+  // Quick-add dialogs
+  const [quickAddType, setQuickAddType] = useState<"country" | "state" | "city" | null>(null);
+  const [quickAddName, setQuickAddName] = useState("");
+
+  // DB-backed location data
+  const { data: dbCountries = [] } = useCountries();
+  const selectedCountryObj = dbCountries.find((c: any) => c.name === form.country);
+  const { data: dbStates = [] } = useStates(selectedCountryObj?.id);
+  const selectedStateObj = (dbStates as any[]).find((s: any) => s.name === form.state);
+  const { data: dbCities = [] } = useCities(selectedCountryObj?.id, selectedStateObj?.id || undefined);
 
   const { data: airportsList = [] } = useQuery({
     queryKey: ["airports-list"],
@@ -136,6 +147,34 @@ export default function Clients() {
   };
   const closeDialog = () => { setDialogOpen(false); setEditingClient(null); setForm(emptyClient); setSelectedAirports([]); };
 
+  // Quick-add location mutation
+  const quickAddMutation = useMutation({
+    mutationFn: async () => {
+      if (quickAddType === "country") {
+        const { error } = await supabase.from("countries").insert({ name: quickAddName });
+        if (error) throw error;
+        setForm({ ...form, country: quickAddName, state: "", city: "" });
+      } else if (quickAddType === "state" && selectedCountryObj) {
+        const { error } = await supabase.from("states").insert({ name: quickAddName, country_id: selectedCountryObj.id });
+        if (error) throw error;
+        setForm({ ...form, state: quickAddName, city: "" });
+      } else if (quickAddType === "city" && selectedCountryObj) {
+        const { error } = await supabase.from("cities").insert({ name: quickAddName, country_id: selectedCountryObj.id, state_id: selectedStateObj?.id || null });
+        if (error) throw error;
+        setForm({ ...form, city: quickAddName });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["locations-countries"] });
+      queryClient.invalidateQueries({ queryKey: ["locations-states"] });
+      queryClient.invalidateQueries({ queryKey: ["locations-cities"] });
+      toast({ title: "Localidade adicionada" });
+      setQuickAddType(null);
+      setQuickAddName("");
+    },
+    onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
   const filtered = sortData(
     clients.filter((c) => {
       const matchesSearch = c.full_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -193,34 +232,56 @@ export default function Clients() {
                   <Input value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                 </div>
                 <div className="space-y-2">
-                  <Label className="font-body">País</Label>
-                  <Select value={form.country ?? "Brasil"} onValueChange={(v) => setForm({ ...form, country: v, state: "" })}>
+                  <div className="flex items-center justify-between">
+                    <Label className="font-body">País</Label>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => { setQuickAddType("country"); setQuickAddName(""); }}>
+                      <Plus className="h-3 w-3 mr-1" />Novo
+                    </Button>
+                  </div>
+                  <Select value={form.country ?? "Brasil"} onValueChange={(v) => setForm({ ...form, country: v, state: "", city: "" })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent className="max-h-60">
-                      {COUNTRY_LIST.map((c) => (
-                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      {dbCountries.map((c: any) => (
+                        <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="font-body">Estado / Região</Label>
-                  {(COUNTRIES_STATES[form.country ?? "Brasil"] ?? []).length > 0 ? (
-                    <Select value={form.state ?? ""} onValueChange={(v) => setForm({ ...form, state: v })}>
-                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                      <SelectContent className="max-h-60">
-                        {(COUNTRIES_STATES[form.country ?? "Brasil"] ?? []).map((s) => (
-                          <SelectItem key={s} value={s}>{s}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Input value={form.state ?? ""} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="Digite o estado/região" />
-                  )}
+                  <div className="flex items-center justify-between">
+                    <Label className="font-body">Estado / Região</Label>
+                    {selectedCountryObj && (
+                      <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => { setQuickAddType("state"); setQuickAddName(""); }}>
+                        <Plus className="h-3 w-3 mr-1" />Novo
+                      </Button>
+                    )}
+                  </div>
+                  <Select value={form.state ?? ""} onValueChange={(v) => setForm({ ...form, state: v, city: "" })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {(dbStates as any[]).map((s: any) => (
+                        <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="font-body">Cidade</Label>
-                  <Input value={form.city ?? ""} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+                  <div className="flex items-center justify-between">
+                    <Label className="font-body">Cidade</Label>
+                    {selectedCountryObj && (
+                      <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => { setQuickAddType("city"); setQuickAddName(""); }}>
+                        <Plus className="h-3 w-3 mr-1" />Nova
+                      </Button>
+                    )}
+                  </div>
+                  <Select value={form.city ?? ""} onValueChange={(v) => setForm({ ...form, city: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {(dbCities as any[]).map((c: any) => (
+                        <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label className="font-body">Perfil de viagem</Label>
@@ -314,6 +375,32 @@ export default function Clients() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Quick-add location dialog */}
+      <Dialog open={quickAddType !== null} onOpenChange={(o) => { if (!o) { setQuickAddType(null); setQuickAddName(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {quickAddType === "country" ? "Novo País" : quickAddType === "state" ? "Novo Estado/Região" : "Nova Cidade"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            {quickAddType === "state" && <p className="text-sm text-muted-foreground">País: {form.country}</p>}
+            {quickAddType === "city" && (
+              <p className="text-sm text-muted-foreground">
+                {form.country}{form.state ? ` → ${form.state}` : ""}
+              </p>
+            )}
+            <div>
+              <Label>Nome <span className="text-destructive">*</span></Label>
+              <Input value={quickAddName} onChange={(e) => setQuickAddName(e.target.value)} placeholder={`Nome ${quickAddType === "country" ? "do país" : quickAddType === "state" ? "do estado/região" : "da cidade"}`} />
+            </div>
+            <Button onClick={() => quickAddMutation.mutate()} disabled={!quickAddName || quickAddMutation.isPending}>
+              {quickAddMutation.isPending ? "Adicionando..." : "Adicionar"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <div className="relative flex-1 sm:max-w-sm">
