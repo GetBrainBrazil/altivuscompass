@@ -379,37 +379,23 @@ export default function Clients() {
           </div>
         </div>
 
-        <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-6">
-          {/* ====== UPPER SECTION: Main Data ====== */}
-          <div className="glass-card rounded-xl p-6 space-y-5">
-            <h2 className="text-base font-display font-semibold text-foreground border-b border-border/50 pb-2">Dados Principais</h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Full name */}
-              <div className="sm:col-span-2 lg:col-span-2 space-y-1.5">
+        <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-4">
+          {/* ====== UPPER SECTION: Compact header with key data ====== */}
+          <div className="glass-card rounded-xl p-4 space-y-3">
+            {/* Row 1: Name + Rating + Birth + Gender + Active */}
+            <div className="grid grid-cols-12 gap-3 items-end">
+              <div className="col-span-12 sm:col-span-4 space-y-1">
                 <Label className="font-body text-xs">Nome completo *</Label>
-                <Input value={form.full_name} onChange={(e) => upd("full_name", e.target.value)} required />
+                <Input value={form.full_name} onChange={(e) => upd("full_name", e.target.value)} required className="h-9" />
               </div>
-
-              {/* Active/Inactive */}
-              <div className="space-y-1.5 flex flex-col justify-end">
-                <div className="flex items-center gap-2">
-                  <Switch checked={form.is_active} onCheckedChange={(v) => upd("is_active", v)} />
-                  <Label className="font-body text-xs">{form.is_active ? "Ativo" : "Inativo"}</Label>
-                </div>
+              <div className="col-span-6 sm:col-span-2 space-y-1">
+                <Label className="font-body text-xs">Nascimento</Label>
+                <Input type="date" value={form.birth_date} onChange={(e) => upd("birth_date", e.target.value)} className="h-9" />
               </div>
-
-              {/* Birth date */}
-              <div className="space-y-1.5">
-                <Label className="font-body text-xs">Data de nascimento</Label>
-                <Input type="date" value={form.birth_date} onChange={(e) => upd("birth_date", e.target.value)} />
-              </div>
-
-              {/* Gender */}
-              <div className="space-y-1.5">
+              <div className="col-span-6 sm:col-span-2 space-y-1">
                 <Label className="font-body text-xs">Sexo</Label>
                 <Select value={form.gender || "_none"} onValueChange={(v) => upd("gender", v === "_none" ? "" : v)}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="_none">Selecione</SelectItem>
                     <SelectItem value="M">Masculino</SelectItem>
@@ -418,18 +404,22 @@ export default function Clients() {
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Rating */}
-              <div className="space-y-1.5">
+              <div className="col-span-6 sm:col-span-2 space-y-1">
                 <Label className="font-body text-xs">Qualificação</Label>
                 <StarRating value={form.rating} onChange={(v) => upd("rating", v)} />
               </div>
+              <div className="col-span-6 sm:col-span-2 flex items-center gap-2 pb-0.5">
+                <Switch checked={form.is_active} onCheckedChange={(v) => upd("is_active", v)} />
+                <Label className="font-body text-xs">{form.is_active ? "Ativo" : "Inativo"}</Label>
+              </div>
+            </div>
 
-              {/* Travel profile */}
-              <div className="space-y-1.5">
+            {/* Row 2: Travel profile, Site, Passport status */}
+            <div className="grid grid-cols-12 gap-3 items-end">
+              <div className="col-span-6 sm:col-span-3 space-y-1">
                 <Label className="font-body text-xs">Perfil de viagem</Label>
                 <Select value={form.travel_profile} onValueChange={(v) => upd("travel_profile", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="economic">Econômico</SelectItem>
                     <SelectItem value="opportunity">Oportunidade</SelectItem>
@@ -437,18 +427,14 @@ export default function Clients() {
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Website */}
-              <div className="space-y-1.5">
+              <div className="col-span-6 sm:col-span-3 space-y-1">
                 <Label className="font-body text-xs">Site</Label>
-                <Input value={form.website} onChange={(e) => upd("website", e.target.value)} placeholder="https://" />
+                <Input value={form.website} onChange={(e) => upd("website", e.target.value)} placeholder="https://" className="h-9" />
               </div>
-
-              {/* Passport */}
-              <div className="space-y-1.5">
+              <div className="col-span-6 sm:col-span-3 space-y-1">
                 <Label className="font-body text-xs">Passaporte (status)</Label>
                 <Select value={form.passport_status} onValueChange={(v) => upd("passport_status", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Sem passaporte</SelectItem>
                     <SelectItem value="valid">Válido</SelectItem>
@@ -458,130 +444,133 @@ export default function Clients() {
                 </Select>
               </div>
             </div>
-
-            {/* Phones */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="font-body text-xs">Celulares / Telefones</Label>
-                <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setPhones([...phones, { phone: "", description: "" }])}>
-                  <Plus className="h-3 w-3 mr-1" />Adicionar
-                </Button>
-              </div>
-              {phones.map((p, i) => (
-                <div key={i} className="flex gap-2 items-start">
-                  <Input className="flex-1" placeholder="Número" value={p.phone} onChange={(e) => { const n = [...phones]; n[i].phone = e.target.value; setPhones(n); }} />
-                  <Input className="w-32 sm:w-40" placeholder="Descrição" value={p.description} onChange={(e) => { const n = [...phones]; n[i].description = e.target.value; setPhones(n); }} />
-                  <Button type="button" variant="ghost" size="icon" className="shrink-0 h-10 w-10 text-destructive" onClick={() => setPhones(phones.filter((_, j) => j !== i))}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-
-            {/* Emails */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="font-body text-xs">E-mails</Label>
-                <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setEmails([...emails, { email: "", description: "" }])}>
-                  <Plus className="h-3 w-3 mr-1" />Adicionar
-                </Button>
-              </div>
-              {emails.map((e, i) => (
-                <div key={i} className="flex gap-2 items-start">
-                  <Input className="flex-1" type="email" placeholder="E-mail" value={e.email} onChange={(ev) => { const n = [...emails]; n[i].email = ev.target.value; setEmails(n); }} />
-                  <Input className="w-32 sm:w-40" placeholder="Descrição" value={e.description} onChange={(ev) => { const n = [...emails]; n[i].description = ev.target.value; setEmails(n); }} />
-                  <Button type="button" variant="ghost" size="icon" className="shrink-0 h-10 w-10 text-destructive" onClick={() => setEmails(emails.filter((_, j) => j !== i))}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-
-            {/* Social Media */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="font-body text-xs">Redes Sociais</Label>
-                <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setSocials([...socials, { network: "Instagram", handle: "" }])}>
-                  <Plus className="h-3 w-3 mr-1" />Adicionar
-                </Button>
-              </div>
-              {socials.map((s, i) => (
-                <div key={i} className="flex gap-2 items-start">
-                  <Select value={s.network} onValueChange={(v) => { const n = [...socials]; n[i].network = v; setSocials(n); }}>
-                    <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {SOCIAL_NETWORKS.map((sn) => <SelectItem key={sn} value={sn}>{sn}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <Input className="flex-1" placeholder="@ ou URL" value={s.handle} onChange={(e) => { const n = [...socials]; n[i].handle = e.target.value; setSocials(n); }} />
-                  <Button type="button" variant="ghost" size="icon" className="shrink-0 h-10 w-10 text-destructive" onClick={() => setSocials(socials.filter((_, j) => j !== i))}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-
-            {/* Communication preferences */}
-            <div className="flex flex-wrap gap-6 pt-2 border-t border-border/50">
-              <div className="flex items-center gap-2">
-                <Switch checked={form.accepts_email_comm} onCheckedChange={(v) => upd("accepts_email_comm", v)} />
-                <Label className="font-body text-xs">Aceita comunicações por e-mail</Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={form.accepts_whatsapp_comm} onCheckedChange={(v) => upd("accepts_whatsapp_comm", v)} />
-                <Label className="font-body text-xs">Aceita comunicações por WhatsApp</Label>
-              </div>
-            </div>
-
-            {/* Airports */}
-            <div className="space-y-2">
-              <Label className="font-body text-xs">Aeroportos preferidos</Label>
-              <Popover open={airportPopoverOpen} onOpenChange={setAirportPopoverOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" type="button" className="w-full justify-between font-normal">
-                    {selectedAirports.length > 0 ? `${selectedAirports.length} aeroporto(s)` : "Selecione aeroportos"}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-0" align="start">
-                  <div className="p-2 border-b"><Input placeholder="Buscar..." value={airportSearch} onChange={(e) => setAirportSearch(e.target.value)} className="h-8 text-sm" /></div>
-                  <div className="max-h-52 overflow-y-auto p-1">
-                    {filteredAirports.slice(0, 50).map((a) => (
-                      <label key={a.iata_code} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
-                        <Checkbox checked={selectedAirports.includes(a.iata_code)} onCheckedChange={(checked) => setSelectedAirports((prev) => checked ? [...prev, a.iata_code] : prev.filter((c) => c !== a.iata_code))} />
-                        <span className="font-mono font-bold text-primary">{a.iata_code}</span>
-                        <span className="text-muted-foreground truncate">{a.city} - {a.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-              {selectedAirports.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {selectedAirports.map((code) => (
-                    <span key={code} className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground">
-                      {code}
-                      <button type="button" onClick={() => setSelectedAirports((prev) => prev.filter((c) => c !== code))} className="hover:text-destructive"><X className="h-3 w-3" /></button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Notes */}
-            <div className="space-y-1.5">
-              <Label className="font-body text-xs">Observações</Label>
-              <Textarea value={form.notes} onChange={(e) => upd("notes", e.target.value)} rows={2} />
-            </div>
           </div>
 
           {/* ====== LOWER SECTION: Tabs ====== */}
-          <div className="glass-card rounded-xl p-6">
-            <Tabs defaultValue="documents">
+          <div className="glass-card rounded-xl p-4">
+            <Tabs defaultValue="contact">
               <TabsList className="w-full justify-start">
+                <TabsTrigger value="contact" className="font-body text-xs">Contato</TabsTrigger>
                 <TabsTrigger value="documents" className="font-body text-xs">Documentos</TabsTrigger>
                 <TabsTrigger value="address" className="font-body text-xs">Endereço</TabsTrigger>
+                <TabsTrigger value="observations" className="font-body text-xs">Observações</TabsTrigger>
               </TabsList>
+
+              {/* Contact Tab */}
+              <TabsContent value="contact" className="space-y-4 pt-3">
+                {/* Phones */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="font-body text-xs font-medium">Celulares / Telefones</Label>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setPhones([...phones, { phone: "", description: "" }])}>
+                      <Plus className="h-3 w-3 mr-1" />Adicionar
+                    </Button>
+                  </div>
+                  {phones.map((p, i) => (
+                    <div key={i} className="flex gap-2 items-start">
+                      <Input className="flex-1 h-9" placeholder="Número" value={p.phone} onChange={(e) => { const n = [...phones]; n[i].phone = e.target.value; setPhones(n); }} />
+                      <Input className="w-32 sm:w-40 h-9" placeholder="Descrição" value={p.description} onChange={(e) => { const n = [...phones]; n[i].description = e.target.value; setPhones(n); }} />
+                      <Button type="button" variant="ghost" size="icon" className="shrink-0 h-9 w-9 text-destructive" onClick={() => setPhones(phones.filter((_, j) => j !== i))}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Emails */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="font-body text-xs font-medium">E-mails</Label>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setEmails([...emails, { email: "", description: "" }])}>
+                      <Plus className="h-3 w-3 mr-1" />Adicionar
+                    </Button>
+                  </div>
+                  {emails.map((e, i) => (
+                    <div key={i} className="flex gap-2 items-start">
+                      <Input className="flex-1 h-9" type="email" placeholder="E-mail" value={e.email} onChange={(ev) => { const n = [...emails]; n[i].email = ev.target.value; setEmails(n); }} />
+                      <Input className="w-32 sm:w-40 h-9" placeholder="Descrição" value={e.description} onChange={(ev) => { const n = [...emails]; n[i].description = ev.target.value; setEmails(n); }} />
+                      <Button type="button" variant="ghost" size="icon" className="shrink-0 h-9 w-9 text-destructive" onClick={() => setEmails(emails.filter((_, j) => j !== i))}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Social Media */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="font-body text-xs font-medium">Redes Sociais</Label>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setSocials([...socials, { network: "Instagram", handle: "" }])}>
+                      <Plus className="h-3 w-3 mr-1" />Adicionar
+                    </Button>
+                  </div>
+                  {socials.map((s, i) => (
+                    <div key={i} className="flex gap-2 items-start">
+                      <Select value={s.network} onValueChange={(v) => { const n = [...socials]; n[i].network = v; setSocials(n); }}>
+                        <SelectTrigger className="w-36 h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {SOCIAL_NETWORKS.map((sn) => <SelectItem key={sn} value={sn}>{sn}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <Input className="flex-1 h-9" placeholder="@ ou URL" value={s.handle} onChange={(e) => { const n = [...socials]; n[i].handle = e.target.value; setSocials(n); }} />
+                      <Button type="button" variant="ghost" size="icon" className="shrink-0 h-9 w-9 text-destructive" onClick={() => setSocials(socials.filter((_, j) => j !== i))}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Communication preferences + Airports inline */}
+                <div className="border-t border-border/50 pt-3 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <Label className="font-body text-xs font-medium">Preferências de comunicação</Label>
+                    <div className="flex flex-wrap gap-4">
+                      <div className="flex items-center gap-2">
+                        <Switch checked={form.accepts_email_comm} onCheckedChange={(v) => upd("accepts_email_comm", v)} />
+                        <Label className="font-body text-xs">E-mail</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Switch checked={form.accepts_whatsapp_comm} onCheckedChange={(v) => upd("accepts_whatsapp_comm", v)} />
+                        <Label className="font-body text-xs">WhatsApp</Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="font-body text-xs font-medium">Aeroportos preferidos</Label>
+                    <Popover open={airportPopoverOpen} onOpenChange={setAirportPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" type="button" className="w-full justify-between font-normal h-9 text-sm">
+                          {selectedAirports.length > 0 ? `${selectedAirports.length} aeroporto(s)` : "Selecione aeroportos"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-0" align="start">
+                        <div className="p-2 border-b"><Input placeholder="Buscar..." value={airportSearch} onChange={(e) => setAirportSearch(e.target.value)} className="h-8 text-sm" /></div>
+                        <div className="max-h-52 overflow-y-auto p-1">
+                          {filteredAirports.slice(0, 50).map((a) => (
+                            <label key={a.iata_code} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                              <Checkbox checked={selectedAirports.includes(a.iata_code)} onCheckedChange={(checked) => setSelectedAirports((prev) => checked ? [...prev, a.iata_code] : prev.filter((c) => c !== a.iata_code))} />
+                              <span className="font-mono font-bold text-primary">{a.iata_code}</span>
+                              <span className="text-muted-foreground truncate">{a.city} - {a.name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    {selectedAirports.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {selectedAirports.map((code) => (
+                          <span key={code} className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                            {code}
+                            <button type="button" onClick={() => setSelectedAirports((prev) => prev.filter((c) => c !== code))} className="hover:text-destructive"><X className="h-3 w-3" /></button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </TabsContent>
 
               {/* Documents Tab */}
               <TabsContent value="documents" className="space-y-4 pt-4">
