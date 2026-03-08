@@ -915,9 +915,6 @@ export default function Clients() {
                 {client.city && <span>{client.city}{client.state ? `, ${client.state}` : ""}</span>}
                 {client.phone && <span>{client.phone}</span>}
               </div>
-              <div className="flex gap-2 pt-1">
-                <Button variant="ghost" size="sm" className="text-destructive font-body" onClick={(e) => { e.stopPropagation(); if (confirm("Remover cliente?")) deleteMutation.mutate(client.id); }}>Excluir</Button>
-              </div>
             </div>
           ))
         )}
