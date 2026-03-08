@@ -92,7 +92,7 @@ export default function Clients() {
     mutationFn: async () => {
       const payload = {
         ...form,
-        preferred_airports: airportsInput.split(",").map(a => a.trim()).filter(Boolean),
+        preferred_airports: selectedAirports,
       } as TablesInsert<"clients">;
       if (editingClient) {
         const { error } = await supabase.from("clients").update(payload).eq("id", editingClient.id);
