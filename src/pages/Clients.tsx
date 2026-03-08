@@ -1232,7 +1232,7 @@ export default function Clients() {
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b border-border/50">
-                            <th className="text-left py-2 px-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Cia Aérea</th>
+                            <th className="text-left py-2 px-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Programa de Milhagem</th>
                             <th className="text-left py-2 px-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Nº Membro</th>
                             <th className="text-left py-2 px-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Usuário</th>
                             <th className="text-left py-2 px-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">E-mail</th>
@@ -1254,9 +1254,15 @@ export default function Clients() {
                                   if (airline?.mileage_program_name) n[mi].program_name = airline.mileage_program_name;
                                   setMilesPrograms(n);
                                 }}>
-                                  <SelectTrigger className="h-8 text-xs min-w-[140px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                  <SelectTrigger className="h-8 text-xs min-w-[200px]"><SelectValue placeholder="Selecione o programa" /></SelectTrigger>
                                   <SelectContent className="max-h-60">
-                                    {airlinesList.map((a: any) => (
+                                    {airlinesList.filter((a: any) => a.mileage_program_name).map((a: any) => (
+                                      <SelectItem key={a.id} value={a.name}>
+                                        <span className="font-medium">{a.mileage_program_name}</span>
+                                        <span className="text-muted-foreground ml-1">({a.iata_code ? `${a.iata_code} - ` : ""}{a.name})</span>
+                                      </SelectItem>
+                                    ))}
+                                    {airlinesList.filter((a: any) => !a.mileage_program_name).map((a: any) => (
                                       <SelectItem key={a.id} value={a.name}>
                                         {a.iata_code ? `${a.iata_code} - ` : ""}{a.name}
                                       </SelectItem>
