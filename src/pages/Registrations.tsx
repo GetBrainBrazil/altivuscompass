@@ -152,11 +152,11 @@ function AirportsTab() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-20">IATA</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Cidade</TableHead>
-                <TableHead className="hidden sm:table-cell">Estado</TableHead>
-                <TableHead>País</TableHead>
+                <SortableHead label="IATA" sortKey="iata_code" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} className="w-20" />
+                <SortableHead label="Nome" sortKey="name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
+                <SortableHead label="Cidade" sortKey="city" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
+                <SortableHead label="Estado" sortKey="state" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} className="hidden sm:table-cell" />
+                <SortableHead label="País" sortKey="country" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
                 {isAdmin && <TableHead className="w-24">Ações</TableHead>}
               </TableRow>
             </TableHeader>
