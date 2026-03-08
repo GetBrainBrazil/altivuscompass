@@ -212,8 +212,37 @@ export default function Finance() {
   const totalReceived = metricsReceivables.filter(t => t.status === "received" || t.status === "paid").reduce((s, t) => s + Number(t.amount), 0);
   const totalPaid = metricsPayables.filter(t => t.status === "paid").reduce((s, t) => s + Number(t.amount), 0);
 
+  // Date filter helper
+  const getDateRange = (): { from: string; to: string } | null => {
+    const today = new Date();
+    const fmt = (d: Date) => d.toISOString().split("T")[0];
+    const startOfWeek = (d: Date) => { const day = d.getDay(); const diff = d.getDate() - day + (day === 0 ? -6 : 1); return new Date(d.setDate(diff)); };
+    
+    switch (datePreset) {
+      case "today": return { from: fmt(today), to: fmt(today) };
+      case "yesterday": { const y = new Date(today); y.setDate(y.getDate() - 1); return { from: fmt(y), to: fmt(y) }; }
+      case "this_week": { const s = startOfWeek(new Date()); return { from: fmt(s), to: fmt(today) }; }
+      case "last_week": { const e = startOfWeek(new Date()); e.setDate(e.getDate() - 1); const s = new Date(e); s.setDate(s.getDate() - 6); return { from: fmt(s), to: fmt(e) }; }
+      case "this_month": { const s = new Date(today.getFullYear(), today.getMonth(), 1); return { from: fmt(s), to: fmt(today) }; }
+      case "last_month": { const e = new Date(today.getFullYear(), today.getMonth(), 0); const s = new Date(e.getFullYear(), e.getMonth(), 1); return { from: fmt(s), to: fmt(e) }; }
+      case "this_year": { const s = new Date(today.getFullYear(), 0, 1); return { from: fmt(s), to: fmt(today) }; }
+      case "custom": return customDateFrom || customDateTo ? { from: customDateFrom || "1900-01-01", to: customDateTo || "2100-12-31" } : null;
+      default: return null;
+    }
+  };
+
+  const dateRange = getDateRange();
+
   const typeFiltered = filter === "all" ? transactions : filter === "receivable" ? receivables : payables;
-  const filtered = accountFilter.size === 0 ? typeFiltered : typeFiltered.filter(t => t.payment_account && accountFilter.has(t.payment_account));
+  const accountFiltered = accountFilter.size === 0 ? typeFiltered : typeFiltered.filter(t => t.payment_account && accountFilter.has(t.payment_account));
+  const dateFiltered = dateRange ? accountFiltered.filter(t => t.date >= dateRange.from && t.date <= dateRange.to) : accountFiltered;
+  const searchLower = search.toLowerCase();
+  const filtered = search ? dateFiltered.filter(t => 
+    t.description.toLowerCase().includes(searchLower) ||
+    t.party_name?.toLowerCase().includes(searchLower) ||
+    t.observations?.toLowerCase().includes(searchLower) ||
+    categoryPathMap.get(t.category || "")?.toLowerCase().includes(searchLower)
+  ) : dateFiltered;
 
   // Calculate running balance
   const sortedFiltered = [...filtered].sort((a, b) => a.date.localeCompare(b.date) || a.created_at.localeCompare(b.created_at));
