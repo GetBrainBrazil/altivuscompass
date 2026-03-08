@@ -422,7 +422,7 @@ export default function Clients() {
         const { data: oldClient } = await supabase.from("clients").select("*").eq("id", editingId).single();
         const { error } = await supabase.from("clients").update(payload).eq("id", editingId);
         if (error) throw error;
-        logAuditEvent({ action: "update", tableName: "clients", recordId: editingId, oldData: oldClient, newData: payload });
+        logAuditEvent({ action: "update", tableName: "clients", recordId: editingId, recordLabel: oldClient?.full_name ?? payload.full_name, oldData: oldClient, newData: payload });
       } else {
         const { data, error } = await supabase.from("clients").insert(payload).select("id").single();
         if (error) throw error;
