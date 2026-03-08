@@ -427,7 +427,7 @@ export default function Clients() {
         const { data, error } = await supabase.from("clients").insert(payload).select("id").single();
         if (error) throw error;
         clientId = data.id;
-        logAuditEvent({ action: "create", tableName: "clients", recordId: data.id, newData: payload });
+        logAuditEvent({ action: "create", tableName: "clients", recordId: data.id, recordLabel: payload.full_name, newData: payload });
       }
 
       // Save multi-value records
