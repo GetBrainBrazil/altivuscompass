@@ -181,6 +181,47 @@ export type Database = {
           },
         ]
       }
+      client_passports: {
+        Row: {
+          client_id: string
+          created_at: string
+          expiry_date: string | null
+          id: string
+          issue_date: string | null
+          nationality: string | null
+          passport_number: string | null
+          status: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          issue_date?: string | null
+          nationality?: string | null
+          passport_number?: string | null
+          status?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          issue_date?: string | null
+          nationality?: string | null
+          passport_number?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_passports_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_phones: {
         Row: {
           client_id: string
@@ -247,23 +288,26 @@ export type Database = {
       }
       client_visas: {
         Row: {
-          client_id: string
+          client_id: string | null
           created_at: string
           id: string
+          passport_id: string | null
           validity_date: string | null
           visa_type: string
         }
         Insert: {
-          client_id: string
+          client_id?: string | null
           created_at?: string
           id?: string
+          passport_id?: string | null
           validity_date?: string | null
           visa_type: string
         }
         Update: {
-          client_id?: string
+          client_id?: string | null
           created_at?: string
           id?: string
+          passport_id?: string | null
           validity_date?: string | null
           visa_type?: string
         }
@@ -273,6 +317,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_visas_passport_id_fkey"
+            columns: ["passport_id"]
+            isOneToOne: false
+            referencedRelation: "client_passports"
             referencedColumns: ["id"]
           },
         ]
