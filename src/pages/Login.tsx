@@ -18,6 +18,20 @@ function ForgotPasswordDialog() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    // Verify email exists in profiles table
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", email.trim())
+      .maybeSingle();
+
+    if (!profile) {
+      setLoading(false);
+      toast({ title: "E-mail não encontrado", description: "Nenhum usuário cadastrado com este e-mail.", variant: "destructive" });
+      return;
+    }
+
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${window.location.origin}/reset-password`,
     });
