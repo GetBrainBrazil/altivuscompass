@@ -413,7 +413,10 @@ export default function SuppliersTab() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {s.category ? <Badge variant="secondary" className="font-body text-xs">{s.category}</Badge> : <span className="text-muted-foreground">—</span>}
+                      {Array.isArray(s.category) && s.category.length > 0
+                        ? <div className="flex flex-wrap gap-1">{s.category.map((c: string) => <Badge key={c} variant="secondary" className="font-body text-xs">{c}</Badge>)}</div>
+                        : <span className="text-muted-foreground">—</span>}
+
                     </TableCell>
                     <TableCell className="hidden sm:table-cell text-muted-foreground">{s.city || "—"}</TableCell>
                     <TableCell className="hidden md:table-cell text-muted-foreground">{s.contact_person || "—"}</TableCell>
