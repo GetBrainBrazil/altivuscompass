@@ -68,6 +68,11 @@ type PassportEntry = {
   image_urls: string[]; _imageFiles?: File[];
 };
 
+const RELATIONSHIP_LABELS: Record<string, string> = {
+  spouse: "Cônjuge", child: "Filho(a)", parent: "Pai/Mãe", employee: "Funcionário(a)",
+  partner: "Sócio(a)", sibling: "Irmão(ã)", other: "Outro",
+};
+
 const SOCIAL_NETWORKS = ["Instagram", "Facebook", "LinkedIn", "Twitter/X", "TikTok", "YouTube", "Outro"];
 const MARITAL_STATUSES = ["Solteiro(a)", "Casado(a)", "Separado(a)", "Divorciado(a)", "Viúvo(a)"];
 
