@@ -558,7 +558,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
               </thead>
               <tbody className="divide-y divide-border/30">
                 {sortedRels.map((r: any) => (
-                  <tr key={r.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => { setEditingRel(r); setEditRelType(r.relationship_type); setEditRelDialog(true); }}>
+                  <tr key={r.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => { setEditingRel(r); setEditRelType(r._display_type); setEditRelDialog(true); }}>
                     <td className="p-3">
                       <div className="flex items-center gap-2">
                         <button
@@ -573,7 +573,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                     </td>
                     <td className="p-3">
                       <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary font-body">
-                        {RELATIONSHIP_TYPES[r.relationship_type] || r.relationship_label || r.relationship_type}
+                        {r._type}
                       </span>
                     </td>
                     <td className="p-3 text-sm font-body text-foreground">{r.client?.birth_date ? new Date(r.client.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
