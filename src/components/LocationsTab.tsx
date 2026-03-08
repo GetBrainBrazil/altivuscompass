@@ -247,8 +247,10 @@ function StatesSubTab() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      const item = states.find((s: any) => s.id === id);
       const { error } = await supabase.from("states").delete().eq("id", id);
       if (error) throw error;
+      await logAuditEvent({ action: "delete", tableName: "states", recordId: id, recordLabel: item?.name ?? id, oldData: item });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["locations-states"] });
