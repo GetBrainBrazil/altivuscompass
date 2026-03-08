@@ -146,7 +146,7 @@ export default function ChartOfAccountsTab() {
     setEditing(c);
     setForm({
       name: c.name, code: c.code ?? "", type: c.type, parent_id: c.parent_id ?? "",
-      description: c.description ?? "", is_active: c.is_active,
+      description: c.description ?? "", is_active: c.is_active, account_nature: c.account_nature || "analytic",
     });
     setDialogOpen(true);
   };
