@@ -590,6 +590,7 @@ export default function Clients() {
     });
     setSelectedAirports(c.preferred_airports ?? []);
     setSelectedTags(c.tags ?? []);
+    setSelectedDestinations((c as any).desired_destinations ?? []);
     setView("form");
   };
 
