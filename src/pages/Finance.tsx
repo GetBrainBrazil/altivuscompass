@@ -46,6 +46,7 @@ export default function Finance() {
   const [partyPopoverOpen, setPartyPopoverOpen] = useState(false);
   const [accountFilter, setAccountFilter] = useState<Set<string>>(new Set());
   const [accountFilterOpen, setAccountFilterOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { data: clients = [] } = useQuery({
     queryKey: ["clients-list"],
