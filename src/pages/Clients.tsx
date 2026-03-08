@@ -343,7 +343,7 @@ export default function Clients() {
   };
 
   const openCreate = () => {
-    setEditingId(null); setForm(emptyForm); setSelectedAirports([]);
+    setEditingId(null); setForm(emptyForm); setSelectedAirports([]); setActiveTab("contact");
     setPhones([]); setEmails([]); setSocials([]); setPassports([]); 
     setView("form");
   };
