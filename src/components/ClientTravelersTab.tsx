@@ -664,6 +664,18 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
               <Label className="font-body text-xs">Nome completo *</Label>
               <Input value={passengerForm.full_name} onChange={(e) => setPassengerForm({ ...passengerForm, full_name: e.target.value })} className="h-9" />
             </div>
+            <div>
+              <Label className="font-body text-xs">Vínculo com o cliente</Label>
+              <Select value={passengerForm.relationship_type || "none"} onValueChange={(v) => setPassengerForm({ ...passengerForm, relationship_type: v === "none" ? "" : v })}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Não definido</SelectItem>
+                  {Object.entries(RELATIONSHIP_TYPES).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="font-body text-xs">Nascimento</Label>
