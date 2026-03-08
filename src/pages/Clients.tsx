@@ -313,7 +313,7 @@ export default function Clients() {
 
   const openCreate = () => {
     setEditingId(null); setForm(emptyForm); setSelectedAirports([]);
-    setPhones([]); setEmails([]); setSocials([]); setPassports([]);
+    setPhones([]); setEmails([]); setSocials([]); setPassports([]); 
     setView("form");
   };
 
