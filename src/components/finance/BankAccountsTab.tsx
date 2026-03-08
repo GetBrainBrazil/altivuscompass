@@ -20,7 +20,7 @@ type BankAccount = {
 };
 
 const accountTypeLabels: Record<string, string> = {
-  checking: "Conta Corrente", savings: "Conta Poupança", salary: "Conta Salário", payment: "Conta Pagamento",
+  checking: "Conta Corrente", savings: "Conta Poupança", salary: "Conta Salário", payment: "Conta Pagamento", petty_cash: "Caixinha",
 };
 
 type SortDir = "asc" | "desc" | null;
