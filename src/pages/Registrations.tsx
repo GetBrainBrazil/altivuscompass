@@ -300,7 +300,7 @@ function AirlinesTab() {
                   <div><Label>País</Label><Input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} placeholder="Brasil" /></div>
                   <div><Label>Programa de Milhagem</Label><Input value={form.mileage_program_name} onChange={(e) => setForm({ ...form, mileage_program_name: e.target.value })} placeholder="LATAM Pass" /></div>
                 </div>
-                <Button onClick={() => saveMutation.mutate()} disabled={!form.name}>
+                <Button onClick={() => saveMutation.mutate()} disabled={!form.name || !form.country}>
                   {editing ? "Salvar" : "Adicionar"}
                 </Button>
               </div>
