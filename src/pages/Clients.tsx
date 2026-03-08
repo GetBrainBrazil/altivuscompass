@@ -636,6 +636,57 @@ export default function Clients() {
                 <Label className="font-body text-xs">Site</Label>
                 <Input value={form.website} onChange={(e) => upd("website", e.target.value)} placeholder="https://" className="h-9" />
               </div>
+              <div className="col-span-12 sm:col-span-6 space-y-1">
+                <Label className="font-body text-xs">Etiquetas</Label>
+                <Popover open={tagPopoverOpen} onOpenChange={setTagPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button type="button" variant="outline" className="w-full h-auto min-h-9 justify-start font-normal px-3 py-1.5">
+                      {selectedTags.length === 0 ? (
+                        <span className="text-muted-foreground text-sm">Selecionar etiquetas...</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {selectedTags.map((tag) => {
+                            const tagObj = availableTags.find((t: any) => t.name === tag);
+                            const colorClass = TAG_COLORS[tagObj?.color ?? ""] ?? "bg-primary/10 text-primary";
+                            return (
+                              <span key={tag} className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${colorClass}`}>
+                                {tag}
+                                <button type="button" className="ml-1 hover:opacity-70" onClick={(e) => { e.stopPropagation(); setSelectedTags(selectedTags.filter(t => t !== tag)); }}>×</button>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
+                      <ChevronsUpDown className="h-3.5 w-3.5 ml-auto shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-2" align="start">
+                    <div className="space-y-1 max-h-48 overflow-y-auto">
+                      {availableTags.length === 0 ? (
+                        <p className="text-xs text-muted-foreground p-2">Nenhuma etiqueta cadastrada. Crie em Cadastros → Etiquetas.</p>
+                      ) : (
+                        availableTags.map((t: any) => {
+                          const isSelected = selectedTags.includes(t.name);
+                          const colorClass = TAG_COLORS[t.color ?? ""] ?? "bg-primary/10 text-primary";
+                          return (
+                            <button
+                              key={t.id}
+                              type="button"
+                              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm font-body hover:bg-muted/50 transition-colors ${isSelected ? "bg-muted/30" : ""}`}
+                              onClick={() => {
+                                setSelectedTags(isSelected ? selectedTags.filter(tag => tag !== t.name) : [...selectedTags, t.name]);
+                              }}
+                            >
+                              <Checkbox checked={isSelected} className="pointer-events-none" />
+                              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${colorClass}`}>{t.name}</span>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
           </div>
 
