@@ -443,6 +443,7 @@ function CitiesSubTab() {
     ...c,
     country_name: c.countries?.name ?? "",
     state_name: c.states?.name ?? "",
+    continent_name: (continentMap as Record<string, string>)[c.country_id] ?? "",
   }));
   const filtered = sortData(
     enriched.filter((c: any) => {
