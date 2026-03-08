@@ -236,6 +236,11 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
   const promoteMutation = useMutation({
     mutationFn: async () => {
       if (!promotePassenger || !clientId) return;
+      // Build notes for the new client
+      const notesText = promotePassenger.notes
+        ? `[Obs. de passageiro]: ${promotePassenger.notes}`
+        : null;
+
       // Create new client
       const { data: newClient, error: clientErr } = await supabase.from("clients").insert({
         full_name: promotePassenger.full_name,
@@ -243,6 +248,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         nationality: promotePassenger.nationality || null,
         passport_number: promotePassenger.passport_number || null,
         passport_status: promotePassenger.passport_number ? "valid" : "none",
+        notes: notesText,
       }).select("id").single();
       if (clientErr) throw clientErr;
 
@@ -253,10 +259,16 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         relationship_type: promoteRelType as any,
       });
 
+      // Delete the passenger record
+      if (promotePassenger.id) {
+        await supabase.from("passengers").delete().eq("id", promotePassenger.id);
+      }
+
       return newClient.id;
     },
     onSuccess: () => {
       toast({ title: "Passageiro promovido a cliente com sucesso!" });
+      qc.invalidateQueries({ queryKey: ["client-passengers", clientId] });
       qc.invalidateQueries({ queryKey: ["client-relationships", clientId] });
       qc.invalidateQueries({ queryKey: ["clients"] });
       setPromotePassenger(null);
