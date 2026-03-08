@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import BankAccountCredentials from "./BankAccountCredentials";
+import { logAuditEvent } from "@/lib/audit";
 
 type BankAccount = {
   id: string; bank_name: string; agency: string | null; account_number: string | null;
