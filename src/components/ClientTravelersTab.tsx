@@ -298,7 +298,22 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     },
   });
 
-  // Promote passenger to client
+  // Update relationship type mutation
+  const updateRelMutation = useMutation({
+    mutationFn: async ({ id, type }: { id: string; type: string }) => {
+      const { error } = await supabase.from("client_relationships").update({ relationship_type: type as any }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Vínculo atualizado" });
+      qc.invalidateQueries({ queryKey: ["client-relationships", clientId] });
+      setEditRelDialog(false);
+      setEditingRel(null);
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+
   const promoteMutation = useMutation({
     mutationFn: async () => {
       if (!promotePassenger || !clientId) return;
