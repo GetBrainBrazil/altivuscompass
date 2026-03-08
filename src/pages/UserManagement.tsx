@@ -452,9 +452,13 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
                     </div>
                     <div className="space-y-2">
                       <Label className="font-body">Telefone</Label>
-                      <Input value={editForm.emergency_contact_phone ?? ""} onChange={(e) => setEditForm({ ...editForm, emergency_contact_phone: e.target.value })} />
+                      <Input value={formatPhone(editForm.emergency_contact_phone ?? "")} onChange={(e) => setEditForm({ ...editForm, emergency_contact_phone: e.target.value.replace(/\D/g, "").slice(0, 11) })} placeholder="(11) 99999-9999" />
                     </div>
                   </div>
+                </div>
+                <div className="border-t pt-4 space-y-2">
+                  <Label className="font-body">Plano de Saúde</Label>
+                  <Input value={editForm.health_plan ?? ""} onChange={(e) => setEditForm({ ...editForm, health_plan: e.target.value })} placeholder="Ex: Unimed, SulAmérica" />
                 </div>
                 <Button type="submit" className="w-full font-body" disabled={updateUserMutation.isPending}>
                   {updateUserMutation.isPending ? "Salvando..." : "Salvar Alterações"}
