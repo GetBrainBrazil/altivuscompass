@@ -734,6 +734,14 @@ export default function Clients() {
                   </div>
                 </div>
               </TabsContent>
+
+              {/* Observations Tab */}
+              <TabsContent value="observations" className="pt-3">
+                <div className="space-y-1">
+                  <Label className="font-body text-xs">Observações gerais</Label>
+                  <Textarea value={form.notes} onChange={(e) => upd("notes", e.target.value)} rows={4} placeholder="Anotações sobre o cliente..." />
+                </div>
+              </TabsContent>
             </Tabs>
           </div>
 
