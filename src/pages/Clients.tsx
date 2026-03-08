@@ -186,7 +186,15 @@ export default function Clients() {
   // Populate multi-value state when editing data loads
   useEffect(() => {
     if (editingId) {
-      setPhones(clientPhones.map((p: any) => ({ id: p.id, phone: p.phone, description: p.description ?? "" })));
+      setPhones(clientPhones.map((p: any) => {
+        // Try to detect country code from stored phone
+        const stored = p.phone ?? "";
+        const match = COUNTRY_CODES.find((c) => stored.startsWith(c.dial));
+        const dialCode = match ? match.dial : "+55";
+        const localPart = match ? stored.slice(match.dial.length).trim() : stored;
+        const cc = COUNTRY_CODES.find((c) => c.dial === dialCode);
+        return { id: p.id, phone: cc ? applyPhoneMask(localPart, cc.mask) : localPart, description: p.description ?? "", country_code: dialCode };
+      }));
     }
   }, [clientPhones, editingId]);
   useEffect(() => {
