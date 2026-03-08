@@ -189,6 +189,7 @@ export default function ChartOfAccountsTab() {
                 <th className="p-4 text-left">
                   <SortHeader label="Tipo" active={sortKey === "type"} direction={sortKey === "type" ? sortDir : null} onClick={() => toggleSort("type")} />
                 </th>
+                <th className="p-4 text-left font-medium text-xs uppercase tracking-wider text-muted-foreground">Natureza</th>
                 <th className="p-4 text-left font-medium text-xs uppercase tracking-wider text-muted-foreground">Status</th>
                 <th className="p-4 text-right font-medium text-xs uppercase tracking-wider text-muted-foreground">Ações</th>
               </tr>
