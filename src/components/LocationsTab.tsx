@@ -49,7 +49,7 @@ function SortableHead({ label, sortKey, sort, onSort, className }: { label: stri
 
 // ── Hooks for shared data ──
 
-export function useContinentCountries() {
+function useContinentMap() {
   return useQuery({
     queryKey: ["continent-countries-map"],
     queryFn: async () => {
