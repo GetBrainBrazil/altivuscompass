@@ -210,54 +210,46 @@ export default function SuppliersTab() {
             <DialogTrigger asChild>
               <Button size="sm">+ Fornecedor</Button>
             </DialogTrigger>
-            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
+            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl">
               <DialogHeader><DialogTitle className="font-display">{editing ? "Editar Fornecedor" : "Novo Fornecedor"}</DialogTitle></DialogHeader>
 
-              {/* ── Dados Principais (topo, 4 colunas) ── */}
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div className="space-y-2 col-span-2">
-                    <Label className="font-body">Razão Social <span className="text-destructive">*</span></Label>
-                    <Input value={form.name} onChange={set("name")} placeholder="Nome da empresa" />
+              {/* ── Dados Principais ── */}
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <div className="space-y-1 col-span-2">
+                    <Label className="font-body text-xs">Razão Social <span className="text-destructive">*</span></Label>
+                    <Input value={form.name} onChange={set("name")} placeholder="Nome da empresa" className="h-9" />
                   </div>
-                  <div className="space-y-2 col-span-2">
-                    <Label className="font-body">Nome Fantasia</Label>
-                    <Input value={form.trade_name} onChange={set("trade_name")} />
+                  <div className="space-y-1">
+                    <Label className="font-body text-xs">Nome Fantasia</Label>
+                    <Input value={form.trade_name} onChange={set("trade_name")} className="h-9" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="font-body text-xs">CNPJ/CPF</Label>
+                    <Input value={form.document_number} onChange={set("document_number")} className="h-9" />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div className="space-y-2">
-                    <Label className="font-body">CNPJ/CPF</Label>
-                    <Input value={form.document_number} onChange={set("document_number")} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-body">Tipo</Label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <div className="space-y-1">
+                    <Label className="font-body text-xs">Tipo</Label>
                     <Select value={form.supplier_type} onValueChange={(v) => setForm(f => ({ ...f, supplier_type: v }))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="company">Pessoa Jurídica</SelectItem>
                         <SelectItem value="individual">Pessoa Física</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="font-body">Website</Label>
-                    <Input value={form.website} onChange={set("website")} placeholder="https://" />
+                  <div className="space-y-1">
+                    <Label className="font-body text-xs">Website</Label>
+                    <Input value={form.website} onChange={set("website")} placeholder="https://" className="h-9" />
                   </div>
-                  {editing ? (
-                    <div className="flex items-center gap-3 pt-6">
-                      <Switch checked={form.is_active} onCheckedChange={(v) => setForm(f => ({ ...f, is_active: v }))} />
-                      <Label className="font-body">{form.is_active ? "Ativo" : "Inativo"}</Label>
-                    </div>
-                  ) : <div />}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-1.5">
-                      <Label className="font-body">Serviços</Label>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1">
+                      <Label className="font-body text-xs">Serviços</Label>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                          <Info className="h-3 w-3 text-muted-foreground cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent side="right" className="max-w-xs text-xs font-body space-y-1 p-3">
                           {SUPPLIER_CATEGORIES.filter(c => c.label !== "Outro").map(c => (
@@ -268,10 +260,10 @@ export default function SuppliersTab() {
                     </div>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start font-normal h-auto min-h-10 text-left">
+                        <Button variant="outline" className="w-full justify-start font-normal h-auto min-h-9 text-left text-xs">
                           {form.categories.length > 0
-                            ? <div className="flex flex-wrap gap-1">{form.categories.map(c => <Badge key={c} variant="secondary" className="text-xs font-body">{c}</Badge>)}</div>
-                            : <span className="text-muted-foreground">Selecione os serviços</span>}
+                            ? <div className="flex flex-wrap gap-1">{form.categories.map(c => <Badge key={c} variant="secondary" className="text-[10px] font-body px-1.5 py-0">{c}</Badge>)}</div>
+                            : <span className="text-muted-foreground">Selecione</span>}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-72 p-2" align="start">
@@ -292,99 +284,104 @@ export default function SuppliersTab() {
                       </PopoverContent>
                     </Popover>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="font-body">Observações</Label>
-                    <Textarea value={form.notes} onChange={set("notes")} rows={2} />
-                  </div>
+                  {editing ? (
+                    <div className="flex items-center gap-2 pt-5">
+                      <Switch checked={form.is_active} onCheckedChange={(v) => setForm(f => ({ ...f, is_active: v }))} />
+                      <Label className="font-body text-xs">{form.is_active ? "Ativo" : "Inativo"}</Label>
+                    </div>
+                  ) : <div />}
+                </div>
+                <div className="space-y-1">
+                  <Label className="font-body text-xs">Observações</Label>
+                  <Textarea value={form.notes} onChange={set("notes")} rows={2} className="text-sm" />
                 </div>
               </div>
 
-              {/* ── Abas (Contato + Endereço) ── */}
-              <Tabs defaultValue="contato" className="w-full mt-2">
+              {/* ── Abas ── */}
+              <Tabs defaultValue="contato" className="w-full mt-1">
                 <TabsList className="w-full grid grid-cols-2">
                   <TabsTrigger value="contato" className="font-body text-xs">Contato</TabsTrigger>
                   <TabsTrigger value="endereco" className="font-body text-xs">Endereço</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="contato" className="space-y-4 mt-4">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="space-y-2 col-span-2">
-                      <Label className="font-body">E-mail</Label>
-                      <Input type="email" value={form.email} onChange={set("email")} />
+                <TabsContent value="contato" className="space-y-3 mt-3">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <div className="space-y-1 col-span-2">
+                      <Label className="font-body text-xs">E-mail</Label>
+                      <Input type="email" value={form.email} onChange={set("email")} className="h-9" />
                     </div>
-                    <div className="space-y-2 col-span-2">
-                      <Label className="font-body">Telefone</Label>
-                      <Input value={formatPhone(form.phone)} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value.replace(/\D/g, "").slice(0, 11) }))} placeholder="(11) 99999-9999" />
+                    <div className="space-y-1 col-span-2">
+                      <Label className="font-body text-xs">Telefone</Label>
+                      <Input value={formatPhone(form.phone)} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value.replace(/\D/g, "").slice(0, 11) }))} placeholder="(11) 99999-9999" className="h-9" />
                     </div>
                   </div>
-                  <div className="border-t pt-4 space-y-4">
-                    <h4 className="text-sm font-semibold font-body text-foreground">Pessoa de Contato</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      <div className="space-y-2 col-span-2">
-                        <Label className="font-body">Nome</Label>
-                        <Input value={form.contact_person} onChange={set("contact_person")} />
+                  <div className="border-t pt-3 space-y-3">
+                    <h4 className="text-xs font-semibold font-body text-foreground">Pessoa de Contato</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      <div className="space-y-1 col-span-2">
+                        <Label className="font-body text-xs">Nome</Label>
+                        <Input value={form.contact_person} onChange={set("contact_person")} className="h-9" />
                       </div>
-                      <div className="space-y-2 col-span-2">
-                        <Label className="font-body">Telefone</Label>
-                        <Input value={formatPhone(form.contact_phone)} onChange={(e) => setForm(f => ({ ...f, contact_phone: e.target.value.replace(/\D/g, "").slice(0, 11) }))} placeholder="(11) 99999-9999" />
+                      <div className="space-y-1 col-span-2">
+                        <Label className="font-body text-xs">Telefone</Label>
+                        <Input value={formatPhone(form.contact_phone)} onChange={(e) => setForm(f => ({ ...f, contact_phone: e.target.value.replace(/\D/g, "").slice(0, 11) }))} placeholder="(11) 99999-9999" className="h-9" />
                       </div>
                     </div>
                   </div>
                 </TabsContent>
 
-                <TabsContent value="endereco" className="space-y-4 mt-4">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="space-y-2">
-                      <Label className="font-body">CEP</Label>
-                      <Input value={form.cep} onChange={set("cep")} onBlur={handleCepBlur} placeholder="00000-000" maxLength={9} />
-                      {loadingCep && <p className="text-xs text-muted-foreground">Buscando...</p>}
+                <TabsContent value="endereco" className="space-y-3 mt-3">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <div className="space-y-1">
+                      <Label className="font-body text-xs">CEP</Label>
+                      <Input value={form.cep} onChange={set("cep")} onBlur={handleCepBlur} placeholder="00000-000" maxLength={9} className="h-9" />
+                      {loadingCep && <p className="text-[10px] text-muted-foreground">Buscando...</p>}
                     </div>
-                    <div className="space-y-2">
-                      <Label className="font-body">País</Label>
-                      <Input value={form.country} onChange={set("country")} />
+                    <div className="space-y-1">
+                      <Label className="font-body text-xs">País</Label>
+                      <Input value={form.country} onChange={set("country")} className="h-9" />
                     </div>
-                    <div className="space-y-2">
-                      <Label className="font-body">Estado</Label>
-                      <Input value={form.state} onChange={set("state")} />
+                    <div className="space-y-1">
+                      <Label className="font-body text-xs">Estado</Label>
+                      <Input value={form.state} onChange={set("state")} className="h-9" />
                     </div>
-                    <div className="space-y-2">
-                      <Label className="font-body">Cidade</Label>
-                      <Input value={form.city} onChange={set("city")} />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="space-y-2 col-span-2">
-                      <Label className="font-body">Endereço</Label>
-                      <Input value={form.address_street} onChange={set("address_street")} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="font-body">Número</Label>
-                      <Input value={form.address_number} onChange={set("address_number")} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="font-body">Complemento</Label>
-                      <Input value={form.address_complement} onChange={set("address_complement")} />
+                    <div className="space-y-1">
+                      <Label className="font-body text-xs">Cidade</Label>
+                      <Input value={form.city} onChange={set("city")} className="h-9" />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="space-y-2 col-span-2">
-                      <Label className="font-body">Bairro</Label>
-                      <Input value={form.neighborhood} onChange={set("neighborhood")} />
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <div className="space-y-1 col-span-2">
+                      <Label className="font-body text-xs">Endereço</Label>
+                      <Input value={form.address_street} onChange={set("address_street")} className="h-9" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="font-body text-xs">Número</Label>
+                      <Input value={form.address_number} onChange={set("address_number")} className="h-9" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="font-body text-xs">Complemento</Label>
+                      <Input value={form.address_complement} onChange={set("address_complement")} className="h-9" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <div className="space-y-1 col-span-2">
+                      <Label className="font-body text-xs">Bairro</Label>
+                      <Input value={form.neighborhood} onChange={set("neighborhood")} className="h-9" />
                     </div>
                   </div>
                 </TabsContent>
               </Tabs>
 
-              <div className="flex flex-col gap-3 mt-4">
+              <div className="flex flex-col gap-2 mt-3">
                 <Button onClick={() => saveMutation.mutate()} disabled={!form.name || saveMutation.isPending} className="w-full font-body">
                   {saveMutation.isPending ? "Salvando..." : editing ? "Salvar Alterações" : "Adicionar Fornecedor"}
                 </Button>
-
                 {editing && (
-                  <div className="border-t pt-3">
+                  <div className="border-t pt-2">
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button type="button" variant="ghost" className="w-full text-destructive hover:text-destructive font-body">
+                        <Button type="button" variant="ghost" size="sm" className="w-full text-destructive hover:text-destructive font-body">
                           Excluir Fornecedor
                         </Button>
                       </AlertDialogTrigger>
