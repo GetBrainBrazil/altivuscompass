@@ -506,7 +506,7 @@ export default function Clients() {
 
           {/* ====== LOWER SECTION: Tabs ====== */}
           <div className="glass-card rounded-xl p-4">
-            <Tabs defaultValue="contact">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="w-full justify-start">
                 <TabsTrigger value="contact" className="font-body text-xs">Contato</TabsTrigger>
                 <TabsTrigger value="preferences" className="font-body text-xs">Preferências</TabsTrigger>
