@@ -442,14 +442,20 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
   };
 
   const sortedRelationships = useMemo(() => {
-    return relationships.map((r: any) => ({
-      ...r,
-      _name: r.client?.full_name ?? "",
-      _type: RELATIONSHIP_TYPES[r.relationship_type] || r.relationship_type,
-      _birth_date: r.client?.birth_date ?? "",
-      _nationality: r.client?.nationality ?? "",
-      _passports: (r.passports ?? []).map((p: any) => p.passport_number).filter(Boolean).join(", "),
-    }));
+    return relationships.map((r: any) => {
+      const displayType = r.inverted
+        ? (INVERSE_RELATIONSHIP[r.relationship_type] || r.relationship_type)
+        : r.relationship_type;
+      return {
+        ...r,
+        _name: r.client?.full_name ?? "",
+        _display_type: displayType,
+        _type: RELATIONSHIP_TYPES[displayType] || displayType,
+        _birth_date: r.client?.birth_date ?? "",
+        _nationality: r.client?.nationality ?? "",
+        _passports: (r.passports ?? []).map((p: any) => p.passport_number).filter(Boolean).join(", "),
+      };
+    });
   }, [relationships]);
 
   const { sorted: sortedPassengers, sort: passengerSort, toggleSort: togglePassengerSort } = useSortableData(passengers);
