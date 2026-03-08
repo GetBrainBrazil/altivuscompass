@@ -398,14 +398,16 @@ export default function Registrations() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-display font-bold text-foreground">Cadastros</h1>
-        <p className="text-sm text-muted-foreground mt-1">Gerencie aeroportos, companhias aéreas e programas de milhagem</p>
+        <p className="text-sm text-muted-foreground mt-1">Gerencie localidades, aeroportos, companhias aéreas e programas de milhagem</p>
       </div>
 
-      <Tabs defaultValue="airports" className="space-y-4">
+      <Tabs defaultValue="locations" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="locations">Localidades</TabsTrigger>
           <TabsTrigger value="airports">Aeroportos</TabsTrigger>
           <TabsTrigger value="airlines">Cias Aéreas & Programas</TabsTrigger>
         </TabsList>
+        <TabsContent value="locations"><LocationsTab /></TabsContent>
         <TabsContent value="airports"><AirportsTab /></TabsContent>
         <TabsContent value="airlines"><AirlinesTab /></TabsContent>
       </Tabs>
