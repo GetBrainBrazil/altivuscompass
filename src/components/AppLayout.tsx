@@ -306,6 +306,79 @@ export function AppLayout({ children }: AppLayoutProps) {
           </main>
         </div>
       </div>
+
+      {/* Mobile impersonation dialog */}
+      {isRealAdmin && (
+        <Dialog open={impersonateDialogOpen} onOpenChange={setImpersonateDialogOpen}>
+          <DialogContent className="max-w-sm max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="font-display text-lg">Ver como...</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 pt-2">
+              {isImpersonating && (
+                <button
+                  onClick={() => { clearImpersonation(); setImpersonateDialogOpen(false); }}
+                  className="w-full text-left px-3 py-2 rounded-lg font-medium text-primary hover:bg-muted transition-colors text-sm font-body"
+                >
+                  ✓ Voltar ao Admin
+                </button>
+              )}
+
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold px-3">Por Função</p>
+              {!impersonatingRole && !impersonatingUser && (
+                <p className="text-xs text-muted-foreground px-3">Administrador (atual)</p>
+              )}
+              {IMPERSONATABLE_ROLES.map((role) => (
+                <button
+                  key={role}
+                  onClick={() => { setImpersonatingRole(role); setImpersonateDialogOpen(false); }}
+                  className={`w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors text-sm font-body ${impersonatingRole === role ? "font-medium text-primary" : "text-foreground"}`}
+                >
+                  {impersonatingRole === role && "✓ "}{ROLE_LABELS[role]}
+                </button>
+              ))}
+
+              <div className="border-t border-border my-2" />
+
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold px-3">Por Usuário</p>
+              <div className="px-3">
+                <div className="relative">
+                  <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar usuário..."
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    className="h-8 text-xs pl-7"
+                  />
+                </div>
+              </div>
+              <div className="max-h-48 overflow-y-auto space-y-0.5">
+                {filteredUsers.length === 0 ? (
+                  <p className="text-xs text-muted-foreground px-3 py-2">Nenhum usuário encontrado</p>
+                ) : (
+                  filteredUsers.map((u) => {
+                    const isActive = impersonatingUser?.userId === u.user_id;
+                    const roleLabel = ROLE_LABELS[u.role] ?? u.role;
+                    return (
+                      <button
+                        key={u.user_id}
+                        onClick={() => {
+                          setImpersonatingUser({ userId: u.user_id, fullName: u.full_name, role: u.role });
+                          setImpersonateDialogOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors text-xs font-body ${isActive ? "font-medium text-primary" : "text-foreground"}`}
+                      >
+                        {isActive && "✓ "}{u.full_name}
+                        {roleLabel && <span className="text-muted-foreground ml-1">— {roleLabel}</span>}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </SidebarProvider>
   );
 }
