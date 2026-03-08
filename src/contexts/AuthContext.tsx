@@ -2,13 +2,21 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+interface ImpersonatingUser {
+  userId: string;
+  fullName: string;
+  role: string;
+}
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   userRole: string | null;
   realRole: string | null;
   impersonatingRole: string | null;
+  impersonatingUser: ImpersonatingUser | null;
   setImpersonatingRole: (role: string | null) => void;
+  setImpersonatingUser: (user: ImpersonatingUser | null) => void;
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -19,7 +27,9 @@ const AuthContext = createContext<AuthContextType>({
   userRole: null,
   realRole: null,
   impersonatingRole: null,
+  impersonatingUser: null,
   setImpersonatingRole: () => {},
+  setImpersonatingUser: () => {},
   loading: true,
   signOut: async () => {},
 });
@@ -30,10 +40,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [realRole, setRealRole] = useState<string | null>(null);
-  const [impersonatingRole, setImpersonatingRole] = useState<string | null>(null);
+  const [impersonatingRole, setImpersonatingRoleState] = useState<string | null>(null);
+  const [impersonatingUser, setImpersonatingUserState] = useState<ImpersonatingUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const userRole = impersonatingRole ?? realRole;
+  // When impersonating a user, use that user's role; otherwise use role override or real role
+  const userRole = impersonatingUser?.role ?? impersonatingRole ?? realRole;
+
+  const setImpersonatingRole = (role: string | null) => {
+    setImpersonatingRoleState(role);
+    setImpersonatingUserState(null); // clear user impersonation when switching to role
+  };
+
+  const setImpersonatingUser = (u: ImpersonatingUser | null) => {
+    setImpersonatingUserState(u);
+    setImpersonatingRoleState(null); // clear role impersonation when switching to user
+  };
 
   const fetchUserRole = async (userId: string) => {
     const { data } = await supabase
@@ -53,7 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setTimeout(() => fetchUserRole(session.user.id), 0);
         } else {
           setRealRole(null);
-          setImpersonatingRole(null);
+          setImpersonatingRoleState(null);
+          setImpersonatingUserState(null);
         }
         setLoading(false);
       }
@@ -76,11 +99,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setUser(null);
     setRealRole(null);
-    setImpersonatingRole(null);
+    setImpersonatingRoleState(null);
+    setImpersonatingUserState(null);
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, userRole, realRole, impersonatingRole, setImpersonatingRole, loading, signOut }}>
+    <AuthContext.Provider value={{ session, user, userRole, realRole, impersonatingRole, impersonatingUser, setImpersonatingRole, setImpersonatingUser, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );
