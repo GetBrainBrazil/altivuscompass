@@ -295,7 +295,9 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       ...r,
       _name: r.client?.full_name ?? "",
       _type: RELATIONSHIP_TYPES[r.relationship_type] || r.relationship_type,
-      _location: r.client?.city ? `${r.client.city}${r.client.state ? `, ${r.client.state}` : ""}` : "",
+      _birth_date: r.client?.birth_date ?? "",
+      _nationality: r.client?.nationality ?? "",
+      _passport: r.client?.passport_number ?? "",
     }));
   }, [relationships]);
 
