@@ -232,34 +232,56 @@ export default function Clients() {
                   <Input value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                 </div>
                 <div className="space-y-2">
-                  <Label className="font-body">País</Label>
-                  <Select value={form.country ?? "Brasil"} onValueChange={(v) => setForm({ ...form, country: v, state: "" })}>
+                  <div className="flex items-center justify-between">
+                    <Label className="font-body">País</Label>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => { setQuickAddType("country"); setQuickAddName(""); }}>
+                      <Plus className="h-3 w-3 mr-1" />Novo
+                    </Button>
+                  </div>
+                  <Select value={form.country ?? "Brasil"} onValueChange={(v) => setForm({ ...form, country: v, state: "", city: "" })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent className="max-h-60">
-                      {COUNTRY_LIST.map((c) => (
-                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      {dbCountries.map((c: any) => (
+                        <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="font-body">Estado / Região</Label>
-                  {(COUNTRIES_STATES[form.country ?? "Brasil"] ?? []).length > 0 ? (
-                    <Select value={form.state ?? ""} onValueChange={(v) => setForm({ ...form, state: v })}>
-                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                      <SelectContent className="max-h-60">
-                        {(COUNTRIES_STATES[form.country ?? "Brasil"] ?? []).map((s) => (
-                          <SelectItem key={s} value={s}>{s}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Input value={form.state ?? ""} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="Digite o estado/região" />
-                  )}
+                  <div className="flex items-center justify-between">
+                    <Label className="font-body">Estado / Região</Label>
+                    {selectedCountryObj && (
+                      <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => { setQuickAddType("state"); setQuickAddName(""); }}>
+                        <Plus className="h-3 w-3 mr-1" />Novo
+                      </Button>
+                    )}
+                  </div>
+                  <Select value={form.state ?? ""} onValueChange={(v) => setForm({ ...form, state: v, city: "" })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {(dbStates as any[]).map((s: any) => (
+                        <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="font-body">Cidade</Label>
-                  <Input value={form.city ?? ""} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+                  <div className="flex items-center justify-between">
+                    <Label className="font-body">Cidade</Label>
+                    {selectedCountryObj && (
+                      <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => { setQuickAddType("city"); setQuickAddName(""); }}>
+                        <Plus className="h-3 w-3 mr-1" />Nova
+                      </Button>
+                    )}
+                  </div>
+                  <Select value={form.city ?? ""} onValueChange={(v) => setForm({ ...form, city: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {(dbCities as any[]).map((c: any) => (
+                        <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label className="font-body">Perfil de viagem</Label>
