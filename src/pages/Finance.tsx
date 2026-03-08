@@ -168,6 +168,26 @@ export default function Finance() {
 
   const formatCurrency = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
+  const categoryPathMap = useMemo(() => {
+    const map = new Map<string, string>();
+    const buildPath = (id: string): string => {
+      const cat = financialCategories.find(c => c.id === id);
+      if (!cat) return "";
+      const parentPath = cat.parent_id ? buildPath(cat.parent_id) : "";
+      return parentPath ? `${parentPath} > ${cat.name}` : cat.name;
+    };
+    financialCategories.forEach(c => map.set(c.id, buildPath(c.id)));
+    return map;
+  }, [financialCategories]);
+
+  const bankAccountMap = useMemo(() => {
+    const map = new Map<string, string>();
+    bankAccounts.forEach(ba => {
+      map.set(ba.id, `${ba.bank_name}${ba.agency ? ` Ag ${ba.agency}` : ""}${ba.account_number ? ` / ${ba.account_number}` : ""}`);
+    });
+    return map;
+  }, [bankAccounts]);
+
   const receivables = transactions.filter(t => t.category?.startsWith("RECEITAS") || t.type === "receivable" || t.type === "sale" || t.type === "commission");
   const payables = transactions.filter(t => t.category?.startsWith("DESPESAS") || t.category?.startsWith("IMPOSTOS") || t.type === "expense" || t.type === "payable");
   const pendingReceivables = receivables.filter(t => t.status === "pending").reduce((s, t) => s + Number(t.amount), 0);
