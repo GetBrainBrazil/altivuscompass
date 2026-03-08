@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccess } from "@/lib/permissions";
 import logoAltivus from "@/assets/logo-altivus.png";
+import logoSymbol from "@/assets/logo-altivus-symbol.png";
 import {
   Sidebar,
   SidebarContent,
