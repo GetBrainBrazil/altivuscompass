@@ -566,7 +566,7 @@ export default function Clients() {
   };
 
   const openCreate = () => {
-    setEditingId(null); setForm(emptyForm); setSelectedAirports([]); setSelectedTags([]); setActiveTab("contact");
+    setEditingId(null); setForm(emptyForm); setSelectedAirports([]); setSelectedTags([]); setSelectedDestinations([]); setActiveTab("contact");
     setPhones([]); setEmails([]); setSocials([]); setPassports([]); setMilesPrograms([]); setShowPasswords({});
     setView("form");
   };
