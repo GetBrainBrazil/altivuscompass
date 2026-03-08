@@ -271,7 +271,7 @@ export default function BankAccountCredentials({ bankAccountId }: { bankAccountI
             {editingId ? "Editar Acesso" : "Novo Acesso"}
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div className="space-y-1.5">
               <Label className="font-body text-xs">Usuário</Label>
               <Input
