@@ -100,8 +100,10 @@ export default function BankAccountsTab() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      const account = accounts.find((a) => a.id === id);
       const { error } = await supabase.from("bank_accounts").delete().eq("id", id);
       if (error) throw error;
+      logAuditEvent({ action: "delete", tableName: "bank_accounts", recordId: id, oldData: account });
     },
     onSuccess: () => {
       toast({ title: "Conta removida" });
