@@ -302,8 +302,10 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
 
   const deletePassengerMutation = useMutation({
     mutationFn: async (id: string) => {
+      const { data: oldData } = await supabase.from("passengers").select("*").eq("id", id).single();
       const { error } = await supabase.from("passengers").delete().eq("id", id);
       if (error) throw error;
+      logAuditEvent({ action: "delete", tableName: "passengers", recordId: id, oldData });
     },
     onSuccess: () => {
       toast({ title: "Passageiro removido" });
