@@ -1215,6 +1215,88 @@ export default function Clients() {
                 />
               </TabsContent>
 
+
+              {/* Miles Tab */}
+              {canAccessFeature(userRole, "client_miles_tab") && (
+                <TabsContent value="miles" className="space-y-4 pt-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-display font-medium text-foreground">Programas de Milhagem</h3>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setMilesPrograms([...milesPrograms, { program_name: "", airline: "", membership_number: "", login_username: "", login_email: "", login_password_encrypted: "", miles_balance: null }])}>
+                      <Plus className="h-3 w-3 mr-1" />Adicionar Programa
+                    </Button>
+                  </div>
+                  {milesPrograms.length === 0 && <p className="text-xs text-muted-foreground font-body">Nenhum programa de milhagem cadastrado.</p>}
+                  {milesPrograms.map((m, mi) => (
+                    <div key={mi} className="border border-border/50 rounded-lg p-3 space-y-3 bg-muted/20">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-body font-medium text-foreground">Programa {mi + 1}</span>
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setMilesPrograms(milesPrograms.filter((_, j) => j !== mi))}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                          <Label className="font-body text-xs">Cia Aérea / Programa</Label>
+                          <Select value={m.airline || ""} onValueChange={(v) => {
+                            const n = [...milesPrograms];
+                            n[mi].airline = v;
+                            const airline = airlinesList.find((a: any) => a.name === v);
+                            if (airline?.mileage_program_name) n[mi].program_name = airline.mileage_program_name;
+                            setMilesPrograms(n);
+                          }}>
+                            <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                            <SelectContent className="max-h-60">
+                              {airlinesList.map((a: any) => (
+                                <SelectItem key={a.id} value={a.name}>
+                                  {a.iata_code ? `${a.iata_code} - ` : ""}{a.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="font-body text-xs">Nº de Membro</Label>
+                          <Input className="h-9" placeholder="Número de associado" value={m.membership_number} onChange={(e) => { const n = [...milesPrograms]; n[mi].membership_number = e.target.value; setMilesPrograms(n); }} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="font-body text-xs">Nome de Usuário</Label>
+                          <Input className="h-9" placeholder="Username do programa" value={m.login_username} onChange={(e) => { const n = [...milesPrograms]; n[mi].login_username = e.target.value; setMilesPrograms(n); }} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="font-body text-xs">E-mail de Cadastro</Label>
+                          <Input className="h-9" type="email" placeholder="E-mail do programa" value={m.login_email} onChange={(e) => { const n = [...milesPrograms]; n[mi].login_email = e.target.value; setMilesPrograms(n); }} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="font-body text-xs">Pontos / Milhas</Label>
+                          <Input className="h-9" type="number" placeholder="0" value={m.miles_balance ?? ""} onChange={(e) => { const n = [...milesPrograms]; n[mi].miles_balance = e.target.value ? parseInt(e.target.value) : null; setMilesPrograms(n); }} />
+                        </div>
+                        {canAccessFeature(userRole, "client_miles_access_data") && (
+                          <div className="space-y-1">
+                            <Label className="font-body text-xs">Dados de Acesso (Senha)</Label>
+                            <div className="relative">
+                              <Input
+                                className="h-9 pr-9"
+                                type={showPasswords[mi] ? "text" : "password"}
+                                placeholder="Senha do programa"
+                                value={m.login_password_encrypted}
+                                onChange={(e) => { const n = [...milesPrograms]; n[mi].login_password_encrypted = e.target.value; setMilesPrograms(n); }}
+                              />
+                              <button
+                                type="button"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                onClick={() => setShowPasswords(prev => ({ ...prev, [mi]: !prev[mi] }))}
+                              >
+                                {showPasswords[mi] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </TabsContent>
+              )}
+
               {/* Observations Tab */}
               <TabsContent value="observations" className="pt-3">
                 <div className="space-y-1">
