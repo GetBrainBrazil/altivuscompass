@@ -313,10 +313,10 @@ function AirlinesTab() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-20">IATA</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead className="hidden sm:table-cell">País</TableHead>
-                <TableHead>Programa de Milhagem</TableHead>
+                <SortableHead label="IATA" sortKey="iata_code" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} className="w-20" />
+                <SortableHead label="Nome" sortKey="name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
+                <SortableHead label="País" sortKey="country" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} className="hidden sm:table-cell" />
+                <SortableHead label="Programa de Milhagem" sortKey="mileage_program_name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
                 {isAdmin && <TableHead className="w-24">Ações</TableHead>}
               </TableRow>
             </TableHeader>
