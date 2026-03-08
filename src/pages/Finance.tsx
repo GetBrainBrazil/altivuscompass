@@ -407,13 +407,60 @@ export default function Finance() {
         } />
       </div>
 
-      <div className="flex gap-1 p-1 rounded-lg bg-muted w-fit">
-        {[{ id: "all", label: "Todas" }, { id: "receivable", label: "Receitas" }, { id: "payable", label: "Despesas" }].map((f) => (
-          <button key={f.id} onClick={() => setFilter(f.id)}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium font-body transition-colors ${filter === f.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-            {f.label}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex gap-1 p-1 rounded-lg bg-muted w-fit">
+          {[{ id: "all", label: "Todas" }, { id: "receivable", label: "Receitas" }, { id: "payable", label: "Despesas" }].map((f) => (
+            <button key={f.id} onClick={() => setFilter(f.id)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium font-body transition-colors ${filter === f.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+              {f.label}
+            </button>
+          ))}
+        </div>
+        <Popover open={accountFilterOpen} onOpenChange={setAccountFilterOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="font-body text-xs gap-1.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" /></svg>
+              Conta{accountFilter.size > 0 ? ` (${accountFilter.size})` : ""}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Buscar conta..." />
+              <CommandList>
+                <CommandEmpty>Nenhuma conta encontrada.</CommandEmpty>
+                <CommandGroup>
+                  {bankAccounts.map(ba => {
+                    const label = `${ba.bank_name}${ba.agency ? ` - Ag ${ba.agency}` : ""}${ba.account_number ? ` / ${ba.account_number}` : ""}`;
+                    const isSelected = accountFilter.has(ba.id);
+                    return (
+                      <CommandItem
+                        key={ba.id}
+                        value={label}
+                        onSelect={() => {
+                          setAccountFilter(prev => {
+                            const next = new Set(prev);
+                            isSelected ? next.delete(ba.id) : next.add(ba.id);
+                            return next;
+                          });
+                        }}
+                      >
+                        <Checkbox checked={isSelected} className="mr-2" />
+                        {label}
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+            {accountFilter.size > 0 && (
+              <div className="border-t p-2">
+                <Button variant="ghost" size="sm" className="w-full text-xs font-body" onClick={() => setAccountFilter(new Set())}>
+                  Limpar filtro
+                </Button>
+              </div>
+            )}
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Desktop table */}
