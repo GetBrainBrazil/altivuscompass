@@ -115,6 +115,7 @@ const emptyForm = {
 
 export default function Clients() {
   const { toast } = useToast();
+  const { userRole } = useAuth();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
