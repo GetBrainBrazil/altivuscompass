@@ -363,6 +363,17 @@ export default function Clients() {
       })));
     }
   }, [clientPassports, editingId]);
+  useEffect(() => {
+    if (editingId) {
+      setMilesPrograms(clientMiles.map((m: any) => ({
+        id: m.id, program_name: m.program_name ?? "", airline: m.airline ?? "",
+        membership_number: m.membership_number ?? "", login_username: (m as any).login_username ?? "",
+        login_email: m.login_email ?? "", login_password_encrypted: m.login_password_encrypted ?? "",
+        miles_balance: m.miles_balance ?? null,
+      })));
+      setShowPasswords({});
+    }
+  }, [clientMiles, editingId]);
 
   // CEP auto-fill
   const handleCepBlur = async () => {
