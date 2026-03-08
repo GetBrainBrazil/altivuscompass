@@ -652,7 +652,7 @@ export default function Clients() {
               </TabsContent>
 
               {/* Address Tab */}
-              <TabsContent value="address" className="space-y-4 pt-4">
+              <TabsContent value="address" className="space-y-4 pt-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {/* Country */}
                   <div className="space-y-1.5">
