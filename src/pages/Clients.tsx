@@ -51,6 +51,7 @@ export default function Clients() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [profileFilter, setProfileFilter] = useState("all");
+  const [sort, setSort] = useState<SortState>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [form, setForm] = useState(emptyClient);
