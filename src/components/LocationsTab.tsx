@@ -347,6 +347,7 @@ function StatesSubTab() {
               <TableRow>
                 <SortableHead label="Nome" sortKey="name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
                 <SortableHead label="País" sortKey="country_name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
+                <SortableHead label="Continente" sortKey="continent_name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -354,10 +355,11 @@ function StatesSubTab() {
                 <TableRow key={s.id} className={isAdmin ? "cursor-pointer hover:bg-muted/50" : ""} onClick={() => isAdmin && openEdit(s)}>
                   <TableCell>{s.name}</TableCell>
                   <TableCell>{s.country_name}</TableCell>
+                  <TableCell>{s.continent_name || "—"}</TableCell>
                 </TableRow>
               ))}
               {filtered.length > 100 && (
-                <TableRow><TableCell colSpan={2} className="text-center text-muted-foreground text-sm">Mostrando 100 de {filtered.length}. Use a busca para refinar.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground text-sm">Mostrando 100 de {filtered.length}. Use a busca para refinar.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
