@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus, ArrowLeft, Star, Trash2 } from "lucide-react";
 import { useCountries, useStates, useCities } from "@/components/LocationsTab";
+import { COUNTRY_CODES, applyPhoneMask } from "@/lib/phone-masks";
 
 type SortDir = "asc" | "desc";
 type SortState = { key: string; dir: SortDir } | null;
