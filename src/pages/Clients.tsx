@@ -8,7 +8,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
+
+type SortDir = "asc" | "desc";
+type SortState = { key: string; dir: SortDir } | null;
+
+function sortData<T extends Record<string, any>>(data: T[], sort: SortState): T[] {
+  if (!sort) return data;
+  return [...data].sort((a, b) => {
+    const va = (a[sort.key] ?? "").toString().toLowerCase();
+    const vb = (b[sort.key] ?? "").toString().toLowerCase();
+    const cmp = va.localeCompare(vb);
+    return sort.dir === "asc" ? cmp : -cmp;
+  });
+}
+
+function toggleSort(sort: SortState, key: string): SortState {
+  if (sort?.key === key) {
+    if (sort.dir === "asc") return { key, dir: "desc" };
+    return null;
+  }
+  return { key, dir: "asc" };
+}
 
 const travelProfiles: Record<string, { label: string; color: string }> = {
   economic: { label: "Econômico", color: "bg-soft-blue/10 text-soft-blue" },
@@ -29,6 +51,7 @@ export default function Clients() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [profileFilter, setProfileFilter] = useState("all");
+  const [sort, setSort] = useState<SortState>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [form, setForm] = useState(emptyClient);
@@ -91,13 +114,29 @@ export default function Clients() {
   };
   const closeDialog = () => { setDialogOpen(false); setEditingClient(null); setForm(emptyClient); setAirportsInput(""); };
 
-  const filtered = clients.filter((c) => {
-    const matchesSearch = c.full_name.toLowerCase().includes(search.toLowerCase()) ||
-      (c.email ?? "").toLowerCase().includes(search.toLowerCase()) ||
-      (c.city ?? "").toLowerCase().includes(search.toLowerCase());
-    const matchesProfile = profileFilter === "all" || c.travel_profile === profileFilter;
-    return matchesSearch && matchesProfile;
-  });
+  const filtered = sortData(
+    clients.filter((c) => {
+      const matchesSearch = c.full_name.toLowerCase().includes(search.toLowerCase()) ||
+        (c.email ?? "").toLowerCase().includes(search.toLowerCase()) ||
+        (c.city ?? "").toLowerCase().includes(search.toLowerCase());
+      const matchesProfile = profileFilter === "all" || c.travel_profile === profileFilter;
+      return matchesSearch && matchesProfile;
+    }),
+    sort
+  );
+
+  const SortableHeader = ({ label, sortKey, className }: { label: string; sortKey: string; className?: string }) => {
+    const active = sort?.key === sortKey;
+    return (
+      <th className={`text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium cursor-pointer select-none hover:text-foreground ${className || ""}`}
+        onClick={() => setSort(toggleSort(sort, sortKey))}>
+        <span className="inline-flex items-center gap-1">
+          {label}
+          {active ? (sort.dir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 opacity-40" />}
+        </span>
+      </th>
+    );
+  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
@@ -208,11 +247,11 @@ export default function Clients() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border/50">
-                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Cliente</th>
-                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Localização</th>
-                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Perfil</th>
+                <SortableHeader label="Cliente" sortKey="full_name" />
+                <SortableHeader label="Localização" sortKey="city" />
+                <SortableHeader label="Perfil" sortKey="travel_profile" />
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Aeroportos</th>
-                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Passaporte</th>
+                <SortableHeader label="Passaporte" sortKey="passport_status" />
                 <th className="text-right p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Ações</th>
               </tr>
             </thead>
