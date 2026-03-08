@@ -338,7 +338,7 @@ export default function Clients() {
   });
 
   const goToList = () => {
-    setView("list"); setEditingId(null); setForm(emptyForm);
+    setView("list"); setEditingId(null); setForm(emptyForm); setActiveTab("contact");
     setSelectedAirports([]); setPhones([]); setEmails([]); setSocials([]); setPassports([]);
   };
 
