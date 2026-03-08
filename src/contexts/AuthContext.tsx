@@ -67,6 +67,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRealRole(data?.role ?? null);
   };
 
+  const hasLoggedLoginRef = useRef(false);
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
@@ -74,10 +76,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
         if (session?.user) {
           setTimeout(() => fetchUserRole(session.user.id), 0);
+          // Log login event once per session
+          if (!hasLoggedLoginRef.current) {
+            hasLoggedLoginRef.current = true;
+            logAuditEvent({
+              action: "create",
+              tableName: "sessions",
+              newData: { event: "LOGIN", email: session.user.email },
+            });
+          }
         } else {
           setRealRole(null);
           setImpersonatingRoleState(null);
           setImpersonatingUserState(null);
+          hasLoggedLoginRef.current = false;
         }
         setLoading(false);
       }
