@@ -78,9 +78,11 @@ function AirportsTab() {
       if (editing) {
         const { error } = await supabase.from("airports").update(payload).eq("id", editing.id);
         if (error) throw error;
+        await logAuditEvent({ action: "update", tableName: "airports", recordId: editing.id, recordLabel: `${payload.iata_code} - ${payload.name}`, oldData: editing, newData: payload });
       } else {
-        const { error } = await supabase.from("airports").insert(payload);
+        const { data, error } = await supabase.from("airports").insert(payload).select("id").single();
         if (error) throw error;
+        await logAuditEvent({ action: "create", tableName: "airports", recordId: data.id, recordLabel: `${payload.iata_code} - ${payload.name}`, newData: payload });
       }
     },
     onSuccess: () => {
