@@ -245,7 +245,7 @@ function AirlinesTab() {
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState({ name: "", iata_code: "", country: "", mileage_program_name: "" });
+  const [form, setForm] = useState({ name: "", iata_code: "", country: "", mileage_program_name: "", program_url: "" });
   const [sort, setSort] = useState<SortState>(null);
 
   const { data: airlines = [], isLoading } = useQuery({
@@ -291,12 +291,12 @@ function AirlinesTab() {
   const closeDialog = () => {
     setDialogOpen(false);
     setEditing(null);
-    setForm({ name: "", iata_code: "", country: "", mileage_program_name: "" });
+    setForm({ name: "", iata_code: "", country: "", mileage_program_name: "", program_url: "" });
   };
 
   const openEdit = (a: any) => {
     setEditing(a);
-    setForm({ name: a.name, iata_code: a.iata_code || "", country: a.country || "", mileage_program_name: a.mileage_program_name || "" });
+    setForm({ name: a.name, iata_code: a.iata_code || "", country: a.country || "", mileage_program_name: a.mileage_program_name || "", program_url: a.program_url || "" });
     setDialogOpen(true);
   };
 
@@ -327,6 +327,10 @@ function AirlinesTab() {
                   <div><Label>País <span className="text-destructive">*</span></Label><Input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} placeholder="Brasil" /></div>
                   <div><Label>Programa de Milhagem</Label><Input value={form.mileage_program_name} onChange={(e) => setForm({ ...form, mileage_program_name: e.target.value })} placeholder="LATAM Pass" /></div>
                 </div>
+                <div>
+                  <Label>Link do Programa</Label>
+                  <Input value={form.program_url} onChange={(e) => setForm({ ...form, program_url: e.target.value })} placeholder="https://www.latampass.latam.com" />
+                </div>
                 <Button onClick={() => saveMutation.mutate()} disabled={!form.name || !form.country}>
                   {editing ? "Salvar" : "Adicionar"}
                 </Button>
@@ -349,6 +353,7 @@ function AirlinesTab() {
                 <SortableHead label="Nome" sortKey="name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
                 <SortableHead label="País" sortKey="country" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} className="hidden sm:table-cell" />
                 <SortableHead label="Programa de Milhagem" sortKey="mileage_program_name" sort={sort} onSort={(k) => setSort(toggleSort(sort, k))} />
+                <TableHead className="hidden lg:table-cell">Link</TableHead>
                 {isAdmin && <TableHead className="w-24">Ações</TableHead>}
               </TableRow>
             </TableHeader>
@@ -359,6 +364,9 @@ function AirlinesTab() {
                   <TableCell>{a.name}</TableCell>
                   <TableCell className="hidden sm:table-cell">{a.country || "—"}</TableCell>
                   <TableCell>{a.mileage_program_name || "—"}</TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {a.program_url ? <a href={a.program_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs truncate max-w-[200px] inline-block">Acessar ↗</a> : "—"}
+                  </TableCell>
                   {isAdmin && (
                     <TableCell>
                       <div className="flex gap-1">
