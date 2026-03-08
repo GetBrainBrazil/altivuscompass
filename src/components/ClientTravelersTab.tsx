@@ -75,6 +75,7 @@ type Passenger = {
   passport_number: string;
   passport_expiry: string;
   notes: string;
+  relationship_type: string;
 };
 
 interface ClientTravelersTabProps {
@@ -90,7 +91,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
   const [passengerDialog, setPassengerDialog] = useState(false);
   const [editingPassenger, setEditingPassenger] = useState<Passenger | null>(null);
   const [passengerForm, setPassengerForm] = useState<Passenger>({
-    full_name: "", birth_date: "", nationality: "", passport_number: "", passport_expiry: "", notes: "",
+    full_name: "", birth_date: "", nationality: "", passport_number: "", passport_expiry: "", notes: "", relationship_type: "",
   });
   const [deletePassengerId, setDeletePassengerId] = useState<string | null>(null);
 
@@ -242,6 +243,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         passport_number: passengerForm.passport_number || null,
         passport_expiry: passengerForm.passport_expiry || null,
         notes: passengerForm.notes || null,
+        relationship_type: passengerForm.relationship_type || null,
       };
 
       if (editingPassenger?.id) {
@@ -390,7 +392,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
 
       // Find ALL clients that have this same passenger (copies)
       // Use passport_number as primary identifier; fallback to name + birth_date
-      let matchQuery = supabase.from("passengers").select("id, client_id");
+      let matchQuery = supabase.from("passengers").select("id, client_id, relationship_type");
       if (promotePassenger.passport_number) {
         matchQuery = matchQuery.eq("passport_number", promotePassenger.passport_number);
       } else if (promotePassenger.birth_date) {
@@ -414,17 +416,20 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         relationship_type: promoteRelType as any,
       });
 
-      // Create relationships with OTHER clients that also had this passenger, with type 'other' (não definido)
-      const otherClientIds = [...new Set(
-        (allPassengerRecords ?? [])
-          .map((rec: any) => rec.client_id)
-          .filter((cid: string) => cid && cid !== clientId)
-      )];
-      if (otherClientIds.length > 0) {
-        const otherRelInserts = otherClientIds.map((cid: string) => ({
-          client_id_a: cid,
+      // Create relationships with OTHER clients that also had this passenger, using their stored relationship_type
+      const otherRecords = (allPassengerRecords ?? []).filter((rec: any) => rec.client_id && rec.client_id !== clientId);
+      // Deduplicate by client_id, keeping the first match
+      const seenClients = new Set<string>();
+      const uniqueOtherRecords = otherRecords.filter((rec: any) => {
+        if (seenClients.has(rec.client_id)) return false;
+        seenClients.add(rec.client_id);
+        return true;
+      });
+      if (uniqueOtherRecords.length > 0) {
+        const otherRelInserts = uniqueOtherRecords.map((rec: any) => ({
+          client_id_a: rec.client_id,
           client_id_b: newClient.id,
-          relationship_type: 'other' as any,
+          relationship_type: (rec.relationship_type || 'other') as any,
         }));
         await supabase.from("client_relationships").insert(otherRelInserts);
       }
@@ -480,10 +485,11 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       setPassengerForm({
         full_name: p.full_name, birth_date: p.birth_date ?? "", nationality: p.nationality ?? "",
         passport_number: p.passport_number ?? "", passport_expiry: p.passport_expiry ?? "", notes: p.notes ?? "",
+        relationship_type: p.relationship_type ?? "",
       });
     } else {
       setEditingPassenger(null);
-      setPassengerForm({ full_name: "", birth_date: "", nationality: "", passport_number: "", passport_expiry: "", notes: "" });
+      setPassengerForm({ full_name: "", birth_date: "", nationality: "", passport_number: "", passport_expiry: "", notes: "", relationship_type: "" });
     }
     setPassengerDialog(true);
   };
@@ -543,6 +549,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
               <thead>
                 <tr className="border-b border-border/50 bg-muted/30">
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => togglePassengerSort("full_name")}>Nome<SortIcon columnKey="full_name" sort={passengerSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => togglePassengerSort("relationship_type")}>Vínculo<SortIcon columnKey="relationship_type" sort={passengerSort} /></th>
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => togglePassengerSort("birth_date")}>Nascimento<SortIcon columnKey="birth_date" sort={passengerSort} /></th>
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => togglePassengerSort("nationality")}>Nacionalidade<SortIcon columnKey="nationality" sort={passengerSort} /></th>
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => togglePassengerSort("passport_number")}>Passaporte<SortIcon columnKey="passport_number" sort={passengerSort} /></th>
@@ -553,13 +560,20 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                 {sortedPassengers.map((p: any) => (
                   <tr key={p.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => openPassengerForm(p)}>
                     <td className="p-3 text-sm font-body text-foreground">{p.full_name}</td>
+                    <td className="p-3">
+                      {p.relationship_type ? (
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary font-body">
+                          {RELATIONSHIP_TYPES[p.relationship_type] || p.relationship_type}
+                        </span>
+                      ) : <span className="text-sm text-muted-foreground">—</span>}
+                    </td>
                     <td className="p-3 text-sm font-body text-foreground">{p.birth_date ? new Date(p.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
                     <td className="p-3 text-sm font-body text-foreground">{p.nationality || "—"}</td>
                     <td className="p-3 text-sm font-body text-foreground">{p.passport_number || "—"}</td>
                     <td className="p-3">
                       <div className="flex gap-1">
                         <Button type="button" variant="ghost" size="icon" className="h-7 w-7" title="Promover a Cliente"
-                          onClick={(e) => { e.stopPropagation(); setPromotePassenger(p); setPromoteRelType("child"); }}>
+                          onClick={(e) => { e.stopPropagation(); setPromotePassenger(p); setPromoteRelType(p.relationship_type || "child"); }}>
                           <UserPlus className="h-3.5 w-3.5 text-primary" />
                         </Button>
                         <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive"
@@ -652,6 +666,18 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
             <div>
               <Label className="font-body text-xs">Nome completo *</Label>
               <Input value={passengerForm.full_name} onChange={(e) => setPassengerForm({ ...passengerForm, full_name: e.target.value })} className="h-9" />
+            </div>
+            <div>
+              <Label className="font-body text-xs">Vínculo com o cliente</Label>
+              <Select value={passengerForm.relationship_type || "none"} onValueChange={(v) => setPassengerForm({ ...passengerForm, relationship_type: v === "none" ? "" : v })}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Não definido</SelectItem>
+                  {Object.entries(RELATIONSHIP_TYPES).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
