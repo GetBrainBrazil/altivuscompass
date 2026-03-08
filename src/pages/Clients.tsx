@@ -45,6 +45,10 @@ type PhoneEntry = { id?: string; phone: string; description: string };
 type EmailEntry = { id?: string; email: string; description: string };
 type SocialEntry = { id?: string; network: string; handle: string };
 type VisaEntry = { id?: string; visa_type: string; validity_date: string };
+type PassportEntry = {
+  id?: string; passport_number: string; issue_date: string; expiry_date: string;
+  nationality: string; status: string; visas: VisaEntry[];
+};
 
 const SOCIAL_NETWORKS = ["Instagram", "Facebook", "LinkedIn", "Twitter/X", "TikTok", "YouTube", "Outro"];
 const MARITAL_STATUSES = ["Solteiro(a)", "Casado(a)", "Separado(a)", "Divorciado(a)", "Viúvo(a)"];
