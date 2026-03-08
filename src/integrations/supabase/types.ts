@@ -149,63 +149,257 @@ export type Database = {
           },
         ]
       }
+      client_emails: {
+        Row: {
+          client_id: string
+          created_at: string
+          description: string | null
+          email: string
+          id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          description?: string | null
+          email: string
+          id?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          email?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_emails_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_phones: {
+        Row: {
+          client_id: string
+          created_at: string
+          description: string | null
+          id: string
+          phone: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          phone: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_phones_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_social_media: {
+        Row: {
+          client_id: string
+          created_at: string
+          handle: string
+          id: string
+          network: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          handle: string
+          id?: string
+          network: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          handle?: string
+          id?: string
+          network?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_social_media_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_visas: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          validity_date: string | null
+          visa_type: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          validity_date?: string | null
+          visa_type: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          validity_date?: string | null
+          visa_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_visas_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
+          accepts_email_comm: boolean
+          accepts_whatsapp_comm: boolean
+          address_complement: string | null
+          address_number: string | null
+          address_street: string | null
+          birth_date: string | null
+          cep: string | null
           city: string | null
           country: string | null
+          cpf_cnpj: string | null
           created_at: string
           created_by: string | null
           email: string | null
+          foreign_id: string | null
           full_name: string
+          gender: string | null
           id: string
+          is_active: boolean
+          marital_status: string | null
+          nationality: string | null
+          neighborhood: string | null
           notes: string | null
+          passport_expiry_date: string | null
+          passport_issue_date: string | null
+          passport_nationality: string | null
+          passport_number: string | null
           passport_status: string | null
           phone: string | null
           preferred_airports: string[] | null
+          rating: number
           region: string | null
+          rg: string | null
+          rg_issuer: string | null
           state: string | null
           tags: string[] | null
           travel_preferences: string | null
           travel_profile: Database["public"]["Enums"]["travel_profile"] | null
           updated_at: string
+          website: string | null
         }
         Insert: {
+          accepts_email_comm?: boolean
+          accepts_whatsapp_comm?: boolean
+          address_complement?: string | null
+          address_number?: string | null
+          address_street?: string | null
+          birth_date?: string | null
+          cep?: string | null
           city?: string | null
           country?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
+          foreign_id?: string | null
           full_name: string
+          gender?: string | null
           id?: string
+          is_active?: boolean
+          marital_status?: string | null
+          nationality?: string | null
+          neighborhood?: string | null
           notes?: string | null
+          passport_expiry_date?: string | null
+          passport_issue_date?: string | null
+          passport_nationality?: string | null
+          passport_number?: string | null
           passport_status?: string | null
           phone?: string | null
           preferred_airports?: string[] | null
+          rating?: number
           region?: string | null
+          rg?: string | null
+          rg_issuer?: string | null
           state?: string | null
           tags?: string[] | null
           travel_preferences?: string | null
           travel_profile?: Database["public"]["Enums"]["travel_profile"] | null
           updated_at?: string
+          website?: string | null
         }
         Update: {
+          accepts_email_comm?: boolean
+          accepts_whatsapp_comm?: boolean
+          address_complement?: string | null
+          address_number?: string | null
+          address_street?: string | null
+          birth_date?: string | null
+          cep?: string | null
           city?: string | null
           country?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
+          foreign_id?: string | null
           full_name?: string
+          gender?: string | null
           id?: string
+          is_active?: boolean
+          marital_status?: string | null
+          nationality?: string | null
+          neighborhood?: string | null
           notes?: string | null
+          passport_expiry_date?: string | null
+          passport_issue_date?: string | null
+          passport_nationality?: string | null
+          passport_number?: string | null
           passport_status?: string | null
           phone?: string | null
           preferred_airports?: string[] | null
+          rating?: number
           region?: string | null
+          rg?: string | null
+          rg_issuer?: string | null
           state?: string | null
           tags?: string[] | null
           travel_preferences?: string | null
           travel_profile?: Database["public"]["Enums"]["travel_profile"] | null
           updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }
