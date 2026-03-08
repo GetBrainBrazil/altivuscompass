@@ -168,6 +168,26 @@ export default function Finance() {
 
   const formatCurrency = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
+  const categoryPathMap = useMemo(() => {
+    const map = new Map<string, string>();
+    const buildPath = (id: string): string => {
+      const cat = financialCategories.find(c => c.id === id);
+      if (!cat) return "";
+      const parentPath = cat.parent_id ? buildPath(cat.parent_id) : "";
+      return parentPath ? `${parentPath} > ${cat.name}` : cat.name;
+    };
+    financialCategories.forEach(c => map.set(c.id, buildPath(c.id)));
+    return map;
+  }, [financialCategories]);
+
+  const bankAccountMap = useMemo(() => {
+    const map = new Map<string, string>();
+    bankAccounts.forEach(ba => {
+      map.set(ba.id, `${ba.bank_name}${ba.agency ? ` Ag ${ba.agency}` : ""}${ba.account_number ? ` / ${ba.account_number}` : ""}`);
+    });
+    return map;
+  }, [bankAccounts]);
+
   const receivables = transactions.filter(t => t.category?.startsWith("RECEITAS") || t.type === "receivable" || t.type === "sale" || t.type === "commission");
   const payables = transactions.filter(t => t.category?.startsWith("DESPESAS") || t.category?.startsWith("IMPOSTOS") || t.type === "expense" || t.type === "payable");
   const pendingReceivables = receivables.filter(t => t.status === "pending").reduce((s, t) => s + Number(t.amount), 0);
@@ -499,8 +519,8 @@ export default function Finance() {
                       {t.is_reconciled && <CheckCircle2 size={14} className="text-success mx-auto" />}
                     </td>
                     <td className="p-3 font-body font-medium text-foreground">{t.description}</td>
-                    <td className="p-3 font-body text-xs text-muted-foreground">{t.payment_account || "-"}</td>
-                    <td className="p-3 font-body text-xs text-muted-foreground max-w-[200px] truncate">{t.category || "-"}</td>
+                    <td className="p-3 font-body text-xs text-muted-foreground">{(t.payment_account && bankAccountMap.get(t.payment_account)) || t.payment_account || "-"}</td>
+                    <td className="p-3 font-body text-xs text-muted-foreground max-w-[200px] truncate" title={categoryPathMap.get(t.category || "") || t.category || ""}>{categoryPathMap.get(t.category || "") || t.category || "-"}</td>
                     <td className="p-3 font-body text-xs text-muted-foreground">{t.party_name || "-"}</td>
                     <td className={`p-3 font-body text-sm font-medium text-right whitespace-nowrap ${isExpense ? "text-destructive" : "text-success"}`}>
                       {isExpense ? `(${formatCurrency(Number(t.amount))})` : formatCurrency(Number(t.amount))}
