@@ -83,7 +83,7 @@ const SUPPLIER_CATEGORIES: { label: string; description: string }[] = [
 ];
 
 const emptyForm = {
-  name: "", trade_name: "", document_number: "", supplier_type: "company", categories: [] as string[],
+  name: "", legal_name: "", trade_name: "", document_number: "", supplier_type: "company", categories: [] as string[],
   email: "", phone: "", website: "", contact_person: "", contact_phone: "",
   cep: "", address_street: "", address_number: "", address_complement: "",
   neighborhood: "", city: "", state: "", country: "Brasil", notes: "", is_active: true,
@@ -118,6 +118,7 @@ export default function SuppliersTab() {
         phone: form.phone.replace(/\D/g, "") || null,
         contact_phone: form.contact_phone.replace(/\D/g, "") || null,
         document_number: form.document_number || null,
+        legal_name: form.legal_name || null,
         trade_name: form.trade_name || null,
         email: form.email || null,
         website: form.website || null,
@@ -171,7 +172,7 @@ export default function SuppliersTab() {
   const openEdit = (s: any) => {
     setEditing(s);
     setForm({
-      name: s.name ?? "", trade_name: s.trade_name ?? "", document_number: s.document_number ?? "",
+      name: s.name ?? "", legal_name: s.legal_name ?? "", trade_name: s.trade_name ?? "", document_number: s.document_number ?? "",
       supplier_type: s.supplier_type ?? "company", categories: Array.isArray(s.category) ? s.category : (s.category ? [s.category] : []),
       email: s.email ?? "", phone: s.phone ?? "", website: s.website ?? "",
       contact_person: s.contact_person ?? "", contact_phone: s.contact_phone ?? "",
@@ -217,20 +218,6 @@ export default function SuppliersTab() {
               {/* ── Dados Principais ── */}
               <div className="space-y-3">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  <div className="space-y-1 col-span-2">
-                    <Label className="font-body text-xs">Nome <span className="text-destructive">*</span></Label>
-                    <Input value={form.name} onChange={set("name")} placeholder="Nome do fornecedor" className="h-9" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="font-body text-xs">Nome Fantasia</Label>
-                    <Input value={form.trade_name} onChange={set("trade_name")} className="h-9" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="font-body text-xs">CNPJ/CPF</Label>
-                    <Input value={form.document_number} onChange={set("document_number")} className="h-9" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   <div className="space-y-1">
                     <Label className="font-body text-xs">Tipo</Label>
                     <Select value={form.supplier_type} onValueChange={(v) => setForm(f => ({ ...f, supplier_type: v }))}>
@@ -241,10 +228,38 @@ export default function SuppliersTab() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-1 col-span-2">
+                    <Label className="font-body text-xs">Nome <span className="text-destructive">*</span></Label>
+                    <Input value={form.name} onChange={set("name")} placeholder="Nome do fornecedor" className="h-9" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="font-body text-xs">{form.supplier_type === "company" ? "CNPJ" : "CPF"}</Label>
+                    <Input value={form.document_number} onChange={set("document_number")} placeholder={form.supplier_type === "company" ? "00.000.000/0000-00" : "000.000.000-00"} className="h-9" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <div className="space-y-1">
+                    <Label className="font-body text-xs">{form.supplier_type === "company" ? "Razão Social" : "Nome Social"}</Label>
+                    <Input value={form.legal_name} onChange={set("legal_name")} className="h-9" />
+                  </div>
+                  {form.supplier_type === "company" && (
+                    <div className="space-y-1">
+                      <Label className="font-body text-xs">Nome Fantasia</Label>
+                      <Input value={form.trade_name} onChange={set("trade_name")} className="h-9" />
+                    </div>
+                  )}
                   <div className="space-y-1">
                     <Label className="font-body text-xs">Website</Label>
                     <Input value={form.website} onChange={set("website")} placeholder="https://" className="h-9" />
                   </div>
+                  {editing ? (
+                    <div className="flex items-center gap-2 pt-5">
+                      <Switch checked={form.is_active} onCheckedChange={(v) => setForm(f => ({ ...f, is_active: v }))} />
+                      <Label className="font-body text-xs">{form.is_active ? "Ativo" : "Inativo"}</Label>
+                    </div>
+                  ) : <div />}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div className="space-y-1">
                     <div className="flex items-center gap-1">
                       <Label className="font-body text-xs">Serviços</Label>
@@ -285,16 +300,10 @@ export default function SuppliersTab() {
                       </PopoverContent>
                     </Popover>
                   </div>
-                  {editing ? (
-                    <div className="flex items-center gap-2 pt-5">
-                      <Switch checked={form.is_active} onCheckedChange={(v) => setForm(f => ({ ...f, is_active: v }))} />
-                      <Label className="font-body text-xs">{form.is_active ? "Ativo" : "Inativo"}</Label>
-                    </div>
-                  ) : <div />}
-                </div>
-                <div className="space-y-1">
-                  <Label className="font-body text-xs">Observações</Label>
-                  <Textarea value={form.notes} onChange={set("notes")} rows={2} className="text-sm" />
+                  <div className="space-y-1">
+                    <Label className="font-body text-xs">Observações</Label>
+                    <Textarea value={form.notes} onChange={set("notes")} rows={2} className="text-sm" />
+                  </div>
                 </div>
               </div>
 
