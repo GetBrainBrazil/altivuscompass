@@ -43,7 +43,7 @@ const travelProfiles: Record<string, { label: string; color: string }> = {
   sophisticated: { label: "Sofisticado", color: "bg-primary/10 text-primary" },
 };
 
-type PhoneEntry = { id?: string; phone: string; description: string };
+type PhoneEntry = { id?: string; phone: string; description: string; country_code: string };
 type EmailEntry = { id?: string; email: string; description: string };
 type SocialEntry = { id?: string; network: string; handle: string };
 type VisaEntry = { id?: string; visa_type: string; validity_date: string };
