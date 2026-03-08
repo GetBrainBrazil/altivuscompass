@@ -118,6 +118,7 @@ export default function SuppliersTab() {
         phone: form.phone.replace(/\D/g, "") || null,
         contact_phone: form.contact_phone.replace(/\D/g, "") || null,
         document_number: form.document_number || null,
+        legal_name: form.legal_name || null,
         trade_name: form.trade_name || null,
         email: form.email || null,
         website: form.website || null,
