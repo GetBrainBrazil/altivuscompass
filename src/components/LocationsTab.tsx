@@ -49,6 +49,21 @@ function SortableHead({ label, sortKey, sort, onSort, className }: { label: stri
 
 // ── Hooks for shared data ──
 
+export function useContinentCountries() {
+  return useQuery({
+    queryKey: ["continent-countries-map"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("continent_countries").select("country_id, continents(name)");
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      (data ?? []).forEach((cc: any) => {
+        if (cc.continents?.name) map[cc.country_id] = cc.continents.name;
+      });
+      return map;
+    },
+  });
+}
+
 export function useCountries() {
   return useQuery({
     queryKey: ["locations-countries"],
