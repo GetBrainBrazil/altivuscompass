@@ -47,6 +47,10 @@ export default function Finance() {
   const [accountFilter, setAccountFilter] = useState<Set<string>>(new Set());
   const [accountFilterOpen, setAccountFilterOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [search, setSearch] = useState("");
+  const [datePreset, setDatePreset] = useState("all");
+  const [customDateFrom, setCustomDateFrom] = useState("");
+  const [customDateTo, setCustomDateTo] = useState("");
 
   const { data: clients = [] } = useQuery({
     queryKey: ["clients-list"],
@@ -208,8 +212,37 @@ export default function Finance() {
   const totalReceived = metricsReceivables.filter(t => t.status === "received" || t.status === "paid").reduce((s, t) => s + Number(t.amount), 0);
   const totalPaid = metricsPayables.filter(t => t.status === "paid").reduce((s, t) => s + Number(t.amount), 0);
 
+  // Date filter helper
+  const getDateRange = (): { from: string; to: string } | null => {
+    const today = new Date();
+    const fmt = (d: Date) => d.toISOString().split("T")[0];
+    const startOfWeek = (d: Date) => { const day = d.getDay(); const diff = d.getDate() - day + (day === 0 ? -6 : 1); return new Date(d.setDate(diff)); };
+    
+    switch (datePreset) {
+      case "today": return { from: fmt(today), to: fmt(today) };
+      case "yesterday": { const y = new Date(today); y.setDate(y.getDate() - 1); return { from: fmt(y), to: fmt(y) }; }
+      case "this_week": { const s = startOfWeek(new Date()); return { from: fmt(s), to: fmt(today) }; }
+      case "last_week": { const e = startOfWeek(new Date()); e.setDate(e.getDate() - 1); const s = new Date(e); s.setDate(s.getDate() - 6); return { from: fmt(s), to: fmt(e) }; }
+      case "this_month": { const s = new Date(today.getFullYear(), today.getMonth(), 1); return { from: fmt(s), to: fmt(today) }; }
+      case "last_month": { const e = new Date(today.getFullYear(), today.getMonth(), 0); const s = new Date(e.getFullYear(), e.getMonth(), 1); return { from: fmt(s), to: fmt(e) }; }
+      case "this_year": { const s = new Date(today.getFullYear(), 0, 1); return { from: fmt(s), to: fmt(today) }; }
+      case "custom": return customDateFrom || customDateTo ? { from: customDateFrom || "1900-01-01", to: customDateTo || "2100-12-31" } : null;
+      default: return null;
+    }
+  };
+
+  const dateRange = getDateRange();
+
   const typeFiltered = filter === "all" ? transactions : filter === "receivable" ? receivables : payables;
-  const filtered = accountFilter.size === 0 ? typeFiltered : typeFiltered.filter(t => t.payment_account && accountFilter.has(t.payment_account));
+  const accountFiltered = accountFilter.size === 0 ? typeFiltered : typeFiltered.filter(t => t.payment_account && accountFilter.has(t.payment_account));
+  const dateFiltered = dateRange ? accountFiltered.filter(t => t.date >= dateRange.from && t.date <= dateRange.to) : accountFiltered;
+  const searchLower = search.toLowerCase();
+  const filtered = search ? dateFiltered.filter(t => 
+    t.description.toLowerCase().includes(searchLower) ||
+    t.party_name?.toLowerCase().includes(searchLower) ||
+    t.observations?.toLowerCase().includes(searchLower) ||
+    categoryPathMap.get(t.category || "")?.toLowerCase().includes(searchLower)
+  ) : dateFiltered;
 
   // Calculate running balance
   const sortedFiltered = [...filtered].sort((a, b) => a.date.localeCompare(b.date) || a.created_at.localeCompare(b.created_at));
@@ -467,6 +500,7 @@ export default function Finance() {
             </button>
           ))}
         </div>
+
         <Popover open={accountFilterOpen} onOpenChange={setAccountFilterOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="font-body text-xs gap-1.5">
@@ -512,6 +546,39 @@ export default function Finance() {
             )}
           </PopoverContent>
         </Popover>
+
+        <Select value={datePreset} onValueChange={(v) => { setDatePreset(v); if (v !== "custom") { setCustomDateFrom(""); setCustomDateTo(""); } }}>
+          <SelectTrigger className="w-auto h-8 text-xs font-body gap-1.5">
+            <SelectValue placeholder="Período" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todo período</SelectItem>
+            <SelectItem value="today">Hoje</SelectItem>
+            <SelectItem value="yesterday">Ontem</SelectItem>
+            <SelectItem value="this_week">Esta semana</SelectItem>
+            <SelectItem value="last_week">Semana passada</SelectItem>
+            <SelectItem value="this_month">Este mês</SelectItem>
+            <SelectItem value="last_month">Mês passado</SelectItem>
+            <SelectItem value="this_year">Este ano</SelectItem>
+            <SelectItem value="custom">Personalizado</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {datePreset === "custom" && (
+          <div className="flex items-center gap-2">
+            <Input type="date" className="h-8 text-xs w-36" value={customDateFrom} onChange={(e) => setCustomDateFrom(e.target.value)} placeholder="De" />
+            <span className="text-xs text-muted-foreground">até</span>
+            <Input type="date" className="h-8 text-xs w-36" value={customDateTo} onChange={(e) => setCustomDateTo(e.target.value)} placeholder="Até" />
+          </div>
+        )}
+
+        <div className="flex-1" />
+        <Input
+          placeholder="Buscar transação..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="h-8 text-xs w-48 sm:w-64"
+        />
       </div>
 
       {/* Desktop table */}
