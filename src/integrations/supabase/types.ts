@@ -74,6 +74,54 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_accounts: {
+        Row: {
+          account_number: string | null
+          account_type: string | null
+          agency: string | null
+          bank_name: string
+          created_at: string
+          holder_document: string | null
+          holder_name: string | null
+          id: string
+          is_active: boolean
+          notes: string | null
+          pix_key: string | null
+          pix_key_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_number?: string | null
+          account_type?: string | null
+          agency?: string | null
+          bank_name: string
+          created_at?: string
+          holder_document?: string | null
+          holder_name?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          pix_key?: string | null
+          pix_key_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string | null
+          account_type?: string | null
+          agency?: string | null
+          bank_name?: string
+          created_at?: string
+          holder_document?: string | null
+          holder_name?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          pix_key?: string | null
+          pix_key_type?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       campaigns: {
         Row: {
           channel: string | null
@@ -546,6 +594,50 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      financial_categories: {
+        Row: {
+          code: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          parent_id: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          parent_id?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          parent_id?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "financial_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       financial_parties: {
         Row: {
