@@ -208,7 +208,7 @@ export default function AuditLogsTab() {
     const data = log.new_data ?? log.old_data;
     if (!data) return "";
     return Object.entries(data)
-      .filter(([k]) => !["id", "created_at", "updated_at"].includes(k))
+      .filter(([k]) => !["id", "created_at", "updated_at", "_label"].includes(k))
       .slice(0, 2)
       .map(([k, v]) => `${k}: ${String(v ?? "—").substring(0, 30)}`)
       .join(" | ");
