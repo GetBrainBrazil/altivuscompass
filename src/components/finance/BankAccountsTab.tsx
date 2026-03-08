@@ -189,8 +189,8 @@ export default function BankAccountsTab() {
             <DialogTitle className="font-display">{editing ? "Editar Conta" : "Nova Conta Bancária"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="sm:col-span-2 space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="sm:col-span-3 space-y-2">
                 <Label className="font-body">Banco *</Label>
                 <Input value={form.bank_name ?? ""} onChange={(e) => setForm({ ...form, bank_name: e.target.value })} required />
               </div>
@@ -227,11 +227,11 @@ export default function BankAccountsTab() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
+              <div className="sm:col-span-2 space-y-2">
                 <Label className="font-body">Chave PIX</Label>
                 <Input value={form.pix_key ?? ""} onChange={(e) => setForm({ ...form, pix_key: e.target.value })} />
               </div>
-              <div className="sm:col-span-2 space-y-2">
+              <div className="sm:col-span-3 space-y-2">
                 <Label className="font-body">Observações</Label>
                 <Textarea value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
               </div>
