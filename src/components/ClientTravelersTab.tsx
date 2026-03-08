@@ -432,9 +432,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       ...r,
       _name: r.client?.full_name ?? "",
       _type: RELATIONSHIP_TYPES[r.relationship_type] || r.relationship_type,
-      _birth_date: r.client?.birth_date ?? "",
-      _nationality: r.client?.nationality ?? "",
-      _passport: r.client?.passport_number ?? "",
+      _passports: (r.passports ?? []).map((p: any) => p.passport_number).filter(Boolean).join(", "),
     }));
   }, [relationships]);
 
