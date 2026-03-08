@@ -46,6 +46,7 @@ export default function Finance() {
   const [partyPopoverOpen, setPartyPopoverOpen] = useState(false);
   const [accountFilter, setAccountFilter] = useState<Set<string>>(new Set());
   const [accountFilterOpen, setAccountFilterOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { data: clients = [] } = useQuery({
     queryKey: ["clients-list"],
@@ -169,6 +170,12 @@ export default function Finance() {
 
   const formatCurrency = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
+  const formatDate = (d: string) => {
+    if (!d) return "-";
+    const [y, m, day] = d.split("-");
+    return `${day}/${m}/${y}`;
+  };
+
   const categoryPathMap = useMemo(() => {
     const map = new Map<string, string>();
     const buildPath = (id: string): string => {
@@ -191,10 +198,15 @@ export default function Finance() {
 
   const receivables = transactions.filter(t => t.category?.startsWith("RECEITAS") || t.type === "receivable" || t.type === "sale" || t.type === "commission");
   const payables = transactions.filter(t => t.category?.startsWith("DESPESAS") || t.category?.startsWith("IMPOSTOS") || t.type === "expense" || t.type === "payable");
-  const pendingReceivables = receivables.filter(t => t.status === "pending").reduce((s, t) => s + Number(t.amount), 0);
-  const pendingPayables = payables.filter(t => t.status === "pending").reduce((s, t) => s + Number(t.amount), 0);
-  const totalReceived = receivables.filter(t => t.status === "received" || t.status === "paid").reduce((s, t) => s + Number(t.amount), 0);
-  const totalPaid = payables.filter(t => t.status === "paid").reduce((s, t) => s + Number(t.amount), 0);
+
+  // Metrics: use selected items if any, otherwise all
+  const metricsSource = selectedIds.size > 0 ? transactions.filter(t => selectedIds.has(t.id)) : transactions;
+  const metricsReceivables = metricsSource.filter(t => t.category?.startsWith("RECEITAS") || t.type === "receivable" || t.type === "sale" || t.type === "commission");
+  const metricsPayables = metricsSource.filter(t => t.category?.startsWith("DESPESAS") || t.category?.startsWith("IMPOSTOS") || t.type === "expense" || t.type === "payable");
+  const pendingReceivables = metricsReceivables.filter(t => t.status === "pending").reduce((s, t) => s + Number(t.amount), 0);
+  const pendingPayables = metricsPayables.filter(t => t.status === "pending").reduce((s, t) => s + Number(t.amount), 0);
+  const totalReceived = metricsReceivables.filter(t => t.status === "received" || t.status === "paid").reduce((s, t) => s + Number(t.amount), 0);
+  const totalPaid = metricsPayables.filter(t => t.status === "paid").reduce((s, t) => s + Number(t.amount), 0);
 
   const typeFiltered = filter === "all" ? transactions : filter === "receivable" ? receivables : payables;
   const filtered = accountFilter.size === 0 ? typeFiltered : typeFiltered.filter(t => t.payment_account && accountFilter.has(t.payment_account));
@@ -504,8 +516,13 @@ export default function Finance() {
 
       {/* Desktop table */}
       <div className="glass-card rounded-xl hidden sm:block overflow-x-auto">
-        <div className="p-4 sm:p-5 border-b border-border/50">
+        <div className="p-4 sm:p-5 border-b border-border/50 flex items-center justify-between">
           <h2 className="font-display text-lg font-semibold">Transações</h2>
+          {selectedIds.size > 0 && (
+            <button onClick={() => setSelectedIds(new Set())} className="text-xs text-muted-foreground hover:text-foreground font-body">
+              Limpar seleção ({selectedIds.size})
+            </button>
+          )}
         </div>
         {isLoading ? (
           <div className="p-8 text-center text-muted-foreground font-body">Carregando...</div>
@@ -515,6 +532,18 @@ export default function Finance() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/50 text-muted-foreground font-body text-xs">
+                <th className="p-3 w-8">
+                  <Checkbox
+                    checked={filtered.length > 0 && filtered.every(t => selectedIds.has(t.id))}
+                    onCheckedChange={(v) => {
+                      if (v) {
+                        setSelectedIds(new Set(filtered.map(t => t.id)));
+                      } else {
+                        setSelectedIds(new Set());
+                      }
+                    }}
+                  />
+                </th>
                 <th className="p-3 text-left font-medium">Data</th>
                 <th className="p-3 text-center font-medium w-8">C</th>
                 <th className="p-3 text-left font-medium">Descrição</th>
@@ -524,7 +553,6 @@ export default function Finance() {
                 <th className="p-3 text-right font-medium">Valor</th>
                 <th className="p-3 text-right font-medium">Saldo</th>
                 <th className="p-3 text-left font-medium">Obs</th>
-                
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
@@ -532,8 +560,20 @@ export default function Finance() {
                 const isExpense = t.category?.startsWith("DESPESAS") || t.category?.startsWith("IMPOSTOS") || t.type === "expense" || t.type === "payable";
                 const balance = balanceMap.get(t.id) ?? 0;
                 return (
-                  <tr key={t.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEdit(t)}>
-                    <td className="p-3 font-body text-xs text-muted-foreground whitespace-nowrap">{t.date}</td>
+                  <tr key={t.id} className={cn("hover:bg-muted/30 transition-colors cursor-pointer", selectedIds.has(t.id) && "bg-primary/5")} onClick={() => openEdit(t)}>
+                    <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedIds.has(t.id)}
+                        onCheckedChange={(v) => {
+                          setSelectedIds(prev => {
+                            const next = new Set(prev);
+                            v ? next.add(t.id) : next.delete(t.id);
+                            return next;
+                          });
+                        }}
+                      />
+                    </td>
+                    <td className="p-3 font-body text-xs text-muted-foreground whitespace-nowrap">{formatDate(t.date)}</td>
                     <td className="p-3 text-center">
                       {t.is_reconciled && <CheckCircle2 size={14} className="text-success mx-auto" />}
                     </td>
@@ -585,8 +625,7 @@ export default function Finance() {
                     <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${st.color}`}>{st.label}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground font-body">{t.date}</span>
-                    <Button variant="ghost" size="sm" className="text-destructive h-6 px-2 text-xs" onClick={(e) => { e.stopPropagation(); if (confirm("Remover?")) deleteMutation.mutate(t.id); }}>✕</Button>
+                    <span className="text-xs text-muted-foreground font-body">{formatDate(t.date)}</span>
                   </div>
                 </div>
               </div>
