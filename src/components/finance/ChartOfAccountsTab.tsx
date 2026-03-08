@@ -299,12 +299,22 @@ export default function ChartOfAccountsTab() {
                 </Select>
               </div>
               <div className="space-y-2">
+                <Label className="font-body">Natureza</Label>
+                <Select value={form.account_nature ?? "analytic"} onValueChange={(v) => setForm({ ...form, account_nature: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="analytic">Analítica (aceita lançamentos)</SelectItem>
+                    <SelectItem value="synthetic">Sintética (consolidadora)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label className="font-body">Categoria Pai</Label>
                 <Select value={form.parent_id ?? "none"} onValueChange={(v) => setForm({ ...form, parent_id: v === "none" ? null : v })}>
                   <SelectTrigger><SelectValue placeholder="Nenhuma (raiz)" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Nenhuma (raiz)</SelectItem>
-                    {categories.filter(c => c.id !== editing?.id).map(c => (
+                    {categories.filter(c => c.id !== editing?.id && c.account_nature === "synthetic").map(c => (
                       <SelectItem key={c.id} value={c.id}>
                         {c.code ? `${c.code} - ` : ""}{c.name}
                       </SelectItem>
