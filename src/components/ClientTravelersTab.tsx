@@ -337,8 +337,22 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
 
   const deleteRelMutation = useMutation({
     mutationFn: async (id: string) => {
+      // Find the relationship details before deleting for audit
+      const rel = relationships.find((r: any) => r.id === id);
       const { error } = await supabase.from("client_relationships").delete().eq("id", id);
       if (error) throw error;
+      // Log audit event with both client names
+      const linkedName = rel?.client?.full_name ?? "Desconhecido";
+      await logAuditEvent({
+        action: "delete",
+        tableName: "client_relationships",
+        recordId: id,
+        recordLabel: linkedName,
+        oldData: {
+          relationship_type: rel?.relationship_type,
+          linked_client: linkedName,
+        },
+      });
     },
     onSuccess: () => {
       toast({ title: "Vínculo removido" });
