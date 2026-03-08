@@ -2,10 +2,9 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -21,55 +20,52 @@ type AuditLog = {
   created_at: string;
 };
 
+type SortDir = "asc" | "desc";
+type SortState = { key: string; dir: SortDir } | null;
+
 const ACTION_LABELS: Record<string, string> = {
-  INSERT: "Criou",
-  UPDATE: "Alterou",
-  DELETE: "Removeu",
-  CREATE: "Criou",
-  create: "Criou",
-  update: "Alterou",
-  delete: "Removeu",
+  INSERT: "Criação", UPDATE: "Alteração", DELETE: "Remoção",
+  CREATE: "Criação", create: "Criação", update: "Alteração", delete: "Remoção",
 };
 
 const ACTION_COLORS: Record<string, string> = {
-  INSERT: "bg-success/10 text-success",
-  UPDATE: "bg-soft-blue/10 text-soft-blue",
-  DELETE: "bg-destructive/10 text-destructive",
-  CREATE: "bg-success/10 text-success",
-  create: "bg-success/10 text-success",
-  update: "bg-soft-blue/10 text-soft-blue",
-  delete: "bg-destructive/10 text-destructive",
+  INSERT: "bg-success/10 text-success", UPDATE: "bg-soft-blue/10 text-soft-blue", DELETE: "bg-destructive/10 text-destructive",
+  CREATE: "bg-success/10 text-success", create: "bg-success/10 text-success", update: "bg-soft-blue/10 text-soft-blue", delete: "bg-destructive/10 text-destructive",
 };
 
 const TABLE_LABELS: Record<string, string> = {
-  clients: "Clientes",
-  quotes: "Cotações",
-  financial_transactions: "Transações",
-  bank_accounts: "Contas Bancárias",
-  bank_account_credentials: "Acessos Bancários",
-  campaigns: "Campanhas",
-  miles_programs: "Milhas",
-  passengers: "Passageiros",
-  profiles: "Perfis",
-  user_roles: "Funções",
-  financial_categories: "Categorias Financeiras",
-  financial_parties: "Partes Financeiras",
-  airports: "Aeroportos",
-  airlines: "Companhias Aéreas",
-  tags: "Tags",
-  sessions: "Sessão",
+  clients: "Clientes", quotes: "Cotações", financial_transactions: "Transações",
+  bank_accounts: "Contas Bancárias", bank_account_credentials: "Acessos Bancários",
+  campaigns: "Campanhas", miles_programs: "Milhas", passengers: "Passageiros",
+  profiles: "Perfis", user_roles: "Funções", financial_categories: "Categorias Financeiras",
+  financial_parties: "Partes Financeiras", airports: "Aeroportos", airlines: "Companhias Aéreas",
+  tags: "Tags", sessions: "Sessão",
 };
 
 const SESSION_EVENT_LABELS: Record<string, string> = {
-  LOGIN: "Login",
-  LOGOUT: "Logout",
-  LOGOUT_INACTIVITY: "Logout por inatividade",
+  LOGIN: "Login", LOGOUT: "Logout", LOGOUT_INACTIVITY: "Logout (inatividade)",
 };
+
+function toggleSort(sort: SortState, key: string): SortState {
+  if (sort?.key === key) {
+    if (sort.dir === "asc") return { key, dir: "desc" };
+    return null;
+  }
+  return { key, dir: "asc" };
+}
+
+function SortIcon({ sort, column }: { sort: SortState; column: string }) {
+  if (sort?.key !== column) return <ArrowUpDown size={12} className="opacity-30" />;
+  return sort.dir === "asc" ? <ArrowUp size={12} /> : <ArrowDown size={12} />;
+}
 
 export default function AuditLogsTab() {
   const [search, setSearch] = useState("");
   const [tableFilter, setTableFilter] = useState("all");
   const [actionFilter, setActionFilter] = useState("all");
+  const [userFilter, setUserFilter] = useState("all");
+  const [sort, setSort] = useState<SortState>({ key: "created_at", dir: "desc" });
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ["audit-logs"],
@@ -89,10 +85,19 @@ export default function AuditLogsTab() {
     return Array.from(set).sort();
   }, [logs]);
 
+  const users = useMemo(() => {
+    const map = new Map<string, string>();
+    logs.forEach((l) => {
+      if (l.user_name && l.user_id) map.set(l.user_id, l.user_name);
+    });
+    return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [logs]);
+
   const filtered = useMemo(() => {
-    return logs.filter((log) => {
+    let result = logs.filter((log) => {
       if (tableFilter !== "all" && log.table_name !== tableFilter) return false;
       if (actionFilter !== "all" && log.action !== actionFilter) return false;
+      if (userFilter !== "all" && log.user_id !== userFilter) return false;
       if (search.trim()) {
         const q = search.toLowerCase();
         const matchesUser = log.user_name?.toLowerCase().includes(q);
@@ -102,7 +107,26 @@ export default function AuditLogsTab() {
       }
       return true;
     });
-  }, [logs, tableFilter, actionFilter, search]);
+
+    if (sort) {
+      result = [...result].sort((a, b) => {
+        let va = "", vb = "";
+        if (sort.key === "created_at") {
+          va = a.created_at; vb = b.created_at;
+        } else if (sort.key === "user_name") {
+          va = (a.user_name ?? "").toLowerCase(); vb = (b.user_name ?? "").toLowerCase();
+        } else if (sort.key === "action") {
+          va = a.action.toLowerCase(); vb = b.action.toLowerCase();
+        } else if (sort.key === "table_name") {
+          va = (TABLE_LABELS[a.table_name] ?? a.table_name).toLowerCase();
+          vb = (TABLE_LABELS[b.table_name] ?? b.table_name).toLowerCase();
+        }
+        return sort.dir === "asc" ? va.localeCompare(vb) : -va.localeCompare(vb);
+      });
+    }
+
+    return result;
+  }, [logs, tableFilter, actionFilter, userFilter, search, sort]);
 
   const getChangedFields = (oldData: Record<string, any> | null, newData: Record<string, any> | null) => {
     if (!oldData || !newData) return null;
@@ -116,19 +140,56 @@ export default function AuditLogsTab() {
     return changes.length > 0 ? changes : null;
   };
 
+  const getActionLabel = (log: AuditLog) => {
+    if (log.table_name === "sessions") {
+      const event = (log.new_data as Record<string, any>)?.event;
+      return SESSION_EVENT_LABELS[event] ?? event ?? "Sessão";
+    }
+    return ACTION_LABELS[log.action] ?? log.action;
+  };
+
+  const getActionColor = (log: AuditLog) => {
+    if (log.table_name === "sessions") {
+      const event = (log.new_data as Record<string, any>)?.event;
+      if (event === "LOGIN") return "bg-success/10 text-success";
+      if (event === "LOGOUT_INACTIVITY") return "bg-warning/10 text-warning";
+      return "bg-muted text-muted-foreground";
+    }
+    return ACTION_COLORS[log.action] ?? "";
+  };
+
+  const getSummary = (log: AuditLog) => {
+    if (log.table_name === "sessions") return "";
+    const changes = log.action === "UPDATE" ? getChangedFields(log.old_data, log.new_data) : null;
+    if (changes) return changes.map(c => c.field).join(", ");
+    const data = log.new_data ?? log.old_data;
+    if (!data) return "";
+    return Object.entries(data)
+      .filter(([k]) => !["id", "created_at", "updated_at"].includes(k))
+      .slice(0, 2)
+      .map(([k, v]) => `${k}: ${String(v ?? "—").substring(0, 30)}`)
+      .join(" | ");
+  };
+
   return (
     <div className="space-y-4">
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por usuário, tabela ou conteúdo..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-9 text-sm"
-          />
+          <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 text-sm" />
         </div>
+        <Select value={userFilter} onValueChange={setUserFilter}>
+          <SelectTrigger className="w-full sm:w-48 h-9 text-sm">
+            <SelectValue placeholder="Usuário" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os usuários</SelectItem>
+            {users.map(([id, name]) => (
+              <SelectItem key={id} value={id}>{name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={tableFilter} onValueChange={setTableFilter}>
           <SelectTrigger className="w-full sm:w-48 h-9 text-sm">
             <Filter size={14} className="mr-1" />
@@ -154,54 +215,93 @@ export default function AuditLogsTab() {
         </Select>
       </div>
 
-      {/* Results */}
+      {/* Table */}
       {isLoading ? (
         <div className="p-8 text-center text-muted-foreground font-body">Carregando logs...</div>
       ) : filtered.length === 0 ? (
         <div className="p-8 text-center text-muted-foreground font-body">Nenhum log encontrado.</div>
       ) : (
-        <div className="space-y-2">
-          {filtered.map((log) => {
+        <div className="rounded-lg border border-border overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-muted/50 border-b border-border">
+                  <th className="text-left p-3 font-medium font-body text-muted-foreground cursor-pointer select-none whitespace-nowrap" onClick={() => setSort(toggleSort(sort, "created_at"))}>
+                    <span className="flex items-center gap-1">Data/Hora <SortIcon sort={sort} column="created_at" /></span>
+                  </th>
+                  <th className="text-left p-3 font-medium font-body text-muted-foreground cursor-pointer select-none whitespace-nowrap" onClick={() => setSort(toggleSort(sort, "user_name"))}>
+                    <span className="flex items-center gap-1">Usuário <SortIcon sort={sort} column="user_name" /></span>
+                  </th>
+                  <th className="text-left p-3 font-medium font-body text-muted-foreground cursor-pointer select-none whitespace-nowrap" onClick={() => setSort(toggleSort(sort, "action"))}>
+                    <span className="flex items-center gap-1">Ação <SortIcon sort={sort} column="action" /></span>
+                  </th>
+                  <th className="text-left p-3 font-medium font-body text-muted-foreground cursor-pointer select-none whitespace-nowrap" onClick={() => setSort(toggleSort(sort, "table_name"))}>
+                    <span className="flex items-center gap-1">Módulo <SortIcon sort={sort} column="table_name" /></span>
+                  </th>
+                  <th className="text-left p-3 font-medium font-body text-muted-foreground whitespace-nowrap hidden md:table-cell">Resumo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((log) => {
+                  const isExpanded = expandedRow === log.id;
+                  const changes = log.action === "UPDATE" ? getChangedFields(log.old_data, log.new_data) : null;
+                  const isSession = log.table_name === "sessions";
+
+                  return (
+                    <tr
+                      key={log.id}
+                      className="border-b border-border/50 hover:bg-muted/30 cursor-pointer transition-colors last:border-b-0"
+                      onClick={() => setExpandedRow(isExpanded ? null : log.id)}
+                    >
+                      <td className="p-3 whitespace-nowrap font-body text-xs text-muted-foreground">
+                        {format(new Date(log.created_at), "dd/MM/yy HH:mm:ss", { locale: ptBR })}
+                      </td>
+                      <td className="p-3 font-body text-sm text-foreground whitespace-nowrap">
+                        {log.user_name ?? "Sistema"}
+                      </td>
+                      <td className="p-3">
+                        <Badge variant="outline" className={`text-[10px] font-body ${getActionColor(log)}`}>
+                          {getActionLabel(log)}
+                        </Badge>
+                      </td>
+                      <td className="p-3 font-body text-xs text-muted-foreground whitespace-nowrap">
+                        {isSession ? "" : (TABLE_LABELS[log.table_name] ?? log.table_name)}
+                      </td>
+                      <td className="p-3 font-body text-xs text-muted-foreground truncate max-w-[300px] hidden md:table-cell">
+                        {getSummary(log)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Expanded detail panel */}
+          {expandedRow && (() => {
+            const log = filtered.find(l => l.id === expandedRow);
+            if (!log) return null;
             const changes = log.action === "UPDATE" ? getChangedFields(log.old_data, log.new_data) : null;
-            const isSessionEvent = log.table_name === "sessions";
-            const sessionEvent = isSessionEvent ? (log.new_data as Record<string, any>)?.event : null;
-            const sessionLabel = sessionEvent ? SESSION_EVENT_LABELS[sessionEvent] ?? sessionEvent : null;
+            const isSession = log.table_name === "sessions";
 
             return (
-              <div key={log.id} className="glass-card rounded-lg p-3 sm:p-4 space-y-2">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {isSessionEvent ? (
-                      <Badge variant="outline" className={`text-[10px] font-body ${
-                        sessionEvent === "LOGIN" ? "bg-success/10 text-success" :
-                        sessionEvent === "LOGOUT_INACTIVITY" ? "bg-warning/10 text-warning" :
-                        "bg-muted text-muted-foreground"
-                      }`}>
-                        {sessionLabel}
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className={`text-[10px] font-body ${ACTION_COLORS[log.action] ?? ""}`}>
-                        {ACTION_LABELS[log.action] ?? log.action}
-                      </Badge>
-                    )}
-                    <span className="text-sm font-body font-medium text-foreground">
-                      {log.user_name ?? "Sistema"}
-                    </span>
-                    {!isSessionEvent && (
-                      <span className="text-xs text-muted-foreground font-body">
-                        em <span className="font-medium">{TABLE_LABELS[log.table_name] ?? log.table_name}</span>
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-body whitespace-nowrap">
+              <div className="border-t border-border bg-muted/20 p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-body font-medium text-foreground">Detalhes do registro</span>
+                  <span className="text-[10px] font-body text-muted-foreground">
                     {format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}
                   </span>
                 </div>
 
-                {/* Show changes for UPDATE */}
+                {isSession && (
+                  <p className="text-xs font-body text-muted-foreground">
+                    E-mail: {(log.new_data as any)?.email ?? "—"}
+                  </p>
+                )}
+
                 {changes && changes.length > 0 && (
-                  <div className="bg-muted/30 rounded-md p-2 space-y-1">
-                    {changes.slice(0, 5).map((c, i) => (
+                  <div className="space-y-1">
+                    {changes.map((c, i) => (
                       <div key={i} className="text-xs font-body text-muted-foreground">
                         <span className="font-medium text-foreground">{c.field}</span>:{" "}
                         <span className="line-through text-destructive/70">{String(c.from ?? "—")}</span>
@@ -209,42 +309,37 @@ export default function AuditLogsTab() {
                         <span className="text-success">{String(c.to ?? "—")}</span>
                       </div>
                     ))}
-                    {changes.length > 5 && (
-                      <p className="text-[10px] text-muted-foreground">+{changes.length - 5} alterações</p>
-                    )}
                   </div>
                 )}
 
-                {/* Show data for INSERT (non-session) */}
-                {log.action === "INSERT" && log.new_data && !isSessionEvent && (
-                  <div className="bg-muted/30 rounded-md p-2">
-                    <p className="text-xs font-body text-muted-foreground truncate">
-                      {Object.entries(log.new_data)
-                        .filter(([k]) => !["id", "created_at", "updated_at"].includes(k))
-                        .slice(0, 3)
-                        .map(([k, v]) => `${k}: ${String(v ?? "—")}`)
-                        .join(" | ")}
-                    </p>
+                {!isSession && !changes && log.new_data && (
+                  <div className="text-xs font-body text-muted-foreground space-y-0.5">
+                    {Object.entries(log.new_data)
+                      .filter(([k]) => !["id", "created_at", "updated_at"].includes(k))
+                      .map(([k, v]) => (
+                        <div key={k}><span className="font-medium text-foreground">{k}</span>: {String(v ?? "—")}</div>
+                      ))}
                   </div>
                 )}
 
-                {/* Show data for DELETE */}
-                {log.action === "DELETE" && log.old_data && (
-                  <div className="bg-destructive/5 rounded-md p-2">
-                    <p className="text-xs font-body text-muted-foreground truncate">
-                      {Object.entries(log.old_data)
-                        .filter(([k]) => !["id", "created_at", "updated_at"].includes(k))
-                        .slice(0, 3)
-                        .map(([k, v]) => `${k}: ${String(v ?? "—")}`)
-                        .join(" | ")}
-                    </p>
+                {!isSession && log.action === "DELETE" && log.old_data && (
+                  <div className="text-xs font-body text-muted-foreground space-y-0.5">
+                    {Object.entries(log.old_data)
+                      .filter(([k]) => !["id", "created_at", "updated_at"].includes(k))
+                      .map(([k, v]) => (
+                        <div key={k}><span className="font-medium text-foreground">{k}</span>: {String(v ?? "—")}</div>
+                      ))}
                   </div>
                 )}
               </div>
             );
-          })}
+          })()}
         </div>
       )}
+
+      <p className="text-[10px] text-muted-foreground font-body text-right">
+        {filtered.length} registro{filtered.length !== 1 ? "s" : ""}
+      </p>
     </div>
   );
 }
