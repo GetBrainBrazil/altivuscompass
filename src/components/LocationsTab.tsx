@@ -419,7 +419,8 @@ function CitiesSubTab() {
     enriched.filter((c: any) => {
       const matchSearch = c.name.toLowerCase().includes(search.toLowerCase()) || c.country_name.toLowerCase().includes(search.toLowerCase()) || c.state_name.toLowerCase().includes(search.toLowerCase());
       const matchCountry = filterCountry === "all" || c.country_id === filterCountry;
-      return matchSearch && matchCountry;
+      const matchState = filterState === "all" || c.state_id === filterState;
+      return matchSearch && matchCountry && matchState;
     }),
     sort
   );
