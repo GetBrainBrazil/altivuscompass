@@ -271,7 +271,7 @@ export default function BankAccountCredentials({ bankAccountId }: { bankAccountI
             {editingId ? "Editar Acesso" : "Novo Acesso"}
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div className="space-y-1.5">
               <Label className="font-body text-xs">Usuário</Label>
               <Input
@@ -327,7 +327,7 @@ export default function BankAccountCredentials({ bankAccountId }: { bankAccountI
               <Label className="font-body text-xs">Facial</Label>
             </div>
 
-            <div className="sm:col-span-2 space-y-1.5">
+            <div className="sm:col-span-4 space-y-1.5">
               <Label className="font-body text-xs">Observações</Label>
               <Textarea
                 value={form.notes ?? ""}
@@ -337,7 +337,7 @@ export default function BankAccountCredentials({ bankAccountId }: { bankAccountI
               />
             </div>
 
-            <div className="sm:col-span-2 space-y-2">
+            <div className="sm:col-span-4 space-y-2">
               <Label className="font-body text-xs font-semibold flex items-center gap-1">
                 <Users size={12} /> Visível para
               </Label>
