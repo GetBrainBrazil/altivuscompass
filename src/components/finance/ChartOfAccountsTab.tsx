@@ -26,6 +26,11 @@ const typeLabels: Record<string, { label: string; color: string }> = {
   transfer: { label: "Transferência", color: "bg-muted text-muted-foreground" },
 };
 
+const natureLabels: Record<string, { label: string; color: string }> = {
+  analytic: { label: "Analítica", color: "bg-soft-blue/10 text-soft-blue" },
+  synthetic: { label: "Sintética", color: "bg-muted text-muted-foreground" },
+};
+
 type SortDir = "asc" | "desc" | null;
 
 function SortHeader({ label, active, direction, onClick }: { label: string; active: boolean; direction: SortDir; onClick: () => void }) {
