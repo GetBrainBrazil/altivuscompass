@@ -74,6 +74,108 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_account_access: {
+        Row: {
+          bank_account_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          bank_account_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          bank_account_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_account_access_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_account_credential_viewers: {
+        Row: {
+          created_at: string
+          credential_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credential_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credential_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_account_credential_viewers_credential_id_fkey"
+            columns: ["credential_id"]
+            isOneToOne: false
+            referencedRelation: "bank_account_credentials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_account_credentials: {
+        Row: {
+          access_password: string | null
+          bank_account_id: string
+          created_at: string
+          has_facial: boolean
+          id: string
+          login_username: string | null
+          notes: string | null
+          transaction_password: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_password?: string | null
+          bank_account_id: string
+          created_at?: string
+          has_facial?: boolean
+          id?: string
+          login_username?: string | null
+          notes?: string | null
+          transaction_password?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_password?: string | null
+          bank_account_id?: string
+          created_at?: string
+          has_facial?: boolean
+          id?: string
+          login_username?: string | null
+          notes?: string | null
+          transaction_password?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_account_credentials_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bank_accounts: {
         Row: {
           account_number: string | null

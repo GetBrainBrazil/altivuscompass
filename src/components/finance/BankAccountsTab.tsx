@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import BankAccountCredentials from "./BankAccountCredentials";
 
 type BankAccount = {
   id: string; bank_name: string; agency: string | null; account_number: string | null;
@@ -240,6 +241,12 @@ export default function BankAccountsTab() {
                 <Label className="font-body">Conta ativa</Label>
               </div>
             </div>
+
+            {editing && (
+              <div className="border-t border-border/50 pt-4">
+                <BankAccountCredentials bankAccountId={editing.id} />
+              </div>
+            )}
             <div className="flex items-center justify-between">
               {editing ? (
                 <AlertDialog>
