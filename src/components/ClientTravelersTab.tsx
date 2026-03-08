@@ -286,17 +286,26 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         });
       }
 
-      // Find ALL clients that have this passenger (by passenger id)
-      const { data: allPassengerRecords } = await supabase
-        .from("passengers")
-        .select("client_id")
-        .eq("full_name", promotePassenger.full_name);
+      // Find ALL clients that have this same passenger (copies)
+      // Use passport_number as primary identifier; fallback to name + birth_date
+      let matchQuery = supabase.from("passengers").select("id, client_id");
+      if (promotePassenger.passport_number) {
+        matchQuery = matchQuery.eq("passport_number", promotePassenger.passport_number);
+      } else if (promotePassenger.birth_date) {
+        matchQuery = matchQuery.eq("full_name", promotePassenger.full_name).eq("birth_date", promotePassenger.birth_date);
+      } else {
+        // No reliable match criteria beyond current record
+        matchQuery = matchQuery.eq("id", promotePassenger.id!);
+      }
+      const { data: allPassengerRecords } = await matchQuery;
 
       // Collect unique client IDs that had this passenger
       const linkedClientIds = new Set<string>();
-      linkedClientIds.add(clientId); // current client always gets the relationship
+      linkedClientIds.add(clientId);
+      const passengerIdsToDelete: string[] = [];
       (allPassengerRecords ?? []).forEach((rec: any) => {
         if (rec.client_id) linkedClientIds.add(rec.client_id);
+        passengerIdsToDelete.push(rec.id);
       });
 
       // Create relationship with each client
@@ -307,15 +316,9 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       }));
       await supabase.from("client_relationships").insert(relationshipInserts);
 
-      // Delete ALL passenger records with same id (could exist as copies)
-      if (promotePassenger.id) {
-        // Delete by name + passport to catch copies across clients
-        const deleteQuery = supabase.from("passengers").delete().eq("full_name", promotePassenger.full_name);
-        if (promotePassenger.passport_number) {
-          await deleteQuery.eq("passport_number", promotePassenger.passport_number);
-        } else {
-          await deleteQuery;
-        }
+      // Delete all matched passenger records
+      if (passengerIdsToDelete.length > 0) {
+        await supabase.from("passengers").delete().in("id", passengerIdsToDelete);
       }
 
       return newClient.id;
