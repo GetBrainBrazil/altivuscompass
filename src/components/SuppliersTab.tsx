@@ -461,36 +461,45 @@ export default function SuppliersTab() {
         </Tabs>
 
         {/* Action buttons */}
-        <div className="flex items-center gap-3">
-          <Button onClick={() => saveMutation.mutate()} disabled={!form.name || saveMutation.isPending} className="font-body">
-            {saveMutation.isPending ? "Salvando..." : editing ? "Salvar e Voltar" : "Adicionar Fornecedor"}
-          </Button>
-          {editing && (
-            <Button variant="outline" onClick={() => { saveMutation.mutate(); }} disabled={!form.name || saveMutation.isPending} className="font-body">
-              Salvar
-            </Button>
-          )}
-          <div className="flex-1" />
-          {editing && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button type="button" variant="ghost" size="sm" className="text-destructive hover:text-destructive font-body">
-                  Excluir Fornecedor
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Excluir fornecedor?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Tem certeza que deseja excluir <strong>{editing.name}</strong>? Esta ação não pode ser desfeita.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => deleteMutation.mutate(editing.id)}>Excluir</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+        <div className="flex items-center gap-3 border-t pt-4">
+          {editing ? (
+            <>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button type="button" variant="ghost" size="sm" className="text-destructive hover:text-destructive font-body">
+                    Excluir Fornecedor
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir fornecedor?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Tem certeza que deseja excluir <strong>{editing.name}</strong>? Esta ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => deleteMutation.mutate(editing.id)}>Excluir</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              <div className="flex-1" />
+              <Button variant="outline" onClick={goBack} className="font-body">Voltar</Button>
+              <Button variant="outline" onClick={() => saveMutation.mutate()} disabled={!form.name || saveMutation.isPending} className="font-body">
+                Salvar e Voltar
+              </Button>
+              <Button onClick={() => saveMutation.mutate()} disabled={!form.name || saveMutation.isPending} className="font-body">
+                {saveMutation.isPending ? "Salvando..." : "Salvar"}
+              </Button>
+            </>
+          ) : (
+            <>
+              <div className="flex-1" />
+              <Button variant="outline" onClick={goBack} className="font-body">Voltar</Button>
+              <Button onClick={() => saveMutation.mutate()} disabled={!form.name || saveMutation.isPending} className="font-body">
+                {saveMutation.isPending ? "Salvando..." : "Adicionar Fornecedor"}
+              </Button>
+            </>
           )}
         </div>
       </div>
