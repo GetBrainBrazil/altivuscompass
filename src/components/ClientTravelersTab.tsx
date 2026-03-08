@@ -482,10 +482,11 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       setPassengerForm({
         full_name: p.full_name, birth_date: p.birth_date ?? "", nationality: p.nationality ?? "",
         passport_number: p.passport_number ?? "", passport_expiry: p.passport_expiry ?? "", notes: p.notes ?? "",
+        relationship_type: p.relationship_type ?? "",
       });
     } else {
       setEditingPassenger(null);
-      setPassengerForm({ full_name: "", birth_date: "", nationality: "", passport_number: "", passport_expiry: "", notes: "" });
+      setPassengerForm({ full_name: "", birth_date: "", nationality: "", passport_number: "", passport_expiry: "", notes: "", relationship_type: "" });
     }
     setPassengerDialog(true);
   };
