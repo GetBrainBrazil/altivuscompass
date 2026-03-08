@@ -542,18 +542,6 @@ export default function Clients() {
                 <Label className="font-body text-xs">Site</Label>
                 <Input value={form.website} onChange={(e) => upd("website", e.target.value)} placeholder="https://" className="h-9" />
               </div>
-              <div className="col-span-6 sm:col-span-3 space-y-1">
-                <Label className="font-body text-xs">Passaporte (status)</Label>
-                <Select value={form.passport_status} onValueChange={(v) => upd("passport_status", v)}>
-                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Sem passaporte</SelectItem>
-                    <SelectItem value="valid">Válido</SelectItem>
-                    <SelectItem value="expired">Vencido</SelectItem>
-                    <SelectItem value="processing">Em processo</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
           </div>
 
