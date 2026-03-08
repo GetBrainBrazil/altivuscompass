@@ -523,7 +523,8 @@ export default function Clients() {
                     </Button>
                   </div>
                   {emails.map((e, i) => (
-                    <div key={i} className="flex gap-2 items-start">
+                    <div key={i} className="flex gap-2 items-center">
+                      <Checkbox checked={emails.length === 1 || e.is_primary} onCheckedChange={() => { const n = emails.map((em, j) => ({ ...em, is_primary: j === i })); setEmails(n); }} className="shrink-0" title="Principal" />
                       <Input className="w-72 h-9 shrink-0" type="email" placeholder="E-mail" value={e.email} onChange={(ev) => { const n = [...emails]; n[i].email = ev.target.value; setEmails(n); }} />
                       <Input className="flex-1 h-9" placeholder="Descrição" value={e.description} onChange={(ev) => { const n = [...emails]; n[i].description = ev.target.value; setEmails(n); }} />
                       <Button type="button" variant="ghost" size="icon" className="shrink-0 h-9 w-9 text-destructive" onClick={() => setEmails(emails.filter((_, j) => j !== i))}>
