@@ -129,7 +129,7 @@ export default function BankAccounts() {
         ) : (
           <div className="divide-y divide-border/30">
             {accounts.map((a) => (
-              <div key={a.id} className="p-4 flex items-center gap-4 hover:bg-muted/30 transition-colors">
+              <div key={a.id} className="p-4 flex items-center gap-4 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEdit(a)}>
                 <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                   <Building2 size={18} className="text-primary" />
                 </div>
@@ -146,28 +146,6 @@ export default function BankAccounts() {
                     {a.account_number ? ` · Cc: ${a.account_number}` : ""}
                     {a.pix_key ? ` · PIX: ${a.pix_key}` : ""}
                   </p>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => openEdit(a)}>
-                    <Pencil size={14} />
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive">
-                        <Trash2 size={14} />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Remover conta bancária?</AlertDialogTitle>
-                        <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => deleteMutation.mutate(a.id)}>Remover</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
                 </div>
               </div>
             ))}
