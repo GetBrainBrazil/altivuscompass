@@ -32,9 +32,20 @@ interface AppLayoutProps {
 const IMPERSONATABLE_ROLES = ["manager", "sales_agent", "operations"] as const;
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { user, userRole, realRole, impersonatingRole, impersonatingUser, setImpersonatingRole, setImpersonatingUser, signOut } = useAuth();
+  const { user, userRole, realRole, impersonatingRole, impersonatingUser, setImpersonatingRole, setImpersonatingUser, signOut, session } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const isRealAdmin = realRole === "admin";
   const [userSearch, setUserSearch] = useState("");
+
+  const handleInactivityLogout = useCallback(async () => {
+    if (!session) return;
+    await signOut("inactivity");
+    toast({ title: "Sessão encerrada", description: "Você foi desconectado por inatividade (2 horas).", variant: "destructive" });
+    navigate("/login", { replace: true });
+  }, [session, signOut, toast, navigate]);
+
+  useInactivityLogout(handleInactivityLogout);
 
   const { data: usersWithRoles = [] } = useQuery({
     queryKey: ["impersonate-users-list"],
