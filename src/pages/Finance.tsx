@@ -61,6 +61,24 @@ export default function Finance() {
     },
   });
 
+  const { data: financialCategories = [] } = useQuery({
+    queryKey: ["financial-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("financial_categories").select("*").eq("is_active", true).order("code").order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const categoryTree = useMemo(() => {
+    type Cat = typeof financialCategories[number] & { children: Cat[] };
+    const build = (parentId: string | null): Cat[] =>
+      financialCategories
+        .filter(c => c.parent_id === parentId)
+        .map(c => ({ ...c, children: build(c.id) }));
+    return build(null);
+  }, [financialCategories]);
+
   const partyOptions = useMemo(() => {
     const clientOpts = clients.map(c => ({ value: c.full_name, label: c.full_name, group: "Clientes" }));
     const supplierOpts = suppliers.map(s => ({ value: s.trade_name || s.name, label: s.trade_name ? `${s.name} (${s.trade_name})` : s.name, group: "Fornecedores" }));
