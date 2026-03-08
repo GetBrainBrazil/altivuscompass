@@ -296,7 +296,7 @@ function AirlinesTab() {
 
   const openEdit = (a: any) => {
     setEditing(a);
-    setForm({ name: a.name, iata_code: a.iata_code || "", country: a.country || "", mileage_program_name: a.mileage_program_name || "" });
+    setForm({ name: a.name, iata_code: a.iata_code || "", country: a.country || "", mileage_program_name: a.mileage_program_name || "", program_url: a.program_url || "" });
     setDialogOpen(true);
   };
 
