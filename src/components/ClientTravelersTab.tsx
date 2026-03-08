@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,8 +7,42 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, ExternalLink, UserPlus, Link2 } from "lucide-react";
+import { Plus, Trash2, ExternalLink, UserPlus, Link2, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+
+type SortDirection = "asc" | "desc" | null;
+type SortState = { key: string; direction: SortDirection };
+
+function useSortableData<T>(data: T[], defaultSort?: SortState) {
+  const [sort, setSort] = useState<SortState>(defaultSort ?? { key: "", direction: null });
+
+  const toggleSort = (key: string) => {
+    setSort((prev) => {
+      if (prev.key !== key) return { key, direction: "asc" };
+      if (prev.direction === "asc") return { key, direction: "desc" };
+      if (prev.direction === "desc") return { key: "", direction: null };
+      return { key, direction: "asc" };
+    });
+  };
+
+  const sorted = useMemo(() => {
+    if (!sort.direction || !sort.key) return data;
+    return [...data].sort((a: any, b: any) => {
+      const va = a[sort.key] ?? "";
+      const vb = b[sort.key] ?? "";
+      const cmp = String(va).localeCompare(String(vb), "pt-BR", { sensitivity: "base" });
+      return sort.direction === "asc" ? cmp : -cmp;
+    });
+  }, [data, sort]);
+
+  return { sorted, sort, toggleSort };
+}
+
+function SortIcon({ columnKey, sort }: { columnKey: string; sort: SortState }) {
+  if (sort.key === columnKey && sort.direction === "asc") return <ArrowUp className="h-3 w-3 ml-1 inline" />;
+  if (sort.key === columnKey && sort.direction === "desc") return <ArrowDown className="h-3 w-3 ml-1 inline" />;
+  return <ArrowUpDown className="h-3 w-3 ml-1 inline opacity-40" />;
+}
 
 const RELATIONSHIP_TYPES: Record<string, string> = {
   spouse: "Cônjuge",
@@ -244,6 +278,18 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     setPassengerDialog(true);
   };
 
+  const sortedRelationships = useMemo(() => {
+    return relationships.map((r: any) => ({
+      ...r,
+      _name: r.client?.full_name ?? "",
+      _type: RELATIONSHIP_TYPES[r.relationship_type] || r.relationship_type,
+      _location: r.client?.city ? `${r.client.city}${r.client.state ? `, ${r.client.state}` : ""}` : "",
+    }));
+  }, [relationships]);
+
+  const { sorted: sortedPassengers, sort: passengerSort, toggleSort: togglePassengerSort } = useSortableData(passengers);
+  const { sorted: sortedRels, sort: relSort, toggleSort: toggleRelSort } = useSortableData(sortedRelationships);
+
   if (!clientId) {
     return (
       <div className="text-center text-muted-foreground font-body py-8">
@@ -273,15 +319,15 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border/50 bg-muted/30">
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Nome</th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Nascimento</th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Nacionalidade</th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Passaporte</th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => togglePassengerSort("full_name")}>Nome<SortIcon columnKey="full_name" sort={passengerSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => togglePassengerSort("birth_date")}>Nascimento<SortIcon columnKey="birth_date" sort={passengerSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => togglePassengerSort("nationality")}>Nacionalidade<SortIcon columnKey="nationality" sort={passengerSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => togglePassengerSort("passport_number")}>Passaporte<SortIcon columnKey="passport_number" sort={passengerSort} /></th>
                   <th className="p-3 w-20"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/30">
-                {passengers.map((p: any) => (
+                {sortedPassengers.map((p: any) => (
                   <tr key={p.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => openPassengerForm(p)}>
                     <td className="p-3 text-sm font-body text-foreground">{p.full_name}</td>
                     <td className="p-3 text-sm font-body text-foreground">{p.birth_date ? new Date(p.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
@@ -326,14 +372,14 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border/50 bg-muted/30">
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Cliente</th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Vínculo</th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Localização</th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_name")}>Cliente<SortIcon columnKey="_name" sort={relSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_type")}>Vínculo<SortIcon columnKey="_type" sort={relSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_location")}>Localização<SortIcon columnKey="_location" sort={relSort} /></th>
                   <th className="p-3 w-20"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/30">
-                {relationships.map((r: any) => (
+                {sortedRels.map((r: any) => (
                   <tr key={r.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => onNavigateToClient(r.linked_client_id)}>
                     <td className="p-3">
                       <div className="flex items-center gap-2">
