@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
     const { action } = body;
 
     if (action === "create") {
-      const { email, password, full_name, role } = body;
+      const { email, password, full_name, role, phone } = body;
 
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email,
@@ -54,20 +54,36 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: createError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      if (newUser?.user && role) {
-        await supabaseAdmin.from("user_roles").insert({ user_id: newUser.user.id, role });
+      if (newUser?.user) {
+        if (role) {
+          await supabaseAdmin.from("user_roles").insert({ user_id: newUser.user.id, role });
+        }
+        if (phone) {
+          await supabaseAdmin.from("profiles").update({ phone }).eq("user_id", newUser.user.id);
+        }
       }
 
       return new Response(JSON.stringify({ success: true, user_id: newUser?.user?.id }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     if (action === "update") {
-      const { user_id, full_name, role, avatar_url } = body;
+      const { user_id, full_name, role, avatar_url, phone, cep, address_street, address_number, address_complement, neighborhood, city, state, country, emergency_contact_name, emergency_contact_phone, health_plan } = body;
 
-      // Update profile name and/or avatar
-      const profileUpdate: Record<string, string> = {};
-      if (full_name) profileUpdate.full_name = full_name;
+      const profileUpdate: Record<string, any> = {};
+      if (full_name !== undefined) profileUpdate.full_name = full_name;
       if (avatar_url !== undefined) profileUpdate.avatar_url = avatar_url;
+      if (phone !== undefined) profileUpdate.phone = phone;
+      if (cep !== undefined) profileUpdate.cep = cep;
+      if (address_street !== undefined) profileUpdate.address_street = address_street;
+      if (address_number !== undefined) profileUpdate.address_number = address_number;
+      if (address_complement !== undefined) profileUpdate.address_complement = address_complement;
+      if (neighborhood !== undefined) profileUpdate.neighborhood = neighborhood;
+      if (city !== undefined) profileUpdate.city = city;
+      if (state !== undefined) profileUpdate.state = state;
+      if (country !== undefined) profileUpdate.country = country;
+      if (emergency_contact_name !== undefined) profileUpdate.emergency_contact_name = emergency_contact_name;
+      if (emergency_contact_phone !== undefined) profileUpdate.emergency_contact_phone = emergency_contact_phone;
+      if (health_plan !== undefined) profileUpdate.health_plan = health_plan;
       
       if (Object.keys(profileUpdate).length > 0) {
         await supabaseAdmin.from("profiles").update(profileUpdate).eq("user_id", user_id);
@@ -76,7 +92,6 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Update role
       if (role) {
         await supabaseAdmin.from("user_roles").delete().eq("user_id", user_id);
         await supabaseAdmin.from("user_roles").insert({ user_id, role });

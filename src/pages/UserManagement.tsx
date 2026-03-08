@@ -1,23 +1,26 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { ROLE_LABELS } from "@/lib/permissions";
+import UserContractsTab from "@/components/users/UserContractsTab";
 import type { Tables } from "@/integrations/supabase/types";
 
 const roleBadgeVariant: Record<string, "default" | "secondary" | "outline"> = {
   admin: "default", manager: "secondary", sales_agent: "outline", operations: "outline",
 };
 
-type ProfileWithRole = Tables<"profiles"> & { role: string };
+type ProfileWithRole = Tables<"profiles"> & { role: string; phone?: string | null; cep?: string | null; address_street?: string | null; address_number?: string | null; address_complement?: string | null; neighborhood?: string | null; city?: string | null; state?: string | null; country?: string | null; emergency_contact_name?: string | null; emergency_contact_phone?: string | null; health_plan?: string | null };
 
 function getAvatarUrl(path: string | null) {
   if (!path) return null;
@@ -69,6 +72,77 @@ async function uploadAvatar(file: File, userId: string): Promise<string> {
   return path;
 }
 
+// CEP auto-fill
+async function fetchCep(cep: string) {
+  const cleaned = cep.replace(/\D/g, "");
+  if (cleaned.length !== 8) return null;
+  try {
+    const res = await fetch(`https://viacep.com.br/ws/${cleaned}/json/`);
+    const data = await res.json();
+    if (data.erro) return null;
+    return { address_street: data.logradouro || "", neighborhood: data.bairro || "", city: data.localidade || "", state: data.uf || "" };
+  } catch { return null; }
+}
+
+// Address fields component
+function AddressFields({ form, setForm }: { form: any; setForm: (f: any) => void }) {
+  const [loadingCep, setLoadingCep] = useState(false);
+
+  const handleCepBlur = async () => {
+    if (!form.cep || form.country !== "Brasil") return;
+    setLoadingCep(true);
+    const data = await fetchCep(form.cep);
+    if (data) setForm({ ...form, ...data });
+    setLoadingCep(false);
+  };
+
+  return (
+    <>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label className="font-body">CEP</Label>
+          <Input value={form.cep ?? ""} onChange={(e) => setForm({ ...form, cep: e.target.value })} onBlur={handleCepBlur} placeholder="00000-000" maxLength={9} />
+          {loadingCep && <p className="text-xs text-muted-foreground">Buscando...</p>}
+        </div>
+        <div className="space-y-2">
+          <Label className="font-body">País</Label>
+          <Input value={form.country ?? "Brasil"} onChange={(e) => setForm({ ...form, country: e.target.value })} />
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="space-y-2 col-span-2">
+          <Label className="font-body">Endereço</Label>
+          <Input value={form.address_street ?? ""} onChange={(e) => setForm({ ...form, address_street: e.target.value })} />
+        </div>
+        <div className="space-y-2">
+          <Label className="font-body">Número</Label>
+          <Input value={form.address_number ?? ""} onChange={(e) => setForm({ ...form, address_number: e.target.value })} />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label className="font-body">Complemento</Label>
+          <Input value={form.address_complement ?? ""} onChange={(e) => setForm({ ...form, address_complement: e.target.value })} />
+        </div>
+        <div className="space-y-2">
+          <Label className="font-body">Bairro</Label>
+          <Input value={form.neighborhood ?? ""} onChange={(e) => setForm({ ...form, neighborhood: e.target.value })} />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label className="font-body">Cidade</Label>
+          <Input value={form.city ?? ""} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+        </div>
+        <div className="space-y-2">
+          <Label className="font-body">Estado</Label>
+          <Input value={form.state ?? ""} onChange={(e) => setForm({ ...form, state: e.target.value })} />
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function UserManagement({ embedded = false }: { embedded?: boolean }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -78,11 +152,15 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState("sales_agent");
   const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null);
+  const [newPhone, setNewPhone] = useState("");
+
   const [editOpen, setEditOpen] = useState(false);
   const [editUser, setEditUser] = useState<ProfileWithRole | null>(null);
   const [editName, setEditName] = useState("");
   const [editRole, setEditRole] = useState("");
   const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null);
+  const [editForm, setEditForm] = useState<Record<string, any>>({});
+
   const [pwOpen, setPwOpen] = useState(false);
   const [pwUser, setPwUser] = useState<ProfileWithRole | null>(null);
   const [newPw, setNewPw] = useState("");
@@ -94,9 +172,9 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
       const { data: profilesData, error } = await supabase.from("profiles").select("*");
       if (error) throw error;
       const { data: rolesData } = await supabase.from("user_roles").select("*");
-      return (profilesData ?? []).map((p: Tables<"profiles">) => ({
+      return (profilesData ?? []).map((p: any) => ({
         ...p,
-        role: rolesData?.find((r: Tables<"user_roles">) => r.user_id === p.user_id)?.role ?? "sem função",
+        role: rolesData?.find((r: any) => r.user_id === p.user_id)?.role ?? "sem função",
       }));
     },
   });
@@ -104,12 +182,11 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
   const createUserMutation = useMutation({
     mutationFn: async () => {
       const response = await supabase.functions.invoke("manage-users", {
-        body: { action: "create", email: newEmail.trim(), password: newPassword, full_name: newName.trim(), role: newRole },
+        body: { action: "create", email: newEmail.trim(), password: newPassword, full_name: newName.trim(), role: newRole, phone: newPhone.trim() || null },
       });
       if (response.error) throw new Error(response.error.message);
       if (response.data?.error) throw new Error(response.data.error);
-      
-      // Upload avatar if provided
+
       if (newAvatarFile && response.data?.user_id) {
         const avatarPath = await uploadAvatar(newAvatarFile, response.data.user_id);
         await supabase.functions.invoke("manage-users", {
@@ -121,7 +198,7 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
     onSuccess: () => {
       toast({ title: "Usuário criado", description: `${newEmail} foi adicionado com sucesso.` });
       queryClient.invalidateQueries({ queryKey: ["profiles-with-roles"] });
-      setCreateOpen(false); setNewEmail(""); setNewName(""); setNewPassword(""); setNewRole("sales_agent"); setNewAvatarFile(null);
+      setCreateOpen(false); setNewEmail(""); setNewName(""); setNewPassword(""); setNewRole("sales_agent"); setNewAvatarFile(null); setNewPhone("");
     },
     onError: (err: Error) => toast({ title: "Erro ao criar usuário", description: err.message, variant: "destructive" }),
   });
@@ -134,7 +211,25 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
         avatarPath = await uploadAvatar(editAvatarFile, editUser.user_id);
       }
       const response = await supabase.functions.invoke("manage-users", {
-        body: { action: "update", user_id: editUser.user_id, full_name: editName.trim(), role: editRole, ...(avatarPath ? { avatar_url: avatarPath } : {}) },
+        body: {
+          action: "update",
+          user_id: editUser.user_id,
+          full_name: editName.trim(),
+          role: editRole,
+          ...(avatarPath ? { avatar_url: avatarPath } : {}),
+          phone: editForm.phone ?? null,
+          cep: editForm.cep ?? null,
+          address_street: editForm.address_street ?? null,
+          address_number: editForm.address_number ?? null,
+          address_complement: editForm.address_complement ?? null,
+          neighborhood: editForm.neighborhood ?? null,
+          city: editForm.city ?? null,
+          state: editForm.state ?? null,
+          country: editForm.country ?? null,
+          emergency_contact_name: editForm.emergency_contact_name ?? null,
+          emergency_contact_phone: editForm.emergency_contact_phone ?? null,
+          health_plan: editForm.health_plan ?? null,
+        },
       });
       if (response.error) throw new Error(response.error.message);
       if (response.data?.error) throw new Error(response.data.error);
@@ -178,7 +273,28 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
 
-  const openEdit = (profile: ProfileWithRole) => { setEditUser(profile); setEditName(profile.full_name); setEditRole(profile.role); setEditAvatarFile(null); setEditOpen(true); };
+  const openEdit = (profile: ProfileWithRole) => {
+    setEditUser(profile);
+    setEditName(profile.full_name);
+    setEditRole(profile.role);
+    setEditAvatarFile(null);
+    setEditForm({
+      phone: (profile as any).phone ?? "",
+      cep: (profile as any).cep ?? "",
+      address_street: (profile as any).address_street ?? "",
+      address_number: (profile as any).address_number ?? "",
+      address_complement: (profile as any).address_complement ?? "",
+      neighborhood: (profile as any).neighborhood ?? "",
+      city: (profile as any).city ?? "",
+      state: (profile as any).state ?? "",
+      country: (profile as any).country ?? "Brasil",
+      emergency_contact_name: (profile as any).emergency_contact_name ?? "",
+      emergency_contact_phone: (profile as any).emergency_contact_phone ?? "",
+      health_plan: (profile as any).health_plan ?? "",
+    });
+    setEditOpen(true);
+  };
+
   const openPasswordChange = (profile: ProfileWithRole) => { setPwUser(profile); setNewPw(""); setConfirmPw(""); setPwOpen(true); };
 
   return (
@@ -203,6 +319,7 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
               <AvatarUpload currentUrl={null} onFileSelect={setNewAvatarFile} />
               <div className="space-y-2"><Label className="font-body">Nome completo</Label><Input value={newName} onChange={(e) => setNewName(e.target.value)} required /></div>
               <div className="space-y-2"><Label className="font-body">E-mail</Label><Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} required /></div>
+              <div className="space-y-2"><Label className="font-body">Celular</Label><Input value={newPhone} onChange={(e) => setNewPhone(e.target.value)} placeholder="(11) 99999-9999" /></div>
               <div className="space-y-2"><Label className="font-body">Senha</Label><Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength={6} /></div>
               <div className="space-y-2">
                 <Label className="font-body">Função</Label>
@@ -219,7 +336,6 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
         </Dialog>
       </div>
 
-
       {/* Desktop table */}
       <div className="glass-card rounded-xl overflow-hidden hidden md:block">
         <Table>
@@ -228,17 +344,18 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
               <TableHead className="font-body w-[60px]">Foto</TableHead>
               <TableHead className="font-body">Nome</TableHead>
               <TableHead className="font-body">E-mail</TableHead>
+              <TableHead className="font-body">Celular</TableHead>
               <TableHead className="font-body">Função</TableHead>
               <TableHead className="font-body text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground font-body py-8">Carregando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground font-body py-8">Carregando...</TableCell></TableRow>
             ) : profiles?.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground font-body py-8">Nenhum usuário encontrado.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground font-body py-8">Nenhum usuário encontrado.</TableCell></TableRow>
             ) : (
-              profiles?.map((profile) => (
+              profiles?.map((profile: any) => (
                 <TableRow key={profile.id}>
                   <TableCell>
                     <Avatar className="h-9 w-9">
@@ -250,6 +367,7 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
                   </TableCell>
                   <TableCell className="font-body font-medium">{profile.full_name}</TableCell>
                   <TableCell className="font-body text-muted-foreground">{profile.email}</TableCell>
+                  <TableCell className="font-body text-muted-foreground">{profile.phone ?? "—"}</TableCell>
                   <TableCell>
                     <Badge variant={roleBadgeVariant[profile.role] ?? "outline"} className="font-body">
                       {ROLE_LABELS[profile.role] ?? profile.role}
@@ -274,7 +392,7 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
         ) : profiles?.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground font-body">Nenhum usuário encontrado.</div>
         ) : (
-          profiles?.map((profile) => (
+          profiles?.map((profile: any) => (
             <div key={profile.id} className="glass-card rounded-xl p-4 space-y-3">
               <div className="flex items-start gap-3">
                 <Avatar className="h-10 w-10">
@@ -286,6 +404,7 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium font-body text-foreground">{profile.full_name}</p>
                   <p className="text-xs text-muted-foreground font-body">{profile.email}</p>
+                  {profile.phone && <p className="text-xs text-muted-foreground font-body">{profile.phone}</p>}
                 </div>
                 <Badge variant={roleBadgeVariant[profile.role] ?? "outline"} className="font-body">
                   {ROLE_LABELS[profile.role] ?? profile.role}
@@ -301,24 +420,62 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
         )}
       </div>
 
-      {/* Edit dialog */}
+      {/* Edit dialog with tabs */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader><DialogTitle className="font-display">Editar Usuário</DialogTitle></DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); updateUserMutation.mutate(); }} className="space-y-4">
-            <AvatarUpload currentUrl={editUser?.avatar_url ? getAvatarUrl(editUser.avatar_url) : null} onFileSelect={setEditAvatarFile} />
-            <div className="space-y-2"><Label className="font-body">Nome completo</Label><Input value={editName} onChange={(e) => setEditName(e.target.value)} required /></div>
-            <div className="space-y-2">
-              <Label className="font-body">Função</Label>
-              <Select value={editRole} onValueChange={setEditRole}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{Object.entries(ROLE_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <Button type="submit" className="w-full font-body" disabled={updateUserMutation.isPending}>
-              {updateUserMutation.isPending ? "Salvando..." : "Salvar Alterações"}
-            </Button>
-          </form>
+          <Tabs defaultValue="dados" className="w-full">
+            <TabsList className="w-full grid grid-cols-3">
+              <TabsTrigger value="dados" className="font-body text-xs">Dados Pessoais</TabsTrigger>
+              <TabsTrigger value="endereco" className="font-body text-xs">Endereço & Emergência</TabsTrigger>
+              <TabsTrigger value="contratos" className="font-body text-xs">Contratos</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="dados">
+              <form onSubmit={(e) => { e.preventDefault(); updateUserMutation.mutate(); }} className="space-y-4">
+                <AvatarUpload currentUrl={editUser?.avatar_url ? getAvatarUrl(editUser.avatar_url) : null} onFileSelect={setEditAvatarFile} />
+                <div className="space-y-2"><Label className="font-body">Nome completo</Label><Input value={editName} onChange={(e) => setEditName(e.target.value)} required /></div>
+                <div className="space-y-2"><Label className="font-body">Celular</Label><Input value={editForm.phone ?? ""} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} placeholder="(11) 99999-9999" /></div>
+                <div className="space-y-2">
+                  <Label className="font-body">Função</Label>
+                  <Select value={editRole} onValueChange={setEditRole}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{Object.entries(ROLE_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2"><Label className="font-body">Plano de Saúde</Label><Input value={editForm.health_plan ?? ""} onChange={(e) => setEditForm({ ...editForm, health_plan: e.target.value })} placeholder="Ex: Unimed, SulAmérica" /></div>
+                <Button type="submit" className="w-full font-body" disabled={updateUserMutation.isPending}>
+                  {updateUserMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="endereco">
+              <form onSubmit={(e) => { e.preventDefault(); updateUserMutation.mutate(); }} className="space-y-4">
+                <AddressFields form={editForm} setForm={setEditForm} />
+                <div className="border-t pt-4 space-y-4">
+                  <h4 className="text-sm font-semibold font-body text-foreground">Contato de Emergência</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label className="font-body">Nome</Label>
+                      <Input value={editForm.emergency_contact_name ?? ""} onChange={(e) => setEditForm({ ...editForm, emergency_contact_name: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="font-body">Telefone</Label>
+                      <Input value={editForm.emergency_contact_phone ?? ""} onChange={(e) => setEditForm({ ...editForm, emergency_contact_phone: e.target.value })} />
+                    </div>
+                  </div>
+                </div>
+                <Button type="submit" className="w-full font-body" disabled={updateUserMutation.isPending}>
+                  {updateUserMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="contratos">
+              {editUser && <UserContractsTab userId={editUser.user_id} />}
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
 
