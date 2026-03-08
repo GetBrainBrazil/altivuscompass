@@ -214,7 +214,7 @@ export default function SuppliersTab() {
       supabase.from("supplier_phones").select("*").eq("supplier_id", s.id).order("created_at"),
       supabase.from("supplier_emails").select("*").eq("supplier_id", s.id).order("created_at"),
     ]);
-    setPhones((phonesRes.data ?? []).map((p: any) => ({ id: p.id, phone: p.phone, country_code: p.country_code || "+55", description: p.description || "" })));
+    setPhones((phonesRes.data ?? []).map((p: any) => ({ id: p.id, phone: p.phone, country_code: COUNTRY_CODES.find(c => c.dial === p.country_code)?.code || "BR", description: p.description || "", is_primary: false })));
     setEmails((emailsRes.data ?? []).map((e: any) => ({ id: e.id, email: e.email, description: e.description || "" })));
     setDialogOpen(true);
   };
