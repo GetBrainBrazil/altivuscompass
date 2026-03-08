@@ -937,7 +937,7 @@ export default function Clients() {
                 <SortableHeader label="Localização" sortKey="city" />
                 <SortableHeader label="Perfil" sortKey="travel_profile" />
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Aeroportos</th>
-                <SortableHeader label="Passaporte" sortKey="passport_status" />
+                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Alertas</th>
                 
               </tr>
             </thead>
