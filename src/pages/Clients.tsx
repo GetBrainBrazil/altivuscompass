@@ -8,7 +8,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
+
+type SortDir = "asc" | "desc";
+type SortState = { key: string; dir: SortDir } | null;
+
+function sortData<T extends Record<string, any>>(data: T[], sort: SortState): T[] {
+  if (!sort) return data;
+  return [...data].sort((a, b) => {
+    const va = (a[sort.key] ?? "").toString().toLowerCase();
+    const vb = (b[sort.key] ?? "").toString().toLowerCase();
+    const cmp = va.localeCompare(vb);
+    return sort.dir === "asc" ? cmp : -cmp;
+  });
+}
+
+function toggleSort(sort: SortState, key: string): SortState {
+  if (sort?.key === key) {
+    if (sort.dir === "asc") return { key, dir: "desc" };
+    return null;
+  }
+  return { key, dir: "asc" };
+}
 
 const travelProfiles: Record<string, { label: string; color: string }> = {
   economic: { label: "Econômico", color: "bg-soft-blue/10 text-soft-blue" },
