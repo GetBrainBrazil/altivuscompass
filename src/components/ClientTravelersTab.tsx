@@ -169,8 +169,10 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         .eq("client_id_b", clientId);
 
       const allRels = [
-        ...(relA ?? []).map((r: any) => ({ id: r.id, linked_client_id: r.client_id_b, relationship_type: r.relationship_type, relationship_label: r.relationship_label })),
-        ...(relB ?? []).map((r: any) => ({ id: r.id, linked_client_id: r.client_id_a, relationship_type: r.relationship_type, relationship_label: r.relationship_label })),
+        // relA: current client is client_id_a, so relationship_type describes client_id_b → use as-is
+        ...(relA ?? []).map((r: any) => ({ id: r.id, linked_client_id: r.client_id_b, relationship_type: r.relationship_type, relationship_label: r.relationship_label, inverted: false })),
+        // relB: current client is client_id_b, so we need the inverse label
+        ...(relB ?? []).map((r: any) => ({ id: r.id, linked_client_id: r.client_id_a, relationship_type: r.relationship_type, relationship_label: r.relationship_label, inverted: true })),
       ];
 
       // Fetch linked client details
