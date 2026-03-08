@@ -444,6 +444,7 @@ export default function Clients() {
         ...rest,
         preferred_airports: selectedAirports,
         tags: selectedTags,
+        desired_destinations: selectedDestinations,
         birth_date: form.birth_date || null,
       };
 
