@@ -163,19 +163,35 @@ export default function AuditLogsTab() {
         <div className="space-y-2">
           {filtered.map((log) => {
             const changes = log.action === "UPDATE" ? getChangedFields(log.old_data, log.new_data) : null;
+            const isSessionEvent = log.table_name === "sessions";
+            const sessionEvent = isSessionEvent ? (log.new_data as Record<string, any>)?.event : null;
+            const sessionLabel = sessionEvent ? SESSION_EVENT_LABELS[sessionEvent] ?? sessionEvent : null;
+
             return (
               <div key={log.id} className="glass-card rounded-lg p-3 sm:p-4 space-y-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="outline" className={`text-[10px] font-body ${ACTION_COLORS[log.action] ?? ""}`}>
-                      {ACTION_LABELS[log.action] ?? log.action}
-                    </Badge>
+                    {isSessionEvent ? (
+                      <Badge variant="outline" className={`text-[10px] font-body ${
+                        sessionEvent === "LOGIN" ? "bg-success/10 text-success" :
+                        sessionEvent === "LOGOUT_INACTIVITY" ? "bg-warning/10 text-warning" :
+                        "bg-muted text-muted-foreground"
+                      }`}>
+                        {sessionLabel}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className={`text-[10px] font-body ${ACTION_COLORS[log.action] ?? ""}`}>
+                        {ACTION_LABELS[log.action] ?? log.action}
+                      </Badge>
+                    )}
                     <span className="text-sm font-body font-medium text-foreground">
                       {log.user_name ?? "Sistema"}
                     </span>
-                    <span className="text-xs text-muted-foreground font-body">
-                      em <span className="font-medium">{TABLE_LABELS[log.table_name] ?? log.table_name}</span>
-                    </span>
+                    {!isSessionEvent && (
+                      <span className="text-xs text-muted-foreground font-body">
+                        em <span className="font-medium">{TABLE_LABELS[log.table_name] ?? log.table_name}</span>
+                      </span>
+                    )}
                   </div>
                   <span className="text-[10px] text-muted-foreground font-body whitespace-nowrap">
                     {format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}
@@ -199,8 +215,8 @@ export default function AuditLogsTab() {
                   </div>
                 )}
 
-                {/* Show data for INSERT */}
-                {log.action === "INSERT" && log.new_data && (
+                {/* Show data for INSERT (non-session) */}
+                {log.action === "INSERT" && log.new_data && !isSessionEvent && (
                   <div className="bg-muted/30 rounded-md p-2">
                     <p className="text-xs font-body text-muted-foreground truncate">
                       {Object.entries(log.new_data)

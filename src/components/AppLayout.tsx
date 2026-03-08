@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { useInactivityLogout } from "@/hooks/useInactivityLogout";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccess } from "@/lib/permissions";
 import { ROLE_LABELS } from "@/lib/permissions";
