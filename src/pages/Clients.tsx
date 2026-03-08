@@ -912,7 +912,9 @@ export default function Clients() {
                                     {v.image_url || v._imageFile ? "Trocar" : "Upload"}
                                     <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                                       const file = e.target.files?.[0];
-                                      if (file) { const n = [...passports]; n[pi].visas[vi]._imageFile = file; setPassports([...n]); }
+                                      if (file) {
+                                        openEditor(file, (edited) => { const n = [...passports]; n[pi].visas[vi]._imageFile = edited; setPassports([...n]); });
+                                      }
                                     }} />
                                   </label>
                                   {(v.image_url || v._imageFile) && (
