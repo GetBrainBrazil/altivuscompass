@@ -1,9 +1,14 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccess } from "@/lib/permissions";
 import { ROLE_LABELS } from "@/lib/permissions";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import type { Tables } from "@/integrations/supabase/types";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -24,8 +30,44 @@ interface AppLayoutProps {
 const IMPERSONATABLE_ROLES = ["manager", "sales_agent", "operations"] as const;
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { user, userRole, realRole, impersonatingRole, setImpersonatingRole, signOut } = useAuth();
+  const { user, userRole, realRole, impersonatingRole, impersonatingUser, setImpersonatingRole, setImpersonatingUser, signOut } = useAuth();
   const isRealAdmin = realRole === "admin";
+  const [userSearch, setUserSearch] = useState("");
+
+  const { data: usersWithRoles = [] } = useQuery({
+    queryKey: ["impersonate-users-list"],
+    queryFn: async () => {
+      const [{ data: profilesData }, { data: rolesData }] = await Promise.all([
+        supabase.from("profiles").select("*"),
+        supabase.from("user_roles").select("*"),
+      ]);
+      return (profilesData ?? []).map((p: Tables<"profiles">) => ({
+        ...p,
+        role: rolesData?.find((r: Tables<"user_roles">) => r.user_id === p.user_id)?.role ?? "",
+      }));
+    },
+    enabled: isRealAdmin,
+  });
+
+  const filteredUsers = usersWithRoles.filter((u) => {
+    if (!userSearch.trim()) return true;
+    const q = userSearch.toLowerCase();
+    const roleLabel = ROLE_LABELS[u.role] ?? u.role;
+    return u.full_name.toLowerCase().includes(q) || roleLabel.toLowerCase().includes(q);
+  });
+
+  const isImpersonating = !!impersonatingRole || !!impersonatingUser;
+
+  const impersonationLabel = impersonatingUser
+    ? `${impersonatingUser.fullName} (${ROLE_LABELS[impersonatingUser.role] ?? impersonatingUser.role})`
+    : impersonatingRole
+      ? ROLE_LABELS[impersonatingRole] ?? impersonatingRole
+      : "";
+
+  const clearImpersonation = () => {
+    setImpersonatingRole(null);
+    setImpersonatingUser(null);
+  };
 
   return (
     <SidebarProvider>
@@ -36,17 +78,17 @@ export function AppLayout({ children }: AppLayoutProps) {
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
 
             {/* Impersonation banner */}
-            {impersonatingRole && (
+            {isImpersonating && (
               <div className="ml-3 flex items-center gap-2">
                 <Badge variant="destructive" className="font-body text-xs gap-1.5 py-1">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                     <circle cx="12" cy="12" r="3"/>
                   </svg>
-                  Visualizando como: {ROLE_LABELS[impersonatingRole] ?? impersonatingRole}
+                  Visualizando como: {impersonationLabel}
                 </Badge>
                 <button
-                  onClick={() => setImpersonatingRole(null)}
+                  onClick={clearImpersonation}
                   className="text-xs font-body font-medium text-destructive hover:underline"
                 >
                   Voltar ao Admin
@@ -73,7 +115,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-muted transition-colors">
                     <Avatar className="h-8 w-8">
-                      <AvatarFallback className={`text-xs font-medium ${impersonatingRole ? "bg-destructive text-destructive-foreground" : "bg-primary text-primary-foreground"}`}>
+                      <AvatarFallback className={`text-xs font-medium ${isImpersonating ? "bg-destructive text-destructive-foreground" : "bg-primary text-primary-foreground"}`}>
                         {user?.email?.[0]?.toUpperCase() ?? "U"}
                       </AvatarFallback>
                     </Avatar>
@@ -108,7 +150,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                     </DropdownMenuItem>
                   )}
 
-                  {/* Impersonate role - admin only */}
+                  {/* Impersonate - admin only */}
                   {isRealAdmin && (
                     <>
                       <DropdownMenuSeparator />
@@ -120,18 +162,25 @@ export function AppLayout({ children }: AppLayoutProps) {
                           </svg>
                           Ver como...
                         </DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent>
-                          {impersonatingRole && (
-                            <DropdownMenuItem onClick={() => setImpersonatingRole(null)} className="cursor-pointer font-medium text-primary">
-                              ✓ Voltar ao Admin
-                            </DropdownMenuItem>
+                        <DropdownMenuSubContent className="w-64">
+                          {isImpersonating && (
+                            <>
+                              <DropdownMenuItem onClick={clearImpersonation} className="cursor-pointer font-medium text-primary">
+                                ✓ Voltar ao Admin
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                            </>
                           )}
-                          {!impersonatingRole && (
+
+                          {/* By role */}
+                          <DropdownMenuItem disabled className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold py-1">
+                            Por Função
+                          </DropdownMenuItem>
+                          {!impersonatingRole && !impersonatingUser && (
                             <DropdownMenuItem disabled className="text-xs text-muted-foreground">
                               Administrador (atual)
                             </DropdownMenuItem>
                           )}
-                          <DropdownMenuSeparator />
                           {IMPERSONATABLE_ROLES.map((role) => (
                             <DropdownMenuItem
                               key={role}
@@ -142,6 +191,53 @@ export function AppLayout({ children }: AppLayoutProps) {
                               {ROLE_LABELS[role]}
                             </DropdownMenuItem>
                           ))}
+
+                          <DropdownMenuSeparator />
+
+                          {/* By user */}
+                          <DropdownMenuItem disabled className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold py-1">
+                            Por Usuário
+                          </DropdownMenuItem>
+                          <div className="px-2 py-1.5" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                            <div className="relative">
+                              <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                              <Input
+                                placeholder="Buscar usuário..."
+                                value={userSearch}
+                                onChange={(e) => setUserSearch(e.target.value)}
+                                className="h-7 text-xs pl-7"
+                              />
+                            </div>
+                          </div>
+                          <div className="max-h-40 overflow-y-auto">
+                            {filteredUsers.length === 0 ? (
+                              <DropdownMenuItem disabled className="text-xs text-muted-foreground">
+                                Nenhum usuário encontrado
+                              </DropdownMenuItem>
+                            ) : (
+                              filteredUsers.map((u) => {
+                                const isActive = impersonatingUser?.userId === u.user_id;
+                                const roleLabel = ROLE_LABELS[u.role] ?? u.role;
+                                return (
+                                  <DropdownMenuItem
+                                    key={u.user_id}
+                                    onClick={() => setImpersonatingUser({
+                                      userId: u.user_id,
+                                      fullName: u.full_name,
+                                      role: u.role,
+                                    })}
+                                    className={`cursor-pointer text-xs ${isActive ? "font-medium text-primary" : ""}`}
+                                  >
+                                    {isActive && "✓ "}
+                                    {u.full_name}
+                                    {roleLabel && (
+                                      <span className="text-muted-foreground ml-1">— {roleLabel}</span>
+                                    )}
+                                  </DropdownMenuItem>
+                                );
+                              })
+                            )}
+                          </div>
                         </DropdownMenuSubContent>
                       </DropdownMenuSub>
                     </>
