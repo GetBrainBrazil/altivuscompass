@@ -837,21 +837,42 @@ export default function Clients() {
                                 <Label className="font-body text-xs">Descrição</Label>
                                 <Input className="h-8 text-sm" placeholder="Observações do visto" value={v.description} onChange={(e) => { const n = [...passports]; n[pi].visas[vi].description = e.target.value; setPassports(n); }} />
                               </div>
-                              <div className="flex items-end pb-0.5">
-                                <div className="flex items-center gap-1.5">
-                                  <Label className="font-body text-xs">Status:</Label>
-                                  {(() => {
-                                    if (!v.validity_date) return <span className="text-xs text-muted-foreground">—</span>;
-                                    const today = new Date();
-                                    const expiry = new Date(v.validity_date + "T00:00:00");
-                                    const diffMs = expiry.getTime() - today.getTime();
-                                    const diffMonths = diffMs / (1000 * 60 * 60 * 24 * 30);
-                                    if (diffMs < 0) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-destructive/10 text-destructive">Vencido</span>;
-                                    if (diffMonths <= 12) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-600">Vencendo ({Math.ceil(diffMonths)}m)</span>;
-                                    return <span className="text-xs font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600">Válido</span>;
-                                  })()}
+                              <div className="space-y-1">
+                                <Label className="font-body text-xs">Imagem do Visto</Label>
+                                <div className="flex items-center gap-2">
+                                  {(v.image_url || v._imageFile) && (
+                                    <a href={v._imageFile ? URL.createObjectURL(v._imageFile) : v.image_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline truncate max-w-[80px]">
+                                      {v._imageFile ? v._imageFile.name : "Ver"}
+                                    </a>
+                                  )}
+                                  <label className="cursor-pointer inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-input bg-background hover:bg-accent text-foreground">
+                                    {v.image_url || v._imageFile ? "Trocar" : "Upload"}
+                                    <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) { const n = [...passports]; n[pi].visas[vi]._imageFile = file; setPassports([...n]); }
+                                    }} />
+                                  </label>
+                                  {(v.image_url || v._imageFile) && (
+                                    <button type="button" className="text-destructive" onClick={() => { const n = [...passports]; n[pi].visas[vi].image_url = ""; n[pi].visas[vi]._imageFile = undefined; setPassports([...n]); }}>
+                                      <X className="h-3.5 w-3.5" />
+                                    </button>
+                                  )}
                                 </div>
                               </div>
+                            </div>
+                            {/* Row 3: Status */}
+                            <div className="flex items-center gap-1.5">
+                              <Label className="font-body text-xs">Status:</Label>
+                              {(() => {
+                                if (!v.validity_date) return <span className="text-xs text-muted-foreground">—</span>;
+                                const today = new Date();
+                                const expiry = new Date(v.validity_date + "T00:00:00");
+                                const diffMs = expiry.getTime() - today.getTime();
+                                const diffMonths = diffMs / (1000 * 60 * 60 * 24 * 30);
+                                if (diffMs < 0) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-destructive/10 text-destructive">Vencido</span>;
+                                if (diffMonths <= 12) return <span className="text-xs font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-600">Vencendo ({Math.ceil(diffMonths)}m)</span>;
+                                return <span className="text-xs font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600">Válido</span>;
+                              })()}
                             </div>
                           </div>
                         ))}
