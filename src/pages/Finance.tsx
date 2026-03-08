@@ -80,6 +80,15 @@ export default function Finance() {
     return build(null);
   }, [financialCategories]);
 
+  const { data: bankAccounts = [] } = useQuery({
+    queryKey: ["bank-accounts-active"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("bank_accounts").select("id, bank_name, agency, account_number").eq("is_active", true).order("bank_name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const partyOptions = useMemo(() => {
     const clientOpts = clients.map(c => ({ value: c.full_name, label: c.full_name, group: "Clientes" }));
     const supplierOpts = suppliers.map(s => ({ value: s.trade_name || s.name, label: s.trade_name ? `${s.name} (${s.trade_name})` : s.name, group: "Fornecedores" }));
