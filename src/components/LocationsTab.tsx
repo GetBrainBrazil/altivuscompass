@@ -430,13 +430,22 @@ function CitiesSubTab() {
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <div className="flex gap-2 flex-1 max-w-lg">
           <Input placeholder="Buscar cidade..." value={search} onChange={(e) => setSearch(e.target.value)} className="flex-1" />
-          <Select value={filterCountry} onValueChange={setFilterCountry}>
+          <Select value={filterCountry} onValueChange={(v) => { setFilterCountry(v); setFilterState("all"); }}>
             <SelectTrigger className="w-44"><SelectValue placeholder="Filtrar país" /></SelectTrigger>
             <SelectContent className="max-h-60">
               <SelectItem value="all">Todos os países</SelectItem>
               {countries.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
             </SelectContent>
           </Select>
+          {filterCountry !== "all" && (statesForFilter as any[]).length > 0 && (
+            <Select value={filterState} onValueChange={setFilterState}>
+              <SelectTrigger className="w-44"><SelectValue placeholder="Filtrar estado" /></SelectTrigger>
+              <SelectContent className="max-h-60">
+                <SelectItem value="all">Todos os estados</SelectItem>
+                {(statesForFilter as any[]).map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
         </div>
         {isAdmin && (
           <>
