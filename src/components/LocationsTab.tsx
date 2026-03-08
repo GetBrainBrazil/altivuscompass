@@ -363,6 +363,7 @@ function CitiesSubTab() {
   const [filterState, setFilterState] = useState("all");
 
   const { data: countries = [] } = useCountries();
+  const { data: statesForFilter = [] } = useStates(filterCountry !== "all" ? filterCountry : undefined);
   const { data: statesForForm = [] } = useStates(form.country_id || undefined);
   const { data: cities = [], isLoading } = useQuery({
     queryKey: ["locations-cities-all"],
