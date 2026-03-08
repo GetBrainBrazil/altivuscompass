@@ -570,7 +570,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                     <td className="p-3">
                       <div className="flex gap-1">
                         <Button type="button" variant="ghost" size="icon" className="h-7 w-7" title="Promover a Cliente"
-                          onClick={(e) => { e.stopPropagation(); setPromotePassenger(p); setPromoteRelType("child"); }}>
+                          onClick={(e) => { e.stopPropagation(); setPromotePassenger(p); setPromoteRelType(p.relationship_type || "child"); }}>
                           <UserPlus className="h-3.5 w-3.5 text-primary" />
                         </Button>
                         <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive"
