@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      airlines: {
+        Row: {
+          country: string | null
+          created_at: string
+          iata_code: string | null
+          id: string
+          mileage_program_name: string | null
+          name: string
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          iata_code?: string | null
+          id?: string
+          mileage_program_name?: string | null
+          name: string
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          iata_code?: string | null
+          id?: string
+          mileage_program_name?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
+      airports: {
+        Row: {
+          city: string
+          country: string
+          created_at: string
+          iata_code: string
+          id: string
+          name: string
+          state: string | null
+        }
+        Insert: {
+          city: string
+          country: string
+          created_at?: string
+          iata_code: string
+          id?: string
+          name: string
+          state?: string | null
+        }
+        Update: {
+          city?: string
+          country?: string
+          created_at?: string
+          iata_code?: string
+          id?: string
+          name?: string
+          state?: string | null
+        }
+        Relationships: []
+      }
       campaigns: {
         Row: {
           channel: string | null
