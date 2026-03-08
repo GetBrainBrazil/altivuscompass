@@ -1248,28 +1248,64 @@ export default function Clients() {
                           {milesPrograms.map((m, mi) => (
                             <tr key={mi} className="group">
                               <td className="py-2 px-2">
-                                <Select value={m.airline || ""} onValueChange={(v) => {
-                                  const n = [...milesPrograms];
-                                  n[mi].airline = v;
-                                  const airline = airlinesList.find((a: any) => a.name === v);
-                                  if (airline?.mileage_program_name) n[mi].program_name = airline.mileage_program_name;
-                                  setMilesPrograms(n);
-                                }}>
-                                  <SelectTrigger className="h-8 text-xs min-w-[200px]"><SelectValue placeholder="Selecione o programa" /></SelectTrigger>
-                                  <SelectContent className="max-h-60">
-                                    {airlinesList.filter((a: any) => a.mileage_program_name).map((a: any) => (
-                                      <SelectItem key={a.id} value={a.name}>
-                                        <span className="font-medium">{a.mileage_program_name}</span>
-                                        <span className="text-muted-foreground ml-1">({a.iata_code ? `${a.iata_code} - ` : ""}{a.name})</span>
-                                      </SelectItem>
-                                    ))}
-                                    {airlinesList.filter((a: any) => !a.mileage_program_name).map((a: any) => (
-                                      <SelectItem key={a.id} value={a.name}>
-                                        {a.iata_code ? `${a.iata_code} - ` : ""}{a.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
+                                <div className="flex items-center gap-1">
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button variant="outline" role="combobox" className="h-8 text-xs min-w-[200px] justify-between font-normal">
+                                        {m.airline ? (
+                                          (() => {
+                                            const al = airlinesList.find((a: any) => a.name === m.airline);
+                                            return al?.mileage_program_name
+                                              ? <span className="truncate"><span className="font-medium">{al.mileage_program_name}</span> <span className="text-muted-foreground">({al.iata_code || al.name})</span></span>
+                                              : <span className="truncate">{al?.iata_code ? `${al.iata_code} - ` : ""}{m.airline}</span>;
+                                          })()
+                                        ) : (
+                                          <span className="text-muted-foreground">Selecione o programa</span>
+                                        )}
+                                        <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[280px] p-0" align="start">
+                                      <Command>
+                                        <CommandInput placeholder="Buscar programa..." className="h-8 text-xs" />
+                                        <CommandList>
+                                          <CommandEmpty className="text-xs py-3 text-center">Nenhum programa encontrado.</CommandEmpty>
+                                          <CommandGroup>
+                                            {airlinesList.map((a: any) => (
+                                              <CommandItem
+                                                key={a.id}
+                                                value={`${a.name} ${a.mileage_program_name || ""} ${a.iata_code || ""}`}
+                                                onSelect={() => {
+                                                  const n = [...milesPrograms];
+                                                  n[mi].airline = a.name;
+                                                  if (a.mileage_program_name) n[mi].program_name = a.mileage_program_name;
+                                                  setMilesPrograms(n);
+                                                }}
+                                                className="text-xs"
+                                              >
+                                                <Check className={`mr-1.5 h-3 w-3 ${m.airline === a.name ? "opacity-100" : "opacity-0"}`} />
+                                                <div className="flex flex-col">
+                                                  <span className="font-medium">{a.mileage_program_name || a.name}</span>
+                                                  {a.mileage_program_name && (
+                                                    <span className="text-[10px] text-muted-foreground">{a.iata_code ? `${a.iata_code} - ` : ""}{a.name}</span>
+                                                  )}
+                                                </div>
+                                              </CommandItem>
+                                            ))}
+                                          </CommandGroup>
+                                        </CommandList>
+                                      </Command>
+                                    </PopoverContent>
+                                  </Popover>
+                                  {m.airline && (() => {
+                                    const al = airlinesList.find((a: any) => a.name === m.airline);
+                                    return al?.program_url ? (
+                                      <a href={al.program_url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors" title="Acessar programa">
+                                        <ExternalLink className="h-3.5 w-3.5" />
+                                      </a>
+                                    ) : null;
+                                  })()}
+                                </div>
                               </td>
                               <td className="py-2 px-2">
                                 <Input className="h-8 text-xs min-w-[110px]" placeholder="Nº associado" value={m.membership_number} onChange={(e) => { const n = [...milesPrograms]; n[mi].membership_number = e.target.value; setMilesPrograms(n); }} />
