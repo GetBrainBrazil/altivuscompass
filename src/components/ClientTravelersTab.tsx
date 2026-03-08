@@ -126,7 +126,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       // Fetch linked client details
       if (allRels.length === 0) return [];
       const ids = allRels.map((r) => r.linked_client_id);
-      const { data: clientsData } = await supabase.from("clients").select("id, full_name, phone, email, city, state").in("id", ids);
+      const { data: clientsData } = await supabase.from("clients").select("id, full_name, birth_date, nationality, passport_number, city, state").in("id", ids);
       return allRels.map((r) => ({
         ...r,
         client: (clientsData ?? []).find((c: any) => c.id === r.linked_client_id),
