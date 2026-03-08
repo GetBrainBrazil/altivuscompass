@@ -243,6 +243,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         passport_number: passengerForm.passport_number || null,
         passport_expiry: passengerForm.passport_expiry || null,
         notes: passengerForm.notes || null,
+        relationship_type: passengerForm.relationship_type || null,
       };
 
       if (editingPassenger?.id) {
