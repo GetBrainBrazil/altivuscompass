@@ -13,6 +13,7 @@ import Campaigns from "./pages/Campaigns";
 import Finance from "./pages/Finance";
 import Miles from "./pages/Miles";
 import Login from "./pages/Login";
+import ResetPassword from "./pages/ResetPassword";
 import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
 
