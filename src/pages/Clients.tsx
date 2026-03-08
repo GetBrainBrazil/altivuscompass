@@ -319,6 +319,15 @@ export default function Clients() {
     },
     enabled: !!editingId,
   });
+  const { data: clientMiles = [] } = useQuery({
+    queryKey: ["client-miles", editingId],
+    queryFn: async () => {
+      if (!editingId) return [];
+      const { data } = await supabase.from("miles_programs").select("*").eq("client_id", editingId);
+      return data ?? [];
+    },
+    enabled: !!editingId,
+  });
 
   // Populate multi-value state when editing data loads
   useEffect(() => {
