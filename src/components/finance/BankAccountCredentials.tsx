@@ -228,11 +228,9 @@ export default function BankAccountCredentials({ bankAccountId }: { bankAccountI
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <Label className="font-body font-semibold text-sm">Acessos</Label>
-        {!impersonatingUser && (
-          <Button type="button" variant="outline" size="sm" onClick={openCreate} className="font-body text-xs h-7">
-            <Plus size={12} className="mr-1" /> Novo Acesso
-          </Button>
-        )}
+        <Button type="button" variant="outline" size="sm" onClick={openCreate} className="font-body text-xs h-7">
+          <Plus size={12} className="mr-1" /> Novo Acesso
+        </Button>
       </div>
 
       {visibleCredentials.length === 0 && !formOpen && (
