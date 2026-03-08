@@ -513,12 +513,12 @@ export default function Clients() {
 
   const goToList = () => {
     setView("list"); setEditingId(null); setForm(emptyForm); setActiveTab("contact");
-    setSelectedAirports([]); setSelectedTags([]); setPhones([]); setEmails([]); setSocials([]); setPassports([]);
+    setSelectedAirports([]); setSelectedTags([]); setPhones([]); setEmails([]); setSocials([]); setPassports([]); setMilesPrograms([]); setShowPasswords({});
   };
 
   const openCreate = () => {
     setEditingId(null); setForm(emptyForm); setSelectedAirports([]); setSelectedTags([]); setActiveTab("contact");
-    setPhones([]); setEmails([]); setSocials([]); setPassports([]); 
+    setPhones([]); setEmails([]); setSocials([]); setPassports([]); setMilesPrograms([]); setShowPasswords({});
     setView("form");
   };
 
