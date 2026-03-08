@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,21 +9,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Users } from "lucide-react";
+import { Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 
 type BankAccount = {
   id: string; bank_name: string; agency: string | null; account_number: string | null;
   account_type: string | null; pix_key: string | null; pix_key_type: string | null;
   holder_name: string | null; holder_document: string | null; is_active: boolean;
   notes: string | null; created_at: string; updated_at: string;
-};
-
-type Profile = {
-  id: string; user_id: string; full_name: string; email: string | null; avatar_url: string | null;
 };
 
 const accountTypeLabels: Record<string, string> = {
@@ -43,10 +36,6 @@ function SortHeader({ label, active, direction, onClick }: { label: string; acti
   );
 }
 
-function getInitials(name: string) {
-  return name.split(" ").map(n => n[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
-}
-
 export default function BankAccountsTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -55,7 +44,6 @@ export default function BankAccountsTab() {
   const [form, setForm] = useState<Record<string, any>>({});
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
-  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
 
   const toggleSort = (key: string) => {
     if (sortKey !== key) { setSortKey(key); setSortDir("asc"); }
@@ -71,38 +59,6 @@ export default function BankAccountsTab() {
       return data as BankAccount[];
     },
   });
-
-  const { data: profiles = [] } = useQuery({
-    queryKey: ["profiles-list"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("*").order("full_name");
-      if (error) throw error;
-      return data as Profile[];
-    },
-  });
-
-  // Load access list when editing
-  useEffect(() => {
-    if (editing) {
-      supabase
-        .from("bank_account_access")
-        .select("user_id")
-        .eq("bank_account_id", editing.id)
-        .then(({ data }) => {
-          setSelectedUserIds(new Set((data || []).map(d => d.user_id)));
-        });
-    } else {
-      setSelectedUserIds(new Set());
-    }
-  }, [editing]);
-
-  const toggleUser = (userId: string) => {
-    setSelectedUserIds(prev => {
-      const next = new Set(prev);
-      next.has(userId) ? next.delete(userId) : next.add(userId);
-      return next;
-    });
-  };
 
   const sorted = useMemo(() => {
     if (!sortKey || !sortDir) return accounts;
@@ -122,28 +78,12 @@ export default function BankAccountsTab() {
         pix_key_type: form.pix_key_type || null, holder_name: form.holder_name || null,
         holder_document: form.holder_document || null, is_active: form.is_active ?? true, notes: form.notes || null,
       };
-
-      let accountId: string;
-
       if (editing) {
         const { error } = await supabase.from("bank_accounts").update(payload).eq("id", editing.id);
         if (error) throw error;
-        accountId = editing.id;
       } else {
-        const { data, error } = await supabase.from("bank_accounts").insert(payload).select("id").single();
+        const { error } = await supabase.from("bank_accounts").insert(payload);
         if (error) throw error;
-        accountId = data.id;
-      }
-
-      // Sync access: delete all then re-insert
-      await supabase.from("bank_account_access").delete().eq("bank_account_id", accountId);
-      if (selectedUserIds.size > 0) {
-        const rows = Array.from(selectedUserIds).map(user_id => ({
-          bank_account_id: accountId,
-          user_id,
-        }));
-        const { error: accessError } = await supabase.from("bank_account_access").insert(rows);
-        if (accessError) throw accessError;
       }
     },
     onSuccess: () => {
@@ -170,7 +110,6 @@ export default function BankAccountsTab() {
   const openCreate = () => {
     setEditing(null);
     setForm({ account_type: "checking", is_active: true });
-    setSelectedUserIds(new Set());
     setDialogOpen(true);
   };
 
@@ -185,7 +124,7 @@ export default function BankAccountsTab() {
     setDialogOpen(true);
   };
 
-  const closeDialog = () => { setDialogOpen(false); setEditing(null); setForm({}); setSelectedUserIds(new Set()); };
+  const closeDialog = () => { setDialogOpen(false); setEditing(null); setForm({}); };
 
   return (
     <div className="space-y-4">
@@ -301,47 +240,6 @@ export default function BankAccountsTab() {
                 <Label className="font-body">Conta ativa</Label>
               </div>
             </div>
-
-            <Separator />
-
-            {/* Access section */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Users size={16} className="text-muted-foreground" />
-                <Label className="font-body font-semibold text-sm">Acesso</Label>
-              </div>
-              <p className="text-xs text-muted-foreground font-body">Selecione os usuários que podem visualizar e editar esta conta.</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto rounded-lg border border-border/50 p-3">
-                {profiles.length === 0 ? (
-                  <p className="text-xs text-muted-foreground font-body col-span-2">Nenhum usuário encontrado.</p>
-                ) : (
-                  profiles.map((p) => (
-                    <label
-                      key={p.user_id}
-                      className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors hover:bg-muted/50 ${
-                        selectedUserIds.has(p.user_id) ? "bg-primary/5" : ""
-                      }`}
-                    >
-                      <Checkbox
-                        checked={selectedUserIds.has(p.user_id)}
-                        onCheckedChange={() => toggleUser(p.user_id)}
-                      />
-                      <Avatar className="h-7 w-7">
-                        <AvatarImage src={p.avatar_url ?? undefined} />
-                        <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                          {getInitials(p.full_name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0">
-                        <p className="text-sm font-body font-medium text-foreground truncate">{p.full_name}</p>
-                        {p.email && <p className="text-[10px] text-muted-foreground font-body truncate">{p.email}</p>}
-                      </div>
-                    </label>
-                  ))
-                )}
-              </div>
-            </div>
-
             <div className="flex items-center justify-between">
               {editing ? (
                 <AlertDialog>
