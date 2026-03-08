@@ -210,6 +210,27 @@ export default function Finance() {
         } />
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <Link to="/finance/bank-accounts" className="glass-card rounded-xl p-4 flex items-center gap-4 hover:bg-muted/30 transition-colors group">
+          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+            <Building2 size={18} className="text-primary" />
+          </div>
+          <div>
+            <p className="text-sm font-medium font-body text-foreground">Dados Bancários</p>
+            <p className="text-xs text-muted-foreground font-body">Contas bancárias da empresa</p>
+          </div>
+        </Link>
+        <Link to="/finance/chart-of-accounts" className="glass-card rounded-xl p-4 flex items-center gap-4 hover:bg-muted/30 transition-colors group">
+          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+            <FolderTree size={18} className="text-primary" />
+          </div>
+          <div>
+            <p className="text-sm font-medium font-body text-foreground">Plano de Contas</p>
+            <p className="text-xs text-muted-foreground font-body">Categorias financeiras hierárquicas</p>
+          </div>
+        </Link>
+      </div>
+
       <div className="flex gap-1 p-1 rounded-lg bg-muted w-fit">
         {[{ id: "all", label: "Todas" }, { id: "receivable", label: "A Receber" }, { id: "payable", label: "A Pagar" }].map((f) => (
           <button key={f.id} onClick={() => setFilter(f.id)}
