@@ -182,12 +182,14 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
   const openPasswordChange = (profile: ProfileWithRole) => { setPwUser(profile); setNewPw(""); setConfirmPw(""); setPwOpen(true); };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
+    <div className={embedded ? "space-y-4" : "max-w-5xl mx-auto space-y-4 sm:space-y-6"}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-display font-semibold text-foreground">Gestão de Usuários</h1>
-          <p className="text-sm text-muted-foreground font-body">Gerencie usuários, permissões e senhas.</p>
-        </div>
+        {!embedded && (
+          <div>
+            <h1 className="text-2xl font-display font-semibold text-foreground">Gestão de Usuários</h1>
+            <p className="text-sm text-muted-foreground font-body">Gerencie usuários, permissões e senhas.</p>
+          </div>
+        )}
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
             <Button className="font-body w-full sm:w-auto">

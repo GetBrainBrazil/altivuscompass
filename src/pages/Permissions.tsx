@@ -68,13 +68,15 @@ export default function Permissions({ embedded = false }: { embedded?: boolean }
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
-      <div>
-        <h1 className="text-2xl font-display font-semibold text-foreground">Permissões</h1>
-        <p className="text-sm text-muted-foreground font-body">
-          Gerencie as permissões de acesso por função para cada página do sistema.
-        </p>
-      </div>
+    <div className={embedded ? "space-y-4" : "max-w-5xl mx-auto space-y-4 sm:space-y-6"}>
+      {!embedded && (
+        <div>
+          <h1 className="text-2xl font-display font-semibold text-foreground">Permissões</h1>
+          <p className="text-sm text-muted-foreground font-body">
+            Gerencie as permissões de acesso por função para cada página do sistema.
+          </p>
+        </div>
+      )}
 
       {/* Permissions Matrix */}
       <div className="glass-card rounded-xl p-3 sm:p-4">
