@@ -557,6 +557,13 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                 {sortedPassengers.map((p: any) => (
                   <tr key={p.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => openPassengerForm(p)}>
                     <td className="p-3 text-sm font-body text-foreground">{p.full_name}</td>
+                    <td className="p-3">
+                      {p.relationship_type ? (
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary font-body">
+                          {RELATIONSHIP_TYPES[p.relationship_type] || p.relationship_type}
+                        </span>
+                      ) : <span className="text-sm text-muted-foreground">—</span>}
+                    </td>
                     <td className="p-3 text-sm font-body text-foreground">{p.birth_date ? new Date(p.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
                     <td className="p-3 text-sm font-body text-foreground">{p.nationality || "—"}</td>
                     <td className="p-3 text-sm font-body text-foreground">{p.passport_number || "—"}</td>
