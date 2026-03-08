@@ -112,7 +112,6 @@ export default function Finance() {
         status: form.status || "pending", category: form.category || form.type || "receivable",
         due_date: form.due_date || null, party_name: form.party_name || null,
         is_reconciled: form.is_reconciled ?? false,
-        virtual_account_owner: form.virtual_account_owner || null,
         observations: form.observations || null,
         payment_account: form.payment_account || null,
       };
