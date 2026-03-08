@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { COUNTRIES_STATES, COUNTRY_LIST } from "@/lib/countries-states";
+import { logAuditEvent } from "@/lib/audit";
 import LocationsTab from "@/components/LocationsTab";
 
 import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";

@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { logAuditEvent } from "@/lib/audit";
 import { useAuth } from "@/contexts/AuthContext";
 import { ArrowUp, ArrowDown, ArrowUpDown, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
