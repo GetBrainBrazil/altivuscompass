@@ -21,7 +21,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -37,6 +37,19 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { toast } = useToast();
   const isRealAdmin = realRole === "admin";
   const [userSearch, setUserSearch] = useState("");
+
+  const { data: headerProfile } = useQuery({
+    queryKey: ["header-profile", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("avatar_url, full_name").eq("user_id", user!.id).single();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const headerAvatarUrl = headerProfile?.avatar_url
+    ? supabase.storage.from("avatars").getPublicUrl(headerProfile.avatar_url).data.publicUrl
+    : null;
 
   const handleInactivityLogout = useCallback(async () => {
     if (!session) return;
@@ -128,8 +141,9 @@ export function AppLayout({ children }: AppLayoutProps) {
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-muted transition-colors">
                     <Avatar className="h-8 w-8">
+                      {headerAvatarUrl && <AvatarImage src={headerAvatarUrl} />}
                       <AvatarFallback className={`text-xs font-medium ${isImpersonating ? "bg-destructive text-destructive-foreground" : "bg-primary text-primary-foreground"}`}>
-                        {user?.email?.[0]?.toUpperCase() ?? "U"}
+                        {headerProfile?.full_name?.[0]?.toUpperCase() ?? user?.email?.[0]?.toUpperCase() ?? "U"}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-sm font-medium text-foreground hidden sm:inline max-w-[150px] truncate">
