@@ -73,14 +73,29 @@ export default function BankAccountCredentials({ bankAccountId }: { bankAccountI
     enabled: credentials.length > 0,
   });
 
-  const { data: profiles = [] } = useQuery({
-    queryKey: ["profiles-list"],
+  const { data: profilesWithRoles = [] } = useQuery({
+    queryKey: ["profiles-with-roles-list"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("*");
-      if (error) throw error;
-      return data as ProfileWithRole[];
+      const [{ data: profilesData, error: pErr }, { data: rolesData }] = await Promise.all([
+        supabase.from("profiles").select("*"),
+        supabase.from("user_roles").select("*"),
+      ]);
+      if (pErr) throw pErr;
+      return (profilesData ?? []).map((p: Tables<"profiles">) => ({
+        ...p,
+        role: rolesData?.find((r: Tables<"user_roles">) => r.user_id === p.user_id)?.role ?? "",
+      }));
     },
   });
+
+  const filteredProfiles = useMemo(() => {
+    if (!viewerSearch.trim()) return profilesWithRoles;
+    const q = viewerSearch.toLowerCase();
+    return profilesWithRoles.filter((p) => {
+      const roleLabel = ROLE_LABELS[p.role] ?? p.role;
+      return p.full_name.toLowerCase().includes(q) || roleLabel.toLowerCase().includes(q);
+    });
+  }, [profilesWithRoles, viewerSearch]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
