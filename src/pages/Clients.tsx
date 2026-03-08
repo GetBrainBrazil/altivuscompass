@@ -58,7 +58,26 @@ export default function Clients() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [form, setForm] = useState(emptyClient);
-  const [airportsInput, setAirportsInput] = useState("");
+  const [selectedAirports, setSelectedAirports] = useState<string[]>([]);
+  const [airportSearch, setAirportSearch] = useState("");
+  const [airportPopoverOpen, setAirportPopoverOpen] = useState(false);
+
+  const { data: airportsList = [] } = useQuery({
+    queryKey: ["airports-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("airports").select("iata_code, name, city, country").order("iata_code");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const filteredAirports = useMemo(() => {
+    if (!airportSearch) return airportsList;
+    const q = airportSearch.toLowerCase();
+    return airportsList.filter((a) =>
+      a.iata_code.toLowerCase().includes(q) || a.name.toLowerCase().includes(q) || a.city.toLowerCase().includes(q)
+    );
+  }, [airportsList, airportSearch]);
 
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ["clients"],
