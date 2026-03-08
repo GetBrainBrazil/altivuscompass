@@ -416,17 +416,20 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         relationship_type: promoteRelType as any,
       });
 
-      // Create relationships with OTHER clients that also had this passenger, with type 'other' (não definido)
-      const otherClientIds = [...new Set(
-        (allPassengerRecords ?? [])
-          .map((rec: any) => rec.client_id)
-          .filter((cid: string) => cid && cid !== clientId)
-      )];
-      if (otherClientIds.length > 0) {
-        const otherRelInserts = otherClientIds.map((cid: string) => ({
-          client_id_a: cid,
+      // Create relationships with OTHER clients that also had this passenger, using their stored relationship_type
+      const otherRecords = (allPassengerRecords ?? []).filter((rec: any) => rec.client_id && rec.client_id !== clientId);
+      // Deduplicate by client_id, keeping the first match
+      const seenClients = new Set<string>();
+      const uniqueOtherRecords = otherRecords.filter((rec: any) => {
+        if (seenClients.has(rec.client_id)) return false;
+        seenClients.add(rec.client_id);
+        return true;
+      });
+      if (uniqueOtherRecords.length > 0) {
+        const otherRelInserts = uniqueOtherRecords.map((rec: any) => ({
+          client_id_a: rec.client_id,
           client_id_b: newClient.id,
-          relationship_type: 'other' as any,
+          relationship_type: (rec.relationship_type || 'other') as any,
         }));
         await supabase.from("client_relationships").insert(otherRelInserts);
       }
