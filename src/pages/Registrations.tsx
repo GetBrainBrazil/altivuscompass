@@ -291,7 +291,7 @@ function AirlinesTab() {
   const closeDialog = () => {
     setDialogOpen(false);
     setEditing(null);
-    setForm({ name: "", iata_code: "", country: "", mileage_program_name: "" });
+    setForm({ name: "", iata_code: "", country: "", mileage_program_name: "", program_url: "" });
   };
 
   const openEdit = (a: any) => {
