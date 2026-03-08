@@ -372,14 +372,14 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border/50 bg-muted/30">
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Cliente</th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Vínculo</th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Localização</th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_name")}>Cliente<SortIcon columnKey="_name" sort={relSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_type")}>Vínculo<SortIcon columnKey="_type" sort={relSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_location")}>Localização<SortIcon columnKey="_location" sort={relSort} /></th>
                   <th className="p-3 w-20"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/30">
-                {relationships.map((r: any) => (
+                {sortedRels.map((r: any) => (
                   <tr key={r.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => onNavigateToClient(r.linked_client_id)}>
                     <td className="p-3">
                       <div className="flex items-center gap-2">
