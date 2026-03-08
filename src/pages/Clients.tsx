@@ -232,8 +232,6 @@ export default function Clients() {
         ...rest,
         preferred_airports: selectedAirports,
         birth_date: form.birth_date || null,
-        passport_issue_date: form.passport_issue_date || null,
-        passport_expiry_date: form.passport_expiry_date || null,
       };
 
       let clientId = editingId;
@@ -248,25 +246,32 @@ export default function Clients() {
 
       // Save multi-value records
       if (clientId) {
-        // Phones: delete old, insert new
         await supabase.from("client_phones").delete().eq("client_id", clientId);
         if (phones.length > 0) {
           await supabase.from("client_phones").insert(phones.filter(p => p.phone).map(p => ({ client_id: clientId!, phone: p.phone, description: p.description || null })));
         }
-        // Emails
         await supabase.from("client_emails").delete().eq("client_id", clientId);
         if (emails.length > 0) {
           await supabase.from("client_emails").insert(emails.filter(e => e.email).map(e => ({ client_id: clientId!, email: e.email, description: e.description || null })));
         }
-        // Socials
         await supabase.from("client_social_media").delete().eq("client_id", clientId);
         if (socials.length > 0) {
           await supabase.from("client_social_media").insert(socials.filter(s => s.handle).map(s => ({ client_id: clientId!, network: s.network, handle: s.handle })));
         }
-        // Visas
-        await supabase.from("client_visas").delete().eq("client_id", clientId);
-        if (visas.length > 0) {
-          await supabase.from("client_visas").insert(visas.filter(v => v.visa_type).map(v => ({ client_id: clientId!, visa_type: v.visa_type, validity_date: v.validity_date || null })));
+        // Passports & Visas: delete old passports (cascades to visas), insert new
+        await supabase.from("client_passports").delete().eq("client_id", clientId);
+        for (const pp of passports.filter(p => p.passport_number)) {
+          const { data: ppData, error: ppErr } = await supabase.from("client_passports").insert({
+            client_id: clientId!, passport_number: pp.passport_number,
+            issue_date: pp.issue_date || null, expiry_date: pp.expiry_date || null,
+            nationality: pp.nationality || null, status: pp.status || "valid",
+          }).select("id").single();
+          if (ppErr) throw ppErr;
+          if (pp.visas.length > 0) {
+            await supabase.from("client_visas").insert(
+              pp.visas.filter(v => v.visa_type).map(v => ({ passport_id: ppData.id, visa_type: v.visa_type, validity_date: v.validity_date || null }))
+            );
+          }
         }
       }
     },
