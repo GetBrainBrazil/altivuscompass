@@ -200,14 +200,6 @@ export default function BankAccounts() {
                 <Label className="font-body">Chave PIX</Label>
                 <Input value={form.pix_key ?? ""} onChange={(e) => setForm({ ...form, pix_key: e.target.value })} />
               </div>
-              <div className="space-y-2">
-                <Label className="font-body">Titular</Label>
-                <Input value={form.holder_name ?? ""} onChange={(e) => setForm({ ...form, holder_name: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label className="font-body">CPF/CNPJ do Titular</Label>
-                <Input value={form.holder_document ?? ""} onChange={(e) => setForm({ ...form, holder_document: e.target.value })} />
-              </div>
               <div className="sm:col-span-2 space-y-2">
                 <Label className="font-body">Observações</Label>
                 <Textarea value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
