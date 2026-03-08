@@ -498,7 +498,7 @@ export default function SuppliersTab() {
             <>
               <div className="flex-1" />
               <Button variant="outline" onClick={goBack} className="font-body">Voltar</Button>
-              <Button onClick={() => saveMutation.mutate()} disabled={!form.name || saveMutation.isPending} className="font-body">
+              <Button onClick={() => { setShouldGoBack(true); saveMutation.mutate(); }} disabled={!form.name || saveMutation.isPending} className="font-body">
                 {saveMutation.isPending ? "Salvando..." : "Adicionar Fornecedor"}
               </Button>
             </>
