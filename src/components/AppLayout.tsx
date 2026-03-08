@@ -46,6 +46,8 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { toast } = useToast();
   const isRealAdmin = realRole === "admin";
   const [userSearch, setUserSearch] = useState("");
+  const [impersonateDialogOpen, setImpersonateDialogOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const { data: headerProfile } = useQuery({
     queryKey: ["header-profile", user?.id],
