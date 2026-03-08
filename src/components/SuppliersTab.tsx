@@ -102,6 +102,8 @@ export default function SuppliersTab() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({ ...emptyForm });
+  const [phones, setPhones] = useState<SupplierPhone[]>([]);
+  const [emails, setEmails] = useState<SupplierEmail[]>([]);
   const [sort, setSort] = useState<SortState>(null);
   const [loadingCep, setLoadingCep] = useState(false);
 
