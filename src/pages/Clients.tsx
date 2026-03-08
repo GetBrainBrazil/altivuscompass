@@ -212,19 +212,21 @@ export default function Clients() {
     );
   }, [airportsList, airportSearch]);
 
-  // Destination options for preferences
+  // Destination options for preferences (unfiltered - all states/cities)
   const { data: destContinents = [] } = useContinents();
   const { data: destCustom = [] } = useCustomDestinations();
+  const { data: allStates = [] } = useStates();
+  const { data: allCities = [] } = useCities();
 
   const destAllOptions = useMemo(() => {
     const opts: { type: string; id: string; label: string; group: string }[] = [];
     for (const d of destCustom) opts.push({ type: "custom", id: d.id, label: d.name, group: "Diversos" });
     for (const c of destContinents) opts.push({ type: "continent", id: c.id, label: c.name, group: "Continentes" });
     for (const c of dbCountries) opts.push({ type: "country", id: c.id, label: c.name, group: "Países" });
-    for (const s of dbStates as any[]) opts.push({ type: "state", id: s.id, label: `${s.name} (${s.countries?.name ?? ""})`, group: "Estados/Regiões" });
-    for (const c of dbCities as any[]) opts.push({ type: "city", id: c.id, label: `${c.name} (${c.countries?.name ?? ""})`, group: "Cidades" });
+    for (const s of allStates as any[]) opts.push({ type: "state", id: s.id, label: `${s.name} (${(s as any).countries?.name ?? ""})`, group: "Estados/Regiões" });
+    for (const c of allCities as any[]) opts.push({ type: "city", id: c.id, label: `${(c as any).name} (${(c as any).countries?.name ?? ""})`, group: "Cidades" });
     return opts;
-  }, [destCustom, destContinents, dbCountries, dbStates, dbCities]);
+  }, [destCustom, destContinents, dbCountries, allStates, allCities]);
 
   const destFilteredOptions = useMemo(() => {
     if (!destSearch) return destAllOptions.slice(0, 80);
