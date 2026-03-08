@@ -107,9 +107,11 @@ function CountriesSubTab() {
       if (editing) {
         const { error } = await supabase.from("countries").update({ name }).eq("id", editing.id);
         if (error) throw error;
+        await logAuditEvent({ action: "update", tableName: "countries", recordId: editing.id, recordLabel: name, oldData: { name: editing.name }, newData: { name } });
       } else {
-        const { error } = await supabase.from("countries").insert({ name });
+        const { data, error } = await supabase.from("countries").insert({ name }).select("id").single();
         if (error) throw error;
+        await logAuditEvent({ action: "create", tableName: "countries", recordId: data.id, recordLabel: name, newData: { name } });
       }
     },
     onSuccess: () => {
