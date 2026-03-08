@@ -887,8 +887,8 @@ export default function Clients() {
                                 <Label className="font-body text-xs">Imagem do Visto</Label>
                                 <div className="flex items-center gap-2">
                                   {(v.image_url || v._imageFile) && (
-                                    <a href={v._imageFile ? URL.createObjectURL(v._imageFile) : v.image_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline truncate max-w-[80px]">
-                                      {v._imageFile ? v._imageFile.name : "Ver"}
+                                    <a href={v._imageFile ? URL.createObjectURL(v._imageFile) : v.image_url} target="_blank" rel="noopener noreferrer">
+                                      <img src={v._imageFile ? URL.createObjectURL(v._imageFile) : v.image_url} alt="Visto" className="h-10 w-14 object-cover rounded border border-border" />
                                     </a>
                                   )}
                                   <label className="cursor-pointer inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-input bg-background hover:bg-accent text-foreground">
