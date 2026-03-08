@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,8 +7,42 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, ExternalLink, UserPlus, Link2 } from "lucide-react";
+import { Plus, Trash2, ExternalLink, UserPlus, Link2, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+
+type SortDirection = "asc" | "desc" | null;
+type SortState = { key: string; direction: SortDirection };
+
+function useSortableData<T>(data: T[], defaultSort?: SortState) {
+  const [sort, setSort] = useState<SortState>(defaultSort ?? { key: "", direction: null });
+
+  const toggleSort = (key: string) => {
+    setSort((prev) => {
+      if (prev.key !== key) return { key, direction: "asc" };
+      if (prev.direction === "asc") return { key, direction: "desc" };
+      if (prev.direction === "desc") return { key: "", direction: null };
+      return { key, direction: "asc" };
+    });
+  };
+
+  const sorted = useMemo(() => {
+    if (!sort.direction || !sort.key) return data;
+    return [...data].sort((a: any, b: any) => {
+      const va = a[sort.key] ?? "";
+      const vb = b[sort.key] ?? "";
+      const cmp = String(va).localeCompare(String(vb), "pt-BR", { sensitivity: "base" });
+      return sort.direction === "asc" ? cmp : -cmp;
+    });
+  }, [data, sort]);
+
+  return { sorted, sort, toggleSort };
+}
+
+function SortIcon({ columnKey, sort }: { columnKey: string; sort: SortState }) {
+  if (sort.key === columnKey && sort.direction === "asc") return <ArrowUp className="h-3 w-3 ml-1 inline" />;
+  if (sort.key === columnKey && sort.direction === "desc") return <ArrowDown className="h-3 w-3 ml-1 inline" />;
+  return <ArrowUpDown className="h-3 w-3 ml-1 inline opacity-40" />;
+}
 
 const RELATIONSHIP_TYPES: Record<string, string> = {
   spouse: "Cônjuge",
