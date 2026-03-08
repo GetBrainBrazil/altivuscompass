@@ -793,7 +793,7 @@ export default function Clients() {
           {/* ====== LOWER SECTION: Tabs ====== */}
           <div className="glass-card rounded-xl p-4">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="w-full justify-start overflow-x-auto overflow-y-hidden flex-nowrap">
+              <TabsList className="w-full justify-start overflow-x-auto overflow-y-hidden flex-nowrap scrollbar-hide">
                 <TabsTrigger value="contact" className="font-body text-xs">Contato</TabsTrigger>
                 <TabsTrigger value="preferences" className="font-body text-xs">Preferências</TabsTrigger>
                 <TabsTrigger value="documents" className="font-body text-xs">Documentos</TabsTrigger>
