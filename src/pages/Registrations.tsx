@@ -643,7 +643,7 @@ export default function Registrations() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-display font-bold text-foreground">Cadastros</h1>
-        <p className="text-sm text-muted-foreground mt-1">Gerencie localidades, aeroportos, companhias aéreas e etiquetas</p>
+        <p className="text-sm text-muted-foreground mt-1">Gerencie localidades, aeroportos, companhias aéreas, fornecedores e etiquetas</p>
       </div>
 
       <Tabs defaultValue="locations" className="space-y-4">
@@ -651,11 +651,13 @@ export default function Registrations() {
           <TabsTrigger value="locations">Localidades</TabsTrigger>
           <TabsTrigger value="airports">Aeroportos</TabsTrigger>
           <TabsTrigger value="airlines">Cias Aéreas & Programas</TabsTrigger>
+          <TabsTrigger value="suppliers">Fornecedores</TabsTrigger>
           <TabsTrigger value="tags">Etiquetas</TabsTrigger>
         </TabsList>
         <TabsContent value="locations"><LocationsTab /></TabsContent>
         <TabsContent value="airports"><AirportsTab /></TabsContent>
         <TabsContent value="airlines"><AirlinesTab /></TabsContent>
+        <TabsContent value="suppliers"><SuppliersTab /></TabsContent>
         <TabsContent value="tags"><TagsTab /></TabsContent>
       </Tabs>
     </div>
