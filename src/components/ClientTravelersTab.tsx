@@ -732,7 +732,35 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Copy passengers dialog */}
+      {/* Edit relationship dialog */}
+      <Dialog open={editRelDialog} onOpenChange={(o) => { if (!o) { setEditRelDialog(false); setEditingRel(null); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display">Editar Vínculo</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <p className="text-sm font-body text-muted-foreground">
+              Vínculo com <strong className="text-foreground">{editingRel?.client?.full_name}</strong>
+            </p>
+            <div>
+              <Label className="font-body text-xs">Tipo de vínculo</Label>
+              <Select value={editRelType} onValueChange={setEditRelType}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(RELATIONSHIP_TYPES).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={() => editingRel && updateRelMutation.mutate({ id: editingRel.id, type: editRelType })} disabled={updateRelMutation.isPending} className="font-body">
+              {updateRelMutation.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+
       <Dialog open={copyDialog} onOpenChange={(o) => { if (!o) { setCopyDialog(false); setSelectedCopyClient(null); setCopyPassengerIds(new Set()); } }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
