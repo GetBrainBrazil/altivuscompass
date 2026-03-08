@@ -106,8 +106,11 @@ function AirportsTab() {
     setDialogOpen(true);
   };
 
-  const filtered = airports.filter((a: any) =>
-    [a.iata_code, a.name, a.city, a.country].some((f) => f?.toLowerCase().includes(search.toLowerCase()))
+  const filtered = sortData(
+    airports.filter((a: any) =>
+      [a.iata_code, a.name, a.city, a.country].some((f) => f?.toLowerCase().includes(search.toLowerCase()))
+    ),
+    sort
   );
 
   return (
