@@ -1128,8 +1128,11 @@ export default function Clients() {
                           }} />
                         </label>
                       </div>
+                      </div>
+                      )}
 
-                      {/* Visas for this passport */}
+                      {/* Visas - always visible, indented when collapsed */}
+                      <div className={`${ppCollapsed ? "pl-6 pr-3 pb-3" : "px-3 pb-3"}`}>
                       <div className="border-t border-border/30 pt-2">
                         <div className="flex items-center justify-between mb-2">
                           <Label className="font-body text-xs font-medium">Vistos deste passaporte</Label>
@@ -1250,7 +1253,6 @@ export default function Clients() {
                         })}
                       </div>
                       </div>
-                      )}
                     </div>
                     );
                   })}
