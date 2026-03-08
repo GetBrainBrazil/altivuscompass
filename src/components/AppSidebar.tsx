@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccess } from "@/lib/permissions";
 import logoAltivus from "@/assets/logo-altivus.png";
+import logoSymbol from "@/assets/logo-altivus-symbol.png";
 import {
   Sidebar,
   SidebarContent,
@@ -36,14 +37,12 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
-      <SidebarHeader className="p-4 border-b border-sidebar-border">
+      <SidebarHeader className="p-3 border-b border-sidebar-border">
         <Link to="/" className="flex items-center justify-center">
           {collapsed ? (
-            <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
-              <span className="text-xs font-bold text-sidebar-primary-foreground font-display">A</span>
-            </div>
+            <img src={logoSymbol} alt="Altivus" className="h-8 w-8 object-contain" />
           ) : (
-            <img src={logoAltivus} alt="Altivus Turismo" className="h-10 object-contain" />
+            <img src={logoAltivus} alt="Altivus Turismo" className="h-9 object-contain" />
           )}
         </Link>
       </SidebarHeader>
