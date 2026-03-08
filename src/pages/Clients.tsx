@@ -134,6 +134,10 @@ export default function Clients() {
   const [airportSearch, setAirportSearch] = useState("");
   const [airportPopoverOpen, setAirportPopoverOpen] = useState(false);
 
+  // Tags selection
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
+
   // Quick-add location
   const [quickAddType, setQuickAddType] = useState<"country" | "state" | "city" | null>(null);
   const [quickAddName, setQuickAddName] = useState("");
