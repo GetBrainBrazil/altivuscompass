@@ -376,6 +376,32 @@ export default function Clients() {
         </Dialog>
       </div>
 
+      {/* Quick-add location dialog */}
+      <Dialog open={quickAddType !== null} onOpenChange={(o) => { if (!o) { setQuickAddType(null); setQuickAddName(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {quickAddType === "country" ? "Novo País" : quickAddType === "state" ? "Novo Estado/Região" : "Nova Cidade"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            {quickAddType === "state" && <p className="text-sm text-muted-foreground">País: {form.country}</p>}
+            {quickAddType === "city" && (
+              <p className="text-sm text-muted-foreground">
+                {form.country}{form.state ? ` → ${form.state}` : ""}
+              </p>
+            )}
+            <div>
+              <Label>Nome <span className="text-destructive">*</span></Label>
+              <Input value={quickAddName} onChange={(e) => setQuickAddName(e.target.value)} placeholder={`Nome ${quickAddType === "country" ? "do país" : quickAddType === "state" ? "do estado/região" : "da cidade"}`} />
+            </div>
+            <Button onClick={() => quickAddMutation.mutate()} disabled={!quickAddName || quickAddMutation.isPending}>
+              {quickAddMutation.isPending ? "Adicionando..." : "Adicionar"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <div className="relative flex-1 sm:max-w-sm">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
