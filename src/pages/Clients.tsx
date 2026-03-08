@@ -162,6 +162,9 @@ export default function Clients() {
   const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
   const [destPopoverOpen, setDestPopoverOpen] = useState(false);
   const [destSearch, setDestSearch] = useState("");
+  // Collapsible passports/visas
+  const [collapsedPassports, setCollapsedPassports] = useState<Set<number>>(new Set());
+  const [collapsedVisas, setCollapsedVisas] = useState<Set<string>>(new Set());
 
   // Quick-add location
   const [quickAddType, setQuickAddType] = useState<"country" | "state" | "city" | null>(null);
