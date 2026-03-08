@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, ChevronRight } from "lucide-react";
+import { Plus, Pencil, Trash2, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 
 type FinancialCategory = {
   id: string; name: string; code: string | null; type: string;
@@ -25,6 +25,19 @@ const typeLabels: Record<string, { label: string; color: string }> = {
   transfer: { label: "Transferência", color: "bg-muted text-muted-foreground" },
 };
 
+type SortDir = "asc" | "desc" | null;
+
+function SortHeader({ label, active, direction, onClick }: { label: string; active: boolean; direction: SortDir; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="flex items-center gap-1 group font-medium text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors">
+      {label}
+      {active && direction === "asc" ? <ArrowUp size={12} /> :
+       active && direction === "desc" ? <ArrowDown size={12} /> :
+       <ArrowUpDown size={12} className="opacity-40 group-hover:opacity-100" />}
+    </button>
+  );
+}
+
 function buildTree(categories: FinancialCategory[], parentId: string | null = null): (FinancialCategory & { children: any[] })[] {
   return categories
     .filter(c => c.parent_id === parentId)
@@ -38,6 +51,14 @@ export default function ChartOfAccountsTab() {
   const [editing, setEditing] = useState<FinancialCategory | null>(null);
   const [form, setForm] = useState<Record<string, any>>({});
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>(null);
+
+  const toggleSort = (key: string) => {
+    if (sortKey !== key) { setSortKey(key); setSortDir("asc"); }
+    else if (sortDir === "asc") setSortDir("desc");
+    else if (sortDir === "desc") { setSortKey(null); setSortDir(null); }
+  };
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["financial-categories"],
@@ -47,6 +68,32 @@ export default function ChartOfAccountsTab() {
       return data as FinancialCategory[];
     },
   });
+
+  // Flatten tree for table display, maintaining hierarchy via depth
+  const flatList = useMemo(() => {
+    if (sortKey && sortDir) {
+      // When sorting, show flat list sorted by the key
+      return [...categories].sort((a, b) => {
+        const va = (a as any)[sortKey] ?? "";
+        const vb = (b as any)[sortKey] ?? "";
+        const cmp = String(va).localeCompare(String(vb), "pt-BR", { sensitivity: "base" });
+        return sortDir === "asc" ? cmp : -cmp;
+      }).map(c => ({ ...c, depth: 0, hasChildren: categories.some(x => x.parent_id === c.id) }));
+    }
+    // Default: tree order
+    const result: (FinancialCategory & { depth: number; hasChildren: boolean })[] = [];
+    const flatten = (cats: (FinancialCategory & { children: any[] })[], depth: number) => {
+      cats.forEach(c => {
+        const hasChildren = c.children.length > 0;
+        result.push({ ...c, depth, hasChildren });
+        if (hasChildren && expandedIds.has(c.id)) {
+          flatten(c.children, depth + 1);
+        }
+      });
+    };
+    flatten(buildTree(categories), 0);
+    return result;
+  }, [categories, expandedIds, sortKey, sortDir]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -108,69 +155,7 @@ export default function ChartOfAccountsTab() {
     });
   };
 
-  const tree = buildTree(categories);
-
-  const renderCategory = (cat: FinancialCategory & { children: any[] }, depth: number = 0) => {
-    const hasChildren = cat.children.length > 0;
-    const isExpanded = expandedIds.has(cat.id);
-    const tp = typeLabels[cat.type] ?? typeLabels.expense;
-
-    return (
-      <div key={cat.id}>
-        <div
-          className="p-3 sm:p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors"
-          style={{ paddingLeft: `${16 + depth * 24}px` }}
-        >
-          {hasChildren ? (
-            <button onClick={() => toggleExpand(cat.id)} className="h-5 w-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
-              <ChevronRight size={14} className={`transition-transform ${isExpanded ? "rotate-90" : ""}`} />
-            </button>
-          ) : (
-            <span className="h-5 w-5" />
-          )}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              {cat.code && <span className="text-xs text-muted-foreground font-mono font-body">{cat.code}</span>}
-              <p className="text-sm font-medium font-body text-foreground">{cat.name}</p>
-              {!cat.is_active && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-body">Inativa</span>
-              )}
-            </div>
-            {cat.description && <p className="text-xs text-muted-foreground font-body mt-0.5">{cat.description}</p>}
-          </div>
-          <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${tp.color}`}>{tp.label}</span>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openCreate(cat.id)} title="Adicionar subcategoria">
-              <Plus size={12} />
-            </Button>
-            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(cat)}>
-              <Pencil size={12} />
-            </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive">
-                  <Trash2 size={12} />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Remover categoria?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {hasChildren ? "Subcategorias ficarão órfãs. " : ""}Esta ação não pode ser desfeita.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => deleteMutation.mutate(cat.id)}>Remover</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </div>
-        {hasChildren && isExpanded && cat.children.map((child: any) => renderCategory(child, depth + 1))}
-      </div>
-    );
-  };
+  const isSorting = !!sortKey && !!sortDir;
 
   return (
     <div className="space-y-4">
@@ -180,18 +165,99 @@ export default function ChartOfAccountsTab() {
         </Button>
       </div>
 
-      <div className="glass-card rounded-xl">
-        <div className="p-4 sm:p-5 border-b border-border/50">
-          <h2 className="font-display text-lg font-semibold">Categorias</h2>
-        </div>
+      <div className="glass-card rounded-xl overflow-x-auto">
         {isLoading ? (
           <div className="p-8 text-center text-muted-foreground font-body">Carregando...</div>
         ) : categories.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground font-body">Nenhuma categoria cadastrada.</div>
         ) : (
-          <div className="divide-y divide-border/30">
-            {tree.map((cat) => renderCategory(cat))}
-          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border/50">
+                <th className="p-4 text-left">
+                  <SortHeader label="Código" active={sortKey === "code"} direction={sortKey === "code" ? sortDir : null} onClick={() => toggleSort("code")} />
+                </th>
+                <th className="p-4 text-left">
+                  <SortHeader label="Nome" active={sortKey === "name"} direction={sortKey === "name" ? sortDir : null} onClick={() => toggleSort("name")} />
+                </th>
+                <th className="p-4 text-left">
+                  <SortHeader label="Tipo" active={sortKey === "type"} direction={sortKey === "type" ? sortDir : null} onClick={() => toggleSort("type")} />
+                </th>
+                <th className="p-4 text-left font-medium text-xs uppercase tracking-wider text-muted-foreground">Status</th>
+                <th className="p-4 text-right font-medium text-xs uppercase tracking-wider text-muted-foreground">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/30">
+              {flatList.map((cat) => {
+                const tp = typeLabels[cat.type] ?? typeLabels.expense;
+                const isExpanded = expandedIds.has(cat.id);
+                return (
+                  <tr key={cat.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEdit(cat)}>
+                    <td className="p-4 font-body text-muted-foreground font-mono text-xs whitespace-nowrap">
+                      <div className="flex items-center gap-1" style={{ paddingLeft: isSorting ? 0 : `${cat.depth * 20}px` }}>
+                        {!isSorting && cat.hasChildren ? (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); toggleExpand(cat.id); }}
+                            className="h-5 w-5 flex items-center justify-center text-muted-foreground hover:text-foreground shrink-0"
+                          >
+                            <ChevronRight size={12} className={`transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+                          </button>
+                        ) : !isSorting ? (
+                          <span className="h-5 w-5 shrink-0" />
+                        ) : null}
+                        {cat.code || "—"}
+                      </div>
+                    </td>
+                    <td className="p-4 font-body font-medium text-foreground">
+                      <div>
+                        {cat.name}
+                        {cat.description && <p className="text-xs text-muted-foreground font-normal mt-0.5">{cat.description}</p>}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${tp.color}`}>{tp.label}</span>
+                    </td>
+                    <td className="p-4">
+                      {cat.is_active ? (
+                        <span className="text-[10px] font-medium px-2.5 py-1 rounded-full bg-success/10 text-success font-body">Ativa</span>
+                      ) : (
+                        <span className="text-[10px] font-medium px-2.5 py-1 rounded-full bg-muted text-muted-foreground font-body">Inativa</span>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openCreate(cat.id)} title="Adicionar subcategoria">
+                          <Plus size={12} />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(cat)}>
+                          <Pencil size={12} />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive">
+                              <Trash2 size={12} />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remover categoria?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {cat.hasChildren ? "Subcategorias ficarão órfãs. " : ""}Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => deleteMutation.mutate(cat.id)}>Remover</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         )}
       </div>
 

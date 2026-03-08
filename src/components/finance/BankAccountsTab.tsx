@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Building2 } from "lucide-react";
+import { Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 
 type BankAccount = {
   id: string; bank_name: string; agency: string | null; account_number: string | null;
@@ -23,12 +23,33 @@ const accountTypeLabels: Record<string, string> = {
   checking: "Conta Corrente", savings: "Conta Poupança", salary: "Conta Salário", payment: "Conta Pagamento",
 };
 
+type SortDir = "asc" | "desc" | null;
+
+function SortHeader({ label, active, direction, onClick }: { label: string; active: boolean; direction: SortDir; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="flex items-center gap-1 group font-medium text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors">
+      {label}
+      {active && direction === "asc" ? <ArrowUp size={12} /> :
+       active && direction === "desc" ? <ArrowDown size={12} /> :
+       <ArrowUpDown size={12} className="opacity-40 group-hover:opacity-100" />}
+    </button>
+  );
+}
+
 export default function BankAccountsTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<BankAccount | null>(null);
   const [form, setForm] = useState<Record<string, any>>({});
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>(null);
+
+  const toggleSort = (key: string) => {
+    if (sortKey !== key) { setSortKey(key); setSortDir("asc"); }
+    else if (sortDir === "asc") setSortDir("desc");
+    else if (sortDir === "desc") { setSortKey(null); setSortDir(null); }
+  };
 
   const { data: accounts = [], isLoading } = useQuery({
     queryKey: ["bank-accounts"],
@@ -38,6 +59,16 @@ export default function BankAccountsTab() {
       return data as BankAccount[];
     },
   });
+
+  const sorted = useMemo(() => {
+    if (!sortKey || !sortDir) return accounts;
+    return [...accounts].sort((a, b) => {
+      const va = (a as any)[sortKey] ?? "";
+      const vb = (b as any)[sortKey] ?? "";
+      const cmp = String(va).localeCompare(String(vb), "pt-BR", { sensitivity: "base" });
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }, [accounts, sortKey, sortDir]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -103,38 +134,52 @@ export default function BankAccountsTab() {
         </Button>
       </div>
 
-      <div className="glass-card rounded-xl">
-        <div className="p-4 sm:p-5 border-b border-border/50">
-          <h2 className="font-display text-lg font-semibold">Contas Cadastradas</h2>
-        </div>
+      <div className="glass-card rounded-xl overflow-x-auto">
         {isLoading ? (
           <div className="p-8 text-center text-muted-foreground font-body">Carregando...</div>
         ) : accounts.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground font-body">Nenhuma conta bancária cadastrada.</div>
         ) : (
-          <div className="divide-y divide-border/30">
-            {accounts.map((a) => (
-              <div key={a.id} className="p-4 flex items-center gap-4 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEdit(a)}>
-                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <Building2 size={18} className="text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium font-body text-foreground">{a.bank_name}</p>
-                    {!a.is_active && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-body">Inativa</span>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border/50">
+                <th className="p-4 text-left">
+                  <SortHeader label="Banco" active={sortKey === "bank_name"} direction={sortKey === "bank_name" ? sortDir : null} onClick={() => toggleSort("bank_name")} />
+                </th>
+                <th className="p-4 text-left">
+                  <SortHeader label="Tipo" active={sortKey === "account_type"} direction={sortKey === "account_type" ? sortDir : null} onClick={() => toggleSort("account_type")} />
+                </th>
+                <th className="p-4 text-left">
+                  <SortHeader label="Agência" active={sortKey === "agency"} direction={sortKey === "agency" ? sortDir : null} onClick={() => toggleSort("agency")} />
+                </th>
+                <th className="p-4 text-left">
+                  <SortHeader label="Conta" active={sortKey === "account_number"} direction={sortKey === "account_number" ? sortDir : null} onClick={() => toggleSort("account_number")} />
+                </th>
+                <th className="p-4 text-left">
+                  <SortHeader label="Chave PIX" active={sortKey === "pix_key"} direction={sortKey === "pix_key" ? sortDir : null} onClick={() => toggleSort("pix_key")} />
+                </th>
+                <th className="p-4 text-left font-medium text-xs uppercase tracking-wider text-muted-foreground">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/30">
+              {sorted.map((a) => (
+                <tr key={a.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEdit(a)}>
+                  <td className="p-4 font-body font-medium text-foreground">{a.bank_name}</td>
+                  <td className="p-4 font-body text-muted-foreground">{accountTypeLabels[a.account_type ?? "checking"] ?? a.account_type}</td>
+                  <td className="p-4 font-body text-muted-foreground">{a.agency || "—"}</td>
+                  <td className="p-4 font-body text-muted-foreground">{a.account_number || "—"}</td>
+                  <td className="p-4 font-body text-muted-foreground">{a.pix_key || "—"}</td>
+                  <td className="p-4">
+                    {a.is_active ? (
+                      <span className="text-[10px] font-medium px-2.5 py-1 rounded-full bg-success/10 text-success font-body">Ativa</span>
+                    ) : (
+                      <span className="text-[10px] font-medium px-2.5 py-1 rounded-full bg-muted text-muted-foreground font-body">Inativa</span>
                     )}
-                  </div>
-                  <p className="text-xs text-muted-foreground font-body">
-                    {accountTypeLabels[a.account_type ?? "checking"] ?? a.account_type}
-                    {a.agency ? ` · Ag: ${a.agency}` : ""}
-                    {a.account_number ? ` · Cc: ${a.account_number}` : ""}
-                    {a.pix_key ? ` · PIX: ${a.pix_key}` : ""}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
 
