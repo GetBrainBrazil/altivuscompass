@@ -204,10 +204,6 @@ export default function Clients() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="font-body">Cidade</Label>
-                  <Input value={form.city ?? ""} onChange={(e) => setForm({ ...form, city: e.target.value })} />
-                </div>
-                <div className="space-y-2">
                   <Label className="font-body">Estado / Região</Label>
                   {(COUNTRIES_STATES[form.country ?? "Brasil"] ?? []).length > 0 ? (
                     <Select value={form.state ?? ""} onValueChange={(v) => setForm({ ...form, state: v })}>
@@ -221,6 +217,10 @@ export default function Clients() {
                   ) : (
                     <Input value={form.state ?? ""} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="Digite o estado/região" />
                   )}
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-body">Cidade</Label>
+                  <Input value={form.city ?? ""} onChange={(e) => setForm({ ...form, city: e.target.value })} />
                 </div>
                 <div className="space-y-2">
                   <Label className="font-body">Perfil de viagem</Label>
