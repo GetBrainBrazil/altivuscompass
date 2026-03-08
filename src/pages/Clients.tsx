@@ -161,6 +161,15 @@ export default function Clients() {
     },
   });
 
+  const { data: availableTags = [] } = useQuery({
+    queryKey: ["tags"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("tags").select("*").order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const filteredAirports = useMemo(() => {
     if (!airportSearch) return airportsList;
     const q = airportSearch.toLowerCase();
