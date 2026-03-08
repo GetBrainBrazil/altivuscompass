@@ -179,8 +179,9 @@ function CountriesSubTab() {
   const closeDialog = () => { setDialogOpen(false); setEditing(null); setName(""); };
   const openEdit = (c: any) => { setEditing(c); setName(c.name); setDialogOpen(true); };
 
+  const enriched = countries.map((c: any) => ({ ...c, continent_name: (continentMap as Record<string, string>)[c.id] ?? "" }));
   const filtered = sortData(
-    countries.filter((c: any) => c.name.toLowerCase().includes(search.toLowerCase())),
+    enriched.filter((c: any) => c.name.toLowerCase().includes(search.toLowerCase()) || c.continent_name.toLowerCase().includes(search.toLowerCase())),
     sort
   );
 
