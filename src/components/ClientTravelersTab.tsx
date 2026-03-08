@@ -541,7 +541,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="font-body text-xs">Nº Passaporte</Label>
-                <Input value={passengerForm.passport_number} onChange={(e) => setPassengerForm({ ...passengerForm, passport_number: e.target.value })} className="h-9" />
+                <Input value={passengerForm.passport_number} onChange={(e) => setPassengerForm({ ...passengerForm, passport_number: e.target.value.toUpperCase() })} className="h-9" />
               </div>
               <div>
                 <Label className="font-body text-xs">Validade Passaporte</Label>

@@ -754,7 +754,7 @@ export default function Clients() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                         <div className="space-y-1">
                           <Label className="font-body text-xs">Número</Label>
-                          <Input className="h-9" value={pp.passport_number} onChange={(e) => { const n = [...passports]; n[pi].passport_number = e.target.value; setPassports(n); }} />
+                          <Input className="h-9" value={pp.passport_number} onChange={(e) => { const n = [...passports]; n[pi].passport_number = e.target.value.toUpperCase(); setPassports(n); }} />
                         </div>
                         <div className="space-y-1">
                           <Label className="font-body text-xs">Emissão</Label>
