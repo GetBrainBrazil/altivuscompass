@@ -465,11 +465,11 @@ export default function Tasks() {
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="hidden lg:table-cell">
+                    <TableCell className="hidden lg:table-cell" onClick={(e) => e.stopPropagation()}>
                       {task.quotes ? (
-                        <span className="text-xs text-soft-blue font-body truncate max-w-[150px] block">
+                        <a href="/quotes" onClick={(e) => { e.preventDefault(); navigate("/quotes"); }} className="text-xs text-soft-blue font-body truncate max-w-[150px] block hover:underline cursor-pointer">
                           {task.quotes.destination ?? task.quotes.title ?? "—"}
-                        </span>
+                        </a>
                       ) : task.clients ? (
                         <span className="text-xs text-muted-foreground font-body truncate max-w-[150px] block">
                           {(task.clients as any).full_name}
