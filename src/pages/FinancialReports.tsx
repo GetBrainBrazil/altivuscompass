@@ -100,6 +100,15 @@ export default function FinancialReports() {
   const [customEnd, setCustomEnd] = useState<Date | undefined>();
   const [budgetRows, setBudgetRows] = useState<BudgetRow[]>([]);
   const [budgetInitialized, setBudgetInitialized] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<string>("all");
+
+  const accountOptions = useMemo(() => {
+    const opts: { value: string; label: string }[] = [{ value: "all", label: "Todas as Contas" }];
+    bankAccounts.forEach((a: any) => opts.push({ value: a.id, label: a.bank_name }));
+    const hasVirtual = transactions.some((t) => t.payment_account === "virtual");
+    if (hasVirtual) opts.push({ value: "virtual", label: "Conta Virtual" });
+    return opts;
+  }, [bankAccounts, transactions]);
 
   const periodDates = useMemo(() => {
     if (periodPreset === "custom") {
