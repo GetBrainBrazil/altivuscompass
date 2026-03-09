@@ -598,12 +598,26 @@ export default function Quotes() {
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-1 pb-3">
-          <div>
+          <div className="flex gap-2">
             {editingQuote && (
-              <Button type="button" variant="ghost" size="sm" className="text-destructive hover:text-destructive font-body gap-1.5 text-xs"
-                onClick={() => { if (confirm("Remover cotação?")) { deleteMutation.mutate(editingQuote.id); closeDialog(); } }}>
-                <Trash2 className="w-3.5 h-3.5" /> Excluir Cotação
-              </Button>
+              <>
+                <Button type="button" variant="ghost" size="sm" className="text-destructive hover:text-destructive font-body gap-1.5 text-xs"
+                  onClick={() => { if (confirm("Remover cotação?")) { deleteMutation.mutate(editingQuote.id); closeDialog(); } }}>
+                  <Trash2 className="w-3.5 h-3.5" /> Excluir
+                </Button>
+                <Button type="button" variant="outline" size="sm" className="font-body gap-1.5 text-xs"
+                  onClick={() => {
+                    const url = `${window.location.origin}/quote/${editingQuote.id}`;
+                    navigator.clipboard.writeText(url);
+                    toast({ title: "Link copiado!", description: "Compartilhe com seu cliente." });
+                  }}>
+                  <Copy className="w-3.5 h-3.5" /> Copiar Link
+                </Button>
+                <Button type="button" variant="outline" size="sm" className="font-body gap-1.5 text-xs"
+                  onClick={() => window.open(`/quote/${editingQuote.id}`, "_blank")}>
+                  <ExternalLink className="w-3.5 h-3.5" /> Visualizar
+                </Button>
+              </>
             )}
           </div>
           <div className="flex gap-2">
