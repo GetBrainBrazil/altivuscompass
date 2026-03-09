@@ -450,6 +450,11 @@ export default function Tasks() {
                     <TableCell>
                       <Badge variant="outline" className={cn("text-[10px] font-body whitespace-nowrap", status.color)}>{status.label}</Badge>
                       {isOverdue && <Badge variant="destructive" className="text-[10px] font-body ml-1">Atrasada</Badge>}
+                      {task.completed_at && (
+                        <p className="text-[10px] text-success font-body mt-0.5">
+                          {format(new Date(task.completed_at), "dd/MM/yyyy HH:mm")}
+                        </p>
+                      )}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       {task.due_date ? (
