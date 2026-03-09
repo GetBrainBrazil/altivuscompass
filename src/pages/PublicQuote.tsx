@@ -250,35 +250,34 @@ export default function PublicQuote() {
       </div>
 
       {/* Header */}
-      <header className="border-b border-border bg-card">
+      <header className="border-b border-gray-200 bg-white">
         <div className="max-w-5xl mx-auto px-3 sm:px-6 py-4 sm:py-5">
-          {/* Mobile: stack vertically, Desktop: side by side */}
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
             {/* Top row on mobile: logo + agency info */}
             <div className="flex items-start justify-between gap-3 sm:contents">
               <div className="flex-shrink-0">
-                <img src={agencyLogo} alt={agencyName} className="h-10 sm:h-14 object-contain" />
+                <img src={agencyLogo} alt={agencyName} className="h-14 sm:h-16 object-contain" />
               </div>
-              {/* Agency info - visible on mobile as compact, desktop as full */}
+              {/* Agency info - always visible */}
               <div className="flex-shrink-0 text-right space-y-0.5 sm:order-3">
-                {agency?.name && <p className="text-xs sm:text-sm font-semibold text-foreground font-body">{agency.name}</p>}
+                {agency?.name && <p className="text-xs sm:text-sm font-semibold text-gray-900 font-body">{agency.name}</p>}
                 {agency?.cnpj && (
-                  <p className="text-[10px] sm:text-xs text-muted-foreground font-body hidden sm:flex items-center justify-end gap-1">
+                  <p className="text-[10px] sm:text-xs text-gray-500 font-body flex items-center justify-end gap-1">
                     {agency.cnpj} <span className="text-[10px]">📋</span>
                   </p>
                 )}
                 {agency?.phone && (
-                  <p className="text-[10px] sm:text-xs text-muted-foreground font-body flex items-center justify-end gap-1">
+                  <p className="text-[10px] sm:text-xs text-gray-500 font-body flex items-center justify-end gap-1">
                     {agency.phone} <Phone className="w-3 h-3" />
                   </p>
                 )}
                 {agency?.email && (
-                  <p className="text-[10px] sm:text-xs text-muted-foreground font-body hidden sm:flex items-center justify-end gap-1">
+                  <p className="text-[10px] sm:text-xs text-gray-500 font-body flex items-center justify-end gap-1">
                     {agency.email} <Mail className="w-3 h-3" />
                   </p>
                 )}
                 {agency?.instagram && (
-                  <p className="text-[10px] sm:text-xs text-muted-foreground font-body hidden sm:flex items-center justify-end gap-1">
+                  <p className="text-[10px] sm:text-xs text-gray-500 font-body flex items-center justify-end gap-1">
                     {agency.instagram} <Instagram className="w-3 h-3" />
                   </p>
                 )}
@@ -286,11 +285,11 @@ export default function PublicQuote() {
             </div>
             {/* Title centered */}
             <div className="flex-1 text-center sm:order-2">
-              <h1 className="text-base sm:text-xl font-display font-bold text-foreground tracking-wide uppercase">
+              <h1 className="text-base sm:text-xl font-display font-bold text-gray-900 tracking-wide uppercase">
                 {t.travelQuote}
               </h1>
               <div className="mt-1">
-                <Badge variant="outline" className="font-body text-xs px-3 py-0.5 font-medium">
+                <Badge variant="outline" className="font-body text-xs px-3 py-0.5 font-medium border-gray-300 text-gray-700">
                   {quote.title || quote.destination || t.quote}
                 </Badge>
               </div>
