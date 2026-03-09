@@ -8,9 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandInput, CommandList, CommandEmpty, CommandItem } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, Map, CalendarDays, Image as ImageIcon, X } from "lucide-react";
+import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, Map, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const stages = [
@@ -486,22 +488,63 @@ export default function Quotes() {
           {/* Passageiros & clientes vinculados */}
           {form.client_id && (clientPassengers.length > 0 || linkedClients.length > 0) && (
             <div className="space-y-2 pt-3 border-t border-border">
-              <Label className="font-body text-xs font-semibold">Passageiros e Clientes Vinculados</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1.5">
-                {clientPassengers.map((p) => (
-                  <label key={p.id} className="flex items-center gap-1.5 px-2 py-1.5 rounded-md border border-border hover:bg-muted/50 cursor-pointer transition-colors">
-                    <Checkbox checked={selectedPassengers.includes(p.id)} onCheckedChange={() => togglePassenger(p.id)} className="h-3.5 w-3.5" />
-                    <span className="text-xs font-body truncate">{p.full_name}</span>
-                    {p.relationship_type && <span className="text-[10px] text-muted-foreground">({RELATIONSHIP_LABELS[p.relationship_type] || p.relationship_type})</span>}
-                  </label>
-                ))}
-                {linkedClients.map((lc: any) => (
-                  <label key={lc.id} className="flex items-center gap-1.5 px-2 py-1.5 rounded-md border border-border hover:bg-muted/50 cursor-pointer transition-colors">
-                    <Checkbox checked={selectedLinkedClients.includes(lc.id)} onCheckedChange={() => toggleLinkedClient(lc.id)} className="h-3.5 w-3.5" />
-                    <Badge variant="outline" className="text-[9px] h-4 px-1 shrink-0">{RELATIONSHIP_LABELS[lc.relationship_type] || lc.relationship_type}</Badge>
-                    <span className="text-xs font-body truncate">{lc.full_name}</span>
-                  </label>
-                ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {clientPassengers.length > 0 && (
+                  <div className="space-y-1">
+                    <Label className="font-body text-xs font-semibold">Passageiros</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-between h-9 text-sm font-normal">
+                          {selectedPassengers.length === 0 ? "Selecionar passageiros..." : `${selectedPassengers.length} selecionado(s)`}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar passageiro..." className="h-8 text-xs" />
+                          <CommandList>
+                            <CommandEmpty className="py-3 text-xs">Nenhum encontrado.</CommandEmpty>
+                            {clientPassengers.map((p) => (
+                              <CommandItem key={p.id} onSelect={() => togglePassenger(p.id)} className="text-xs cursor-pointer">
+                                <Check className={cn("mr-2 h-3.5 w-3.5", selectedPassengers.includes(p.id) ? "opacity-100" : "opacity-0")} />
+                                <span className="truncate">{p.full_name}</span>
+                                {p.relationship_type && <span className="ml-auto text-[10px] text-muted-foreground">({RELATIONSHIP_LABELS[p.relationship_type] || p.relationship_type})</span>}
+                              </CommandItem>
+                            ))}
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                )}
+                {linkedClients.length > 0 && (
+                  <div className="space-y-1">
+                    <Label className="font-body text-xs font-semibold">Clientes Vinculados</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-between h-9 text-sm font-normal">
+                          {selectedLinkedClients.length === 0 ? "Selecionar clientes..." : `${selectedLinkedClients.length} selecionado(s)`}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar cliente..." className="h-8 text-xs" />
+                          <CommandList>
+                            <CommandEmpty className="py-3 text-xs">Nenhum encontrado.</CommandEmpty>
+                            {linkedClients.map((lc: any) => (
+                              <CommandItem key={lc.id} onSelect={() => toggleLinkedClient(lc.id)} className="text-xs cursor-pointer">
+                                <Check className={cn("mr-2 h-3.5 w-3.5", selectedLinkedClients.includes(lc.id) ? "opacity-100" : "opacity-0")} />
+                                <Badge variant="outline" className="text-[9px] h-4 px-1 shrink-0 mr-1">{RELATIONSHIP_LABELS[lc.relationship_type] || lc.relationship_type}</Badge>
+                                <span className="truncate">{lc.full_name}</span>
+                              </CommandItem>
+                            ))}
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                )}
               </div>
             </div>
           )}
