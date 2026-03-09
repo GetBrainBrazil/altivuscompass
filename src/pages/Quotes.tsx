@@ -181,15 +181,18 @@ export default function Quotes() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      const imageUrl = data.base64 || data.imageUrl;
-      if (imageUrl) {
-        setCoverPreview(imageUrl);
+      // Always use base64 for immediate preview
+      const previewSrc = data.base64 || data.imageUrl;
+      if (previewSrc) {
+        setCoverPreview(previewSrc);
         if (data.imageUrl) {
-          setForm((f: any) => ({ ...f, cover_image_url: data.imageUrl }));
+          // Add cache-buster to storage URL
+          const cacheBustedUrl = `${data.imageUrl}?t=${Date.now()}`;
+          setForm((f: any) => ({ ...f, cover_image_url: cacheBustedUrl }));
           setCoverFile(null);
-        } else {
+        } else if (data.base64) {
           // Convert base64 to File for upload
-          const res = await fetch(imageUrl);
+          const res = await fetch(data.base64);
           const blob = await res.blob();
           const file = new File([blob], "cover-ai.png", { type: "image/png" });
           setCoverFile(file);
