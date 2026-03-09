@@ -1118,7 +1118,29 @@ export default function Quotes() {
                             </div>
                             <div className="col-span-3 space-y-0.5">
                               <Label className="text-[11px] font-body">Companhia</Label>
-                              <Input value={d.airline || ""} onChange={(e) => updateDetail("airline", e.target.value)} placeholder="Ex: LATAM" className="h-8 text-xs" />
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" role="combobox" className="w-full h-8 justify-between text-xs font-normal px-2.5">
+                                    <span className="truncate">{d.airline || "Selecione"}</span>
+                                    <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[280px] p-0" align="start">
+                                  <Command>
+                                    <CommandInput placeholder="Buscar companhia..." className="text-xs h-8" />
+                                    <CommandList>
+                                      <CommandEmpty className="text-xs p-2">Nenhuma companhia encontrada</CommandEmpty>
+                                      {airlinesData.map((al: any) => (
+                                        <CommandItem key={al.id} value={`${al.name} ${al.iata_code || ""}`} onSelect={() => updateDetail("airline", al.iata_code ? `${al.name} (${al.iata_code})` : al.name)} className="text-xs cursor-pointer">
+                                          <Check className={cn("mr-2 h-3 w-3", d.airline === (al.iata_code ? `${al.name} (${al.iata_code})` : al.name) ? "opacity-100" : "opacity-0")} />
+                                          <span className="font-medium mr-1">{al.iata_code || "—"}</span>
+                                          <span className="truncate text-muted-foreground">{al.name}</span>
+                                        </CommandItem>
+                                      ))}
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
                             </div>
                             <div className="col-span-2 space-y-0.5">
                               <Label className="text-[11px] font-body">Nº do Voo</Label>
