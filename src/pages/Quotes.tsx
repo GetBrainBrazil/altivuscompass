@@ -155,6 +155,19 @@ export default function Quotes() {
     return items;
   }, [citiesRaw, countriesRaw, customDestinations]);
 
+  // Fetch airports for flight origin/destination
+  const { data: airports = [] } = useQuery({
+    queryKey: ["airports-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("airports").select("id, iata_code, name, city, country").order("iata_code");
+      if (error) throw error;
+      return (data ?? []).map((a: any) => ({
+        ...a,
+        label: `${a.iata_code} - ${a.name} (${a.city}, ${a.country})`,
+        value: `${a.iata_code} - ${a.name}`,
+      }));
+    },
+  });
 
   const selectedClientId = form.client_id;
   const { data: clientPassengers = [] } = useQuery({
@@ -950,7 +963,29 @@ export default function Quotes() {
                             </div>
                             <div className="col-span-5 space-y-0.5">
                               <Label className="text-[11px] font-body">Origem <span className="text-destructive">*</span></Label>
-                              <Input value={d.origin || ""} onChange={(e) => updateDetail("origin", e.target.value)} placeholder="Ex: GRU - Guarulhos" className="h-8 text-xs" />
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" role="combobox" className="w-full h-8 justify-between text-xs font-normal px-2.5">
+                                    <span className="truncate">{d.origin || "Selecione o aeroporto"}</span>
+                                    <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[350px] p-0" align="start">
+                                  <Command>
+                                    <CommandInput placeholder="Buscar aeroporto..." className="text-xs h-8" />
+                                    <CommandList>
+                                      <CommandEmpty className="text-xs p-2">Nenhum aeroporto encontrado</CommandEmpty>
+                                      {airports.map((ap: any) => (
+                                        <CommandItem key={ap.id} value={ap.label} onSelect={() => updateDetail("origin", ap.value)} className="text-xs cursor-pointer">
+                                          <Check className={cn("mr-2 h-3 w-3", d.origin === ap.value ? "opacity-100" : "opacity-0")} />
+                                          <span className="font-medium mr-1">{ap.iata_code}</span>
+                                          <span className="truncate text-muted-foreground">{ap.name} ({ap.city})</span>
+                                        </CommandItem>
+                                      ))}
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
                             </div>
                             <div className="col-span-3 space-y-0.5">
                               <Label className="text-[11px] font-body">Embarque <span className="text-destructive">*</span></Label>
@@ -967,7 +1002,29 @@ export default function Quotes() {
                             <div className="col-span-2" />
                             <div className="col-span-5 space-y-0.5">
                               <Label className="text-[11px] font-body">Destino <span className="text-destructive">*</span></Label>
-                              <Input value={d.destination || ""} onChange={(e) => updateDetail("destination", e.target.value)} placeholder="Ex: FCO - Roma" className="h-8 text-xs" />
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" role="combobox" className="w-full h-8 justify-between text-xs font-normal px-2.5">
+                                    <span className="truncate">{d.destination || "Selecione o aeroporto"}</span>
+                                    <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[350px] p-0" align="start">
+                                  <Command>
+                                    <CommandInput placeholder="Buscar aeroporto..." className="text-xs h-8" />
+                                    <CommandList>
+                                      <CommandEmpty className="text-xs p-2">Nenhum aeroporto encontrado</CommandEmpty>
+                                      {airports.map((ap: any) => (
+                                        <CommandItem key={ap.id} value={ap.label} onSelect={() => updateDetail("destination", ap.value)} className="text-xs cursor-pointer">
+                                          <Check className={cn("mr-2 h-3 w-3", d.destination === ap.value ? "opacity-100" : "opacity-0")} />
+                                          <span className="font-medium mr-1">{ap.iata_code}</span>
+                                          <span className="truncate text-muted-foreground">{ap.name} ({ap.city})</span>
+                                        </CommandItem>
+                                      ))}
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
                             </div>
                             <div className="col-span-3 space-y-0.5">
                               <Label className="text-[11px] font-body">Chegada <span className="text-destructive">*</span></Label>
