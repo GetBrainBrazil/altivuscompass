@@ -542,7 +542,30 @@ export default function Quotes() {
     );
   };
 
-  const toggleDestination = (dest: string) => {
+  const TRAVEL_PROFILE_LABELS: Record<string, string> = { economic: "Econômico", opportunity: "Oportunidade", sophisticated: "Sofisticado" };
+
+  const renderPrefsTooltip = (client: any) => {
+    const hasPrefs = client.seat_preference || (client.preferred_airports?.length > 0) || client.travel_profile || client.travel_preferences || (client.desired_destinations?.length > 0);
+    if (!hasPrefs) return null;
+    return (
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="w-3 h-3 shrink-0 text-muted-foreground hover:text-foreground cursor-help transition-colors" />
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-xs text-xs space-y-1 p-3">
+            <p className="font-semibold text-foreground mb-1">Preferências de {client.full_name}</p>
+            {client.travel_profile && <p><span className="text-muted-foreground">Perfil:</span> {TRAVEL_PROFILE_LABELS[client.travel_profile] || client.travel_profile}</p>}
+            {client.seat_preference && <p><span className="text-muted-foreground">Assento:</span> {client.seat_preference === "window" ? "Janela" : client.seat_preference === "aisle" ? "Corredor" : client.seat_preference}</p>}
+            {client.preferred_airports?.length > 0 && <p><span className="text-muted-foreground">Aeroportos:</span> {client.preferred_airports.join(", ")}</p>}
+            {client.desired_destinations?.length > 0 && <p><span className="text-muted-foreground">Destinos desejados:</span> {client.desired_destinations.join(", ")}</p>}
+            {client.travel_preferences && <p><span className="text-muted-foreground">Obs:</span> {client.travel_preferences}</p>}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
+
     setSelectedDestinations(prev =>
       prev.includes(dest) ? prev.filter(d => d !== dest) : [...prev, dest]
     );
