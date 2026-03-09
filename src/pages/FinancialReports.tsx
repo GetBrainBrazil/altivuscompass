@@ -325,6 +325,7 @@ export default function FinancialReports() {
           <TabsTrigger value="dre" className="font-body text-xs sm:text-sm">DRE</TabsTrigger>
           <TabsTrigger value="cashflow" className="font-body text-xs sm:text-sm">Fluxo de Caixa</TabsTrigger>
           <TabsTrigger value="budget" className="font-body text-xs sm:text-sm">Orçamento</TabsTrigger>
+          <TabsTrigger value="balances" className="font-body text-xs sm:text-sm">Saldos</TabsTrigger>
         </TabsList>
 
         {/* ═══ GERENCIAL ═══ */}
