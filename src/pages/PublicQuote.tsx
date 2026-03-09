@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map } from "lucide-react";
 import logoAltivus from "@/assets/logo-altivus.png";
