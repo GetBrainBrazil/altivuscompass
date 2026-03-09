@@ -95,10 +95,16 @@ export default function PublicQuote() {
     return acc;
   }, {});
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleWhatsApp = () => {
+    const phone = quote.client_phone;
+    if (!phone) return;
+    // Clean phone number - keep only digits
+    const cleanPhone = phone.replace(/\D/g, "");
+    const link = window.location.href;
+    const agName = agency?.name || "Altivus Turismo";
+    const destination = quote.title || quote.destination || "sua viagem";
+    const message = `Olá! Segue o orçamento de *${destination}* preparado pela *${agName}*:\n\n${link}`;
+    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, "_blank");
   };
 
   const handlePrint = () => {
