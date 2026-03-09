@@ -410,28 +410,23 @@ export default function PublicQuote() {
                                   <span className="text-[10px] sm:text-xs text-muted-foreground font-body block">
                                     {d.airline}{d.flight_number ? ` (${d.flight_number})` : ""}
                                   </span>
-                                  {hasBaggage && (
-                                    <div className="flex items-center gap-1 justify-end">
-                                      {d.pax_adults != null && (
-                                        <div className="flex flex-col items-center border border-border rounded px-1.5 py-1 min-w-[32px]" title={t.backpack}>
-                                          <Backpack className="w-3.5 h-3.5 text-primary" />
-                                          <span className="text-[10px] font-medium text-foreground font-body mt-0.5">{d.pax_adults}</span>
-                                        </div>
-                                      )}
-                                      {d.pax_children != null && (
-                                        <div className="flex flex-col items-center border border-border rounded px-1.5 py-1 min-w-[32px]" title={t.carryOn}>
-                                          <Briefcase className="w-3.5 h-3.5 text-primary" />
-                                          <span className="text-[10px] font-medium text-foreground font-body mt-0.5">{d.pax_children}</span>
-                                        </div>
-                                      )}
-                                      {d.pax_infants != null && (
-                                        <div className="flex flex-col items-center border border-border rounded px-1.5 py-1 min-w-[32px]" title={t.checkedBag}>
-                                          <Luggage className="w-3.5 h-3.5 text-primary" />
-                                          <span className="text-[10px] font-medium text-foreground font-body mt-0.5">{d.pax_infants}</span>
-                                        </div>
-                                      )}
+                                  <div className="flex items-center gap-1 justify-end">
+                                    <div className="flex flex-col items-center border border-border rounded px-1.5 py-1 min-w-[36px]">
+                                      <Backpack className="w-3.5 h-3.5 text-primary" />
+                                      <span className="text-[9px] text-muted-foreground font-body">{t.backpack}</span>
+                                      <span className="text-[10px] font-medium text-foreground font-body">{d.pax_adults ?? 0}</span>
                                     </div>
-                                  )}
+                                    <div className="flex flex-col items-center border border-border rounded px-1.5 py-1 min-w-[36px]">
+                                      <Briefcase className="w-3.5 h-3.5 text-primary" />
+                                      <span className="text-[9px] text-muted-foreground font-body">{t.carryOn}</span>
+                                      <span className="text-[10px] font-medium text-foreground font-body">{d.pax_children ?? 0}</span>
+                                    </div>
+                                    <div className="flex flex-col items-center border border-border rounded px-1.5 py-1 min-w-[36px]">
+                                      <Luggage className="w-3.5 h-3.5 text-primary" />
+                                      <span className="text-[9px] text-muted-foreground font-body">{t.checkedBag}</span>
+                                      <span className="text-[10px] font-medium text-foreground font-body">{d.pax_infants ?? 0}</span>
+                                    </div>
+                                  </div>
                                 </div>
                               )}
                             </div>
