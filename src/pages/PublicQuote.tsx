@@ -201,28 +201,30 @@ export default function PublicQuote() {
     <div className="min-h-screen bg-background">
       {/* Top toolbar - hidden on print */}
       <div className="print:hidden border-b border-border bg-card">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2 flex items-center gap-2">
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-2 flex items-center gap-1.5 sm:gap-2 flex-wrap">
           {quote.client_phone && (
-            <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs" onClick={handleWhatsApp}>
+            <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs h-8" onClick={handleWhatsApp}>
               <Phone className="w-3.5 h-3.5" />
-              {t.sendWhatsApp}
+              <span className="hidden sm:inline">{t.sendWhatsApp}</span>
+              <span className="sm:hidden">WhatsApp</span>
             </Button>
           )}
-          <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs" onClick={() => window.print()}>
+          <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs h-8" onClick={() => window.print()}>
             <Printer className="w-3.5 h-3.5" />
-            {t.printPdf}
+            <span className="hidden sm:inline">{t.printPdf}</span>
+            <span className="sm:hidden">PDF</span>
           </Button>
 
           {translating && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-body ml-2">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-body ml-1">
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              <span>Traduzindo...</span>
+              <span className="hidden sm:inline">Traduzindo...</span>
             </div>
           )}
 
           <div className="ml-auto">
             <Select value={lang} onValueChange={(v) => handleLangChange(v as QuoteLang)}>
-              <SelectTrigger className="h-8 w-[160px] text-xs font-body">
+              <SelectTrigger className="h-8 w-[130px] sm:w-[160px] text-xs font-body">
                 <SelectValue>
                   {selectedLang && (
                     <span className="flex items-center gap-1.5">
@@ -249,43 +251,49 @@ export default function PublicQuote() {
 
       {/* Header */}
       <header className="border-b border-border bg-card">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-shrink-0">
-              <img src={agencyLogo} alt={agencyName} className="h-12 sm:h-14 object-contain" />
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-4 sm:py-5">
+          {/* Mobile: stack vertically, Desktop: side by side */}
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+            {/* Top row on mobile: logo + agency info */}
+            <div className="flex items-start justify-between gap-3 sm:contents">
+              <div className="flex-shrink-0">
+                <img src={agencyLogo} alt={agencyName} className="h-10 sm:h-14 object-contain" />
+              </div>
+              {/* Agency info - visible on mobile as compact, desktop as full */}
+              <div className="flex-shrink-0 text-right space-y-0.5 sm:order-3">
+                {agency?.name && <p className="text-xs sm:text-sm font-semibold text-foreground font-body">{agency.name}</p>}
+                {agency?.cnpj && (
+                  <p className="text-[10px] sm:text-xs text-muted-foreground font-body hidden sm:flex items-center justify-end gap-1">
+                    {agency.cnpj} <span className="text-[10px]">📋</span>
+                  </p>
+                )}
+                {agency?.phone && (
+                  <p className="text-[10px] sm:text-xs text-muted-foreground font-body flex items-center justify-end gap-1">
+                    {agency.phone} <Phone className="w-3 h-3" />
+                  </p>
+                )}
+                {agency?.email && (
+                  <p className="text-[10px] sm:text-xs text-muted-foreground font-body hidden sm:flex items-center justify-end gap-1">
+                    {agency.email} <Mail className="w-3 h-3" />
+                  </p>
+                )}
+                {agency?.instagram && (
+                  <p className="text-[10px] sm:text-xs text-muted-foreground font-body hidden sm:flex items-center justify-end gap-1">
+                    {agency.instagram} <Instagram className="w-3 h-3" />
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="flex-1 text-center">
-              <h1 className="text-lg sm:text-xl font-display font-bold text-foreground tracking-wide uppercase">
+            {/* Title centered */}
+            <div className="flex-1 text-center sm:order-2">
+              <h1 className="text-base sm:text-xl font-display font-bold text-foreground tracking-wide uppercase">
                 {t.travelQuote}
               </h1>
-              <div className="mt-1.5">
+              <div className="mt-1">
                 <Badge variant="outline" className="font-body text-xs px-3 py-0.5 font-medium">
                   {quote.title || quote.destination || t.quote}
                 </Badge>
               </div>
-            </div>
-            <div className="flex-shrink-0 text-right space-y-0.5">
-              {agency?.name && <p className="text-sm font-semibold text-foreground font-body">{agency.name}</p>}
-              {agency?.cnpj && (
-                <p className="text-xs text-muted-foreground font-body flex items-center justify-end gap-1">
-                  {agency.cnpj} <span className="text-[10px]">📋</span>
-                </p>
-              )}
-              {agency?.phone && (
-                <p className="text-xs text-muted-foreground font-body flex items-center justify-end gap-1">
-                  {agency.phone} <Phone className="w-3 h-3" />
-                </p>
-              )}
-              {agency?.email && (
-                <p className="text-xs text-muted-foreground font-body flex items-center justify-end gap-1">
-                  {agency.email} <Mail className="w-3 h-3" />
-                </p>
-              )}
-              {agency?.instagram && (
-                <p className="text-xs text-muted-foreground font-body flex items-center justify-end gap-1">
-                  {agency.instagram} <Instagram className="w-3 h-3" />
-                </p>
-              )}
             </div>
           </div>
         </div>
@@ -298,16 +306,16 @@ export default function PublicQuote() {
         </div>
       )}
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+      <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8 space-y-4 sm:space-y-6">
         {/* Client & dates */}
-        <div className="glass-card rounded-xl p-5 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="glass-card rounded-xl p-4 sm:p-5 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-2 sm:gap-3">
             <div className="space-y-1">
               {quote.client_name && (
                 <p className="text-muted-foreground font-body text-sm">
                   {t.client}: <span className="text-foreground font-semibold">{quote.client_name}</span>
                   {quote.travel_date_start && (
-                    <span className="ml-3 text-muted-foreground">
+                    <span className="block sm:inline sm:ml-3 text-muted-foreground text-xs sm:text-sm mt-0.5 sm:mt-0">
                       {quote.travel_date_start.split("-").reverse().join("/")}{quote.travel_date_end ? ` – ${quote.travel_date_end.split("-").reverse().join("/")}` : ""}
                     </span>
                   )}
@@ -315,9 +323,9 @@ export default function PublicQuote() {
               )}
             </div>
             {quote.total_value != null && quote.total_value > 0 && (
-              <div className="text-right">
+              <div className="text-left sm:text-right">
                 <p className="text-xs text-muted-foreground font-body">{t.totalValue}</p>
-                <p className="text-xl font-display font-bold text-foreground">{formatCurrency(quote.total_value)}</p>
+                <p className="text-lg sm:text-xl font-display font-bold text-foreground">{formatCurrency(quote.total_value)}</p>
               </div>
             )}
           </div>
@@ -325,9 +333,9 @@ export default function PublicQuote() {
 
         {/* Details */}
         {getContent("details") && (
-          <div className="glass-card rounded-xl p-5 space-y-1">
+          <div className="glass-card rounded-xl p-4 sm:p-5 space-y-1">
             <h2 className="text-sm font-semibold text-foreground font-body">{t.details}</h2>
-            <p className="text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("details")}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("details")}</p>
           </div>
         )}
 
@@ -383,53 +391,55 @@ export default function PublicQuote() {
                         const hasBaggage = d.backpack_qty || d.carry_on_qty || d.checked_bag_qty;
 
                         return (
-                          <div key={idx} className="border border-border rounded-lg p-4 space-y-2.5">
+                          <div key={idx} className="border border-border rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-2.5">
                             {/* Route header */}
-                            <div className="flex items-start gap-2 flex-wrap">
-                              <div className="flex items-center gap-2 flex-wrap flex-1">
-                                {dirLabel && (
-                                  <Badge variant="secondary" className="text-[10px] font-body">{dirLabel}</Badge>
-                                )}
-                                <div className="flex items-center gap-1.5 text-sm font-medium text-foreground font-body">
-                                  {d.origin && <span>{d.origin}</span>}
-                                  {d.origin && d.destination && <Plane className="w-3.5 h-3.5 text-muted-foreground" />}
-                                  {d.destination && <span>{d.destination}</span>}
-                                </div>
-                              </div>
-                              {d.airline && (
-                                <div className="text-right ml-auto space-y-1">
-                                  <span className="text-xs text-muted-foreground font-body block">
-                                    {d.airline}{d.flight_number ? ` (${d.flight_number})` : ""}
-                                  </span>
-                                  {hasBaggage && (
-                                    <div className="flex items-center gap-1.5 justify-end">
-                                      {d.backpack_qty > 0 && (
-                                        <span className="text-[10px] text-muted-foreground font-body flex items-center gap-0.5" title={t.backpack}>
-                                          🎒 {d.backpack_qty}
-                                        </span>
-                                      )}
-                                      {d.carry_on_qty > 0 && (
-                                        <span className="text-[10px] text-muted-foreground font-body flex items-center gap-0.5" title={t.carryOn}>
-                                          👜 {d.carry_on_qty}
-                                        </span>
-                                      )}
-                                      {d.checked_bag_qty > 0 && (
-                                        <span className="text-[10px] text-muted-foreground font-body flex items-center gap-0.5" title={t.checkedBag}>
-                                          🧳 {d.checked_bag_qty}
-                                        </span>
-                                      )}
-                                    </div>
+                            <div className="space-y-1.5 sm:space-y-0">
+                              <div className="flex items-start sm:items-center gap-2 flex-wrap justify-between">
+                                <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+                                  {dirLabel && (
+                                    <Badge variant="secondary" className="text-[10px] font-body flex-shrink-0">{dirLabel}</Badge>
                                   )}
+                                  <div className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-foreground font-body min-w-0">
+                                    {d.origin && <span className="truncate">{d.origin}</span>}
+                                    {d.origin && d.destination && <Plane className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-muted-foreground flex-shrink-0" />}
+                                    {d.destination && <span className="truncate">{d.destination}</span>}
+                                  </div>
                                 </div>
-                              )}
+                                {d.airline && (
+                                  <div className="text-right flex-shrink-0 space-y-0.5">
+                                    <span className="text-[10px] sm:text-xs text-muted-foreground font-body block">
+                                      {d.airline}{d.flight_number ? ` (${d.flight_number})` : ""}
+                                    </span>
+                                    {hasBaggage && (
+                                      <div className="flex items-center gap-1.5 justify-end">
+                                        {d.backpack_qty > 0 && (
+                                          <span className="text-[10px] text-muted-foreground font-body flex items-center gap-0.5" title={t.backpack}>
+                                            🎒 {d.backpack_qty}
+                                          </span>
+                                        )}
+                                        {d.carry_on_qty > 0 && (
+                                          <span className="text-[10px] text-muted-foreground font-body flex items-center gap-0.5" title={t.carryOn}>
+                                            👜 {d.carry_on_qty}
+                                          </span>
+                                        )}
+                                        {d.checked_bag_qty > 0 && (
+                                          <span className="text-[10px] text-muted-foreground font-body flex items-center gap-0.5" title={t.checkedBag}>
+                                            🧳 {d.checked_bag_qty}
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
 
                             {/* Date/time row */}
-                            <div className="grid grid-cols-2 gap-3 text-xs font-body">
+                            <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs font-body">
                               {d.departure_date && (
                                 <div className="space-y-0.5">
                                   <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t.departure}</p>
-                                  <p className="text-foreground font-medium">
+                                  <p className="text-foreground font-medium text-[11px] sm:text-xs">
                                     {formatDate(d.departure_date)}{d.departure_time ? ` · ${d.departure_time}` : ""}
                                   </p>
                                 </div>
@@ -437,7 +447,7 @@ export default function PublicQuote() {
                               {d.arrival_date && (
                                 <div className="space-y-0.5">
                                   <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t.arrival}</p>
-                                  <p className="text-foreground font-medium">
+                                  <p className="text-foreground font-medium text-[11px] sm:text-xs">
                                     {formatDate(d.arrival_date)}{d.arrival_time ? ` · ${d.arrival_time}` : ""}
                                   </p>
                                 </div>
@@ -445,7 +455,7 @@ export default function PublicQuote() {
                             </div>
 
                             {/* Meta badges */}
-                            <div className="flex flex-wrap gap-1.5">
+                            <div className="flex flex-wrap gap-1 sm:gap-1.5">
                               {d.duration && (
                                 <Badge variant="outline" className="text-[10px] font-body gap-1">
                                   ⏱ {d.duration}
@@ -487,25 +497,25 @@ export default function PublicQuote() {
 
         {/* Payment terms */}
         {getContent("payment_terms") && (
-          <div className="glass-card rounded-xl p-5 space-y-1">
+          <div className="glass-card rounded-xl p-4 sm:p-5 space-y-1">
             <h2 className="text-sm font-semibold text-foreground font-body">{t.paymentTerms}</h2>
-            <p className="text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("payment_terms")}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("payment_terms")}</p>
           </div>
         )}
 
         {/* Terms */}
         {getContent("terms_conditions") && (
-          <div className="glass-card rounded-xl p-5 space-y-1">
+          <div className="glass-card rounded-xl p-4 sm:p-5 space-y-1">
             <h2 className="text-sm font-semibold text-foreground font-body">{t.termsConditions}</h2>
-            <p className="text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("terms_conditions")}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("terms_conditions")}</p>
           </div>
         )}
 
         {/* Other info */}
         {getContent("other_info") && (
-          <div className="glass-card rounded-xl p-5 space-y-1">
+          <div className="glass-card rounded-xl p-4 sm:p-5 space-y-1">
             <h2 className="text-sm font-semibold text-foreground font-body">{t.otherInfo}</h2>
-            <p className="text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("other_info")}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("other_info")}</p>
           </div>
         )}
       </main>
