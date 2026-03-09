@@ -1128,21 +1128,10 @@ export default function Quotes() {
                             <div className="col-span-2 space-y-0.5">
                               <Label className="text-[11px] font-body">Duração</Label>
                               <Input
-                                value={(() => {
-                                  if (!d.departure_date || !d.arrival_date) return "";
-                                  const dep = new Date(`${d.departure_date}T${d.departure_time || "00:00"}`);
-                                  const arr = new Date(`${d.arrival_date}T${d.arrival_time || "00:00"}`);
-                                  const diffMs = arr.getTime() - dep.getTime();
-                                  if (diffMs <= 0) return "";
-                                  const totalMin = Math.floor(diffMs / 60000);
-                                  const h = Math.floor(totalMin / 60);
-                                  const m = totalMin % 60;
-                                  return `${h}h${m.toString().padStart(2, "0")}`;
-                                })()}
-                                readOnly
-                                tabIndex={-1}
-                                className="h-8 text-xs bg-muted cursor-default"
-                                placeholder="Auto"
+                                value={d.duration || ""}
+                                onChange={(e) => updateDetail("duration", e.target.value)}
+                                placeholder="Ex: 12h30"
+                                className="h-8 text-xs"
                               />
                             </div>
                             <div className="col-span-3 space-y-0.5">
