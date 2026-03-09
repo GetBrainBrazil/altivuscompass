@@ -167,6 +167,42 @@ export default function Quotes() {
     return data.publicUrl;
   };
 
+  const generateCoverWithAI = async () => {
+    const destination = form.destination || form.title;
+    if (!destination) {
+      toast({ title: "Preencha o destino ou título antes de gerar a imagem", variant: "destructive" });
+      return;
+    }
+    setGeneratingCover(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-cover-image", {
+        body: { destination, quoteId: editingQuote?.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const imageUrl = data.base64 || data.imageUrl;
+      if (imageUrl) {
+        setCoverPreview(imageUrl);
+        if (data.imageUrl) {
+          setForm((f: any) => ({ ...f, cover_image_url: data.imageUrl }));
+          setCoverFile(null);
+        } else {
+          // Convert base64 to File for upload
+          const res = await fetch(imageUrl);
+          const blob = await res.blob();
+          const file = new File([blob], "cover-ai.png", { type: "image/png" });
+          setCoverFile(file);
+        }
+        toast({ title: "Imagem gerada com sucesso!" });
+      }
+    } catch (e: any) {
+      console.error("AI cover error:", e);
+      toast({ title: e.message || "Erro ao gerar imagem", variant: "destructive" });
+    } finally {
+      setGeneratingCover(false);
+    }
+  };
+
   const saveQuote = async (closeAfter: boolean) => {
     try {
       const stage = form.stage || "new";
