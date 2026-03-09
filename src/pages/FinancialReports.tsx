@@ -177,15 +177,15 @@ export default function FinancialReports() {
 
   // ── Management Report Data ──
   const managementData = useMemo(() => {
-    const income = yearTx.filter((t) => t.type === "income" || t.type === "receivable" || t.type === "sale").reduce((s, t) => s + Math.abs(t.amount), 0);
-    const expense = yearTx.filter((t) => t.type === "expense" || t.type === "payable").reduce((s, t) => s + Math.abs(t.amount), 0);
-    const paid = yearTx.filter((t) => t.status === "paid").reduce((s, t) => s + Math.abs(t.amount), 0);
-    const received = yearTx.filter((t) => t.status === "received").reduce((s, t) => s + Math.abs(t.amount), 0);
-    const pending = yearTx.filter((t) => t.status === "pending").reduce((s, t) => s + Math.abs(t.amount), 0);
+    const income = filteredTx.filter((t) => t.type === "income" || t.type === "receivable" || t.type === "sale").reduce((s, t) => s + Math.abs(t.amount), 0);
+    const expense = filteredTx.filter((t) => t.type === "expense" || t.type === "payable").reduce((s, t) => s + Math.abs(t.amount), 0);
+    const paid = filteredTx.filter((t) => t.status === "paid").reduce((s, t) => s + Math.abs(t.amount), 0);
+    const received = filteredTx.filter((t) => t.status === "received").reduce((s, t) => s + Math.abs(t.amount), 0);
+    const pending = filteredTx.filter((t) => t.status === "pending").reduce((s, t) => s + Math.abs(t.amount), 0);
 
     // By category pie
     const byCat: Record<string, number> = {};
-    yearTx.forEach((t) => {
+    filteredTx.forEach((t) => {
       const cat = t.category ?? "Sem Categoria";
       byCat[cat] = (byCat[cat] ?? 0) + Math.abs(t.amount);
     });
@@ -193,11 +193,10 @@ export default function FinancialReports() {
 
     // Monthly trend
     const monthlyMap: Record<string, { receitas: number; despesas: number }> = {};
-    for (let m = 1; m <= 12; m++) {
-      const key = `${year}-${String(m).padStart(2, "0")}`;
+    periodMonthKeys.forEach((key) => {
       monthlyMap[key] = { receitas: 0, despesas: 0 };
-    }
-    yearTx.forEach((t) => {
+    });
+    filteredTx.forEach((t) => {
       const key = getMonthKey(t.date);
       if (!monthlyMap[key]) return;
       if (t.type === "income" || t.type === "receivable" || t.type === "sale") {
@@ -218,22 +217,20 @@ export default function FinancialReports() {
     ].filter((d) => d.value > 0);
 
     return { income, expense, paid, received, pending, pieData, monthlyTrend, statusData, balance: income - expense };
-  }, [yearTx, year]);
+  }, [filteredTx, periodMonthKeys]);
 
   // ── DRE Data ──
   const dreData = useMemo(() => {
-    // Build category tree mapping
     const catMap = new Map(categories.map((c) => [c.id, c]));
     const getFullPath = (catStr: string | null): string => {
       if (!catStr) return "Sem Categoria";
       return catStr;
     };
 
-    // Group revenue
     const revenueItems: Record<string, number> = {};
     const expenseItems: Record<string, number> = {};
 
-    yearTx.forEach((t) => {
+    filteredTx.forEach((t) => {
       const catName = getFullPath(t.category);
       const shortName = catName.split(" – ").pop() ?? catName;
       if (t.type === "income" || t.type === "receivable" || t.type === "sale") {
@@ -256,18 +253,16 @@ export default function FinancialReports() {
       netIncome,
       margin,
     };
-  }, [yearTx, categories]);
+  }, [filteredTx, categories]);
 
   // ── Cash Flow Data ──
   const cashFlowData = useMemo(() => {
     const monthlyMap: Record<string, { entradas: number; saidas: number; saldo: number }> = {};
-    for (let m = 1; m <= 12; m++) {
-      const key = `${year}-${String(m).padStart(2, "0")}`;
+    periodMonthKeys.forEach((key) => {
       monthlyMap[key] = { entradas: 0, saidas: 0, saldo: 0 };
-    }
+    });
 
-    // Only realized (paid/received)
-    yearTx
+    filteredTx
       .filter((t) => t.status === "paid" || t.status === "received")
       .forEach((t) => {
         const key = getMonthKey(t.date);
@@ -290,9 +285,8 @@ export default function FinancialReports() {
     const totalIn = monthly.reduce((s, m) => s + m.entradas, 0);
     const totalOut = monthly.reduce((s, m) => s + m.saidas, 0);
 
-    // By account
     const byAccount: Record<string, number> = {};
-    yearTx
+    filteredTx
       .filter((t) => t.status === "paid" || t.status === "received")
       .forEach((t) => {
         const acc = t.payment_account ?? "Sem Conta";
@@ -302,13 +296,12 @@ export default function FinancialReports() {
     const accountData = Object.entries(byAccount).map(([name, value]) => ({ name, value }));
 
     return { monthly, totalIn, totalOut, finalBalance: runningBalance, accountData };
-  }, [yearTx, year]);
+  }, [filteredTx, periodMonthKeys]);
 
   // ── Budget Data ──
-  // Initialize budget rows from categories when not done
   useMemo(() => {
     if (budgetInitialized) return;
-    const expenseCategories = yearTx.reduce<Record<string, number>>((acc, t) => {
+    const expenseCategories = filteredTx.reduce<Record<string, number>>((acc, t) => {
       if (t.type === "expense" || t.type === "payable") {
         const cat = t.category?.split(" – ").pop() ?? "Sem Categoria";
         acc[cat] = (acc[cat] ?? 0) + Math.abs(t.amount);
@@ -319,14 +312,14 @@ export default function FinancialReports() {
     const rows = Object.entries(expenseCategories).map(([category, actual]) => ({
       category,
       planned: 0,
-      actual,
+      actual: actual as number,
     }));
 
     if (rows.length > 0) {
       setBudgetRows(rows);
       setBudgetInitialized(true);
     }
-  }, [yearTx, budgetInitialized]);
+  }, [filteredTx, budgetInitialized]);
 
   const updateBudgetPlanned = (idx: number, value: number) => {
     setBudgetRows((prev) => prev.map((r, i) => (i === idx ? { ...r, planned: value } : r)));
@@ -334,13 +327,10 @@ export default function FinancialReports() {
 
   // ── Account Balances Data ──
   const balancesData = useMemo(() => {
-    // Calculate balance per bank account from ALL transactions (not filtered by year)
     const balanceMap: Record<string, number> = {};
-    // Initialize with bank accounts
     bankAccounts.forEach((a) => {
       balanceMap[a.id] = 0;
     });
-    // Also track "Virtual" and unassigned
     transactions.forEach((t) => {
       const acc = t.payment_account ?? "unassigned";
       if (!(acc in balanceMap)) balanceMap[acc] = 0;
@@ -359,10 +349,8 @@ export default function FinancialReports() {
       balance: balanceMap[a.id] ?? 0,
     }));
 
-    // Virtual account
     const virtualBalance = balanceMap["Virtual"] ?? 0;
     const unassignedBalance = balanceMap["unassigned"] ?? 0;
-
     const totalBalance = accountBalances.reduce((s, a) => s + a.balance, 0) + virtualBalance + unassignedBalance;
 
     return { accountBalances, virtualBalance, unassignedBalance, totalBalance };
@@ -374,12 +362,6 @@ export default function FinancialReports() {
     return { totalPlanned, totalActual, variance: totalPlanned - totalActual };
   }, [budgetRows]);
 
-  const yearOptions = useMemo(() => {
-    const years = new Set(transactions.map((t) => t.date.slice(0, 4)));
-    years.add(String(currentYear));
-    return Array.from(years).sort().reverse();
-  }, [transactions, currentYear]);
-
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -387,18 +369,44 @@ export default function FinancialReports() {
           <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">Relatórios Financeiros</h1>
           <p className="text-muted-foreground font-body mt-1 text-sm">Análise gerencial, DRE, fluxo de caixa e orçamento.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Label className="text-xs font-body text-muted-foreground">Ano:</Label>
-          <Select value={year} onValueChange={setYear}>
-            <SelectTrigger className="w-24 h-9 text-sm">
+        <div className="flex flex-wrap items-center gap-2">
+          <Select value={periodPreset} onValueChange={(v) => setPeriodPreset(v as PeriodPreset)}>
+            <SelectTrigger className="w-44 h-9 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {yearOptions.map((y) => (
-                <SelectItem key={y} value={y}>{y}</SelectItem>
+              {(Object.keys(PERIOD_LABELS) as PeriodPreset[]).map((key) => (
+                <SelectItem key={key} value={key}>{PERIOD_LABELS[key]}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+          {periodPreset === "custom" && (
+            <div className="flex items-center gap-1.5">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("h-9 w-[130px] justify-start text-left text-xs font-normal", !customStart && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
+                    {customStart ? format(customStart, "dd/MM/yyyy") : "Início"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={customStart} onSelect={setCustomStart} initialFocus className={cn("p-3 pointer-events-auto")} locale={ptBR} />
+                </PopoverContent>
+              </Popover>
+              <span className="text-xs text-muted-foreground">a</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("h-9 w-[130px] justify-start text-left text-xs font-normal", !customEnd && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
+                    {customEnd ? format(customEnd, "dd/MM/yyyy") : "Fim"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={customEnd} onSelect={setCustomEnd} initialFocus className={cn("p-3 pointer-events-auto")} locale={ptBR} />
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
         </div>
       </div>
 
