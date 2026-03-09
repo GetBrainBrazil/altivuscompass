@@ -859,7 +859,7 @@ export default function Quotes() {
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="flex flex-wrap h-auto gap-0.5 bg-muted p-0.5 w-full justify-start">
               {editingQuote && (
-                <TabsTrigger value="history" className="flex items-center gap-1 text-[11px] px-2 py-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <TabsTrigger value="history" className="flex items-center gap-1 text-[11px] px-2 py-1 bg-primary/15 text-primary border border-primary/30 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary">
                   <History className="w-3 h-3" />
                   Histórico
                 </TabsTrigger>
@@ -925,7 +925,7 @@ export default function Quotes() {
                     <TooltipTrigger asChild>
                       <Info className="w-3 h-3 text-muted-foreground cursor-help" />
                     </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-xs text-xs z-[9999]">
+                    <TooltipContent side="right" className="max-w-xs text-xs z-[9999]">
                       A IA gera automaticamente uma descrição da viagem com base no título e destinos selecionados. Você pode editar o texto depois.
                     </TooltipContent>
                   </Tooltip>
