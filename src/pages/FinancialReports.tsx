@@ -732,7 +732,7 @@ export default function FinancialReports() {
 
           {budgetRows.length === 0 && (
             <div className="glass-card rounded-xl p-8 text-center">
-              <p className="text-muted-foreground font-body text-sm">Nenhuma despesa registrada em {year} para construir o orçamento.</p>
+              <p className="text-muted-foreground font-body text-sm">Nenhuma despesa registrada em {periodLabel} para construir o orçamento.</p>
             </div>
           )}
         </TabsContent>
