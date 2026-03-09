@@ -81,10 +81,12 @@ export default function Quotes() {
   const [items, setItems] = useState<QuoteItem[]>([]);
   const [selectedPassengers, setSelectedPassengers] = useState<string[]>([]);
   const [selectedLinkedClients, setSelectedLinkedClients] = useState<string[]>([]);
+  const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [generatingCover, setGeneratingCover] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [destOpen, setDestOpen] = useState(false);
 
   const { data: quotes = [], isLoading } = useQuery({
     queryKey: ["quotes"],
