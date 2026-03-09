@@ -176,10 +176,10 @@ export default function PublicQuote() {
                     <h2 className="text-sm font-semibold text-foreground font-body">
                       {meta?.label || type}
                     </h2>
-                    <Badge variant="outline" className="text-[10px] h-5">{typeItems.length}</Badge>
+                    <Badge variant="outline" className="text-[10px] h-5">{(typeItems as any[]).length}</Badge>
                   </div>
                   <div className="space-y-2">
-                    {typeItems.map((item: any, idx: number) => (
+                    {(typeItems as any[]).map((item: any, idx: number) => (
                       <div key={idx} className="border border-border rounded-lg p-3">
                         {item.title && (
                           <p className="text-sm font-medium text-foreground font-body">{item.title}</p>
