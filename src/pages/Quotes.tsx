@@ -927,6 +927,7 @@ export default function Quotes() {
                         <Badge key={`slc-${cid}`} variant="outline" className="text-xs gap-1 pr-1">
                           {(lc as any).full_name}
                           <span className="text-[9px] text-muted-foreground">({RELATIONSHIP_LABELS[(lc as any).relationship_type] || (lc as any).relationship_type})</span>
+                          {renderPrefsTooltip(lc)}
                           <button type="button" onClick={() => toggleLinkedClient(cid)} className="ml-0.5 hover:text-destructive transition-colors"><X className="w-3 h-3" /></button>
                         </Badge>
                       );
