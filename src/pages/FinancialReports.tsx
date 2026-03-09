@@ -77,6 +77,15 @@ export default function FinancialReports() {
     },
   });
 
+  const { data: bankAccounts = [] } = useQuery({
+    queryKey: ["finance-report-bank-accounts"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("bank_accounts").select("*").order("bank_name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   // Filter by year
   const yearTx = useMemo(
     () => transactions.filter((t) => t.date.startsWith(year)),
@@ -240,6 +249,42 @@ export default function FinancialReports() {
     setBudgetRows((prev) => prev.map((r, i) => (i === idx ? { ...r, planned: value } : r)));
   };
 
+  // ── Account Balances Data ──
+  const balancesData = useMemo(() => {
+    // Calculate balance per bank account from ALL transactions (not filtered by year)
+    const balanceMap: Record<string, number> = {};
+    // Initialize with bank accounts
+    bankAccounts.forEach((a) => {
+      balanceMap[a.id] = 0;
+    });
+    // Also track "Virtual" and unassigned
+    transactions.forEach((t) => {
+      const acc = t.payment_account ?? "unassigned";
+      if (!(acc in balanceMap)) balanceMap[acc] = 0;
+      const isIncome = t.type === "income" || t.type === "receivable" || t.type === "sale";
+      const isPaid = t.status === "paid" || t.status === "received";
+      if (isPaid) {
+        balanceMap[acc] += isIncome ? Math.abs(t.amount) : -Math.abs(t.amount);
+      }
+    });
+
+    const accountBalances = bankAccounts.map((a) => ({
+      id: a.id,
+      name: a.bank_name,
+      accountType: a.account_type,
+      isActive: a.is_active,
+      balance: balanceMap[a.id] ?? 0,
+    }));
+
+    // Virtual account
+    const virtualBalance = balanceMap["Virtual"] ?? 0;
+    const unassignedBalance = balanceMap["unassigned"] ?? 0;
+
+    const totalBalance = accountBalances.reduce((s, a) => s + a.balance, 0) + virtualBalance + unassignedBalance;
+
+    return { accountBalances, virtualBalance, unassignedBalance, totalBalance };
+  }, [transactions, bankAccounts]);
+
   const budgetTotals = useMemo(() => {
     const totalPlanned = budgetRows.reduce((s, r) => s + r.planned, 0);
     const totalActual = budgetRows.reduce((s, r) => s + r.actual, 0);
@@ -280,6 +325,7 @@ export default function FinancialReports() {
           <TabsTrigger value="dre" className="font-body text-xs sm:text-sm">DRE</TabsTrigger>
           <TabsTrigger value="cashflow" className="font-body text-xs sm:text-sm">Fluxo de Caixa</TabsTrigger>
           <TabsTrigger value="budget" className="font-body text-xs sm:text-sm">Orçamento</TabsTrigger>
+          <TabsTrigger value="balances" className="font-body text-xs sm:text-sm">Saldos</TabsTrigger>
         </TabsList>
 
         {/* ═══ GERENCIAL ═══ */}
@@ -596,6 +642,125 @@ export default function FinancialReports() {
           {budgetRows.length === 0 && (
             <div className="glass-card rounded-xl p-8 text-center">
               <p className="text-muted-foreground font-body text-sm">Nenhuma despesa registrada em {year} para construir o orçamento.</p>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* ═══ SALDOS ═══ */}
+        <TabsContent value="balances" className="space-y-6">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            <MetricCard title="Saldo Total (Contas)" value={formatCurrency(balancesData.totalBalance)} icon={
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-soft-blue"><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /></svg>
+            } trend={balancesData.totalBalance >= 0 ? { value: "Positivo", positive: true } : { value: "Negativo", positive: false }} />
+            <MetricCard title="Contas Ativas" value={String(balancesData.accountBalances.filter(a => a.isActive).length)} icon={
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-success"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><path d="M22 4L12 14.01l-3-3" /></svg>
+            } />
+            <MetricCard title="Conta Virtual" value={formatCurrency(balancesData.virtualBalance)} icon={
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-gold"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" /><path d="M3 5v14a2 2 0 0 0 2 2h16v-5" /><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z" /></svg>
+            } />
+          </div>
+
+          <div className="glass-card rounded-xl overflow-hidden">
+            <div className="p-4 border-b border-border/50">
+              <h3 className="font-display text-sm font-semibold">Saldo por Conta Bancária</h3>
+              <p className="text-xs text-muted-foreground font-body mt-1">Calculado com base nas transações realizadas (pagas/recebidas).</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border/50">
+                    <th className="text-left p-3 font-body font-semibold text-muted-foreground text-xs">Conta</th>
+                    <th className="text-left p-3 font-body font-semibold text-muted-foreground text-xs">Tipo</th>
+                    <th className="text-center p-3 font-body font-semibold text-muted-foreground text-xs">Status</th>
+                    <th className="text-right p-3 font-body font-semibold text-muted-foreground text-xs">Saldo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {balancesData.accountBalances.map((a) => (
+                    <tr key={a.id} className="border-b border-border/20 hover:bg-muted/30">
+                      <td className="p-3 font-body font-medium text-foreground">{a.name}</td>
+                      <td className="p-3 font-body text-muted-foreground">
+                        {a.accountType === "checking" ? "Conta Corrente" :
+                         a.accountType === "savings" ? "Conta Poupança" :
+                         a.accountType === "salary" ? "Conta Salário" :
+                         a.accountType === "payment" ? "Conta Pagamento" :
+                         a.accountType === "petty_cash" ? "Caixinha" : a.accountType ?? "—"}
+                      </td>
+                      <td className="p-3 text-center">
+                        {a.isActive ? (
+                          <span className="text-[10px] font-medium px-2.5 py-1 rounded-full bg-success/10 text-success font-body">Ativa</span>
+                        ) : (
+                          <span className="text-[10px] font-medium px-2.5 py-1 rounded-full bg-muted text-muted-foreground font-body">Inativa</span>
+                        )}
+                      </td>
+                      <td className={`p-3 font-body text-right font-semibold ${a.balance >= 0 ? "text-success" : "text-destructive"}`}>
+                        {formatCurrency(a.balance)}
+                      </td>
+                    </tr>
+                  ))}
+                  {balancesData.virtualBalance !== 0 && (
+                    <tr className="border-b border-border/20 hover:bg-muted/30">
+                      <td className="p-3 font-body font-medium text-foreground">Conta Virtual</td>
+                      <td className="p-3 font-body text-muted-foreground">Virtual</td>
+                      <td className="p-3 text-center">
+                        <span className="text-[10px] font-medium px-2.5 py-1 rounded-full bg-soft-blue/10 text-soft-blue font-body">Virtual</span>
+                      </td>
+                      <td className={`p-3 font-body text-right font-semibold ${balancesData.virtualBalance >= 0 ? "text-success" : "text-destructive"}`}>
+                        {formatCurrency(balancesData.virtualBalance)}
+                      </td>
+                    </tr>
+                  )}
+                  {balancesData.unassignedBalance !== 0 && (
+                    <tr className="border-b border-border/20 hover:bg-muted/30">
+                      <td className="p-3 font-body font-medium text-foreground">Sem Conta Atribuída</td>
+                      <td className="p-3 font-body text-muted-foreground">—</td>
+                      <td className="p-3 text-center">
+                        <span className="text-[10px] font-medium px-2.5 py-1 rounded-full bg-muted text-muted-foreground font-body">—</span>
+                      </td>
+                      <td className={`p-3 font-body text-right font-semibold ${balancesData.unassignedBalance >= 0 ? "text-success" : "text-destructive"}`}>
+                        {formatCurrency(balancesData.unassignedBalance)}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t border-border bg-muted/30">
+                    <td colSpan={3} className="p-3 font-body font-semibold">Saldo Total</td>
+                    <td className={`p-3 font-body text-right font-bold text-base ${balancesData.totalBalance >= 0 ? "text-success" : "text-destructive"}`}>
+                      {formatCurrency(balancesData.totalBalance)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          {balancesData.accountBalances.length > 0 && (
+            <div className="glass-card rounded-xl p-4 sm:p-5">
+              <h3 className="font-display text-sm font-semibold mb-4">Saldo por Conta</h3>
+              <ResponsiveContainer width="100%" height={Math.max(200, balancesData.accountBalances.length * 50 + 60)}>
+                <BarChart
+                  data={[
+                    ...balancesData.accountBalances.map(a => ({ name: a.name, saldo: a.balance })),
+                    ...(balancesData.virtualBalance !== 0 ? [{ name: "Virtual", saldo: balancesData.virtualBalance }] : []),
+                  ]}
+                  layout="vertical"
+                  margin={{ left: 100 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={95} />
+                  <RTooltip formatter={(v: number) => formatCurrency(v)} />
+                  <Bar dataKey="saldo" name="Saldo" radius={[0, 4, 4, 0]}>
+                    {[
+                      ...balancesData.accountBalances.map(a => a.balance),
+                      ...(balancesData.virtualBalance !== 0 ? [balancesData.virtualBalance] : []),
+                    ].map((balance, i) => (
+                      <Cell key={i} fill={balance >= 0 ? "hsl(155, 50%, 42%)" : "hsl(0, 65%, 55%)"} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           )}
         </TabsContent>
