@@ -176,7 +176,7 @@ export default function PublicQuote() {
   const formatCurrency = (v: number | null) =>
     v != null ? v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—";
 
-  const groupedItems = items.reduce((acc: Record<string, { item: any; originalIdx: number }[]>, item: any, idx: number) => {
+  const groupedItems: Record<string, { item: any; originalIdx: number }[]> = items.reduce((acc: Record<string, { item: any; originalIdx: number }[]>, item: any, idx: number) => {
     if (!acc[item.item_type]) acc[item.item_type] = [];
     acc[item.item_type].push({ item, originalIdx: idx });
     return acc;
