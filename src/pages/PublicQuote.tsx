@@ -227,20 +227,30 @@ export default function PublicQuote() {
           </div>
         )}
 
-        {/* Passengers */}
-        {passengers.length > 0 && (
-          <div className="glass-card rounded-xl p-5 space-y-2">
-            <h2 className="text-sm font-semibold text-foreground font-body">Passageiros</h2>
-            <div className="flex flex-wrap gap-2">
-              {passengers.map((p, i) => (
-                <Badge key={i} variant="secondary" className="text-xs font-body">
-                  {p.full_name}
-                  {p.relationship_type && <span className="ml-1 opacity-60">({p.relationship_type})</span>}
-                </Badge>
-              ))}
+        {/* Travelers */}
+        {(() => {
+          const clientIsTraveling = quote.price_breakdown?.client_self_traveling === true;
+          const hasTravelers = clientIsTraveling || passengers.length > 0;
+          if (!hasTravelers) return null;
+          return (
+            <div className="glass-card rounded-xl p-5 space-y-2">
+              <h2 className="text-sm font-semibold text-foreground font-body">Viajantes</h2>
+              <div className="flex flex-wrap gap-2">
+                {clientIsTraveling && quote.client_name && (
+                  <Badge variant="secondary" className="text-xs font-body">
+                    {quote.client_name}
+                  </Badge>
+                )}
+                {passengers.map((p, i) => (
+                  <Badge key={i} variant="secondary" className="text-xs font-body">
+                    {p.full_name}
+                    {p.relationship_type && <span className="ml-1 opacity-60">({p.relationship_type})</span>}
+                  </Badge>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Items by type */}
         {Object.keys(groupedItems).length > 0 && (
