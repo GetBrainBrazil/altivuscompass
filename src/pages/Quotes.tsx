@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,9 +12,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandInput, CommandList, CommandEmpty, CommandItem } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, Map, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info } from "lucide-react";
+import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, Map, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Calendar } from "@/components/ui/calendar";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const stages = [
   { id: "new", label: "Nova Cotação", color: "bg-soft-blue" },
@@ -78,10 +81,12 @@ export default function Quotes() {
   const [items, setItems] = useState<QuoteItem[]>([]);
   const [selectedPassengers, setSelectedPassengers] = useState<string[]>([]);
   const [selectedLinkedClients, setSelectedLinkedClients] = useState<string[]>([]);
+  const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [generatingCover, setGeneratingCover] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [destOpen, setDestOpen] = useState(false);
 
   const { data: quotes = [], isLoading } = useQuery({
     queryKey: ["quotes"],
@@ -104,7 +109,46 @@ export default function Quotes() {
     },
   });
 
-  // Fetch passengers for selected client
+  // Fetch destinations from cities, countries, and custom destinations
+  const { data: citiesRaw = [] } = useQuery({
+    queryKey: ["cities-for-destinations"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("cities").select("id, name, countries(name)").order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: countriesRaw = [] } = useQuery({
+    queryKey: ["countries-for-destinations"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("countries").select("id, name").order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: customDestinations = [] } = useQuery({
+    queryKey: ["custom-destinations"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("custom_destinations").select("id, name").order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const allDestinations = useMemo(() => {
+    const items: { label: string; value: string; group: string }[] = [];
+    customDestinations.forEach((d: any) => items.push({ label: d.name, value: d.name, group: "Destinos" }));
+    countriesRaw.forEach((c: any) => items.push({ label: c.name, value: c.name, group: "Países" }));
+    citiesRaw.forEach((c: any) => {
+      const country = (c as any).countries?.name ?? "";
+      items.push({ label: `${c.name}${country ? `, ${country}` : ""}`, value: `${c.name}${country ? `, ${country}` : ""}`, group: "Cidades" });
+    });
+    return items;
+  }, [citiesRaw, countriesRaw, customDestinations]);
+
+
   const selectedClientId = form.client_id;
   const { data: clientPassengers = [] } = useQuery({
     queryKey: ["client-passengers", selectedClientId],
@@ -221,7 +265,7 @@ export default function Quotes() {
         payment_terms: form.payment_terms || null,
         terms_conditions: form.terms_conditions || null,
         other_info: form.other_info || null,
-        destination: form.destination || null,
+        destination: selectedDestinations.length > 0 ? selectedDestinations.join(", ") : null,
         total_value: form.total_value ? Number(form.total_value) : 0,
         stage,
         conclusion_type,
@@ -333,6 +377,7 @@ export default function Quotes() {
     setItems([]);
     setSelectedPassengers([]);
     setSelectedLinkedClients([]);
+    setSelectedDestinations([]);
     setCoverFile(null);
     setCoverPreview(null);
     setActiveTab("flight");
@@ -357,6 +402,7 @@ export default function Quotes() {
       travel_date_end: q.travel_date_end ?? "",
       notes: q.notes ?? "",
     });
+    setSelectedDestinations(q.destination ? q.destination.split(", ").filter(Boolean) : []);
     setCoverFile(null);
     setCoverPreview(q.cover_image_url || null);
     setActiveTab("flight");
@@ -370,6 +416,7 @@ export default function Quotes() {
     setItems([]);
     setSelectedPassengers([]);
     setSelectedLinkedClients([]);
+    setSelectedDestinations([]);
     setCoverFile(null);
     setCoverPreview(null);
   };
@@ -403,6 +450,12 @@ export default function Quotes() {
   const toggleLinkedClient = (clientId: string) => {
     setSelectedLinkedClients(prev =>
       prev.includes(clientId) ? prev.filter(c => c !== clientId) : [...prev, clientId]
+    );
+  };
+
+  const toggleDestination = (dest: string) => {
+    setSelectedDestinations(prev =>
+      prev.includes(dest) ? prev.filter(d => d !== dest) : [...prev, dest]
     );
   };
 
@@ -542,7 +595,97 @@ export default function Quotes() {
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
               </div>
             </div>
+
+            {/* Data Início */}
+            <div className="col-span-1 space-y-1">
+              <Label className="font-body text-xs">Data Início</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full h-9 justify-start text-left text-sm font-normal", !form.travel_date_start && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                    {form.travel_date_start ? format(parseISO(form.travel_date_start), "dd/MM/yyyy") : "Selecionar"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={form.travel_date_start ? parseISO(form.travel_date_start) : undefined}
+                    onSelect={(date) => setForm({ ...form, travel_date_start: date ? format(date, "yyyy-MM-dd") : "" })}
+                    initialFocus
+                    locale={ptBR}
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Data Fim */}
+            <div className="col-span-1 space-y-1">
+              <Label className="font-body text-xs">Data Fim</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full h-9 justify-start text-left text-sm font-normal", !form.travel_date_end && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                    {form.travel_date_end ? format(parseISO(form.travel_date_end), "dd/MM/yyyy") : "Selecionar"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={form.travel_date_end ? parseISO(form.travel_date_end) : undefined}
+                    onSelect={(date) => setForm({ ...form, travel_date_end: date ? format(date, "yyyy-MM-dd") : "" })}
+                    initialFocus
+                    locale={ptBR}
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Destino(s) */}
+            <div className="col-span-2 space-y-1">
+              <Label className="font-body text-xs">Destino(s)</Label>
+              <Popover open={destOpen} onOpenChange={setDestOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between h-9 text-sm font-normal">
+                    {selectedDestinations.length === 0
+                      ? "Buscar destino..."
+                      : `${selectedDestinations.length} destino(s)`}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Buscar cidade, país..." className="h-8 text-xs" />
+                    <CommandList>
+                      <CommandEmpty className="py-3 text-xs">Nenhum destino encontrado.</CommandEmpty>
+                      {allDestinations.map((d) => (
+                        <CommandItem key={d.value} onSelect={() => toggleDestination(d.value)} className="text-xs cursor-pointer">
+                          <Check className={cn("mr-2 h-3.5 w-3.5", selectedDestinations.includes(d.value) ? "opacity-100" : "opacity-0")} />
+                          <Badge variant="secondary" className="text-[9px] h-4 px-1 shrink-0 mr-1">{d.group}</Badge>
+                          <span className="truncate">{d.label}</span>
+                        </CommandItem>
+                      ))}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
+
+          {/* Destinos selecionados */}
+          {selectedDestinations.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {selectedDestinations.map((dest) => (
+                <Badge key={dest} variant="secondary" className="text-xs gap-1 pr-1">
+                  {dest}
+                  <button type="button" onClick={() => toggleDestination(dest)} className="ml-0.5 hover:text-destructive transition-colors">
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          )}
 
           {/* Passageiros & clientes vinculados - fora do grid */}
           {form.client_id && (clientPassengers.length > 0 || linkedClients.length > 0) && (
