@@ -265,7 +265,7 @@ export default function Quotes() {
         payment_terms: form.payment_terms || null,
         terms_conditions: form.terms_conditions || null,
         other_info: form.other_info || null,
-        destination: form.destination || null,
+        destination: selectedDestinations.length > 0 ? selectedDestinations.join(", ") : null,
         total_value: form.total_value ? Number(form.total_value) : 0,
         stage,
         conclusion_type,
