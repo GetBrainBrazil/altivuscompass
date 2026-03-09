@@ -306,16 +306,16 @@ export default function PublicQuote() {
         </div>
       )}
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+      <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8 space-y-4 sm:space-y-6">
         {/* Client & dates */}
-        <div className="glass-card rounded-xl p-5 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="glass-card rounded-xl p-4 sm:p-5 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-2 sm:gap-3">
             <div className="space-y-1">
               {quote.client_name && (
                 <p className="text-muted-foreground font-body text-sm">
                   {t.client}: <span className="text-foreground font-semibold">{quote.client_name}</span>
                   {quote.travel_date_start && (
-                    <span className="ml-3 text-muted-foreground">
+                    <span className="block sm:inline sm:ml-3 text-muted-foreground text-xs sm:text-sm mt-0.5 sm:mt-0">
                       {quote.travel_date_start.split("-").reverse().join("/")}{quote.travel_date_end ? ` – ${quote.travel_date_end.split("-").reverse().join("/")}` : ""}
                     </span>
                   )}
@@ -323,9 +323,9 @@ export default function PublicQuote() {
               )}
             </div>
             {quote.total_value != null && quote.total_value > 0 && (
-              <div className="text-right">
+              <div className="text-left sm:text-right">
                 <p className="text-xs text-muted-foreground font-body">{t.totalValue}</p>
-                <p className="text-xl font-display font-bold text-foreground">{formatCurrency(quote.total_value)}</p>
+                <p className="text-lg sm:text-xl font-display font-bold text-foreground">{formatCurrency(quote.total_value)}</p>
               </div>
             )}
           </div>
