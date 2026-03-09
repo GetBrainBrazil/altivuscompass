@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      agency_settings: {
+        Row: {
+          address: string | null
+          cnpj: string | null
+          created_at: string
+          email: string | null
+          id: string
+          instagram: string | null
+          logo_url: string | null
+          name: string
+          phone: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          instagram?: string | null
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          instagram?: string | null
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       airlines: {
         Row: {
           country: string | null
