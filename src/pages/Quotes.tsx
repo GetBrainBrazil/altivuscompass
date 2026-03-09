@@ -862,6 +862,12 @@ export default function Quotes() {
                   </TabsTrigger>
                 );
               })}
+              {editingQuote && (
+                <TabsTrigger value="history" className="flex items-center gap-1 text-[11px] px-2 py-1">
+                  <History className="w-3 h-3" />
+                  Histórico
+                </TabsTrigger>
+              )}
             </TabsList>
 
             {ITEM_TYPES.map((type) => (
