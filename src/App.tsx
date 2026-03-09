@@ -22,6 +22,7 @@ import Registrations from "./pages/Registrations";
 import Sales from "./pages/Sales";
 import MyProfile from "./pages/MyProfile";
 import System from "./pages/System";
+import PublicQuote from "./pages/PublicQuote";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
