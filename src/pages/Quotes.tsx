@@ -19,6 +19,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Calendar } from "@/components/ui/calendar";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useAuth } from "@/contexts/AuthContext";
+import QuoteHistoryTab from "@/components/quotes/QuoteHistoryTab";
 
 const stages = [
   { id: "new", label: "Nova Cotação", color: "bg-soft-blue" },
