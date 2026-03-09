@@ -198,7 +198,7 @@ export default function PublicQuote() {
   const selectedLang = LANG_OPTIONS.find(l => l.value === lang);
 
   return (
-    <div className="min-h-screen bg-white text-gray-900" style={{ colorScheme: "light" }} data-theme="light">
+    <div className="min-h-screen bg-gray-50 text-gray-900" style={{ colorScheme: "light" }} data-theme="light">
       {/* Top toolbar - hidden on print */}
       <div className="print:hidden">
         <div className="max-w-5xl mx-auto px-3 sm:px-6 py-2 flex items-center gap-1.5 sm:gap-2 flex-wrap border-b border-gray-200 bg-white">
@@ -307,14 +307,14 @@ export default function PublicQuote() {
 
       <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8 space-y-4 sm:space-y-6">
         {/* Client & dates */}
-        <div className="glass-card rounded-xl p-4 sm:p-5 space-y-3">
+        <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 sm:p-5 space-y-3">
           <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-2 sm:gap-3">
             <div className="space-y-1">
               {quote.client_name && (
-                <p className="text-muted-foreground font-body text-sm">
-                  {t.client}: <span className="text-foreground font-semibold">{quote.client_name}</span>
+                <p className="text-gray-500 font-body text-sm">
+                  {t.client}: <span className="text-gray-900 font-semibold">{quote.client_name}</span>
                   {quote.travel_date_start && (
-                    <span className="block sm:inline sm:ml-3 text-muted-foreground text-xs sm:text-sm mt-0.5 sm:mt-0">
+                    <span className="block sm:inline sm:ml-3 text-gray-500 text-xs sm:text-sm mt-0.5 sm:mt-0">
                       {quote.travel_date_start.split("-").reverse().join("/")}{quote.travel_date_end ? ` – ${quote.travel_date_end.split("-").reverse().join("/")}` : ""}
                     </span>
                   )}
@@ -323,8 +323,8 @@ export default function PublicQuote() {
             </div>
             {quote.total_value != null && quote.total_value > 0 && (
               <div className="text-left sm:text-right">
-                <p className="text-xs text-muted-foreground font-body">{t.totalValue}</p>
-                <p className="text-lg sm:text-xl font-display font-bold text-foreground">{formatCurrency(quote.total_value)}</p>
+                <p className="text-xs text-gray-500 font-body">{t.totalValue}</p>
+                <p className="text-lg sm:text-xl font-display font-bold text-gray-900">{formatCurrency(quote.total_value)}</p>
               </div>
             )}
           </div>
@@ -332,9 +332,9 @@ export default function PublicQuote() {
 
         {/* Details */}
         {getContent("details") && (
-          <div className="glass-card rounded-xl p-4 sm:p-5 space-y-1">
-            <h2 className="text-sm font-semibold text-foreground font-body">{t.details}</h2>
-            <p className="text-xs sm:text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("details")}</p>
+          <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 sm:p-5 space-y-1">
+            <h2 className="text-sm font-semibold text-gray-900 font-body">{t.details}</h2>
+            <p className="text-xs sm:text-sm text-gray-500 font-body whitespace-pre-line">{getContent("details")}</p>
           </div>
         )}
 
@@ -344,19 +344,19 @@ export default function PublicQuote() {
           const hasTravelers = clientIsTraveling || passengers.length > 0;
           if (!hasTravelers) return null;
           return (
-            <div className="glass-card rounded-xl p-5 space-y-2">
-              <h2 className="text-sm font-semibold text-foreground font-body">{t.travelers}</h2>
+            <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-5 space-y-2">
+              <h2 className="text-sm font-semibold text-gray-900 font-body">{t.travelers}</h2>
               <div className="flex flex-wrap gap-2">
                 {clientIsTraveling && quote.client_name && (
-                  <Badge variant="secondary" className="text-xs font-body">{quote.client_name}</Badge>
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-body bg-gray-100 text-gray-700">{quote.client_name}</span>
                 )}
                 {passengers.map((p, i) => (
-                  <Badge key={i} variant="secondary" className="text-xs font-body">
+                  <span key={i} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-body bg-gray-100 text-gray-700">
                     {p.full_name}
                     {p.relationship_type && (
                       <span className="ml-1 opacity-60">({getRelationshipLabel(lang, p.relationship_type)})</span>
                     )}
-                  </Badge>
+                  </span>
                 ))}
               </div>
             </div>
@@ -369,13 +369,13 @@ export default function PublicQuote() {
             {Object.entries(groupedItems).map(([type, typeEntries]) => {
               const Icon = ITEM_TYPE_ICONS[type] || Package;
               return (
-                <div key={type} className="glass-card rounded-xl p-5 space-y-3">
+                <div key={type} className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 sm:p-5 space-y-3">
                   <div className="flex items-center gap-2">
-                    <Icon className="w-4 h-4 text-accent" />
-                    <h2 className="text-sm font-semibold text-foreground font-body">
+                    <Icon className="w-4 h-4 text-amber-600" />
+                    <h2 className="text-sm font-semibold text-gray-900 font-body">
                       {getItemTypeLabel(lang, type)}
                     </h2>
-                    <Badge variant="outline" className="text-[10px] h-5">{typeEntries.length}</Badge>
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] h-5 border border-gray-300 text-gray-600">{typeEntries.length}</span>
                   </div>
                   <div className="space-y-2">
                     {typeEntries.map(({ item, originalIdx }, idx) => {
@@ -387,43 +387,41 @@ export default function PublicQuote() {
                       if (isFlight && (d.origin || d.destination || d.departure_date)) {
                         const formatDate = (ds: string) => ds ? ds.split("-").reverse().join("/") : "";
                         const dirLabel = d.flight_direction ? getFlightDirectionLabel(lang, d.flight_direction) : null;
-                        // Baggage stored as pax_adults (backpack), pax_children (carry-on), pax_infants (checked bag)
-                        const hasBaggage = d.pax_adults != null || d.pax_children != null || d.pax_infants != null;
 
                         return (
-                          <div key={idx} className="border border-border rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-2.5">
-                            {/* Route header */}
-                            <div className="flex items-start sm:items-center gap-2 flex-wrap justify-between">
-                              <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+                          <div key={idx} className="border border-gray-200 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-2.5">
+                            {/* Route header - stacked on mobile */}
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                              <div className="flex items-center gap-2 flex-wrap">
                                 {dirLabel && (
-                                  <Badge variant="secondary" className="text-[10px] font-body flex-shrink-0">{dirLabel}</Badge>
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-body bg-gray-100 text-gray-700 flex-shrink-0">{dirLabel}</span>
                                 )}
-                                <div className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-foreground font-body min-w-0">
-                                  {d.origin && <span className="truncate">{d.origin}</span>}
-                                  {d.origin && d.destination && <Plane className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-muted-foreground flex-shrink-0" />}
-                                  {d.destination && <span className="truncate">{d.destination}</span>}
+                                <div className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-gray-900 font-body">
+                                  {d.origin && <span>{d.origin}</span>}
+                                  {d.origin && d.destination && <Plane className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-gray-400 flex-shrink-0" />}
+                                  {d.destination && <span>{d.destination}</span>}
                                 </div>
                               </div>
                               {d.airline && (
-                                <div className="text-right flex-shrink-0 space-y-1.5">
-                                  <span className="text-[10px] sm:text-xs text-muted-foreground font-body block">
+                                <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2 sm:gap-1.5">
+                                  <span className="text-[10px] sm:text-xs text-gray-500 font-body">
                                     {d.airline}{d.flight_number ? ` (${d.flight_number})` : ""}
                                   </span>
-                                  <div className="flex items-center gap-1 justify-end">
-                                    <div className="flex flex-col items-center border border-border rounded px-1.5 py-1 min-w-[36px]">
-                                      <Backpack className="w-3.5 h-3.5 text-primary" />
-                                      <span className="text-[9px] text-muted-foreground font-body">{t.backpack}</span>
-                                      <span className="text-[10px] font-medium text-foreground font-body">{d.pax_adults ?? 0}</span>
+                                  <div className="flex items-center gap-1">
+                                    <div className="flex flex-col items-center border border-gray-200 rounded px-1.5 py-1 min-w-[36px]">
+                                      <Backpack className="w-3.5 h-3.5 text-blue-800" />
+                                      <span className="text-[9px] text-gray-500 font-body">{t.backpack}</span>
+                                      <span className="text-[10px] font-medium text-gray-900 font-body">{d.pax_adults ?? 0}</span>
                                     </div>
-                                    <div className="flex flex-col items-center border border-border rounded px-1.5 py-1 min-w-[36px]">
-                                      <Briefcase className="w-3.5 h-3.5 text-primary" />
-                                      <span className="text-[9px] text-muted-foreground font-body">{t.carryOn}</span>
-                                      <span className="text-[10px] font-medium text-foreground font-body">{d.pax_children ?? 0}</span>
+                                    <div className="flex flex-col items-center border border-gray-200 rounded px-1.5 py-1 min-w-[36px]">
+                                      <Briefcase className="w-3.5 h-3.5 text-blue-800" />
+                                      <span className="text-[9px] text-gray-500 font-body">{t.carryOn}</span>
+                                      <span className="text-[10px] font-medium text-gray-900 font-body">{d.pax_children ?? 0}</span>
                                     </div>
-                                    <div className="flex flex-col items-center border border-border rounded px-1.5 py-1 min-w-[36px]">
-                                      <Luggage className="w-3.5 h-3.5 text-primary" />
-                                      <span className="text-[9px] text-muted-foreground font-body">{t.checkedBag}</span>
-                                      <span className="text-[10px] font-medium text-foreground font-body">{d.pax_infants ?? 0}</span>
+                                    <div className="flex flex-col items-center border border-gray-200 rounded px-1.5 py-1 min-w-[36px]">
+                                      <Luggage className="w-3.5 h-3.5 text-blue-800" />
+                                      <span className="text-[9px] text-gray-500 font-body">{t.checkedBag}</span>
+                                      <span className="text-[10px] font-medium text-gray-900 font-body">{d.pax_infants ?? 0}</span>
                                     </div>
                                   </div>
                                 </div>
@@ -434,16 +432,16 @@ export default function PublicQuote() {
                             <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs font-body sm:pl-6">
                               {d.departure_date && (
                                 <div className="space-y-0.5">
-                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t.departure}</p>
-                                  <p className="text-foreground font-medium text-[11px] sm:text-xs">
+                                  <p className="text-[10px] text-gray-400 uppercase tracking-wide">{t.departure}</p>
+                                  <p className="text-gray-900 font-medium text-[11px] sm:text-xs">
                                     {formatDate(d.departure_date)}{d.departure_time ? ` · ${d.departure_time}` : ""}
                                   </p>
                                 </div>
                               )}
                               {d.arrival_date && (
                                 <div className="space-y-0.5">
-                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t.arrival}</p>
-                                  <p className="text-foreground font-medium text-[11px] sm:text-xs">
+                                  <p className="text-[10px] text-gray-400 uppercase tracking-wide">{t.arrival}</p>
+                                  <p className="text-gray-900 font-medium text-[11px] sm:text-xs">
                                     {formatDate(d.arrival_date)}{d.arrival_time ? ` · ${d.arrival_time}` : ""}
                                   </p>
                                 </div>
@@ -453,34 +451,34 @@ export default function PublicQuote() {
                             {/* Meta badges */}
                             <div className="flex flex-wrap gap-1 sm:gap-1.5 sm:pl-6">
                               {d.duration && (
-                                <Badge variant="outline" className="text-[10px] font-body gap-1">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-body border border-gray-300 text-gray-600 gap-1">
                                   ⏱ {d.duration}
-                                </Badge>
+                                </span>
                               )}
                               {d.cabin_class && (
-                                <Badge variant="outline" className="text-[10px] font-body">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-body border border-gray-300 text-gray-600">
                                   {getCabinClassLabel(lang, d.cabin_class)}
-                                </Badge>
+                                </span>
                               )}
                               {d.connections && (
-                                <Badge variant="outline" className="text-[10px] font-body">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-body border border-gray-300 text-gray-600">
                                   {getConnectionsLabel(lang, d.connections)}
-                                </Badge>
+                                </span>
                               )}
                             </div>
 
                             {/* Observation */}
                             {d.observation && (
-                              <p className="text-[11px] text-muted-foreground font-body italic sm:pl-6">{d.observation}</p>
+                              <p className="text-[11px] text-gray-500 font-body italic sm:pl-6">{d.observation}</p>
                             )}
                           </div>
                         );
                       }
 
                       return (
-                        <div key={idx} className="border border-border rounded-lg p-3">
-                          {title && <p className="text-sm font-medium text-foreground font-body">{title}</p>}
-                          {description && <p className="text-xs text-muted-foreground font-body mt-0.5">{description}</p>}
+                        <div key={idx} className="border border-gray-200 rounded-lg p-3">
+                          {title && <p className="text-sm font-medium text-gray-900 font-body">{title}</p>}
+                          {description && <p className="text-xs text-gray-500 font-body mt-0.5">{description}</p>}
                         </div>
                       );
                     })}
@@ -493,25 +491,25 @@ export default function PublicQuote() {
 
         {/* Payment terms */}
         {getContent("payment_terms") && (
-          <div className="glass-card rounded-xl p-4 sm:p-5 space-y-1">
-            <h2 className="text-sm font-semibold text-foreground font-body">{t.paymentTerms}</h2>
-            <p className="text-xs sm:text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("payment_terms")}</p>
+          <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 sm:p-5 space-y-1">
+            <h2 className="text-sm font-semibold text-gray-900 font-body">{t.paymentTerms}</h2>
+            <p className="text-xs sm:text-sm text-gray-500 font-body whitespace-pre-line">{getContent("payment_terms")}</p>
           </div>
         )}
 
         {/* Terms */}
         {getContent("terms_conditions") && (
-          <div className="glass-card rounded-xl p-4 sm:p-5 space-y-1">
-            <h2 className="text-sm font-semibold text-foreground font-body">{t.termsConditions}</h2>
-            <p className="text-xs sm:text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("terms_conditions")}</p>
+          <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 sm:p-5 space-y-1">
+            <h2 className="text-sm font-semibold text-gray-900 font-body">{t.termsConditions}</h2>
+            <p className="text-xs sm:text-sm text-gray-500 font-body whitespace-pre-line">{getContent("terms_conditions")}</p>
           </div>
         )}
 
         {/* Other info */}
         {getContent("other_info") && (
-          <div className="glass-card rounded-xl p-4 sm:p-5 space-y-1">
-            <h2 className="text-sm font-semibold text-foreground font-body">{t.otherInfo}</h2>
-            <p className="text-xs sm:text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("other_info")}</p>
+          <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 sm:p-5 space-y-1">
+            <h2 className="text-sm font-semibold text-gray-900 font-body">{t.otherInfo}</h2>
+            <p className="text-xs sm:text-sm text-gray-500 font-body whitespace-pre-line">{getContent("other_info")}</p>
           </div>
         )}
       </main>
