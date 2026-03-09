@@ -2,29 +2,21 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Printer } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Printer, Globe } from "lucide-react";
 import logoAltivusFallback from "@/assets/logo-altivus.png";
+import { type QuoteLang, LANG_OPTIONS, getTranslations, getItemTypeLabel, getRelationshipLabel } from "@/lib/quote-translations";
 
-const RELATIONSHIP_LABELS: Record<string, string> = {
-  spouse: "Cônjuge",
-  child: "Filho(a)",
-  parent: "Pai/Mãe",
-  employee: "Funcionário(a)",
-  partner: "Sócio(a)",
-  sibling: "Irmão/Irmã",
-  other: "Outro",
-};
-
-const ITEM_TYPE_META: Record<string, { label: string; icon: any }> = {
-  flight: { label: "Voos", icon: Plane },
-  hotel: { label: "Hospedagem", icon: Hotel },
-  transport: { label: "Transporte", icon: Bus },
-  cruise: { label: "Cruzeiro", icon: Ship },
-  experience: { label: "Experiências", icon: Sparkles },
-  insurance: { label: "Seguros", icon: Shield },
-  other_service: { label: "Outros Serviços", icon: Package },
-  itinerary: { label: "Roteiro Dia a Dia", icon: CalendarDays },
-  map: { label: "Mapa", icon: Map },
+const ITEM_TYPE_ICONS: Record<string, any> = {
+  flight: Plane,
+  hotel: Hotel,
+  transport: Bus,
+  cruise: Ship,
+  experience: Sparkles,
+  insurance: Shield,
+  other_service: Package,
+  itinerary: CalendarDays,
+  map: Map,
 };
 
 type AgencyData = {
@@ -50,7 +42,9 @@ export default function PublicQuote() {
   const [data, setData] = useState<QuoteData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+  const [lang, setLang] = useState<QuoteLang>("pt");
+
+  const t = getTranslations(lang);
 
   useEffect(() => {
     if (!id) return;
@@ -61,14 +55,14 @@ export default function PublicQuote() {
           `${supabaseUrl}/functions/v1/get-public-quote?id=${id}`
         );
         if (!res.ok) {
-          setError("Cotação não encontrada.");
+          setError(t.notFound);
           setLoading(false);
           return;
         }
         const json = await res.json();
         setData(json);
       } catch (err) {
-        setError("Erro ao carregar cotação.");
+        setError(t.error);
       } finally {
         setLoading(false);
       }
@@ -79,7 +73,7 @@ export default function PublicQuote() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground font-body animate-pulse">Carregando cotação...</p>
+        <p className="text-muted-foreground font-body animate-pulse">{t.loading}</p>
       </div>
     );
   }
@@ -88,8 +82,8 @@ export default function PublicQuote() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-2">
-          <p className="text-lg font-semibold text-foreground font-display">{error || "Erro ao carregar"}</p>
-          <p className="text-sm text-muted-foreground font-body">Verifique o link e tente novamente.</p>
+          <p className="text-lg font-semibold text-foreground font-display">{error || t.error}</p>
+          <p className="text-sm text-muted-foreground font-body">{t.checkLink}</p>
         </div>
       </div>
     );
@@ -108,7 +102,6 @@ export default function PublicQuote() {
   const handleWhatsApp = () => {
     const phone = quote.client_phone;
     if (!phone) return;
-    // Clean phone number - keep only digits
     const cleanPhone = phone.replace(/\D/g, "");
     const link = window.location.href;
     const agName = agency?.name || "Altivus Turismo";
@@ -123,6 +116,7 @@ export default function PublicQuote() {
 
   const agencyLogo = agency?.logo_url || logoAltivusFallback;
   const agencyName = agency?.name || "Altivus Turismo";
+  const selectedLang = LANG_OPTIONS.find(l => l.value === lang);
 
   return (
     <div className="min-h-screen bg-background">
@@ -132,38 +126,50 @@ export default function PublicQuote() {
           {quote.client_phone && (
             <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs" onClick={handleWhatsApp}>
               <Phone className="w-3.5 h-3.5" />
-              Enviar por WhatsApp
+              {t.sendWhatsApp}
             </Button>
           )}
           <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs" onClick={handlePrint}>
             <Printer className="w-3.5 h-3.5" />
-            Imprimir/PDF
+            {t.printPdf}
           </Button>
+          <div className="ml-auto">
+            <Select value={lang} onValueChange={(v) => setLang(v as QuoteLang)}>
+              <SelectTrigger className="h-8 w-[150px] text-xs font-body gap-1.5">
+                <Globe className="w-3.5 h-3.5 shrink-0" />
+                <SelectValue>
+                  {selectedLang && `${selectedLang.flag} ${selectedLang.label}`}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {LANG_OPTIONS.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value} className="text-xs font-body">
+                    {opt.flag} {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
-      {/* Header - like the reference: logo left, title center, agency info right */}
+      {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5">
           <div className="flex items-start justify-between gap-4">
-            {/* Logo */}
             <div className="flex-shrink-0">
               <img src={agencyLogo} alt={agencyName} className="h-12 sm:h-14 object-contain" />
             </div>
-
-            {/* Center: Title */}
             <div className="flex-1 text-center">
               <h1 className="text-lg sm:text-xl font-display font-bold text-foreground tracking-wide uppercase">
-                Orçamento de Viagem
+                {t.travelQuote}
               </h1>
               <div className="mt-1.5">
                 <Badge variant="outline" className="font-body text-xs px-3 py-0.5 font-medium">
-                  {quote.title || quote.destination || "Cotação"}
+                  {quote.title || quote.destination || t.quote}
                 </Badge>
               </div>
             </div>
-
-            {/* Right: Agency info */}
             <div className="flex-shrink-0 text-right space-y-0.5">
               {agency?.name && (
                 <p className="text-sm font-semibold text-foreground font-body">{agency.name}</p>
@@ -193,25 +199,21 @@ export default function PublicQuote() {
         </div>
       </header>
 
-      {/* Cover image - full width */}
+      {/* Cover image */}
       {quote.cover_image_url && (
         <div className="max-w-5xl mx-auto">
-          <img
-            src={quote.cover_image_url}
-            alt="Capa da cotação"
-            className="w-full h-56 sm:h-72 lg:h-80 object-cover"
-          />
+          <img src={quote.cover_image_url} alt="" className="w-full h-56 sm:h-72 lg:h-80 object-cover" />
         </div>
       )}
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-        {/* Client & dates info */}
+        {/* Client & dates */}
         <div className="glass-card rounded-xl p-5 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="space-y-1">
               {quote.client_name && (
                 <p className="text-muted-foreground font-body text-sm">
-                  Cliente: <span className="text-foreground font-semibold">{quote.client_name}</span>
+                  {t.client}: <span className="text-foreground font-semibold">{quote.client_name}</span>
                 </p>
               )}
               {quote.travel_date_start && (
@@ -222,7 +224,7 @@ export default function PublicQuote() {
             </div>
             {quote.total_value != null && quote.total_value > 0 && (
               <div className="text-right">
-                <p className="text-xs text-muted-foreground font-body">Valor Total</p>
+                <p className="text-xs text-muted-foreground font-body">{t.totalValue}</p>
                 <p className="text-xl font-display font-bold text-foreground">{formatCurrency(quote.total_value)}</p>
               </div>
             )}
@@ -232,7 +234,7 @@ export default function PublicQuote() {
         {/* Details */}
         {quote.details && (
           <div className="glass-card rounded-xl p-5 space-y-1">
-            <h2 className="text-sm font-semibold text-foreground font-body">Detalhes</h2>
+            <h2 className="text-sm font-semibold text-foreground font-body">{t.details}</h2>
             <p className="text-sm text-muted-foreground font-body whitespace-pre-line">{quote.details}</p>
           </div>
         )}
@@ -244,7 +246,7 @@ export default function PublicQuote() {
           if (!hasTravelers) return null;
           return (
             <div className="glass-card rounded-xl p-5 space-y-2">
-              <h2 className="text-sm font-semibold text-foreground font-body">Viajantes</h2>
+              <h2 className="text-sm font-semibold text-foreground font-body">{t.travelers}</h2>
               <div className="flex flex-wrap gap-2">
                 {clientIsTraveling && quote.client_name && (
                   <Badge variant="secondary" className="text-xs font-body">
@@ -254,7 +256,9 @@ export default function PublicQuote() {
                 {passengers.map((p, i) => (
                   <Badge key={i} variant="secondary" className="text-xs font-body">
                     {p.full_name}
-                    {p.relationship_type && <span className="ml-1 opacity-60">({RELATIONSHIP_LABELS[p.relationship_type] || p.relationship_type})</span>}
+                    {p.relationship_type && (
+                      <span className="ml-1 opacity-60">({getRelationshipLabel(lang, p.relationship_type)})</span>
+                    )}
                   </Badge>
                 ))}
               </div>
@@ -266,14 +270,13 @@ export default function PublicQuote() {
         {Object.keys(groupedItems).length > 0 && (
           <div className="space-y-4">
             {Object.entries(groupedItems).map(([type, typeItems]) => {
-              const meta = ITEM_TYPE_META[type];
-              const Icon = meta?.icon || Package;
+              const Icon = ITEM_TYPE_ICONS[type] || Package;
               return (
                 <div key={type} className="glass-card rounded-xl p-5 space-y-3">
                   <div className="flex items-center gap-2">
                     <Icon className="w-4 h-4 text-accent" />
                     <h2 className="text-sm font-semibold text-foreground font-body">
-                      {meta?.label || type}
+                      {getItemTypeLabel(lang, type)}
                     </h2>
                     <Badge variant="outline" className="text-[10px] h-5">{(typeItems as any[]).length}</Badge>
                   </div>
@@ -298,7 +301,7 @@ export default function PublicQuote() {
         {/* Payment terms */}
         {quote.payment_terms && (
           <div className="glass-card rounded-xl p-5 space-y-1">
-            <h2 className="text-sm font-semibold text-foreground font-body">Forma de Pagamento</h2>
+            <h2 className="text-sm font-semibold text-foreground font-body">{t.paymentTerms}</h2>
             <p className="text-sm text-muted-foreground font-body whitespace-pre-line">{quote.payment_terms}</p>
           </div>
         )}
@@ -306,7 +309,7 @@ export default function PublicQuote() {
         {/* Terms */}
         {quote.terms_conditions && (
           <div className="glass-card rounded-xl p-5 space-y-1">
-            <h2 className="text-sm font-semibold text-foreground font-body">Termos e Condições</h2>
+            <h2 className="text-sm font-semibold text-foreground font-body">{t.termsConditions}</h2>
             <p className="text-sm text-muted-foreground font-body whitespace-pre-line">{quote.terms_conditions}</p>
           </div>
         )}
@@ -314,7 +317,7 @@ export default function PublicQuote() {
         {/* Other info */}
         {quote.other_info && (
           <div className="glass-card rounded-xl p-5 space-y-1">
-            <h2 className="text-sm font-semibold text-foreground font-body">Outras Informações</h2>
+            <h2 className="text-sm font-semibold text-foreground font-body">{t.otherInfo}</h2>
             <p className="text-sm text-muted-foreground font-body whitespace-pre-line">{quote.other_info}</p>
           </div>
         )}
@@ -324,7 +327,7 @@ export default function PublicQuote() {
       <footer className="border-t border-border bg-card mt-12 print:mt-4">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 text-center space-y-1">
           <p className="text-xs text-muted-foreground font-body">
-            Cotação gerada por <span className="font-medium text-foreground">{agencyName}</span>
+            {t.quoteGeneratedBy} <span className="font-medium text-foreground">{agencyName}</span>
           </p>
           {agency?.phone && (
             <p className="text-[11px] text-muted-foreground font-body">
