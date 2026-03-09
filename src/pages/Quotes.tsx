@@ -502,7 +502,7 @@ export default function Quotes() {
 
     return (
       <div className="max-w-full mx-auto space-y-4">
-        {/* Header */}
+        {/* Header + Stepper */}
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={closeDialog} className="shrink-0 h-8 w-8">
             <ArrowLeft className="w-4 h-4" />
@@ -510,6 +510,60 @@ export default function Quotes() {
           <h1 className="text-xl font-display font-semibold text-foreground">
             {editingQuote ? "Editar Cotação" : "Nova Cotação"}
           </h1>
+        </div>
+
+        {/* Stage stepper */}
+        <div className="glass-card rounded-xl px-4 py-3">
+          <div className="flex items-center gap-1">
+            {stages.map((stage, idx) => {
+              const currentIdx = stages.findIndex(s => s.id === (form.stage || "new"));
+              const isActive = stage.id === form.stage;
+              const isPast = idx < currentIdx;
+              const isLast = idx === stages.length - 1;
+              return (
+                <div key={stage.id} className="flex items-center flex-1">
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, stage: stage.id })}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-body font-medium transition-all cursor-pointer whitespace-nowrap",
+                      isActive
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : isPast
+                          ? "bg-primary/20 text-primary"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    )}
+                  >
+                    <span className={cn(
+                      "flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold",
+                      isActive ? "bg-primary-foreground text-primary" : isPast ? "bg-primary text-primary-foreground" : "bg-muted-foreground/30 text-muted-foreground"
+                    )}>
+                      {isPast ? <Check className="w-2.5 h-2.5" /> : idx + 1}
+                    </span>
+                    {stage.label}
+                  </button>
+                  {!isLast && (
+                    <div className={cn("flex-1 h-0.5 mx-1 rounded-full min-w-[8px]", isPast ? "bg-primary/40" : "bg-border")} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {form.stage === "confirmed" && (
+            <div className="mt-2 flex items-center gap-2 pl-1">
+              <Label className="font-body text-xs text-muted-foreground">Resultado:</Label>
+              <div className="flex gap-1">
+                <button type="button" onClick={() => setForm({ ...form, conclusion_type: "won" })}
+                  className={cn("px-2.5 py-1 rounded-md text-xs font-body transition-colors",
+                    form.conclusion_type === "won" ? "bg-emerald-500/20 text-emerald-700 border border-emerald-500/30" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  )}>Convertida em venda</button>
+                <button type="button" onClick={() => setForm({ ...form, conclusion_type: "lost" })}
+                  className={cn("px-2.5 py-1 rounded-md text-xs font-body transition-colors",
+                    form.conclusion_type === "lost" ? "bg-destructive/20 text-destructive border border-destructive/30" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  )}>Perdida</button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Main fields card */}
