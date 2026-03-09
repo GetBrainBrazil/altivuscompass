@@ -1012,16 +1012,16 @@ export default function Quotes() {
                     <TableHead className="cursor-pointer font-body" onClick={() => handleSort("stage")}>
                       Estágio {getSortIcon("stage")}
                     </TableHead>
-                    <TableHead className="cursor-pointer font-body" onClick={() => handleSort("total_value")}>
-                      Valor {getSortIcon("total_value")}
-                    </TableHead>
-                    
-                  </TableRow>
+                     <TableHead className="cursor-pointer font-body" onClick={() => handleSort("total_value")}>
+                       Valor {getSortIcon("total_value")}
+                     </TableHead>
+                     <TableHead className="font-body w-10"></TableHead>
+                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sortedQuotes.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center p-8 text-muted-foreground font-body">Nenhuma cotação encontrada.</TableCell>
+                      <TableCell colSpan={6} className="text-center p-8 text-muted-foreground font-body">Nenhuma cotação encontrada.</TableCell>
                     </TableRow>
                   ) : (
                     sortedQuotes.map((quote: Quote) => {
@@ -1044,8 +1044,28 @@ export default function Quotes() {
                               )}
                             </div>
                           </TableCell>
-                          <TableCell className="font-body font-medium">{formatCurrency(quote.total_value)}</TableCell>
-                        </TableRow>
+                           <TableCell className="font-body font-medium">{formatCurrency(quote.total_value)}</TableCell>
+                           <TableCell>
+                             <TooltipProvider>
+                               <Tooltip>
+                                 <TooltipTrigger asChild>
+                                   <Button
+                                     variant="ghost"
+                                     size="icon"
+                                     className="h-7 w-7"
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       window.open(`/orcamento/${quote.id}`, "_blank");
+                                     }}
+                                   >
+                                     <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+                                   </Button>
+                                 </TooltipTrigger>
+                                 <TooltipContent>Ver cotação pública</TooltipContent>
+                               </Tooltip>
+                             </TooltipProvider>
+                           </TableCell>
+                         </TableRow>
                       );
                     })
                   )}
