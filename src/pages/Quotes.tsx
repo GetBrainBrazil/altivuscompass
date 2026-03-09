@@ -811,6 +811,17 @@ export default function Quotes() {
                       <CommandInput placeholder="Buscar..." className="h-8 text-xs" />
                       <CommandList>
                         <CommandEmpty className="py-3 text-xs">Nenhum encontrado.</CommandEmpty>
+                        {(() => {
+                          const selectedClient = clients.find((c: any) => c.id === form.client_id);
+                          if (!selectedClient) return null;
+                          return (
+                            <CommandItem key={`self-${selectedClient.id}`} onSelect={() => setClientSelfTraveling(prev => !prev)} className="text-xs cursor-pointer">
+                              <Check className={cn("mr-2 h-3.5 w-3.5", clientSelfTraveling ? "opacity-100" : "opacity-0")} />
+                              <Badge className="text-[9px] h-4 px-1 shrink-0 mr-1 bg-primary/20 text-primary border-primary/30">Cliente</Badge>
+                              <span className="truncate font-medium">{selectedClient.full_name}</span>
+                            </CommandItem>
+                          );
+                        })()}
                         {clientPassengers.map((p) => (
                           <CommandItem key={`p-${p.id}`} onSelect={() => togglePassenger(p.id)} className="text-xs cursor-pointer">
                             <Check className={cn("mr-2 h-3.5 w-3.5", selectedPassengers.includes(p.id) ? "opacity-100" : "opacity-0")} />
