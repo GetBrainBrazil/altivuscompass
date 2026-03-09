@@ -382,6 +382,16 @@ export default function FinancialReports() {
           <p className="text-muted-foreground font-body mt-1 text-sm">Análise gerencial, DRE, fluxo de caixa e orçamento.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Select value={selectedAccount} onValueChange={setSelectedAccount}>
+            <SelectTrigger className="w-48 h-9 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {accountOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={periodPreset} onValueChange={(v) => setPeriodPreset(v as PeriodPreset)}>
             <SelectTrigger className="w-44 h-9 text-sm">
               <SelectValue />
