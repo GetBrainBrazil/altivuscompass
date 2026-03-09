@@ -7,6 +7,12 @@ import { MetricCard } from "@/components/MetricCard";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { format, startOfMonth, endOfMonth, subMonths, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, ResponsiveContainer, Legend, AreaChart, Area } from "recharts";
 
 const COLORS = [
@@ -36,6 +42,44 @@ function formatCurrency(v: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 }
 
+type PeriodPreset = "this_month" | "last_month" | "this_quarter" | "this_semester" | "this_year" | "all" | "custom";
+
+const PERIOD_LABELS: Record<PeriodPreset, string> = {
+  this_month: "Este Mês",
+  last_month: "Mês Passado",
+  this_quarter: "Este Trimestre",
+  this_semester: "Este Semestre",
+  this_year: "Este Ano",
+  all: "Todo Período",
+  custom: "Personalizado",
+};
+
+function getPeriodDates(preset: PeriodPreset): { start: Date | null; end: Date | null } {
+  const now = new Date();
+  switch (preset) {
+    case "this_month":
+      return { start: startOfMonth(now), end: endOfMonth(now) };
+    case "last_month": {
+      const last = subMonths(now, 1);
+      return { start: startOfMonth(last), end: endOfMonth(last) };
+    }
+    case "this_quarter":
+      return { start: startOfQuarter(now), end: endOfQuarter(now) };
+    case "this_semester": {
+      const m = now.getMonth();
+      const semStart = m < 6 ? new Date(now.getFullYear(), 0, 1) : new Date(now.getFullYear(), 6, 1);
+      const semEnd = m < 6 ? new Date(now.getFullYear(), 5, 30) : new Date(now.getFullYear(), 11, 31);
+      return { start: semStart, end: semEnd };
+    }
+    case "this_year":
+      return { start: startOfYear(now), end: endOfYear(now) };
+    case "all":
+      return { start: null, end: null };
+    case "custom":
+      return { start: null, end: null };
+  }
+}
+
 type Transaction = {
   id: string; description: string; type: string; amount: number; date: string;
   status: string | null; category: string | null; due_date: string | null;
@@ -51,10 +95,26 @@ type BudgetRow = {
 };
 
 export default function FinancialReports() {
-  const currentYear = new Date().getFullYear();
-  const [year, setYear] = useState(String(currentYear));
+  const [periodPreset, setPeriodPreset] = useState<PeriodPreset>("this_year");
+  const [customStart, setCustomStart] = useState<Date | undefined>();
+  const [customEnd, setCustomEnd] = useState<Date | undefined>();
   const [budgetRows, setBudgetRows] = useState<BudgetRow[]>([]);
   const [budgetInitialized, setBudgetInitialized] = useState(false);
+
+  const periodDates = useMemo(() => {
+    if (periodPreset === "custom") {
+      return { start: customStart ?? null, end: customEnd ?? null };
+    }
+    return getPeriodDates(periodPreset);
+  }, [periodPreset, customStart, customEnd]);
+
+  const periodLabel = useMemo(() => {
+    if (periodPreset === "custom" && customStart && customEnd) {
+      return `${format(customStart, "dd/MM/yy")} — ${format(customEnd, "dd/MM/yy")}`;
+    }
+    if (periodPreset === "all") return "Todo o Período";
+    return PERIOD_LABELS[periodPreset];
+  }, [periodPreset, customStart, customEnd]);
 
   const { data: transactions = [] } = useQuery<Transaction[]>({
     queryKey: ["finance-reports-transactions"],
@@ -86,11 +146,34 @@ export default function FinancialReports() {
     },
   });
 
-  // Filter by year
-  const yearTx = useMemo(
-    () => transactions.filter((t) => t.date.startsWith(year)),
-    [transactions, year]
-  );
+  // Filter by period
+  const filteredTx = useMemo(() => {
+    const { start, end } = periodDates;
+    if (!start && !end) return transactions;
+    return transactions.filter((t) => {
+      const d = new Date(t.date + "T00:00:00");
+      if (start && d < start) return false;
+      if (end && d > end) return false;
+      return true;
+    });
+  }, [transactions, periodDates]);
+
+  // Get the distinct months in the filtered period for charts
+  const periodMonthKeys = useMemo(() => {
+    const { start, end } = periodDates;
+    if (!start || !end) {
+      // For "all", get months from transactions
+      const keys = new Set(transactions.map((t) => getMonthKey(t.date)));
+      return Array.from(keys).sort();
+    }
+    const keys: string[] = [];
+    const cursor = new Date(start);
+    while (cursor <= end) {
+      keys.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`);
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+    return keys;
+  }, [periodDates, transactions]);
 
   // ── Management Report Data ──
   const managementData = useMemo(() => {
