@@ -516,8 +516,12 @@ export default function Quotes() {
 
   const updateQuoteStage = async (quoteId: string, newStage: string) => {
     try {
+      const q = quotes.find((q: Quote) => q.id === quoteId);
       const { error } = await supabase.from("quotes").update({ stage: newStage as any }).eq("id", quoteId);
       if (error) throw error;
+      const oldLabel = stages.find(s => s.id === q?.stage)?.label ?? q?.stage;
+      const newLabel = stages.find(s => s.id === newStage)?.label ?? newStage;
+      await logHistory(quoteId, "stage_change", `Etapa alterada de "${oldLabel}" para "${newLabel}"`);
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
     } catch (err: any) {
       toast({ title: "Erro ao mover cotação", description: err.message, variant: "destructive" });
