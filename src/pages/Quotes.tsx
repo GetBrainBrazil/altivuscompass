@@ -85,6 +85,7 @@ export default function Quotes() {
   const [items, setItems] = useState<QuoteItem[]>([]);
   const [selectedPassengers, setSelectedPassengers] = useState<string[]>([]);
   const [selectedLinkedClients, setSelectedLinkedClients] = useState<string[]>([]);
+  const [clientSelfTraveling, setClientSelfTraveling] = useState(false);
   const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
@@ -202,8 +203,11 @@ export default function Quotes() {
       });
       // Load linked client IDs from price_breakdown
       const pb = (editingQuote as any).price_breakdown;
-      if (pb && typeof pb === 'object' && Array.isArray((pb as any).linked_client_ids)) {
-        setSelectedLinkedClients((pb as any).linked_client_ids);
+      if (pb && typeof pb === 'object') {
+        if (Array.isArray((pb as any).linked_client_ids)) {
+          setSelectedLinkedClients((pb as any).linked_client_ids);
+        }
+        setClientSelfTraveling(!!(pb as any).client_self_traveling);
       }
     }
   }, [editingQuote]);
@@ -296,7 +300,7 @@ export default function Quotes() {
         travel_date_start: form.travel_date_start || null,
         travel_date_end: form.travel_date_end || null,
         notes: form.notes || null,
-        price_breakdown: { linked_client_ids: selectedLinkedClients, flexible_dates: !!form.flexible_dates, flexible_dates_description: form.flexible_dates_description || null },
+        price_breakdown: { linked_client_ids: selectedLinkedClients, client_self_traveling: clientSelfTraveling, flexible_dates: !!form.flexible_dates, flexible_dates_description: form.flexible_dates_description || null },
       };
 
       if (editingQuote) {
@@ -426,6 +430,7 @@ export default function Quotes() {
     setItems([]);
     setSelectedPassengers([]);
     setSelectedLinkedClients([]);
+    setClientSelfTraveling(false);
     setSelectedDestinations([]);
     setCoverFile(null);
     setCoverPreview(null);
@@ -455,6 +460,7 @@ export default function Quotes() {
       flexible_dates_description: pb?.flexible_dates_description ?? "",
     });
     setSelectedDestinations(q.destination ? q.destination.split(", ").filter(Boolean) : []);
+    setClientSelfTraveling(pb?.client_self_traveling ?? false);
     setCoverFile(null);
     setCoverPreview(q.cover_image_url || null);
     setActiveTab("flight");
@@ -468,6 +474,7 @@ export default function Quotes() {
     setItems([]);
     setSelectedPassengers([]);
     setSelectedLinkedClients([]);
+    setClientSelfTraveling(false);
     setSelectedDestinations([]);
     setCoverFile(null);
     setCoverPreview(null);
@@ -644,7 +651,7 @@ export default function Quotes() {
 
             <div className="col-span-2 lg:col-span-4 space-y-1">
               <Label className="font-body text-xs">Cliente</Label>
-              <Select value={form.client_id ?? ""} onValueChange={(v) => { setForm({ ...form, client_id: v }); setSelectedPassengers([]); setSelectedLinkedClients([]); }}>
+              <Select value={form.client_id ?? ""} onValueChange={(v) => { setForm({ ...form, client_id: v }); setSelectedPassengers([]); setSelectedLinkedClients([]); setClientSelfTraveling(false); }}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar cliente" /></SelectTrigger>
                 <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}</SelectContent>
               </Select>
@@ -785,17 +792,18 @@ export default function Quotes() {
             </div>
           </div>
 
-          {/* Row 3: Passageiros (shown when client selected) */}
-          {form.client_id && (clientPassengers.length > 0 || linkedClients.length > 0) && (
+          {/* Row 3: Viajantes (shown when client selected) */}
+          {form.client_id && (
             <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-3">
               <div className="col-span-2 lg:col-span-5 space-y-1">
                 <Label className="font-body text-xs">Viajantes</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-between h-9 text-sm font-normal">
-                      {(selectedPassengers.length + selectedLinkedClients.length) === 0
-                        ? "Selecionar pessoas..."
-                        : `${selectedPassengers.length + selectedLinkedClients.length} selecionado(s)`}
+                      {(() => {
+                        const total = (clientSelfTraveling ? 1 : 0) + selectedPassengers.length + selectedLinkedClients.length;
+                        return total === 0 ? "Selecionar viajantes..." : `${total} selecionado(s)`;
+                      })()}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
@@ -804,6 +812,17 @@ export default function Quotes() {
                       <CommandInput placeholder="Buscar..." className="h-8 text-xs" />
                       <CommandList>
                         <CommandEmpty className="py-3 text-xs">Nenhum encontrado.</CommandEmpty>
+                        {(() => {
+                          const selectedClient = clients.find((c: any) => c.id === form.client_id);
+                          if (!selectedClient) return null;
+                          return (
+                            <CommandItem key={`self-${selectedClient.id}`} onSelect={() => setClientSelfTraveling(prev => !prev)} className="text-xs cursor-pointer">
+                              <Check className={cn("mr-2 h-3.5 w-3.5", clientSelfTraveling ? "opacity-100" : "opacity-0")} />
+                              <Badge className="text-[9px] h-4 px-1 shrink-0 mr-1 bg-primary/20 text-primary border-primary/30">Cliente</Badge>
+                              <span className="truncate font-medium">{selectedClient.full_name}</span>
+                            </CommandItem>
+                          );
+                        })()}
                         {clientPassengers.map((p) => (
                           <CommandItem key={`p-${p.id}`} onSelect={() => togglePassenger(p.id)} className="text-xs cursor-pointer">
                             <Check className={cn("mr-2 h-3.5 w-3.5", selectedPassengers.includes(p.id) ? "opacity-100" : "opacity-0")} />
@@ -823,8 +842,19 @@ export default function Quotes() {
                     </Command>
                   </PopoverContent>
                 </Popover>
-                {(selectedPassengers.length > 0 || selectedLinkedClients.length > 0) && (
+                {(clientSelfTraveling || selectedPassengers.length > 0 || selectedLinkedClients.length > 0) && (
                   <div className="flex flex-wrap gap-1 pt-1">
+                    {clientSelfTraveling && (() => {
+                      const selectedClient = clients.find((c: any) => c.id === form.client_id);
+                      if (!selectedClient) return null;
+                      return (
+                        <Badge key="self-client" className="text-xs gap-1 pr-1 bg-primary/20 text-primary border-primary/30">
+                          {selectedClient.full_name}
+                          <span className="text-[9px]">(Cliente)</span>
+                          <button type="button" onClick={() => setClientSelfTraveling(false)} className="ml-0.5 hover:text-destructive transition-colors"><X className="w-3 h-3" /></button>
+                        </Badge>
+                      );
+                    })()}
                     {selectedPassengers.map((pid) => {
                       const p = clientPassengers.find((cp) => cp.id === pid);
                       if (!p) return null;
