@@ -110,7 +110,7 @@ export default function Quotes() {
   const { data: clients = [] } = useQuery({
     queryKey: ["clients-list"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("clients").select("id, full_name").order("full_name");
+      const { data, error } = await supabase.from("clients").select("id, full_name, seat_preference, preferred_airports, travel_profile, travel_preferences, desired_destinations").order("full_name");
       if (error) throw error;
       return data ?? [];
     },
@@ -191,15 +191,21 @@ export default function Quotes() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("client_relationships")
-        .select("*, client_a:clients!client_relationships_client_id_a_fkey(id, full_name), client_b:clients!client_relationships_client_id_b_fkey(id, full_name)")
+        .select("*, client_a:clients!client_relationships_client_id_a_fkey(id, full_name, seat_preference, preferred_airports, travel_profile, travel_preferences, desired_destinations), client_b:clients!client_relationships_client_id_b_fkey(id, full_name, seat_preference, preferred_airports, travel_profile, travel_preferences, desired_destinations)")
         .or(`client_id_a.eq.${selectedClientId},client_id_b.eq.${selectedClientId}`);
       if (error) throw error;
       return (data ?? []).map((r: any) => {
         const isA = r.client_id_a === selectedClientId;
+        const other = isA ? r.client_b : r.client_a;
         return {
-          id: isA ? r.client_b?.id : r.client_a?.id,
-          full_name: isA ? r.client_b?.full_name : r.client_a?.full_name,
+          id: other?.id,
+          full_name: other?.full_name,
           relationship_type: r.relationship_type,
+          seat_preference: other?.seat_preference,
+          preferred_airports: other?.preferred_airports,
+          travel_profile: other?.travel_profile,
+          travel_preferences: other?.travel_preferences,
+          desired_destinations: other?.desired_destinations,
         };
       });
     },
@@ -533,6 +539,30 @@ export default function Quotes() {
   const toggleLinkedClient = (clientId: string) => {
     setSelectedLinkedClients(prev =>
       prev.includes(clientId) ? prev.filter(c => c !== clientId) : [...prev, clientId]
+    );
+  };
+
+  const TRAVEL_PROFILE_LABELS: Record<string, string> = { economic: "Econômico", opportunity: "Oportunidade", sophisticated: "Sofisticado" };
+
+  const renderPrefsTooltip = (client: any) => {
+    const hasPrefs = client.seat_preference || (client.preferred_airports?.length > 0) || client.travel_profile || client.travel_preferences || (client.desired_destinations?.length > 0);
+    if (!hasPrefs) return null;
+    return (
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="w-3 h-3 shrink-0 text-muted-foreground hover:text-foreground cursor-help transition-colors" />
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-xs text-xs space-y-1 p-3">
+            <p className="font-semibold text-foreground mb-1">Preferências de {client.full_name}</p>
+            {client.travel_profile && <p><span className="text-muted-foreground">Perfil:</span> {TRAVEL_PROFILE_LABELS[client.travel_profile] || client.travel_profile}</p>}
+            {client.seat_preference && <p><span className="text-muted-foreground">Assento:</span> {client.seat_preference === "window" ? "Janela" : client.seat_preference === "aisle" ? "Corredor" : client.seat_preference}</p>}
+            {client.preferred_airports?.length > 0 && <p><span className="text-muted-foreground">Aeroportos:</span> {client.preferred_airports.join(", ")}</p>}
+            {client.desired_destinations?.length > 0 && <p><span className="text-muted-foreground">Destinos desejados:</span> {client.desired_destinations.join(", ")}</p>}
+            {client.travel_preferences && <p><span className="text-muted-foreground">Obs:</span> {client.travel_preferences}</p>}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   };
 
@@ -875,6 +905,7 @@ export default function Quotes() {
                         <Badge key="self-client" className="text-xs gap-1 pr-1 bg-primary/20 text-primary border-primary/30">
                           {selectedClient.full_name}
                           <span className="text-[9px]">(Cliente)</span>
+                          {renderPrefsTooltip(selectedClient)}
                           <button type="button" onClick={() => setClientSelfTraveling(false)} className="ml-0.5 hover:text-destructive transition-colors"><X className="w-3 h-3" /></button>
                         </Badge>
                       );
@@ -897,6 +928,7 @@ export default function Quotes() {
                         <Badge key={`slc-${cid}`} variant="outline" className="text-xs gap-1 pr-1">
                           {(lc as any).full_name}
                           <span className="text-[9px] text-muted-foreground">({RELATIONSHIP_LABELS[(lc as any).relationship_type] || (lc as any).relationship_type})</span>
+                          {renderPrefsTooltip(lc)}
                           <button type="button" onClick={() => toggleLinkedClient(cid)} className="ml-0.5 hover:text-destructive transition-colors"><X className="w-3 h-3" /></button>
                         </Badge>
                       );
