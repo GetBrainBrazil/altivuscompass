@@ -89,6 +89,7 @@ export default function Quotes() {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [generatingCover, setGeneratingCover] = useState(false);
+  const [generatingDetails, setGeneratingDetails] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [destOpen, setDestOpen] = useState(false);
   const [draggedQuoteId, setDraggedQuoteId] = useState<string | null>(null);
