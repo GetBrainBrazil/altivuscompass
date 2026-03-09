@@ -453,6 +453,12 @@ export default function Quotes() {
     );
   };
 
+  const toggleDestination = (dest: string) => {
+    setSelectedDestinations(prev =>
+      prev.includes(dest) ? prev.filter(d => d !== dest) : [...prev, dest]
+    );
+  };
+
   const formatCurrency = (value: number | null) => {
     if (!value) return "R$ 0";
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
