@@ -222,6 +222,10 @@ export default function Tasks() {
         if (quoteFilter === "none" && t.quote_id) return false;
         if (quoteFilter !== "none" && t.quote_id !== quoteFilter) return false;
       }
+      if (clientFilter !== "all") {
+        if (clientFilter === "none" && t.client_id) return false;
+        if (clientFilter !== "none" && t.client_id !== clientFilter) return false;
+      }
       return true;
     })
     .sort((a: any, b: any) => {
