@@ -357,6 +357,12 @@ export default function Quotes() {
     );
   };
 
+  const toggleLinkedClient = (clientId: string) => {
+    setSelectedLinkedClients(prev =>
+      prev.includes(clientId) ? prev.filter(c => c !== clientId) : [...prev, clientId]
+    );
+  };
+
   const formatCurrency = (value: number | null) => {
     if (!value) return "R$ 0";
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
