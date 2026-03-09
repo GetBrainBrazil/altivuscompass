@@ -566,6 +566,7 @@ export default function Quotes() {
     );
   };
 
+  const toggleDestination = (dest: string) => {
     setSelectedDestinations(prev =>
       prev.includes(dest) ? prev.filter(d => d !== dest) : [...prev, dest]
     );
