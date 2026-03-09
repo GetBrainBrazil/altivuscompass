@@ -898,6 +898,12 @@ export default function Quotes() {
                 </Button>
               </TabsContent>
             ))}
+
+            {editingQuote && (
+              <TabsContent value="history" className="mt-3">
+                <QuoteHistoryTab quoteId={editingQuote.id} />
+              </TabsContent>
+            )}
           </Tabs>
         </div>
 
