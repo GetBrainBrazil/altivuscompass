@@ -1006,6 +1006,18 @@ export default function Quotes() {
           </div>
         </div>
       </div>
+
+      {/* Cover image zoom overlay */}
+      {coverZoom && coverPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setCoverZoom(false)}>
+          <div className="relative max-w-4xl max-h-[85vh] p-2">
+            <img src={coverPreview} alt="Capa ampliada" className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl" />
+            <button type="button" onClick={() => setCoverZoom(false)} className="absolute top-4 right-4 bg-background/80 text-foreground rounded-full p-1.5 hover:bg-background transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
     );
   }
 
