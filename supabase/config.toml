@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.get-public-quote]
 verify_jwt = false
+
+[functions.generate-cover-image]
+verify_jwt = false
