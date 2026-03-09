@@ -155,6 +155,19 @@ export default function Quotes() {
     return items;
   }, [citiesRaw, countriesRaw, customDestinations]);
 
+  // Fetch airports for flight origin/destination
+  const { data: airports = [] } = useQuery({
+    queryKey: ["airports-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("airports").select("id, iata_code, name, city, country").order("iata_code");
+      if (error) throw error;
+      return (data ?? []).map((a: any) => ({
+        ...a,
+        label: `${a.iata_code} - ${a.name} (${a.city}, ${a.country})`,
+        value: `${a.iata_code} - ${a.name}`,
+      }));
+    },
+  });
 
   const selectedClientId = form.client_id;
   const { data: clientPassengers = [] } = useQuery({
