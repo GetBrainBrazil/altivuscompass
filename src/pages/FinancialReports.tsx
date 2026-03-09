@@ -7,6 +7,12 @@ import { MetricCard } from "@/components/MetricCard";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { format, startOfMonth, endOfMonth, subMonths, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, ResponsiveContainer, Legend, AreaChart, Area } from "recharts";
 
 const COLORS = [
@@ -36,6 +42,44 @@ function formatCurrency(v: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 }
 
+type PeriodPreset = "this_month" | "last_month" | "this_quarter" | "this_semester" | "this_year" | "all" | "custom";
+
+const PERIOD_LABELS: Record<PeriodPreset, string> = {
+  this_month: "Este Mês",
+  last_month: "Mês Passado",
+  this_quarter: "Este Trimestre",
+  this_semester: "Este Semestre",
+  this_year: "Este Ano",
+  all: "Todo Período",
+  custom: "Personalizado",
+};
+
+function getPeriodDates(preset: PeriodPreset): { start: Date | null; end: Date | null } {
+  const now = new Date();
+  switch (preset) {
+    case "this_month":
+      return { start: startOfMonth(now), end: endOfMonth(now) };
+    case "last_month": {
+      const last = subMonths(now, 1);
+      return { start: startOfMonth(last), end: endOfMonth(last) };
+    }
+    case "this_quarter":
+      return { start: startOfQuarter(now), end: endOfQuarter(now) };
+    case "this_semester": {
+      const m = now.getMonth();
+      const semStart = m < 6 ? new Date(now.getFullYear(), 0, 1) : new Date(now.getFullYear(), 6, 1);
+      const semEnd = m < 6 ? new Date(now.getFullYear(), 5, 30) : new Date(now.getFullYear(), 11, 31);
+      return { start: semStart, end: semEnd };
+    }
+    case "this_year":
+      return { start: startOfYear(now), end: endOfYear(now) };
+    case "all":
+      return { start: null, end: null };
+    case "custom":
+      return { start: null, end: null };
+  }
+}
+
 type Transaction = {
   id: string; description: string; type: string; amount: number; date: string;
   status: string | null; category: string | null; due_date: string | null;
@@ -51,10 +95,26 @@ type BudgetRow = {
 };
 
 export default function FinancialReports() {
-  const currentYear = new Date().getFullYear();
-  const [year, setYear] = useState(String(currentYear));
+  const [periodPreset, setPeriodPreset] = useState<PeriodPreset>("this_year");
+  const [customStart, setCustomStart] = useState<Date | undefined>();
+  const [customEnd, setCustomEnd] = useState<Date | undefined>();
   const [budgetRows, setBudgetRows] = useState<BudgetRow[]>([]);
   const [budgetInitialized, setBudgetInitialized] = useState(false);
+
+  const periodDates = useMemo(() => {
+    if (periodPreset === "custom") {
+      return { start: customStart ?? null, end: customEnd ?? null };
+    }
+    return getPeriodDates(periodPreset);
+  }, [periodPreset, customStart, customEnd]);
+
+  const periodLabel = useMemo(() => {
+    if (periodPreset === "custom" && customStart && customEnd) {
+      return `${format(customStart, "dd/MM/yy")} — ${format(customEnd, "dd/MM/yy")}`;
+    }
+    if (periodPreset === "all") return "Todo o Período";
+    return PERIOD_LABELS[periodPreset];
+  }, [periodPreset, customStart, customEnd]);
 
   const { data: transactions = [] } = useQuery<Transaction[]>({
     queryKey: ["finance-reports-transactions"],
@@ -86,23 +146,46 @@ export default function FinancialReports() {
     },
   });
 
-  // Filter by year
-  const yearTx = useMemo(
-    () => transactions.filter((t) => t.date.startsWith(year)),
-    [transactions, year]
-  );
+  // Filter by period
+  const filteredTx = useMemo(() => {
+    const { start, end } = periodDates;
+    if (!start && !end) return transactions;
+    return transactions.filter((t) => {
+      const d = new Date(t.date + "T00:00:00");
+      if (start && d < start) return false;
+      if (end && d > end) return false;
+      return true;
+    });
+  }, [transactions, periodDates]);
+
+  // Get the distinct months in the filtered period for charts
+  const periodMonthKeys = useMemo(() => {
+    const { start, end } = periodDates;
+    if (!start || !end) {
+      // For "all", get months from transactions
+      const keys = new Set(transactions.map((t) => getMonthKey(t.date)));
+      return Array.from(keys).sort();
+    }
+    const keys: string[] = [];
+    const cursor = new Date(start);
+    while (cursor <= end) {
+      keys.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`);
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+    return keys;
+  }, [periodDates, transactions]);
 
   // ── Management Report Data ──
   const managementData = useMemo(() => {
-    const income = yearTx.filter((t) => t.type === "income" || t.type === "receivable" || t.type === "sale").reduce((s, t) => s + Math.abs(t.amount), 0);
-    const expense = yearTx.filter((t) => t.type === "expense" || t.type === "payable").reduce((s, t) => s + Math.abs(t.amount), 0);
-    const paid = yearTx.filter((t) => t.status === "paid").reduce((s, t) => s + Math.abs(t.amount), 0);
-    const received = yearTx.filter((t) => t.status === "received").reduce((s, t) => s + Math.abs(t.amount), 0);
-    const pending = yearTx.filter((t) => t.status === "pending").reduce((s, t) => s + Math.abs(t.amount), 0);
+    const income = filteredTx.filter((t) => t.type === "income" || t.type === "receivable" || t.type === "sale").reduce((s, t) => s + Math.abs(t.amount), 0);
+    const expense = filteredTx.filter((t) => t.type === "expense" || t.type === "payable").reduce((s, t) => s + Math.abs(t.amount), 0);
+    const paid = filteredTx.filter((t) => t.status === "paid").reduce((s, t) => s + Math.abs(t.amount), 0);
+    const received = filteredTx.filter((t) => t.status === "received").reduce((s, t) => s + Math.abs(t.amount), 0);
+    const pending = filteredTx.filter((t) => t.status === "pending").reduce((s, t) => s + Math.abs(t.amount), 0);
 
     // By category pie
     const byCat: Record<string, number> = {};
-    yearTx.forEach((t) => {
+    filteredTx.forEach((t) => {
       const cat = t.category ?? "Sem Categoria";
       byCat[cat] = (byCat[cat] ?? 0) + Math.abs(t.amount);
     });
@@ -110,11 +193,10 @@ export default function FinancialReports() {
 
     // Monthly trend
     const monthlyMap: Record<string, { receitas: number; despesas: number }> = {};
-    for (let m = 1; m <= 12; m++) {
-      const key = `${year}-${String(m).padStart(2, "0")}`;
+    periodMonthKeys.forEach((key) => {
       monthlyMap[key] = { receitas: 0, despesas: 0 };
-    }
-    yearTx.forEach((t) => {
+    });
+    filteredTx.forEach((t) => {
       const key = getMonthKey(t.date);
       if (!monthlyMap[key]) return;
       if (t.type === "income" || t.type === "receivable" || t.type === "sale") {
@@ -135,22 +217,20 @@ export default function FinancialReports() {
     ].filter((d) => d.value > 0);
 
     return { income, expense, paid, received, pending, pieData, monthlyTrend, statusData, balance: income - expense };
-  }, [yearTx, year]);
+  }, [filteredTx, periodMonthKeys]);
 
   // ── DRE Data ──
   const dreData = useMemo(() => {
-    // Build category tree mapping
     const catMap = new Map(categories.map((c) => [c.id, c]));
     const getFullPath = (catStr: string | null): string => {
       if (!catStr) return "Sem Categoria";
       return catStr;
     };
 
-    // Group revenue
     const revenueItems: Record<string, number> = {};
     const expenseItems: Record<string, number> = {};
 
-    yearTx.forEach((t) => {
+    filteredTx.forEach((t) => {
       const catName = getFullPath(t.category);
       const shortName = catName.split(" – ").pop() ?? catName;
       if (t.type === "income" || t.type === "receivable" || t.type === "sale") {
@@ -173,18 +253,16 @@ export default function FinancialReports() {
       netIncome,
       margin,
     };
-  }, [yearTx, categories]);
+  }, [filteredTx, categories]);
 
   // ── Cash Flow Data ──
   const cashFlowData = useMemo(() => {
     const monthlyMap: Record<string, { entradas: number; saidas: number; saldo: number }> = {};
-    for (let m = 1; m <= 12; m++) {
-      const key = `${year}-${String(m).padStart(2, "0")}`;
+    periodMonthKeys.forEach((key) => {
       monthlyMap[key] = { entradas: 0, saidas: 0, saldo: 0 };
-    }
+    });
 
-    // Only realized (paid/received)
-    yearTx
+    filteredTx
       .filter((t) => t.status === "paid" || t.status === "received")
       .forEach((t) => {
         const key = getMonthKey(t.date);
@@ -207,9 +285,8 @@ export default function FinancialReports() {
     const totalIn = monthly.reduce((s, m) => s + m.entradas, 0);
     const totalOut = monthly.reduce((s, m) => s + m.saidas, 0);
 
-    // By account
     const byAccount: Record<string, number> = {};
-    yearTx
+    filteredTx
       .filter((t) => t.status === "paid" || t.status === "received")
       .forEach((t) => {
         const acc = t.payment_account ?? "Sem Conta";
@@ -219,13 +296,12 @@ export default function FinancialReports() {
     const accountData = Object.entries(byAccount).map(([name, value]) => ({ name, value }));
 
     return { monthly, totalIn, totalOut, finalBalance: runningBalance, accountData };
-  }, [yearTx, year]);
+  }, [filteredTx, periodMonthKeys]);
 
   // ── Budget Data ──
-  // Initialize budget rows from categories when not done
   useMemo(() => {
     if (budgetInitialized) return;
-    const expenseCategories = yearTx.reduce<Record<string, number>>((acc, t) => {
+    const expenseCategories = filteredTx.reduce<Record<string, number>>((acc, t) => {
       if (t.type === "expense" || t.type === "payable") {
         const cat = t.category?.split(" – ").pop() ?? "Sem Categoria";
         acc[cat] = (acc[cat] ?? 0) + Math.abs(t.amount);
@@ -236,14 +312,14 @@ export default function FinancialReports() {
     const rows = Object.entries(expenseCategories).map(([category, actual]) => ({
       category,
       planned: 0,
-      actual,
+      actual: actual as number,
     }));
 
     if (rows.length > 0) {
       setBudgetRows(rows);
       setBudgetInitialized(true);
     }
-  }, [yearTx, budgetInitialized]);
+  }, [filteredTx, budgetInitialized]);
 
   const updateBudgetPlanned = (idx: number, value: number) => {
     setBudgetRows((prev) => prev.map((r, i) => (i === idx ? { ...r, planned: value } : r)));
@@ -251,13 +327,10 @@ export default function FinancialReports() {
 
   // ── Account Balances Data ──
   const balancesData = useMemo(() => {
-    // Calculate balance per bank account from ALL transactions (not filtered by year)
     const balanceMap: Record<string, number> = {};
-    // Initialize with bank accounts
     bankAccounts.forEach((a) => {
       balanceMap[a.id] = 0;
     });
-    // Also track "Virtual" and unassigned
     transactions.forEach((t) => {
       const acc = t.payment_account ?? "unassigned";
       if (!(acc in balanceMap)) balanceMap[acc] = 0;
@@ -276,10 +349,8 @@ export default function FinancialReports() {
       balance: balanceMap[a.id] ?? 0,
     }));
 
-    // Virtual account
     const virtualBalance = balanceMap["Virtual"] ?? 0;
     const unassignedBalance = balanceMap["unassigned"] ?? 0;
-
     const totalBalance = accountBalances.reduce((s, a) => s + a.balance, 0) + virtualBalance + unassignedBalance;
 
     return { accountBalances, virtualBalance, unassignedBalance, totalBalance };
@@ -291,12 +362,6 @@ export default function FinancialReports() {
     return { totalPlanned, totalActual, variance: totalPlanned - totalActual };
   }, [budgetRows]);
 
-  const yearOptions = useMemo(() => {
-    const years = new Set(transactions.map((t) => t.date.slice(0, 4)));
-    years.add(String(currentYear));
-    return Array.from(years).sort().reverse();
-  }, [transactions, currentYear]);
-
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -304,18 +369,44 @@ export default function FinancialReports() {
           <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">Relatórios Financeiros</h1>
           <p className="text-muted-foreground font-body mt-1 text-sm">Análise gerencial, DRE, fluxo de caixa e orçamento.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Label className="text-xs font-body text-muted-foreground">Ano:</Label>
-          <Select value={year} onValueChange={setYear}>
-            <SelectTrigger className="w-24 h-9 text-sm">
+        <div className="flex flex-wrap items-center gap-2">
+          <Select value={periodPreset} onValueChange={(v) => setPeriodPreset(v as PeriodPreset)}>
+            <SelectTrigger className="w-44 h-9 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {yearOptions.map((y) => (
-                <SelectItem key={y} value={y}>{y}</SelectItem>
+              {(Object.keys(PERIOD_LABELS) as PeriodPreset[]).map((key) => (
+                <SelectItem key={key} value={key}>{PERIOD_LABELS[key]}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+          {periodPreset === "custom" && (
+            <div className="flex items-center gap-1.5">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("h-9 w-[130px] justify-start text-left text-xs font-normal", !customStart && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
+                    {customStart ? format(customStart, "dd/MM/yyyy") : "Início"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={customStart} onSelect={setCustomStart} initialFocus className={cn("p-3 pointer-events-auto")} locale={ptBR} />
+                </PopoverContent>
+              </Popover>
+              <span className="text-xs text-muted-foreground">a</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("h-9 w-[130px] justify-start text-left text-xs font-normal", !customEnd && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
+                    {customEnd ? format(customEnd, "dd/MM/yyyy") : "Fim"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={customEnd} onSelect={setCustomEnd} initialFocus className={cn("p-3 pointer-events-auto")} locale={ptBR} />
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
         </div>
       </div>
 
@@ -423,7 +514,7 @@ export default function FinancialReports() {
 
           <div className="glass-card rounded-xl overflow-hidden">
             <div className="p-4 sm:p-5 border-b border-border/50">
-              <h3 className="font-display text-base font-semibold">Demonstração do Resultado do Exercício — {year}</h3>
+              <h3 className="font-display text-base font-semibold">Demonstração do Resultado do Exercício — {periodLabel}</h3>
             </div>
             <div className="divide-y divide-border/30">
               {/* Revenue Section */}
@@ -498,7 +589,7 @@ export default function FinancialReports() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Cash Flow Chart */}
             <div className="glass-card rounded-xl p-4 sm:p-5 lg:col-span-2">
-              <h3 className="font-display text-sm font-semibold mb-4">Fluxo de Caixa Mensal — {year}</h3>
+              <h3 className="font-display text-sm font-semibold mb-4">Fluxo de Caixa Mensal — {periodLabel}</h3>
               <ResponsiveContainer width="100%" height={320}>
                 <AreaChart data={cashFlowData.monthly}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -579,7 +670,7 @@ export default function FinancialReports() {
           {/* Budget Table */}
           <div className="glass-card rounded-xl overflow-hidden">
             <div className="p-4 border-b border-border/50">
-              <h3 className="font-display text-sm font-semibold">Detalhamento do Orçamento — {year}</h3>
+              <h3 className="font-display text-sm font-semibold">Detalhamento do Orçamento — {periodLabel}</h3>
               <p className="text-xs text-muted-foreground font-body mt-1">Insira os valores orçados para cada categoria e compare com o realizado.</p>
             </div>
             <div className="overflow-x-auto">
@@ -641,7 +732,7 @@ export default function FinancialReports() {
 
           {budgetRows.length === 0 && (
             <div className="glass-card rounded-xl p-8 text-center">
-              <p className="text-muted-foreground font-body text-sm">Nenhuma despesa registrada em {year} para construir o orçamento.</p>
+              <p className="text-muted-foreground font-body text-sm">Nenhuma despesa registrada em {periodLabel} para construir o orçamento.</p>
             </div>
           )}
         </TabsContent>
