@@ -109,7 +109,46 @@ export default function Quotes() {
     },
   });
 
-  // Fetch passengers for selected client
+  // Fetch destinations from cities, countries, and custom destinations
+  const { data: citiesRaw = [] } = useQuery({
+    queryKey: ["cities-for-destinations"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("cities").select("id, name, countries(name)").order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: countriesRaw = [] } = useQuery({
+    queryKey: ["countries-for-destinations"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("countries").select("id, name").order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: customDestinations = [] } = useQuery({
+    queryKey: ["custom-destinations"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("custom_destinations").select("id, name").order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const allDestinations = useMemo(() => {
+    const items: { label: string; value: string; group: string }[] = [];
+    customDestinations.forEach((d: any) => items.push({ label: d.name, value: d.name, group: "Destinos" }));
+    countriesRaw.forEach((c: any) => items.push({ label: c.name, value: c.name, group: "Países" }));
+    citiesRaw.forEach((c: any) => {
+      const country = (c as any).countries?.name ?? "";
+      items.push({ label: `${c.name}${country ? `, ${country}` : ""}`, value: `${c.name}${country ? `, ${country}` : ""}`, group: "Cidades" });
+    });
+    return items;
+  }, [citiesRaw, countriesRaw, customDestinations]);
+
+
   const selectedClientId = form.client_id;
   const { data: clientPassengers = [] } = useQuery({
     queryKey: ["client-passengers", selectedClientId],
