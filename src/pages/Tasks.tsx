@@ -630,14 +630,14 @@ export default function Tasks() {
           <DialogFooter>
             <Button variant="outline" onClick={() => { setReminderDialogOpen(false); setReminderTime("09:00"); }}>Cancelar</Button>
             <Button
-              disabled={!reminderDate || addReminderMutation.isPending}
+              disabled={!reminderDate || saveReminderMutation.isPending}
               onClick={() => {
                 if (reminderDate && reminderTask) {
                   const [hours, minutes] = reminderTime.split(":").map(Number);
                   const dateWithTime = new Date(reminderDate);
                   dateWithTime.setHours(hours, minutes, 0, 0);
-                  addReminderMutation.mutate({ taskId: reminderTask.id, remindAt: dateWithTime.toISOString() });
-                  setReminderTime("09:00");
+                  const existing = getTaskReminder(reminderTask.id);
+                  saveReminderMutation.mutate({ taskId: reminderTask.id, remindAt: dateWithTime.toISOString(), existingId: existing?.id });
                 }
               }}
             >
