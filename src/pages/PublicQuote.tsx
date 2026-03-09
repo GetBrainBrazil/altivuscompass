@@ -1,33 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Printer, Globe } from "lucide-react";
+import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Printer, Globe, Loader2 } from "lucide-react";
 import logoAltivusFallback from "@/assets/logo-altivus.png";
 import { type QuoteLang, LANG_OPTIONS, getTranslations, getItemTypeLabel, getRelationshipLabel } from "@/lib/quote-translations";
 
 const ITEM_TYPE_ICONS: Record<string, any> = {
-  flight: Plane,
-  hotel: Hotel,
-  transport: Bus,
-  cruise: Ship,
-  experience: Sparkles,
-  insurance: Shield,
-  other_service: Package,
-  itinerary: CalendarDays,
-  map: Map,
+  flight: Plane, hotel: Hotel, transport: Bus, cruise: Ship,
+  experience: Sparkles, insurance: Shield, other_service: Package,
+  itinerary: CalendarDays, map: Map,
 };
 
 type AgencyData = {
-  name: string;
-  cnpj: string;
-  phone: string;
-  email: string;
-  instagram: string;
-  website: string;
-  logo_url: string;
-  address: string;
+  name: string; cnpj: string; phone: string; email: string;
+  instagram: string; website: string; logo_url: string; address: string;
 };
 
 type QuoteData = {
@@ -37,12 +25,19 @@ type QuoteData = {
   agency: AgencyData | null;
 };
 
+// Keys of translatable content fields
+const CONTENT_KEYS = ["details", "payment_terms", "terms_conditions", "other_info"] as const;
+
 export default function PublicQuote() {
   const { id } = useParams<{ id: string }>();
   const [data, setData] = useState<QuoteData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lang, setLang] = useState<QuoteLang>("pt");
+  const [translating, setTranslating] = useState(false);
+  const [translatedContent, setTranslatedContent] = useState<Record<string, string>>({});
+  const [translatedItems, setTranslatedItems] = useState<Record<number, { title?: string; description?: string }>>({});
+  const translationCache = useRef<Record<string, { content: Record<string, string>; items: Record<number, { title?: string; description?: string }> }>>({});
 
   const t = getTranslations(lang);
 
@@ -51,24 +46,112 @@ export default function PublicQuote() {
     const fetchQuote = async () => {
       try {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const res = await fetch(
-          `${supabaseUrl}/functions/v1/get-public-quote?id=${id}`
-        );
-        if (!res.ok) {
-          setError(t.notFound);
-          setLoading(false);
-          return;
-        }
+        const res = await fetch(`${supabaseUrl}/functions/v1/get-public-quote?id=${id}`);
+        if (!res.ok) { setError("Cotação não encontrada."); setLoading(false); return; }
         const json = await res.json();
         setData(json);
-      } catch (err) {
-        setError(t.error);
-      } finally {
-        setLoading(false);
-      }
+      } catch (err) { setError("Erro ao carregar cotação."); }
+      finally { setLoading(false); }
     };
     fetchQuote();
   }, [id]);
+
+  const translateContent = useCallback(async (targetLang: QuoteLang) => {
+    if (!data || targetLang === "pt") {
+      setTranslatedContent({});
+      setTranslatedItems({});
+      return;
+    }
+
+    // Check cache
+    if (translationCache.current[targetLang]) {
+      setTranslatedContent(translationCache.current[targetLang].content);
+      setTranslatedItems(translationCache.current[targetLang].items);
+      return;
+    }
+
+    setTranslating(true);
+    try {
+      // Collect all texts to translate in one batch
+      const textsToTranslate: string[] = [];
+      const contentMapping: { key: string; index: number }[] = [];
+      const itemMapping: { itemIdx: number; field: "title" | "description"; index: number }[] = [];
+
+      // Quote content fields
+      for (const key of CONTENT_KEYS) {
+        const value = data.quote[key];
+        if (value) {
+          contentMapping.push({ key, index: textsToTranslate.length });
+          textsToTranslate.push(value);
+        }
+      }
+
+      // Item titles and descriptions
+      data.items.forEach((item, idx) => {
+        if (item.title) {
+          itemMapping.push({ itemIdx: idx, field: "title", index: textsToTranslate.length });
+          textsToTranslate.push(item.title);
+        }
+        if (item.description) {
+          itemMapping.push({ itemIdx: idx, field: "description", index: textsToTranslate.length });
+          textsToTranslate.push(item.description);
+        }
+      });
+
+      if (textsToTranslate.length === 0) {
+        setTranslating(false);
+        return;
+      }
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const res = await fetch(`${supabaseUrl}/functions/v1/translate-quote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ texts: textsToTranslate, targetLang }),
+      });
+
+      if (!res.ok) throw new Error("Translation failed");
+      const result = await res.json();
+      const translated: string[] = result.translations;
+
+      // Map back
+      const newContent: Record<string, string> = {};
+      for (const { key, index } of contentMapping) {
+        newContent[key] = translated[index];
+      }
+
+      const newItems: Record<number, { title?: string; description?: string }> = {};
+      for (const { itemIdx, field, index } of itemMapping) {
+        if (!newItems[itemIdx]) newItems[itemIdx] = {};
+        newItems[itemIdx][field] = translated[index];
+      }
+
+      // Cache
+      translationCache.current[targetLang] = { content: newContent, items: newItems };
+      setTranslatedContent(newContent);
+      setTranslatedItems(newItems);
+    } catch (err) {
+      console.error("Translation error:", err);
+    } finally {
+      setTranslating(false);
+    }
+  }, [data]);
+
+  const handleLangChange = (newLang: QuoteLang) => {
+    setLang(newLang);
+    translateContent(newLang);
+  };
+
+  // Helper to get content - translated or original
+  const getContent = (key: string): string | null => {
+    if (lang !== "pt" && translatedContent[key]) return translatedContent[key];
+    return data?.quote[key] || null;
+  };
+
+  const getItemContent = (idx: number, field: "title" | "description"): string | null => {
+    if (lang !== "pt" && translatedItems[idx]?.[field]) return translatedItems[idx][field]!;
+    return data?.items[idx]?.[field] || null;
+  };
 
   if (loading) {
     return (
@@ -93,9 +176,9 @@ export default function PublicQuote() {
   const formatCurrency = (v: number | null) =>
     v != null ? v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—";
 
-  const groupedItems = items.reduce((acc: Record<string, any[]>, item: any) => {
+  const groupedItems: Record<string, { item: any; originalIdx: number }[]> = items.reduce((acc: Record<string, { item: any; originalIdx: number }[]>, item: any, idx: number) => {
     if (!acc[item.item_type]) acc[item.item_type] = [];
-    acc[item.item_type].push(item);
+    acc[item.item_type].push({ item, originalIdx: idx });
     return acc;
   }, {});
 
@@ -108,10 +191,6 @@ export default function PublicQuote() {
     const destination = quote.title || quote.destination || "sua viagem";
     const message = `Olá! Segue o orçamento de *${destination}* preparado pela *${agName}*:\n\n${link}`;
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, "_blank");
-  };
-
-  const handlePrint = () => {
-    window.print();
   };
 
   const agencyLogo = agency?.logo_url || logoAltivusFallback;
@@ -129,22 +208,37 @@ export default function PublicQuote() {
               {t.sendWhatsApp}
             </Button>
           )}
-          <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs" onClick={handlePrint}>
+          <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs" onClick={() => window.print()}>
             <Printer className="w-3.5 h-3.5" />
             {t.printPdf}
           </Button>
+
+          {translating && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-body ml-2">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>Traduzindo...</span>
+            </div>
+          )}
+
           <div className="ml-auto">
-            <Select value={lang} onValueChange={(v) => setLang(v as QuoteLang)}>
-              <SelectTrigger className="h-8 w-[150px] text-xs font-body gap-1.5">
-                <Globe className="w-3.5 h-3.5 shrink-0" />
+            <Select value={lang} onValueChange={(v) => handleLangChange(v as QuoteLang)}>
+              <SelectTrigger className="h-8 w-[160px] text-xs font-body">
                 <SelectValue>
-                  {selectedLang && `${selectedLang.flag} ${selectedLang.label}`}
+                  {selectedLang && (
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-sm">{selectedLang.flag}</span>
+                      <span>{selectedLang.label}</span>
+                    </span>
+                  )}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {LANG_OPTIONS.map(opt => (
                   <SelectItem key={opt.value} value={opt.value} className="text-xs font-body">
-                    {opt.flag} {opt.label}
+                    <span className="flex items-center gap-2">
+                      <span className="text-sm">{opt.flag}</span>
+                      <span>{opt.label}</span>
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -171,9 +265,7 @@ export default function PublicQuote() {
               </div>
             </div>
             <div className="flex-shrink-0 text-right space-y-0.5">
-              {agency?.name && (
-                <p className="text-sm font-semibold text-foreground font-body">{agency.name}</p>
-              )}
+              {agency?.name && <p className="text-sm font-semibold text-foreground font-body">{agency.name}</p>}
               {agency?.cnpj && (
                 <p className="text-xs text-muted-foreground font-body flex items-center justify-end gap-1">
                   {agency.cnpj} <span className="text-[10px]">📋</span>
@@ -232,10 +324,10 @@ export default function PublicQuote() {
         </div>
 
         {/* Details */}
-        {quote.details && (
+        {getContent("details") && (
           <div className="glass-card rounded-xl p-5 space-y-1">
             <h2 className="text-sm font-semibold text-foreground font-body">{t.details}</h2>
-            <p className="text-sm text-muted-foreground font-body whitespace-pre-line">{quote.details}</p>
+            <p className="text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("details")}</p>
           </div>
         )}
 
@@ -249,9 +341,7 @@ export default function PublicQuote() {
               <h2 className="text-sm font-semibold text-foreground font-body">{t.travelers}</h2>
               <div className="flex flex-wrap gap-2">
                 {clientIsTraveling && quote.client_name && (
-                  <Badge variant="secondary" className="text-xs font-body">
-                    {quote.client_name}
-                  </Badge>
+                  <Badge variant="secondary" className="text-xs font-body">{quote.client_name}</Badge>
                 )}
                 {passengers.map((p, i) => (
                   <Badge key={i} variant="secondary" className="text-xs font-body">
@@ -269,7 +359,7 @@ export default function PublicQuote() {
         {/* Items by type */}
         {Object.keys(groupedItems).length > 0 && (
           <div className="space-y-4">
-            {Object.entries(groupedItems).map(([type, typeItems]) => {
+            {Object.entries(groupedItems).map(([type, typeEntries]) => {
               const Icon = ITEM_TYPE_ICONS[type] || Package;
               return (
                 <div key={type} className="glass-card rounded-xl p-5 space-y-3">
@@ -278,19 +368,19 @@ export default function PublicQuote() {
                     <h2 className="text-sm font-semibold text-foreground font-body">
                       {getItemTypeLabel(lang, type)}
                     </h2>
-                    <Badge variant="outline" className="text-[10px] h-5">{(typeItems as any[]).length}</Badge>
+                    <Badge variant="outline" className="text-[10px] h-5">{typeEntries.length}</Badge>
                   </div>
                   <div className="space-y-2">
-                    {(typeItems as any[]).map((item: any, idx: number) => (
-                      <div key={idx} className="border border-border rounded-lg p-3">
-                        {item.title && (
-                          <p className="text-sm font-medium text-foreground font-body">{item.title}</p>
-                        )}
-                        {item.description && (
-                          <p className="text-xs text-muted-foreground font-body mt-0.5">{item.description}</p>
-                        )}
-                      </div>
-                    ))}
+                    {typeEntries.map(({ originalIdx }, idx) => {
+                      const title = getItemContent(originalIdx, "title");
+                      const description = getItemContent(originalIdx, "description");
+                      return (
+                        <div key={idx} className="border border-border rounded-lg p-3">
+                          {title && <p className="text-sm font-medium text-foreground font-body">{title}</p>}
+                          {description && <p className="text-xs text-muted-foreground font-body mt-0.5">{description}</p>}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
@@ -299,26 +389,26 @@ export default function PublicQuote() {
         )}
 
         {/* Payment terms */}
-        {quote.payment_terms && (
+        {getContent("payment_terms") && (
           <div className="glass-card rounded-xl p-5 space-y-1">
             <h2 className="text-sm font-semibold text-foreground font-body">{t.paymentTerms}</h2>
-            <p className="text-sm text-muted-foreground font-body whitespace-pre-line">{quote.payment_terms}</p>
+            <p className="text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("payment_terms")}</p>
           </div>
         )}
 
         {/* Terms */}
-        {quote.terms_conditions && (
+        {getContent("terms_conditions") && (
           <div className="glass-card rounded-xl p-5 space-y-1">
             <h2 className="text-sm font-semibold text-foreground font-body">{t.termsConditions}</h2>
-            <p className="text-sm text-muted-foreground font-body whitespace-pre-line">{quote.terms_conditions}</p>
+            <p className="text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("terms_conditions")}</p>
           </div>
         )}
 
         {/* Other info */}
-        {quote.other_info && (
+        {getContent("other_info") && (
           <div className="glass-card rounded-xl p-5 space-y-1">
             <h2 className="text-sm font-semibold text-foreground font-body">{t.otherInfo}</h2>
-            <p className="text-sm text-muted-foreground font-body whitespace-pre-line">{quote.other_info}</p>
+            <p className="text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("other_info")}</p>
           </div>
         )}
       </main>
