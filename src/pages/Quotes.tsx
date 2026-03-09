@@ -1044,8 +1044,28 @@ export default function Quotes() {
                               )}
                             </div>
                           </TableCell>
-                          <TableCell className="font-body font-medium">{formatCurrency(quote.total_value)}</TableCell>
-                        </TableRow>
+                           <TableCell className="font-body font-medium">{formatCurrency(quote.total_value)}</TableCell>
+                           <TableCell>
+                             <TooltipProvider>
+                               <Tooltip>
+                                 <TooltipTrigger asChild>
+                                   <Button
+                                     variant="ghost"
+                                     size="icon"
+                                     className="h-7 w-7"
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       window.open(`/orcamento/${quote.id}`, "_blank");
+                                     }}
+                                   >
+                                     <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+                                   </Button>
+                                 </TooltipTrigger>
+                                 <TooltipContent>Ver cotação pública</TooltipContent>
+                               </Tooltip>
+                             </TooltipProvider>
+                           </TableCell>
+                         </TableRow>
                       );
                     })
                   )}
