@@ -74,6 +74,7 @@ export default function Quotes() {
   const [activeTab, setActiveTab] = useState("flight");
   const [items, setItems] = useState<QuoteItem[]>([]);
   const [selectedPassengers, setSelectedPassengers] = useState<string[]>([]);
+  const [selectedLinkedClients, setSelectedLinkedClients] = useState<string[]>([]);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -145,6 +146,11 @@ export default function Quotes() {
       supabase.from("quote_passengers").select("passenger_id").eq("quote_id", editingQuote.id).then(({ data }) => {
         setSelectedPassengers((data ?? []).map((p: any) => p.passenger_id));
       });
+      // Load linked client IDs from price_breakdown
+      const pb = (editingQuote as any).price_breakdown;
+      if (pb && typeof pb === 'object' && Array.isArray((pb as any).linked_client_ids)) {
+        setSelectedLinkedClients((pb as any).linked_client_ids);
+      }
     }
   }, [editingQuote]);
 
@@ -179,6 +185,7 @@ export default function Quotes() {
         travel_date_start: form.travel_date_start || null,
         travel_date_end: form.travel_date_end || null,
         notes: form.notes || null,
+        price_breakdown: { linked_client_ids: selectedLinkedClients },
       };
 
       if (editingQuote) {
@@ -282,6 +289,7 @@ export default function Quotes() {
     setForm({ stage: "new", total_value: "" });
     setItems([]);
     setSelectedPassengers([]);
+    setSelectedLinkedClients([]);
     setCoverFile(null);
     setCoverPreview(null);
     setActiveTab("flight");
@@ -318,6 +326,7 @@ export default function Quotes() {
     setForm({});
     setItems([]);
     setSelectedPassengers([]);
+    setSelectedLinkedClients([]);
     setCoverFile(null);
     setCoverPreview(null);
   };
@@ -345,6 +354,12 @@ export default function Quotes() {
   const togglePassenger = (passengerId: string) => {
     setSelectedPassengers(prev =>
       prev.includes(passengerId) ? prev.filter(p => p !== passengerId) : [...prev, passengerId]
+    );
+  };
+
+  const toggleLinkedClient = (clientId: string) => {
+    setSelectedLinkedClients(prev =>
+      prev.includes(clientId) ? prev.filter(c => c !== clientId) : [...prev, clientId]
     );
   };
 
@@ -413,7 +428,7 @@ export default function Quotes() {
             {/* Cliente */}
             <div className="col-span-2 sm:col-span-2 space-y-1">
               <Label className="font-body text-xs">Cliente</Label>
-              <Select value={form.client_id ?? ""} onValueChange={(v) => { setForm({ ...form, client_id: v }); setSelectedPassengers([]); }}>
+              <Select value={form.client_id ?? ""} onValueChange={(v) => { setForm({ ...form, client_id: v }); setSelectedPassengers([]); setSelectedLinkedClients([]); }}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar cliente" /></SelectTrigger>
                 <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}</SelectContent>
               </Select>
@@ -481,10 +496,11 @@ export default function Quotes() {
                   </label>
                 ))}
                 {linkedClients.map((lc: any) => (
-                  <div key={lc.id} className="flex items-center gap-1.5 px-2 py-1.5 rounded-md border border-border bg-muted/30">
-                    <Badge variant="outline" className="text-[9px] h-4 px-1">{RELATIONSHIP_LABELS[lc.relationship_type] || lc.relationship_type}</Badge>
+                  <label key={lc.id} className="flex items-center gap-1.5 px-2 py-1.5 rounded-md border border-border hover:bg-muted/50 cursor-pointer transition-colors">
+                    <Checkbox checked={selectedLinkedClients.includes(lc.id)} onCheckedChange={() => toggleLinkedClient(lc.id)} className="h-3.5 w-3.5" />
+                    <Badge variant="outline" className="text-[9px] h-4 px-1 shrink-0">{RELATIONSHIP_LABELS[lc.relationship_type] || lc.relationship_type}</Badge>
                     <span className="text-xs font-body truncate">{lc.full_name}</span>
-                  </div>
+                  </label>
                 ))}
               </div>
             </div>
