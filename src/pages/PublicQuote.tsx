@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Printer, Globe, Loader2 } from "lucide-react";
 import logoAltivusFallback from "@/assets/logo-altivus.png";
-import { type QuoteLang, LANG_OPTIONS, getTranslations, getItemTypeLabel, getRelationshipLabel, getFlagUrl } from "@/lib/quote-translations";
+import { type QuoteLang, LANG_OPTIONS, getTranslations, getItemTypeLabel, getRelationshipLabel, getFlagUrl, getCabinClassLabel, getConnectionsLabel, getFlightDirectionLabel } from "@/lib/quote-translations";
 
 const ITEM_TYPE_ICONS: Record<string, any> = {
   flight: Plane, hotel: Hotel, transport: Bus, cruise: Ship,
@@ -371,9 +371,96 @@ export default function PublicQuote() {
                     <Badge variant="outline" className="text-[10px] h-5">{typeEntries.length}</Badge>
                   </div>
                   <div className="space-y-2">
-                    {typeEntries.map(({ originalIdx }, idx) => {
+                    {typeEntries.map(({ item, originalIdx }, idx) => {
                       const title = getItemContent(originalIdx, "title");
                       const description = getItemContent(originalIdx, "description");
+                      const d = (item.details as any) || {};
+                      const isFlight = type === "flight";
+
+                      if (isFlight && (d.origin || d.destination || d.departure_date)) {
+                        const formatDate = (ds: string) => ds ? ds.split("-").reverse().join("/") : "";
+                        const dirLabel = d.flight_direction ? getFlightDirectionLabel(lang, d.flight_direction) : null;
+                        const hasBaggage = d.backpack_qty || d.carry_on_qty || d.checked_bag_qty;
+
+                        return (
+                          <div key={idx} className="border border-border rounded-lg p-4 space-y-2.5">
+                            {/* Route header */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {dirLabel && (
+                                <Badge variant="secondary" className="text-[10px] font-body">{dirLabel}</Badge>
+                              )}
+                              <div className="flex items-center gap-1.5 text-sm font-medium text-foreground font-body">
+                                {d.origin && <span>{d.origin}</span>}
+                                {d.origin && d.destination && <Plane className="w-3.5 h-3.5 text-muted-foreground" />}
+                                {d.destination && <span>{d.destination}</span>}
+                              </div>
+                              {d.airline && (
+                                <span className="text-xs text-muted-foreground font-body ml-auto">
+                                  {d.airline}{d.flight_number ? ` · ${d.flight_number}` : ""}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Date/time row */}
+                            <div className="grid grid-cols-2 gap-3 text-xs font-body">
+                              {d.departure_date && (
+                                <div className="space-y-0.5">
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t.departure}</p>
+                                  <p className="text-foreground font-medium">
+                                    {formatDate(d.departure_date)}{d.departure_time ? ` · ${d.departure_time}` : ""}
+                                  </p>
+                                </div>
+                              )}
+                              {d.arrival_date && (
+                                <div className="space-y-0.5">
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t.arrival}</p>
+                                  <p className="text-foreground font-medium">
+                                    {formatDate(d.arrival_date)}{d.arrival_time ? ` · ${d.arrival_time}` : ""}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Meta badges */}
+                            <div className="flex flex-wrap gap-1.5">
+                              {d.duration && (
+                                <Badge variant="outline" className="text-[10px] font-body gap-1">
+                                  ⏱ {d.duration}
+                                </Badge>
+                              )}
+                              {d.cabin_class && (
+                                <Badge variant="outline" className="text-[10px] font-body">
+                                  {getCabinClassLabel(lang, d.cabin_class)}
+                                </Badge>
+                              )}
+                              {d.connections && (
+                                <Badge variant="outline" className="text-[10px] font-body">
+                                  {getConnectionsLabel(lang, d.connections)}
+                                </Badge>
+                              )}
+                              {hasBaggage && (
+                                <Badge variant="outline" className="text-[10px] font-body gap-1">
+                                  🧳 {[
+                                    d.backpack_qty ? `${t.backpack}: ${d.backpack_qty}` : null,
+                                    d.carry_on_qty ? `${t.carryOn}: ${d.carry_on_qty}` : null,
+                                    d.checked_bag_qty ? `${t.checkedBag}: ${d.checked_bag_qty}` : null,
+                                  ].filter(Boolean).join(" · ")}
+                                </Badge>
+                              )}
+                            </div>
+
+                            {/* Observation */}
+                            {d.observation && (
+                              <p className="text-[11px] text-muted-foreground font-body italic">{d.observation}</p>
+                            )}
+
+                            {/* Title/description fallback */}
+                            {title && <p className="text-xs font-medium text-foreground font-body">{title}</p>}
+                            {description && <p className="text-xs text-muted-foreground font-body">{description}</p>}
+                          </div>
+                        );
+                      }
+
                       return (
                         <div key={idx} className="border border-border rounded-lg p-3">
                           {title && <p className="text-sm font-medium text-foreground font-body">{title}</p>}
