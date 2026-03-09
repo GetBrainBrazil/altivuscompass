@@ -146,6 +146,11 @@ export default function Quotes() {
       supabase.from("quote_passengers").select("passenger_id").eq("quote_id", editingQuote.id).then(({ data }) => {
         setSelectedPassengers((data ?? []).map((p: any) => p.passenger_id));
       });
+      // Load linked client IDs from price_breakdown
+      const pb = (editingQuote as any).price_breakdown;
+      if (pb && typeof pb === 'object' && Array.isArray((pb as any).linked_client_ids)) {
+        setSelectedLinkedClients((pb as any).linked_client_ids);
+      }
     }
   }, [editingQuote]);
 
