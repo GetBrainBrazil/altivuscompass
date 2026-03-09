@@ -156,8 +156,8 @@ export default function Tasks() {
       description: task.description ?? "",
       priority: task.priority,
       assigned_to: task.assigned_to ?? "",
-      quote_id: task.quote_id ?? "",
-      client_id: task.client_id ?? "",
+      quote_id: task.quote_id ?? "none",
+      client_id: task.client_id ?? "none",
       due_date: task.due_date ? new Date(task.due_date) : null,
       start_date: task.start_date ? new Date(task.start_date) : new Date(),
     });
