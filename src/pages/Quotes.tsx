@@ -916,8 +916,42 @@ export default function Quotes() {
         <div className="glass-card rounded-xl p-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             <div className="lg:col-span-2 space-y-1">
-              <Label className="font-body text-xs">Detalhes</Label>
-              <Textarea value={form.details ?? ""} onChange={(e) => setForm({ ...form, details: e.target.value })} rows={2} className="text-sm" placeholder="Descrição geral da viagem, roteiro resumido..." />
+              <div className="flex items-center gap-1.5">
+                <Label className="font-body text-xs">Detalhes</Label>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const dest = selectedDestinations.length > 0 ? selectedDestinations.join(", ") : form.destination;
+                    const title = form.title;
+                    if (!dest && !title) {
+                      toast({ title: "Preencha o título ou destino antes de gerar com IA", variant: "destructive" });
+                      return;
+                    }
+                    setGeneratingDetails(true);
+                    try {
+                      const { data, error } = await supabase.functions.invoke("generate-quote-details", {
+                        body: { title, destinations: dest },
+                      });
+                      if (error) throw error;
+                      if (data?.error) throw new Error(data.error);
+                      if (data?.text) {
+                        setForm((f: any) => ({ ...f, details: data.text }));
+                        toast({ title: "Texto gerado com sucesso!" });
+                      }
+                    } catch (e: any) {
+                      toast({ title: e.message || "Erro ao gerar texto", variant: "destructive" });
+                    } finally {
+                      setGeneratingDetails(false);
+                    }
+                  }}
+                  disabled={generatingDetails}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 border border-dashed border-accent rounded-md text-accent-foreground hover:bg-accent/10 transition-colors text-[10px] disabled:opacity-50"
+                >
+                  {generatingDetails ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
+                  {generatingDetails ? "Gerando..." : "Gerar com IA"}
+                </button>
+              </div>
+              <Textarea value={form.details ?? ""} onChange={(e) => setForm({ ...form, details: e.target.value })} rows={3} className="text-sm" placeholder="Descrição geral da viagem, roteiro resumido..." />
             </div>
             <div className="space-y-1">
               <Label className="font-body text-xs">Forma de Pagamento</Label>
