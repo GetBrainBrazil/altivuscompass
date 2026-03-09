@@ -546,46 +546,46 @@ export default function Quotes() {
 
           {/* Passageiros & clientes vinculados - fora do grid */}
           {form.client_id && (clientPassengers.length > 0 || linkedClients.length > 0) && (
-            <div className="grid grid-cols-2 lg:grid-cols-6 gap-x-3 gap-y-1">
-              <div className="col-span-2 space-y-1">
-              <Label className="font-body text-xs">Passageiros e Clientes Vinculados</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between h-9 text-sm font-normal">
-                    {(selectedPassengers.length + selectedLinkedClients.length) === 0
-                      ? "Selecionar pessoas..."
-                      : `${selectedPassengers.length + selectedLinkedClients.length} selecionado(s)`}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="Buscar..." className="h-8 text-xs" />
-                    <CommandList>
-                      <CommandEmpty className="py-3 text-xs">Nenhum encontrado.</CommandEmpty>
-                      {clientPassengers.map((p) => (
-                        <CommandItem key={`p-${p.id}`} onSelect={() => togglePassenger(p.id)} className="text-xs cursor-pointer">
-                          <Check className={cn("mr-2 h-3.5 w-3.5", selectedPassengers.includes(p.id) ? "opacity-100" : "opacity-0")} />
-                          <Badge variant="secondary" className="text-[9px] h-4 px-1 shrink-0 mr-1">Passageiro</Badge>
-                          <span className="truncate">{p.full_name}</span>
-                          {p.relationship_type && <span className="ml-auto text-[10px] text-muted-foreground">({RELATIONSHIP_LABELS[p.relationship_type] || p.relationship_type})</span>}
-                        </CommandItem>
-                      ))}
-                      {linkedClients.map((lc: any) => (
-                        <CommandItem key={`lc-${lc.id}`} onSelect={() => toggleLinkedClient(lc.id)} className="text-xs cursor-pointer">
-                          <Check className={cn("mr-2 h-3.5 w-3.5", selectedLinkedClients.includes(lc.id) ? "opacity-100" : "opacity-0")} />
-                          <Badge variant="outline" className="text-[9px] h-4 px-1 shrink-0 mr-1">{RELATIONSHIP_LABELS[lc.relationship_type] || lc.relationship_type}</Badge>
-                          <span className="truncate">{lc.full_name}</span>
-                        </CommandItem>
-                      ))}
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+            <>
+              <div className="grid grid-cols-2 lg:grid-cols-6 gap-x-3 gap-y-1">
+                <div className="col-span-2 space-y-1">
+                  <Label className="font-body text-xs">Passageiros e Clientes Vinculados</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between h-9 text-sm font-normal">
+                        {(selectedPassengers.length + selectedLinkedClients.length) === 0
+                          ? "Selecionar pessoas..."
+                          : `${selectedPassengers.length + selectedLinkedClients.length} selecionado(s)`}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Buscar..." className="h-8 text-xs" />
+                        <CommandList>
+                          <CommandEmpty className="py-3 text-xs">Nenhum encontrado.</CommandEmpty>
+                          {clientPassengers.map((p) => (
+                            <CommandItem key={`p-${p.id}`} onSelect={() => togglePassenger(p.id)} className="text-xs cursor-pointer">
+                              <Check className={cn("mr-2 h-3.5 w-3.5", selectedPassengers.includes(p.id) ? "opacity-100" : "opacity-0")} />
+                              <Badge variant="secondary" className="text-[9px] h-4 px-1 shrink-0 mr-1">Passageiro</Badge>
+                              <span className="truncate">{p.full_name}</span>
+                              {p.relationship_type && <span className="ml-auto text-[10px] text-muted-foreground">({RELATIONSHIP_LABELS[p.relationship_type] || p.relationship_type})</span>}
+                            </CommandItem>
+                          ))}
+                          {linkedClients.map((lc: any) => (
+                            <CommandItem key={`lc-${lc.id}`} onSelect={() => toggleLinkedClient(lc.id)} className="text-xs cursor-pointer">
+                              <Check className={cn("mr-2 h-3.5 w-3.5", selectedLinkedClients.includes(lc.id) ? "opacity-100" : "opacity-0")} />
+                              <Badge variant="outline" className="text-[9px] h-4 px-1 shrink-0 mr-1">{RELATIONSHIP_LABELS[lc.relationship_type] || lc.relationship_type}</Badge>
+                              <span className="truncate">{lc.full_name}</span>
+                            </CommandItem>
+                          ))}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
-            </div>
 
-              {/* Lista dos selecionados */}
               {(selectedPassengers.length > 0 || selectedLinkedClients.length > 0) && (
                 <div className="flex flex-wrap gap-1.5">
                   {selectedPassengers.map((pid) => {
@@ -616,7 +616,7 @@ export default function Quotes() {
                   })}
                 </div>
               )}
-            
+            </>
           )}
         </div>
 
