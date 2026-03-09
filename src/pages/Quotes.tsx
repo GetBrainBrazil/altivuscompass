@@ -402,6 +402,7 @@ export default function Quotes() {
       travel_date_end: q.travel_date_end ?? "",
       notes: q.notes ?? "",
     });
+    setSelectedDestinations(q.destination ? q.destination.split(", ").filter(Boolean) : []);
     setCoverFile(null);
     setCoverPreview(q.cover_image_url || null);
     setActiveTab("flight");
