@@ -19,6 +19,7 @@ import ResetPassword from "./pages/ResetPassword";
 import UserManagement from "./pages/UserManagement";
 import Permissions from "./pages/Permissions";
 import Registrations from "./pages/Registrations";
+import Sales from "./pages/Sales";
 import MyProfile from "./pages/MyProfile";
 import System from "./pages/System";
 import NotFound from "./pages/NotFound";
