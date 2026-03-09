@@ -78,6 +78,16 @@ export default function Tasks() {
     },
   });
 
+  const { data: reminders = [] } = useQuery({
+    queryKey: ["task-reminders", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data } = await supabase.from("task_reminders").select("*").eq("user_id", user.id);
+      return data ?? [];
+    },
+    enabled: !!user?.id,
+  });
+
   const { data: profiles = [] } = useQuery({
     queryKey: ["profiles-list"],
     queryFn: async () => {
@@ -135,23 +145,45 @@ export default function Tasks() {
     },
   });
 
-  const addReminderMutation = useMutation({
-    mutationFn: async ({ taskId, remindAt }: { taskId: string; remindAt: string }) => {
-      const { error } = await supabase.from("task_reminders").insert({
-        task_id: taskId,
-        user_id: user!.id,
-        remind_at: remindAt,
-      });
-      if (error) throw error;
+  const saveReminderMutation = useMutation({
+    mutationFn: async ({ taskId, remindAt, existingId }: { taskId: string; remindAt: string; existingId?: string }) => {
+      if (existingId) {
+        const { error } = await supabase.from("task_reminders").update({ remind_at: remindAt }).eq("id", existingId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("task_reminders").insert({
+          task_id: taskId,
+          user_id: user!.id,
+          remind_at: remindAt,
+        });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["task-reminders"] });
-      toast({ title: "Lembrete adicionado" });
+      toast({ title: "Lembrete salvo" });
       setReminderDialogOpen(false);
       setReminderDate(undefined);
+      setReminderTime("09:00");
     },
-    onError: () => toast({ title: "Erro ao adicionar lembrete", variant: "destructive" }),
+    onError: () => toast({ title: "Erro ao salvar lembrete", variant: "destructive" }),
   });
+
+  const getTaskReminder = (taskId: string) => reminders.find((r: any) => r.task_id === taskId);
+
+  const openReminderDialog = (task: any) => {
+    setReminderTask(task);
+    const existing = getTaskReminder(task.id);
+    if (existing) {
+      const d = new Date(existing.remind_at);
+      setReminderDate(d);
+      setReminderTime(format(d, "HH:mm"));
+    } else {
+      setReminderDate(undefined);
+      setReminderTime("09:00");
+    }
+    setReminderDialogOpen(true);
+  };
 
   const closeDialog = () => {
     setDialogOpen(false);
@@ -442,13 +474,18 @@ export default function Tasks() {
                       )}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => { setReminderTask(task); setReminderDialogOpen(true); }}
-                        className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                        title="Adicionar lembrete"
-                      >
-                        <Bell size={14} />
-                      </button>
+                      {(() => {
+                        const hasReminder = !!getTaskReminder(task.id);
+                        return (
+                          <button
+                            onClick={() => openReminderDialog(task)}
+                            className={cn("p-1.5 rounded-md hover:bg-muted transition-colors", hasReminder ? "text-foreground" : "text-muted-foreground hover:text-foreground")}
+                            title={hasReminder ? "Editar lembrete" : "Adicionar lembrete"}
+                          >
+                            {hasReminder ? <Bell size={14} className="fill-current" /> : <Bell size={14} />}
+                          </button>
+                        );
+                      })()}
                     </TableCell>
                   </TableRow>
                 );
@@ -565,7 +602,7 @@ export default function Tasks() {
       <Dialog open={reminderDialogOpen} onOpenChange={setReminderDialogOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="font-display">Adicionar Lembrete</DialogTitle>
+            <DialogTitle className="font-display">{getTaskReminder(reminderTask?.id) ? "Editar Lembrete" : "Adicionar Lembrete"}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground font-body">
             Tarefa: <strong>{reminderTask?.title}</strong>
@@ -593,14 +630,14 @@ export default function Tasks() {
           <DialogFooter>
             <Button variant="outline" onClick={() => { setReminderDialogOpen(false); setReminderTime("09:00"); }}>Cancelar</Button>
             <Button
-              disabled={!reminderDate || addReminderMutation.isPending}
+              disabled={!reminderDate || saveReminderMutation.isPending}
               onClick={() => {
                 if (reminderDate && reminderTask) {
                   const [hours, minutes] = reminderTime.split(":").map(Number);
                   const dateWithTime = new Date(reminderDate);
                   dateWithTime.setHours(hours, minutes, 0, 0);
-                  addReminderMutation.mutate({ taskId: reminderTask.id, remindAt: dateWithTime.toISOString() });
-                  setReminderTime("09:00");
+                  const existing = getTaskReminder(reminderTask.id);
+                  saveReminderMutation.mutate({ taskId: reminderTask.id, remindAt: dateWithTime.toISOString(), existingId: existing?.id });
                 }
               }}
             >
