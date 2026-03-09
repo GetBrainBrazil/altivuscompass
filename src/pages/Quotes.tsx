@@ -904,6 +904,7 @@ export default function Quotes() {
                         <Badge key="self-client" className="text-xs gap-1 pr-1 bg-primary/20 text-primary border-primary/30">
                           {selectedClient.full_name}
                           <span className="text-[9px]">(Cliente)</span>
+                          {renderPrefsTooltip(selectedClient)}
                           <button type="button" onClick={() => setClientSelfTraveling(false)} className="ml-0.5 hover:text-destructive transition-colors"><X className="w-3 h-3" /></button>
                         </Badge>
                       );
