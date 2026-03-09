@@ -136,9 +136,9 @@ export default function Dashboard() {
             {quotes.map((quote: any) => {
               const stage = stageLabels[quote.stage] ?? stageLabels.new;
               return (
-                <div key={quote.id} className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 hover:bg-muted/30 transition-colors">
+              <Link key={quote.id} to="/quotes" className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 hover:bg-muted/30 transition-colors cursor-pointer">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground font-body truncate">{quote.clients?.full_name ?? "Sem cliente"}</p>
+                    <p className="text-sm font-medium text-foreground font-body truncate">{quote.title || quote.clients?.full_name || "Sem cliente"}</p>
                     <p className="text-xs text-muted-foreground font-body">{quote.destination ?? "Sem destino"}</p>
                   </div>
                   <div className="flex items-center gap-2 sm:gap-4">
@@ -147,7 +147,7 @@ export default function Dashboard() {
                       {quote.total_value ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(quote.total_value) : "—"}
                     </span>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
