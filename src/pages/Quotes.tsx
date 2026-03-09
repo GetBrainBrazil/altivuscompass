@@ -1021,7 +1021,7 @@ export default function Quotes() {
                 <TableBody>
                   {sortedQuotes.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center p-8 text-muted-foreground font-body">Nenhuma cotação encontrada.</TableCell>
+                      <TableCell colSpan={6} className="text-center p-8 text-muted-foreground font-body">Nenhuma cotação encontrada.</TableCell>
                     </TableRow>
                   ) : (
                     sortedQuotes.map((quote: Quote) => {
