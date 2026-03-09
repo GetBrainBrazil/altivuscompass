@@ -514,7 +514,7 @@ export default function FinancialReports() {
 
           <div className="glass-card rounded-xl overflow-hidden">
             <div className="p-4 sm:p-5 border-b border-border/50">
-              <h3 className="font-display text-base font-semibold">Demonstração do Resultado do Exercício — {year}</h3>
+              <h3 className="font-display text-base font-semibold">Demonstração do Resultado do Exercício — {periodLabel}</h3>
             </div>
             <div className="divide-y divide-border/30">
               {/* Revenue Section */}
