@@ -1012,11 +1012,11 @@ export default function Quotes() {
                     <TableHead className="cursor-pointer font-body" onClick={() => handleSort("stage")}>
                       Estágio {getSortIcon("stage")}
                     </TableHead>
-                    <TableHead className="cursor-pointer font-body" onClick={() => handleSort("total_value")}>
-                      Valor {getSortIcon("total_value")}
-                    </TableHead>
-                    
-                  </TableRow>
+                     <TableHead className="cursor-pointer font-body" onClick={() => handleSort("total_value")}>
+                       Valor {getSortIcon("total_value")}
+                     </TableHead>
+                     <TableHead className="font-body w-10"></TableHead>
+                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sortedQuotes.length === 0 ? (
