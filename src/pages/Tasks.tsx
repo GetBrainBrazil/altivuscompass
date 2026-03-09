@@ -48,8 +48,8 @@ export default function Tasks() {
     description: "",
     priority: "medium",
     assigned_to: "",
-    quote_id: "",
-    client_id: "",
+    quote_id: "none",
+    client_id: "none",
     due_date: null as Date | null,
     start_date: new Date(),
   });
