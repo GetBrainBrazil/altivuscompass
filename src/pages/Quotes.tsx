@@ -523,6 +523,7 @@ export default function Quotes() {
                 </Popover>
               </div>
             )}
+          </div>
         </div>
 
         {/* Details card */}
