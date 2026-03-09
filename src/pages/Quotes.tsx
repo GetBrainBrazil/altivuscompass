@@ -756,7 +756,7 @@ export default function Quotes() {
           </div>
 
           {/* Row 2: Datas / Data Flexível, Destinos */}
-          <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-3">
+          <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-3 items-start">
             {/* Data Flexível toggle */}
             <div className="col-span-1 lg:col-span-1 space-y-1">
               <Label className="font-body text-xs whitespace-nowrap">Flexível</Label>
