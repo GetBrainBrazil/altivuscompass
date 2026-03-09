@@ -306,11 +306,11 @@ export default function PublicQuote() {
               {quote.client_name && (
                 <p className="text-muted-foreground font-body text-sm">
                   {t.client}: <span className="text-foreground font-semibold">{quote.client_name}</span>
-                </p>
-              )}
-              {quote.travel_date_start && (
-                <p className="text-sm text-muted-foreground font-body">
-                  📅 {quote.travel_date_start}{quote.travel_date_end ? ` – ${quote.travel_date_end}` : ""}
+                  {quote.travel_date_start && (
+                    <span className="ml-3 text-muted-foreground">
+                      {quote.travel_date_start.split("-").reverse().join("/")}{quote.travel_date_end ? ` – ${quote.travel_date_end.split("-").reverse().join("/")}` : ""}
+                    </span>
+                  )}
                 </p>
               )}
             </div>
