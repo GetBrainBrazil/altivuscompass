@@ -567,7 +567,7 @@ export default function Quotes() {
     const itemCount = (type: string) => items.filter(i => i.item_type === type).length;
 
     return (
-      <div className="max-w-full mx-auto space-y-4">
+      <>
         {/* Header + Stepper */}
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={closeDialog} className="shrink-0 h-8 w-8">
