@@ -174,6 +174,95 @@ export default function Quotes() {
     return sortDir === "asc" ? <ArrowUp className="ml-2 h-4 w-4 inline-block" /> : <ArrowDown className="ml-2 h-4 w-4 inline-block" />;
   };
 
+  if (dialogOpen) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={closeDialog} className="shrink-0">
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-2xl font-display font-semibold text-foreground">
+            {editingQuote ? "Editar Cotação" : "Nova Cotação"}
+          </h1>
+        </div>
+        <div className="glass-card rounded-xl p-6">
+          <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2 space-y-2">
+                <Label className="font-body">Cliente</Label>
+                <Select value={form.client_id ?? ""} onValueChange={(v) => setForm({ ...form, client_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecionar cliente" /></SelectTrigger>
+                  <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="font-body">Destino</Label>
+                <Input value={form.destination ?? ""} onChange={(e) => setForm({ ...form, destination: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label className="font-body">Cidade de saída</Label>
+                <Input value={form.departure_city ?? ""} onChange={(e) => setForm({ ...form, departure_city: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label className="font-body">Aeroporto de saída</Label>
+                <Input value={form.departure_airport ?? ""} onChange={(e) => setForm({ ...form, departure_airport: e.target.value })} placeholder="GRU" />
+              </div>
+              <div className="space-y-2">
+                <Label className="font-body">Valor total (R$)</Label>
+                <Input type="number" step="0.01" value={form.total_value ?? ""} onChange={(e) => setForm({ ...form, total_value: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label className="font-body">Data ida</Label>
+                <Input type="date" value={form.travel_date_start ?? ""} onChange={(e) => setForm({ ...form, travel_date_start: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label className="font-body">Data volta</Label>
+                <Input type="date" value={form.travel_date_end ?? ""} onChange={(e) => setForm({ ...form, travel_date_end: e.target.value })} />
+              </div>
+              <div className={`space-y-2 ${form.stage === "confirmed" ? "" : "sm:col-span-2"}`}>
+                <Label className="font-body">Estágio</Label>
+                <Select value={form.stage ?? "new"} onValueChange={(v) => setForm({ ...form, stage: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{stages.map((s) => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              {form.stage === "confirmed" && (
+                <div className="space-y-2">
+                  <Label className="font-body">Resultado</Label>
+                  <Select value={form.conclusion_type ?? "won"} onValueChange={(v) => setForm({ ...form, conclusion_type: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="won">Convertida em venda</SelectItem>
+                      <SelectItem value="lost">Perdida</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className="sm:col-span-2 space-y-2">
+                <Label className="font-body">Opções de aéreas</Label>
+                <Textarea value={form.airline_options ?? ""} onChange={(e) => setForm({ ...form, airline_options: e.target.value })} rows={2} />
+              </div>
+              <div className="sm:col-span-2 space-y-2">
+                <Label className="font-body">Opções de hotel</Label>
+                <Textarea value={form.hotel_options ?? ""} onChange={(e) => setForm({ ...form, hotel_options: e.target.value })} rows={2} />
+              </div>
+              <div className="sm:col-span-2 space-y-2">
+                <Label className="font-body">Observações</Label>
+                <Textarea value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end pt-2">
+              <Button type="button" variant="outline" onClick={closeDialog} className="font-body">Cancelar</Button>
+              <Button type="submit" disabled={saveMutation.isPending} className="font-body">
+                {saveMutation.isPending ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-full mx-auto space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
@@ -190,91 +279,10 @@ export default function Quotes() {
               <TableIcon className="w-4 h-4" />
             </button>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={openCreate} className="font-body">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
-                Nova Cotação
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle className="font-display">{editingQuote ? "Editar Cotação" : "Nova Cotação"}</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="sm:col-span-2 space-y-2">
-                    <Label className="font-body">Cliente</Label>
-                    <Select value={form.client_id ?? ""} onValueChange={(v) => setForm({ ...form, client_id: v })}>
-                      <SelectTrigger><SelectValue placeholder="Selecionar cliente" /></SelectTrigger>
-                      <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-body">Destino</Label>
-                    <Input value={form.destination ?? ""} onChange={(e) => setForm({ ...form, destination: e.target.value })} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-body">Cidade de saída</Label>
-                    <Input value={form.departure_city ?? ""} onChange={(e) => setForm({ ...form, departure_city: e.target.value })} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-body">Aeroporto de saída</Label>
-                    <Input value={form.departure_airport ?? ""} onChange={(e) => setForm({ ...form, departure_airport: e.target.value })} placeholder="GRU" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-body">Valor total (R$)</Label>
-                    <Input type="number" step="0.01" value={form.total_value ?? ""} onChange={(e) => setForm({ ...form, total_value: e.target.value })} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-body">Data ida</Label>
-                    <Input type="date" value={form.travel_date_start ?? ""} onChange={(e) => setForm({ ...form, travel_date_start: e.target.value })} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-body">Data volta</Label>
-                    <Input type="date" value={form.travel_date_end ?? ""} onChange={(e) => setForm({ ...form, travel_date_end: e.target.value })} />
-                  </div>
-                  <div className={`space-y-2 ${form.stage === "confirmed" ? "" : "sm:col-span-2"}`}>
-                    <Label className="font-body">Estágio</Label>
-                    <Select value={form.stage ?? "new"} onValueChange={(v) => setForm({ ...form, stage: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{stages.map((s) => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  {form.stage === "confirmed" && (
-                    <div className="space-y-2">
-                      <Label className="font-body">Resultado</Label>
-                      <Select value={form.conclusion_type ?? "won"} onValueChange={(v) => setForm({ ...form, conclusion_type: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="won">Convertida em venda</SelectItem>
-                          <SelectItem value="lost">Perdida</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                  <div className="sm:col-span-2 space-y-2">
-                    <Label className="font-body">Opções de aéreas</Label>
-                    <Textarea value={form.airline_options ?? ""} onChange={(e) => setForm({ ...form, airline_options: e.target.value })} rows={2} />
-                  </div>
-                  <div className="sm:col-span-2 space-y-2">
-                    <Label className="font-body">Opções de hotel</Label>
-                    <Textarea value={form.hotel_options ?? ""} onChange={(e) => setForm({ ...form, hotel_options: e.target.value })} rows={2} />
-                  </div>
-                  <div className="sm:col-span-2 space-y-2">
-                    <Label className="font-body">Observações</Label>
-                    <Textarea value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
-                  </div>
-                </div>
-                <div className="flex gap-2 justify-end">
-                  <Button type="button" variant="outline" onClick={closeDialog} className="font-body">Cancelar</Button>
-                  <Button type="submit" disabled={saveMutation.isPending} className="font-body">
-                    {saveMutation.isPending ? "Salvando..." : "Salvar"}
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={openCreate} className="font-body">
+            <Plus className="w-4 h-4" />
+            Nova Cotação
+          </Button>
         </div>
       </div>
 
