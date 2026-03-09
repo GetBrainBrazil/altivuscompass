@@ -181,7 +181,7 @@ export default function Sales() {
                           <p className="text-[10px] text-muted-foreground font-body mb-2">Bilhete: {sale.ticket_number}</p>
                         )}
                         <div className="text-[10px] text-muted-foreground font-body">
-                          <span>{sale.travel_date_start ?? ""} {sale.travel_date_end ? `– ${sale.travel_date_end}` : ""}</span>
+                          <span>{sale.travel_date_start ? sale.travel_date_start.split("-").reverse().join("/") : ""} {sale.travel_date_end ? `– ${sale.travel_date_end.split("-").reverse().join("/")}` : ""}</span>
                         </div>
                       </div>
                     ))}
