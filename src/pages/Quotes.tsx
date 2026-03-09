@@ -226,7 +226,12 @@ export default function Quotes() {
   useEffect(() => {
     if (editingQuote) {
       supabase.from("quote_items").select("*").eq("quote_id", editingQuote.id).order("sort_order").then(({ data }) => {
-        setItems((data ?? []).map((i: any) => ({ ...i, details: i.details ?? {} })));
+        const loadedItems = (data ?? []).map((i: any) => ({ ...i, details: i.details ?? {} }));
+        setItems(loadedItems);
+        // Collapse all flight items by default
+        const flightIndices = new Set<number>();
+        loadedItems.forEach((it: any, idx: number) => { if (it.item_type === "flight") flightIndices.add(idx); });
+        setCollapsedFlights(flightIndices);
       });
       supabase.from("quote_passengers").select("passenger_id").eq("quote_id", editingQuote.id).then(({ data }) => {
         setSelectedPassengers((data ?? []).map((p: any) => p.passenger_id));
