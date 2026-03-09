@@ -474,13 +474,18 @@ export default function Tasks() {
                       )}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => { setReminderTask(task); setReminderDialogOpen(true); }}
-                        className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                        title="Adicionar lembrete"
-                      >
-                        <Bell size={14} />
-                      </button>
+                      {(() => {
+                        const hasReminder = !!getTaskReminder(task.id);
+                        return (
+                          <button
+                            onClick={() => openReminderDialog(task)}
+                            className={cn("p-1.5 rounded-md hover:bg-muted transition-colors", hasReminder ? "text-foreground" : "text-muted-foreground hover:text-foreground")}
+                            title={hasReminder ? "Editar lembrete" : "Adicionar lembrete"}
+                          >
+                            {hasReminder ? <Bell size={14} className="fill-current" /> : <Bell size={14} />}
+                          </button>
+                        );
+                      })()}
                     </TableCell>
                   </TableRow>
                 );
