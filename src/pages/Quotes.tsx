@@ -959,7 +959,14 @@ export default function Quotes() {
 
         {/* Tabs for items */}
         <div className="glass-card rounded-xl p-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={(v) => {
+            setActiveTab(v);
+            if (v === "flight") {
+              const flightIndices = new Set<number>();
+              items.forEach((it, idx) => { if (it.item_type === "flight") flightIndices.add(idx); });
+              setCollapsedFlights(flightIndices);
+            }
+          }}>
             <TabsList className="flex flex-wrap h-auto gap-0.5 bg-muted p-0.5 w-full justify-start">
               {editingQuote && (
                 <TabsTrigger value="history" className="flex items-center gap-1 text-[11px] px-2 py-1 bg-primary/15 text-primary border border-primary/30 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary">
