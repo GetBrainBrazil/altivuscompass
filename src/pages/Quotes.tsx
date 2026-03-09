@@ -93,6 +93,7 @@ export default function Quotes() {
   const [generatingDetails, setGeneratingDetails] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [destOpen, setDestOpen] = useState(false);
+  const [collapsedFlights, setCollapsedFlights] = useState<Set<number>>(new Set());
   const [coverZoom, setCoverZoom] = useState(false);
   const [draggedQuoteId, setDraggedQuoteId] = useState<string | null>(null);
   const { data: quotes = [], isLoading } = useQuery({
