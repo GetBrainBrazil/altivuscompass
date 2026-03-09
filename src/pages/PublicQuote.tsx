@@ -155,18 +155,18 @@ export default function PublicQuote() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground font-body animate-pulse">{t.loading}</p>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <p className="text-gray-500 font-body animate-pulse">{t.loading}</p>
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center space-y-2">
-          <p className="text-lg font-semibold text-foreground font-display">{error || t.error}</p>
-          <p className="text-sm text-muted-foreground font-body">{t.checkLink}</p>
+          <p className="text-lg font-semibold text-gray-900 font-display">{error || t.error}</p>
+          <p className="text-sm text-gray-500 font-body">{t.checkLink}</p>
         </div>
       </div>
     );
