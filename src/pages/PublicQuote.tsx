@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map } from "lucide-react";
-import logoAltivus from "@/assets/logo-altivus.png";
+import { Button } from "@/components/ui/button";
+import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Copy, Printer } from "lucide-react";
+import logoAltivusFallback from "@/assets/logo-altivus.png";
 
 const ITEM_TYPE_META: Record<string, { label: string; icon: any }> = {
   flight: { label: "Voos", icon: Plane },
@@ -16,20 +17,22 @@ const ITEM_TYPE_META: Record<string, { label: string; icon: any }> = {
   map: { label: "Mapa", icon: Map },
 };
 
-const STAGE_LABELS: Record<string, string> = {
-  new: "Nova Cotação",
-  sent: "Cotação Enviada",
-  negotiation: "Negociação",
-  confirmed: "Concluída",
-  issued: "Emitida",
-  completed: "Finalizada",
-  post_sale: "Pós-Venda",
+type AgencyData = {
+  name: string;
+  cnpj: string;
+  phone: string;
+  email: string;
+  instagram: string;
+  website: string;
+  logo_url: string;
+  address: string;
 };
 
 type QuoteData = {
   quote: any;
   items: any[];
   passengers: { full_name: string; relationship_type: string | null }[];
+  agency: AgencyData | null;
 };
 
 export default function PublicQuote() {
@@ -37,6 +40,7 @@ export default function PublicQuote() {
   const [data, setData] = useState<QuoteData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -81,7 +85,7 @@ export default function PublicQuote() {
     );
   }
 
-  const { quote, items, passengers } = data;
+  const { quote, items, passengers, agency } = data;
   const formatCurrency = (v: number | null) =>
     v != null ? v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—";
 
@@ -91,46 +95,118 @@ export default function PublicQuote() {
     return acc;
   }, {});
 
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const agencyLogo = agency?.logo_url || logoAltivusFallback;
+  const agencyName = agency?.name || "Altivus Turismo";
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      {/* Top toolbar - hidden on print */}
+      <div className="print:hidden border-b border-border bg-card">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2 flex items-center gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs" onClick={handleCopyLink}>
+            <Copy className="w-3.5 h-3.5" />
+            {copied ? "Copiado!" : "Copiar link"}
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs" onClick={handlePrint}>
+            <Printer className="w-3.5 h-3.5" />
+            Imprimir/PDF
+          </Button>
+        </div>
+      </div>
+
+      {/* Header - like the reference: logo left, title center, agency info right */}
       <header className="border-b border-border bg-card">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <img src={logoAltivus} alt="Altivus" className="h-8" />
-          <Badge variant="secondary" className="font-body text-xs">
-            {STAGE_LABELS[quote.stage] || quote.stage}
-          </Badge>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5">
+          <div className="flex items-start justify-between gap-4">
+            {/* Logo */}
+            <div className="flex-shrink-0">
+              <img src={agencyLogo} alt={agencyName} className="h-12 sm:h-14 object-contain" />
+            </div>
+
+            {/* Center: Title */}
+            <div className="flex-1 text-center">
+              <h1 className="text-lg sm:text-xl font-display font-bold text-foreground tracking-wide uppercase">
+                Orçamento de Viagem
+              </h1>
+              <div className="mt-1.5">
+                <Badge variant="outline" className="font-body text-xs px-3 py-0.5 font-medium">
+                  {quote.title || quote.destination || "Cotação"}
+                </Badge>
+              </div>
+            </div>
+
+            {/* Right: Agency info */}
+            <div className="flex-shrink-0 text-right space-y-0.5">
+              {agency?.name && (
+                <p className="text-sm font-semibold text-foreground font-body">{agency.name}</p>
+              )}
+              {agency?.cnpj && (
+                <p className="text-xs text-muted-foreground font-body flex items-center justify-end gap-1">
+                  {agency.cnpj} <span className="text-[10px]">📋</span>
+                </p>
+              )}
+              {agency?.phone && (
+                <p className="text-xs text-muted-foreground font-body flex items-center justify-end gap-1">
+                  {agency.phone} <Phone className="w-3 h-3" />
+                </p>
+              )}
+              {agency?.email && (
+                <p className="text-xs text-muted-foreground font-body flex items-center justify-end gap-1">
+                  {agency.email} <Mail className="w-3 h-3" />
+                </p>
+              )}
+              {agency?.instagram && (
+                <p className="text-xs text-muted-foreground font-body flex items-center justify-end gap-1">
+                  {agency.instagram} <Instagram className="w-3 h-3" />
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-        {/* Cover image */}
-        {quote.cover_image_url && (
-          <div className="rounded-xl overflow-hidden">
-            <img
-              src={quote.cover_image_url}
-              alt="Capa da cotação"
-              className="w-full h-48 sm:h-64 object-cover"
-            />
-          </div>
-        )}
+      {/* Cover image - full width */}
+      {quote.cover_image_url && (
+        <div className="max-w-5xl mx-auto">
+          <img
+            src={quote.cover_image_url}
+            alt="Capa da cotação"
+            className="w-full h-56 sm:h-72 lg:h-80 object-cover"
+          />
+        </div>
+      )}
 
-        {/* Title & basic info */}
-        <div className="space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">
-            {quote.title || quote.destination || "Cotação"}
-          </h1>
-          {quote.client_name && (
-            <p className="text-muted-foreground font-body">
-              Cliente: <span className="text-foreground font-medium">{quote.client_name}</span>
-            </p>
-          )}
-          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground font-body">
-            {quote.travel_date_start && (
-              <span>📅 {quote.travel_date_start}{quote.travel_date_end ? ` – ${quote.travel_date_end}` : ""}</span>
-            )}
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        {/* Client & dates info */}
+        <div className="glass-card rounded-xl p-5 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="space-y-1">
+              {quote.client_name && (
+                <p className="text-muted-foreground font-body text-sm">
+                  Cliente: <span className="text-foreground font-semibold">{quote.client_name}</span>
+                </p>
+              )}
+              {quote.travel_date_start && (
+                <p className="text-sm text-muted-foreground font-body">
+                  📅 {quote.travel_date_start}{quote.travel_date_end ? ` – ${quote.travel_date_end}` : ""}
+                </p>
+              )}
+            </div>
             {quote.total_value != null && quote.total_value > 0 && (
-              <span className="font-semibold text-foreground text-lg">{formatCurrency(quote.total_value)}</span>
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground font-body">Valor Total</p>
+                <p className="text-xl font-display font-bold text-foreground">{formatCurrency(quote.total_value)}</p>
+              </div>
             )}
           </div>
         </div>
@@ -217,11 +293,16 @@ export default function PublicQuote() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-card mt-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 text-center">
+      <footer className="border-t border-border bg-card mt-12 print:mt-4">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 text-center space-y-1">
           <p className="text-xs text-muted-foreground font-body">
-            Cotação gerada por <span className="font-medium text-foreground">Altivus Travel</span>
+            Cotação gerada por <span className="font-medium text-foreground">{agencyName}</span>
           </p>
+          {agency?.phone && (
+            <p className="text-[11px] text-muted-foreground font-body">
+              {agency.phone} • {agency.email}
+            </p>
+          )}
         </div>
       </footer>
     </div>
