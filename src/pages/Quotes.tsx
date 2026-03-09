@@ -935,7 +935,7 @@ export default function Quotes() {
                 </div>
               )}
             </div>
-        </div>
+          </div>
 
         {/* Tabs for items */}
         <div className="glass-card rounded-xl p-4">
