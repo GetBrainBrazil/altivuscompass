@@ -147,6 +147,34 @@ export default function Quotes() {
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
   };
 
+  const sortedQuotes = [...quotes].sort((a: any, b: any) => {
+    if (!sortField) return 0;
+    let aValue = a[sortField];
+    let bValue = b[sortField];
+    
+    if (aValue === bValue) return 0;
+    if (aValue === null || aValue === undefined) return 1;
+    if (bValue === null || bValue === undefined) return -1;
+    
+    const modifier = sortDir === "asc" ? 1 : -1;
+    return aValue > bValue ? modifier : -modifier;
+  });
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      if (sortDir === "asc") setSortDir("desc");
+      else if (sortDir === "desc") { setSortField(null); setSortDir(null); }
+    } else {
+      setSortField(field);
+      setSortDir("asc");
+    }
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sortField !== field) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50 inline-block" />;
+    return sortDir === "asc" ? <ArrowUp className="ml-2 h-4 w-4 inline-block" /> : <ArrowDown className="ml-2 h-4 w-4 inline-block" />;
+  };
+
   return (
     <div className="max-w-full mx-auto space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
