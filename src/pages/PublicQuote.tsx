@@ -226,7 +226,7 @@ export default function PublicQuote() {
                 <SelectValue>
                   {selectedLang && (
                     <span className="flex items-center gap-1.5">
-                      <span className="text-sm">{selectedLang.flag}</span>
+                      <img src={getFlagUrl(selectedLang.countryCode)} alt="" className="w-5 h-auto rounded-[2px]" />
                       <span>{selectedLang.label}</span>
                     </span>
                   )}
@@ -236,7 +236,7 @@ export default function PublicQuote() {
                 {LANG_OPTIONS.map(opt => (
                   <SelectItem key={opt.value} value={opt.value} className="text-xs font-body">
                     <span className="flex items-center gap-2">
-                      <span className="text-sm">{opt.flag}</span>
+                      <img src={getFlagUrl(opt.countryCode)} alt="" className="w-5 h-auto rounded-[2px]" />
                       <span>{opt.label}</span>
                     </span>
                   </SelectItem>
