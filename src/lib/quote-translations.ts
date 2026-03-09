@@ -495,6 +495,7 @@ export function getFlightDirectionLabel(lang: QuoteLang, dir: string): string {
   const map: Record<string, string> = {
     outbound: t.outbound,
     inbound: t.inbound,
+    return: t.inbound,
   };
   return map[dir] || dir;
 }
