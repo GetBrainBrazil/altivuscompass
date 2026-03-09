@@ -420,15 +420,15 @@ export default function Quotes() {
 
         {/* Main fields card */}
         <div className="glass-card rounded-xl p-4 space-y-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-3 gap-y-3">
+          <div className="grid grid-cols-4 lg:grid-cols-8 gap-x-3 gap-y-3">
             {/* Título */}
-            <div className="col-span-2 sm:col-span-2 space-y-1">
+            <div className="col-span-2 space-y-1">
               <Label className="font-body text-xs">Título da Cotação</Label>
               <Input className="h-9 text-sm" value={form.title ?? ""} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex: Viagem Europa - Família Silva" />
             </div>
 
             {/* Cliente */}
-            <div className="col-span-2 sm:col-span-2 space-y-1">
+            <div className="col-span-2 lg:col-span-3 space-y-1">
               <Label className="font-body text-xs">Cliente</Label>
               <Select value={form.client_id ?? ""} onValueChange={(v) => { setForm({ ...form, client_id: v }); setSelectedPassengers([]); setSelectedLinkedClients([]); }}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar cliente" /></SelectTrigger>
@@ -437,7 +437,7 @@ export default function Quotes() {
             </div>
 
             {/* Estágio */}
-            <div className="space-y-1">
+            <div className="col-span-2 lg:col-span-2 space-y-1">
               <Label className="font-body text-xs">Estágio</Label>
               <Select value={form.stage ?? "new"} onValueChange={(v) => setForm({ ...form, stage: v })}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
@@ -446,13 +446,13 @@ export default function Quotes() {
             </div>
 
             {/* Valor */}
-            <div className="space-y-1">
+            <div className="col-span-2 lg:col-span-1 space-y-1">
               <Label className="font-body text-xs">Valor total (R$)</Label>
               <Input className="h-9 text-sm" type="number" step="0.01" value={form.total_value ?? ""} onChange={(e) => setForm({ ...form, total_value: e.target.value })} />
             </div>
 
             {form.stage === "confirmed" && (
-              <div className="space-y-1">
+              <div className="col-span-2 space-y-1">
                 <Label className="font-body text-xs">Resultado</Label>
                 <Select value={form.conclusion_type ?? "won"} onValueChange={(v) => setForm({ ...form, conclusion_type: v })}>
                   <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
@@ -465,7 +465,7 @@ export default function Quotes() {
             )}
 
             {/* Imagem de capa */}
-            <div className="space-y-1">
+            <div className="col-span-2 space-y-1">
               <Label className="font-body text-xs">Imagem de Capa</Label>
               <div className="flex items-center gap-2">
                 {coverPreview ? (
@@ -486,7 +486,7 @@ export default function Quotes() {
 
             {/* Passageiros & clientes vinculados */}
             {form.client_id && (clientPassengers.length > 0 || linkedClients.length > 0) && (
-              <div className="space-y-1">
+              <div className="col-span-2 lg:col-span-6 space-y-1">
                 <Label className="font-body text-xs font-semibold">Passageiros e Clientes Vinculados</Label>
                 <Popover>
                   <PopoverTrigger asChild>
