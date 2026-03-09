@@ -517,13 +517,13 @@ export default function PublicQuote() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-card mt-12 print:mt-4">
+      <footer className="border-t border-gray-200 bg-white mt-12 print:mt-4">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 text-center space-y-1">
-          <p className="text-xs text-muted-foreground font-body">
-            {t.quoteGeneratedBy} <span className="font-medium text-foreground">{agencyName}</span>
+          <p className="text-xs text-gray-500 font-body">
+            {t.quoteGeneratedBy} <span className="font-medium text-gray-900">{agencyName}</span>
           </p>
           {agency?.phone && (
-            <p className="text-[11px] text-muted-foreground font-body">
+            <p className="text-[11px] text-gray-500 font-body">
               {agency.phone} • {agency.email}
             </p>
           )}
