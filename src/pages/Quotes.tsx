@@ -802,10 +802,13 @@ export default function Quotes() {
                 <Input className="h-9 text-sm" value={form.flexible_dates_description ?? ""} onChange={(e) => setForm({ ...form, flexible_dates_description: e.target.value })} placeholder="Ex: Qualquer semana em julho..." />
               </div>
             )}
+          </div>
 
+          {/* Row 3: Viajantes + Destino(s) side by side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-3 gap-y-3 items-start">
             {/* Viajantes (shown when client selected) */}
             {form.client_id && (
-              <div className="col-span-2 lg:col-span-5 space-y-1">
+              <div className="space-y-1">
                 <Label className="font-body text-xs">Viajantes</Label>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -895,7 +898,7 @@ export default function Quotes() {
             )}
 
             {/* Destino(s) */}
-            <div className="col-span-2 lg:col-span-5 space-y-1">
+            <div className="space-y-1">
               <Label className="font-body text-xs">Destino(s)</Label>
               <Popover open={destOpen} onOpenChange={setDestOpen}>
                 <PopoverTrigger asChild>
