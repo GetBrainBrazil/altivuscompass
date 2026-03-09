@@ -497,25 +497,25 @@ export default function PublicQuote() {
 
         {/* Payment terms */}
         {getContent("payment_terms") && (
-          <div className="glass-card rounded-xl p-5 space-y-1">
+          <div className="glass-card rounded-xl p-4 sm:p-5 space-y-1">
             <h2 className="text-sm font-semibold text-foreground font-body">{t.paymentTerms}</h2>
-            <p className="text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("payment_terms")}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("payment_terms")}</p>
           </div>
         )}
 
         {/* Terms */}
         {getContent("terms_conditions") && (
-          <div className="glass-card rounded-xl p-5 space-y-1">
+          <div className="glass-card rounded-xl p-4 sm:p-5 space-y-1">
             <h2 className="text-sm font-semibold text-foreground font-body">{t.termsConditions}</h2>
-            <p className="text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("terms_conditions")}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("terms_conditions")}</p>
           </div>
         )}
 
         {/* Other info */}
         {getContent("other_info") && (
-          <div className="glass-card rounded-xl p-5 space-y-1">
+          <div className="glass-card rounded-xl p-4 sm:p-5 space-y-1">
             <h2 className="text-sm font-semibold text-foreground font-body">{t.otherInfo}</h2>
-            <p className="text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("other_info")}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("other_info")}</p>
           </div>
         )}
       </main>
