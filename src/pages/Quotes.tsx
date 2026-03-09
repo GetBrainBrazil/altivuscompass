@@ -789,7 +789,7 @@ export default function Quotes() {
           {form.client_id && (clientPassengers.length > 0 || linkedClients.length > 0) && (
             <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-3">
               <div className="col-span-2 lg:col-span-5 space-y-1">
-                <Label className="font-body text-xs">Passageiros e Clientes Vinculados</Label>
+                <Label className="font-body text-xs">Viajantes</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-between h-9 text-sm font-normal">
