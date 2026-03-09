@@ -465,7 +465,7 @@ export default function Quotes() {
             )}
 
             {/* Imagem de capa */}
-            <div className="col-span-2 sm:col-span-1 space-y-1">
+            <div className="space-y-1">
               <Label className="font-body text-xs">Imagem de Capa</Label>
               <div className="flex items-center gap-2">
                 {coverPreview ? (
@@ -483,11 +483,9 @@ export default function Quotes() {
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
               </div>
             </div>
-          </div>
 
-          {/* Passageiros & clientes vinculados */}
-          {form.client_id && (clientPassengers.length > 0 || linkedClients.length > 0) && (
-            <div className="space-y-2 pt-3 border-t border-border">
+            {/* Passageiros & clientes vinculados */}
+            {form.client_id && (clientPassengers.length > 0 || linkedClients.length > 0) && (
               <div className="space-y-1">
                 <Label className="font-body text-xs font-semibold">Passageiros e Clientes Vinculados</Label>
                 <Popover>
@@ -524,8 +522,8 @@ export default function Quotes() {
                   </PopoverContent>
                 </Popover>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Details card */}
