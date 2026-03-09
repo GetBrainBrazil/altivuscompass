@@ -385,19 +385,42 @@ export default function PublicQuote() {
                         return (
                           <div key={idx} className="border border-border rounded-lg p-4 space-y-2.5">
                             {/* Route header */}
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {dirLabel && (
-                                <Badge variant="secondary" className="text-[10px] font-body">{dirLabel}</Badge>
-                              )}
-                              <div className="flex items-center gap-1.5 text-sm font-medium text-foreground font-body">
-                                {d.origin && <span>{d.origin}</span>}
-                                {d.origin && d.destination && <Plane className="w-3.5 h-3.5 text-muted-foreground" />}
-                                {d.destination && <span>{d.destination}</span>}
+                            <div className="flex items-start gap-2 flex-wrap">
+                              <div className="flex items-center gap-2 flex-wrap flex-1">
+                                {dirLabel && (
+                                  <Badge variant="secondary" className="text-[10px] font-body">{dirLabel}</Badge>
+                                )}
+                                <div className="flex items-center gap-1.5 text-sm font-medium text-foreground font-body">
+                                  {d.origin && <span>{d.origin}</span>}
+                                  {d.origin && d.destination && <Plane className="w-3.5 h-3.5 text-muted-foreground" />}
+                                  {d.destination && <span>{d.destination}</span>}
+                                </div>
                               </div>
                               {d.airline && (
-                                <span className="text-xs text-muted-foreground font-body ml-auto">
-                                  {d.airline}{d.flight_number ? ` · ${d.flight_number}` : ""}
-                                </span>
+                                <div className="text-right ml-auto space-y-1">
+                                  <span className="text-xs text-muted-foreground font-body block">
+                                    {d.airline}{d.flight_number ? ` (${d.flight_number})` : ""}
+                                  </span>
+                                  {hasBaggage && (
+                                    <div className="flex items-center gap-1.5 justify-end">
+                                      {d.backpack_qty > 0 && (
+                                        <span className="text-[10px] text-muted-foreground font-body flex items-center gap-0.5" title={t.backpack}>
+                                          🎒 {d.backpack_qty}
+                                        </span>
+                                      )}
+                                      {d.carry_on_qty > 0 && (
+                                        <span className="text-[10px] text-muted-foreground font-body flex items-center gap-0.5" title={t.carryOn}>
+                                          👜 {d.carry_on_qty}
+                                        </span>
+                                      )}
+                                      {d.checked_bag_qty > 0 && (
+                                        <span className="text-[10px] text-muted-foreground font-body flex items-center gap-0.5" title={t.checkedBag}>
+                                          🧳 {d.checked_bag_qty}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
                               )}
                             </div>
 
@@ -438,25 +461,12 @@ export default function PublicQuote() {
                                   {getConnectionsLabel(lang, d.connections)}
                                 </Badge>
                               )}
-                              {hasBaggage && (
-                                <Badge variant="outline" className="text-[10px] font-body gap-1">
-                                  🧳 {[
-                                    d.backpack_qty ? `${t.backpack}: ${d.backpack_qty}` : null,
-                                    d.carry_on_qty ? `${t.carryOn}: ${d.carry_on_qty}` : null,
-                                    d.checked_bag_qty ? `${t.checkedBag}: ${d.checked_bag_qty}` : null,
-                                  ].filter(Boolean).join(" · ")}
-                                </Badge>
-                              )}
                             </div>
 
                             {/* Observation */}
                             {d.observation && (
                               <p className="text-[11px] text-muted-foreground font-body italic">{d.observation}</p>
                             )}
-
-                            {/* Title/description fallback */}
-                            {title && <p className="text-xs font-medium text-foreground font-body">{title}</p>}
-                            {description && <p className="text-xs text-muted-foreground font-body">{description}</p>}
                           </div>
                         );
                       }
