@@ -514,47 +514,47 @@ export default function Quotes() {
         </div>
 
         {/* Tabs for items */}
-        <div className="glass-card rounded-xl p-6">
+        <div className="glass-card rounded-xl p-4">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="flex flex-wrap h-auto gap-1 bg-muted p-1 w-full justify-start">
+            <TabsList className="flex flex-wrap h-auto gap-0.5 bg-muted p-0.5 w-full justify-start">
               {ITEM_TYPES.map((type) => {
                 const count = itemCount(type.id);
                 const Icon = type.icon;
                 return (
-                  <TabsTrigger key={type.id} value={type.id} className="flex items-center gap-1.5 text-xs px-3 py-1.5">
-                    <Icon className="w-3.5 h-3.5" />
+                  <TabsTrigger key={type.id} value={type.id} className="flex items-center gap-1 text-[11px] px-2 py-1">
+                    <Icon className="w-3 h-3" />
                     {type.label}
-                    {count > 0 && <Badge variant="secondary" className="text-[10px] h-4 px-1 ml-0.5">{count}</Badge>}
+                    {count > 0 && <Badge variant="secondary" className="text-[9px] h-3.5 px-1 ml-0.5">{count}</Badge>}
                   </TabsTrigger>
                 );
               })}
             </TabsList>
 
             {ITEM_TYPES.map((type) => (
-              <TabsContent key={type.id} value={type.id} className="mt-4 space-y-3">
+              <TabsContent key={type.id} value={type.id} className="mt-3 space-y-2">
                 {itemsForType(type.id).map((item, idx) => {
                   const globalIdx = items.indexOf(item);
                   return (
-                    <div key={globalIdx} className="border border-border rounded-lg p-4 space-y-3 relative">
-                      <button type="button" onClick={() => removeItem(globalIdx)} className="absolute top-3 right-3 text-destructive hover:text-destructive/80 transition-colors">
-                        <Trash2 className="w-4 h-4" />
+                    <div key={globalIdx} className="border border-border rounded-md p-3 relative">
+                      <button type="button" onClick={() => removeItem(globalIdx)} className="absolute top-2.5 right-2.5 text-destructive hover:text-destructive/80 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pr-8">
-                        <div className="space-y-1">
-                          <Label className="text-xs font-body">Título</Label>
-                          <Input value={item.title} onChange={(e) => updateItem(globalIdx, { title: e.target.value })} placeholder={`Nome do ${type.label.toLowerCase()}`} className="h-9 text-sm" />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pr-6">
+                        <div className="space-y-0.5">
+                          <Label className="text-[11px] font-body">Título</Label>
+                          <Input value={item.title} onChange={(e) => updateItem(globalIdx, { title: e.target.value })} placeholder={`Nome do ${type.label.toLowerCase()}`} className="h-8 text-xs" />
                         </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs font-body">Descrição</Label>
-                          <Input value={item.description} onChange={(e) => updateItem(globalIdx, { description: e.target.value })} placeholder="Detalhes adicionais" className="h-9 text-sm" />
+                        <div className="space-y-0.5">
+                          <Label className="text-[11px] font-body">Descrição</Label>
+                          <Input value={item.description} onChange={(e) => updateItem(globalIdx, { description: e.target.value })} placeholder="Detalhes adicionais" className="h-8 text-xs" />
                         </div>
                       </div>
                     </div>
                   );
                 })}
 
-                <Button type="button" variant="outline" size="sm" className="gap-1.5 font-body text-xs" onClick={() => addItem(type.id)}>
-                  <Plus className="w-3.5 h-3.5" /> Adicionar {type.label}
+                <Button type="button" variant="outline" size="sm" className="gap-1 font-body text-xs h-8" onClick={() => addItem(type.id)}>
+                  <Plus className="w-3 h-3" /> Adicionar {type.label}
                 </Button>
               </TabsContent>
             ))}
@@ -562,27 +562,23 @@ export default function Quotes() {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-2 pb-4">
+        <div className="flex items-center justify-between pt-1 pb-3">
           <div>
             {editingQuote && (
-              <Button
-                type="button"
-                variant="ghost"
-                className="text-destructive hover:text-destructive font-body gap-2"
-                onClick={() => { if (confirm("Remover cotação?")) { deleteMutation.mutate(editingQuote.id); closeDialog(); } }}
-              >
-                <Trash2 className="w-4 h-4" /> Excluir Cotação
+              <Button type="button" variant="ghost" size="sm" className="text-destructive hover:text-destructive font-body gap-1.5 text-xs"
+                onClick={() => { if (confirm("Remover cotação?")) { deleteMutation.mutate(editingQuote.id); closeDialog(); } }}>
+                <Trash2 className="w-3.5 h-3.5" /> Excluir Cotação
               </Button>
             )}
           </div>
           <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={closeDialog} className="font-body gap-2">
-              <ArrowLeft className="w-4 h-4" /> Voltar
+            <Button type="button" variant="outline" size="sm" onClick={closeDialog} className="font-body gap-1.5">
+              <ArrowLeft className="w-3.5 h-3.5" /> Voltar
             </Button>
-            <Button type="button" variant="outline" className="font-body" onClick={() => saveQuote(true)}>
+            <Button type="button" variant="outline" size="sm" className="font-body" onClick={() => saveQuote(true)}>
               Salvar e Voltar
             </Button>
-            <Button type="button" className="font-body" onClick={() => saveQuote(false)}>
+            <Button type="button" size="sm" className="font-body" onClick={() => saveQuote(false)}>
               Salvar
             </Button>
           </div>
