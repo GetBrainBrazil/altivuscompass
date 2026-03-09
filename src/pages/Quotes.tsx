@@ -987,7 +987,6 @@ export default function Quotes() {
                                 </PopoverContent>
                               </Popover>
                             </div>
-                            </div>
                             <div className="col-span-3 space-y-0.5">
                               <Label className="text-[11px] font-body">Embarque <span className="text-destructive">*</span></Label>
                               <Input type="date" value={d.departure_date || ""} onChange={(e) => updateDetail("departure_date", e.target.value)} className="h-8 text-xs" />
