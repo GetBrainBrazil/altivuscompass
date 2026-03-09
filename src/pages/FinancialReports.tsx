@@ -589,7 +589,7 @@ export default function FinancialReports() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Cash Flow Chart */}
             <div className="glass-card rounded-xl p-4 sm:p-5 lg:col-span-2">
-              <h3 className="font-display text-sm font-semibold mb-4">Fluxo de Caixa Mensal — {year}</h3>
+              <h3 className="font-display text-sm font-semibold mb-4">Fluxo de Caixa Mensal — {periodLabel}</h3>
               <ResponsiveContainer width="100%" height={320}>
                 <AreaChart data={cashFlowData.monthly}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
