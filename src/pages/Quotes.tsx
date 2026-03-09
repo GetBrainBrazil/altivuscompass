@@ -180,7 +180,7 @@ export default function Quotes() {
     },
   });
 
-
+  const selectedClientId = form.client_id;
   const { data: clientPassengers = [] } = useQuery({
     queryKey: ["client-passengers", selectedClientId],
     enabled: !!selectedClientId,
