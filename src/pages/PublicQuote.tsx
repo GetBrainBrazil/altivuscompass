@@ -251,43 +251,49 @@ export default function PublicQuote() {
 
       {/* Header */}
       <header className="border-b border-border bg-card">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-shrink-0">
-              <img src={agencyLogo} alt={agencyName} className="h-12 sm:h-14 object-contain" />
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-4 sm:py-5">
+          {/* Mobile: stack vertically, Desktop: side by side */}
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+            {/* Top row on mobile: logo + agency info */}
+            <div className="flex items-start justify-between gap-3 sm:contents">
+              <div className="flex-shrink-0">
+                <img src={agencyLogo} alt={agencyName} className="h-10 sm:h-14 object-contain" />
+              </div>
+              {/* Agency info - visible on mobile as compact, desktop as full */}
+              <div className="flex-shrink-0 text-right space-y-0.5 sm:order-3">
+                {agency?.name && <p className="text-xs sm:text-sm font-semibold text-foreground font-body">{agency.name}</p>}
+                {agency?.cnpj && (
+                  <p className="text-[10px] sm:text-xs text-muted-foreground font-body hidden sm:flex items-center justify-end gap-1">
+                    {agency.cnpj} <span className="text-[10px]">📋</span>
+                  </p>
+                )}
+                {agency?.phone && (
+                  <p className="text-[10px] sm:text-xs text-muted-foreground font-body flex items-center justify-end gap-1">
+                    {agency.phone} <Phone className="w-3 h-3" />
+                  </p>
+                )}
+                {agency?.email && (
+                  <p className="text-[10px] sm:text-xs text-muted-foreground font-body hidden sm:flex items-center justify-end gap-1">
+                    {agency.email} <Mail className="w-3 h-3" />
+                  </p>
+                )}
+                {agency?.instagram && (
+                  <p className="text-[10px] sm:text-xs text-muted-foreground font-body hidden sm:flex items-center justify-end gap-1">
+                    {agency.instagram} <Instagram className="w-3 h-3" />
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="flex-1 text-center">
-              <h1 className="text-lg sm:text-xl font-display font-bold text-foreground tracking-wide uppercase">
+            {/* Title centered */}
+            <div className="flex-1 text-center sm:order-2">
+              <h1 className="text-base sm:text-xl font-display font-bold text-foreground tracking-wide uppercase">
                 {t.travelQuote}
               </h1>
-              <div className="mt-1.5">
+              <div className="mt-1">
                 <Badge variant="outline" className="font-body text-xs px-3 py-0.5 font-medium">
                   {quote.title || quote.destination || t.quote}
                 </Badge>
               </div>
-            </div>
-            <div className="flex-shrink-0 text-right space-y-0.5">
-              {agency?.name && <p className="text-sm font-semibold text-foreground font-body">{agency.name}</p>}
-              {agency?.cnpj && (
-                <p className="text-xs text-muted-foreground font-body flex items-center justify-end gap-1">
-                  {agency.cnpj} <span className="text-[10px]">📋</span>
-                </p>
-              )}
-              {agency?.phone && (
-                <p className="text-xs text-muted-foreground font-body flex items-center justify-end gap-1">
-                  {agency.phone} <Phone className="w-3 h-3" />
-                </p>
-              )}
-              {agency?.email && (
-                <p className="text-xs text-muted-foreground font-body flex items-center justify-end gap-1">
-                  {agency.email} <Mail className="w-3 h-3" />
-                </p>
-              )}
-              {agency?.instagram && (
-                <p className="text-xs text-muted-foreground font-body flex items-center justify-end gap-1">
-                  {agency.instagram} <Instagram className="w-3 h-3" />
-                </p>
-              )}
             </div>
           </div>
         </div>
