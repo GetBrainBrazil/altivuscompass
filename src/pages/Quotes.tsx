@@ -326,6 +326,7 @@ export default function Quotes() {
     setForm({});
     setItems([]);
     setSelectedPassengers([]);
+    setSelectedLinkedClients([]);
     setCoverFile(null);
     setCoverPreview(null);
   };
