@@ -79,6 +79,7 @@ export default function Quotes() {
   const [selectedLinkedClients, setSelectedLinkedClients] = useState<string[]>([]);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [generatingCover, setGeneratingCover] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: quotes = [], isLoading } = useQuery({
