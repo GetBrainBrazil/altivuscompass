@@ -88,7 +88,7 @@ export default function Quotes() {
   const [generatingCover, setGeneratingCover] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [destOpen, setDestOpen] = useState(false);
-
+  const [draggedQuoteId, setDraggedQuoteId] = useState<string | null>(null);
   const { data: quotes = [], isLoading } = useQuery({
     queryKey: ["quotes"],
     queryFn: async () => {
