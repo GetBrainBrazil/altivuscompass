@@ -286,32 +286,70 @@ export default function Tasks() {
             ))}
           </SelectContent>
         </Select>
-        <Select value={quoteFilter} onValueChange={setQuoteFilter}>
-          <SelectTrigger className="w-full sm:w-[200px]">
-            <SelectValue placeholder="Cotação" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as Cotações</SelectItem>
-            <SelectItem value="none">Sem cotação</SelectItem>
-            {quotesWithTasks.map((q: any) => (
-              <SelectItem key={q.id} value={q.id}>
-                {q.clients?.full_name ?? "—"} — {q.destination ?? q.title ?? "Sem destino"}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={clientFilter} onValueChange={setClientFilter}>
-          <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Cliente" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os Clientes</SelectItem>
-            <SelectItem value="none">Sem cliente</SelectItem>
-            {clients.map((c: any) => (
-              <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-full sm:w-[220px] justify-between font-normal text-sm">
+              {quoteFilter === "all" ? "Todas as Cotações" : quoteFilter === "none" ? "Sem cotação" : (() => { const q = quotesWithTasks.find((q: any) => q.id === quoteFilter); return q ? `${q.clients?.full_name ?? "—"} — ${q.destination ?? q.title ?? ""}` : "Cotação"; })()}
+              <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[260px] p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Buscar cotação..." />
+              <CommandList>
+                <CommandEmpty>Nenhuma cotação encontrada.</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem onSelect={() => setQuoteFilter("all")}>
+                    <Check className={cn("mr-2 h-3.5 w-3.5", quoteFilter === "all" ? "opacity-100" : "opacity-0")} />
+                    Todas as Cotações
+                  </CommandItem>
+                  <CommandItem onSelect={() => setQuoteFilter("none")}>
+                    <Check className={cn("mr-2 h-3.5 w-3.5", quoteFilter === "none" ? "opacity-100" : "opacity-0")} />
+                    Sem cotação
+                  </CommandItem>
+                  {quotesWithTasks.map((q: any) => (
+                    <CommandItem key={q.id} value={`${q.clients?.full_name ?? ""} ${q.destination ?? q.title ?? ""}`} onSelect={() => setQuoteFilter(q.id)}>
+                      <Check className={cn("mr-2 h-3.5 w-3.5", quoteFilter === q.id ? "opacity-100" : "opacity-0")} />
+                      <span className="truncate">{q.clients?.full_name ?? "—"} — {q.destination ?? q.title ?? "Sem destino"}</span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-full sm:w-[200px] justify-between font-normal text-sm">
+              {clientFilter === "all" ? "Todos os Clientes" : clientFilter === "none" ? "Sem cliente" : (clients.find((c: any) => c.id === clientFilter)?.full_name ?? "Cliente")}
+              <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[240px] p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Buscar cliente..." />
+              <CommandList>
+                <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem onSelect={() => setClientFilter("all")}>
+                    <Check className={cn("mr-2 h-3.5 w-3.5", clientFilter === "all" ? "opacity-100" : "opacity-0")} />
+                    Todos os Clientes
+                  </CommandItem>
+                  <CommandItem onSelect={() => setClientFilter("none")}>
+                    <Check className={cn("mr-2 h-3.5 w-3.5", clientFilter === "none" ? "opacity-100" : "opacity-0")} />
+                    Sem cliente
+                  </CommandItem>
+                  {clients.map((c: any) => (
+                    <CommandItem key={c.id} value={c.full_name} onSelect={() => setClientFilter(c.id)}>
+                      <Check className={cn("mr-2 h-3.5 w-3.5", clientFilter === c.id ? "opacity-100" : "opacity-0")} />
+                      {c.full_name}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
 
       {isLoading ? (
