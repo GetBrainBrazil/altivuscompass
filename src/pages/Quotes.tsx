@@ -911,21 +911,160 @@ export default function Quotes() {
               <TabsContent key={type.id} value={type.id} className="mt-3 space-y-2">
                 {itemsForType(type.id).map((item, idx) => {
                   const globalIdx = items.indexOf(item);
+                  const d = item.details || {};
+                  const updateDetail = (key: string, value: any) => {
+                    updateItem(globalIdx, { details: { ...d, [key]: value } });
+                  };
+
                   return (
                     <div key={globalIdx} className="border border-border rounded-md p-3 relative">
                       <button type="button" onClick={() => removeItem(globalIdx)} className="absolute top-2.5 right-2.5 text-destructive hover:text-destructive/80 transition-colors">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pr-6">
-                        <div className="space-y-0.5">
-                          <Label className="text-[11px] font-body">Título</Label>
-                          <Input value={item.title} onChange={(e) => updateItem(globalIdx, { title: e.target.value })} placeholder={`Nome do ${type.label.toLowerCase()}`} className="h-8 text-xs" />
+
+                      {type.id === "flight" ? (
+                        <div className="space-y-2.5 pr-6">
+                          {/* Row 1: Direction + Origin + Departure date/time */}
+                          <div className="grid grid-cols-12 gap-2">
+                            <div className="col-span-2 space-y-0.5">
+                              <Label className="text-[11px] font-body">Tipo <span className="text-destructive">*</span></Label>
+                              <Select value={d.flight_direction || ""} onValueChange={(v) => updateDetail("flight_direction", v)}>
+                                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="outbound">Ida</SelectItem>
+                                  <SelectItem value="return">Volta</SelectItem>
+                                  <SelectItem value="domestic">Interno</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="col-span-5 space-y-0.5">
+                              <Label className="text-[11px] font-body">Origem <span className="text-destructive">*</span></Label>
+                              <Input value={d.origin || ""} onChange={(e) => updateDetail("origin", e.target.value)} placeholder="Ex: GRU - Guarulhos" className="h-8 text-xs" />
+                            </div>
+                            <div className="col-span-3 space-y-0.5">
+                              <Label className="text-[11px] font-body">Embarque <span className="text-destructive">*</span></Label>
+                              <Input type="date" value={d.departure_date || ""} onChange={(e) => updateDetail("departure_date", e.target.value)} className="h-8 text-xs" />
+                            </div>
+                            <div className="col-span-2 space-y-0.5">
+                              <Label className="text-[11px] font-body">Horário</Label>
+                              <Input type="time" value={d.departure_time || ""} onChange={(e) => updateDetail("departure_time", e.target.value)} className="h-8 text-xs" />
+                            </div>
+                          </div>
+
+                          {/* Row 2: Destination + Arrival date/time */}
+                          <div className="grid grid-cols-12 gap-2">
+                            <div className="col-span-2" />
+                            <div className="col-span-5 space-y-0.5">
+                              <Label className="text-[11px] font-body">Destino <span className="text-destructive">*</span></Label>
+                              <Input value={d.destination || ""} onChange={(e) => updateDetail("destination", e.target.value)} placeholder="Ex: FCO - Roma" className="h-8 text-xs" />
+                            </div>
+                            <div className="col-span-3 space-y-0.5">
+                              <Label className="text-[11px] font-body">Chegada <span className="text-destructive">*</span></Label>
+                              <Input type="date" value={d.arrival_date || ""} onChange={(e) => updateDetail("arrival_date", e.target.value)} className="h-8 text-xs" />
+                            </div>
+                            <div className="col-span-2 space-y-0.5">
+                              <Label className="text-[11px] font-body">Horário</Label>
+                              <Input type="time" value={d.arrival_time || ""} onChange={(e) => updateDetail("arrival_time", e.target.value)} className="h-8 text-xs" />
+                            </div>
+                          </div>
+
+                          {/* Row 3: Duration, Airline, Flight#, Locator, Purchase# */}
+                          <div className="grid grid-cols-12 gap-2">
+                            <div className="col-span-2 space-y-0.5">
+                              <Label className="text-[11px] font-body">Duração</Label>
+                              <Input value={d.duration || ""} onChange={(e) => updateDetail("duration", e.target.value)} placeholder="Ex: 12h30" className="h-8 text-xs" />
+                            </div>
+                            <div className="col-span-3 space-y-0.5">
+                              <Label className="text-[11px] font-body">Companhia</Label>
+                              <Input value={d.airline || ""} onChange={(e) => updateDetail("airline", e.target.value)} placeholder="Ex: LATAM" className="h-8 text-xs" />
+                            </div>
+                            <div className="col-span-2 space-y-0.5">
+                              <Label className="text-[11px] font-body">Nº do Voo</Label>
+                              <Input value={d.flight_number || ""} onChange={(e) => updateDetail("flight_number", e.target.value)} placeholder="Ex: LA8084" className="h-8 text-xs" />
+                            </div>
+                            <div className="col-span-2 space-y-0.5">
+                              <Label className="text-[11px] font-body">Localizador</Label>
+                              <Input value={d.locator || ""} onChange={(e) => updateDetail("locator", e.target.value)} placeholder="" className="h-8 text-xs" />
+                            </div>
+                            <div className="col-span-3 space-y-0.5">
+                              <Label className="text-[11px] font-body">Nº da Compra</Label>
+                              <Input value={d.purchase_number || ""} onChange={(e) => updateDetail("purchase_number", e.target.value)} placeholder="" className="h-8 text-xs" />
+                            </div>
+                          </div>
+
+                          {/* Row 4: Passengers (ADT/CHD/INF), Class, Connections, Check-in notification */}
+                          <div className="grid grid-cols-12 gap-2">
+                            <div className="col-span-2 space-y-0.5">
+                              <Label className="text-[11px] font-body">Classe</Label>
+                              <Select value={d.cabin_class || ""} onValueChange={(v) => updateDetail("cabin_class", v)}>
+                                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="economy">Econômica</SelectItem>
+                                  <SelectItem value="premium_economy">Premium Economy</SelectItem>
+                                  <SelectItem value="business">Executiva</SelectItem>
+                                  <SelectItem value="first">Primeira</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="col-span-2 space-y-0.5">
+                              <Label className="text-[11px] font-body">Conexões</Label>
+                              <Select value={d.connections || ""} onValueChange={(v) => updateDetail("connections", v)}>
+                                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="direct">Voo direto</SelectItem>
+                                  <SelectItem value="1">1 conexão</SelectItem>
+                                  <SelectItem value="2">2 conexões</SelectItem>
+                                  <SelectItem value="3+">3+ conexões</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="col-span-3 space-y-0.5">
+                              <Label className="text-[11px] font-body">Notificação Check-in</Label>
+                              <Select value={d.checkin_notification || ""} onValueChange={(v) => updateDetail("checkin_notification", v)}>
+                                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none">Não notificar</SelectItem>
+                                  <SelectItem value="24h">Notificar 24h antes</SelectItem>
+                                  <SelectItem value="48h">Notificar 48h antes</SelectItem>
+                                  <SelectItem value="72h">Notificar 72h antes</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="col-span-5 space-y-0.5">
+                              <Label className="text-[11px] font-body">Observação</Label>
+                              <Input value={d.observation || ""} onChange={(e) => updateDetail("observation", e.target.value)} placeholder="" className="h-8 text-xs" />
+                            </div>
+                          </div>
+
+                          {/* Row 5: Passenger counts */}
+                          <div className="grid grid-cols-12 gap-2">
+                            <div className="col-span-1 space-y-0.5">
+                              <Label className="text-[11px] font-body text-center block">🧑 ADT</Label>
+                              <Input type="number" min={0} value={d.pax_adults ?? 1} onChange={(e) => updateDetail("pax_adults", parseInt(e.target.value) || 0)} className="h-8 text-xs text-center" />
+                            </div>
+                            <div className="col-span-1 space-y-0.5">
+                              <Label className="text-[11px] font-body text-center block">👶 CHD</Label>
+                              <Input type="number" min={0} value={d.pax_children ?? 0} onChange={(e) => updateDetail("pax_children", parseInt(e.target.value) || 0)} className="h-8 text-xs text-center" />
+                            </div>
+                            <div className="col-span-1 space-y-0.5">
+                              <Label className="text-[11px] font-body text-center block">🍼 INF</Label>
+                              <Input type="number" min={0} value={d.pax_infants ?? 0} onChange={(e) => updateDetail("pax_infants", parseInt(e.target.value) || 0)} className="h-8 text-xs text-center" />
+                            </div>
+                          </div>
                         </div>
-                        <div className="space-y-0.5">
-                          <Label className="text-[11px] font-body">Descrição</Label>
-                          <Input value={item.description} onChange={(e) => updateItem(globalIdx, { description: e.target.value })} placeholder="Detalhes adicionais" className="h-8 text-xs" />
+                      ) : (
+                        /* Generic form for non-flight items */
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pr-6">
+                          <div className="space-y-0.5">
+                            <Label className="text-[11px] font-body">Título</Label>
+                            <Input value={item.title} onChange={(e) => updateItem(globalIdx, { title: e.target.value })} placeholder={`Nome do ${type.label.toLowerCase()}`} className="h-8 text-xs" />
+                          </div>
+                          <div className="space-y-0.5">
+                            <Label className="text-[11px] font-body">Descrição</Label>
+                            <Input value={item.description} onChange={(e) => updateItem(globalIdx, { description: e.target.value })} placeholder="Detalhes adicionais" className="h-8 text-xs" />
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   );
                 })}
