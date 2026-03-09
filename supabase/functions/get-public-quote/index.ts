@@ -54,6 +54,13 @@ Deno.serve(async (req) => {
       .select("*, passengers(full_name, relationship_type)")
       .eq("quote_id", quoteId);
 
+    // Fetch agency settings
+    const { data: agency } = await supabase
+      .from("agency_settings")
+      .select("*")
+      .limit(1)
+      .single();
+
     return new Response(
       JSON.stringify({
         quote: {
@@ -66,6 +73,7 @@ Deno.serve(async (req) => {
           full_name: qp.passengers?.full_name,
           relationship_type: qp.passengers?.relationship_type,
         })),
+        agency: agency ?? null,
       }),
       {
         status: 200,
