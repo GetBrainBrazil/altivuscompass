@@ -43,7 +43,9 @@ export default function Quotes() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
   const [form, setForm] = useState<Record<string, any>>({});
-  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
+  const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
+  const [sortField, setSortField] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc" | null>(null);
 
   const { data: quotes = [], isLoading } = useQuery({
     queryKey: ["quotes"],
