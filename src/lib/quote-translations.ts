@@ -30,7 +30,6 @@ type TranslationKeys = {
   notFound: string;
   checkLink: string;
   error: string;
-  // Item types
   flights: string;
   accommodation: string;
   transport: string;
@@ -40,7 +39,6 @@ type TranslationKeys = {
   otherServices: string;
   dayByDay: string;
   map: string;
-  // Relationships
   spouse: string;
   child: string;
   parent: string;
@@ -49,11 +47,8 @@ type TranslationKeys = {
   sibling: string;
   other: string;
   // Flight details
-  flightDirection: string;
   outbound: string;
   inbound: string;
-  origin: string;
-  destination_label: string;
   departure: string;
   arrival: string;
   duration: string;
@@ -74,6 +69,156 @@ type TranslationKeys = {
   carryOn: string;
   checkedBag: string;
   observation: string;
+};
+
+const flightPt = {
+  outbound: "Ida",
+  inbound: "Volta",
+  departure: "Embarque",
+  arrival: "Chegada",
+  duration: "Duração",
+  airline: "Companhia",
+  flightNumber: "Voo",
+  cabinClass: "Classe",
+  connections: "Conexões",
+  directFlight: "Voo direto",
+  connection1: "1 conexão",
+  connections2: "2 conexões",
+  connections3plus: "3+ conexões",
+  economy: "Econômica",
+  premiumEconomy: "Premium Economy",
+  business: "Executiva",
+  firstClass: "Primeira",
+  baggage: "Bagagem",
+  backpack: "Mochila",
+  carryOn: "Mão",
+  checkedBag: "Despachada",
+  observation: "Observação",
+};
+
+const flightEn = {
+  outbound: "Outbound",
+  inbound: "Return",
+  departure: "Departure",
+  arrival: "Arrival",
+  duration: "Duration",
+  airline: "Airline",
+  flightNumber: "Flight",
+  cabinClass: "Class",
+  connections: "Connections",
+  directFlight: "Direct flight",
+  connection1: "1 connection",
+  connections2: "2 connections",
+  connections3plus: "3+ connections",
+  economy: "Economy",
+  premiumEconomy: "Premium Economy",
+  business: "Business",
+  firstClass: "First",
+  baggage: "Baggage",
+  backpack: "Backpack",
+  carryOn: "Carry-on",
+  checkedBag: "Checked",
+  observation: "Note",
+};
+
+const flightEs = {
+  outbound: "Ida",
+  inbound: "Vuelta",
+  departure: "Salida",
+  arrival: "Llegada",
+  duration: "Duración",
+  airline: "Aerolínea",
+  flightNumber: "Vuelo",
+  cabinClass: "Clase",
+  connections: "Conexiones",
+  directFlight: "Vuelo directo",
+  connection1: "1 conexión",
+  connections2: "2 conexiones",
+  connections3plus: "3+ conexiones",
+  economy: "Económica",
+  premiumEconomy: "Premium Economy",
+  business: "Ejecutiva",
+  firstClass: "Primera",
+  baggage: "Equipaje",
+  backpack: "Mochila",
+  carryOn: "Mano",
+  checkedBag: "Facturado",
+  observation: "Observación",
+};
+
+const flightFr = {
+  outbound: "Aller",
+  inbound: "Retour",
+  departure: "Départ",
+  arrival: "Arrivée",
+  duration: "Durée",
+  airline: "Compagnie",
+  flightNumber: "Vol",
+  cabinClass: "Classe",
+  connections: "Correspondances",
+  directFlight: "Vol direct",
+  connection1: "1 correspondance",
+  connections2: "2 correspondances",
+  connections3plus: "3+ correspondances",
+  economy: "Économique",
+  premiumEconomy: "Premium Economy",
+  business: "Affaires",
+  firstClass: "Première",
+  baggage: "Bagages",
+  backpack: "Sac à dos",
+  carryOn: "Cabine",
+  checkedBag: "Soute",
+  observation: "Observation",
+};
+
+const flightDe = {
+  outbound: "Hinflug",
+  inbound: "Rückflug",
+  departure: "Abflug",
+  arrival: "Ankunft",
+  duration: "Dauer",
+  airline: "Fluggesellschaft",
+  flightNumber: "Flug",
+  cabinClass: "Klasse",
+  connections: "Umsteigen",
+  directFlight: "Direktflug",
+  connection1: "1 Umstieg",
+  connections2: "2 Umstiege",
+  connections3plus: "3+ Umstiege",
+  economy: "Economy",
+  premiumEconomy: "Premium Economy",
+  business: "Business",
+  firstClass: "First",
+  baggage: "Gepäck",
+  backpack: "Rucksack",
+  carryOn: "Handgepäck",
+  checkedBag: "Aufgegeben",
+  observation: "Bemerkung",
+};
+
+const flightIt = {
+  outbound: "Andata",
+  inbound: "Ritorno",
+  departure: "Partenza",
+  arrival: "Arrivo",
+  duration: "Durata",
+  airline: "Compagnia",
+  flightNumber: "Volo",
+  cabinClass: "Classe",
+  connections: "Scali",
+  directFlight: "Volo diretto",
+  connection1: "1 scalo",
+  connections2: "2 scali",
+  connections3plus: "3+ scali",
+  economy: "Economica",
+  premiumEconomy: "Premium Economy",
+  business: "Business",
+  firstClass: "Prima",
+  baggage: "Bagaglio",
+  backpack: "Zaino",
+  carryOn: "Mano",
+  checkedBag: "Stiva",
+  observation: "Osservazione",
 };
 
 const translations: Record<QuoteLang, TranslationKeys> = {
@@ -110,6 +255,7 @@ const translations: Record<QuoteLang, TranslationKeys> = {
     partner: "Sócio(a)",
     sibling: "Irmão/Irmã",
     other: "Outro",
+    ...flightPt,
   },
   en: {
     travelQuote: "Travel Quote",
@@ -144,6 +290,7 @@ const translations: Record<QuoteLang, TranslationKeys> = {
     partner: "Partner",
     sibling: "Sibling",
     other: "Other",
+    ...flightEn,
   },
   es: {
     travelQuote: "Presupuesto de Viaje",
@@ -178,6 +325,7 @@ const translations: Record<QuoteLang, TranslationKeys> = {
     partner: "Socio(a)",
     sibling: "Hermano(a)",
     other: "Otro",
+    ...flightEs,
   },
   fr: {
     travelQuote: "Devis de Voyage",
@@ -212,6 +360,7 @@ const translations: Record<QuoteLang, TranslationKeys> = {
     partner: "Associé(e)",
     sibling: "Frère/Sœur",
     other: "Autre",
+    ...flightFr,
   },
   de: {
     travelQuote: "Reiseangebot",
@@ -246,6 +395,7 @@ const translations: Record<QuoteLang, TranslationKeys> = {
     partner: "Partner(in)",
     sibling: "Geschwister",
     other: "Sonstige",
+    ...flightDe,
   },
   it: {
     travelQuote: "Preventivo di Viaggio",
@@ -280,6 +430,7 @@ const translations: Record<QuoteLang, TranslationKeys> = {
     partner: "Socio/a",
     sibling: "Fratello/Sorella",
     other: "Altro",
+    ...flightIt,
   },
 };
 
@@ -315,4 +466,35 @@ export function getRelationshipLabel(lang: QuoteLang, relType: string): string {
     other: t.other,
   };
   return map[relType] || relType;
+}
+
+export function getCabinClassLabel(lang: QuoteLang, cls: string): string {
+  const t = translations[lang];
+  const map: Record<string, string> = {
+    economy: t.economy,
+    premium_economy: t.premiumEconomy,
+    business: t.business,
+    first: t.firstClass,
+  };
+  return map[cls] || cls;
+}
+
+export function getConnectionsLabel(lang: QuoteLang, conn: string): string {
+  const t = translations[lang];
+  const map: Record<string, string> = {
+    direct: t.directFlight,
+    "1": t.connection1,
+    "2": t.connections2,
+    "3+": t.connections3plus,
+  };
+  return map[conn] || conn;
+}
+
+export function getFlightDirectionLabel(lang: QuoteLang, dir: string): string {
+  const t = translations[lang];
+  const map: Record<string, string> = {
+    outbound: t.outbound,
+    inbound: t.inbound,
+  };
+  return map[dir] || dir;
 }
