@@ -791,17 +791,18 @@ export default function Quotes() {
             </div>
           </div>
 
-          {/* Row 3: Passageiros (shown when client selected) */}
-          {form.client_id && (clientPassengers.length > 0 || linkedClients.length > 0) && (
+          {/* Row 3: Viajantes (shown when client selected) */}
+          {form.client_id && (
             <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-3">
               <div className="col-span-2 lg:col-span-5 space-y-1">
                 <Label className="font-body text-xs">Viajantes</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-between h-9 text-sm font-normal">
-                      {(selectedPassengers.length + selectedLinkedClients.length) === 0
-                        ? "Selecionar pessoas..."
-                        : `${selectedPassengers.length + selectedLinkedClients.length} selecionado(s)`}
+                      {(() => {
+                        const total = (clientSelfTraveling ? 1 : 0) + selectedPassengers.length + selectedLinkedClients.length;
+                        return total === 0 ? "Selecionar viajantes..." : `${total} selecionado(s)`;
+                      })()}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
