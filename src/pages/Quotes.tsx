@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandInput, CommandList, CommandEmpty, CommandItem } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, Map, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy } from "lucide-react";
+import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, Map, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const stages = [
@@ -79,6 +79,7 @@ export default function Quotes() {
   const [selectedLinkedClients, setSelectedLinkedClients] = useState<string[]>([]);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [generatingCover, setGeneratingCover] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: quotes = [], isLoading } = useQuery({
@@ -164,6 +165,42 @@ export default function Quotes() {
     if (error) throw error;
     const { data } = supabase.storage.from("quote-images").getPublicUrl(path);
     return data.publicUrl;
+  };
+
+  const generateCoverWithAI = async () => {
+    const destination = form.destination || form.title;
+    if (!destination) {
+      toast({ title: "Preencha o destino ou título antes de gerar a imagem", variant: "destructive" });
+      return;
+    }
+    setGeneratingCover(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-cover-image", {
+        body: { destination, quoteId: editingQuote?.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const imageUrl = data.base64 || data.imageUrl;
+      if (imageUrl) {
+        setCoverPreview(imageUrl);
+        if (data.imageUrl) {
+          setForm((f: any) => ({ ...f, cover_image_url: data.imageUrl }));
+          setCoverFile(null);
+        } else {
+          // Convert base64 to File for upload
+          const res = await fetch(imageUrl);
+          const blob = await res.blob();
+          const file = new File([blob], "cover-ai.png", { type: "image/png" });
+          setCoverFile(file);
+        }
+        toast({ title: "Imagem gerada com sucesso!" });
+      }
+    } catch (e: any) {
+      console.error("AI cover error:", e);
+      toast({ title: e.message || "Erro ao gerar imagem", variant: "destructive" });
+    } finally {
+      setGeneratingCover(false);
+    }
   };
 
   const saveQuote = async (closeAfter: boolean) => {
@@ -476,9 +513,20 @@ export default function Quotes() {
                     </button>
                   </div>
                 ) : (
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className="h-9 px-3 border border-dashed border-border rounded-md flex items-center gap-1.5 text-muted-foreground hover:border-primary hover:text-primary transition-colors text-xs">
-                    <ImageIcon className="w-3.5 h-3.5" /> Adicionar
-                  </button>
+                  <>
+                    <button type="button" onClick={() => fileInputRef.current?.click()} className="h-9 px-3 border border-dashed border-border rounded-md flex items-center gap-1.5 text-muted-foreground hover:border-primary hover:text-primary transition-colors text-xs">
+                      <ImageIcon className="w-3.5 h-3.5" /> Adicionar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={generateCoverWithAI}
+                      disabled={generatingCover}
+                      className="h-9 px-3 border border-dashed border-accent rounded-md flex items-center gap-1.5 text-accent-foreground hover:bg-accent/10 hover:border-accent transition-colors text-xs disabled:opacity-50"
+                    >
+                      {generatingCover ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+                      {generatingCover ? "Gerando..." : "Gerar com IA"}
+                    </button>
+                  </>
                 )}
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
               </div>
