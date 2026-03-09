@@ -1028,7 +1028,7 @@ export default function Quotes() {
                               {isCollapsed ? <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" /> : <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />}
                               <Plane className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                               <span className="text-xs font-medium text-foreground truncate">{summary}</span>
-                              {d.departure_date && <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{d.departure_date}</span>}
+                              {d.departure_date && <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{d.departure_date.split("-").reverse().join("/")}{d.departure_time ? ` ${d.departure_time}` : ""}</span>}
                               <button type="button" onClick={(e) => { e.stopPropagation(); removeItem(globalIdx); }} className="ml-2 text-destructive hover:text-destructive/80 transition-colors shrink-0">
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
