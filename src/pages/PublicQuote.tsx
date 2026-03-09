@@ -40,7 +40,7 @@ export default function PublicQuote() {
   const [data, setData] = useState<QuoteData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  
 
   useEffect(() => {
     if (!id) return;
