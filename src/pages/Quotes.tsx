@@ -841,8 +841,19 @@ export default function Quotes() {
                     </Command>
                   </PopoverContent>
                 </Popover>
-                {(selectedPassengers.length > 0 || selectedLinkedClients.length > 0) && (
+                {(clientSelfTraveling || selectedPassengers.length > 0 || selectedLinkedClients.length > 0) && (
                   <div className="flex flex-wrap gap-1 pt-1">
+                    {clientSelfTraveling && (() => {
+                      const selectedClient = clients.find((c: any) => c.id === form.client_id);
+                      if (!selectedClient) return null;
+                      return (
+                        <Badge key="self-client" className="text-xs gap-1 pr-1 bg-primary/20 text-primary border-primary/30">
+                          {selectedClient.full_name}
+                          <span className="text-[9px]">(Cliente)</span>
+                          <button type="button" onClick={() => setClientSelfTraveling(false)} className="ml-0.5 hover:text-destructive transition-colors"><X className="w-3 h-3" /></button>
+                        </Badge>
+                      );
+                    })()}
                     {selectedPassengers.map((pid) => {
                       const p = clientPassengers.find((cp) => cp.id === pid);
                       if (!p) return null;
