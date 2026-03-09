@@ -100,6 +100,7 @@ export default function FinancialReports() {
   const [customEnd, setCustomEnd] = useState<Date | undefined>();
   const [budgetRows, setBudgetRows] = useState<BudgetRow[]>([]);
   const [budgetInitialized, setBudgetInitialized] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<string>("all");
 
   const periodDates = useMemo(() => {
     if (periodPreset === "custom") {
@@ -146,17 +147,28 @@ export default function FinancialReports() {
     },
   });
 
-  // Filter by period
+  const accountOptions = useMemo(() => {
+    const opts: { value: string; label: string }[] = [{ value: "all", label: "Todas as Contas" }];
+    bankAccounts.forEach((a: any) => opts.push({ value: a.id, label: a.bank_name }));
+    const hasVirtual = transactions.some((t) => t.payment_account === "virtual");
+    if (hasVirtual) opts.push({ value: "virtual", label: "Conta Virtual" });
+    return opts;
+  }, [bankAccounts, transactions]);
+
+  // Filter by period and account
   const filteredTx = useMemo(() => {
     const { start, end } = periodDates;
-    if (!start && !end) return transactions;
     return transactions.filter((t) => {
       const d = new Date(t.date + "T00:00:00");
       if (start && d < start) return false;
       if (end && d > end) return false;
+      if (selectedAccount !== "all") {
+        const acc = t.payment_account ?? "unassigned";
+        if (acc !== selectedAccount) return false;
+      }
       return true;
     });
-  }, [transactions, periodDates]);
+  }, [transactions, periodDates, selectedAccount]);
 
   // Get the distinct months in the filtered period for charts
   const periodMonthKeys = useMemo(() => {
@@ -370,6 +382,16 @@ export default function FinancialReports() {
           <p className="text-muted-foreground font-body mt-1 text-sm">Análise gerencial, DRE, fluxo de caixa e orçamento.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Select value={selectedAccount} onValueChange={setSelectedAccount}>
+            <SelectTrigger className="w-48 h-9 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {accountOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={periodPreset} onValueChange={(v) => setPeriodPreset(v as PeriodPreset)}>
             <SelectTrigger className="w-44 h-9 text-sm">
               <SelectValue />
