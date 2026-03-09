@@ -174,9 +174,13 @@ export default function Quotes() {
     return sortDir === "asc" ? <ArrowUp className="ml-2 h-4 w-4 inline-block" /> : <ArrowDown className="ml-2 h-4 w-4 inline-block" />;
   };
 
+  const handleSaveAndBack = () => {
+    saveMutation.mutate();
+  };
+
   if (dialogOpen) {
     return (
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-full mx-auto space-y-6">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={closeDialog} className="shrink-0">
             <ArrowLeft className="w-5 h-5" />
@@ -185,9 +189,11 @@ export default function Quotes() {
             {editingQuote ? "Editar Cotação" : "Nova Cotação"}
           </h1>
         </div>
-        <div className="glass-card rounded-xl p-6">
-          <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        {/* Top card - main fields */}
+        <form id="quote-form" onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }}>
+          <div className="glass-card rounded-xl p-6 space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="sm:col-span-2 space-y-2">
                 <Label className="font-body">Cliente</Label>
                 <Select value={form.client_id ?? ""} onValueChange={(v) => setForm({ ...form, client_id: v })}>
@@ -200,16 +206,16 @@ export default function Quotes() {
                 <Input value={form.destination ?? ""} onChange={(e) => setForm({ ...form, destination: e.target.value })} />
               </div>
               <div className="space-y-2">
+                <Label className="font-body">Valor total (R$)</Label>
+                <Input type="number" step="0.01" value={form.total_value ?? ""} onChange={(e) => setForm({ ...form, total_value: e.target.value })} />
+              </div>
+              <div className="space-y-2">
                 <Label className="font-body">Cidade de saída</Label>
                 <Input value={form.departure_city ?? ""} onChange={(e) => setForm({ ...form, departure_city: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label className="font-body">Aeroporto de saída</Label>
                 <Input value={form.departure_airport ?? ""} onChange={(e) => setForm({ ...form, departure_airport: e.target.value })} placeholder="GRU" />
-              </div>
-              <div className="space-y-2">
-                <Label className="font-body">Valor total (R$)</Label>
-                <Input type="number" step="0.01" value={form.total_value ?? ""} onChange={(e) => setForm({ ...form, total_value: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label className="font-body">Data ida</Label>
@@ -219,7 +225,7 @@ export default function Quotes() {
                 <Label className="font-body">Data volta</Label>
                 <Input type="date" value={form.travel_date_end ?? ""} onChange={(e) => setForm({ ...form, travel_date_end: e.target.value })} />
               </div>
-              <div className={`space-y-2 ${form.stage === "confirmed" ? "" : "sm:col-span-2"}`}>
+              <div className="space-y-2">
                 <Label className="font-body">Estágio</Label>
                 <Select value={form.stage ?? "new"} onValueChange={(v) => setForm({ ...form, stage: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -238,27 +244,95 @@ export default function Quotes() {
                   </Select>
                 </div>
               )}
-              <div className="sm:col-span-2 space-y-2">
+            </div>
+          </div>
+
+          {/* Bottom card - details */}
+          <div className="glass-card rounded-xl p-6 mt-4 space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="space-y-2">
                 <Label className="font-body">Opções de aéreas</Label>
-                <Textarea value={form.airline_options ?? ""} onChange={(e) => setForm({ ...form, airline_options: e.target.value })} rows={2} />
+                <Textarea value={form.airline_options ?? ""} onChange={(e) => setForm({ ...form, airline_options: e.target.value })} rows={3} />
               </div>
-              <div className="sm:col-span-2 space-y-2">
+              <div className="space-y-2">
                 <Label className="font-body">Opções de hotel</Label>
-                <Textarea value={form.hotel_options ?? ""} onChange={(e) => setForm({ ...form, hotel_options: e.target.value })} rows={2} />
+                <Textarea value={form.hotel_options ?? ""} onChange={(e) => setForm({ ...form, hotel_options: e.target.value })} rows={3} />
               </div>
-              <div className="sm:col-span-2 space-y-2">
+              <div className="lg:col-span-2 space-y-2">
                 <Label className="font-body">Observações</Label>
-                <Textarea value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
+                <Textarea value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} />
               </div>
             </div>
-            <div className="flex gap-2 justify-end pt-2">
-              <Button type="button" variant="outline" onClick={closeDialog} className="font-body">Cancelar</Button>
-              <Button type="submit" disabled={saveMutation.isPending} className="font-body">
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between pt-4">
+            <div>
+              {editingQuote && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="text-destructive hover:text-destructive font-body gap-2"
+                  onClick={() => { if (confirm("Remover cotação?")) { deleteMutation.mutate(editingQuote.id); closeDialog(); } }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
+                  Excluir Cotação
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={closeDialog} className="font-body gap-2">
+                <ArrowLeft className="w-4 h-4" /> Voltar
+              </Button>
+              <Button type="submit" variant="outline" disabled={saveMutation.isPending} className="font-body">
+                Salvar e Voltar
+              </Button>
+              <Button
+                type="button"
+                disabled={saveMutation.isPending}
+                className="font-body"
+                onClick={() => {
+                  const stage = form.stage || "new";
+                  const conclusion_type = stage === "confirmed" ? (form.conclusion_type || "won") : null;
+                  const payload: any = {
+                    client_id: form.client_id || null, destination: form.destination || null,
+                    departure_city: form.departure_city || null, departure_airport: form.departure_airport || null,
+                    travel_date_start: form.travel_date_start || null, travel_date_end: form.travel_date_end || null,
+                    total_value: form.total_value ? Number(form.total_value) : 0, stage,
+                    airline_options: form.airline_options || null, hotel_options: form.hotel_options || null,
+                    notes: form.notes || null, conclusion_type,
+                  };
+                  const doSave = async () => {
+                    try {
+                      if (editingQuote) {
+                        const { error } = await supabase.from("quotes").update(payload).eq("id", editingQuote.id);
+                        if (error) throw error;
+                        if (stage === "confirmed" && conclusion_type === "won" && editingQuote.stage !== "confirmed") {
+                          await createSaleFromQuote(editingQuote.id, payload);
+                        }
+                      } else {
+                        const { data, error } = await supabase.from("quotes").insert(payload).select("id").single();
+                        if (error) throw error;
+                        if (stage === "confirmed" && conclusion_type === "won") {
+                          await createSaleFromQuote(data.id, payload);
+                        }
+                        // Switch to editing mode after creation
+                        setEditingQuote({ ...payload, id: data.id, created_at: new Date().toISOString() } as Quote);
+                      }
+                      toast({ title: "Cotação salva" });
+                      queryClient.invalidateQueries({ queryKey: ["quotes"] });
+                    } catch (err: any) {
+                      toast({ title: "Erro", description: err.message, variant: "destructive" });
+                    }
+                  };
+                  doSave();
+                }}
+              >
                 {saveMutation.isPending ? "Salvando..." : "Salvar"}
               </Button>
             </div>
-          </form>
-        </div>
+          </div>
+        </form>
       </div>
     );
   }
