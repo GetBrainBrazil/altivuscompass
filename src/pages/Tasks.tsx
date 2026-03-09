@@ -47,6 +47,8 @@ export default function Tasks() {
   const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
   const [reminderTask, setReminderTask] = useState<any>(null);
   const [reminderDate, setReminderDate] = useState<Date>();
+  const [reminderTime, setReminderTime] = useState("09:00");
+  const [clientFilter, setClientFilter] = useState<string>("all");
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
 
