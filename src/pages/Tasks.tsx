@@ -48,8 +48,8 @@ export default function Tasks() {
     description: "",
     priority: "medium",
     assigned_to: "",
-    quote_id: "",
-    client_id: "",
+    quote_id: "none",
+    client_id: "none",
     due_date: null as Date | null,
     start_date: new Date(),
   });
@@ -146,7 +146,7 @@ export default function Tasks() {
   const closeDialog = () => {
     setDialogOpen(false);
     setEditingTask(null);
-    setForm({ title: "", description: "", priority: "medium", assigned_to: "", quote_id: "", client_id: "", due_date: null, start_date: new Date() });
+    setForm({ title: "", description: "", priority: "medium", assigned_to: "", quote_id: "none", client_id: "none", due_date: null, start_date: new Date() });
   };
 
   const openEdit = (task: any) => {
@@ -156,8 +156,8 @@ export default function Tasks() {
       description: task.description ?? "",
       priority: task.priority,
       assigned_to: task.assigned_to ?? "",
-      quote_id: task.quote_id ?? "",
-      client_id: task.client_id ?? "",
+      quote_id: task.quote_id ?? "none",
+      client_id: task.client_id ?? "none",
       due_date: task.due_date ? new Date(task.due_date) : null,
       start_date: task.start_date ? new Date(task.start_date) : new Date(),
     });
@@ -171,8 +171,8 @@ export default function Tasks() {
       description: form.description || null,
       priority: form.priority,
       assigned_to: form.assigned_to || null,
-      quote_id: form.quote_id || null,
-      client_id: form.client_id || null,
+      quote_id: form.quote_id && form.quote_id !== "none" ? form.quote_id : null,
+      client_id: form.client_id && form.client_id !== "none" ? form.client_id : null,
       due_date: form.due_date ? format(form.due_date, "yyyy-MM-dd") : null,
       start_date: form.start_date ? format(form.start_date, "yyyy-MM-dd") : null,
     });
@@ -365,7 +365,7 @@ export default function Tasks() {
               <Select value={form.quote_id} onValueChange={(v) => setForm({ ...form, quote_id: v })}>
                 <SelectTrigger><SelectValue placeholder="Vincular a uma cotação" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhuma</SelectItem>
+                  <SelectItem value="none">Nenhuma</SelectItem>
                   {quotes.map((q: any) => (
                     <SelectItem key={q.id} value={q.id}>
                       {q.clients?.full_name ?? "—"} — {q.destination ?? q.title ?? "Sem destino"}
@@ -379,7 +379,7 @@ export default function Tasks() {
               <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
                 <SelectTrigger><SelectValue placeholder="Vincular a um cliente" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum</SelectItem>
+                  <SelectItem value="none">Nenhum</SelectItem>
                   {clients.map((c: any) => (
                     <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
                   ))}
