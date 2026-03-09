@@ -458,7 +458,7 @@ export default function Quotes() {
 
         {/* Main fields card */}
         <div className="glass-card rounded-xl p-4 space-y-4">
-          <div className="grid grid-cols-4 lg:grid-cols-8 gap-x-3 gap-y-3">
+          <div className="grid grid-cols-2 lg:grid-cols-6 gap-x-3 gap-y-3">
             {/* Título */}
             <div className="col-span-2 space-y-1">
               <Label className="font-body text-xs">Título da Cotação</Label>
@@ -466,7 +466,7 @@ export default function Quotes() {
             </div>
 
             {/* Cliente */}
-            <div className="col-span-2 lg:col-span-3 space-y-1">
+            <div className="col-span-2 space-y-1">
               <Label className="font-body text-xs">Cliente</Label>
               <Select value={form.client_id ?? ""} onValueChange={(v) => { setForm({ ...form, client_id: v }); setSelectedPassengers([]); setSelectedLinkedClients([]); }}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar cliente" /></SelectTrigger>
@@ -475,7 +475,7 @@ export default function Quotes() {
             </div>
 
             {/* Estágio */}
-            <div className="col-span-2 lg:col-span-2 space-y-1">
+            <div className="col-span-1 space-y-1">
               <Label className="font-body text-xs">Estágio</Label>
               <Select value={form.stage ?? "new"} onValueChange={(v) => setForm({ ...form, stage: v })}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
@@ -483,14 +483,8 @@ export default function Quotes() {
               </Select>
             </div>
 
-            {/* Valor */}
-            <div className="col-span-2 lg:col-span-1 space-y-1">
-              <Label className="font-body text-xs">Valor total (R$)</Label>
-              <Input className="h-9 text-sm" type="number" step="0.01" value={form.total_value ?? ""} onChange={(e) => setForm({ ...form, total_value: e.target.value })} />
-            </div>
-
             {form.stage === "confirmed" && (
-              <div className="col-span-2 space-y-1">
+              <div className="col-span-1 space-y-1">
                 <Label className="font-body text-xs">Resultado</Label>
                 <Select value={form.conclusion_type ?? "won"} onValueChange={(v) => setForm({ ...form, conclusion_type: v })}>
                   <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
@@ -503,7 +497,7 @@ export default function Quotes() {
             )}
 
             {/* Imagem de capa */}
-            <div className="col-span-2 space-y-1">
+            <div className="col-span-2 lg:col-span-1 space-y-1">
               <div className="flex items-center gap-1.5">
                 <Label className="font-body text-xs">Imagem de Capa</Label>
                 <TooltipProvider>
@@ -548,11 +542,11 @@ export default function Quotes() {
 
             {/* Passageiros & clientes vinculados */}
             {form.client_id && (clientPassengers.length > 0 || linkedClients.length > 0) && (
-              <div className="col-span-2 lg:col-span-6 space-y-1">
+              <div className="col-span-2 lg:col-span-6 space-y-2">
                 <Label className="font-body text-xs font-semibold">Passageiros e Clientes Vinculados</Label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between h-9 text-sm font-normal">
+                    <Button variant="outline" className="w-full max-w-sm justify-between h-9 text-sm font-normal">
                       {(selectedPassengers.length + selectedLinkedClients.length) === 0
                         ? "Selecionar pessoas..."
                         : `${selectedPassengers.length + selectedLinkedClients.length} selecionado(s)`}
@@ -583,6 +577,38 @@ export default function Quotes() {
                     </Command>
                   </PopoverContent>
                 </Popover>
+
+                {/* Lista dos selecionados */}
+                {(selectedPassengers.length > 0 || selectedLinkedClients.length > 0) && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedPassengers.map((pid) => {
+                      const p = clientPassengers.find((cp) => cp.id === pid);
+                      if (!p) return null;
+                      return (
+                        <Badge key={`sp-${pid}`} variant="secondary" className="text-xs gap-1 pr-1">
+                          {p.full_name}
+                          {p.relationship_type && <span className="text-[9px] text-muted-foreground">({RELATIONSHIP_LABELS[p.relationship_type] || p.relationship_type})</span>}
+                          <button type="button" onClick={() => togglePassenger(pid)} className="ml-0.5 hover:text-destructive transition-colors">
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
+                      );
+                    })}
+                    {selectedLinkedClients.map((cid) => {
+                      const lc = linkedClients.find((l: any) => l.id === cid);
+                      if (!lc) return null;
+                      return (
+                        <Badge key={`slc-${cid}`} variant="outline" className="text-xs gap-1 pr-1">
+                          {(lc as any).full_name}
+                          <span className="text-[9px] text-muted-foreground">({RELATIONSHIP_LABELS[(lc as any).relationship_type] || (lc as any).relationship_type})</span>
+                          <button type="button" onClick={() => toggleLinkedClient(cid)} className="ml-0.5 hover:text-destructive transition-colors">
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>
