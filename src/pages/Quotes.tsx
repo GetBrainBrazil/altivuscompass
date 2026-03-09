@@ -925,7 +925,7 @@ export default function Quotes() {
                     <TooltipTrigger asChild>
                       <Info className="w-3 h-3 text-muted-foreground cursor-help" />
                     </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-xs text-xs">
+                    <TooltipContent side="top" className="max-w-xs text-xs z-[9999]">
                       A IA gera automaticamente uma descrição da viagem com base no título e destinos selecionados. Você pode editar o texto depois.
                     </TooltipContent>
                   </Tooltip>
