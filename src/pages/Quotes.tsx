@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandInput, CommandList, CommandEmpty, CommandItem } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, Map, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight } from "lucide-react";
+import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, Map, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Calendar } from "@/components/ui/calendar";
@@ -1162,18 +1162,39 @@ export default function Quotes() {
                             </div>
                           </div>
 
-                          {/* Row 5: Passenger counts */}
+                          {/* Row 5: Baggage counts */}
                           <div className="grid grid-cols-12 gap-2">
                             <div className="col-span-1 space-y-0.5">
-                              <Label className="text-[11px] font-body text-center block">🧑 ADT</Label>
+                              <TooltipProvider delayDuration={200}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Label className="text-[11px] font-body text-center flex items-center justify-center gap-1 cursor-help"><Backpack className="w-3.5 h-3.5" /></Label>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="text-xs">Mochila</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                               <Input type="number" min={0} value={d.pax_adults ?? 1} onChange={(e) => updateDetail("pax_adults", parseInt(e.target.value) || 0)} className="h-8 text-xs text-center" />
                             </div>
                             <div className="col-span-1 space-y-0.5">
-                              <Label className="text-[11px] font-body text-center block">👶 CHD</Label>
+                              <TooltipProvider delayDuration={200}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Label className="text-[11px] font-body text-center flex items-center justify-center gap-1 cursor-help"><BriefcaseBusiness className="w-3.5 h-3.5" /></Label>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="text-xs">Mala de Mão</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                               <Input type="number" min={0} value={d.pax_children ?? 0} onChange={(e) => updateDetail("pax_children", parseInt(e.target.value) || 0)} className="h-8 text-xs text-center" />
                             </div>
                             <div className="col-span-1 space-y-0.5">
-                              <Label className="text-[11px] font-body text-center block">🍼 INF</Label>
+                              <TooltipProvider delayDuration={200}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Label className="text-[11px] font-body text-center flex items-center justify-center gap-1 cursor-help"><Luggage className="w-3.5 h-3.5" /></Label>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="text-xs">Bagagem Despachada</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                               <Input type="number" min={0} value={d.pax_infants ?? 0} onChange={(e) => updateDetail("pax_infants", parseInt(e.target.value) || 0)} className="h-8 text-xs text-center" />
                             </div>
                           </div>
