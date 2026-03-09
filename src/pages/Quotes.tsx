@@ -855,6 +855,12 @@ export default function Quotes() {
         <div className="glass-card rounded-xl p-4">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="flex flex-wrap h-auto gap-0.5 bg-muted p-0.5 w-full justify-start">
+              {editingQuote && (
+                <TabsTrigger value="history" className="flex items-center gap-1 text-[11px] px-2 py-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <History className="w-3 h-3" />
+                  Histórico
+                </TabsTrigger>
+              )}
               {ITEM_TYPES.map((type) => {
                 const count = itemCount(type.id);
                 const Icon = type.icon;
@@ -866,12 +872,6 @@ export default function Quotes() {
                   </TabsTrigger>
                 );
               })}
-              {editingQuote && (
-                <TabsTrigger value="history" className="flex items-center gap-1 text-[11px] px-2 py-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <History className="w-3 h-3" />
-                  Histórico
-                </TabsTrigger>
-              )}
             </TabsList>
 
             {ITEM_TYPES.map((type) => (
