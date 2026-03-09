@@ -155,18 +155,18 @@ export default function PublicQuote() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground font-body animate-pulse">{t.loading}</p>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <p className="text-gray-500 font-body animate-pulse">{t.loading}</p>
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center space-y-2">
-          <p className="text-lg font-semibold text-foreground font-display">{error || t.error}</p>
-          <p className="text-sm text-muted-foreground font-body">{t.checkLink}</p>
+          <p className="text-lg font-semibold text-gray-900 font-display">{error || t.error}</p>
+          <p className="text-sm text-gray-500 font-body">{t.checkLink}</p>
         </div>
       </div>
     );
@@ -198,10 +198,10 @@ export default function PublicQuote() {
   const selectedLang = LANG_OPTIONS.find(l => l.value === lang);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white text-gray-900" style={{ colorScheme: "light" }} data-theme="light">
       {/* Top toolbar - hidden on print */}
-      <div className="print:hidden border-b border-border bg-card">
-        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-2 flex items-center gap-1.5 sm:gap-2 flex-wrap">
+      <div className="print:hidden">
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-2 flex items-center gap-1.5 sm:gap-2 flex-wrap border-b border-gray-200 bg-white">
           {quote.client_phone && (
             <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs h-8" onClick={handleWhatsApp}>
               <Phone className="w-3.5 h-3.5" />
@@ -250,35 +250,34 @@ export default function PublicQuote() {
       </div>
 
       {/* Header */}
-      <header className="border-b border-border bg-card">
+      <header className="border-b border-gray-200 bg-white">
         <div className="max-w-5xl mx-auto px-3 sm:px-6 py-4 sm:py-5">
-          {/* Mobile: stack vertically, Desktop: side by side */}
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
             {/* Top row on mobile: logo + agency info */}
             <div className="flex items-start justify-between gap-3 sm:contents">
               <div className="flex-shrink-0">
-                <img src={agencyLogo} alt={agencyName} className="h-10 sm:h-14 object-contain" />
+                <img src={agencyLogo} alt={agencyName} className="h-14 sm:h-16 object-contain" />
               </div>
-              {/* Agency info - visible on mobile as compact, desktop as full */}
+              {/* Agency info - always visible */}
               <div className="flex-shrink-0 text-right space-y-0.5 sm:order-3">
-                {agency?.name && <p className="text-xs sm:text-sm font-semibold text-foreground font-body">{agency.name}</p>}
+                {agency?.name && <p className="text-xs sm:text-sm font-semibold text-gray-900 font-body">{agency.name}</p>}
                 {agency?.cnpj && (
-                  <p className="text-[10px] sm:text-xs text-muted-foreground font-body hidden sm:flex items-center justify-end gap-1">
+                  <p className="text-[10px] sm:text-xs text-gray-500 font-body flex items-center justify-end gap-1">
                     {agency.cnpj} <span className="text-[10px]">📋</span>
                   </p>
                 )}
                 {agency?.phone && (
-                  <p className="text-[10px] sm:text-xs text-muted-foreground font-body flex items-center justify-end gap-1">
+                  <p className="text-[10px] sm:text-xs text-gray-500 font-body flex items-center justify-end gap-1">
                     {agency.phone} <Phone className="w-3 h-3" />
                   </p>
                 )}
                 {agency?.email && (
-                  <p className="text-[10px] sm:text-xs text-muted-foreground font-body hidden sm:flex items-center justify-end gap-1">
+                  <p className="text-[10px] sm:text-xs text-gray-500 font-body flex items-center justify-end gap-1">
                     {agency.email} <Mail className="w-3 h-3" />
                   </p>
                 )}
                 {agency?.instagram && (
-                  <p className="text-[10px] sm:text-xs text-muted-foreground font-body hidden sm:flex items-center justify-end gap-1">
+                  <p className="text-[10px] sm:text-xs text-gray-500 font-body flex items-center justify-end gap-1">
                     {agency.instagram} <Instagram className="w-3 h-3" />
                   </p>
                 )}
@@ -286,11 +285,11 @@ export default function PublicQuote() {
             </div>
             {/* Title centered */}
             <div className="flex-1 text-center sm:order-2">
-              <h1 className="text-base sm:text-xl font-display font-bold text-foreground tracking-wide uppercase">
+              <h1 className="text-base sm:text-xl font-display font-bold text-gray-900 tracking-wide uppercase">
                 {t.travelQuote}
               </h1>
               <div className="mt-1">
-                <Badge variant="outline" className="font-body text-xs px-3 py-0.5 font-medium">
+                <Badge variant="outline" className="font-body text-xs px-3 py-0.5 font-medium border-gray-300 text-gray-700">
                   {quote.title || quote.destination || t.quote}
                 </Badge>
               </div>
@@ -518,13 +517,13 @@ export default function PublicQuote() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-card mt-12 print:mt-4">
+      <footer className="border-t border-gray-200 bg-white mt-12 print:mt-4">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 text-center space-y-1">
-          <p className="text-xs text-muted-foreground font-body">
-            {t.quoteGeneratedBy} <span className="font-medium text-foreground">{agencyName}</span>
+          <p className="text-xs text-gray-500 font-body">
+            {t.quoteGeneratedBy} <span className="font-medium text-gray-900">{agencyName}</span>
           </p>
           {agency?.phone && (
-            <p className="text-[11px] text-muted-foreground font-body">
+            <p className="text-[11px] text-gray-500 font-body">
               {agency.phone} • {agency.email}
             </p>
           )}
