@@ -471,57 +471,31 @@ export default function Tasks() {
               </div>
             </div>
             <div>
-              <Label className="font-body text-xs">Vincular a (opcional)</Label>
-              <Select
-                value={form.quote_id !== "none" ? "quote" : form.client_id !== "none" ? "client" : "none"}
-                onValueChange={(v) => {
-                  if (v === "none") setForm({ ...form, quote_id: "none", client_id: "none" });
-                  else if (v === "quote") setForm({ ...form, client_id: "none" });
-                  else if (v === "client") setForm({ ...form, quote_id: "none" });
-                }}
-              >
-                <SelectTrigger><SelectValue placeholder="Tipo de vínculo" /></SelectTrigger>
+              <Label className="font-body text-xs">Cotação (opcional)</Label>
+              <Select value={form.quote_id} onValueChange={(v) => setForm({ ...form, quote_id: v, client_id: v !== "none" ? "none" : form.client_id })}>
+                <SelectTrigger><SelectValue placeholder="Vincular a uma cotação" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Nenhum</SelectItem>
-                  <SelectItem value="quote">Cotação</SelectItem>
-                  <SelectItem value="client">Cliente</SelectItem>
+                  <SelectItem value="none">Nenhuma</SelectItem>
+                  {quotes.map((q: any) => (
+                    <SelectItem key={q.id} value={q.id}>
+                      {q.clients?.full_name ?? "—"} — {q.destination ?? q.title ?? "Sem destino"}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-            {(form.quote_id !== "none" || (form.client_id === "none" && form.quote_id === "none" ? false : false)) ? null : null}
-            {form.quote_id !== "none" || (form.client_id === "none" && (() => false)()) ? null : null}
-            {/* Show quote selector */}
-            {(form.quote_id !== "none" || (form.client_id === "none" && form.quote_id === "none")) ? null : null}
-            {form.client_id === "none" && form.quote_id !== "none" && (
-              <div>
-                <Label className="font-body text-xs">Cotação</Label>
-                <Select value={form.quote_id} onValueChange={(v) => setForm({ ...form, quote_id: v, client_id: "none" })}>
-                  <SelectTrigger><SelectValue placeholder="Selecione a cotação" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhuma</SelectItem>
-                    {quotes.map((q: any) => (
-                      <SelectItem key={q.id} value={q.id}>
-                        {q.clients?.full_name ?? "—"} — {q.destination ?? q.title ?? "Sem destino"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            {form.quote_id === "none" && form.client_id !== "none" && (
-              <div>
-                <Label className="font-body text-xs">Cliente</Label>
-                <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v, quote_id: "none" })}>
-                  <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhum</SelectItem>
-                    {clients.map((c: any) => (
-                      <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            <div>
+              <Label className="font-body text-xs">Cliente (opcional)</Label>
+              <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v, quote_id: v !== "none" ? "none" : form.quote_id })}>
+                <SelectTrigger><SelectValue placeholder="Vincular a um cliente" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum</SelectItem>
+                  {clients.map((c: any) => (
+                    <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={closeDialog}>Cancelar</Button>
