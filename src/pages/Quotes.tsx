@@ -170,7 +170,17 @@ export default function Quotes() {
     },
   });
 
-  const selectedClientId = form.client_id;
+  // Fetch airlines for flight companhia field
+  const { data: airlinesData = [] } = useQuery({
+    queryKey: ["airlines-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("airlines").select("id, name, iata_code").order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+
   const { data: clientPassengers = [] } = useQuery({
     queryKey: ["client-passengers", selectedClientId],
     enabled: !!selectedClientId,
