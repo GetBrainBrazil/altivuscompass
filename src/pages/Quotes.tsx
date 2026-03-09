@@ -13,12 +13,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandInput, CommandList, CommandEmpty, CommandItem } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, Map, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon } from "lucide-react";
+import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, Map, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Calendar } from "@/components/ui/calendar";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useAuth } from "@/contexts/AuthContext";
+import QuoteHistoryTab from "@/components/quotes/QuoteHistoryTab";
 
 const stages = [
   { id: "new", label: "Nova Cotação", color: "bg-soft-blue" },
@@ -71,6 +73,7 @@ type QuoteItem = {
 
 export default function Quotes() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
@@ -252,6 +255,24 @@ export default function Quotes() {
     }
   };
 
+  const logHistory = async (quoteId: string, action: string, description: string, details?: Record<string, any>) => {
+    let userName = user?.email ?? "Sistema";
+    try {
+      if (user?.id) {
+        const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", user.id).single();
+        if (profile?.full_name) userName = profile.full_name;
+      }
+    } catch {}
+    await supabase.from("quote_history").insert({
+      quote_id: quoteId,
+      user_id: user?.id ?? null,
+      user_name: userName,
+      action,
+      description,
+      details: details ?? {},
+    });
+  };
+
   const saveQuote = async (closeAfter: boolean) => {
     try {
       const stage = form.stage || "new";
@@ -281,6 +302,30 @@ export default function Quotes() {
         payload.cover_image_url = coverUrl;
         const { error } = await supabase.from("quotes").update(payload).eq("id", editingQuote.id);
         if (error) throw error;
+
+        // Log changes
+        const changedFields: Record<string, any> = {};
+        const fieldLabels: Record<string, string> = {
+          title: "Título", client_id: "Cliente", destination: "Destino", total_value: "Valor",
+          stage: "Etapa", details: "Detalhes", payment_terms: "Pagamento", terms_conditions: "Termos",
+          other_info: "Outras Info", travel_date_start: "Data Início", travel_date_end: "Data Fim",
+          notes: "Observações", conclusion_type: "Resultado", cover_image_url: "Imagem de Capa",
+        };
+        for (const key of Object.keys(fieldLabels)) {
+          const oldVal = (editingQuote as any)[key] ?? null;
+          const newVal = payload[key] ?? null;
+          if (String(oldVal) !== String(newVal)) changedFields[fieldLabels[key]] = { de: oldVal, para: newVal };
+        }
+
+        if (editingQuote.stage !== stage) {
+          const oldStage = stages.find(s => s.id === editingQuote.stage)?.label ?? editingQuote.stage;
+          const newStage = stages.find(s => s.id === stage)?.label ?? stage;
+          await logHistory(editingQuote.id, "stage_change", `Etapa alterada de "${oldStage}" para "${newStage}"`);
+        } else if (Object.keys(changedFields).length > 0) {
+          const fieldNames = Object.keys(changedFields).join(", ");
+          await logHistory(editingQuote.id, "updated", `Campos alterados: ${fieldNames}`, changedFields);
+        }
+
         if (stage === "confirmed" && conclusion_type === "won" && editingQuote.stage !== "confirmed") {
           await createSaleFromQuote(editingQuote.id, payload);
         }
@@ -292,6 +337,7 @@ export default function Quotes() {
         if (coverUrl) {
           await supabase.from("quotes").update({ cover_image_url: coverUrl }).eq("id", data.id);
         }
+        await logHistory(data.id, "created", "Cotação criada");
         if (stage === "confirmed" && conclusion_type === "won") {
           await createSaleFromQuote(data.id, payload);
         }
@@ -470,8 +516,12 @@ export default function Quotes() {
 
   const updateQuoteStage = async (quoteId: string, newStage: string) => {
     try {
+      const q = quotes.find((q: Quote) => q.id === quoteId);
       const { error } = await supabase.from("quotes").update({ stage: newStage as any }).eq("id", quoteId);
       if (error) throw error;
+      const oldLabel = stages.find(s => s.id === q?.stage)?.label ?? q?.stage;
+      const newLabel = stages.find(s => s.id === newStage)?.label ?? newStage;
+      await logHistory(quoteId, "stage_change", `Etapa alterada de "${oldLabel}" para "${newLabel}"`);
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
     } catch (err: any) {
       toast({ title: "Erro ao mover cotação", description: err.message, variant: "destructive" });
@@ -816,6 +866,12 @@ export default function Quotes() {
                   </TabsTrigger>
                 );
               })}
+              {editingQuote && (
+                <TabsTrigger value="history" className="flex items-center gap-1 text-[11px] px-2 py-1">
+                  <History className="w-3 h-3" />
+                  Histórico
+                </TabsTrigger>
+              )}
             </TabsList>
 
             {ITEM_TYPES.map((type) => (
@@ -846,6 +902,12 @@ export default function Quotes() {
                 </Button>
               </TabsContent>
             ))}
+
+            {editingQuote && (
+              <TabsContent value="history" className="mt-3">
+                <QuoteHistoryTab quoteId={editingQuote.id} />
+              </TabsContent>
+            )}
           </Tabs>
         </div>
 

@@ -1244,6 +1244,47 @@ export type Database = {
           },
         ]
       }
+      quote_history: {
+        Row: {
+          action: string
+          created_at: string
+          description: string | null
+          details: Json | null
+          id: string
+          quote_id: string
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          description?: string | null
+          details?: Json | null
+          id?: string
+          quote_id: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          description?: string | null
+          details?: Json | null
+          id?: string
+          quote_id?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_history_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quote_items: {
         Row: {
           created_at: string
