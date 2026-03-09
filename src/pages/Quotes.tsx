@@ -546,11 +546,12 @@ export default function Quotes() {
 
           {/* Passageiros & clientes vinculados - fora do grid */}
           {form.client_id && (clientPassengers.length > 0 || linkedClients.length > 0) && (
-            <div className="space-y-1">
+            <div className="grid grid-cols-2 lg:grid-cols-6 gap-x-3 gap-y-1">
+              <div className="col-span-2 space-y-1">
               <Label className="font-body text-xs">Passageiros e Clientes Vinculados</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full max-w-sm justify-between h-9 text-sm font-normal">
+                  <Button variant="outline" className="w-full justify-between h-9 text-sm font-normal">
                     {(selectedPassengers.length + selectedLinkedClients.length) === 0
                       ? "Selecionar pessoas..."
                       : `${selectedPassengers.length + selectedLinkedClients.length} selecionado(s)`}
