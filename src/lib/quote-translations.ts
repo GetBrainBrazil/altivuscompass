@@ -48,6 +48,32 @@ type TranslationKeys = {
   partner: string;
   sibling: string;
   other: string;
+  // Flight details
+  flightDirection: string;
+  outbound: string;
+  inbound: string;
+  origin: string;
+  destination_label: string;
+  departure: string;
+  arrival: string;
+  duration: string;
+  airline: string;
+  flightNumber: string;
+  cabinClass: string;
+  connections: string;
+  directFlight: string;
+  connection1: string;
+  connections2: string;
+  connections3plus: string;
+  economy: string;
+  premiumEconomy: string;
+  business: string;
+  firstClass: string;
+  baggage: string;
+  backpack: string;
+  carryOn: string;
+  checkedBag: string;
+  observation: string;
 };
 
 const translations: Record<QuoteLang, TranslationKeys> = {
