@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map } from "lucide-react";
 import logoAltivus from "@/assets/logo-altivus.png";
@@ -43,26 +42,22 @@ export default function PublicQuote() {
     if (!id) return;
     const fetchQuote = async () => {
       try {
-        const { data: result, error: fnError } = await supabase.functions.invoke(
-          "get-public-quote",
-          { body: null, headers: {}, method: "GET" }
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const res = await fetch(
+          `${supabaseUrl}/functions/v1/get-public-quote?id=${id}`
         );
-        // supabase.functions.invoke doesn't support query params easily, use fetch directly
-      } catch {}
-
-      // Use direct fetch for GET with query param
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const res = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/get-public-quote?id=${id}`
-      );
-      if (!res.ok) {
-        setError("Cotação não encontrada.");
+        if (!res.ok) {
+          setError("Cotação não encontrada.");
+          setLoading(false);
+          return;
+        }
+        const json = await res.json();
+        setData(json);
+      } catch (err) {
+        setError("Erro ao carregar cotação.");
+      } finally {
         setLoading(false);
-        return;
       }
-      const json = await res.json();
-      setData(json);
-      setLoading(false);
     };
     fetchQuote();
   }, [id]);
