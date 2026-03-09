@@ -185,6 +185,7 @@ export default function Quotes() {
         travel_date_start: form.travel_date_start || null,
         travel_date_end: form.travel_date_end || null,
         notes: form.notes || null,
+        price_breakdown: { linked_client_ids: selectedLinkedClients },
       };
 
       if (editingQuote) {
