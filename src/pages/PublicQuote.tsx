@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Printer, Globe, Loader2 } from "lucide-react";
+import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Printer, Globe, Loader2, Backpack, Briefcase, Luggage } from "lucide-react";
 import logoAltivusFallback from "@/assets/logo-altivus.png";
 import { type QuoteLang, LANG_OPTIONS, getTranslations, getItemTypeLabel, getRelationshipLabel, getFlagUrl, getCabinClassLabel, getConnectionsLabel, getFlightDirectionLabel } from "@/lib/quote-translations";
 
@@ -393,49 +393,50 @@ export default function PublicQuote() {
                         return (
                           <div key={idx} className="border border-border rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-2.5">
                             {/* Route header */}
-                            <div className="space-y-1.5 sm:space-y-0">
-                              <div className="flex items-start sm:items-center gap-2 flex-wrap justify-between">
-                                <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
-                                  {dirLabel && (
-                                    <Badge variant="secondary" className="text-[10px] font-body flex-shrink-0">{dirLabel}</Badge>
-                                  )}
-                                  <div className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-foreground font-body min-w-0">
-                                    {d.origin && <span className="truncate">{d.origin}</span>}
-                                    {d.origin && d.destination && <Plane className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-muted-foreground flex-shrink-0" />}
-                                    {d.destination && <span className="truncate">{d.destination}</span>}
-                                  </div>
-                                </div>
-                                {d.airline && (
-                                  <div className="text-right flex-shrink-0 space-y-0.5">
-                                    <span className="text-[10px] sm:text-xs text-muted-foreground font-body block">
-                                      {d.airline}{d.flight_number ? ` (${d.flight_number})` : ""}
-                                    </span>
-                                    {hasBaggage && (
-                                      <div className="flex items-center gap-1.5 justify-end">
-                                        {d.backpack_qty > 0 && (
-                                          <span className="text-[10px] text-muted-foreground font-body flex items-center gap-0.5" title={t.backpack}>
-                                            🎒 {d.backpack_qty}
-                                          </span>
-                                        )}
-                                        {d.carry_on_qty > 0 && (
-                                          <span className="text-[10px] text-muted-foreground font-body flex items-center gap-0.5" title={t.carryOn}>
-                                            👜 {d.carry_on_qty}
-                                          </span>
-                                        )}
-                                        {d.checked_bag_qty > 0 && (
-                                          <span className="text-[10px] text-muted-foreground font-body flex items-center gap-0.5" title={t.checkedBag}>
-                                            🧳 {d.checked_bag_qty}
-                                          </span>
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
+                            <div className="flex items-start sm:items-center gap-2 flex-wrap justify-between">
+                              <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+                                {dirLabel && (
+                                  <Badge variant="secondary" className="text-[10px] font-body flex-shrink-0">{dirLabel}</Badge>
                                 )}
+                                <div className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-foreground font-body min-w-0">
+                                  {d.origin && <span className="truncate">{d.origin}</span>}
+                                  {d.origin && d.destination && <Plane className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-muted-foreground flex-shrink-0" />}
+                                  {d.destination && <span className="truncate">{d.destination}</span>}
+                                </div>
                               </div>
+                              {d.airline && (
+                                <div className="text-right flex-shrink-0 space-y-1.5">
+                                  <span className="text-[10px] sm:text-xs text-muted-foreground font-body block">
+                                    {d.airline}{d.flight_number ? ` (${d.flight_number})` : ""}
+                                  </span>
+                                  {hasBaggage && (
+                                    <div className="flex items-center gap-1 justify-end">
+                                      {d.backpack_qty != null && (
+                                        <div className="flex flex-col items-center border border-border rounded px-1.5 py-1 min-w-[32px]" title={t.backpack}>
+                                          <Backpack className="w-3.5 h-3.5 text-primary" />
+                                          <span className="text-[10px] font-medium text-foreground font-body mt-0.5">{d.backpack_qty}</span>
+                                        </div>
+                                      )}
+                                      {d.carry_on_qty != null && (
+                                        <div className="flex flex-col items-center border border-border rounded px-1.5 py-1 min-w-[32px]" title={t.carryOn}>
+                                          <Briefcase className="w-3.5 h-3.5 text-primary" />
+                                          <span className="text-[10px] font-medium text-foreground font-body mt-0.5">{d.carry_on_qty}</span>
+                                        </div>
+                                      )}
+                                      {d.checked_bag_qty != null && (
+                                        <div className="flex flex-col items-center border border-border rounded px-1.5 py-1 min-w-[32px]" title={t.checkedBag}>
+                                          <Luggage className="w-3.5 h-3.5 text-primary" />
+                                          <span className="text-[10px] font-medium text-foreground font-body mt-0.5">{d.checked_bag_qty}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
 
-                            {/* Date/time row */}
-                            <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs font-body">
+                            {/* Date/time row with direction labels */}
+                            <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs font-body sm:pl-6">
                               {d.departure_date && (
                                 <div className="space-y-0.5">
                                   <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t.departure}</p>
@@ -455,7 +456,7 @@ export default function PublicQuote() {
                             </div>
 
                             {/* Meta badges */}
-                            <div className="flex flex-wrap gap-1 sm:gap-1.5">
+                            <div className="flex flex-wrap gap-1 sm:gap-1.5 sm:pl-6">
                               {d.duration && (
                                 <Badge variant="outline" className="text-[10px] font-body gap-1">
                                   ⏱ {d.duration}
@@ -475,7 +476,7 @@ export default function PublicQuote() {
 
                             {/* Observation */}
                             {d.observation && (
-                              <p className="text-[11px] text-muted-foreground font-body italic">{d.observation}</p>
+                              <p className="text-[11px] text-muted-foreground font-body italic sm:pl-6">{d.observation}</p>
                             )}
                           </div>
                         );
