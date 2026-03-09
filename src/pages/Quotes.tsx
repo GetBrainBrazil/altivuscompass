@@ -867,7 +867,7 @@ export default function Quotes() {
                 );
               })}
               {editingQuote && (
-                <TabsTrigger value="history" className="flex items-center gap-1 text-[11px] px-2 py-1">
+                <TabsTrigger value="history" className="flex items-center gap-1 text-[11px] px-2 py-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <History className="w-3 h-3" />
                   Histórico
                 </TabsTrigger>
