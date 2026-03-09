@@ -920,6 +920,16 @@ export default function Quotes() {
             <div className="lg:col-span-2 space-y-1">
               <div className="flex items-center gap-1.5">
                 <Label className="font-body text-xs">Detalhes</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="w-3 h-3 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs text-xs">
+                      A IA gera automaticamente uma descrição da viagem com base no título e destinos selecionados. Você pode editar o texto depois.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <button
                   type="button"
                   onClick={async () => {
