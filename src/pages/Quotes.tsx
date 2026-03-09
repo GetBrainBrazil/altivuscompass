@@ -390,40 +390,55 @@ export default function Quotes() {
     const itemCount = (type: string) => items.filter(i => i.item_type === type).length;
 
     return (
-      <div className="max-w-full mx-auto space-y-6">
+      <div className="max-w-full mx-auto space-y-4">
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={closeDialog} className="shrink-0">
-            <ArrowLeft className="w-5 h-5" />
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={closeDialog} className="shrink-0 h-8 w-8">
+            <ArrowLeft className="w-4 h-4" />
           </Button>
-          <h1 className="text-2xl font-display font-semibold text-foreground">
+          <h1 className="text-xl font-display font-semibold text-foreground">
             {editingQuote ? "Editar Cotação" : "Nova Cotação"}
           </h1>
         </div>
 
         {/* Main fields card */}
-        <div className="glass-card rounded-xl p-6 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="glass-card rounded-xl p-4 space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-3 gap-y-3">
             {/* Título */}
-            <div className="sm:col-span-2 space-y-2">
-              <Label className="font-body">Título da Cotação</Label>
-              <Input value={form.title ?? ""} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex: Viagem Europa - Família Silva" />
+            <div className="col-span-2 sm:col-span-2 space-y-1">
+              <Label className="font-body text-xs">Título da Cotação</Label>
+              <Input className="h-9 text-sm" value={form.title ?? ""} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex: Viagem Europa - Família Silva" />
+            </div>
+
+            {/* Cliente */}
+            <div className="col-span-2 sm:col-span-2 space-y-1">
+              <Label className="font-body text-xs">Cliente</Label>
+              <Select value={form.client_id ?? ""} onValueChange={(v) => { setForm({ ...form, client_id: v }); setSelectedPassengers([]); }}>
+                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar cliente" /></SelectTrigger>
+                <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}</SelectContent>
+              </Select>
             </div>
 
             {/* Estágio */}
-            <div className="space-y-2">
-              <Label className="font-body">Estágio</Label>
+            <div className="space-y-1">
+              <Label className="font-body text-xs">Estágio</Label>
               <Select value={form.stage ?? "new"} onValueChange={(v) => setForm({ ...form, stage: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent>{stages.map((s) => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
 
+            {/* Valor */}
+            <div className="space-y-1">
+              <Label className="font-body text-xs">Valor total (R$)</Label>
+              <Input className="h-9 text-sm" type="number" step="0.01" value={form.total_value ?? ""} onChange={(e) => setForm({ ...form, total_value: e.target.value })} />
+            </div>
+
             {form.stage === "confirmed" && (
-              <div className="space-y-2">
-                <Label className="font-body">Resultado</Label>
+              <div className="space-y-1">
+                <Label className="font-body text-xs">Resultado</Label>
                 <Select value={form.conclusion_type ?? "won"} onValueChange={(v) => setForm({ ...form, conclusion_type: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="won">Convertida em venda</SelectItem>
                     <SelectItem value="lost">Perdida</SelectItem>
@@ -432,36 +447,20 @@ export default function Quotes() {
               </div>
             )}
 
-            {/* Valor */}
-            <div className="space-y-2">
-              <Label className="font-body">Valor total (R$)</Label>
-              <Input type="number" step="0.01" value={form.total_value ?? ""} onChange={(e) => setForm({ ...form, total_value: e.target.value })} />
-            </div>
-
-            {/* Cliente */}
-            <div className="sm:col-span-2 space-y-2">
-              <Label className="font-body">Cliente</Label>
-              <Select value={form.client_id ?? ""} onValueChange={(v) => { setForm({ ...form, client_id: v }); setSelectedPassengers([]); }}>
-                <SelectTrigger><SelectValue placeholder="Selecionar cliente" /></SelectTrigger>
-                <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-
             {/* Imagem de capa */}
-            <div className="sm:col-span-2 space-y-2">
-              <Label className="font-body">Imagem de Capa</Label>
-              <div className="flex items-center gap-3">
+            <div className="col-span-2 sm:col-span-1 space-y-1">
+              <Label className="font-body text-xs">Imagem de Capa</Label>
+              <div className="flex items-center gap-2">
                 {coverPreview ? (
                   <div className="relative">
-                    <img src={coverPreview} alt="Capa" className="h-20 w-32 object-cover rounded-lg border border-border" />
-                    <button type="button" onClick={() => { setCoverFile(null); setCoverPreview(null); setForm({ ...form, cover_image_url: "" }); }} className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-0.5">
-                      <X className="w-3 h-3" />
+                    <img src={coverPreview} alt="Capa" className="h-9 w-16 object-cover rounded border border-border" />
+                    <button type="button" onClick={() => { setCoverFile(null); setCoverPreview(null); setForm({ ...form, cover_image_url: "" }); }} className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full p-0.5">
+                      <X className="w-2.5 h-2.5" />
                     </button>
                   </div>
                 ) : (
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className="h-20 w-32 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors">
-                    <ImageIcon className="w-5 h-5 mb-1" />
-                    <span className="text-[10px]">Adicionar</span>
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="h-9 px-3 border border-dashed border-border rounded-md flex items-center gap-1.5 text-muted-foreground hover:border-primary hover:text-primary transition-colors text-xs">
+                    <ImageIcon className="w-3.5 h-3.5" /> Adicionar
                   </button>
                 )}
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
@@ -471,22 +470,20 @@ export default function Quotes() {
 
           {/* Passageiros & clientes vinculados */}
           {form.client_id && (clientPassengers.length > 0 || linkedClients.length > 0) && (
-            <div className="space-y-3 pt-2 border-t border-border">
-              <Label className="font-body text-sm font-semibold">Passageiros e Clientes Vinculados</Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            <div className="space-y-2 pt-3 border-t border-border">
+              <Label className="font-body text-xs font-semibold">Passageiros e Clientes Vinculados</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1.5">
                 {clientPassengers.map((p) => (
-                  <label key={p.id} className="flex items-center gap-2 p-2 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors">
-                    <Checkbox checked={selectedPassengers.includes(p.id)} onCheckedChange={() => togglePassenger(p.id)} />
-                    <div>
-                      <span className="text-sm font-body">{p.full_name}</span>
-                      {p.relationship_type && <span className="text-xs text-muted-foreground ml-1">({RELATIONSHIP_LABELS[p.relationship_type] || p.relationship_type})</span>}
-                    </div>
+                  <label key={p.id} className="flex items-center gap-1.5 px-2 py-1.5 rounded-md border border-border hover:bg-muted/50 cursor-pointer transition-colors">
+                    <Checkbox checked={selectedPassengers.includes(p.id)} onCheckedChange={() => togglePassenger(p.id)} className="h-3.5 w-3.5" />
+                    <span className="text-xs font-body truncate">{p.full_name}</span>
+                    {p.relationship_type && <span className="text-[10px] text-muted-foreground">({RELATIONSHIP_LABELS[p.relationship_type] || p.relationship_type})</span>}
                   </label>
                 ))}
                 {linkedClients.map((lc: any) => (
-                  <div key={lc.id} className="flex items-center gap-2 p-2 rounded-lg border border-border bg-muted/30">
-                    <Badge variant="outline" className="text-[10px]">{RELATIONSHIP_LABELS[lc.relationship_type] || lc.relationship_type}</Badge>
-                    <span className="text-sm font-body">{lc.full_name}</span>
+                  <div key={lc.id} className="flex items-center gap-1.5 px-2 py-1.5 rounded-md border border-border bg-muted/30">
+                    <Badge variant="outline" className="text-[9px] h-4 px-1">{RELATIONSHIP_LABELS[lc.relationship_type] || lc.relationship_type}</Badge>
+                    <span className="text-xs font-body truncate">{lc.full_name}</span>
                   </div>
                 ))}
               </div>
@@ -495,23 +492,23 @@ export default function Quotes() {
         </div>
 
         {/* Details card */}
-        <div className="glass-card rounded-xl p-6 space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="lg:col-span-2 space-y-2">
-              <Label className="font-body">Detalhes</Label>
-              <Textarea value={form.details ?? ""} onChange={(e) => setForm({ ...form, details: e.target.value })} rows={3} placeholder="Descrição geral da viagem, roteiro resumido..." />
+        <div className="glass-card rounded-xl p-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <div className="lg:col-span-2 space-y-1">
+              <Label className="font-body text-xs">Detalhes</Label>
+              <Textarea value={form.details ?? ""} onChange={(e) => setForm({ ...form, details: e.target.value })} rows={2} className="text-sm" placeholder="Descrição geral da viagem, roteiro resumido..." />
             </div>
-            <div className="space-y-2">
-              <Label className="font-body">Forma de Pagamento</Label>
-              <Textarea value={form.payment_terms ?? ""} onChange={(e) => setForm({ ...form, payment_terms: e.target.value })} rows={3} placeholder="Ex: 50% na confirmação, 50% até 30 dias antes da viagem" />
+            <div className="space-y-1">
+              <Label className="font-body text-xs">Forma de Pagamento</Label>
+              <Textarea value={form.payment_terms ?? ""} onChange={(e) => setForm({ ...form, payment_terms: e.target.value })} rows={2} className="text-sm" placeholder="Ex: 50% na confirmação, 50% até 30 dias antes" />
             </div>
-            <div className="space-y-2">
-              <Label className="font-body">Termos e Condições</Label>
-              <Textarea value={form.terms_conditions ?? ""} onChange={(e) => setForm({ ...form, terms_conditions: e.target.value })} rows={3} placeholder="Políticas de cancelamento, reembolso..." />
+            <div className="space-y-1">
+              <Label className="font-body text-xs">Termos e Condições</Label>
+              <Textarea value={form.terms_conditions ?? ""} onChange={(e) => setForm({ ...form, terms_conditions: e.target.value })} rows={2} className="text-sm" placeholder="Políticas de cancelamento, reembolso..." />
             </div>
-            <div className="lg:col-span-2 space-y-2">
-              <Label className="font-body">Outras Informações</Label>
-              <Textarea value={form.other_info ?? ""} onChange={(e) => setForm({ ...form, other_info: e.target.value })} rows={2} placeholder="Informações complementares..." />
+            <div className="lg:col-span-2 space-y-1">
+              <Label className="font-body text-xs">Outras Informações</Label>
+              <Textarea value={form.other_info ?? ""} onChange={(e) => setForm({ ...form, other_info: e.target.value })} rows={2} className="text-sm" placeholder="Informações complementares..." />
             </div>
           </div>
         </div>
