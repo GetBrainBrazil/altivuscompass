@@ -360,10 +360,21 @@ export default function Quotes() {
         // Upsert items
         for (let i = 0; i < items.length; i++) {
           const item = items[i];
+          // Auto-generate title for flights from details
+          let itemTitle = item.title || null;
+          if (item.item_type === "flight" && item.details) {
+            const dd = item.details;
+            const dirLabels: Record<string, string> = { outbound: "Ida", return: "Volta", domestic: "Interno" };
+            const parts: string[] = [];
+            if (dd.flight_direction) parts.push(`[${dirLabels[dd.flight_direction] || dd.flight_direction}]`);
+            if (dd.origin || dd.destination) parts.push(`${dd.origin || "?"} → ${dd.destination || "?"}`);
+            if (dd.airline) parts.push(`(${dd.airline}${dd.flight_number ? ` ${dd.flight_number}` : ""})`);
+            if (parts.length) itemTitle = parts.join(" ");
+          }
           const itemPayload = {
             quote_id: quoteId,
             item_type: item.item_type,
-            title: item.title || null,
+            title: itemTitle,
             description: item.description || null,
             details: item.details || {},
             sort_order: i,
