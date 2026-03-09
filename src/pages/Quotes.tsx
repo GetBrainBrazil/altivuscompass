@@ -255,6 +255,24 @@ export default function Quotes() {
     }
   };
 
+  const logHistory = async (quoteId: string, action: string, description: string, details?: Record<string, any>) => {
+    let userName = user?.email ?? "Sistema";
+    try {
+      if (user?.id) {
+        const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", user.id).single();
+        if (profile?.full_name) userName = profile.full_name;
+      }
+    } catch {}
+    await supabase.from("quote_history").insert({
+      quote_id: quoteId,
+      user_id: user?.id ?? null,
+      user_name: userName,
+      action,
+      description,
+      details: details ?? {},
+    });
+  };
+
   const saveQuote = async (closeAfter: boolean) => {
     try {
       const stage = form.stage || "new";
