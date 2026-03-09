@@ -460,6 +460,7 @@ export default function Quotes() {
       flexible_dates_description: pb?.flexible_dates_description ?? "",
     });
     setSelectedDestinations(q.destination ? q.destination.split(", ").filter(Boolean) : []);
+    setClientSelfTraveling(pb?.client_self_traveling ?? false);
     setCoverFile(null);
     setCoverPreview(q.cover_image_url || null);
     setActiveTab("flight");
