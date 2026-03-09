@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import UserManagement from "./UserManagement";
 import Permissions from "./Permissions";
 import AuditLogsTab from "@/components/system/AuditLogsTab";
+import AgencySettingsTab from "@/components/system/AgencySettingsTab";
 
 export default function System() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -25,7 +26,7 @@ export default function System() {
         </Link>
         <div>
           <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">Admin</h1>
-          <p className="text-muted-foreground font-body mt-1 text-sm">Usuários, permissões e logs de auditoria.</p>
+          <p className="text-muted-foreground font-body mt-1 text-sm">Usuários, permissões, agência e logs.</p>
         </div>
       </div>
 
@@ -33,6 +34,7 @@ export default function System() {
         <TabsList>
           <TabsTrigger value="users" className="font-body">Usuários</TabsTrigger>
           <TabsTrigger value="permissions" className="font-body">Permissões</TabsTrigger>
+          <TabsTrigger value="agency" className="font-body">Agência</TabsTrigger>
           <TabsTrigger value="logs" className="font-body">Logs</TabsTrigger>
         </TabsList>
         <TabsContent value="users" className="mt-4">
@@ -40,6 +42,9 @@ export default function System() {
         </TabsContent>
         <TabsContent value="permissions" className="mt-4">
           <Permissions embedded />
+        </TabsContent>
+        <TabsContent value="agency" className="mt-4">
+          <AgencySettingsTab />
         </TabsContent>
         <TabsContent value="logs" className="mt-4">
           <AuditLogsTab />
