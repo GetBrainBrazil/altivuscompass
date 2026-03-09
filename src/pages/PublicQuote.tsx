@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Printer, Globe, Loader2 } from "lucide-react";
 import logoAltivusFallback from "@/assets/logo-altivus.png";
-import { type QuoteLang, LANG_OPTIONS, getTranslations, getItemTypeLabel, getRelationshipLabel } from "@/lib/quote-translations";
+import { type QuoteLang, LANG_OPTIONS, getTranslations, getItemTypeLabel, getRelationshipLabel, getFlagUrl } from "@/lib/quote-translations";
 
 const ITEM_TYPE_ICONS: Record<string, any> = {
   flight: Plane, hotel: Hotel, transport: Bus, cruise: Ship,
@@ -226,7 +226,7 @@ export default function PublicQuote() {
                 <SelectValue>
                   {selectedLang && (
                     <span className="flex items-center gap-1.5">
-                      <span className="text-sm">{selectedLang.flag}</span>
+                      <img src={getFlagUrl(selectedLang.countryCode)} alt="" className="w-5 h-auto rounded-[2px]" />
                       <span>{selectedLang.label}</span>
                     </span>
                   )}
@@ -236,7 +236,7 @@ export default function PublicQuote() {
                 {LANG_OPTIONS.map(opt => (
                   <SelectItem key={opt.value} value={opt.value} className="text-xs font-body">
                     <span className="flex items-center gap-2">
-                      <span className="text-sm">{opt.flag}</span>
+                      <img src={getFlagUrl(opt.countryCode)} alt="" className="w-5 h-auto rounded-[2px]" />
                       <span>{opt.label}</span>
                     </span>
                   </SelectItem>
