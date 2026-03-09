@@ -5,6 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Printer } from "lucide-react";
 import logoAltivusFallback from "@/assets/logo-altivus.png";
 
+const RELATIONSHIP_LABELS: Record<string, string> = {
+  spouse: "Cônjuge",
+  child: "Filho(a)",
+  parent: "Pai/Mãe",
+  employee: "Funcionário(a)",
+  partner: "Sócio(a)",
+  sibling: "Irmão/Irmã",
+  other: "Outro",
+};
+
 const ITEM_TYPE_META: Record<string, { label: string; icon: any }> = {
   flight: { label: "Voos", icon: Plane },
   hotel: { label: "Hospedagem", icon: Hotel },
@@ -244,7 +254,7 @@ export default function PublicQuote() {
                 {passengers.map((p, i) => (
                   <Badge key={i} variant="secondary" className="text-xs font-body">
                     {p.full_name}
-                    {p.relationship_type && <span className="ml-1 opacity-60">({p.relationship_type})</span>}
+                    {p.relationship_type && <span className="ml-1 opacity-60">({RELATIONSHIP_LABELS[p.relationship_type] || p.relationship_type})</span>}
                   </Badge>
                 ))}
               </div>

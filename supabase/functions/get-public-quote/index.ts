@@ -54,7 +54,6 @@ Deno.serve(async (req) => {
       if (primaryPhone?.phone) {
         clientPhone = primaryPhone.phone;
       } else if (!clientPhone) {
-        // fallback to any phone
         const { data: anyPhone } = await supabase
           .from("client_phones")
           .select("phone")
@@ -78,12 +77,66 @@ Deno.serve(async (req) => {
       .select("*, passengers(full_name, relationship_type)")
       .eq("quote_id", quoteId);
 
+    // Fetch linked clients from price_breakdown
+    const linkedClientIds: string[] = (quote.price_breakdown as any)?.linked_client_ids ?? [];
+    let linkedClients: { full_name: string; relationship_type: string | null }[] = [];
+    if (linkedClientIds.length > 0 && quote.client_id) {
+      // Get relationship info from client_relationships
+      const { data: relationships } = await supabase
+        .from("client_relationships")
+        .select("client_id_a, client_id_b, relationship_type")
+        .or(`client_id_a.eq.${quote.client_id},client_id_b.eq.${quote.client_id}`)
+        .in("client_id_a", [...linkedClientIds, quote.client_id])
+        .in("client_id_b", [...linkedClientIds, quote.client_id]);
+
+      // Fetch linked client names
+      const { data: clientsData } = await supabase
+        .from("clients")
+        .select("id, full_name")
+        .in("id", linkedClientIds);
+
+      const relationshipMap: Record<string, string> = {};
+      // Map to invert relationship labels
+      const INVERSE_RELATIONSHIP: Record<string, string> = {
+        spouse: "spouse",
+        child: "parent",
+        parent: "child",
+        employee: "partner",
+        partner: "employee",
+        sibling: "sibling",
+        other: "other",
+      };
+
+      for (const rel of (relationships ?? [])) {
+        if (rel.client_id_a === quote.client_id && linkedClientIds.includes(rel.client_id_b)) {
+          relationshipMap[rel.client_id_b] = rel.relationship_type;
+        } else if (rel.client_id_b === quote.client_id && linkedClientIds.includes(rel.client_id_a)) {
+          // Invert relationship perspective
+          relationshipMap[rel.client_id_a] = INVERSE_RELATIONSHIP[rel.relationship_type] || rel.relationship_type;
+        }
+      }
+
+      linkedClients = (clientsData ?? []).map((c: any) => ({
+        full_name: c.full_name,
+        relationship_type: relationshipMap[c.id] || null,
+      }));
+    }
+
     // Fetch agency settings
     const { data: agency } = await supabase
       .from("agency_settings")
       .select("*")
       .limit(1)
       .single();
+
+    // Merge passengers and linked clients
+    const allPassengers = [
+      ...(quotePassengers ?? []).map((qp: any) => ({
+        full_name: qp.passengers?.full_name,
+        relationship_type: qp.passengers?.relationship_type,
+      })),
+      ...linkedClients,
+    ];
 
     return new Response(
       JSON.stringify({
@@ -94,10 +147,7 @@ Deno.serve(async (req) => {
           clients: undefined,
         },
         items: items ?? [],
-        passengers: (quotePassengers ?? []).map((qp: any) => ({
-          full_name: qp.passengers?.full_name,
-          relationship_type: qp.passengers?.relationship_type,
-        })),
+        passengers: allPassengers,
         agency: agency ?? null,
       }),
       {
