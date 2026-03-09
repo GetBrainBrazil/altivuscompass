@@ -388,7 +388,8 @@ export default function PublicQuote() {
                       if (isFlight && (d.origin || d.destination || d.departure_date)) {
                         const formatDate = (ds: string) => ds ? ds.split("-").reverse().join("/") : "";
                         const dirLabel = d.flight_direction ? getFlightDirectionLabel(lang, d.flight_direction) : null;
-                        const hasBaggage = d.backpack_qty || d.carry_on_qty || d.checked_bag_qty;
+                        // Baggage stored as pax_adults (backpack), pax_children (carry-on), pax_infants (checked bag)
+                        const hasBaggage = d.pax_adults != null || d.pax_children != null || d.pax_infants != null;
 
                         return (
                           <div key={idx} className="border border-border rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-2.5">
@@ -411,22 +412,22 @@ export default function PublicQuote() {
                                   </span>
                                   {hasBaggage && (
                                     <div className="flex items-center gap-1 justify-end">
-                                      {d.backpack_qty != null && (
+                                      {d.pax_adults != null && (
                                         <div className="flex flex-col items-center border border-border rounded px-1.5 py-1 min-w-[32px]" title={t.backpack}>
                                           <Backpack className="w-3.5 h-3.5 text-primary" />
-                                          <span className="text-[10px] font-medium text-foreground font-body mt-0.5">{d.backpack_qty}</span>
+                                          <span className="text-[10px] font-medium text-foreground font-body mt-0.5">{d.pax_adults}</span>
                                         </div>
                                       )}
-                                      {d.carry_on_qty != null && (
+                                      {d.pax_children != null && (
                                         <div className="flex flex-col items-center border border-border rounded px-1.5 py-1 min-w-[32px]" title={t.carryOn}>
                                           <Briefcase className="w-3.5 h-3.5 text-primary" />
-                                          <span className="text-[10px] font-medium text-foreground font-body mt-0.5">{d.carry_on_qty}</span>
+                                          <span className="text-[10px] font-medium text-foreground font-body mt-0.5">{d.pax_children}</span>
                                         </div>
                                       )}
-                                      {d.checked_bag_qty != null && (
+                                      {d.pax_infants != null && (
                                         <div className="flex flex-col items-center border border-border rounded px-1.5 py-1 min-w-[32px]" title={t.checkedBag}>
                                           <Luggage className="w-3.5 h-3.5 text-primary" />
-                                          <span className="text-[10px] font-medium text-foreground font-body mt-0.5">{d.checked_bag_qty}</span>
+                                          <span className="text-[10px] font-medium text-foreground font-body mt-0.5">{d.pax_infants}</span>
                                         </div>
                                       )}
                                     </div>
@@ -435,7 +436,7 @@ export default function PublicQuote() {
                               )}
                             </div>
 
-                            {/* Date/time row with direction labels */}
+                            {/* Date/time row */}
                             <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs font-body sm:pl-6">
                               {d.departure_date && (
                                 <div className="space-y-0.5">
