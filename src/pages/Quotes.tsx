@@ -582,10 +582,12 @@ export default function Quotes() {
                   </Command>
                 </PopoverContent>
               </Popover>
+              </div>
+            </div>
 
               {/* Lista dos selecionados */}
               {(selectedPassengers.length > 0 || selectedLinkedClients.length > 0) && (
-                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                <div className="flex flex-wrap gap-1.5">
                   {selectedPassengers.map((pid) => {
                     const p = clientPassengers.find((cp) => cp.id === pid);
                     if (!p) return null;
@@ -614,7 +616,7 @@ export default function Quotes() {
                   })}
                 </div>
               )}
-            </div>
+            
           )}
         </div>
 
