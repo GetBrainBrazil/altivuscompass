@@ -379,7 +379,7 @@ export default function Tasks() {
               <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
                 <SelectTrigger><SelectValue placeholder="Vincular a um cliente" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum</SelectItem>
+                  <SelectItem value="none">Nenhum</SelectItem>
                   {clients.map((c: any) => (
                     <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
                   ))}
