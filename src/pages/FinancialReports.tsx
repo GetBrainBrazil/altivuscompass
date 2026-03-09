@@ -670,7 +670,7 @@ export default function FinancialReports() {
           {/* Budget Table */}
           <div className="glass-card rounded-xl overflow-hidden">
             <div className="p-4 border-b border-border/50">
-              <h3 className="font-display text-sm font-semibold">Detalhamento do Orçamento — {year}</h3>
+              <h3 className="font-display text-sm font-semibold">Detalhamento do Orçamento — {periodLabel}</h3>
               <p className="text-xs text-muted-foreground font-body mt-1">Insira os valores orçados para cada categoria e compare com o realizado.</p>
             </div>
             <div className="overflow-x-auto">
