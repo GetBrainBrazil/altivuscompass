@@ -1545,7 +1545,7 @@ export default function Quotes() {
                           <TableCell className="font-medium font-body">{quote.title || quote.destination || "-"}</TableCell>
                           <TableCell className="font-body text-muted-foreground">{quote.client_name}</TableCell>
                           <TableCell className="font-body text-xs text-muted-foreground whitespace-nowrap">
-                            {quote.travel_date_start ?? ""} {quote.travel_date_end ? `até ${quote.travel_date_end}` : ""}
+                            {quote.travel_date_start ? quote.travel_date_start.split("-").reverse().join("/") : ""} {quote.travel_date_end ? `até ${quote.travel_date_end.split("-").reverse().join("/")}` : ""}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
