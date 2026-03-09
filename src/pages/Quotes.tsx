@@ -289,6 +289,7 @@ export default function Quotes() {
     setForm({ stage: "new", total_value: "" });
     setItems([]);
     setSelectedPassengers([]);
+    setSelectedLinkedClients([]);
     setCoverFile(null);
     setCoverPreview(null);
     setActiveTab("flight");
