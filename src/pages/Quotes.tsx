@@ -526,28 +526,6 @@ export default function Quotes() {
           </div>
         </div>
 
-        {/* Details card */}
-        <div className="glass-card rounded-xl p-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            <div className="lg:col-span-2 space-y-1">
-              <Label className="font-body text-xs">Detalhes</Label>
-              <Textarea value={form.details ?? ""} onChange={(e) => setForm({ ...form, details: e.target.value })} rows={2} className="text-sm" placeholder="Descrição geral da viagem, roteiro resumido..." />
-            </div>
-            <div className="space-y-1">
-              <Label className="font-body text-xs">Forma de Pagamento</Label>
-              <Textarea value={form.payment_terms ?? ""} onChange={(e) => setForm({ ...form, payment_terms: e.target.value })} rows={2} className="text-sm" placeholder="Ex: 50% na confirmação, 50% até 30 dias antes" />
-            </div>
-            <div className="space-y-1">
-              <Label className="font-body text-xs">Termos e Condições</Label>
-              <Textarea value={form.terms_conditions ?? ""} onChange={(e) => setForm({ ...form, terms_conditions: e.target.value })} rows={2} className="text-sm" placeholder="Políticas de cancelamento, reembolso..." />
-            </div>
-            <div className="lg:col-span-2 space-y-1">
-              <Label className="font-body text-xs">Outras Informações</Label>
-              <Textarea value={form.other_info ?? ""} onChange={(e) => setForm({ ...form, other_info: e.target.value })} rows={2} className="text-sm" placeholder="Informações complementares..." />
-            </div>
-          </div>
-        </div>
-
         {/* Tabs for items */}
         <div className="glass-card rounded-xl p-4">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -594,6 +572,28 @@ export default function Quotes() {
               </TabsContent>
             ))}
           </Tabs>
+        </div>
+
+        {/* Details card */}
+        <div className="glass-card rounded-xl p-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <div className="lg:col-span-2 space-y-1">
+              <Label className="font-body text-xs">Detalhes</Label>
+              <Textarea value={form.details ?? ""} onChange={(e) => setForm({ ...form, details: e.target.value })} rows={2} className="text-sm" placeholder="Descrição geral da viagem, roteiro resumido..." />
+            </div>
+            <div className="space-y-1">
+              <Label className="font-body text-xs">Forma de Pagamento</Label>
+              <Textarea value={form.payment_terms ?? ""} onChange={(e) => setForm({ ...form, payment_terms: e.target.value })} rows={2} className="text-sm" placeholder="Ex: 50% na confirmação, 50% até 30 dias antes" />
+            </div>
+            <div className="space-y-1">
+              <Label className="font-body text-xs">Termos e Condições</Label>
+              <Textarea value={form.terms_conditions ?? ""} onChange={(e) => setForm({ ...form, terms_conditions: e.target.value })} rows={2} className="text-sm" placeholder="Políticas de cancelamento, reembolso..." />
+            </div>
+            <div className="lg:col-span-2 space-y-1">
+              <Label className="font-body text-xs">Outras Informações</Label>
+              <Textarea value={form.other_info ?? ""} onChange={(e) => setForm({ ...form, other_info: e.target.value })} rows={2} className="text-sm" placeholder="Informações complementares..." />
+            </div>
+          </div>
         </div>
 
         {/* Footer */}
