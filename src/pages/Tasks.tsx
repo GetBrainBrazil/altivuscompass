@@ -472,7 +472,7 @@ export default function Tasks() {
             </div>
             <div>
               <Label className="font-body text-xs">Cotação (opcional)</Label>
-              <Select value={form.quote_id} onValueChange={(v) => setForm({ ...form, quote_id: v })}>
+              <Select value={form.quote_id} onValueChange={(v) => setForm({ ...form, quote_id: v, client_id: v !== "none" ? "none" : form.client_id })}>
                 <SelectTrigger><SelectValue placeholder="Vincular a uma cotação" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Nenhuma</SelectItem>
@@ -486,7 +486,7 @@ export default function Tasks() {
             </div>
             <div>
               <Label className="font-body text-xs">Cliente (opcional)</Label>
-              <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
+              <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v, quote_id: v !== "none" ? "none" : form.quote_id })}>
                 <SelectTrigger><SelectValue placeholder="Vincular a um cliente" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Nenhum</SelectItem>
