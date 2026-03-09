@@ -283,80 +283,109 @@ export default function Quotes() {
         <div className="p-8 text-center text-muted-foreground font-body">Carregando...</div>
       ) : (
         <>
-          {/* Kanban */}
-          <div className={`${viewMode === "list" ? "hidden sm:flex" : "flex"} gap-3 sm:gap-4 overflow-x-auto pb-4 -mx-3 px-3 sm:mx-0 sm:px-0`}>
-            {stages.map((stage) => {
-              const stageQuotes = quotes.filter((q: Quote) => q.stage === stage.id);
-              return (
-                <div key={stage.id} className="min-w-[240px] sm:min-w-[280px] flex-shrink-0">
-                  <div className="flex items-center gap-2 mb-3 px-1">
-                    <div className={`w-2 h-2 rounded-full ${stage.color}`} />
-                    <span className="text-xs font-medium text-foreground font-body">{stage.label}</span>
-                    <span className="text-xs text-muted-foreground font-body ml-auto">{stageQuotes.length}</span>
-                  </div>
-                  <div className="space-y-3">
-                    {stageQuotes.map((quote: Quote) => (
-                      <div key={quote.id} className="glass-card rounded-xl p-3 sm:p-4 cursor-pointer hover:shadow-md transition-shadow animate-fade-in" onClick={() => openEdit(quote)}>
-                        <div className="flex items-start justify-between mb-2">
-                          <p className="text-sm font-medium font-body text-foreground">{quote.destination || "Sem destino"}</p>
-                          <span className="text-xs font-semibold text-foreground font-body ml-2">{formatCurrency(quote.total_value)}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground font-body mb-2">{quote.client_name}</p>
-                        {stage.id === "confirmed" && quote.conclusion_type && (
-                          <Badge variant={quote.conclusion_type === "won" ? "default" : "destructive"} className="text-[10px] mb-2">
-                            {quote.conclusion_type === "won" ? "Convertida" : "Perdida"}
-                          </Badge>
-                        )}
-                        <div className="flex items-center justify-between text-[10px] text-muted-foreground font-body">
-                          <span>{quote.travel_date_start ?? ""} {quote.travel_date_end ? `– ${quote.travel_date_end}` : ""}</span>
-                          <Button variant="ghost" size="sm" className="h-6 px-2 text-destructive text-[10px]" onClick={(e) => { e.stopPropagation(); if (confirm("Remover cotação?")) deleteMutation.mutate(quote.id); }}>✕</Button>
-                        </div>
-                      </div>
-                    ))}
-                    {stageQuotes.length === 0 && (
-                      <div className="rounded-xl border border-dashed border-border/50 p-4 sm:p-6 text-center">
-                        <p className="text-xs text-muted-foreground font-body">Sem cotações</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* List view - mobile */}
-          <div className={`${viewMode === "kanban" ? "hidden" : "block"} sm:hidden space-y-3`}>
-            {quotes.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground font-body">Nenhuma cotação.</div>
-            ) : (
-              quotes.map((quote: Quote) => {
-                const stage = stages.find(s => s.id === quote.stage) ?? stages[0];
+          {viewMode === "kanban" ? (
+            <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 -mx-3 px-3 sm:mx-0 sm:px-0">
+              {stages.map((stage) => {
+                const stageQuotes = quotes.filter((q: Quote) => q.stage === stage.id);
                 return (
-                  <div key={quote.id} className="glass-card rounded-xl p-4 space-y-2" onClick={() => openEdit(quote)}>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-sm font-medium font-body text-foreground">{quote.destination || "Sem destino"}</p>
-                        <p className="text-xs text-muted-foreground font-body">{quote.client_name}</p>
-                      </div>
-                      <span className="text-sm font-semibold text-foreground font-body">{formatCurrency(quote.total_value)}</span>
+                  <div key={stage.id} className="min-w-[240px] sm:min-w-[280px] flex-shrink-0">
+                    <div className="flex items-center gap-2 mb-3 px-1">
+                      <div className={`w-2 h-2 rounded-full ${stage.color}`} />
+                      <span className="text-xs font-medium text-foreground font-body">{stage.label}</span>
+                      <span className="text-xs text-muted-foreground font-body ml-auto">{stageQuotes.length}</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${stage.color}`} />
-                        <span className="text-xs text-muted-foreground font-body">{stage.label}</span>
-                        {quote.stage === "confirmed" && quote.conclusion_type && (
-                          <Badge variant={quote.conclusion_type === "won" ? "default" : "destructive"} className="text-[10px]">
-                            {quote.conclusion_type === "won" ? "Convertida" : "Perdida"}
-                          </Badge>
-                        )}
-                      </div>
-                      <span className="text-[10px] text-muted-foreground font-body">{quote.travel_date_start ?? ""}</span>
+                    <div className="space-y-3">
+                      {stageQuotes.map((quote: Quote) => (
+                        <div key={quote.id} className="glass-card rounded-xl p-3 sm:p-4 cursor-pointer hover:shadow-md transition-shadow animate-fade-in" onClick={() => openEdit(quote)}>
+                          <div className="flex items-start justify-between mb-2">
+                            <p className="text-sm font-medium font-body text-foreground">{quote.destination || "Sem destino"}</p>
+                            <span className="text-xs font-semibold text-foreground font-body ml-2">{formatCurrency(quote.total_value)}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground font-body mb-2">{quote.client_name}</p>
+                          {stage.id === "confirmed" && quote.conclusion_type && (
+                            <Badge variant={quote.conclusion_type === "won" ? "default" : "destructive"} className="text-[10px] mb-2">
+                              {quote.conclusion_type === "won" ? "Convertida" : "Perdida"}
+                            </Badge>
+                          )}
+                          <div className="flex items-center justify-between text-[10px] text-muted-foreground font-body">
+                            <span>{quote.travel_date_start ?? ""} {quote.travel_date_end ? `– ${quote.travel_date_end}` : ""}</span>
+                            <Button variant="ghost" size="sm" className="h-6 px-2 text-destructive text-[10px]" onClick={(e) => { e.stopPropagation(); if (confirm("Remover cotação?")) deleteMutation.mutate(quote.id); }}>✕</Button>
+                          </div>
+                        </div>
+                      ))}
+                      {stageQuotes.length === 0 && (
+                        <div className="rounded-xl border border-dashed border-border/50 p-4 sm:p-6 text-center">
+                          <p className="text-xs text-muted-foreground font-body">Sem cotações</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
-              })
-            )}
-          </div>
+              })}
+            </div>
+          ) : (
+            <div className="glass-card rounded-xl overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="cursor-pointer font-body" onClick={() => handleSort("destination")}>
+                      Destino {getSortIcon("destination")}
+                    </TableHead>
+                    <TableHead className="cursor-pointer font-body" onClick={() => handleSort("client_name")}>
+                      Cliente {getSortIcon("client_name")}
+                    </TableHead>
+                    <TableHead className="cursor-pointer font-body" onClick={() => handleSort("travel_date_start")}>
+                      Data {getSortIcon("travel_date_start")}
+                    </TableHead>
+                    <TableHead className="cursor-pointer font-body" onClick={() => handleSort("stage")}>
+                      Estágio {getSortIcon("stage")}
+                    </TableHead>
+                    <TableHead className="cursor-pointer font-body" onClick={() => handleSort("total_value")}>
+                      Valor {getSortIcon("total_value")}
+                    </TableHead>
+                    <TableHead className="w-[80px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedQuotes.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center p-8 text-muted-foreground font-body">Nenhuma cotação encontrada.</TableCell>
+                    </TableRow>
+                  ) : (
+                    sortedQuotes.map((quote: Quote) => {
+                      const stage = stages.find((s) => s.id === quote.stage) ?? stages[0];
+                      return (
+                        <TableRow key={quote.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(quote)}>
+                          <TableCell className="font-medium font-body">{quote.destination || "-"}</TableCell>
+                          <TableCell className="font-body text-muted-foreground">{quote.client_name}</TableCell>
+                          <TableCell className="font-body text-xs text-muted-foreground whitespace-nowrap">
+                            {quote.travel_date_start ?? ""} {quote.travel_date_end ? `até ${quote.travel_date_end}` : ""}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${stage.color}`} />
+                              <span className="text-xs text-muted-foreground font-body whitespace-nowrap">{stage.label}</span>
+                              {quote.stage === "confirmed" && quote.conclusion_type && (
+                                <Badge variant={quote.conclusion_type === "won" ? "default" : "destructive"} className="text-[10px]">
+                                  {quote.conclusion_type === "won" ? "Convertida" : "Perdida"}
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-body font-medium">{formatCurrency(quote.total_value)}</TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm" className="h-8 px-2 text-destructive" onClick={(e) => { e.stopPropagation(); if (confirm("Remover cotação?")) deleteMutation.mutate(quote.id); }}>
+                              ✕
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </>
       )}
     </div>
