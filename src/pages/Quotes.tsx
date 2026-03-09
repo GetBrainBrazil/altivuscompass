@@ -468,6 +468,16 @@ export default function Quotes() {
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
   };
 
+  const updateQuoteStage = async (quoteId: string, newStage: string) => {
+    try {
+      const { error } = await supabase.from("quotes").update({ stage: newStage }).eq("id", quoteId);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["quotes"] });
+    } catch (err: any) {
+      toast({ title: "Erro ao mover cotação", description: err.message, variant: "destructive" });
+    }
+  };
+
   const sortedQuotes = [...quotes].sort((a: any, b: any) => {
     if (!sortField) return 0;
     let aValue = a[sortField];
