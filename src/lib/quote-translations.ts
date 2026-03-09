@@ -1,13 +1,17 @@
 export type QuoteLang = "pt" | "en" | "es" | "fr" | "de" | "it";
 
-export const LANG_OPTIONS: { value: QuoteLang; label: string; flag: string }[] = [
-  { value: "pt", label: "Português", flag: "🇧🇷" },
-  { value: "en", label: "English", flag: "🇺🇸" },
-  { value: "es", label: "Español", flag: "🇪🇸" },
-  { value: "fr", label: "Français", flag: "🇫🇷" },
-  { value: "de", label: "Deutsch", flag: "🇩🇪" },
-  { value: "it", label: "Italiano", flag: "🇮🇹" },
+export const LANG_OPTIONS: { value: QuoteLang; label: string; countryCode: string }[] = [
+  { value: "pt", label: "Português", countryCode: "br" },
+  { value: "en", label: "English", countryCode: "us" },
+  { value: "es", label: "Español", countryCode: "es" },
+  { value: "fr", label: "Français", countryCode: "fr" },
+  { value: "de", label: "Deutsch", countryCode: "de" },
+  { value: "it", label: "Italiano", countryCode: "it" },
 ];
+
+export function getFlagUrl(countryCode: string) {
+  return `https://flagcdn.com/w40/${countryCode}.png`;
+}
 
 type TranslationKeys = {
   travelQuote: string;
