@@ -981,7 +981,26 @@ export default function Quotes() {
                   const globalIdx = items.indexOf(item);
                   const d = item.details || {};
                   const updateDetail = (key: string, value: any) => {
-                    updateItem(globalIdx, { details: { ...d, [key]: value } });
+                    const newDetails = { ...d, [key]: value };
+                    // Auto-calc duration when date/time fields change
+                    if (["departure_date", "departure_time", "arrival_date", "arrival_time"].includes(key)) {
+                      const depDate = key === "departure_date" ? value : d.departure_date;
+                      const depTime = key === "departure_time" ? value : d.departure_time;
+                      const arrDate = key === "arrival_date" ? value : d.arrival_date;
+                      const arrTime = key === "arrival_time" ? value : d.arrival_time;
+                      if (depDate && arrDate) {
+                        const dep = new Date(`${depDate}T${depTime || "00:00"}`);
+                        const arr = new Date(`${arrDate}T${arrTime || "00:00"}`);
+                        const diffMs = arr.getTime() - dep.getTime();
+                        if (diffMs > 0) {
+                          const totalMin = Math.floor(diffMs / 60000);
+                          const h = Math.floor(totalMin / 60);
+                          const m = totalMin % 60;
+                          newDetails.duration = `${h}h${m.toString().padStart(2, "0")}`;
+                        }
+                      }
+                    }
+                    updateItem(globalIdx, { details: newDetails });
                   };
 
                   return (
