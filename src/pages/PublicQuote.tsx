@@ -201,28 +201,30 @@ export default function PublicQuote() {
     <div className="min-h-screen bg-background">
       {/* Top toolbar - hidden on print */}
       <div className="print:hidden border-b border-border bg-card">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2 flex items-center gap-2">
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-2 flex items-center gap-1.5 sm:gap-2 flex-wrap">
           {quote.client_phone && (
-            <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs" onClick={handleWhatsApp}>
+            <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs h-8" onClick={handleWhatsApp}>
               <Phone className="w-3.5 h-3.5" />
-              {t.sendWhatsApp}
+              <span className="hidden sm:inline">{t.sendWhatsApp}</span>
+              <span className="sm:hidden">WhatsApp</span>
             </Button>
           )}
-          <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs" onClick={() => window.print()}>
+          <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs h-8" onClick={() => window.print()}>
             <Printer className="w-3.5 h-3.5" />
-            {t.printPdf}
+            <span className="hidden sm:inline">{t.printPdf}</span>
+            <span className="sm:hidden">PDF</span>
           </Button>
 
           {translating && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-body ml-2">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-body ml-1">
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              <span>Traduzindo...</span>
+              <span className="hidden sm:inline">Traduzindo...</span>
             </div>
           )}
 
           <div className="ml-auto">
             <Select value={lang} onValueChange={(v) => handleLangChange(v as QuoteLang)}>
-              <SelectTrigger className="h-8 w-[160px] text-xs font-body">
+              <SelectTrigger className="h-8 w-[130px] sm:w-[160px] text-xs font-body">
                 <SelectValue>
                   {selectedLang && (
                     <span className="flex items-center gap-1.5">
