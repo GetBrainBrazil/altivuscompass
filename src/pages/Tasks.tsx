@@ -78,6 +78,16 @@ export default function Tasks() {
     },
   });
 
+  const { data: reminders = [] } = useQuery({
+    queryKey: ["task-reminders", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data } = await supabase.from("task_reminders").select("*").eq("user_id", user.id);
+      return data ?? [];
+    },
+    enabled: !!user?.id,
+  });
+
   const { data: profiles = [] } = useQuery({
     queryKey: ["profiles-list"],
     queryFn: async () => {
