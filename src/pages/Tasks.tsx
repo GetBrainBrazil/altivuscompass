@@ -9,14 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, Plus, Search, CheckCircle2, Clock, AlertCircle, Bell } from "lucide-react";
+import { CalendarIcon, Plus, Search, CheckCircle2, Clock, AlertCircle, Bell, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
@@ -31,17 +31,24 @@ const PRIORITY_CONFIG: Record<string, { label: string; color: string }> = {
   high: { label: "Alta", color: "bg-destructive/10 text-destructive" },
 };
 
+type SortField = "title" | "due_date" | "priority" | "status" | "assigned_to";
+type SortDir = "asc" | "desc" | null;
+
 export default function Tasks() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [userFilter, setUserFilter] = useState<string>("all");
+  const [quoteFilter, setQuoteFilter] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<any>(null);
   const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
   const [reminderTask, setReminderTask] = useState<any>(null);
   const [reminderDate, setReminderDate] = useState<Date>();
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>(null);
 
   const [form, setForm] = useState({
     title: "",
@@ -178,16 +185,60 @@ export default function Tasks() {
     });
   };
 
-  const filteredTasks = tasks.filter((t: any) => {
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return t.title?.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q);
-  });
-
   const getAssigneeName = (userId: string | null) => {
-    if (!userId) return "Sem responsável";
+    if (!userId) return "—";
     return profiles.find((p: any) => p.user_id === userId)?.full_name ?? "Usuário";
   };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      if (sortDir === "asc") setSortDir("desc");
+      else if (sortDir === "desc") { setSortField(null); setSortDir(null); }
+    } else {
+      setSortField(field);
+      setSortDir("asc");
+    }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return <ArrowUpDown size={12} className="opacity-30" />;
+    if (sortDir === "asc") return <ArrowUp size={12} />;
+    return <ArrowDown size={12} />;
+  };
+
+  const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
+  const statusOrder: Record<string, number> = { pending: 0, in_progress: 1, completed: 2 };
+
+  const filteredTasks = tasks
+    .filter((t: any) => {
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        if (!t.title?.toLowerCase().includes(q) && !t.description?.toLowerCase().includes(q)) return false;
+      }
+      if (userFilter !== "all" && t.assigned_to !== userFilter) return false;
+      if (quoteFilter !== "all") {
+        if (quoteFilter === "none" && t.quote_id) return false;
+        if (quoteFilter !== "none" && t.quote_id !== quoteFilter) return false;
+      }
+      return true;
+    })
+    .sort((a: any, b: any) => {
+      if (!sortField || !sortDir) return 0;
+      const dir = sortDir === "asc" ? 1 : -1;
+      if (sortField === "title") return (a.title ?? "").localeCompare(b.title ?? "") * dir;
+      if (sortField === "due_date") {
+        const da = a.due_date ?? "9999";
+        const db = b.due_date ?? "9999";
+        return da.localeCompare(db) * dir;
+      }
+      if (sortField === "priority") return ((priorityOrder[a.priority] ?? 1) - (priorityOrder[b.priority] ?? 1)) * dir;
+      if (sortField === "status") return ((statusOrder[a.status] ?? 0) - (statusOrder[b.status] ?? 0)) * dir;
+      if (sortField === "assigned_to") return getAssigneeName(a.assigned_to).localeCompare(getAssigneeName(b.assigned_to)) * dir;
+      return 0;
+    });
+
+  // Get unique quotes that have tasks for the filter
+  const quotesWithTasks = quotes.filter((q: any) => tasks.some((t: any) => t.quote_id === q.id));
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -201,20 +252,45 @@ export default function Tasks() {
         </Button>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
+      <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="Buscar tarefas..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-full sm:w-[160px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="all">Todos os Status</SelectItem>
             <SelectItem value="pending">Pendente</SelectItem>
             <SelectItem value="in_progress">Em Andamento</SelectItem>
             <SelectItem value="completed">Concluída</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={userFilter} onValueChange={setUserFilter}>
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectValue placeholder="Responsável" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os Usuários</SelectItem>
+            {profiles.map((p: any) => (
+              <SelectItem key={p.user_id} value={p.user_id}>{p.full_name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={quoteFilter} onValueChange={setQuoteFilter}>
+          <SelectTrigger className="w-full sm:w-[200px]">
+            <SelectValue placeholder="Cotação" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as Cotações</SelectItem>
+            <SelectItem value="none">Sem cotação</SelectItem>
+            {quotesWithTasks.map((q: any) => (
+              <SelectItem key={q.id} value={q.id}>
+                {q.clients?.full_name ?? "—"} — {q.destination ?? q.title ?? "Sem destino"}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -224,70 +300,104 @@ export default function Tasks() {
       ) : filteredTasks.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground font-body">Nenhuma tarefa encontrada.</div>
       ) : (
-        <div className="space-y-2">
-          {filteredTasks.map((task: any) => {
-            const status = STATUS_CONFIG[task.status] ?? STATUS_CONFIG.pending;
-            const priority = PRIORITY_CONFIG[task.priority] ?? PRIORITY_CONFIG.medium;
-            const StatusIcon = status.icon;
-            const isOverdue = task.due_date && !task.completed_at && new Date(task.due_date) < new Date();
+        <div className="glass-card rounded-xl overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-10" />
+                <TableHead className="cursor-pointer font-body" onClick={() => handleSort("title")}>
+                  <span className="flex items-center gap-1">Título {getSortIcon("title")}</span>
+                </TableHead>
+                <TableHead className="cursor-pointer font-body hidden md:table-cell" onClick={() => handleSort("assigned_to")}>
+                  <span className="flex items-center gap-1">Responsável {getSortIcon("assigned_to")}</span>
+                </TableHead>
+                <TableHead className="cursor-pointer font-body" onClick={() => handleSort("priority")}>
+                  <span className="flex items-center gap-1">Prioridade {getSortIcon("priority")}</span>
+                </TableHead>
+                <TableHead className="cursor-pointer font-body" onClick={() => handleSort("status")}>
+                  <span className="flex items-center gap-1">Status {getSortIcon("status")}</span>
+                </TableHead>
+                <TableHead className="cursor-pointer font-body hidden sm:table-cell" onClick={() => handleSort("due_date")}>
+                  <span className="flex items-center gap-1">Prazo {getSortIcon("due_date")}</span>
+                </TableHead>
+                <TableHead className="font-body hidden lg:table-cell">Cotação / Cliente</TableHead>
+                <TableHead className="w-10" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredTasks.map((task: any) => {
+                const status = STATUS_CONFIG[task.status] ?? STATUS_CONFIG.pending;
+                const priority = PRIORITY_CONFIG[task.priority] ?? PRIORITY_CONFIG.medium;
+                const isOverdue = task.due_date && !task.completed_at && new Date(task.due_date) < new Date();
 
-            return (
-              <Card key={task.id} className={cn("transition-colors hover:bg-muted/30", task.status === "completed" && "opacity-60")}>
-                <CardContent className="p-3 sm:p-4 flex items-start gap-3">
-                  <Checkbox
-                    checked={task.status === "completed"}
-                    onCheckedChange={() => toggleStatusMutation.mutate({ id: task.id, currentStatus: task.status })}
-                    className="mt-1"
-                  />
-                  <div className="flex-1 min-w-0 cursor-pointer" onClick={() => openEdit(task)}>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={cn("text-sm font-medium font-body", task.status === "completed" && "line-through text-muted-foreground")}>
-                        {task.title}
-                      </span>
-                      <Badge variant="outline" className={cn("text-[10px] font-body", priority.color)}>{priority.label}</Badge>
-                      <Badge variant="outline" className={cn("text-[10px] font-body", status.color)}>
-                        <StatusIcon size={10} className="mr-1" />{status.label}
-                      </Badge>
-                      {isOverdue && <Badge variant="destructive" className="text-[10px] font-body">Atrasada</Badge>}
-                    </div>
-                    {task.description && (
-                      <p className="text-xs text-muted-foreground font-body mt-1 line-clamp-1">{task.description}</p>
-                    )}
-                    <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                      <span className="text-[11px] text-muted-foreground font-body">{getAssigneeName(task.assigned_to)}</span>
-                      {task.due_date && (
-                        <span className={cn("text-[11px] font-body", isOverdue ? "text-destructive" : "text-muted-foreground")}>
-                          Prazo: {format(new Date(task.due_date), "dd/MM/yyyy")}
-                        </span>
-                      )}
-                      {task.quotes && (
-                        <span className="text-[11px] text-soft-blue font-body">
-                          Cotação: {task.quotes.destination ?? task.quotes.title ?? "—"}
-                        </span>
-                      )}
-                      {!task.quotes && task.clients && (
-                        <span className="text-[11px] text-muted-foreground font-body">
-                          Cliente: {(task.clients as any).full_name}
-                        </span>
-                      )}
-                      {task.completed_at && (
-                        <span className="text-[11px] text-success font-body">
-                          Concluída em {format(new Date(task.completed_at), "dd/MM/yyyy HH:mm")}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => { setReminderTask(task); setReminderDialogOpen(true); }}
-                    className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                    title="Adicionar lembrete"
+                return (
+                  <TableRow
+                    key={task.id}
+                    className={cn("cursor-pointer hover:bg-muted/30 transition-colors", task.status === "completed" && "opacity-60")}
+                    onClick={() => openEdit(task)}
                   >
-                    <Bell size={14} />
-                  </button>
-                </CardContent>
-              </Card>
-            );
-          })}
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={task.status === "completed"}
+                        onCheckedChange={() => toggleStatusMutation.mutate({ id: task.id, currentStatus: task.status })}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="min-w-0">
+                        <span className={cn("text-sm font-medium font-body", task.status === "completed" && "line-through text-muted-foreground")}>
+                          {task.title}
+                        </span>
+                        {task.description && (
+                          <p className="text-xs text-muted-foreground font-body mt-0.5 line-clamp-1">{task.description}</p>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <span className="text-xs text-muted-foreground font-body">{getAssigneeName(task.assigned_to)}</span>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={cn("text-[10px] font-body whitespace-nowrap", priority.color)}>{priority.label}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={cn("text-[10px] font-body whitespace-nowrap", status.color)}>{status.label}</Badge>
+                      {isOverdue && <Badge variant="destructive" className="text-[10px] font-body ml-1">Atrasada</Badge>}
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      {task.due_date ? (
+                        <span className={cn("text-xs font-body whitespace-nowrap", isOverdue ? "text-destructive" : "text-muted-foreground")}>
+                          {task.due_date.split("-").reverse().join("/")}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      {task.quotes ? (
+                        <span className="text-xs text-soft-blue font-body truncate max-w-[150px] block">
+                          {task.quotes.destination ?? task.quotes.title ?? "—"}
+                        </span>
+                      ) : task.clients ? (
+                        <span className="text-xs text-muted-foreground font-body truncate max-w-[150px] block">
+                          {(task.clients as any).full_name}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => { setReminderTask(task); setReminderDialogOpen(true); }}
+                        className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                        title="Adicionar lembrete"
+                      >
+                        <Bell size={14} />
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </div>
       )}
 
