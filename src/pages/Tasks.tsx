@@ -40,6 +40,7 @@ export default function Tasks() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [userFilter, setUserFilter] = useState<string>("all");
