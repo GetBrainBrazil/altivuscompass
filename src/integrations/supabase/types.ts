@@ -1202,6 +1202,50 @@ export type Database = {
           },
         ]
       }
+      quote_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          details: Json | null
+          id: string
+          item_type: string
+          quote_id: string
+          sort_order: number | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          details?: Json | null
+          id?: string
+          item_type: string
+          quote_id: string
+          sort_order?: number | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          details?: Json | null
+          id?: string
+          item_type?: string
+          quote_id?: string
+          sort_order?: number | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_items_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quote_passengers: {
         Row: {
           id: string
@@ -1241,18 +1285,24 @@ export type Database = {
           assigned_to: string | null
           client_id: string | null
           conclusion_type: string | null
+          cover_image_url: string | null
           created_at: string
           created_by: string | null
           departure_airport: string | null
           departure_city: string | null
           destination: string | null
           destination_images: string[] | null
+          details: string | null
           hotel_options: string | null
           id: string
           notes: string | null
+          other_info: string | null
+          payment_terms: string | null
           price_breakdown: Json | null
           quote_validity: string | null
           stage: Database["public"]["Enums"]["quote_stage"]
+          terms_conditions: string | null
+          title: string | null
           total_value: number | null
           travel_date_end: string | null
           travel_date_start: string | null
@@ -1263,18 +1313,24 @@ export type Database = {
           assigned_to?: string | null
           client_id?: string | null
           conclusion_type?: string | null
+          cover_image_url?: string | null
           created_at?: string
           created_by?: string | null
           departure_airport?: string | null
           departure_city?: string | null
           destination?: string | null
           destination_images?: string[] | null
+          details?: string | null
           hotel_options?: string | null
           id?: string
           notes?: string | null
+          other_info?: string | null
+          payment_terms?: string | null
           price_breakdown?: Json | null
           quote_validity?: string | null
           stage?: Database["public"]["Enums"]["quote_stage"]
+          terms_conditions?: string | null
+          title?: string | null
           total_value?: number | null
           travel_date_end?: string | null
           travel_date_start?: string | null
@@ -1285,18 +1341,24 @@ export type Database = {
           assigned_to?: string | null
           client_id?: string | null
           conclusion_type?: string | null
+          cover_image_url?: string | null
           created_at?: string
           created_by?: string | null
           departure_airport?: string | null
           departure_city?: string | null
           destination?: string | null
           destination_images?: string[] | null
+          details?: string | null
           hotel_options?: string | null
           id?: string
           notes?: string | null
+          other_info?: string | null
+          payment_terms?: string | null
           price_breakdown?: Json | null
           quote_validity?: string | null
           stage?: Database["public"]["Enums"]["quote_stage"]
+          terms_conditions?: string | null
+          title?: string | null
           total_value?: number | null
           travel_date_end?: string | null
           travel_date_start?: string | null
