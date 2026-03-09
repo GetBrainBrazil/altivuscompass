@@ -391,53 +391,55 @@ export default function PublicQuote() {
                         const hasBaggage = d.backpack_qty || d.carry_on_qty || d.checked_bag_qty;
 
                         return (
-                          <div key={idx} className="border border-border rounded-lg p-4 space-y-2.5">
+                          <div key={idx} className="border border-border rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-2.5">
                             {/* Route header */}
-                            <div className="flex items-start gap-2 flex-wrap">
-                              <div className="flex items-center gap-2 flex-wrap flex-1">
-                                {dirLabel && (
-                                  <Badge variant="secondary" className="text-[10px] font-body">{dirLabel}</Badge>
-                                )}
-                                <div className="flex items-center gap-1.5 text-sm font-medium text-foreground font-body">
-                                  {d.origin && <span>{d.origin}</span>}
-                                  {d.origin && d.destination && <Plane className="w-3.5 h-3.5 text-muted-foreground" />}
-                                  {d.destination && <span>{d.destination}</span>}
-                                </div>
-                              </div>
-                              {d.airline && (
-                                <div className="text-right ml-auto space-y-1">
-                                  <span className="text-xs text-muted-foreground font-body block">
-                                    {d.airline}{d.flight_number ? ` (${d.flight_number})` : ""}
-                                  </span>
-                                  {hasBaggage && (
-                                    <div className="flex items-center gap-1.5 justify-end">
-                                      {d.backpack_qty > 0 && (
-                                        <span className="text-[10px] text-muted-foreground font-body flex items-center gap-0.5" title={t.backpack}>
-                                          🎒 {d.backpack_qty}
-                                        </span>
-                                      )}
-                                      {d.carry_on_qty > 0 && (
-                                        <span className="text-[10px] text-muted-foreground font-body flex items-center gap-0.5" title={t.carryOn}>
-                                          👜 {d.carry_on_qty}
-                                        </span>
-                                      )}
-                                      {d.checked_bag_qty > 0 && (
-                                        <span className="text-[10px] text-muted-foreground font-body flex items-center gap-0.5" title={t.checkedBag}>
-                                          🧳 {d.checked_bag_qty}
-                                        </span>
-                                      )}
-                                    </div>
+                            <div className="space-y-1.5 sm:space-y-0">
+                              <div className="flex items-start sm:items-center gap-2 flex-wrap justify-between">
+                                <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+                                  {dirLabel && (
+                                    <Badge variant="secondary" className="text-[10px] font-body flex-shrink-0">{dirLabel}</Badge>
                                   )}
+                                  <div className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-foreground font-body min-w-0">
+                                    {d.origin && <span className="truncate">{d.origin}</span>}
+                                    {d.origin && d.destination && <Plane className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-muted-foreground flex-shrink-0" />}
+                                    {d.destination && <span className="truncate">{d.destination}</span>}
+                                  </div>
                                 </div>
-                              )}
+                                {d.airline && (
+                                  <div className="text-right flex-shrink-0 space-y-0.5">
+                                    <span className="text-[10px] sm:text-xs text-muted-foreground font-body block">
+                                      {d.airline}{d.flight_number ? ` (${d.flight_number})` : ""}
+                                    </span>
+                                    {hasBaggage && (
+                                      <div className="flex items-center gap-1.5 justify-end">
+                                        {d.backpack_qty > 0 && (
+                                          <span className="text-[10px] text-muted-foreground font-body flex items-center gap-0.5" title={t.backpack}>
+                                            🎒 {d.backpack_qty}
+                                          </span>
+                                        )}
+                                        {d.carry_on_qty > 0 && (
+                                          <span className="text-[10px] text-muted-foreground font-body flex items-center gap-0.5" title={t.carryOn}>
+                                            👜 {d.carry_on_qty}
+                                          </span>
+                                        )}
+                                        {d.checked_bag_qty > 0 && (
+                                          <span className="text-[10px] text-muted-foreground font-body flex items-center gap-0.5" title={t.checkedBag}>
+                                            🧳 {d.checked_bag_qty}
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
 
                             {/* Date/time row */}
-                            <div className="grid grid-cols-2 gap-3 text-xs font-body">
+                            <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs font-body">
                               {d.departure_date && (
                                 <div className="space-y-0.5">
                                   <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t.departure}</p>
-                                  <p className="text-foreground font-medium">
+                                  <p className="text-foreground font-medium text-[11px] sm:text-xs">
                                     {formatDate(d.departure_date)}{d.departure_time ? ` · ${d.departure_time}` : ""}
                                   </p>
                                 </div>
@@ -445,7 +447,7 @@ export default function PublicQuote() {
                               {d.arrival_date && (
                                 <div className="space-y-0.5">
                                   <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t.arrival}</p>
-                                  <p className="text-foreground font-medium">
+                                  <p className="text-foreground font-medium text-[11px] sm:text-xs">
                                     {formatDate(d.arrival_date)}{d.arrival_time ? ` · ${d.arrival_time}` : ""}
                                   </p>
                                 </div>
@@ -453,7 +455,7 @@ export default function PublicQuote() {
                             </div>
 
                             {/* Meta badges */}
-                            <div className="flex flex-wrap gap-1.5">
+                            <div className="flex flex-wrap gap-1 sm:gap-1.5">
                               {d.duration && (
                                 <Badge variant="outline" className="text-[10px] font-body gap-1">
                                   ⏱ {d.duration}
