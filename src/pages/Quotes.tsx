@@ -1015,7 +1015,7 @@ export default function Quotes() {
                     <TableHead className="cursor-pointer font-body" onClick={() => handleSort("total_value")}>
                       Valor {getSortIcon("total_value")}
                     </TableHead>
-                    <TableHead className="w-[80px]"></TableHead>
+                    
                   </TableRow>
                 </TableHeader>
                 <TableBody>
