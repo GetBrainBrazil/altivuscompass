@@ -171,8 +171,8 @@ export default function Tasks() {
       description: form.description || null,
       priority: form.priority,
       assigned_to: form.assigned_to || null,
-      quote_id: form.quote_id || null,
-      client_id: form.client_id || null,
+      quote_id: form.quote_id && form.quote_id !== "none" ? form.quote_id : null,
+      client_id: form.client_id && form.client_id !== "none" ? form.client_id : null,
       due_date: form.due_date ? format(form.due_date, "yyyy-MM-dd") : null,
       start_date: form.start_date ? format(form.start_date, "yyyy-MM-dd") : null,
     });
