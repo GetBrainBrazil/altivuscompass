@@ -191,15 +191,21 @@ export default function Quotes() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("client_relationships")
-        .select("*, client_a:clients!client_relationships_client_id_a_fkey(id, full_name), client_b:clients!client_relationships_client_id_b_fkey(id, full_name)")
+        .select("*, client_a:clients!client_relationships_client_id_a_fkey(id, full_name, seat_preference, preferred_airports, travel_profile, travel_preferences, desired_destinations), client_b:clients!client_relationships_client_id_b_fkey(id, full_name, seat_preference, preferred_airports, travel_profile, travel_preferences, desired_destinations)")
         .or(`client_id_a.eq.${selectedClientId},client_id_b.eq.${selectedClientId}`);
       if (error) throw error;
       return (data ?? []).map((r: any) => {
         const isA = r.client_id_a === selectedClientId;
+        const other = isA ? r.client_b : r.client_a;
         return {
-          id: isA ? r.client_b?.id : r.client_a?.id,
-          full_name: isA ? r.client_b?.full_name : r.client_a?.full_name,
+          id: other?.id,
+          full_name: other?.full_name,
           relationship_type: r.relationship_type,
+          seat_preference: other?.seat_preference,
+          preferred_airports: other?.preferred_airports,
+          travel_profile: other?.travel_profile,
+          travel_preferences: other?.travel_preferences,
+          desired_destinations: other?.desired_destinations,
         };
       });
     },
