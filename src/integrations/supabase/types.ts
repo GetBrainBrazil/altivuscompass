@@ -1240,6 +1240,7 @@ export type Database = {
           airline_options: string | null
           assigned_to: string | null
           client_id: string | null
+          conclusion_type: string | null
           created_at: string
           created_by: string | null
           departure_airport: string | null
@@ -1261,6 +1262,7 @@ export type Database = {
           airline_options?: string | null
           assigned_to?: string | null
           client_id?: string | null
+          conclusion_type?: string | null
           created_at?: string
           created_by?: string | null
           departure_airport?: string | null
@@ -1282,6 +1284,7 @@ export type Database = {
           airline_options?: string | null
           assigned_to?: string | null
           client_id?: string | null
+          conclusion_type?: string | null
           created_at?: string
           created_by?: string | null
           departure_airport?: string | null
@@ -1305,6 +1308,75 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales: {
+        Row: {
+          assigned_to: string | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          destination: string | null
+          id: string
+          notes: string | null
+          quote_id: string | null
+          stage: string
+          ticket_issued_at: string | null
+          ticket_number: string | null
+          total_value: number | null
+          travel_date_end: string | null
+          travel_date_start: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination?: string | null
+          id?: string
+          notes?: string | null
+          quote_id?: string | null
+          stage?: string
+          ticket_issued_at?: string | null
+          ticket_number?: string | null
+          total_value?: number | null
+          travel_date_end?: string | null
+          travel_date_start?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination?: string | null
+          id?: string
+          notes?: string | null
+          quote_id?: string | null
+          stage?: string
+          ticket_issued_at?: string | null
+          ticket_number?: string | null
+          total_value?: number | null
+          travel_date_end?: string | null
+          travel_date_start?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
             referencedColumns: ["id"]
           },
         ]
