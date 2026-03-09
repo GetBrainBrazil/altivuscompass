@@ -1045,11 +1045,6 @@ export default function Quotes() {
                             </div>
                           </TableCell>
                           <TableCell className="font-body font-medium">{formatCurrency(quote.total_value)}</TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="sm" className="h-8 px-2 text-destructive" onClick={(e) => { e.stopPropagation(); if (confirm("Remover cotação?")) deleteMutation.mutate(quote.id); }}>
-                              ✕
-                            </Button>
-                          </TableCell>
                         </TableRow>
                       );
                     })
