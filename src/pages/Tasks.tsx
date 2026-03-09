@@ -299,6 +299,18 @@ export default function Tasks() {
             ))}
           </SelectContent>
         </Select>
+        <Select value={clientFilter} onValueChange={setClientFilter}>
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectValue placeholder="Cliente" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os Clientes</SelectItem>
+            <SelectItem value="none">Sem cliente</SelectItem>
+            {clients.map((c: any) => (
+              <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {isLoading ? (
