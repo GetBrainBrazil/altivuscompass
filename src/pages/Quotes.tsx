@@ -571,16 +571,15 @@ export default function Quotes() {
         </div>
 
         {/* Main fields card */}
-        <div className="glass-card rounded-xl p-4 space-y-4">
-          <div className="grid grid-cols-2 lg:grid-cols-6 gap-x-3 gap-y-3">
-            {/* Título */}
-            <div className="col-span-2 space-y-1">
+        <div className="glass-card rounded-xl p-4 space-y-3">
+          {/* Row 1: Título, Cliente, Imagem de Capa */}
+          <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-3">
+            <div className="col-span-2 lg:col-span-4 space-y-1">
               <Label className="font-body text-xs">Título da Cotação</Label>
               <Input className="h-9 text-sm" value={form.title ?? ""} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex: Viagem Europa - Família Silva" />
             </div>
 
-            {/* Cliente */}
-            <div className="col-span-2 space-y-1">
+            <div className="col-span-2 lg:col-span-4 space-y-1">
               <Label className="font-body text-xs">Cliente</Label>
               <Select value={form.client_id ?? ""} onValueChange={(v) => { setForm({ ...form, client_id: v }); setSelectedPassengers([]); setSelectedLinkedClients([]); }}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar cliente" /></SelectTrigger>
@@ -588,8 +587,7 @@ export default function Quotes() {
               </Select>
             </div>
 
-            {/* Imagem de capa */}
-            <div className="col-span-2 lg:col-span-1 space-y-1">
+            <div className="col-span-2 lg:col-span-4 space-y-1">
               <div className="flex items-center gap-1.5">
                 <Label className="font-body text-xs">Imagem de Capa</Label>
                 <TooltipProvider>
@@ -599,7 +597,7 @@ export default function Quotes() {
                     </TooltipTrigger>
                     <TooltipContent side="top" className="max-w-[280px] text-xs">
                       <p>A IA usa o <strong>título da cotação</strong> para gerar a imagem automaticamente.</p>
-                      <p className="mt-1">Para upload manual, a largura ideal é <strong>1200×630px</strong> (proporção 1.9:1) para boa exibição no desktop e mobile.</p>
+                      <p className="mt-1">Para upload manual, a largura ideal é <strong>1200×630px</strong> (proporção 1.9:1).</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -631,21 +629,21 @@ export default function Quotes() {
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
               </div>
             </div>
+          </div>
 
-            {/* Data Flexível toggle + Datas */}
-            <div className="col-span-1 space-y-1">
-              <div className="flex items-center gap-1.5">
-                <Label className="font-body text-xs">Data Flexível</Label>
-              </div>
+          {/* Row 2: Datas / Data Flexível, Destinos */}
+          <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-3">
+            {/* Data Flexível toggle */}
+            <div className="col-span-1 lg:col-span-1 space-y-1">
+              <Label className="font-body text-xs whitespace-nowrap">Flexível</Label>
               <div className="flex items-center h-9">
-                <Switch checked={!!form.flexible_dates} onCheckedChange={(v) => setForm({ ...form, flexible_dates: v })} />
+                <Switch checked={!!form.flexible_dates} onCheckedChange={(v) => setForm({ ...form, flexible_dates: v, ...(v ? { travel_date_start: "", travel_date_end: "" } : {}) })} />
               </div>
             </div>
 
             {!form.flexible_dates ? (
               <>
-                {/* Data Início */}
-                <div className="col-span-1 space-y-1">
+                <div className="col-span-1 lg:col-span-2 space-y-1">
                   <Label className="font-body text-xs">Data Início</Label>
                   <Popover>
                     <PopoverTrigger asChild>
@@ -655,20 +653,11 @@ export default function Quotes() {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={form.travel_date_start ? parseISO(form.travel_date_start) : undefined}
-                        onSelect={(date) => setForm({ ...form, travel_date_start: date ? format(date, "yyyy-MM-dd") : "" })}
-                        initialFocus
-                        locale={ptBR}
-                        className={cn("p-3 pointer-events-auto")}
-                      />
+                      <Calendar mode="single" selected={form.travel_date_start ? parseISO(form.travel_date_start) : undefined} onSelect={(date) => setForm({ ...form, travel_date_start: date ? format(date, "yyyy-MM-dd") : "" })} initialFocus locale={ptBR} className={cn("p-3 pointer-events-auto")} />
                     </PopoverContent>
                   </Popover>
                 </div>
-
-                {/* Data Fim */}
-                <div className="col-span-1 space-y-1">
+                <div className="col-span-1 lg:col-span-2 space-y-1">
                   <Label className="font-body text-xs">Data Fim</Label>
                   <Popover>
                     <PopoverTrigger asChild>
@@ -678,27 +667,20 @@ export default function Quotes() {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={form.travel_date_end ? parseISO(form.travel_date_end) : undefined}
-                        onSelect={(date) => setForm({ ...form, travel_date_end: date ? format(date, "yyyy-MM-dd") : "" })}
-                        initialFocus
-                        locale={ptBR}
-                        className={cn("p-3 pointer-events-auto")}
-                      />
+                      <Calendar mode="single" selected={form.travel_date_end ? parseISO(form.travel_date_end) : undefined} onSelect={(date) => setForm({ ...form, travel_date_end: date ? format(date, "yyyy-MM-dd") : "" })} initialFocus locale={ptBR} className={cn("p-3 pointer-events-auto")} />
                     </PopoverContent>
                   </Popover>
                 </div>
               </>
             ) : (
-              <div className="col-span-2 space-y-1">
+              <div className="col-span-1 lg:col-span-4 space-y-1">
                 <Label className="font-body text-xs">Descrição das Datas</Label>
-                <Input className="h-9 text-sm" value={form.flexible_dates_description ?? ""} onChange={(e) => setForm({ ...form, flexible_dates_description: e.target.value })} placeholder="Ex: Qualquer semana em julho, feriados de fim de ano..." />
+                <Input className="h-9 text-sm" value={form.flexible_dates_description ?? ""} onChange={(e) => setForm({ ...form, flexible_dates_description: e.target.value })} placeholder="Ex: Qualquer semana em julho..." />
               </div>
             )}
 
             {/* Destino(s) */}
-            <div className="col-span-2 space-y-1">
+            <div className="col-span-2 lg:col-span-5 space-y-1">
               <Label className="font-body text-xs">Destino(s)</Label>
               <Popover open={destOpen} onOpenChange={setDestOpen}>
                 <PopoverTrigger asChild>
@@ -725,22 +707,20 @@ export default function Quotes() {
                   </Command>
                 </PopoverContent>
               </Popover>
+              {selectedDestinations.length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {selectedDestinations.map((dest) => (
+                    <Badge key={dest} variant="secondary" className="text-xs gap-1 pr-1">
+                      {dest}
+                      <button type="button" onClick={() => toggleDestination(dest)} className="ml-0.5 hover:text-destructive transition-colors">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Destinos selecionados */}
-          {selectedDestinations.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {selectedDestinations.map((dest) => (
-                <Badge key={dest} variant="secondary" className="text-xs gap-1 pr-1">
-                  {dest}
-                  <button type="button" onClick={() => toggleDestination(dest)} className="ml-0.5 hover:text-destructive transition-colors">
-                    <X className="w-3 h-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-          )}
 
           {/* Passageiros & clientes vinculados - fora do grid */}
           {form.client_id && (clientPassengers.length > 0 || linkedClients.length > 0) && (
