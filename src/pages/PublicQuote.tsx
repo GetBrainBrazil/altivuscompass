@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Copy, Printer } from "lucide-react";
+import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Printer } from "lucide-react";
 import logoAltivusFallback from "@/assets/logo-altivus.png";
 
 const ITEM_TYPE_META: Record<string, { label: string; icon: any }> = {
