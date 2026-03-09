@@ -203,8 +203,11 @@ export default function Quotes() {
       });
       // Load linked client IDs from price_breakdown
       const pb = (editingQuote as any).price_breakdown;
-      if (pb && typeof pb === 'object' && Array.isArray((pb as any).linked_client_ids)) {
-        setSelectedLinkedClients((pb as any).linked_client_ids);
+      if (pb && typeof pb === 'object') {
+        if (Array.isArray((pb as any).linked_client_ids)) {
+          setSelectedLinkedClients((pb as any).linked_client_ids);
+        }
+        setClientSelfTraveling(!!(pb as any).client_self_traveling);
       }
     }
   }, [editingQuote]);
