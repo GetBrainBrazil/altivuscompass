@@ -1495,7 +1495,7 @@ export default function Quotes() {
                              </Badge>
                            )}
                            <div className="text-[10px] text-muted-foreground font-body">
-                             <span>{quote.travel_date_start ?? ""} {quote.travel_date_end ? `– ${quote.travel_date_end}` : ""}</span>
+                             <span>{quote.travel_date_start ? quote.travel_date_start.split("-").reverse().join("/") : ""} {quote.travel_date_end ? `– ${quote.travel_date_end.split("-").reverse().join("/")}` : ""}</span>
                            </div>
                          </div>
                        ))}
