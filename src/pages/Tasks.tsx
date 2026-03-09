@@ -531,27 +531,37 @@ export default function Tasks() {
           <p className="text-sm text-muted-foreground font-body">
             Tarefa: <strong>{reminderTask?.title}</strong>
           </p>
-          <div>
-            <Label className="font-body text-xs">Data e hora do lembrete</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !reminderDate && "text-muted-foreground")}>
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {reminderDate ? format(reminderDate, "dd/MM/yyyy") : "Selecione a data"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={reminderDate} onSelect={setReminderDate} className="p-3 pointer-events-auto" locale={ptBR} />
-              </PopoverContent>
-            </Popover>
+          <div className="space-y-3">
+            <div>
+              <Label className="font-body text-xs">Data do lembrete</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !reminderDate && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {reminderDate ? format(reminderDate, "dd/MM/yyyy") : "Selecione a data"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={reminderDate} onSelect={setReminderDate} className="p-3 pointer-events-auto" locale={ptBR} />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div>
+              <Label className="font-body text-xs">Hora</Label>
+              <Input type="time" value={reminderTime} onChange={(e) => setReminderTime(e.target.value)} />
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setReminderDialogOpen(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => { setReminderDialogOpen(false); setReminderTime("09:00"); }}>Cancelar</Button>
             <Button
               disabled={!reminderDate || addReminderMutation.isPending}
               onClick={() => {
                 if (reminderDate && reminderTask) {
-                  addReminderMutation.mutate({ taskId: reminderTask.id, remindAt: reminderDate.toISOString() });
+                  const [hours, minutes] = reminderTime.split(":").map(Number);
+                  const dateWithTime = new Date(reminderDate);
+                  dateWithTime.setHours(hours, minutes, 0, 0);
+                  addReminderMutation.mutate({ taskId: reminderTask.id, remindAt: dateWithTime.toISOString() });
+                  setReminderTime("09:00");
                 }
               }}
             >
