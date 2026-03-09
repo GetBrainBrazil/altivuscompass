@@ -198,7 +198,7 @@ export default function PublicQuote() {
   const selectedLang = LANG_OPTIONS.find(l => l.value === lang);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white text-gray-900" style={{ colorScheme: "light" }} data-theme="light">
       {/* Top toolbar - hidden on print */}
       <div className="print:hidden border-b border-border bg-card">
         <div className="max-w-5xl mx-auto px-3 sm:px-6 py-2 flex items-center gap-1.5 sm:gap-2 flex-wrap">
