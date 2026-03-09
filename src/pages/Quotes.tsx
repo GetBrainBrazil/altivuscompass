@@ -1015,13 +1015,13 @@ export default function Quotes() {
                     <TableHead className="cursor-pointer font-body" onClick={() => handleSort("total_value")}>
                       Valor {getSortIcon("total_value")}
                     </TableHead>
-                    <TableHead className="w-[80px]"></TableHead>
+                    
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sortedQuotes.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center p-8 text-muted-foreground font-body">Nenhuma cotação encontrada.</TableCell>
+                      <TableCell colSpan={5} className="text-center p-8 text-muted-foreground font-body">Nenhuma cotação encontrada.</TableCell>
                     </TableRow>
                   ) : (
                     sortedQuotes.map((quote: Quote) => {
@@ -1045,11 +1045,6 @@ export default function Quotes() {
                             </div>
                           </TableCell>
                           <TableCell className="font-body font-medium">{formatCurrency(quote.total_value)}</TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="sm" className="h-8 px-2 text-destructive" onClick={(e) => { e.stopPropagation(); if (confirm("Remover cotação?")) deleteMutation.mutate(quote.id); }}>
-                              ✕
-                            </Button>
-                          </TableCell>
                         </TableRow>
                       );
                     })
