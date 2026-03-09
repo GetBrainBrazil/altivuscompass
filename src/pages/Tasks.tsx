@@ -365,7 +365,7 @@ export default function Tasks() {
               <Select value={form.quote_id} onValueChange={(v) => setForm({ ...form, quote_id: v })}>
                 <SelectTrigger><SelectValue placeholder="Vincular a uma cotação" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhuma</SelectItem>
+                  <SelectItem value="none">Nenhuma</SelectItem>
                   {quotes.map((q: any) => (
                     <SelectItem key={q.id} value={q.id}>
                       {q.clients?.full_name ?? "—"} — {q.destination ?? q.title ?? "Sem destino"}
