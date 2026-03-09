@@ -85,6 +85,7 @@ export default function Quotes() {
   const [items, setItems] = useState<QuoteItem[]>([]);
   const [selectedPassengers, setSelectedPassengers] = useState<string[]>([]);
   const [selectedLinkedClients, setSelectedLinkedClients] = useState<string[]>([]);
+  const [clientSelfTraveling, setClientSelfTraveling] = useState(false);
   const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
