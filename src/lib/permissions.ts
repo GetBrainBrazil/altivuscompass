@@ -13,6 +13,7 @@ export interface PagePermission {
 // "admin" always has access to everything (enforced in canAccess)
 export const PAGE_PERMISSIONS: PagePermission[] = [
   { path: "/", label: "Painel", allowedRoles: ["admin", "manager", "sales_agent", "operations"] },
+  { path: "/tasks", label: "Tarefas", allowedRoles: ["admin", "manager", "sales_agent", "operations"] },
   { path: "/clients", label: "Clientes", allowedRoles: ["admin", "manager", "sales_agent"] },
   { path: "/quotes", label: "Cotações", allowedRoles: ["admin", "manager", "sales_agent"] },
   { path: "/sales", label: "Vendas", allowedRoles: ["admin", "manager", "sales_agent"] },
