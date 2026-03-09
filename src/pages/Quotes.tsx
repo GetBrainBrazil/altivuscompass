@@ -943,31 +943,48 @@ export default function Quotes() {
               {stages.map((stage) => {
                 const stageQuotes = quotes.filter((q: Quote) => q.stage === stage.id);
                 return (
-                  <div key={stage.id} className="min-w-[240px] sm:min-w-[280px] flex-shrink-0">
+                   <div key={stage.id} className="min-w-[240px] sm:min-w-[280px] flex-shrink-0"
+                     onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("bg-accent/10"); }}
+                     onDragLeave={(e) => { e.currentTarget.classList.remove("bg-accent/10"); }}
+                     onDrop={(e) => {
+                       e.preventDefault();
+                       e.currentTarget.classList.remove("bg-accent/10");
+                       if (draggedQuoteId) {
+                         const q = quotes.find((q: Quote) => q.id === draggedQuoteId);
+                         if (q && q.stage !== stage.id) updateQuoteStage(draggedQuoteId, stage.id);
+                         setDraggedQuoteId(null);
+                       }
+                     }}
+                   >
                     <div className="flex items-center gap-2 mb-3 px-1">
-                      <div className={`w-2 h-2 rounded-full ${stage.color}`} />
-                      <span className="text-xs font-medium text-foreground font-body">{stage.label}</span>
-                      <span className="text-xs text-muted-foreground font-body ml-auto">{stageQuotes.length}</span>
-                    </div>
-                    <div className="space-y-3">
-                      {stageQuotes.map((quote: Quote) => (
-                        <div key={quote.id} className="glass-card rounded-xl p-3 sm:p-4 cursor-pointer hover:shadow-md transition-shadow animate-fade-in" onClick={() => openEdit(quote)}>
+                       <div className={`w-2 h-2 rounded-full ${stage.color}`} />
+                       <span className="text-xs font-medium text-foreground font-body">{stage.label}</span>
+                       <span className="text-xs text-muted-foreground font-body ml-auto">{stageQuotes.length}</span>
+                     </div>
+                     <div className="space-y-3 min-h-[60px] rounded-lg transition-colors">
+                       {stageQuotes.map((quote: Quote) => (
+                         <div key={quote.id}
+                           draggable
+                           onDragStart={() => setDraggedQuoteId(quote.id)}
+                           onDragEnd={() => setDraggedQuoteId(null)}
+                           className={cn("glass-card rounded-xl p-3 sm:p-4 cursor-grab hover:shadow-md transition-all animate-fade-in active:cursor-grabbing", draggedQuoteId === quote.id && "opacity-40")}
+                           onClick={() => openEdit(quote)}
+                         >
                           <div className="flex items-start justify-between mb-1">
-                            <p className="text-sm font-medium font-body text-foreground">{quote.title || quote.destination || "Sem título"}</p>
-                            <span className="text-xs font-semibold text-foreground font-body ml-2">{formatCurrency(quote.total_value)}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground font-body mb-2">{quote.client_name}</p>
-                          {stage.id === "confirmed" && quote.conclusion_type && (
-                            <Badge variant={quote.conclusion_type === "won" ? "default" : "destructive"} className="text-[10px] mb-2">
-                              {quote.conclusion_type === "won" ? "Convertida" : "Perdida"}
-                            </Badge>
-                          )}
-                          <div className="flex items-center justify-between text-[10px] text-muted-foreground font-body">
-                            <span>{quote.travel_date_start ?? ""} {quote.travel_date_end ? `– ${quote.travel_date_end}` : ""}</span>
-                            <Button variant="ghost" size="sm" className="h-6 px-2 text-destructive text-[10px]" onClick={(e) => { e.stopPropagation(); if (confirm("Remover cotação?")) deleteMutation.mutate(quote.id); }}>✕</Button>
-                          </div>
-                        </div>
-                      ))}
+                             <p className="text-sm font-medium font-body text-foreground">{quote.title || quote.destination || "Sem título"}</p>
+                             <span className="text-xs font-semibold text-foreground font-body ml-2">{formatCurrency(quote.total_value)}</span>
+                           </div>
+                           <p className="text-xs text-muted-foreground font-body mb-2">{quote.client_name}</p>
+                           {stage.id === "confirmed" && quote.conclusion_type && (
+                             <Badge variant={quote.conclusion_type === "won" ? "default" : "destructive"} className="text-[10px] mb-2">
+                               {quote.conclusion_type === "won" ? "Convertida" : "Perdida"}
+                             </Badge>
+                           )}
+                           <div className="text-[10px] text-muted-foreground font-body">
+                             <span>{quote.travel_date_start ?? ""} {quote.travel_date_end ? `– ${quote.travel_date_end}` : ""}</span>
+                           </div>
+                         </div>
+                       ))}
                       {stageQuotes.length === 0 && (
                         <div className="rounded-xl border border-dashed border-border/50 p-4 sm:p-6 text-center">
                           <p className="text-xs text-muted-foreground font-body">Sem cotações</p>
