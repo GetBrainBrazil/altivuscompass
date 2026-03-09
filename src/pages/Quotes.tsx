@@ -542,7 +542,7 @@ export default function Quotes() {
     );
   };
 
-  const TRAVEL_PROFILE_LABELS: Record<string, string> = { economic: "Econômico", opportunity: "Oportunidade", sophisticated: "Sofisticado" };
+  const TRAVEL_PROFILE_LABELS: Record<string, string> = { economic: "Econômico", opportunity: "Conforto", sophisticated: "Premium" };
 
   const renderPrefsTooltip = (client: any) => {
     const hasPrefs = client.seat_preference || (client.preferred_airports?.length > 0) || client.travel_profile || client.travel_preferences || (client.desired_destinations?.length > 0);
