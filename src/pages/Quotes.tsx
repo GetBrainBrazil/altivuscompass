@@ -667,7 +667,7 @@ export default function Quotes() {
               <div className="flex items-center gap-2">
                 {coverPreview ? (
                   <div className="relative">
-                    <img src={coverPreview} alt="Capa" className="h-9 w-16 object-cover rounded border border-border" />
+                    <img src={coverPreview} alt="Capa" className="h-9 w-16 object-cover rounded border border-border cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setCoverZoom(true)} />
                     <button type="button" onClick={() => { setCoverFile(null); setCoverPreview(null); setForm({ ...form, cover_image_url: "" }); }} className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full p-0.5">
                       <X className="w-2.5 h-2.5" />
                     </button>
