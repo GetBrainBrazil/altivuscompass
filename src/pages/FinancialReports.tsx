@@ -249,6 +249,42 @@ export default function FinancialReports() {
     setBudgetRows((prev) => prev.map((r, i) => (i === idx ? { ...r, planned: value } : r)));
   };
 
+  // ── Account Balances Data ──
+  const balancesData = useMemo(() => {
+    // Calculate balance per bank account from ALL transactions (not filtered by year)
+    const balanceMap: Record<string, number> = {};
+    // Initialize with bank accounts
+    bankAccounts.forEach((a) => {
+      balanceMap[a.id] = 0;
+    });
+    // Also track "Virtual" and unassigned
+    transactions.forEach((t) => {
+      const acc = t.payment_account ?? "unassigned";
+      if (!(acc in balanceMap)) balanceMap[acc] = 0;
+      const isIncome = t.type === "income" || t.type === "receivable" || t.type === "sale";
+      const isPaid = t.status === "paid" || t.status === "received";
+      if (isPaid) {
+        balanceMap[acc] += isIncome ? Math.abs(t.amount) : -Math.abs(t.amount);
+      }
+    });
+
+    const accountBalances = bankAccounts.map((a) => ({
+      id: a.id,
+      name: a.bank_name,
+      accountType: a.account_type,
+      isActive: a.is_active,
+      balance: balanceMap[a.id] ?? 0,
+    }));
+
+    // Virtual account
+    const virtualBalance = balanceMap["Virtual"] ?? 0;
+    const unassignedBalance = balanceMap["unassigned"] ?? 0;
+
+    const totalBalance = accountBalances.reduce((s, a) => s + a.balance, 0) + virtualBalance + unassignedBalance;
+
+    return { accountBalances, virtualBalance, unassignedBalance, totalBalance };
+  }, [transactions, bankAccounts]);
+
   const budgetTotals = useMemo(() => {
     const totalPlanned = budgetRows.reduce((s, r) => s + r.planned, 0);
     const totalActual = budgetRows.reduce((s, r) => s + r.actual, 0);
