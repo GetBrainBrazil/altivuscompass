@@ -183,9 +183,13 @@ export default function Quotes() {
           <p className="text-muted-foreground font-body mt-1 text-sm">{quotes.length} cotações</p>
         </div>
         <div className="flex gap-2 items-center">
-          <div className="flex gap-1 p-1 rounded-lg bg-muted sm:hidden">
-            <button onClick={() => setViewMode("list")} className={`px-2 py-1 rounded text-xs font-body ${viewMode === "list" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"}`}>Lista</button>
-            <button onClick={() => setViewMode("kanban")} className={`px-2 py-1 rounded text-xs font-body ${viewMode === "kanban" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"}`}>Kanban</button>
+          <div className="flex gap-1 p-1 rounded-lg bg-muted">
+            <button onClick={() => setViewMode("kanban")} className={`p-2 rounded-md transition-colors ${viewMode === "kanban" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:bg-background/50"}`} title="Kanban">
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button onClick={() => setViewMode("table")} className={`p-2 rounded-md transition-colors ${viewMode === "table" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:bg-background/50"}`} title="Tabela">
+              <TableIcon className="w-4 h-4" />
+            </button>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
