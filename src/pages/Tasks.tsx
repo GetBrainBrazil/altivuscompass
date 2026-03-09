@@ -146,7 +146,7 @@ export default function Tasks() {
   const closeDialog = () => {
     setDialogOpen(false);
     setEditingTask(null);
-    setForm({ title: "", description: "", priority: "medium", assigned_to: "", quote_id: "", client_id: "", due_date: null, start_date: new Date() });
+    setForm({ title: "", description: "", priority: "medium", assigned_to: "", quote_id: "none", client_id: "none", due_date: null, start_date: new Date() });
   };
 
   const openEdit = (task: any) => {
