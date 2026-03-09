@@ -29,7 +29,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image",
+        model: "google/gemini-3-pro-image-preview",
         messages: [{ role: "user", content: prompt }],
         modalities: ["image", "text"],
       }),
@@ -54,9 +54,26 @@ serve(async (req) => {
     }
 
     const aiData = await aiResponse.json();
-    const imageBase64 = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    console.log("AI response structure:", JSON.stringify(Object.keys(aiData)));
+    console.log("First choice keys:", JSON.stringify(aiData.choices?.[0]?.message ? Object.keys(aiData.choices[0].message) : "no message"));
+    
+    // Try multiple response formats
+    let imageBase64 = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    
+    // Alternative: check content parts for inline_data
+    if (!imageBase64 && aiData.choices?.[0]?.message?.content) {
+      const content = aiData.choices[0].message.content;
+      if (Array.isArray(content)) {
+        const imagePart = content.find((p: any) => p.type === "image_url" || p.inline_data || p.image_url);
+        if (imagePart?.image_url?.url) imageBase64 = imagePart.image_url.url;
+        else if (imagePart?.inline_data?.data) imageBase64 = `data:${imagePart.inline_data.mime_type || "image/png"};base64,${imagePart.inline_data.data}`;
+      }
+    }
+    
+    console.log("Image found:", !!imageBase64, imageBase64 ? imageBase64.substring(0, 50) : "none");
 
     if (!imageBase64) {
+      console.error("Full AI response:", JSON.stringify(aiData).substring(0, 2000));
       throw new Error("Nenhuma imagem foi gerada");
     }
 
