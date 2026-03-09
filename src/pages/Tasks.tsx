@@ -602,7 +602,7 @@ export default function Tasks() {
       <Dialog open={reminderDialogOpen} onOpenChange={setReminderDialogOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="font-display">Adicionar Lembrete</DialogTitle>
+            <DialogTitle className="font-display">{getTaskReminder(reminderTask?.id) ? "Editar Lembrete" : "Adicionar Lembrete"}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground font-body">
             Tarefa: <strong>{reminderTask?.title}</strong>
