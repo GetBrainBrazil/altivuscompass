@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -272,7 +273,7 @@ export default function Quotes() {
         travel_date_start: form.travel_date_start || null,
         travel_date_end: form.travel_date_end || null,
         notes: form.notes || null,
-        price_breakdown: { linked_client_ids: selectedLinkedClients },
+        price_breakdown: { linked_client_ids: selectedLinkedClients, flexible_dates: !!form.flexible_dates, flexible_dates_description: form.flexible_dates_description || null },
       };
 
       if (editingQuote) {
@@ -386,6 +387,7 @@ export default function Quotes() {
 
   const openEdit = (q: Quote) => {
     setEditingQuote(q);
+    const pb = (q as any).price_breakdown;
     setForm({
       title: q.title ?? "",
       client_id: q.client_id ?? "",
@@ -401,6 +403,8 @@ export default function Quotes() {
       travel_date_start: q.travel_date_start ?? "",
       travel_date_end: q.travel_date_end ?? "",
       notes: q.notes ?? "",
+      flexible_dates: pb?.flexible_dates ?? false,
+      flexible_dates_description: pb?.flexible_dates_description ?? "",
     });
     setSelectedDestinations(q.destination ? q.destination.split(", ").filter(Boolean) : []);
     setCoverFile(null);
@@ -502,7 +506,7 @@ export default function Quotes() {
 
     return (
       <div className="max-w-full mx-auto space-y-4">
-        {/* Header */}
+        {/* Header + Stepper */}
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={closeDialog} className="shrink-0 h-8 w-8">
             <ArrowLeft className="w-4 h-4" />
@@ -510,6 +514,60 @@ export default function Quotes() {
           <h1 className="text-xl font-display font-semibold text-foreground">
             {editingQuote ? "Editar Cotação" : "Nova Cotação"}
           </h1>
+        </div>
+
+        {/* Stage stepper */}
+        <div className="glass-card rounded-xl px-4 py-3">
+          <div className="flex items-center gap-1">
+            {stages.map((stage, idx) => {
+              const currentIdx = stages.findIndex(s => s.id === (form.stage || "new"));
+              const isActive = stage.id === form.stage;
+              const isPast = idx < currentIdx;
+              const isLast = idx === stages.length - 1;
+              return (
+                <div key={stage.id} className="flex items-center flex-1">
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, stage: stage.id })}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-body font-medium transition-all cursor-pointer whitespace-nowrap",
+                      isActive
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : isPast
+                          ? "bg-primary/20 text-primary"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    )}
+                  >
+                    <span className={cn(
+                      "flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold",
+                      isActive ? "bg-primary-foreground text-primary" : isPast ? "bg-primary text-primary-foreground" : "bg-muted-foreground/30 text-muted-foreground"
+                    )}>
+                      {isPast ? <Check className="w-2.5 h-2.5" /> : idx + 1}
+                    </span>
+                    {stage.label}
+                  </button>
+                  {!isLast && (
+                    <div className={cn("flex-1 h-0.5 mx-1 rounded-full min-w-[8px]", isPast ? "bg-primary/40" : "bg-border")} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {form.stage === "confirmed" && (
+            <div className="mt-2 flex items-center gap-2 pl-1">
+              <Label className="font-body text-xs text-muted-foreground">Resultado:</Label>
+              <div className="flex gap-1">
+                <button type="button" onClick={() => setForm({ ...form, conclusion_type: "won" })}
+                  className={cn("px-2.5 py-1 rounded-md text-xs font-body transition-colors",
+                    form.conclusion_type === "won" ? "bg-emerald-500/20 text-emerald-700 border border-emerald-500/30" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  )}>Convertida em venda</button>
+                <button type="button" onClick={() => setForm({ ...form, conclusion_type: "lost" })}
+                  className={cn("px-2.5 py-1 rounded-md text-xs font-body transition-colors",
+                    form.conclusion_type === "lost" ? "bg-destructive/20 text-destructive border border-destructive/30" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  )}>Perdida</button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Main fields card */}
@@ -529,28 +587,6 @@ export default function Quotes() {
                 <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-
-            {/* Estágio */}
-            <div className="col-span-1 space-y-1">
-              <Label className="font-body text-xs">Estágio</Label>
-              <Select value={form.stage ?? "new"} onValueChange={(v) => setForm({ ...form, stage: v })}>
-                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                <SelectContent>{stages.map((s) => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-
-            {form.stage === "confirmed" && (
-              <div className="col-span-1 space-y-1">
-                <Label className="font-body text-xs">Resultado</Label>
-                <Select value={form.conclusion_type ?? "won"} onValueChange={(v) => setForm({ ...form, conclusion_type: v })}>
-                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="won">Convertida em venda</SelectItem>
-                    <SelectItem value="lost">Perdida</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
 
             {/* Imagem de capa */}
             <div className="col-span-2 lg:col-span-1 space-y-1">
@@ -596,51 +632,70 @@ export default function Quotes() {
               </div>
             </div>
 
-            {/* Data Início */}
+            {/* Data Flexível toggle + Datas */}
             <div className="col-span-1 space-y-1">
-              <Label className="font-body text-xs">Data Início</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("w-full h-9 justify-start text-left text-sm font-normal", !form.travel_date_start && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                    {form.travel_date_start ? format(parseISO(form.travel_date_start), "dd/MM/yyyy") : "Selecionar"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={form.travel_date_start ? parseISO(form.travel_date_start) : undefined}
-                    onSelect={(date) => setForm({ ...form, travel_date_start: date ? format(date, "yyyy-MM-dd") : "" })}
-                    initialFocus
-                    locale={ptBR}
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
+              <div className="flex items-center gap-1.5">
+                <Label className="font-body text-xs">Data Flexível</Label>
+              </div>
+              <div className="flex items-center h-9">
+                <Switch checked={!!form.flexible_dates} onCheckedChange={(v) => setForm({ ...form, flexible_dates: v })} />
+              </div>
             </div>
 
-            {/* Data Fim */}
-            <div className="col-span-1 space-y-1">
-              <Label className="font-body text-xs">Data Fim</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("w-full h-9 justify-start text-left text-sm font-normal", !form.travel_date_end && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                    {form.travel_date_end ? format(parseISO(form.travel_date_end), "dd/MM/yyyy") : "Selecionar"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={form.travel_date_end ? parseISO(form.travel_date_end) : undefined}
-                    onSelect={(date) => setForm({ ...form, travel_date_end: date ? format(date, "yyyy-MM-dd") : "" })}
-                    initialFocus
-                    locale={ptBR}
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+            {!form.flexible_dates ? (
+              <>
+                {/* Data Início */}
+                <div className="col-span-1 space-y-1">
+                  <Label className="font-body text-xs">Data Início</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className={cn("w-full h-9 justify-start text-left text-sm font-normal", !form.travel_date_start && "text-muted-foreground")}>
+                        <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                        {form.travel_date_start ? format(parseISO(form.travel_date_start), "dd/MM/yyyy") : "Selecionar"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={form.travel_date_start ? parseISO(form.travel_date_start) : undefined}
+                        onSelect={(date) => setForm({ ...form, travel_date_start: date ? format(date, "yyyy-MM-dd") : "" })}
+                        initialFocus
+                        locale={ptBR}
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Data Fim */}
+                <div className="col-span-1 space-y-1">
+                  <Label className="font-body text-xs">Data Fim</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className={cn("w-full h-9 justify-start text-left text-sm font-normal", !form.travel_date_end && "text-muted-foreground")}>
+                        <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                        {form.travel_date_end ? format(parseISO(form.travel_date_end), "dd/MM/yyyy") : "Selecionar"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={form.travel_date_end ? parseISO(form.travel_date_end) : undefined}
+                        onSelect={(date) => setForm({ ...form, travel_date_end: date ? format(date, "yyyy-MM-dd") : "" })}
+                        initialFocus
+                        locale={ptBR}
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </>
+            ) : (
+              <div className="col-span-2 space-y-1">
+                <Label className="font-body text-xs">Descrição das Datas</Label>
+                <Input className="h-9 text-sm" value={form.flexible_dates_description ?? ""} onChange={(e) => setForm({ ...form, flexible_dates_description: e.target.value })} placeholder="Ex: Qualquer semana em julho, feriados de fim de ano..." />
+              </div>
+            )}
 
             {/* Destino(s) */}
             <div className="col-span-2 space-y-1">
