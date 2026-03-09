@@ -496,10 +496,11 @@ export default function Quotes() {
                   </label>
                 ))}
                 {linkedClients.map((lc: any) => (
-                  <div key={lc.id} className="flex items-center gap-1.5 px-2 py-1.5 rounded-md border border-border bg-muted/30">
-                    <Badge variant="outline" className="text-[9px] h-4 px-1">{RELATIONSHIP_LABELS[lc.relationship_type] || lc.relationship_type}</Badge>
+                  <label key={lc.id} className="flex items-center gap-1.5 px-2 py-1.5 rounded-md border border-border hover:bg-muted/50 cursor-pointer transition-colors">
+                    <Checkbox checked={selectedLinkedClients.includes(lc.id)} onCheckedChange={() => toggleLinkedClient(lc.id)} className="h-3.5 w-3.5" />
+                    <Badge variant="outline" className="text-[9px] h-4 px-1 shrink-0">{RELATIONSHIP_LABELS[lc.relationship_type] || lc.relationship_type}</Badge>
                     <span className="text-xs font-body truncate">{lc.full_name}</span>
-                  </div>
+                  </label>
                 ))}
               </div>
             </div>
