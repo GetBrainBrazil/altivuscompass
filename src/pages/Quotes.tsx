@@ -1162,18 +1162,39 @@ export default function Quotes() {
                             </div>
                           </div>
 
-                          {/* Row 5: Passenger counts */}
+                          {/* Row 5: Baggage counts */}
                           <div className="grid grid-cols-12 gap-2">
                             <div className="col-span-1 space-y-0.5">
-                              <Label className="text-[11px] font-body text-center block">🧑 ADT</Label>
+                              <TooltipProvider delayDuration={200}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Label className="text-[11px] font-body text-center flex items-center justify-center gap-1 cursor-help"><Backpack className="w-3.5 h-3.5" /></Label>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="text-xs">Mochila</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                               <Input type="number" min={0} value={d.pax_adults ?? 1} onChange={(e) => updateDetail("pax_adults", parseInt(e.target.value) || 0)} className="h-8 text-xs text-center" />
                             </div>
                             <div className="col-span-1 space-y-0.5">
-                              <Label className="text-[11px] font-body text-center block">👶 CHD</Label>
+                              <TooltipProvider delayDuration={200}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Label className="text-[11px] font-body text-center flex items-center justify-center gap-1 cursor-help"><BriefcaseBusiness className="w-3.5 h-3.5" /></Label>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="text-xs">Mala de Mão</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                               <Input type="number" min={0} value={d.pax_children ?? 0} onChange={(e) => updateDetail("pax_children", parseInt(e.target.value) || 0)} className="h-8 text-xs text-center" />
                             </div>
                             <div className="col-span-1 space-y-0.5">
-                              <Label className="text-[11px] font-body text-center block">🍼 INF</Label>
+                              <TooltipProvider delayDuration={200}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Label className="text-[11px] font-body text-center flex items-center justify-center gap-1 cursor-help"><Luggage className="w-3.5 h-3.5" /></Label>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="text-xs">Bagagem Despachada</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                               <Input type="number" min={0} value={d.pax_infants ?? 0} onChange={(e) => updateDetail("pax_infants", parseInt(e.target.value) || 0)} className="h-8 text-xs text-center" />
                             </div>
                           </div>
