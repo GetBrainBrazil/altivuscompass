@@ -15,6 +15,7 @@ export const PAGE_PERMISSIONS: PagePermission[] = [
   { path: "/", label: "Painel", allowedRoles: ["admin", "manager", "sales_agent", "operations"] },
   { path: "/clients", label: "Clientes", allowedRoles: ["admin", "manager", "sales_agent"] },
   { path: "/quotes", label: "Cotações", allowedRoles: ["admin", "manager", "sales_agent"] },
+  { path: "/sales", label: "Vendas", allowedRoles: ["admin", "manager", "sales_agent"] },
   { path: "/campaigns", label: "Campanhas", allowedRoles: ["admin", "manager", "operations"] },
   { path: "/finance", label: "Financeiro", allowedRoles: ["admin", "manager"] },
   { path: "/finance/registrations", label: "Cadastros Financeiros", allowedRoles: ["admin", "manager"] },
