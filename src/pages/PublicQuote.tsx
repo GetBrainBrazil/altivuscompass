@@ -333,9 +333,9 @@ export default function PublicQuote() {
 
         {/* Details */}
         {getContent("details") && (
-          <div className="glass-card rounded-xl p-5 space-y-1">
+          <div className="glass-card rounded-xl p-4 sm:p-5 space-y-1">
             <h2 className="text-sm font-semibold text-foreground font-body">{t.details}</h2>
-            <p className="text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("details")}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground font-body whitespace-pre-line">{getContent("details")}</p>
           </div>
         )}
 
