@@ -387,6 +387,7 @@ export default function Quotes() {
 
   const openEdit = (q: Quote) => {
     setEditingQuote(q);
+    const pb = (q as any).price_breakdown;
     setForm({
       title: q.title ?? "",
       client_id: q.client_id ?? "",
@@ -402,6 +403,8 @@ export default function Quotes() {
       travel_date_start: q.travel_date_start ?? "",
       travel_date_end: q.travel_date_end ?? "",
       notes: q.notes ?? "",
+      flexible_dates: pb?.flexible_dates ?? false,
+      flexible_dates_description: pb?.flexible_dates_description ?? "",
     });
     setSelectedDestinations(q.destination ? q.destination.split(", ").filter(Boolean) : []);
     setCoverFile(null);
