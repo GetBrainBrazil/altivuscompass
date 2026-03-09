@@ -513,9 +513,20 @@ export default function Quotes() {
                     </button>
                   </div>
                 ) : (
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className="h-9 px-3 border border-dashed border-border rounded-md flex items-center gap-1.5 text-muted-foreground hover:border-primary hover:text-primary transition-colors text-xs">
-                    <ImageIcon className="w-3.5 h-3.5" /> Adicionar
-                  </button>
+                  <>
+                    <button type="button" onClick={() => fileInputRef.current?.click()} className="h-9 px-3 border border-dashed border-border rounded-md flex items-center gap-1.5 text-muted-foreground hover:border-primary hover:text-primary transition-colors text-xs">
+                      <ImageIcon className="w-3.5 h-3.5" /> Adicionar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={generateCoverWithAI}
+                      disabled={generatingCover}
+                      className="h-9 px-3 border border-dashed border-accent rounded-md flex items-center gap-1.5 text-accent-foreground hover:bg-accent/10 hover:border-accent transition-colors text-xs disabled:opacity-50"
+                    >
+                      {generatingCover ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+                      {generatingCover ? "Gerando..." : "Gerar com IA"}
+                    </button>
+                  </>
                 )}
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
               </div>
