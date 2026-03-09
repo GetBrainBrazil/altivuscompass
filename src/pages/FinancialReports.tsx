@@ -77,6 +77,15 @@ export default function FinancialReports() {
     },
   });
 
+  const { data: bankAccounts = [] } = useQuery({
+    queryKey: ["finance-report-bank-accounts"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("bank_accounts").select("*").order("bank_name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   // Filter by year
   const yearTx = useMemo(
     () => transactions.filter((t) => t.date.startsWith(year)),
