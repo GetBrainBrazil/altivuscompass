@@ -416,6 +416,7 @@ export default function Quotes() {
     setItems([]);
     setSelectedPassengers([]);
     setSelectedLinkedClients([]);
+    setSelectedDestinations([]);
     setCoverFile(null);
     setCoverPreview(null);
   };
