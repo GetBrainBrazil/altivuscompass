@@ -302,6 +302,30 @@ export default function Quotes() {
         payload.cover_image_url = coverUrl;
         const { error } = await supabase.from("quotes").update(payload).eq("id", editingQuote.id);
         if (error) throw error;
+
+        // Log changes
+        const changedFields: Record<string, any> = {};
+        const fieldLabels: Record<string, string> = {
+          title: "Título", client_id: "Cliente", destination: "Destino", total_value: "Valor",
+          stage: "Etapa", details: "Detalhes", payment_terms: "Pagamento", terms_conditions: "Termos",
+          other_info: "Outras Info", travel_date_start: "Data Início", travel_date_end: "Data Fim",
+          notes: "Observações", conclusion_type: "Resultado", cover_image_url: "Imagem de Capa",
+        };
+        for (const key of Object.keys(fieldLabels)) {
+          const oldVal = (editingQuote as any)[key] ?? null;
+          const newVal = payload[key] ?? null;
+          if (String(oldVal) !== String(newVal)) changedFields[fieldLabels[key]] = { de: oldVal, para: newVal };
+        }
+
+        if (editingQuote.stage !== stage) {
+          const oldStage = stages.find(s => s.id === editingQuote.stage)?.label ?? editingQuote.stage;
+          const newStage = stages.find(s => s.id === stage)?.label ?? stage;
+          await logHistory(editingQuote.id, "stage_change", `Etapa alterada de "${oldStage}" para "${newStage}"`);
+        } else if (Object.keys(changedFields).length > 0) {
+          const fieldNames = Object.keys(changedFields).join(", ");
+          await logHistory(editingQuote.id, "updated", `Campos alterados: ${fieldNames}`, changedFields);
+        }
+
         if (stage === "confirmed" && conclusion_type === "won" && editingQuote.stage !== "confirmed") {
           await createSaleFromQuote(editingQuote.id, payload);
         }
@@ -313,6 +337,7 @@ export default function Quotes() {
         if (coverUrl) {
           await supabase.from("quotes").update({ cover_image_url: coverUrl }).eq("id", data.id);
         }
+        await logHistory(data.id, "created", "Cotação criada");
         if (stage === "confirmed" && conclusion_type === "won") {
           await createSaleFromQuote(data.id, payload);
         }
