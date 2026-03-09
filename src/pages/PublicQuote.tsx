@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Copy, Printer } from "lucide-react";
+import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Printer } from "lucide-react";
 import logoAltivusFallback from "@/assets/logo-altivus.png";
 
 const ITEM_TYPE_META: Record<string, { label: string; icon: any }> = {
@@ -40,7 +40,7 @@ export default function PublicQuote() {
   const [data, setData] = useState<QuoteData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  
 
   useEffect(() => {
     if (!id) return;
@@ -95,10 +95,16 @@ export default function PublicQuote() {
     return acc;
   }, {});
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleWhatsApp = () => {
+    const phone = quote.client_phone;
+    if (!phone) return;
+    // Clean phone number - keep only digits
+    const cleanPhone = phone.replace(/\D/g, "");
+    const link = window.location.href;
+    const agName = agency?.name || "Altivus Turismo";
+    const destination = quote.title || quote.destination || "sua viagem";
+    const message = `Olá! Segue o orçamento de *${destination}* preparado pela *${agName}*:\n\n${link}`;
+    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, "_blank");
   };
 
   const handlePrint = () => {
@@ -113,10 +119,12 @@ export default function PublicQuote() {
       {/* Top toolbar - hidden on print */}
       <div className="print:hidden border-b border-border bg-card">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2 flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs" onClick={handleCopyLink}>
-            <Copy className="w-3.5 h-3.5" />
-            {copied ? "Copiado!" : "Copiar link"}
-          </Button>
+          {quote.client_phone && (
+            <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs" onClick={handleWhatsApp}>
+              <Phone className="w-3.5 h-3.5" />
+              Enviar por WhatsApp
+            </Button>
+          )}
           <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs" onClick={handlePrint}>
             <Printer className="w-3.5 h-3.5" />
             Imprimir/PDF
