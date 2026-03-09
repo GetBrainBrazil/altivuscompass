@@ -254,7 +254,7 @@ export default function PublicQuote() {
                 {passengers.map((p, i) => (
                   <Badge key={i} variant="secondary" className="text-xs font-body">
                     {p.full_name}
-                    {p.relationship_type && <span className="ml-1 opacity-60">({p.relationship_type})</span>}
+                    {p.relationship_type && <span className="ml-1 opacity-60">({RELATIONSHIP_LABELS[p.relationship_type] || p.relationship_type})</span>}
                   </Badge>
                 ))}
               </div>
