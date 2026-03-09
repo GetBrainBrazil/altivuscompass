@@ -119,10 +119,12 @@ export default function PublicQuote() {
       {/* Top toolbar - hidden on print */}
       <div className="print:hidden border-b border-border bg-card">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2 flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs" onClick={handleCopyLink}>
-            <Copy className="w-3.5 h-3.5" />
-            {copied ? "Copiado!" : "Copiar link"}
-          </Button>
+          {quote.client_phone && (
+            <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs" onClick={handleWhatsApp}>
+              <Phone className="w-3.5 h-3.5" />
+              Enviar por WhatsApp
+            </Button>
+          )}
           <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs" onClick={handlePrint}>
             <Printer className="w-3.5 h-3.5" />
             Imprimir/PDF

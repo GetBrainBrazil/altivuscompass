@@ -27,10 +27,10 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Fetch quote with client name
+    // Fetch quote with client name and phone
     const { data: quote, error: quoteError } = await supabase
       .from("quotes")
-      .select("*, clients(full_name)")
+      .select("*, clients(full_name, phone)")
       .eq("id", quoteId)
       .single();
 
@@ -39,6 +39,30 @@ Deno.serve(async (req) => {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Fetch primary phone from client_phones if available
+    let clientPhone = quote.clients?.phone ?? null;
+    if (quote.client_id) {
+      const { data: primaryPhone } = await supabase
+        .from("client_phones")
+        .select("phone")
+        .eq("client_id", quote.client_id)
+        .eq("is_primary", true)
+        .limit(1)
+        .single();
+      if (primaryPhone?.phone) {
+        clientPhone = primaryPhone.phone;
+      } else if (!clientPhone) {
+        // fallback to any phone
+        const { data: anyPhone } = await supabase
+          .from("client_phones")
+          .select("phone")
+          .eq("client_id", quote.client_id)
+          .limit(1)
+          .single();
+        if (anyPhone?.phone) clientPhone = anyPhone.phone;
+      }
     }
 
     // Fetch quote items
@@ -66,6 +90,7 @@ Deno.serve(async (req) => {
         quote: {
           ...quote,
           client_name: quote.clients?.full_name ?? null,
+          client_phone: clientPhone,
           clients: undefined,
         },
         items: items ?? [],
