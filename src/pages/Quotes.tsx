@@ -470,7 +470,7 @@ export default function Quotes() {
 
   const updateQuoteStage = async (quoteId: string, newStage: string) => {
     try {
-      const { error } = await supabase.from("quotes").update({ stage: newStage }).eq("id", quoteId);
+      const { error } = await supabase.from("quotes").update({ stage: newStage as any }).eq("id", quoteId);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
     } catch (err: any) {
