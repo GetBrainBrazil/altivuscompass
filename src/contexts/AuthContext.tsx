@@ -65,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq("user_id", userId)
       .maybeSingle();
     setRealRole(data?.role ?? null);
+    setLoading(false);
   };
 
   const hasLoggedLoginRef = useRef(false);
