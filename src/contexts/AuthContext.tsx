@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          setTimeout(() => fetchUserRole(session.user.id), 0);
+          fetchUserRole(session.user.id);
           // Log login event once per session
           if (!hasLoggedLoginRef.current) {
             hasLoggedLoginRef.current = true;
@@ -91,8 +91,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setImpersonatingRoleState(null);
           setImpersonatingUserState(null);
           hasLoggedLoginRef.current = false;
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
@@ -101,8 +101,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchUserRole(session.user.id);
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
