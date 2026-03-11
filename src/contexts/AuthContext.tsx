@@ -76,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
+          setLoading(true);
           fetchUserRole(session.user.id);
           // Log login event once per session
           if (!hasLoggedLoginRef.current) {
@@ -100,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
+        setLoading(true);
         fetchUserRole(session.user.id);
       } else {
         setLoading(false);

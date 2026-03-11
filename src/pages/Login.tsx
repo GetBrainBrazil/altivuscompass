@@ -111,7 +111,6 @@ export default function Login() {
       refreshCaptcha();
       return;
     }
-    navigate("/", { replace: true });
   };
 
   return (
