@@ -1036,6 +1036,241 @@ export type Database = {
           },
         ]
       }
+      itineraries: {
+        Row: {
+          base_file: string | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          destination: string | null
+          id: string
+          main_bases: string | null
+          notes: string | null
+          title: string
+          travel_date_end: string | null
+          travel_date_start: string | null
+          traveler_profile: string | null
+          updated_at: string
+        }
+        Insert: {
+          base_file?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination?: string | null
+          id?: string
+          main_bases?: string | null
+          notes?: string | null
+          title: string
+          travel_date_end?: string | null
+          travel_date_start?: string | null
+          traveler_profile?: string | null
+          updated_at?: string
+        }
+        Update: {
+          base_file?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination?: string | null
+          id?: string
+          main_bases?: string | null
+          notes?: string | null
+          title?: string
+          travel_date_end?: string | null
+          travel_date_start?: string | null
+          traveler_profile?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itineraries_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      itinerary_activities: {
+        Row: {
+          activity_name: string
+          approx_price: number | null
+          avg_duration: string | null
+          created_at: string
+          description: string | null
+          id: string
+          itinerary_id: string
+          period: string | null
+          source_url: string | null
+        }
+        Insert: {
+          activity_name: string
+          approx_price?: number | null
+          avg_duration?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          itinerary_id: string
+          period?: string | null
+          source_url?: string | null
+        }
+        Update: {
+          activity_name?: string
+          approx_price?: number | null
+          avg_duration?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          itinerary_id?: string
+          period?: string | null
+          source_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itinerary_activities_itinerary_id_fkey"
+            columns: ["itinerary_id"]
+            isOneToOne: false
+            referencedRelation: "itineraries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      itinerary_days: {
+        Row: {
+          afternoon_activity: string | null
+          city: string | null
+          created_at: string
+          day_date: string | null
+          evening_activity: string | null
+          id: string
+          itinerary_id: string
+          morning_activity: string | null
+          sort_order: number
+        }
+        Insert: {
+          afternoon_activity?: string | null
+          city?: string | null
+          created_at?: string
+          day_date?: string | null
+          evening_activity?: string | null
+          id?: string
+          itinerary_id: string
+          morning_activity?: string | null
+          sort_order?: number
+        }
+        Update: {
+          afternoon_activity?: string | null
+          city?: string | null
+          created_at?: string
+          day_date?: string | null
+          evening_activity?: string | null
+          id?: string
+          itinerary_id?: string
+          morning_activity?: string | null
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itinerary_days_itinerary_id_fkey"
+            columns: ["itinerary_id"]
+            isOneToOne: false
+            referencedRelation: "itineraries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      itinerary_hotels: {
+        Row: {
+          check_in: string | null
+          check_out: string | null
+          city_base: string | null
+          created_at: string
+          hotel_name: string
+          hotel_type: string | null
+          id: string
+          itinerary_id: string
+          nights: number | null
+          observations: string | null
+        }
+        Insert: {
+          check_in?: string | null
+          check_out?: string | null
+          city_base?: string | null
+          created_at?: string
+          hotel_name: string
+          hotel_type?: string | null
+          id?: string
+          itinerary_id: string
+          nights?: number | null
+          observations?: string | null
+        }
+        Update: {
+          check_in?: string | null
+          check_out?: string | null
+          city_base?: string | null
+          created_at?: string
+          hotel_name?: string
+          hotel_type?: string | null
+          id?: string
+          itinerary_id?: string
+          nights?: number | null
+          observations?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itinerary_hotels_itinerary_id_fkey"
+            columns: ["itinerary_id"]
+            isOneToOne: false
+            referencedRelation: "itineraries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      itinerary_restaurants: {
+        Row: {
+          best_fit: string | null
+          city_base: string | null
+          created_at: string
+          cuisine_type: string | null
+          id: string
+          itinerary_id: string
+          reason: string | null
+          restaurant_name: string
+          source: string | null
+        }
+        Insert: {
+          best_fit?: string | null
+          city_base?: string | null
+          created_at?: string
+          cuisine_type?: string | null
+          id?: string
+          itinerary_id: string
+          reason?: string | null
+          restaurant_name: string
+          source?: string | null
+        }
+        Update: {
+          best_fit?: string | null
+          city_base?: string | null
+          created_at?: string
+          cuisine_type?: string | null
+          id?: string
+          itinerary_id?: string
+          reason?: string | null
+          restaurant_name?: string
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itinerary_restaurants_itinerary_id_fkey"
+            columns: ["itinerary_id"]
+            isOneToOne: false
+            referencedRelation: "itineraries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       miles_programs: {
         Row: {
           airline: string
