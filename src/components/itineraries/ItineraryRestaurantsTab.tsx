@@ -27,7 +27,13 @@ export default function ItineraryRestaurantsTab({ itineraryId }: Props) {
     mutationFn: async () => {
       if (!newItem.restaurant_name.trim()) { toast({ title: "Nome é obrigatório", variant: "destructive" }); throw new Error(); }
       const { error } = await supabase.from("itinerary_restaurants").insert({
-        itinerary_id: itineraryId, ...Object.fromEntries(Object.entries(newItem).map(([k, v]) => [k, v || null])),
+        itinerary_id: itineraryId,
+        city_base: newItem.city_base || null,
+        restaurant_name: newItem.restaurant_name,
+        cuisine_type: newItem.cuisine_type || null,
+        best_fit: newItem.best_fit || null,
+        reason: newItem.reason || null,
+        source: newItem.source || null,
       });
       if (error) throw error;
     },
