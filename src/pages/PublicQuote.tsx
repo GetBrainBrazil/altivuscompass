@@ -42,6 +42,10 @@ export default function PublicQuote() {
   const [translatedContent, setTranslatedContent] = useState<Record<string, string>>({});
   const [translatedItems, setTranslatedItems] = useState<Record<number, { title?: string; description?: string }>>({});
   const translationCache = useRef<Record<string, { content: Record<string, string>; items: Record<number, { title?: string; description?: string }> }>>({});
+  const [whatsappOpen, setWhatsappOpen] = useState(false);
+  const [whatsappPhone, setWhatsappPhone] = useState("");
+  const [whatsappMessage, setWhatsappMessage] = useState("");
+  const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
 
   const t = getTranslations(lang);
 
