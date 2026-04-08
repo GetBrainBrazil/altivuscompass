@@ -3,7 +3,11 @@ import { useParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Printer, Globe, Loader2, Backpack, Briefcase, Luggage } from "lucide-react";
+import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Printer, Globe, Loader2, Backpack, Briefcase, Luggage, MessageCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import logoAltivusFallback from "@/assets/logo-altivus.png";
 import { type QuoteLang, LANG_OPTIONS, getTranslations, getItemTypeLabel, getRelationshipLabel, getFlagUrl, getCabinClassLabel, getConnectionsLabel, getFlightDirectionLabel } from "@/lib/quote-translations";
 
@@ -38,6 +42,10 @@ export default function PublicQuote() {
   const [translatedContent, setTranslatedContent] = useState<Record<string, string>>({});
   const [translatedItems, setTranslatedItems] = useState<Record<number, { title?: string; description?: string }>>({});
   const translationCache = useRef<Record<string, { content: Record<string, string>; items: Record<number, { title?: string; description?: string }> }>>({});
+  const [whatsappOpen, setWhatsappOpen] = useState(false);
+  const [whatsappPhone, setWhatsappPhone] = useState("");
+  const [whatsappMessage, setWhatsappMessage] = useState("");
+  const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
 
   const t = getTranslations(lang);
 
@@ -182,15 +190,41 @@ export default function PublicQuote() {
     return acc;
   }, {});
 
-  const handleWhatsApp = () => {
-    const phone = quote.client_phone;
-    if (!phone) return;
-    const cleanPhone = phone.replace(/\D/g, "");
+
+  const openWhatsappDialog = () => {
+    const phone = quote.client_phone || "";
     const link = window.location.href;
     const agName = agency?.name || "Altivus Turismo";
     const destination = quote.title || quote.destination || "sua viagem";
-    const message = `Olá! Segue o orçamento de *${destination}* preparado pela *${agName}*:\n\n${link}`;
-    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, "_blank");
+    setWhatsappPhone(phone.replace(/\D/g, ""));
+    setWhatsappMessage(`Olá! Segue o orçamento de *${destination}* preparado pela *${agName}*:\n\n${link}`);
+    setWhatsappOpen(true);
+  };
+
+  const handleSendWhatsapp = async () => {
+    if (!whatsappPhone.trim()) return;
+    setSendingWhatsapp(true);
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const res = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+        body: JSON.stringify({
+          action: "send-text",
+          phone: whatsappPhone,
+          message: whatsappMessage,
+          quote_id: id,
+        }),
+      });
+      const result = await res.json();
+      if (result.error) throw new Error(result.error);
+      setWhatsappOpen(false);
+      alert("Mensagem enviada com sucesso!");
+    } catch (err: any) {
+      alert("Erro ao enviar: " + err.message);
+    } finally {
+      setSendingWhatsapp(false);
+    }
   };
 
   const agencyLogo = agency?.logo_url || logoAltivusFallback;
@@ -202,13 +236,11 @@ export default function PublicQuote() {
       {/* Top toolbar - hidden on print */}
       <div className="print:hidden">
         <div className="max-w-5xl mx-auto px-3 sm:px-6 py-2 flex items-center gap-1.5 sm:gap-2 flex-wrap border-b border-gray-200 bg-white">
-          {quote.client_phone && (
-            <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs h-8" onClick={handleWhatsApp}>
-              <Phone className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{t.sendWhatsApp}</span>
-              <span className="sm:hidden">WhatsApp</span>
-            </Button>
-          )}
+          <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs h-8" onClick={openWhatsappDialog}>
+            <Phone className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">{t.sendWhatsApp}</span>
+            <span className="sm:hidden">WhatsApp</span>
+          </Button>
           <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs h-8" onClick={() => window.print()}>
             <Printer className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">{t.printPdf}</span>
@@ -527,6 +559,52 @@ export default function PublicQuote() {
           )}
         </div>
       </footer>
+
+      {/* WhatsApp Dialog */}
+      <Dialog open={whatsappOpen} onOpenChange={setWhatsappOpen}>
+        <DialogContent className="max-w-md bg-white text-gray-900">
+          <DialogHeader>
+            <DialogTitle className="font-body flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-green-600" /> Enviar via WhatsApp
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1">
+              <Label className="font-body text-xs text-gray-700">Telefone (com DDD e código do país)</Label>
+              <Input
+                placeholder="5511999999999"
+                value={whatsappPhone}
+                onChange={(e) => setWhatsappPhone(e.target.value)}
+                className="font-body bg-white text-gray-900 border-gray-300"
+              />
+              <p className="text-[10px] text-gray-500">Ex: 5511999999999 (Brasil)</p>
+            </div>
+            <div className="space-y-1">
+              <Label className="font-body text-xs text-gray-700">Mensagem</Label>
+              <Textarea
+                value={whatsappMessage}
+                onChange={(e) => setWhatsappMessage(e.target.value)}
+                rows={5}
+                className="font-body text-sm bg-white text-gray-900 border-gray-300"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setWhatsappOpen(false)} className="font-body">
+                Cancelar
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSendWhatsapp}
+                disabled={sendingWhatsapp}
+                className="font-body bg-green-600 hover:bg-green-700 text-white gap-1.5"
+              >
+                {sendingWhatsapp ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageCircle className="w-3.5 h-3.5" />}
+                Enviar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
