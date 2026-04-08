@@ -559,6 +559,52 @@ export default function PublicQuote() {
           )}
         </div>
       </footer>
+
+      {/* WhatsApp Dialog */}
+      <Dialog open={whatsappOpen} onOpenChange={setWhatsappOpen}>
+        <DialogContent className="max-w-md bg-white text-gray-900">
+          <DialogHeader>
+            <DialogTitle className="font-body flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-green-600" /> Enviar via WhatsApp
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1">
+              <Label className="font-body text-xs text-gray-700">Telefone (com DDD e código do país)</Label>
+              <Input
+                placeholder="5511999999999"
+                value={whatsappPhone}
+                onChange={(e) => setWhatsappPhone(e.target.value)}
+                className="font-body bg-white text-gray-900 border-gray-300"
+              />
+              <p className="text-[10px] text-gray-500">Ex: 5511999999999 (Brasil)</p>
+            </div>
+            <div className="space-y-1">
+              <Label className="font-body text-xs text-gray-700">Mensagem</Label>
+              <Textarea
+                value={whatsappMessage}
+                onChange={(e) => setWhatsappMessage(e.target.value)}
+                rows={5}
+                className="font-body text-sm bg-white text-gray-900 border-gray-300"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setWhatsappOpen(false)} className="font-body">
+                Cancelar
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSendWhatsapp}
+                disabled={sendingWhatsapp}
+                className="font-body bg-green-600 hover:bg-green-700 text-white gap-1.5"
+              >
+                {sendingWhatsapp ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageCircle className="w-3.5 h-3.5" />}
+                Enviar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
