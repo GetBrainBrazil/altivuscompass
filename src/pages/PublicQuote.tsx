@@ -190,10 +190,6 @@ export default function PublicQuote() {
     return acc;
   }, {});
 
-  const [whatsappOpen, setWhatsappOpen] = useState(false);
-  const [whatsappPhone, setWhatsappPhone] = useState("");
-  const [whatsappMessage, setWhatsappMessage] = useState("");
-  const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
 
   const openWhatsappDialog = () => {
     const phone = quote.client_phone || "";
