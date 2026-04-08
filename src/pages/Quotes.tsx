@@ -1435,10 +1435,6 @@ export default function Quotes() {
                   onClick={() => window.open(`/quote/${editingQuote.id}`, "_blank")}>
                   <ExternalLink className="w-3.5 h-3.5" /> Visualizar
                 </Button>
-                <Button type="button" variant="outline" size="sm" className="font-body gap-1.5 text-xs text-green-600 border-green-300 hover:bg-green-50"
-                  onClick={openWhatsappDialog}>
-                  <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
-                </Button>
               </>
             )}
           </div>
