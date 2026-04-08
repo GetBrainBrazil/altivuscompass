@@ -97,6 +97,10 @@ export default function Quotes() {
   const [collapsedFlights, setCollapsedFlights] = useState<Set<number>>(new Set());
   const [coverZoom, setCoverZoom] = useState(false);
   const [draggedQuoteId, setDraggedQuoteId] = useState<string | null>(null);
+  const [whatsappOpen, setWhatsappOpen] = useState(false);
+  const [whatsappPhone, setWhatsappPhone] = useState("");
+  const [whatsappMessage, setWhatsappMessage] = useState("");
+  const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
   const { data: quotes = [], isLoading } = useQuery({
     queryKey: ["quotes"],
     queryFn: async () => {
