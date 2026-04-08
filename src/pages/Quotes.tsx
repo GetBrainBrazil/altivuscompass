@@ -531,6 +531,43 @@ export default function Quotes() {
     setCoverPreview(null);
   };
 
+  const openWhatsappDialog = () => {
+    const client = clients.find((c: any) => c.id === form.client_id);
+    const phone = client?.phone || "";
+    const quoteUrl = `${window.location.origin}/quote/${editingQuote?.id}`;
+    const title = form.title || form.destination || "sua cotação";
+    setWhatsappPhone(phone);
+    setWhatsappMessage(`Olá! Segue o link da ${title}:\n${quoteUrl}`);
+    setWhatsappOpen(true);
+  };
+
+  const handleSendWhatsapp = async () => {
+    if (!whatsappPhone.trim()) {
+      toast({ title: "Informe o número de telefone", variant: "destructive" });
+      return;
+    }
+    setSendingWhatsapp(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-whatsapp", {
+        body: {
+          action: "send-text",
+          phone: whatsappPhone,
+          message: whatsappMessage,
+          quote_id: editingQuote?.id,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "Mensagem enviada com sucesso!" });
+      setWhatsappOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["quote-history"] });
+    } catch (err: any) {
+      toast({ title: "Erro ao enviar WhatsApp", description: err.message, variant: "destructive" });
+    } finally {
+      setSendingWhatsapp(false);
+    }
+  };
+
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
