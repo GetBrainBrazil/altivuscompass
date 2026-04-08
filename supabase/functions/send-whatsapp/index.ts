@@ -21,18 +21,27 @@ Deno.serve(async (req) => {
     if (!ZAPI_TOKEN) throw new Error('ZAPI_TOKEN não configurado')
     if (!ZAPI_SECURITY_TOKEN) throw new Error('ZAPI_SECURITY_TOKEN não configurado')
 
+    // Validate auth
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Não autorizado' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      global: { headers: { Authorization: authHeader } },
+    })
 
-    // Auth is optional (public quote page can send without auth)
-    const authHeader = req.headers.get('Authorization')
-    let user: any = null
-    if (authHeader) {
-      const supabase = createClient(supabaseUrl, supabaseKey, {
-        global: { headers: { Authorization: authHeader } },
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: 'Sessão inválida' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      user = authUser
     }
 
     const body = await req.json()
@@ -169,28 +178,19 @@ Deno.serve(async (req) => {
 
     // Log the action if quote_id is provided
     if (quote_id && (action === 'send-text' || action === 'send-link' || action === 'send-image')) {
-      const serviceSupabase = createClient(supabaseUrl, supabaseKey)
-      if (user) {
-        const { data: profile } = await serviceSupabase
-          .from('profiles')
-          .select('full_name')
-          .eq('user_id', user.id)
-          .single()
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', user.id)
+        .single()
 
-        await serviceSupabase.from('quote_history').insert({
-          quote_id,
-          user_id: user.id,
-          user_name: profile?.full_name || user.email,
-          action: 'whatsapp_sent',
-          description: `Mensagem WhatsApp enviada para ${phone}`,
-        })
-      } else {
-        await serviceSupabase.from('quote_history').insert({
-          quote_id,
-          action: 'whatsapp_sent',
-          description: `Mensagem WhatsApp enviada para ${phone} (página pública)`,
-        })
-      }
+      await supabase.from('quote_history').insert({
+        quote_id,
+        user_id: user.id,
+        user_name: profile?.full_name || user.email,
+        action: 'whatsapp_sent',
+        description: `Mensagem WhatsApp enviada para ${phone}`,
+      })
     }
 
     return new Response(JSON.stringify({ success: true, data: result }), {
