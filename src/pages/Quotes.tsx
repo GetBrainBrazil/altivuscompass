@@ -1635,6 +1635,52 @@ export default function Quotes() {
           )}
         </>
       )}
+
+      {/* WhatsApp Dialog */}
+      <WhatsAppDialog open={whatsappOpen} onOpenChange={setWhatsappOpen}>
+        <WhatsAppDialogContent className="max-w-md">
+          <WhatsAppDialogHeader>
+            <WhatsAppDialogTitle className="font-body flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-green-600" /> Enviar via WhatsApp
+            </WhatsAppDialogTitle>
+          </WhatsAppDialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1">
+              <Label className="font-body text-xs">Telefone (com DDD e código do país)</Label>
+              <Input
+                placeholder="5511999999999"
+                value={whatsappPhone}
+                onChange={(e) => setWhatsappPhone(e.target.value)}
+                className="font-body"
+              />
+              <p className="text-[10px] text-muted-foreground">Ex: 5511999999999 (Brasil)</p>
+            </div>
+            <div className="space-y-1">
+              <Label className="font-body text-xs">Mensagem</Label>
+              <Textarea
+                value={whatsappMessage}
+                onChange={(e) => setWhatsappMessage(e.target.value)}
+                rows={5}
+                className="font-body text-sm"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setWhatsappOpen(false)} className="font-body">
+                Cancelar
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSendWhatsapp}
+                disabled={sendingWhatsapp}
+                className="font-body bg-green-600 hover:bg-green-700 text-white gap-1.5"
+              >
+                {sendingWhatsapp ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageCircle className="w-3.5 h-3.5" />}
+                Enviar
+              </Button>
+            </div>
+          </div>
+        </WhatsAppDialogContent>
+      </WhatsAppDialog>
     </div>
   );
 }
