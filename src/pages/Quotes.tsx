@@ -13,7 +13,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandInput, CommandList, CommandEmpty, CommandItem } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, Map, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage } from "lucide-react";
+import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, Map, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle } from "lucide-react";
+import { Dialog as WhatsAppDialog, DialogContent as WhatsAppDialogContent, DialogHeader as WhatsAppDialogHeader, DialogTitle as WhatsAppDialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Calendar } from "@/components/ui/calendar";
@@ -96,6 +97,10 @@ export default function Quotes() {
   const [collapsedFlights, setCollapsedFlights] = useState<Set<number>>(new Set());
   const [coverZoom, setCoverZoom] = useState(false);
   const [draggedQuoteId, setDraggedQuoteId] = useState<string | null>(null);
+  const [whatsappOpen, setWhatsappOpen] = useState(false);
+  const [whatsappPhone, setWhatsappPhone] = useState("");
+  const [whatsappMessage, setWhatsappMessage] = useState("");
+  const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
   const { data: quotes = [], isLoading } = useQuery({
     queryKey: ["quotes"],
     queryFn: async () => {
@@ -111,7 +116,7 @@ export default function Quotes() {
   const { data: clients = [] } = useQuery({
     queryKey: ["clients-list"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("clients").select("id, full_name, seat_preference, preferred_airports, travel_profile, travel_preferences, desired_destinations").order("full_name");
+      const { data, error } = await supabase.from("clients").select("id, full_name, phone, seat_preference, preferred_airports, travel_profile, travel_preferences, desired_destinations").order("full_name");
       if (error) throw error;
       return data ?? [];
     },
@@ -524,6 +529,43 @@ export default function Quotes() {
     setSelectedDestinations([]);
     setCoverFile(null);
     setCoverPreview(null);
+  };
+
+  const openWhatsappDialog = () => {
+    const client = clients.find((c: any) => c.id === form.client_id);
+    const phone = client?.phone || "";
+    const quoteUrl = `${window.location.origin}/quote/${editingQuote?.id}`;
+    const title = form.title || form.destination || "sua cotação";
+    setWhatsappPhone(phone);
+    setWhatsappMessage(`Olá! Segue o link da ${title}:\n${quoteUrl}`);
+    setWhatsappOpen(true);
+  };
+
+  const handleSendWhatsapp = async () => {
+    if (!whatsappPhone.trim()) {
+      toast({ title: "Informe o número de telefone", variant: "destructive" });
+      return;
+    }
+    setSendingWhatsapp(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-whatsapp", {
+        body: {
+          action: "send-text",
+          phone: whatsappPhone,
+          message: whatsappMessage,
+          quote_id: editingQuote?.id,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "Mensagem enviada com sucesso!" });
+      setWhatsappOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["quote-history"] });
+    } catch (err: any) {
+      toast({ title: "Erro ao enviar WhatsApp", description: err.message, variant: "destructive" });
+    } finally {
+      setSendingWhatsapp(false);
+    }
   };
 
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1393,6 +1435,10 @@ export default function Quotes() {
                   onClick={() => window.open(`/quote/${editingQuote.id}`, "_blank")}>
                   <ExternalLink className="w-3.5 h-3.5" /> Visualizar
                 </Button>
+                <Button type="button" variant="outline" size="sm" className="font-body gap-1.5 text-xs text-green-600 border-green-300 hover:bg-green-50"
+                  onClick={openWhatsappDialog}>
+                  <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+                </Button>
               </>
             )}
           </div>
@@ -1589,6 +1635,52 @@ export default function Quotes() {
           )}
         </>
       )}
+
+      {/* WhatsApp Dialog */}
+      <WhatsAppDialog open={whatsappOpen} onOpenChange={setWhatsappOpen}>
+        <WhatsAppDialogContent className="max-w-md">
+          <WhatsAppDialogHeader>
+            <WhatsAppDialogTitle className="font-body flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-green-600" /> Enviar via WhatsApp
+            </WhatsAppDialogTitle>
+          </WhatsAppDialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1">
+              <Label className="font-body text-xs">Telefone (com DDD e código do país)</Label>
+              <Input
+                placeholder="5511999999999"
+                value={whatsappPhone}
+                onChange={(e) => setWhatsappPhone(e.target.value)}
+                className="font-body"
+              />
+              <p className="text-[10px] text-muted-foreground">Ex: 5511999999999 (Brasil)</p>
+            </div>
+            <div className="space-y-1">
+              <Label className="font-body text-xs">Mensagem</Label>
+              <Textarea
+                value={whatsappMessage}
+                onChange={(e) => setWhatsappMessage(e.target.value)}
+                rows={5}
+                className="font-body text-sm"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setWhatsappOpen(false)} className="font-body">
+                Cancelar
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSendWhatsapp}
+                disabled={sendingWhatsapp}
+                className="font-body bg-green-600 hover:bg-green-700 text-white gap-1.5"
+              >
+                {sendingWhatsapp ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageCircle className="w-3.5 h-3.5" />}
+                Enviar
+              </Button>
+            </div>
+          </div>
+        </WhatsAppDialogContent>
+      </WhatsAppDialog>
     </div>
   );
 }
