@@ -436,7 +436,7 @@ export default function Quotes() {
         }
       }
 
-      toast({ title: editingQuote ? "Cotação atualizada" : "Cotação criada" });
+      toast({ title: editingQuote ? "Cotação atualizada" : "Cotação criada", duration: 2000 });
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
       queryClient.invalidateQueries({ queryKey: ["sales"] });
 
