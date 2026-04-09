@@ -974,6 +974,7 @@ export type Database = {
       financial_transactions: {
         Row: {
           amount: number
+          attachment_urls: string[] | null
           category: string | null
           created_at: string
           created_by: string | null
@@ -992,6 +993,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          attachment_urls?: string[] | null
           category?: string | null
           created_at?: string
           created_by?: string | null
@@ -1010,6 +1012,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          attachment_urls?: string[] | null
           category?: string | null
           created_at?: string
           created_by?: string | null
@@ -2181,6 +2184,39 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          phone: string
+          session_type: string
+          state: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          phone: string
+          session_type?: string
+          state?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          phone?: string
+          session_type?: string
+          state?: Json
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
