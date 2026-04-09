@@ -153,4 +153,19 @@
     background-color: hsl(var(--background)) !important;
     color: hsl(var(--foreground)) !important;
   }
+
+  @media (max-width: 639px) {
+    .public-quote {
+      --pq-font-step-px: calc(var(--pq-font-step, 0) * 2px);
+    }
+
+    .pq-fs-4xs { font-size: calc(0.5625rem + var(--pq-font-step-px)); }
+    .pq-fs-3xs { font-size: calc(0.625rem + var(--pq-font-step-px)); }
+    .pq-fs-2xs { font-size: calc(0.6875rem + var(--pq-font-step-px)); }
+    .pq-fs-xs { font-size: calc(0.75rem + var(--pq-font-step-px)); }
+    .pq-fs-sm { font-size: calc(0.875rem + var(--pq-font-step-px)); }
+    .pq-fs-base { font-size: calc(1rem + var(--pq-font-step-px)); }
+    .pq-fs-lg { font-size: calc(1.125rem + var(--pq-font-step-px)); }
+    .pq-fs-xl { font-size: calc(1.25rem + var(--pq-font-step-px)); }
+  }
 }
