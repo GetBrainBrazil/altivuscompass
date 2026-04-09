@@ -555,24 +555,37 @@ export default function Quotes() {
       toast({ title: "Informe o número de telefone", variant: "destructive" });
       return;
     }
+
     setSendingWhatsapp(true);
     try {
+      const savedQuoteId = await saveQuote(false);
+      if (!savedQuoteId) {
+        throw new Error("Não foi possível salvar a cotação antes do envio.");
+      }
+
+      const finalMessage = whatsappMessage.replace(
+        "[o link da cotação será gerado ao confirmar o envio]",
+        `${window.location.origin}/quote/${savedQuoteId}`,
+      );
+
       const { data, error } = await supabase.functions.invoke("send-whatsapp", {
         body: {
           action: "send-text",
           phone: whatsappPhone,
-          message: whatsappMessage,
-          quote_id: whatsappQuoteId,
+          message: finalMessage,
+          quote_id: savedQuoteId,
         },
       });
-      console.log("WhatsApp response:", { data, error });
+
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+
+      setWhatsappQuoteId(savedQuoteId);
+      setWhatsappMessage(finalMessage);
       toast({ title: "✅ Mensagem enviada!", description: `WhatsApp enviado com sucesso para ${whatsappPhone}.` });
       setWhatsappOpen(false);
       queryClient.invalidateQueries({ queryKey: ["quote-history"] });
     } catch (err: any) {
-      console.error("WhatsApp send error:", err);
       toast({ title: "❌ Falha ao enviar WhatsApp", description: err.message || "Verifique o número e tente novamente.", variant: "destructive" });
     } finally {
       setSendingWhatsapp(false);
