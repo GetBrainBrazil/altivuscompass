@@ -568,11 +568,17 @@ export default function Quotes() {
         `https://compass.altivusturismo.com.br/quote/${savedQuoteId}`,
       );
 
+      const quoteUrl = `https://compass.altivusturismo.com.br/quote/${savedQuoteId}`;
+
       const { data, error } = await supabase.functions.invoke("send-whatsapp", {
         body: {
-          action: "send-text",
+          action: "send-link",
           phone: whatsappPhone,
           message: finalMessage,
+          link_url: quoteUrl,
+          link_title: "Altivus Compass",
+          link_description: `Sistema de gestão da Altivus\ncompass.altivusturismo.com.br`,
+          image_url: "https://storage.googleapis.com/gpt-engineer-file-uploads/Q5PyjPx9DmYrShMRadDhPe4XruD2/social-images/social-1772900670484-img_1010.webp",
           quote_id: savedQuoteId,
         },
       });
