@@ -125,6 +125,14 @@
     --input: 220 15% 90%;
     --ring: 215 50% 45%;
   }
+
+  body.public-quote-light-body,
+  #root.public-quote-light-app {
+    color-scheme: light !important;
+    background-color: hsl(var(--card)) !important;
+    background-image: none !important;
+    color: hsl(var(--foreground)) !important;
+  }
 }
 
 @layer utilities {
@@ -145,13 +153,47 @@
   html.public-quote-light-root .public-quote,
   html.public-quote-light-root .public-quote * {
     color-scheme: light !important;
+    forced-color-adjust: none !important;
   }
 
   html.public-quote-light-root body,
   html.public-quote-light-root #root,
-  html.public-quote-light-root .public-quote {
+  html.public-quote-light-root .public-quote,
+  html.public-quote-light-root .public-quote-shell,
+  html.public-quote-light-root .public-quote-toolbar,
+  html.public-quote-light-root .public-quote-shell > header,
+  html.public-quote-light-root .public-quote-shell > main,
+  html.public-quote-light-root .public-quote-shell > footer,
+  html.public-quote-light-root .public-quote-shell .bg-white {
     background-color: hsl(var(--background)) !important;
+    background-image: none !important;
     color: hsl(var(--foreground)) !important;
+  }
+
+  html.public-quote-light-root .public-quote-shell,
+  html.public-quote-light-root .public-quote-toolbar,
+  html.public-quote-light-root .public-quote-shell > header,
+  html.public-quote-light-root .public-quote-shell > main,
+  html.public-quote-light-root .public-quote-shell > footer {
+    box-shadow: none !important;
+  }
+
+  .public-quote-control-button {
+    font-size: 0.6875rem;
+    line-height: 1;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .public-quote-control-label {
+    font-size: 0.625rem;
+    line-height: 1;
+  }
+
+  @media (min-width: 640px) {
+    .public-quote-control-button {
+      font-size: 0.75rem;
+    }
   }
 
   @media (max-width: 639px) {

@@ -289,16 +289,16 @@ export default function PublicQuote() {
     <div className="public-quote public-quote-shell min-h-screen bg-white text-gray-900" data-theme="light" style={{ ["--pq-font-step" as string]: fontScale }}>
       {/* Top toolbar - hidden on print */}
       <div className="public-quote-toolbar print:hidden">
-        <div className="max-w-5xl mx-auto px-2 sm:px-6 py-2 flex items-center justify-between gap-2 sm:gap-3 border-b border-gray-200 bg-white">
-          <div className="flex min-w-0 items-center gap-1 sm:gap-2">
+        <div className="max-w-5xl mx-auto px-2 sm:px-6 py-2 flex flex-nowrap items-center justify-between gap-2 sm:gap-3 border-b border-gray-200 bg-white">
+          <div className="flex min-w-0 flex-nowrap items-center gap-1 sm:gap-2">
             {quote.client_phone && (
-              <Button variant="outline" size="sm" className="gap-1 font-body pq-fs-2xs sm:text-xs h-8 px-2 sm:px-3" onClick={handleWhatsApp}>
+              <Button variant="outline" size="sm" className="public-quote-control-button gap-1 font-body h-8 px-2 sm:px-3" onClick={handleWhatsApp}>
                 <Phone className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">{t.sendWhatsApp}</span>
                 <span className="sm:hidden">WhatsApp</span>
               </Button>
             )}
-            <Button variant="outline" size="sm" className="gap-1 font-body pq-fs-2xs sm:text-xs h-8 px-2 sm:px-3" onClick={() => window.print()}>
+            <Button variant="outline" size="sm" className="public-quote-control-button gap-1 font-body h-8 px-2 sm:px-3" onClick={() => window.print()}>
               <Printer className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{t.printPdf}</span>
               <span className="sm:hidden">PDF</span>
@@ -308,17 +308,17 @@ export default function PublicQuote() {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 w-8 p-0 font-body"
+                className="public-quote-control-button h-8 w-8 p-0 font-body"
                 onClick={() => setFontScale(s => Math.max(-1, s - 1))}
                 disabled={fontScale <= -1}
               >
                 <Minus className="w-3.5 h-3.5" />
               </Button>
-              <span className="pq-fs-3xs font-body text-gray-500 w-4 text-center">A</span>
+              <span className="public-quote-control-label font-body text-gray-500 w-4 text-center shrink-0">A</span>
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 w-8 p-0 font-body"
+                className="public-quote-control-button h-8 w-8 p-0 font-body"
                 onClick={() => setFontScale(s => Math.min(2, s + 1))}
                 disabled={fontScale >= 2}
               >
@@ -327,7 +327,7 @@ export default function PublicQuote() {
             </div>
 
             {translating && (
-              <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground font-body ml-1">
+              <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground font-body ml-1 shrink-0">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 <span>Traduzindo...</span>
               </div>
@@ -336,7 +336,7 @@ export default function PublicQuote() {
 
           <div className="shrink-0">
             <Select value={lang} onValueChange={(v) => handleLangChange(v as QuoteLang)}>
-              <SelectTrigger className="h-8 w-[112px] sm:w-[160px] pq-fs-2xs sm:text-xs font-body px-2 sm:px-3">
+              <SelectTrigger className="public-quote-control-button h-8 w-[112px] sm:w-[160px] font-body px-2 sm:px-3">
                 <SelectValue>
                   {selectedLang && (
                     <span className="flex items-center gap-1.5">
