@@ -131,6 +131,31 @@ Deno.serve(async (req) => {
       const finalData = sessionState.final_data
       const attachmentUrls = (sessionState.attachments || []).map((a: any) => a.storage_url).filter(Boolean)
 
+      // Handle supplier: check if exists, if not create in suppliers table
+      let supplierName = finalData.supplier || null
+      if (supplierName) {
+        const { data: existingSupplier } = await supabase
+          .from('financial_parties')
+          .select('name')
+          .ilike('name', `%${supplierName}%`)
+          .limit(1)
+          .single()
+
+        if (!existingSupplier) {
+          // Create new supplier in both financial_parties and suppliers tables
+          await supabase.from('financial_parties').insert({
+            name: supplierName,
+            type: 'company',
+          })
+          await supabase.from('suppliers').insert({
+            name: supplierName,
+            is_active: true,
+          })
+        } else {
+          supplierName = existingSupplier.name
+        }
+      }
+
       const { error: insertError } = await supabase.from('financial_transactions').insert({
         description: finalData.description || 'Conta paga via WhatsApp',
         type: 'expense',
@@ -138,7 +163,7 @@ Deno.serve(async (req) => {
         status: 'paid',
         date: finalData.payment_date || new Date().toISOString().split('T')[0],
         due_date: finalData.due_date || null,
-        party_name: finalData.supplier || null,
+        party_name: supplierName,
         category: finalData.category || null,
         payment_account: finalData.bank_account || null,
         observations: `Cadastrado via WhatsApp por ${sessionState.sender_name || phone}`,
@@ -152,7 +177,9 @@ Deno.serve(async (req) => {
         await supabase.from('whatsapp_sessions')
           .update({ status: 'completed', state: sessionState })
           .eq('id', existingSession.id)
-        await sendZapiText(zapiInstanceId, zapiToken, zapiSecurityToken, phone, '✅ Esta conta paga foi cadastrada com sucesso em Contas a Pagar!')
+        
+        const newSupplierNote = finalData.is_new_supplier ? '\n📋 Novo fornecedor cadastrado: ' + supplierName : ''
+        await sendZapiText(zapiInstanceId, zapiToken, zapiSecurityToken, phone, `✅ Esta conta paga foi cadastrada com sucesso em Contas a Pagar!${newSupplierNote}`)
       }
 
       return new Response(JSON.stringify({ status: 'saved' }), {
@@ -255,27 +282,34 @@ async function callAI(supabase: any, apiKey: string, sessionState: any, newAttac
 Seu objetivo é coletar as seguintes informações para registrar uma conta paga:
 - Descrição (obrigatório)
 - Valor (obrigatório)
-- Fornecedor/Pagador (opcional - busque nos cadastrados: ${suppliers || 'nenhum cadastrado'})
-- Data de vencimento (opcional)
+- Fornecedor/Pagador (obrigatório - busque nos cadastrados abaixo. Se encontrar, informe "✅ Fornecedor encontrado: [nome]". Se NÃO encontrar, informe "⚠️ Fornecedor não encontrado. Será cadastrado como novo: [nome]")
+  Fornecedores cadastrados: ${suppliers || 'nenhum cadastrado'}
+- Data de vencimento (obrigatório - se não conseguir identificar no documento/texto, PERGUNTE ao usuário)
 - Data de pagamento (opcional, padrão: hoje ${new Date().toISOString().split('T')[0]})
-- Categoria (opcional - categorias disponíveis: ${categories || 'nenhuma cadastrada'})
-- Conta bancária (opcional - contas disponíveis: ${accounts || 'nenhuma cadastrada'})
+- Categoria (obrigatório - DEVE ser uma das categorias cadastradas abaixo, NÃO invente categorias novas. Sugira a mais adequada)
+  Categorias cadastradas: ${categories || 'nenhuma cadastrada'}
+- Conta bancária (obrigatório - DEVE ser uma das contas cadastradas abaixo, NÃO invente contas novas. Pergunte ao usuário qual conta)
+  Contas cadastradas: ${accounts || 'nenhuma cadastrada'}
 
 Regras:
 1. Se o usuário enviar uma imagem ou documento, analise o conteúdo descrito e extraia os dados possíveis (valor, fornecedor, vencimento, etc.)
-2. Quando tiver pelo menos descrição e valor, apresente um resumo formatado e peça confirmação
-3. Para fornecedor, tente fazer busca aproximada nos nomes cadastrados. Se não encontrar, use o nome informado como texto livre
-4. Para categoria, sugira a mais adequada com base no contexto
-5. Responda sempre em português brasileiro, de forma concisa e amigável
-6. Use emojis com moderação
-7. Formate valores como R$ X.XXX,XX
+2. TODOS os campos obrigatórios devem estar preenchidos antes de apresentar o resumo para confirmação
+3. Se faltar data de vencimento, pergunte explicitamente
+4. Se faltar categoria, sugira uma das cadastradas e pergunte se concorda
+5. Se faltar conta bancária, liste as opções cadastradas e peça para escolher
+6. Para fornecedor, faça busca aproximada. Se encontrar, use o nome exato cadastrado. Se não encontrar, avise que será cadastrado como novo
+7. NUNCA apresente o resumo final se faltar algum campo obrigatório
+8. Responda sempre em português brasileiro, de forma concisa e amigável
+9. Use emojis com moderação
+10. Formate valores como R$ X.XXX,XX
 
 Dados coletados até agora: ${JSON.stringify(sessionState.extracted_data || {})}
 Anexos recebidos: ${(sessionState.attachments || []).length} arquivo(s)
 
-Quando apresentar o resumo para confirmação, retorne EXATAMENTE neste formato JSON no final da sua mensagem, em uma linha separada começando com ###JSON###:
-###JSON###{"awaiting_confirmation":true,"final_data":{"description":"...","amount":0,"supplier":"...","due_date":"YYYY-MM-DD","payment_date":"YYYY-MM-DD","category":"...","bank_account":"..."}}
+Quando apresentar o resumo para confirmação (SOMENTE quando TODOS os campos obrigatórios estiverem preenchidos), retorne EXATAMENTE neste formato JSON no final da sua mensagem, em uma linha separada começando com ###JSON###:
+###JSON###{"awaiting_confirmation":true,"final_data":{"description":"...","amount":0,"supplier":"...","is_new_supplier":false,"due_date":"YYYY-MM-DD","payment_date":"YYYY-MM-DD","category":"...","bank_account":"..."}}
 
+O campo is_new_supplier deve ser true se o fornecedor NÃO foi encontrado nos cadastrados.
 Não inclua o JSON se ainda estiver coletando informações.`
 
   // Build messages for AI
