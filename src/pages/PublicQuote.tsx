@@ -38,6 +38,7 @@ export default function PublicQuote() {
   const [translatedContent, setTranslatedContent] = useState<Record<string, string>>({});
   const [translatedItems, setTranslatedItems] = useState<Record<number, { title?: string; description?: string }>>({});
   const translationCache = useRef<Record<string, { content: Record<string, string>; items: Record<number, { title?: string; description?: string }> }>>({});
+  const [fontScale, setFontScale] = useState(0); // -1, 0, +1, +2
 
   const t = getTranslations(lang);
 
