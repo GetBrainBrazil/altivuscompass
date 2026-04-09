@@ -564,8 +564,8 @@ export default function Quotes() {
       }
 
       const finalMessage = whatsappMessage.replace(
-        "[o link da cotação será gerado ao confirmar o envio]",
-        `${window.location.origin}/quote/${savedQuoteId}`,
+        "[o link será gerado ao confirmar o envio]",
+        `https://compass.altivusturismo.com.br/quote/${savedQuoteId}`,
       );
 
       const { data, error } = await supabase.functions.invoke("send-whatsapp", {
