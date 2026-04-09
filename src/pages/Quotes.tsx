@@ -535,10 +535,8 @@ export default function Quotes() {
 
   const openWhatsappDialog = async () => {
     // Save the quote first before sending via WhatsApp
-    try {
-      await saveQuote(false);
-      toast({ title: "Cotação salva com sucesso!" });
-    } catch (err: any) {
+    const saved = await saveQuote(false);
+    if (!saved) {
       toast({ title: "Erro ao salvar cotação", description: "Não foi possível salvar antes de enviar.", variant: "destructive" });
       return;
     }
