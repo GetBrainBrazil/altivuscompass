@@ -540,13 +540,13 @@ export default function Quotes() {
     const cleanPhone = phone.replace(/\D/g, "");
     const formattedPhone = cleanPhone ? (cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`) : "";
     const previewQuoteUrl = editingQuote?.id
-      ? `${window.location.origin}/quote/${editingQuote.id}`
-      : "[o link da cotação será gerado ao confirmar o envio]";
-    const title = form.title || form.destination || "sua cotação";
+      ? `https://compass.altivusturismo.com.br/quote/${editingQuote.id}`
+      : "[o link será gerado ao confirmar o envio]";
+    const destination = form.destination || form.title || "sua viagem";
 
     setWhatsappQuoteId(editingQuote?.id ?? null);
     setWhatsappPhone(formattedPhone);
-    setWhatsappMessage(`Olá! Segue o link da ${title}:\n${previewQuoteUrl}`);
+    setWhatsappMessage(`Olá! Segue o orçamento de *${destination}* preparado pela *Altivus Turismo*: ${previewQuoteUrl}`);
     setWhatsappOpen(true);
   };
 
