@@ -48,6 +48,17 @@ export default function PublicQuote() {
     const body = document.body;
     const root = document.getElementById("root");
     const hadDarkClass = html.classList.contains("dark");
+    const previousHtmlColorScheme = html.style.colorScheme;
+    const previousHtmlBackground = html.style.backgroundColor;
+    const previousHtmlForcedColorAdjust = html.style.getPropertyValue("forced-color-adjust");
+    const previousBodyBackground = body.style.backgroundColor;
+    const previousBodyBackgroundImage = body.style.backgroundImage;
+    const previousBodyColor = body.style.color;
+    const previousBodyForcedColorAdjust = body.style.getPropertyValue("forced-color-adjust");
+    const previousRootBackground = root?.style.backgroundColor ?? "";
+    const previousRootBackgroundImage = root?.style.backgroundImage ?? "";
+    const previousRootColor = root?.style.color ?? "";
+    const previousRootForcedColorAdjust = root?.style.getPropertyValue("forced-color-adjust") ?? "";
 
     const ensureMeta = (name: string, content: string) => {
       let meta = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
@@ -69,7 +80,7 @@ export default function PublicQuote() {
       };
     };
 
-    const restoreColorScheme = ensureMeta("color-scheme", "only light");
+    const restoreColorScheme = ensureMeta("color-scheme", "light");
     const restoreSupportedSchemes = ensureMeta("supported-color-schemes", "light");
     const restoreThemeColor = ensureMeta("theme-color", "#ffffff");
 
@@ -77,31 +88,46 @@ export default function PublicQuote() {
     html.classList.add("public-quote-light-root");
     body.classList.add("public-quote-light-body");
     root?.classList.add("public-quote-light-app");
+    html.style.colorScheme = "only light";
+    html.style.backgroundColor = "#ffffff";
+    html.style.setProperty("forced-color-adjust", "none");
+    body.style.backgroundColor = "#ffffff";
+    body.style.backgroundImage = "none";
+    body.style.color = "#111827";
+    body.style.setProperty("forced-color-adjust", "none");
+    if (root) {
+      root.style.backgroundColor = "#ffffff";
+      root.style.backgroundImage = "none";
+      root.style.color = "#111827";
+      root.style.setProperty("forced-color-adjust", "none");
+    }
 
     return () => {
       html.classList.remove("public-quote-light-root");
       body.classList.remove("public-quote-light-body");
       root?.classList.remove("public-quote-light-app");
       if (hadDarkClass) html.classList.add("dark");
+      html.style.colorScheme = previousHtmlColorScheme;
+      html.style.backgroundColor = previousHtmlBackground;
+      if (previousHtmlForcedColorAdjust) html.style.setProperty("forced-color-adjust", previousHtmlForcedColorAdjust);
+      else html.style.removeProperty("forced-color-adjust");
+      body.style.backgroundColor = previousBodyBackground;
+      body.style.backgroundImage = previousBodyBackgroundImage;
+      body.style.color = previousBodyColor;
+      if (previousBodyForcedColorAdjust) body.style.setProperty("forced-color-adjust", previousBodyForcedColorAdjust);
+      else body.style.removeProperty("forced-color-adjust");
+      if (root) {
+        root.style.backgroundColor = previousRootBackground;
+        root.style.backgroundImage = previousRootBackgroundImage;
+        root.style.color = previousRootColor;
+        if (previousRootForcedColorAdjust) root.style.setProperty("forced-color-adjust", previousRootForcedColorAdjust);
+        else root.style.removeProperty("forced-color-adjust");
+      }
       restoreColorScheme();
       restoreSupportedSchemes();
       restoreThemeColor();
     };
   }, []);
-
-  useEffect(() => {
-    const html = document.documentElement;
-    const previousFontSize = html.style.fontSize;
-    const isMobile = window.matchMedia("(max-width: 639px)").matches;
-
-    if (isMobile) {
-      html.style.fontSize = `${16 + fontScale * 2}px`;
-    }
-
-    return () => {
-      html.style.fontSize = previousFontSize;
-    };
-  }, [fontScale]);
 
   useEffect(() => {
     if (!id) return;
@@ -260,9 +286,9 @@ export default function PublicQuote() {
   const selectedLang = LANG_OPTIONS.find(l => l.value === lang);
 
   return (
-    <div className="public-quote min-h-screen bg-gray-50 text-gray-900" data-theme="light" style={{ ["--pq-font-step" as string]: fontScale }}>
+    <div className="public-quote public-quote-shell min-h-screen bg-white text-gray-900" data-theme="light" style={{ ["--pq-font-step" as string]: fontScale }}>
       {/* Top toolbar - hidden on print */}
-      <div className="print:hidden">
+      <div className="public-quote-toolbar print:hidden">
         <div className="max-w-5xl mx-auto px-2 sm:px-6 py-2 flex items-center justify-between gap-2 sm:gap-3 border-b border-gray-200 bg-white">
           <div className="flex min-w-0 items-center gap-1 sm:gap-2">
             {quote.client_phone && (
