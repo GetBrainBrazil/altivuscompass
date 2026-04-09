@@ -100,6 +100,7 @@ export default function Quotes() {
   const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [whatsappPhone, setWhatsappPhone] = useState("");
   const [whatsappMessage, setWhatsappMessage] = useState("");
+  const [whatsappQuoteId, setWhatsappQuoteId] = useState<string | null>(null);
   const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
   const { data: quotes = [], isLoading } = useQuery({
     queryKey: ["quotes"],
