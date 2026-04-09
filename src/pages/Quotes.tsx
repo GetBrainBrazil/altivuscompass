@@ -320,7 +320,7 @@ export default function Quotes() {
     });
   };
 
-  const saveQuote = async (closeAfter: boolean): Promise<boolean> => {
+  const saveQuote = async (closeAfter: boolean): Promise<string | null> => {
     try {
       const stage = form.stage || "new";
       const conclusion_type = stage === "confirmed" ? (form.conclusion_type || "won") : null;
