@@ -42,23 +42,39 @@ export default function PublicQuote() {
 
   const t = getTranslations(lang);
 
-  // Force light mode on this page
+  // Force light mode on this page — override browser dark mode
   useEffect(() => {
     const html = document.documentElement;
     html.classList.remove("dark");
     html.style.colorScheme = "light";
-    // Set meta theme-color for mobile browser chrome
-    let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
-    if (!meta) {
-      meta = document.createElement("meta");
-      meta.name = "theme-color";
-      document.head.appendChild(meta);
+
+    // Meta color-scheme to tell the browser to render form controls in light mode
+    let metaCS = document.querySelector('meta[name="color-scheme"]') as HTMLMetaElement | null;
+    if (!metaCS) {
+      metaCS = document.createElement("meta");
+      metaCS.name = "color-scheme";
+      document.head.appendChild(metaCS);
     }
-    meta.content = "#f9fafb";
+    metaCS.content = "light only";
+
+    // Meta theme-color for mobile browser chrome bar
+    let metaTC = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
+    if (!metaTC) {
+      metaTC = document.createElement("meta");
+      metaTC.name = "theme-color";
+      document.head.appendChild(metaTC);
+    }
+    metaTC.content = "#ffffff";
+
+    // Force background on body to prevent flash of dark
+    const prevBg = document.body.style.backgroundColor;
+    document.body.style.backgroundColor = "#f9fafb";
 
     return () => {
       html.style.colorScheme = "";
-      if (meta) meta.remove();
+      if (metaCS) metaCS.remove();
+      if (metaTC) metaTC.remove();
+      document.body.style.backgroundColor = prevBg;
     };
   }, []);
 
