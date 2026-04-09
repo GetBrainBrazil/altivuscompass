@@ -100,6 +100,7 @@ export default function Quotes() {
   const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [whatsappPhone, setWhatsappPhone] = useState("");
   const [whatsappMessage, setWhatsappMessage] = useState("");
+  const [whatsappQuoteId, setWhatsappQuoteId] = useState<string | null>(null);
   const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
   const { data: quotes = [], isLoading } = useQuery({
     queryKey: ["quotes"],
@@ -319,7 +320,7 @@ export default function Quotes() {
     });
   };
 
-  const saveQuote = async (closeAfter: boolean): Promise<boolean> => {
+  const saveQuote = async (closeAfter: boolean): Promise<string | null> => {
     try {
       const stage = form.stage || "new";
       const conclusion_type = stage === "confirmed" ? (form.conclusion_type || "won") : null;
@@ -444,10 +445,10 @@ export default function Quotes() {
       } else if (!editingQuote && quoteId) {
         setEditingQuote({ ...payload, id: quoteId, created_at: new Date().toISOString() } as Quote);
       }
-      return true;
+      return quoteId ?? null;
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
-      return false;
+      return null;
     }
   };
 
@@ -534,24 +535,25 @@ export default function Quotes() {
   };
 
   const openWhatsappDialog = async () => {
-    // Save the quote first before sending via WhatsApp
-    const saved = await saveQuote(false);
-    if (!saved) {
+    const savedQuoteId = await saveQuote(false);
+    if (!savedQuoteId) {
       toast({ title: "Erro ao salvar cotação", description: "Não foi possível salvar antes de enviar.", variant: "destructive" });
       return;
     }
 
     const client = clients.find((c: any) => c.id === form.client_id);
-    let phone = client?.phone || "";
+    const phone = client?.phone || "";
     if (!phone) {
       toast({ title: "Cliente sem telefone cadastrado", description: "Cadastre o telefone do cliente antes de enviar via WhatsApp.", variant: "destructive" });
       return;
     }
-    // Ensure phone has country code (default to Brazil +55)
+
     const cleanPhone = phone.replace(/\D/g, "");
     const formattedPhone = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
-    const quoteUrl = `${window.location.origin}/quote/${editingQuote?.id}`;
+    const quoteUrl = `${window.location.origin}/quote/${savedQuoteId}`;
     const title = form.title || form.destination || "sua cotação";
+
+    setWhatsappQuoteId(savedQuoteId);
     setWhatsappPhone(formattedPhone);
     setWhatsappMessage(`Olá! Segue o link da ${title}:\n${quoteUrl}`);
     setWhatsappOpen(true);
@@ -569,7 +571,7 @@ export default function Quotes() {
           action: "send-text",
           phone: whatsappPhone,
           message: whatsappMessage,
-          quote_id: editingQuote?.id,
+          quote_id: whatsappQuoteId,
         },
       });
       console.log("WhatsApp response:", { data, error });
@@ -1659,20 +1661,40 @@ export default function Quotes() {
         <WhatsAppDialogContent className="max-w-md">
           <WhatsAppDialogHeader>
             <WhatsAppDialogTitle className="font-body flex items-center gap-2">
-              <MessageCircle className="w-5 h-5 text-green-600" /> Enviar via WhatsApp
+              <MessageCircle className="w-5 h-5 text-primary" /> Prévia do WhatsApp
             </WhatsAppDialogTitle>
           </WhatsAppDialogHeader>
           <div className="space-y-4 pt-2">
             <div className="space-y-1">
-              <Label className="font-body text-xs">Telefone (com DDD e código do país)</Label>
+              <Label className="font-body text-xs">Telefone do cliente</Label>
               <Input
                 placeholder="5511999999999"
                 value={whatsappPhone}
                 onChange={(e) => setWhatsappPhone(e.target.value)}
                 className="font-body"
               />
-              <p className="text-[10px] text-muted-foreground">Ex: 5511999999999 (Brasil)</p>
+              <p className="text-[10px] text-muted-foreground">Revise o número antes do envio.</p>
             </div>
+
+            <div className="rounded-2xl border border-border bg-muted/30 p-3">
+              <div className="mb-3 flex items-center gap-2 border-b border-border pb-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <MessageCircle className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium font-body text-foreground">Cliente</p>
+                  <p className="text-[11px] font-body text-muted-foreground">Prévia da mensagem que será enviada</p>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <div className="max-w-[85%] rounded-2xl rounded-br-md bg-primary px-3 py-2 text-primary-foreground shadow-sm">
+                  <p className="whitespace-pre-line break-words text-sm font-body">{whatsappMessage}</p>
+                  <p className="mt-1 text-right text-[10px] text-primary-foreground/80">agora</p>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-1">
               <Label className="font-body text-xs">Mensagem</Label>
               <Textarea
@@ -1682,6 +1704,7 @@ export default function Quotes() {
                 className="font-body text-sm"
               />
             </div>
+
             <div className="flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={() => setWhatsappOpen(false)} className="font-body">
                 Cancelar
@@ -1690,10 +1713,10 @@ export default function Quotes() {
                 size="sm"
                 onClick={handleSendWhatsapp}
                 disabled={sendingWhatsapp}
-                className="font-body bg-green-600 hover:bg-green-700 text-white gap-1.5"
+                className="font-body gap-1.5"
               >
                 {sendingWhatsapp ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageCircle className="w-3.5 h-3.5" />}
-                Enviar
+                Confirmar envio
               </Button>
             </div>
           </div>
