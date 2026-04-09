@@ -41,6 +41,26 @@ export default function PublicQuote() {
 
   const t = getTranslations(lang);
 
+  // Force light mode on this page
+  useEffect(() => {
+    const html = document.documentElement;
+    html.classList.remove("dark");
+    html.style.colorScheme = "light";
+    // Set meta theme-color for mobile browser chrome
+    let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.name = "theme-color";
+      document.head.appendChild(meta);
+    }
+    meta.content = "#f9fafb";
+
+    return () => {
+      html.style.colorScheme = "";
+      if (meta) meta.remove();
+    };
+  }, []);
+
   useEffect(() => {
     if (!id) return;
     const fetchQuote = async () => {
