@@ -45,38 +45,63 @@ export default function PublicQuote() {
   // Force light mode on this page — override browser dark mode
   useEffect(() => {
     const html = document.documentElement;
+    const body = document.body;
+    const root = document.getElementById("root");
+    const hadDarkClass = html.classList.contains("dark");
+
+    const ensureMeta = (name: string, content: string) => {
+      let meta = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
+      const created = !meta;
+      const previousContent = meta?.content ?? "";
+
+      if (!meta) {
+        meta = document.createElement("meta");
+        meta.name = name;
+        document.head.appendChild(meta);
+      }
+
+      meta.content = content;
+
+      return () => {
+        if (!meta) return;
+        if (created) meta.remove();
+        else meta.content = previousContent;
+      };
+    };
+
+    const restoreColorScheme = ensureMeta("color-scheme", "only light");
+    const restoreSupportedSchemes = ensureMeta("supported-color-schemes", "light");
+    const restoreThemeColor = ensureMeta("theme-color", "#ffffff");
+
     html.classList.remove("dark");
-    html.style.colorScheme = "light";
-
-    // Meta color-scheme to tell the browser to render form controls in light mode
-    let metaCS = document.querySelector('meta[name="color-scheme"]') as HTMLMetaElement | null;
-    if (!metaCS) {
-      metaCS = document.createElement("meta");
-      metaCS.name = "color-scheme";
-      document.head.appendChild(metaCS);
-    }
-    metaCS.content = "light only";
-
-    // Meta theme-color for mobile browser chrome bar
-    let metaTC = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
-    if (!metaTC) {
-      metaTC = document.createElement("meta");
-      metaTC.name = "theme-color";
-      document.head.appendChild(metaTC);
-    }
-    metaTC.content = "#ffffff";
-
-    // Force background on body to prevent flash of dark
-    const prevBg = document.body.style.backgroundColor;
-    document.body.style.backgroundColor = "#f9fafb";
+    html.classList.add("public-quote-light-root");
+    body.classList.add("public-quote-light-body");
+    root?.classList.add("public-quote-light-app");
 
     return () => {
-      html.style.colorScheme = "";
-      if (metaCS) metaCS.remove();
-      if (metaTC) metaTC.remove();
-      document.body.style.backgroundColor = prevBg;
+      html.classList.remove("public-quote-light-root");
+      body.classList.remove("public-quote-light-body");
+      root?.classList.remove("public-quote-light-app");
+      if (hadDarkClass) html.classList.add("dark");
+      restoreColorScheme();
+      restoreSupportedSchemes();
+      restoreThemeColor();
     };
   }, []);
+
+  useEffect(() => {
+    const html = document.documentElement;
+    const previousFontSize = html.style.fontSize;
+    const isMobile = window.matchMedia("(max-width: 639px)").matches;
+
+    if (isMobile) {
+      html.style.fontSize = `${16 + fontScale * 2}px`;
+    }
+
+    return () => {
+      html.style.fontSize = previousFontSize;
+    };
+  }, [fontScale]);
 
   useEffect(() => {
     if (!id) return;
@@ -234,60 +259,58 @@ export default function PublicQuote() {
   const agencyName = agency?.name || "Altivus Turismo";
   const selectedLang = LANG_OPTIONS.find(l => l.value === lang);
 
-  // Font scale: each step = 2px on base 16px
-  const fontSizePx = 16 + fontScale * 2;
-
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900" style={{ colorScheme: "light", fontSize: `${fontSizePx}px` }} data-theme="light">
+    <div className="public-quote min-h-screen bg-gray-50 text-gray-900" data-theme="light">
       {/* Top toolbar - hidden on print */}
       <div className="print:hidden">
-        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-2 flex items-center gap-1.5 sm:gap-2 flex-wrap border-b border-gray-200 bg-white">
-          {quote.client_phone && (
-            <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs h-8" onClick={handleWhatsApp}>
-              <Phone className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{t.sendWhatsApp}</span>
-              <span className="sm:hidden">WhatsApp</span>
+        <div className="max-w-5xl mx-auto px-2 sm:px-6 py-2 flex items-center justify-between gap-2 sm:gap-3 border-b border-gray-200 bg-white">
+          <div className="flex min-w-0 items-center gap-1 sm:gap-2">
+            {quote.client_phone && (
+              <Button variant="outline" size="sm" className="gap-1 font-body text-[11px] sm:text-xs h-8 px-2 sm:px-3" onClick={handleWhatsApp}>
+                <Phone className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{t.sendWhatsApp}</span>
+                <span className="sm:hidden">WhatsApp</span>
+              </Button>
+            )}
+            <Button variant="outline" size="sm" className="gap-1 font-body text-[11px] sm:text-xs h-8 px-2 sm:px-3" onClick={() => window.print()}>
+              <Printer className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{t.printPdf}</span>
+              <span className="sm:hidden">PDF</span>
             </Button>
-          )}
-          <Button variant="outline" size="sm" className="gap-1.5 font-body text-xs h-8" onClick={() => window.print()}>
-            <Printer className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{t.printPdf}</span>
-            <span className="sm:hidden">PDF</span>
-          </Button>
 
-          {/* Font size controls - mobile only */}
-          <div className="flex items-center gap-0.5 sm:hidden">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 w-8 p-0 font-body"
-              onClick={() => setFontScale(s => Math.max(-1, s - 1))}
-              disabled={fontScale <= -1}
-            >
-              <Minus className="w-3.5 h-3.5" />
-            </Button>
-            <span className="text-[10px] font-body text-gray-500 w-5 text-center">A</span>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 w-8 p-0 font-body"
-              onClick={() => setFontScale(s => Math.min(2, s + 1))}
-              disabled={fontScale >= 2}
-            >
-              <Plus className="w-3.5 h-3.5" />
-            </Button>
+            <div className="flex items-center gap-0.5 sm:hidden shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0 font-body"
+                onClick={() => setFontScale(s => Math.max(-1, s - 1))}
+                disabled={fontScale <= -1}
+              >
+                <Minus className="w-3.5 h-3.5" />
+              </Button>
+              <span className="text-[10px] font-body text-gray-500 w-4 text-center">A</span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0 font-body"
+                onClick={() => setFontScale(s => Math.min(2, s + 1))}
+                disabled={fontScale >= 2}
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+
+            {translating && (
+              <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground font-body ml-1">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Traduzindo...</span>
+              </div>
+            )}
           </div>
 
-          {translating && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-body ml-1">
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              <span className="hidden sm:inline">Traduzindo...</span>
-            </div>
-          )}
-
-          <div className="ml-auto">
+          <div className="shrink-0">
             <Select value={lang} onValueChange={(v) => handleLangChange(v as QuoteLang)}>
-              <SelectTrigger className="h-8 w-[130px] sm:w-[160px] text-xs font-body">
+              <SelectTrigger className="h-8 w-[110px] sm:w-[160px] text-[11px] sm:text-xs font-body px-2 sm:px-3">
                 <SelectValue>
                   {selectedLang && (
                     <span className="flex items-center gap-1.5">
