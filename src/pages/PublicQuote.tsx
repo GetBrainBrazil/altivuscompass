@@ -278,7 +278,8 @@ export default function PublicQuote() {
             </Button>
           </div>
 
-            {translating && (
+          {translating && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-body ml-1">
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
               <span className="hidden sm:inline">Traduzindo...</span>
             </div>
