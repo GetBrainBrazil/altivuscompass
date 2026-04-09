@@ -445,10 +445,10 @@ export default function Quotes() {
       } else if (!editingQuote && quoteId) {
         setEditingQuote({ ...payload, id: quoteId, created_at: new Date().toISOString() } as Quote);
       }
-      return true;
+      return quoteId ?? null;
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
-      return false;
+      return null;
     }
   };
 
@@ -535,24 +535,25 @@ export default function Quotes() {
   };
 
   const openWhatsappDialog = async () => {
-    // Save the quote first before sending via WhatsApp
-    const saved = await saveQuote(false);
-    if (!saved) {
+    const savedQuoteId = await saveQuote(false);
+    if (!savedQuoteId) {
       toast({ title: "Erro ao salvar cotação", description: "Não foi possível salvar antes de enviar.", variant: "destructive" });
       return;
     }
 
     const client = clients.find((c: any) => c.id === form.client_id);
-    let phone = client?.phone || "";
+    const phone = client?.phone || "";
     if (!phone) {
       toast({ title: "Cliente sem telefone cadastrado", description: "Cadastre o telefone do cliente antes de enviar via WhatsApp.", variant: "destructive" });
       return;
     }
-    // Ensure phone has country code (default to Brazil +55)
+
     const cleanPhone = phone.replace(/\D/g, "");
     const formattedPhone = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
-    const quoteUrl = `${window.location.origin}/quote/${editingQuote?.id}`;
+    const quoteUrl = `${window.location.origin}/quote/${savedQuoteId}`;
     const title = form.title || form.destination || "sua cotação";
+
+    setWhatsappQuoteId(savedQuoteId);
     setWhatsappPhone(formattedPhone);
     setWhatsappMessage(`Olá! Segue o link da ${title}:\n${quoteUrl}`);
     setWhatsappOpen(true);
@@ -570,7 +571,7 @@ export default function Quotes() {
           action: "send-text",
           phone: whatsappPhone,
           message: whatsappMessage,
-          quote_id: editingQuote?.id,
+          quote_id: whatsappQuoteId,
         },
       });
       console.log("WhatsApp response:", { data, error });
