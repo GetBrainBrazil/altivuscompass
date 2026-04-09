@@ -58,15 +58,27 @@ Deno.serve(async (req) => {
       .limit(1)
       .single()
 
+    if (isCancelarCommand) {
+      if (existingSession) {
+        await supabase.from('whatsapp_sessions')
+          .update({ status: 'cancelled' })
+          .eq('id', existingSession.id)
+        await sendZapiText(zapiInstanceId, zapiToken, zapiSecurityToken, phone, '❌ Lançamento cancelado. Envie #pago para iniciar um novo.')
+      } else {
+        await sendZapiText(zapiInstanceId, zapiToken, zapiSecurityToken, phone, 'Não há lançamento em andamento. Envie #pago para iniciar.')
+      }
+      return new Response(JSON.stringify({ status: 'cancelled' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     if (isPagoCommand) {
-      // Cancel any existing session
       if (existingSession) {
         await supabase.from('whatsapp_sessions')
           .update({ status: 'cancelled' })
           .eq('id', existingSession.id)
       }
 
-      // Create new session
       const greeting = senderName ? `Olá, ${senderName.split(' ')[0]}!` : 'Olá!'
       const { data: newSession } = await supabase.from('whatsapp_sessions').insert({
         phone,
