@@ -255,7 +255,29 @@ export default function PublicQuote() {
             <span className="sm:hidden">PDF</span>
           </Button>
 
-          {translating && (
+          {/* Font size controls - mobile only */}
+          <div className="flex items-center gap-0.5 sm:hidden">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0 font-body"
+              onClick={() => setFontScale(s => Math.max(-1, s - 1))}
+              disabled={fontScale <= -1}
+            >
+              <Minus className="w-3.5 h-3.5" />
+            </Button>
+            <span className="text-[10px] font-body text-gray-500 w-5 text-center">A</span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0 font-body"
+              onClick={() => setFontScale(s => Math.min(2, s + 1))}
+              disabled={fontScale >= 2}
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-body ml-1">
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
               <span className="hidden sm:inline">Traduzindo...</span>
