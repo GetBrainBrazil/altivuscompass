@@ -1519,6 +1519,15 @@ export default function Quotes() {
 
               <div className="flex justify-end">
                 <div className="max-w-[85%] rounded-2xl rounded-br-md bg-primary px-3 py-2 text-primary-foreground shadow-sm">
+                  {/* Link card preview */}
+                  <div className="mb-2 overflow-hidden rounded-lg border border-primary-foreground/20 bg-primary-foreground/10">
+                    <img src="https://storage.googleapis.com/gpt-engineer-file-uploads/Q5PyjPx9DmYrShMRadDhPe4XruD2/social-images/social-1772900670484-img_1010.webp" alt="Preview" className="h-28 w-full object-cover" />
+                    <div className="px-2.5 py-2">
+                      <p className="text-xs font-semibold text-primary-foreground">Altivus Compass</p>
+                      <p className="text-[10px] text-primary-foreground/70">Sistema de gestão da Altivus</p>
+                      <p className="text-[10px] text-primary-foreground/60">compass.altivusturismo.com.br</p>
+                    </div>
+                  </div>
                   <p className="whitespace-pre-line break-words text-sm font-body">{whatsappMessage}</p>
                   <p className="mt-1 text-right text-[10px] text-primary-foreground/80">agora</p>
                 </div>
@@ -1761,6 +1770,15 @@ export default function Quotes() {
 
               <div className="flex justify-end">
                 <div className="max-w-[85%] rounded-2xl rounded-br-md bg-primary px-3 py-2 text-primary-foreground shadow-sm">
+                  {/* Link card preview */}
+                  <div className="mb-2 overflow-hidden rounded-lg border border-primary-foreground/20 bg-primary-foreground/10">
+                    <img src="https://storage.googleapis.com/gpt-engineer-file-uploads/Q5PyjPx9DmYrShMRadDhPe4XruD2/social-images/social-1772900670484-img_1010.webp" alt="Preview" className="h-28 w-full object-cover" />
+                    <div className="px-2.5 py-2">
+                      <p className="text-xs font-semibold text-primary-foreground">Altivus Compass</p>
+                      <p className="text-[10px] text-primary-foreground/70">Sistema de gestão da Altivus</p>
+                      <p className="text-[10px] text-primary-foreground/60">compass.altivusturismo.com.br</p>
+                    </div>
+                  </div>
                   <p className="whitespace-pre-line break-words text-sm font-body">{whatsappMessage}</p>
                   <p className="mt-1 text-right text-[10px] text-primary-foreground/80">agora</p>
                 </div>
