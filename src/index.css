@@ -104,6 +104,27 @@
   .text-body {
     font-family: 'DM Sans', sans-serif;
   }
+
+  html.public-quote-light-root {
+    color-scheme: light !important;
+    --background: 220 20% 97%;
+    --foreground: 220 40% 13%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 40% 13%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 40% 13%;
+    --primary: 220 60% 18%;
+    --primary-foreground: 40 20% 96%;
+    --secondary: 215 30% 92%;
+    --secondary-foreground: 220 40% 18%;
+    --muted: 220 15% 94%;
+    --muted-foreground: 220 10% 50%;
+    --accent: 38 60% 55%;
+    --accent-foreground: 220 40% 13%;
+    --border: 220 15% 90%;
+    --input: 220 15% 90%;
+    --ring: 215 50% 45%;
+  }
 }
 
 @layer utilities {
@@ -116,5 +137,35 @@
   }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  html.public-quote-light-root,
+  html.public-quote-light-root body,
+  html.public-quote-light-root #root,
+  html.public-quote-light-root .public-quote,
+  html.public-quote-light-root .public-quote * {
+    color-scheme: light !important;
+  }
+
+  html.public-quote-light-root body,
+  html.public-quote-light-root #root,
+  html.public-quote-light-root .public-quote {
+    background-color: hsl(var(--background)) !important;
+    color: hsl(var(--foreground)) !important;
+  }
+
+  @media (max-width: 639px) {
+    .public-quote {
+      --pq-font-step-px: calc(var(--pq-font-step, 0) * 2px);
+    }
+
+    .pq-fs-4xs { font-size: calc(0.5625rem + var(--pq-font-step-px)); }
+    .pq-fs-3xs { font-size: calc(0.625rem + var(--pq-font-step-px)); }
+    .pq-fs-2xs { font-size: calc(0.6875rem + var(--pq-font-step-px)); }
+    .pq-fs-xs { font-size: calc(0.75rem + var(--pq-font-step-px)); }
+    .pq-fs-sm { font-size: calc(0.875rem + var(--pq-font-step-px)); }
+    .pq-fs-base { font-size: calc(1rem + var(--pq-font-step-px)); }
+    .pq-fs-lg { font-size: calc(1.125rem + var(--pq-font-step-px)); }
+    .pq-fs-xl { font-size: calc(1.25rem + var(--pq-font-step-px)); }
   }
 }
