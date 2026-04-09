@@ -131,6 +131,31 @@ Deno.serve(async (req) => {
       const finalData = sessionState.final_data
       const attachmentUrls = (sessionState.attachments || []).map((a: any) => a.storage_url).filter(Boolean)
 
+      // Handle supplier: check if exists, if not create in suppliers table
+      let supplierName = finalData.supplier || null
+      if (supplierName) {
+        const { data: existingSupplier } = await supabase
+          .from('financial_parties')
+          .select('name')
+          .ilike('name', `%${supplierName}%`)
+          .limit(1)
+          .single()
+
+        if (!existingSupplier) {
+          // Create new supplier in both financial_parties and suppliers tables
+          await supabase.from('financial_parties').insert({
+            name: supplierName,
+            type: 'company',
+          })
+          await supabase.from('suppliers').insert({
+            name: supplierName,
+            is_active: true,
+          })
+        } else {
+          supplierName = existingSupplier.name
+        }
+      }
+
       const { error: insertError } = await supabase.from('financial_transactions').insert({
         description: finalData.description || 'Conta paga via WhatsApp',
         type: 'expense',
@@ -138,7 +163,7 @@ Deno.serve(async (req) => {
         status: 'paid',
         date: finalData.payment_date || new Date().toISOString().split('T')[0],
         due_date: finalData.due_date || null,
-        party_name: finalData.supplier || null,
+        party_name: supplierName,
         category: finalData.category || null,
         payment_account: finalData.bank_account || null,
         observations: `Cadastrado via WhatsApp por ${sessionState.sender_name || phone}`,
@@ -152,7 +177,9 @@ Deno.serve(async (req) => {
         await supabase.from('whatsapp_sessions')
           .update({ status: 'completed', state: sessionState })
           .eq('id', existingSession.id)
-        await sendZapiText(zapiInstanceId, zapiToken, zapiSecurityToken, phone, '✅ Esta conta paga foi cadastrada com sucesso em Contas a Pagar!')
+        
+        const newSupplierNote = finalData.is_new_supplier ? '\n📋 Novo fornecedor cadastrado: ' + supplierName : ''
+        await sendZapiText(zapiInstanceId, zapiToken, zapiSecurityToken, phone, `✅ Esta conta paga foi cadastrada com sucesso em Contas a Pagar!${newSupplierNote}`)
       }
 
       return new Response(JSON.stringify({ status: 'saved' }), {
