@@ -444,8 +444,10 @@ export default function Quotes() {
       } else if (!editingQuote && quoteId) {
         setEditingQuote({ ...payload, id: quoteId, created_at: new Date().toISOString() } as Quote);
       }
+      return true;
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
+      return false;
     }
   };
 
