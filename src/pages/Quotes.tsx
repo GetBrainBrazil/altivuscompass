@@ -542,14 +542,17 @@ export default function Quotes() {
     }
 
     const client = clients.find((c: any) => c.id === form.client_id);
-    const phone = client?.phone || "";
+    let phone = client?.phone || "";
     if (!phone) {
       toast({ title: "Cliente sem telefone cadastrado", description: "Cadastre o telefone do cliente antes de enviar via WhatsApp.", variant: "destructive" });
       return;
     }
+    // Ensure phone has country code (default to Brazil +55)
+    const cleanPhone = phone.replace(/\D/g, "");
+    const formattedPhone = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
     const quoteUrl = `${window.location.origin}/quote/${editingQuote?.id}`;
     const title = form.title || form.destination || "sua cotação";
-    setWhatsappPhone(phone);
+    setWhatsappPhone(formattedPhone);
     setWhatsappMessage(`Olá! Segue o link da ${title}:\n${quoteUrl}`);
     setWhatsappOpen(true);
   };
