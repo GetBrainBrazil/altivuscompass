@@ -45,6 +45,7 @@ Deno.serve(async (req) => {
 
     // Check for #pago command
     const isPagoCommand = isTextMsg && messageText.trim().toLowerCase() === '#pago'
+    const isCancelarCommand = isTextMsg && ['#cancelar', '#cancela', '#sair'].includes(messageText.trim().toLowerCase())
 
     // Find active session for this phone
     const { data: existingSession } = await supabase
