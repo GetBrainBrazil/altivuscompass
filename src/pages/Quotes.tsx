@@ -535,27 +535,18 @@ export default function Quotes() {
   };
 
   const openWhatsappDialog = async () => {
-    const savedQuoteId = await saveQuote(false);
-    if (!savedQuoteId) {
-      toast({ title: "Erro ao salvar cotação", description: "Não foi possível salvar antes de enviar.", variant: "destructive" });
-      return;
-    }
-
     const client = clients.find((c: any) => c.id === form.client_id);
     const phone = client?.phone || "";
-    if (!phone) {
-      toast({ title: "Cliente sem telefone cadastrado", description: "Cadastre o telefone do cliente antes de enviar via WhatsApp.", variant: "destructive" });
-      return;
-    }
-
     const cleanPhone = phone.replace(/\D/g, "");
-    const formattedPhone = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
-    const quoteUrl = `${window.location.origin}/quote/${savedQuoteId}`;
+    const formattedPhone = cleanPhone ? (cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`) : "";
+    const previewQuoteUrl = editingQuote?.id
+      ? `${window.location.origin}/quote/${editingQuote.id}`
+      : "[o link da cotação será gerado ao confirmar o envio]";
     const title = form.title || form.destination || "sua cotação";
 
-    setWhatsappQuoteId(savedQuoteId);
+    setWhatsappQuoteId(editingQuote?.id ?? null);
     setWhatsappPhone(formattedPhone);
-    setWhatsappMessage(`Olá! Segue o link da ${title}:\n${quoteUrl}`);
+    setWhatsappMessage(`Olá! Segue o link da ${title}:\n${previewQuoteUrl}`);
     setWhatsappOpen(true);
   };
 
