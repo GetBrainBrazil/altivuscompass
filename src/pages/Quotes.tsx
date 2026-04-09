@@ -319,7 +319,7 @@ export default function Quotes() {
     });
   };
 
-  const saveQuote = async (closeAfter: boolean) => {
+  const saveQuote = async (closeAfter: boolean): Promise<boolean> => {
     try {
       const stage = form.stage || "new";
       const conclusion_type = stage === "confirmed" ? (form.conclusion_type || "won") : null;
@@ -444,8 +444,10 @@ export default function Quotes() {
       } else if (!editingQuote && quoteId) {
         setEditingQuote({ ...payload, id: quoteId, created_at: new Date().toISOString() } as Quote);
       }
+      return true;
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
+      return false;
     }
   };
 
@@ -533,23 +535,24 @@ export default function Quotes() {
 
   const openWhatsappDialog = async () => {
     // Save the quote first before sending via WhatsApp
-    try {
-      await saveQuote(false);
-      toast({ title: "Cotação salva com sucesso!" });
-    } catch (err: any) {
+    const saved = await saveQuote(false);
+    if (!saved) {
       toast({ title: "Erro ao salvar cotação", description: "Não foi possível salvar antes de enviar.", variant: "destructive" });
       return;
     }
 
     const client = clients.find((c: any) => c.id === form.client_id);
-    const phone = client?.phone || "";
+    let phone = client?.phone || "";
     if (!phone) {
       toast({ title: "Cliente sem telefone cadastrado", description: "Cadastre o telefone do cliente antes de enviar via WhatsApp.", variant: "destructive" });
       return;
     }
+    // Ensure phone has country code (default to Brazil +55)
+    const cleanPhone = phone.replace(/\D/g, "");
+    const formattedPhone = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
     const quoteUrl = `${window.location.origin}/quote/${editingQuote?.id}`;
     const title = form.title || form.destination || "sua cotação";
-    setWhatsappPhone(phone);
+    setWhatsappPhone(formattedPhone);
     setWhatsappMessage(`Olá! Segue o link da ${title}:\n${quoteUrl}`);
     setWhatsappOpen(true);
   };
@@ -569,12 +572,14 @@ export default function Quotes() {
           quote_id: editingQuote?.id,
         },
       });
+      console.log("WhatsApp response:", { data, error });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast({ title: "✅ Mensagem enviada!", description: `WhatsApp enviado com sucesso para ${whatsappPhone}.` });
       setWhatsappOpen(false);
       queryClient.invalidateQueries({ queryKey: ["quote-history"] });
     } catch (err: any) {
+      console.error("WhatsApp send error:", err);
       toast({ title: "❌ Falha ao enviar WhatsApp", description: err.message || "Verifique o número e tente novamente.", variant: "destructive" });
     } finally {
       setSendingWhatsapp(false);
