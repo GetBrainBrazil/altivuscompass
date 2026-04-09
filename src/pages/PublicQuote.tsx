@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Printer, Globe, Loader2, Backpack, Briefcase, Luggage } from "lucide-react";
+import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Printer, Globe, Loader2, Backpack, Briefcase, Luggage, Plus, Minus } from "lucide-react";
 import logoAltivusFallback from "@/assets/logo-altivus.png";
 import { type QuoteLang, LANG_OPTIONS, getTranslations, getItemTypeLabel, getRelationshipLabel, getFlagUrl, getCabinClassLabel, getConnectionsLabel, getFlightDirectionLabel } from "@/lib/quote-translations";
 
@@ -38,26 +38,43 @@ export default function PublicQuote() {
   const [translatedContent, setTranslatedContent] = useState<Record<string, string>>({});
   const [translatedItems, setTranslatedItems] = useState<Record<number, { title?: string; description?: string }>>({});
   const translationCache = useRef<Record<string, { content: Record<string, string>; items: Record<number, { title?: string; description?: string }> }>>({});
+  const [fontScale, setFontScale] = useState(0); // -1, 0, +1, +2
 
   const t = getTranslations(lang);
 
-  // Force light mode on this page
+  // Force light mode on this page — override browser dark mode
   useEffect(() => {
     const html = document.documentElement;
     html.classList.remove("dark");
     html.style.colorScheme = "light";
-    // Set meta theme-color for mobile browser chrome
-    let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
-    if (!meta) {
-      meta = document.createElement("meta");
-      meta.name = "theme-color";
-      document.head.appendChild(meta);
+
+    // Meta color-scheme to tell the browser to render form controls in light mode
+    let metaCS = document.querySelector('meta[name="color-scheme"]') as HTMLMetaElement | null;
+    if (!metaCS) {
+      metaCS = document.createElement("meta");
+      metaCS.name = "color-scheme";
+      document.head.appendChild(metaCS);
     }
-    meta.content = "#f9fafb";
+    metaCS.content = "light only";
+
+    // Meta theme-color for mobile browser chrome bar
+    let metaTC = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
+    if (!metaTC) {
+      metaTC = document.createElement("meta");
+      metaTC.name = "theme-color";
+      document.head.appendChild(metaTC);
+    }
+    metaTC.content = "#ffffff";
+
+    // Force background on body to prevent flash of dark
+    const prevBg = document.body.style.backgroundColor;
+    document.body.style.backgroundColor = "#f9fafb";
 
     return () => {
       html.style.colorScheme = "";
-      if (meta) meta.remove();
+      if (metaCS) metaCS.remove();
+      if (metaTC) metaTC.remove();
+      document.body.style.backgroundColor = prevBg;
     };
   }, []);
 
@@ -217,8 +234,11 @@ export default function PublicQuote() {
   const agencyName = agency?.name || "Altivus Turismo";
   const selectedLang = LANG_OPTIONS.find(l => l.value === lang);
 
+  // Font scale: each step = 2px on base 16px
+  const fontSizePx = 16 + fontScale * 2;
+
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900" style={{ colorScheme: "light" }} data-theme="light">
+    <div className="min-h-screen bg-gray-50 text-gray-900" style={{ colorScheme: "light", fontSize: `${fontSizePx}px` }} data-theme="light">
       {/* Top toolbar - hidden on print */}
       <div className="print:hidden">
         <div className="max-w-5xl mx-auto px-3 sm:px-6 py-2 flex items-center gap-1.5 sm:gap-2 flex-wrap border-b border-gray-200 bg-white">
@@ -234,6 +254,29 @@ export default function PublicQuote() {
             <span className="hidden sm:inline">{t.printPdf}</span>
             <span className="sm:hidden">PDF</span>
           </Button>
+
+          {/* Font size controls - mobile only */}
+          <div className="flex items-center gap-0.5 sm:hidden">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0 font-body"
+              onClick={() => setFontScale(s => Math.max(-1, s - 1))}
+              disabled={fontScale <= -1}
+            >
+              <Minus className="w-3.5 h-3.5" />
+            </Button>
+            <span className="text-[10px] font-body text-gray-500 w-5 text-center">A</span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0 font-body"
+              onClick={() => setFontScale(s => Math.min(2, s + 1))}
+              disabled={fontScale >= 2}
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </Button>
+          </div>
 
           {translating && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-body ml-1">
