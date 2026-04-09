@@ -396,15 +396,15 @@ export default function PublicQuote() {
                                 {dirLabel && (
                                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-body bg-gray-100 text-gray-700 flex-shrink-0">{dirLabel}</span>
                                 )}
-                                <div className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-gray-900 font-body">
+                                <div className="flex items-center gap-1.5 text-sm font-bold text-gray-900 font-body">
                                   {d.origin && <span>{d.origin}</span>}
-                                  {d.origin && d.destination && <Plane className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-gray-400 flex-shrink-0" />}
+                                  {d.origin && d.destination && <Plane className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />}
                                   {d.destination && <span>{d.destination}</span>}
                                 </div>
                               </div>
                               {d.airline && (
                                 <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2 sm:gap-1.5">
-                                  <span className="text-[10px] sm:text-xs text-gray-500 font-body">
+                                  <span className="text-xs text-gray-500 font-body">
                                     {d.airline}{d.flight_number ? ` (${d.flight_number})` : ""}
                                   </span>
                                   <div className="flex items-center gap-1">
@@ -433,7 +433,7 @@ export default function PublicQuote() {
                               {d.departure_date && (
                                 <div className="space-y-0.5">
                                   <p className="text-[11px] sm:text-[10px] text-gray-400 uppercase tracking-wide">{t.departure}</p>
-                                  <p className="text-gray-900 font-medium text-[11px] sm:text-xs">
+                                  <p className="text-gray-900 font-bold text-xs">
                                     {formatDate(d.departure_date)}{d.departure_time ? ` · ${d.departure_time}` : ""}
                                   </p>
                                 </div>
@@ -441,7 +441,7 @@ export default function PublicQuote() {
                               {d.arrival_date && (
                                 <div className="space-y-0.5">
                                   <p className="text-[11px] sm:text-[10px] text-gray-400 uppercase tracking-wide">{t.arrival}</p>
-                                  <p className="text-gray-900 font-medium text-[11px] sm:text-xs">
+                                  <p className="text-gray-900 font-bold text-xs">
                                     {formatDate(d.arrival_date)}{d.arrival_time ? ` · ${d.arrival_time}` : ""}
                                   </p>
                                 </div>
