@@ -48,6 +48,17 @@ export default function PublicQuote() {
     const body = document.body;
     const root = document.getElementById("root");
     const hadDarkClass = html.classList.contains("dark");
+    const previousHtmlColorScheme = html.style.colorScheme;
+    const previousHtmlBackground = html.style.backgroundColor;
+    const previousHtmlForcedColorAdjust = html.style.getPropertyValue("forced-color-adjust");
+    const previousBodyBackground = body.style.backgroundColor;
+    const previousBodyBackgroundImage = body.style.backgroundImage;
+    const previousBodyColor = body.style.color;
+    const previousBodyForcedColorAdjust = body.style.getPropertyValue("forced-color-adjust");
+    const previousRootBackground = root?.style.backgroundColor ?? "";
+    const previousRootBackgroundImage = root?.style.backgroundImage ?? "";
+    const previousRootColor = root?.style.color ?? "";
+    const previousRootForcedColorAdjust = root?.style.getPropertyValue("forced-color-adjust") ?? "";
 
     const ensureMeta = (name: string, content: string) => {
       let meta = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
@@ -69,7 +80,7 @@ export default function PublicQuote() {
       };
     };
 
-    const restoreColorScheme = ensureMeta("color-scheme", "only light");
+    const restoreColorScheme = ensureMeta("color-scheme", "light");
     const restoreSupportedSchemes = ensureMeta("supported-color-schemes", "light");
     const restoreThemeColor = ensureMeta("theme-color", "#ffffff");
 
@@ -77,31 +88,46 @@ export default function PublicQuote() {
     html.classList.add("public-quote-light-root");
     body.classList.add("public-quote-light-body");
     root?.classList.add("public-quote-light-app");
+    html.style.colorScheme = "only light";
+    html.style.backgroundColor = "#ffffff";
+    html.style.setProperty("forced-color-adjust", "none");
+    body.style.backgroundColor = "#ffffff";
+    body.style.backgroundImage = "none";
+    body.style.color = "#111827";
+    body.style.setProperty("forced-color-adjust", "none");
+    if (root) {
+      root.style.backgroundColor = "#ffffff";
+      root.style.backgroundImage = "none";
+      root.style.color = "#111827";
+      root.style.setProperty("forced-color-adjust", "none");
+    }
 
     return () => {
       html.classList.remove("public-quote-light-root");
       body.classList.remove("public-quote-light-body");
       root?.classList.remove("public-quote-light-app");
       if (hadDarkClass) html.classList.add("dark");
+      html.style.colorScheme = previousHtmlColorScheme;
+      html.style.backgroundColor = previousHtmlBackground;
+      if (previousHtmlForcedColorAdjust) html.style.setProperty("forced-color-adjust", previousHtmlForcedColorAdjust);
+      else html.style.removeProperty("forced-color-adjust");
+      body.style.backgroundColor = previousBodyBackground;
+      body.style.backgroundImage = previousBodyBackgroundImage;
+      body.style.color = previousBodyColor;
+      if (previousBodyForcedColorAdjust) body.style.setProperty("forced-color-adjust", previousBodyForcedColorAdjust);
+      else body.style.removeProperty("forced-color-adjust");
+      if (root) {
+        root.style.backgroundColor = previousRootBackground;
+        root.style.backgroundImage = previousRootBackgroundImage;
+        root.style.color = previousRootColor;
+        if (previousRootForcedColorAdjust) root.style.setProperty("forced-color-adjust", previousRootForcedColorAdjust);
+        else root.style.removeProperty("forced-color-adjust");
+      }
       restoreColorScheme();
       restoreSupportedSchemes();
       restoreThemeColor();
     };
   }, []);
-
-  useEffect(() => {
-    const html = document.documentElement;
-    const previousFontSize = html.style.fontSize;
-    const isMobile = window.matchMedia("(max-width: 639px)").matches;
-
-    if (isMobile) {
-      html.style.fontSize = `${16 + fontScale * 2}px`;
-    }
-
-    return () => {
-      html.style.fontSize = previousFontSize;
-    };
-  }, [fontScale]);
 
   useEffect(() => {
     if (!id) return;
@@ -260,19 +286,19 @@ export default function PublicQuote() {
   const selectedLang = LANG_OPTIONS.find(l => l.value === lang);
 
   return (
-    <div className="public-quote min-h-screen bg-gray-50 text-gray-900" data-theme="light" style={{ ["--pq-font-step" as string]: fontScale }}>
+    <div className="public-quote public-quote-shell min-h-screen bg-white text-gray-900" data-theme="light" style={{ ["--pq-font-step" as string]: fontScale }}>
       {/* Top toolbar - hidden on print */}
-      <div className="print:hidden">
-        <div className="max-w-5xl mx-auto px-2 sm:px-6 py-2 flex items-center justify-between gap-2 sm:gap-3 border-b border-gray-200 bg-white">
-          <div className="flex min-w-0 items-center gap-1 sm:gap-2">
+      <div className="public-quote-toolbar print:hidden">
+        <div className="max-w-5xl mx-auto px-2 sm:px-6 py-2 flex flex-nowrap items-center justify-between gap-2 sm:gap-3 border-b border-gray-200 bg-white">
+          <div className="flex min-w-0 flex-nowrap items-center gap-1 sm:gap-2">
             {quote.client_phone && (
-              <Button variant="outline" size="sm" className="gap-1 font-body pq-fs-2xs sm:text-xs h-8 px-2 sm:px-3" onClick={handleWhatsApp}>
+              <Button variant="outline" size="sm" className="public-quote-control-button gap-1 font-body h-8 px-2 sm:px-3" onClick={handleWhatsApp}>
                 <Phone className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">{t.sendWhatsApp}</span>
                 <span className="sm:hidden">WhatsApp</span>
               </Button>
             )}
-            <Button variant="outline" size="sm" className="gap-1 font-body pq-fs-2xs sm:text-xs h-8 px-2 sm:px-3" onClick={() => window.print()}>
+            <Button variant="outline" size="sm" className="public-quote-control-button gap-1 font-body h-8 px-2 sm:px-3" onClick={() => window.print()}>
               <Printer className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{t.printPdf}</span>
               <span className="sm:hidden">PDF</span>
@@ -282,17 +308,17 @@ export default function PublicQuote() {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 w-8 p-0 font-body"
+                className="public-quote-control-button h-8 w-8 p-0 font-body"
                 onClick={() => setFontScale(s => Math.max(-1, s - 1))}
                 disabled={fontScale <= -1}
               >
                 <Minus className="w-3.5 h-3.5" />
               </Button>
-              <span className="pq-fs-3xs font-body text-gray-500 w-4 text-center">A</span>
+              <span className="public-quote-control-label font-body text-gray-500 w-4 text-center shrink-0">A</span>
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 w-8 p-0 font-body"
+                className="public-quote-control-button h-8 w-8 p-0 font-body"
                 onClick={() => setFontScale(s => Math.min(2, s + 1))}
                 disabled={fontScale >= 2}
               >
@@ -301,7 +327,7 @@ export default function PublicQuote() {
             </div>
 
             {translating && (
-              <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground font-body ml-1">
+              <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground font-body ml-1 shrink-0">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 <span>Traduzindo...</span>
               </div>
@@ -310,7 +336,7 @@ export default function PublicQuote() {
 
           <div className="shrink-0">
             <Select value={lang} onValueChange={(v) => handleLangChange(v as QuoteLang)}>
-              <SelectTrigger className="h-8 w-[112px] sm:w-[160px] pq-fs-2xs sm:text-xs font-body px-2 sm:px-3">
+              <SelectTrigger className="public-quote-control-button h-8 w-[112px] sm:w-[160px] font-body px-2 sm:px-3">
                 <SelectValue>
                   {selectedLang && (
                     <span className="flex items-center gap-1.5">
