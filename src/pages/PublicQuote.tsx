@@ -334,7 +334,7 @@ export default function PublicQuote() {
         {getContent("details") && (
           <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 sm:p-5 space-y-1">
             <h2 className="text-sm font-semibold text-gray-900 font-body">{t.details}</h2>
-            <p className="text-xs sm:text-sm text-gray-500 font-body whitespace-pre-line">{getContent("details")}</p>
+            <p className="text-sm sm:text-sm text-gray-500 font-body whitespace-pre-line leading-relaxed">{getContent("details")}</p>
           </div>
         )}
 
@@ -348,10 +348,10 @@ export default function PublicQuote() {
               <h2 className="text-sm font-semibold text-gray-900 font-body">{t.travelers}</h2>
               <div className="flex flex-wrap gap-2">
                 {clientIsTraveling && quote.client_name && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-body bg-gray-100 text-gray-700">{quote.client_name}</span>
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm sm:text-xs font-body bg-gray-100 text-gray-700">{quote.client_name}</span>
                 )}
                 {passengers.map((p, i) => (
-                  <span key={i} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-body bg-gray-100 text-gray-700">
+                  <span key={i} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm sm:text-xs font-body bg-gray-100 text-gray-700">
                     {p.full_name}
                     {p.relationship_type && (
                       <span className="ml-1 opacity-60">({getRelationshipLabel(lang, p.relationship_type)})</span>
@@ -396,15 +396,15 @@ export default function PublicQuote() {
                                 {dirLabel && (
                                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-body bg-gray-100 text-gray-700 flex-shrink-0">{dirLabel}</span>
                                 )}
-                                <div className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-gray-900 font-body">
+                                <div className="flex items-center gap-1.5 text-sm font-bold text-gray-900 font-body">
                                   {d.origin && <span>{d.origin}</span>}
-                                  {d.origin && d.destination && <Plane className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-gray-400 flex-shrink-0" />}
+                                  {d.origin && d.destination && <Plane className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />}
                                   {d.destination && <span>{d.destination}</span>}
                                 </div>
                               </div>
                               {d.airline && (
                                 <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2 sm:gap-1.5">
-                                  <span className="text-[10px] sm:text-xs text-gray-500 font-body">
+                                  <span className="text-xs text-gray-500 font-body">
                                     {d.airline}{d.flight_number ? ` (${d.flight_number})` : ""}
                                   </span>
                                   <div className="flex items-center gap-1">
@@ -432,16 +432,16 @@ export default function PublicQuote() {
                             <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs font-body sm:pl-6">
                               {d.departure_date && (
                                 <div className="space-y-0.5">
-                                  <p className="text-[10px] text-gray-400 uppercase tracking-wide">{t.departure}</p>
-                                  <p className="text-gray-900 font-medium text-[11px] sm:text-xs">
+                                  <p className="text-[11px] sm:text-[10px] text-gray-400 uppercase tracking-wide">{t.departure}</p>
+                                  <p className="text-gray-900 font-bold text-xs">
                                     {formatDate(d.departure_date)}{d.departure_time ? ` · ${d.departure_time}` : ""}
                                   </p>
                                 </div>
                               )}
                               {d.arrival_date && (
                                 <div className="space-y-0.5">
-                                  <p className="text-[10px] text-gray-400 uppercase tracking-wide">{t.arrival}</p>
-                                  <p className="text-gray-900 font-medium text-[11px] sm:text-xs">
+                                  <p className="text-[11px] sm:text-[10px] text-gray-400 uppercase tracking-wide">{t.arrival}</p>
+                                  <p className="text-gray-900 font-bold text-xs">
                                     {formatDate(d.arrival_date)}{d.arrival_time ? ` · ${d.arrival_time}` : ""}
                                   </p>
                                 </div>
@@ -493,7 +493,7 @@ export default function PublicQuote() {
         {getContent("payment_terms") && (
           <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 sm:p-5 space-y-1">
             <h2 className="text-sm font-semibold text-gray-900 font-body">{t.paymentTerms}</h2>
-            <p className="text-xs sm:text-sm text-gray-500 font-body whitespace-pre-line">{getContent("payment_terms")}</p>
+            <p className="text-sm sm:text-sm text-gray-500 font-body whitespace-pre-line leading-relaxed">{getContent("payment_terms")}</p>
           </div>
         )}
 
@@ -501,7 +501,7 @@ export default function PublicQuote() {
         {getContent("terms_conditions") && (
           <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 sm:p-5 space-y-1">
             <h2 className="text-sm font-semibold text-gray-900 font-body">{t.termsConditions}</h2>
-            <p className="text-xs sm:text-sm text-gray-500 font-body whitespace-pre-line">{getContent("terms_conditions")}</p>
+            <p className="text-sm sm:text-sm text-gray-500 font-body whitespace-pre-line leading-relaxed">{getContent("terms_conditions")}</p>
           </div>
         )}
 
@@ -509,7 +509,7 @@ export default function PublicQuote() {
         {getContent("other_info") && (
           <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 sm:p-5 space-y-1">
             <h2 className="text-sm font-semibold text-gray-900 font-body">{t.otherInfo}</h2>
-            <p className="text-xs sm:text-sm text-gray-500 font-body whitespace-pre-line">{getContent("other_info")}</p>
+            <p className="text-sm sm:text-sm text-gray-500 font-body whitespace-pre-line leading-relaxed">{getContent("other_info")}</p>
           </div>
         )}
       </main>
