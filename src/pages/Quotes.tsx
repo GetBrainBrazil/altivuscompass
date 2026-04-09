@@ -572,12 +572,14 @@ export default function Quotes() {
           quote_id: editingQuote?.id,
         },
       });
+      console.log("WhatsApp response:", { data, error });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast({ title: "✅ Mensagem enviada!", description: `WhatsApp enviado com sucesso para ${whatsappPhone}.` });
       setWhatsappOpen(false);
       queryClient.invalidateQueries({ queryKey: ["quote-history"] });
     } catch (err: any) {
+      console.error("WhatsApp send error:", err);
       toast({ title: "❌ Falha ao enviar WhatsApp", description: err.message || "Verifique o número e tente novamente.", variant: "destructive" });
     } finally {
       setSendingWhatsapp(false);
