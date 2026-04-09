@@ -1480,6 +1480,68 @@ export default function Quotes() {
         </div>
       </div>
 
+      {/* WhatsApp Dialog */}
+      <WhatsAppDialog open={whatsappOpen} onOpenChange={setWhatsappOpen}>
+        <WhatsAppDialogContent className="max-w-md">
+          <WhatsAppDialogHeader>
+            <WhatsAppDialogTitle className="font-body flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-primary" /> Prévia do WhatsApp
+            </WhatsAppDialogTitle>
+          </WhatsAppDialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1">
+              <Label className="font-body text-xs">Telefone do cliente</Label>
+              <Input
+                placeholder="5511999999999"
+                value={whatsappPhone}
+                onChange={(e) => setWhatsappPhone(e.target.value)}
+                className="font-body"
+              />
+              <p className="text-[10px] text-muted-foreground">Revise o número antes do envio.</p>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-muted/30 p-3">
+              <div className="mb-3 flex items-center gap-2 border-b border-border pb-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <MessageCircle className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium font-body text-foreground">Cliente</p>
+                  <p className="text-[11px] font-body text-muted-foreground">Prévia da mensagem que será enviada</p>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <div className="max-w-[85%] rounded-2xl rounded-br-md bg-primary px-3 py-2 text-primary-foreground shadow-sm">
+                  <p className="whitespace-pre-line break-words text-sm font-body">{whatsappMessage}</p>
+                  <p className="mt-1 text-right text-[10px] text-primary-foreground/80">agora</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <Label className="font-body text-xs">Mensagem</Label>
+              <Textarea
+                value={whatsappMessage}
+                onChange={(e) => setWhatsappMessage(e.target.value)}
+                rows={5}
+                className="font-body text-sm"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setWhatsappOpen(false)} className="font-body">
+                Cancelar
+              </Button>
+              <Button size="sm" onClick={handleSendWhatsapp} disabled={sendingWhatsapp} className="font-body gap-1.5">
+                {sendingWhatsapp ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageCircle className="w-3.5 h-3.5" />}
+                {sendingWhatsapp ? "Enviando..." : "Confirmar envio"}
+              </Button>
+            </div>
+          </div>
+        </WhatsAppDialogContent>
+      </WhatsAppDialog>
+
       {/* Cover image zoom overlay */}
       {coverZoom && coverPreview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setCoverZoom(false)}>
