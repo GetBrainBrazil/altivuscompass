@@ -1041,49 +1041,91 @@ export type Database = {
       }
       itineraries: {
         Row: {
+          ai_status: string | null
+          arrival_airport: string | null
+          arrival_datetime: string | null
           base_file: string | null
           client_id: string | null
           created_at: string
           created_by: string | null
+          defined_hotels: string[] | null
+          departure_airport: string | null
+          departure_datetime: string | null
+          desired_places: string[] | null
           destination: string | null
           id: string
           main_bases: string | null
           notes: string | null
+          preferred_hotels: string[] | null
+          public_editable: boolean
+          public_token: string | null
+          sleep_time: string | null
           title: string
           travel_date_end: string | null
           travel_date_start: string | null
           traveler_profile: string | null
+          traveler_type: string | null
+          trip_style: string | null
           updated_at: string
+          wake_time: string | null
         }
         Insert: {
+          ai_status?: string | null
+          arrival_airport?: string | null
+          arrival_datetime?: string | null
           base_file?: string | null
           client_id?: string | null
           created_at?: string
           created_by?: string | null
+          defined_hotels?: string[] | null
+          departure_airport?: string | null
+          departure_datetime?: string | null
+          desired_places?: string[] | null
           destination?: string | null
           id?: string
           main_bases?: string | null
           notes?: string | null
+          preferred_hotels?: string[] | null
+          public_editable?: boolean
+          public_token?: string | null
+          sleep_time?: string | null
           title: string
           travel_date_end?: string | null
           travel_date_start?: string | null
           traveler_profile?: string | null
+          traveler_type?: string | null
+          trip_style?: string | null
           updated_at?: string
+          wake_time?: string | null
         }
         Update: {
+          ai_status?: string | null
+          arrival_airport?: string | null
+          arrival_datetime?: string | null
           base_file?: string | null
           client_id?: string | null
           created_at?: string
           created_by?: string | null
+          defined_hotels?: string[] | null
+          departure_airport?: string | null
+          departure_datetime?: string | null
+          desired_places?: string[] | null
           destination?: string | null
           id?: string
           main_bases?: string | null
           notes?: string | null
+          preferred_hotels?: string[] | null
+          public_editable?: boolean
+          public_token?: string | null
+          sleep_time?: string | null
           title?: string
           travel_date_end?: string | null
           travel_date_start?: string | null
           traveler_profile?: string | null
+          traveler_type?: string | null
+          trip_style?: string | null
           updated_at?: string
+          wake_time?: string | null
         }
         Relationships: [
           {
@@ -1135,6 +1177,86 @@ export type Database = {
             columns: ["itinerary_id"]
             isOneToOne: false
             referencedRelation: "itineraries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      itinerary_day_activities: {
+        Row: {
+          activity_name: string
+          activity_type: string | null
+          address: string | null
+          created_at: string
+          description: string | null
+          end_time: string | null
+          id: string
+          is_ai_suggested: boolean
+          itinerary_day_id: string
+          latitude: number | null
+          longitude: number | null
+          notes: string | null
+          sort_order: number
+          start_time: string | null
+          transport_arrival_time: string | null
+          transport_cost_estimate: number | null
+          transport_currency: string | null
+          transport_departure_time: string | null
+          transport_duration_min: number | null
+          transport_mode: string | null
+          transport_notes: string | null
+        }
+        Insert: {
+          activity_name: string
+          activity_type?: string | null
+          address?: string | null
+          created_at?: string
+          description?: string | null
+          end_time?: string | null
+          id?: string
+          is_ai_suggested?: boolean
+          itinerary_day_id: string
+          latitude?: number | null
+          longitude?: number | null
+          notes?: string | null
+          sort_order?: number
+          start_time?: string | null
+          transport_arrival_time?: string | null
+          transport_cost_estimate?: number | null
+          transport_currency?: string | null
+          transport_departure_time?: string | null
+          transport_duration_min?: number | null
+          transport_mode?: string | null
+          transport_notes?: string | null
+        }
+        Update: {
+          activity_name?: string
+          activity_type?: string | null
+          address?: string | null
+          created_at?: string
+          description?: string | null
+          end_time?: string | null
+          id?: string
+          is_ai_suggested?: boolean
+          itinerary_day_id?: string
+          latitude?: number | null
+          longitude?: number | null
+          notes?: string | null
+          sort_order?: number
+          start_time?: string | null
+          transport_arrival_time?: string | null
+          transport_cost_estimate?: number | null
+          transport_currency?: string | null
+          transport_departure_time?: string | null
+          transport_duration_min?: number | null
+          transport_mode?: string | null
+          transport_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itinerary_day_activities_itinerary_day_id_fkey"
+            columns: ["itinerary_day_id"]
+            isOneToOne: false
+            referencedRelation: "itinerary_days"
             referencedColumns: ["id"]
           },
         ]
