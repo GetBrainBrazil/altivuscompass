@@ -234,7 +234,10 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
 
                   {/* Thumbnail */}
                   {PHOTO_TYPES.includes(act.activity_type) && activityPhotos[act.activity_name] && (
-                    <div className="w-14 h-14 rounded-md overflow-hidden flex-shrink-0 bg-muted">
+                    <div
+                      className="w-14 h-14 rounded-md overflow-hidden flex-shrink-0 bg-muted cursor-zoom-in"
+                      onClick={(e) => { e.stopPropagation(); setLightboxUrl(activityPhotos[act.activity_name]); }}
+                    >
                       <img src={activityPhotos[act.activity_name]} alt="" className="w-full h-full object-cover" />
                     </div>
                   )}
