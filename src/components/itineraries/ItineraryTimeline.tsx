@@ -332,6 +332,16 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
           onOpenChange={(open) => { if (!open) setEditingActivity(null); }}
         />
       )}
+
+      {/* Photo lightbox */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 cursor-zoom-out"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <img src={lightboxUrl.replace('maxwidth=120', 'maxwidth=800').replace('maxHeight=90', 'maxHeight=600')} alt="" className="max-w-[90vw] max-h-[85vh] rounded-lg shadow-2xl object-contain" />
+        </div>
+      )}
     </div>
   );
 }
