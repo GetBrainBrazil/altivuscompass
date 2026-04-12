@@ -732,9 +732,11 @@ export default function Quotes() {
                 {[
                   form.title,
                   clients.find((c: any) => c.id === form.client_id)?.full_name,
-                  form.travel_date_start
-                    ? `${format(parseISO(form.travel_date_start), "dd/MM/yyyy")}${form.travel_date_end ? ` a ${format(parseISO(form.travel_date_end), "dd/MM/yyyy")}` : ""}`
-                    : null,
+                  form.flexible_dates
+                    ? (form.flexible_dates_description || null)
+                    : form.travel_date_start
+                      ? `${format(parseISO(form.travel_date_start), "dd/MM/yyyy")}${form.travel_date_end ? ` a ${format(parseISO(form.travel_date_end), "dd/MM/yyyy")}` : ""}`
+                      : null,
                 ].filter(Boolean).join(" — ")}
               </p>
             )}
