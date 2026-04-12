@@ -26,9 +26,10 @@ interface Props {
   itineraryId: string;
   aiStatus: string | null;
   onStatusChange: (status: string) => void;
+  onBeforeGenerate?: () => Promise<void>;
 }
 
-export default function ItineraryAIPanel({ itineraryId, aiStatus, onStatusChange }: Props) {
+export default function ItineraryAIPanel({ itineraryId, aiStatus, onStatusChange, onBeforeGenerate }: Props) {
   const queryClient = useQueryClient();
   const [chatMessage, setChatMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -74,8 +75,11 @@ export default function ItineraryAIPanel({ itineraryId, aiStatus, onStatusChange
 
   const generate = async (mode: "full" | "chat", message?: string) => {
     setLoading(true);
-    onStatusChange("generating");
     try {
+      if (onBeforeGenerate) {
+        await onBeforeGenerate();
+      }
+      onStatusChange("generating");
       const { data, error } = await supabase.functions.invoke("generate-itinerary", {
         body: { itinerary_id: itineraryId, mode, chat_message: message, custom_prompt: currentPrompt },
       });
