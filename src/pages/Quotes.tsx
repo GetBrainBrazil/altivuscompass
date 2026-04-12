@@ -723,9 +723,22 @@ export default function Quotes() {
           <Button variant="ghost" size="icon" onClick={closeDialog} className="shrink-0 h-8 w-8">
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <h1 className="text-xl font-display font-semibold text-foreground">
-            {editingQuote ? "Editar Cotação" : "Nova Cotação"}
-          </h1>
+          <div>
+            <h1 className="text-xl font-display font-semibold text-foreground">
+              {editingQuote ? "Editar Cotação" : "Nova Cotação"}
+            </h1>
+            {editingQuote && (
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {[
+                  form.title,
+                  clients.find((c: any) => c.id === form.client_id)?.full_name,
+                  form.travel_date_start
+                    ? `${format(parseISO(form.travel_date_start), "dd/MM/yyyy")}${form.travel_date_end ? ` a ${format(parseISO(form.travel_date_end), "dd/MM/yyyy")}` : ""}`
+                    : null,
+                ].filter(Boolean).join(" — ")}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Stage stepper */}
