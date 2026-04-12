@@ -45,12 +45,23 @@ export default function ItineraryFormHeader({ form, setForm, quotes }: Props) {
   const [quoteOpen, setQuoteOpen] = useState(false);
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-2">
-      <div className="col-span-2">
+    <div className="grid grid-cols-3 gap-x-3 gap-y-2">
+      {/* Linha 1 */}
+      <div>
         <Label className="text-xs">Título *</Label>
         <Input className="h-8 text-sm" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex: Roteiro França 2026" />
       </div>
-      <div className="col-span-2">
+      <div>
+        <Label className="text-xs">Aeroporto Chegada</Label>
+        <Input className="h-8 text-sm" value={form.arrival_airport} onChange={(e) => setForm({ ...form, arrival_airport: e.target.value })} placeholder="Ex: CDG" />
+      </div>
+      <div>
+        <Label className="text-xs">Data/Hora Chegada</Label>
+        <Input className="h-8 text-sm" type="datetime-local" value={form.arrival_datetime} onChange={(e) => setForm({ ...form, arrival_datetime: e.target.value })} />
+      </div>
+
+      {/* Linha 2 */}
+      <div>
         <Label className="text-xs">Cotação</Label>
         <Popover open={quoteOpen} onOpenChange={setQuoteOpen}>
           <PopoverTrigger asChild>
@@ -82,30 +93,16 @@ export default function ItineraryFormHeader({ form, setForm, quotes }: Props) {
         </Popover>
       </div>
       <div>
-        <Label className="text-xs">Aeroporto Destino</Label>
-        <Input className="h-8 text-sm" value={form.arrival_airport} onChange={(e) => setForm({ ...form, arrival_airport: e.target.value })} placeholder="Ex: CDG" />
-      </div>
-      <div>
-        <Label className="text-xs">Chegada no Destino</Label>
-        <Input className="h-8 text-sm" type="datetime-local" value={form.arrival_datetime} onChange={(e) => setForm({ ...form, arrival_datetime: e.target.value })} />
-      </div>
-      <div>
         <Label className="text-xs">Aeroporto Saída</Label>
         <Input className="h-8 text-sm" value={form.departure_airport} onChange={(e) => setForm({ ...form, departure_airport: e.target.value })} placeholder="Ex: NCE" />
       </div>
       <div>
-        <Label className="text-xs">Saída do Destino</Label>
+        <Label className="text-xs">Data/Hora Saída</Label>
         <Input className="h-8 text-sm" type="datetime-local" value={form.departure_datetime} onChange={(e) => setForm({ ...form, departure_datetime: e.target.value })} />
       </div>
-      <div>
-        <Label className="text-xs">Acordar</Label>
-        <Input className="h-8 text-sm" type="time" value={form.wake_time} onChange={(e) => setForm({ ...form, wake_time: e.target.value })} />
-      </div>
-      <div>
-        <Label className="text-xs">Dormir</Label>
-        <Input className="h-8 text-sm" type="time" value={form.sleep_time} onChange={(e) => setForm({ ...form, sleep_time: e.target.value })} />
-      </div>
-      <div className="col-span-2 lg:col-span-4">
+
+      {/* Descritivo */}
+      <div className="col-span-3">
         <Label className="text-xs">Descritivo da Viagem</Label>
         <Textarea
           className="text-sm"
