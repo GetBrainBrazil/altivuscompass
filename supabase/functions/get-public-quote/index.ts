@@ -129,6 +129,14 @@ Deno.serve(async (req) => {
       .limit(1)
       .single();
 
+    // Fetch linked itinerary with public token
+    const { data: itinerary } = await supabase
+      .from("itineraries")
+      .select("id, title, public_token")
+      .eq("quote_id", quoteId)
+      .limit(1)
+      .single();
+
     // Merge passengers and linked clients
     const allPassengers = [
       ...(quotePassengers ?? []).map((qp: any) => ({
@@ -149,6 +157,7 @@ Deno.serve(async (req) => {
         items: items ?? [],
         passengers: allPassengers,
         agency: agency ?? null,
+        itinerary: itinerary?.public_token ? { title: itinerary.title, public_token: itinerary.public_token } : null,
       }),
       {
         status: 200,

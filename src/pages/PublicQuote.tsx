@@ -23,6 +23,7 @@ type QuoteData = {
   items: any[];
   passengers: { full_name: string; relationship_type: string | null }[];
   agency: AgencyData | null;
+  itinerary: { title: string; public_token: string } | null;
 };
 
 // Keys of translatable content fields
@@ -312,7 +313,7 @@ export default function PublicQuote() {
     );
   }
 
-  const { quote, items, passengers, agency } = data;
+  const { quote, items, passengers, agency, itinerary } = data;
   const formatCurrency = (v: number | null) =>
     v != null ? v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—";
 
@@ -355,6 +356,13 @@ export default function PublicQuote() {
               <span className="hidden sm:inline">{t.printPdf}</span>
               <span className="sm:hidden">PDF</span>
             </Button>
+            {itinerary && (
+              <Button variant="outline" size="sm" className="public-quote-control-button gap-1 font-body h-8 px-2 sm:px-3" onClick={() => window.open(`/roteiro/${itinerary.public_token}`, '_blank')}>
+                <Map className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Ver Roteiro</span>
+                <span className="sm:hidden">Roteiro</span>
+              </Button>
+            )}
 
             <div className="flex items-center gap-0.5 sm:hidden shrink-0">
               <Button
