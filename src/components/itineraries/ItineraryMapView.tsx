@@ -266,7 +266,10 @@ export default function ItineraryMapView({ itineraryId, selectedDayId, selectedA
       infoWindow.open(mapInstanceRef.current, marker);
       marker.setAnimation(window.google.maps.Animation.BOUNCE);
       setTimeout(() => marker.setAnimation(null), 1400);
-      mapInstanceRef.current.panTo(marker.getPosition());
+      const pos = marker.getPosition();
+      if (pos && typeof pos.lat === "function") {
+        mapInstanceRef.current.panTo({ lat: pos.lat(), lng: pos.lng() });
+      }
     }
   }, [selectedActivityId, mapReady]);
 
