@@ -138,14 +138,19 @@ export default function ItineraryMapView({ itineraryId, selectedDayId, selectedA
             ${act.transport_cost_estimate ? ` · ${act.transport_currency || "BRL"} ${Number(act.transport_cost_estimate).toFixed(2)}` : ""}
           </div>` : "";
 
+      const num = i + 1;
       const infoWindow = new window.google.maps.InfoWindow({
-        content: `<div style="max-width:250px">
-          <strong>${emoji} ${act.activity_name}</strong>
-          ${act.start_time ? `<div style="font-size:12px;color:#666">${act.start_time.slice(0,5)}${act.end_time ? ` - ${act.end_time.slice(0,5)}` : ""}</div>` : ""}
-          ${act.description ? `<div style="font-size:12px;margin-top:4px">${act.description}</div>` : ""}
-          ${act.address ? `<div style="font-size:11px;color:#888;margin-top:4px">📍 ${act.address}</div>` : ""}
+        content: `<div style="max-width:250px;padding:2px 0 0 0">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#ea4335;color:white;font-weight:bold;font-size:11px;flex-shrink:0">${num}</span>
+            <strong style="font-size:13px;line-height:1.2">${emoji} ${act.activity_name}</strong>
+          </div>
+          ${act.start_time ? `<div style="font-size:12px;color:#666;margin-left:28px">${act.start_time.slice(0,5)}${act.end_time ? ` - ${act.end_time.slice(0,5)}` : ""}</div>` : ""}
+          ${act.description ? `<div style="font-size:12px;margin-top:2px;margin-left:28px">${act.description}</div>` : ""}
+          ${act.address ? `<div style="font-size:11px;color:#888;margin-top:2px;margin-left:28px">📍 ${act.address}</div>` : ""}
           ${transportInfo}
         </div>`,
+        disableAutoPan: false,
       });
 
       marker.addListener("click", () => {
