@@ -22,6 +22,8 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
 import QuoteHistoryTab from "@/components/quotes/QuoteHistoryTab";
+import ItineraryTimeline from "@/components/itineraries/ItineraryTimeline";
+import ItineraryMapView from "@/components/itineraries/ItineraryMapView";
 
 const stages = [
   { id: "new", label: "Nova Cotação", color: "bg-soft-blue" },
