@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Copy, ExternalLink, Trash2 } from "lucide-react";
 import ItineraryFormHeader from "./ItineraryFormHeader";
 import ItineraryAIPanel from "./ItineraryAIPanel";
+import ItineraryChatPanel from "./ItineraryChatPanel";
 import ItineraryTimeline from "./ItineraryTimeline";
 import ItineraryMapView from "./ItineraryMapView";
 import ItineraryDaysTab from "./ItineraryDaysTab";
@@ -223,7 +224,10 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
 
       {currentId && (
         <>
-          <ItineraryAIPanel itineraryId={currentId} aiStatus={aiStatus} onStatusChange={setAiStatus} onBeforeGenerate={handleSave} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <ItineraryAIPanel itineraryId={currentId} aiStatus={aiStatus} onStatusChange={setAiStatus} onBeforeGenerate={handleSave} />
+            <ItineraryChatPanel itineraryId={currentId} />
+          </div>
 
            <Tabs defaultValue="timeline" className="mt-2">
             <TabsList className="h-8">
