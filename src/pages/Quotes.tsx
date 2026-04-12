@@ -22,7 +22,6 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
 import QuoteHistoryTab from "@/components/quotes/QuoteHistoryTab";
-import { useFormPersistence } from "@/hooks/useFormPersistence";
 
 const stages = [
   { id: "new", label: "Nova Cotação", color: "bg-soft-blue" },
@@ -539,6 +538,7 @@ export default function Quotes() {
       }
 
       toast({ title: editingQuote ? "Cotação atualizada" : "Cotação criada", duration: 2000 });
+      localStorage.removeItem(QUOTE_EDITOR_DRAFT_KEY);
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
       queryClient.invalidateQueries({ queryKey: ["sales"] });
 
@@ -615,6 +615,9 @@ export default function Quotes() {
       flexible_dates: pb?.flexible_dates ?? false,
       flexible_dates_description: pb?.flexible_dates_description ?? "",
     });
+    setItems([]);
+    setSelectedPassengers([]);
+    setSelectedLinkedClients([]);
     setSelectedDestinations(q.destination ? q.destination.split(", ").filter(Boolean) : []);
     setClientSelfTraveling(pb?.client_self_traveling ?? false);
     setCoverFile(null);
@@ -624,6 +627,7 @@ export default function Quotes() {
   };
 
   const closeDialog = () => {
+    localStorage.removeItem(QUOTE_EDITOR_DRAFT_KEY);
     setDialogOpen(false);
     setEditingQuote(null);
     setForm({});
