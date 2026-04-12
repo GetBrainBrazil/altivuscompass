@@ -221,10 +221,6 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
     </div>
   );
 }
-          {onDelete && (
-            <Button variant="destructive" onClick={onDelete} className="gap-1">
-              <Trash2 className="h-4 w-4" /> Excluir
-            </Button>
           )}
         </div>
 

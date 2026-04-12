@@ -177,10 +177,6 @@ export default function ItineraryFormHeader({ form, setForm, clients, clientOpen
     </div>
   );
 }
-      <div>
-        <Label>Destino</Label>
-        <Input value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })} placeholder="Ex: África do Sul" />
-      </div>
 
       <div>
         <Label>Cliente</Label>
