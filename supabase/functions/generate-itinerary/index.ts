@@ -200,12 +200,11 @@ Gere o roteiro completo com todos os dias. Cada dia deve iniciar no hotel e term
     }
 
     // Save to database
-    if (mode !== "chat") {
-      if (existingDays && existingDays.length > 0) {
-        const dayIds = existingDays.map((d: any) => d.id);
-        await supabase.from("itinerary_day_activities").delete().in("itinerary_day_id", dayIds);
-        await supabase.from("itinerary_days").delete().eq("itinerary_id", itinerary_id);
-      }
+    // Always clear existing days before saving (chat mode returns full updated itinerary)
+    if (existingDays && existingDays.length > 0) {
+      const dayIds = existingDays.map((d: any) => d.id);
+      await supabase.from("itinerary_day_activities").delete().in("itinerary_day_id", dayIds);
+      await supabase.from("itinerary_days").delete().eq("itinerary_id", itinerary_id);
     }
 
     for (let i = 0; i < (parsed.days || []).length; i++) {
