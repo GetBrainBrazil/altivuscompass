@@ -153,7 +153,7 @@ Gere o roteiro completo com todos os dias, atividades, deslocamentos com horári
           { role: "user", content: userPrompt },
         ],
         temperature: 0.7,
-        max_tokens: 16000,
+        max_tokens: 32000,
       }),
     });
 
@@ -165,15 +165,44 @@ Gere o roteiro completo com todos os dias, atividades, deslocamentos com horári
     const aiData = await aiResponse.json();
     const content = aiData.choices?.[0]?.message?.content || "";
 
-    // Parse JSON from response (handle markdown code blocks)
+    // Parse JSON from response (handle markdown code blocks with backticks or single quotes)
     let parsed;
     try {
-      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-      const jsonStr = jsonMatch ? jsonMatch[1].trim() : content.trim();
+      // Match ```json ... ``` or '''json ... ''' or just raw JSON
+      const jsonMatch = content.match(/(?:```|''')(?:json)?\s*([\s\S]*?)(?:```|''')/);
+      let jsonStr = jsonMatch ? jsonMatch[1].trim() : content.trim();
+      
+      // Find JSON boundaries
+      const jsonStart = jsonStr.search(/[\{\[]/);
+      const jsonEnd = Math.max(jsonStr.lastIndexOf('}'), jsonStr.lastIndexOf(']'));
+      if (jsonStart !== -1 && jsonEnd !== -1) {
+        jsonStr = jsonStr.substring(jsonStart, jsonEnd + 1);
+      }
+
+      // Fix trailing commas
+      jsonStr = jsonStr.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
+
+      // Detect truncation
+      const openBraces = (jsonStr.match(/{/g) || []).length;
+      const closeBraces = (jsonStr.match(/}/g) || []).length;
+      const openBrackets = (jsonStr.match(/\[/g) || []).length;
+      const closeBrackets = (jsonStr.match(/\]/g) || []).length;
+
+      if (openBraces !== closeBraces || openBrackets !== closeBrackets) {
+        // Auto-close truncated JSON
+        let fix = jsonStr;
+        for (let k = 0; k < (openBrackets - closeBrackets); k++) fix += "]";
+        for (let k = 0; k < (openBraces - closeBraces); k++) fix += "}";
+        // Remove trailing commas before closing
+        fix = fix.replace(/,\s*]/g, "]").replace(/,\s*}/g, "}");
+        jsonStr = fix;
+      }
+
       parsed = JSON.parse(jsonStr);
-    } catch {
+    } catch (parseErr: any) {
+      console.error("JSON parse error:", parseErr.message, "Raw length:", content.length);
       await supabase.from("itineraries").update({ ai_status: "error" }).eq("id", itinerary_id);
-      return new Response(JSON.stringify({ error: "Failed to parse AI response", raw: content }), {
+      return new Response(JSON.stringify({ error: "Falha ao processar resposta da IA. Tente novamente.", details: parseErr.message }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
