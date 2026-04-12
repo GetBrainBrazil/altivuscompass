@@ -1,6 +1,12 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 interface FormData {
   title: string;
@@ -23,6 +29,7 @@ interface FormData {
   desired_places: string[];
   defined_hotels: string[];
   preferred_hotels: string[];
+  quote_id: string;
 }
 
 interface Props {
@@ -31,14 +38,48 @@ interface Props {
   clients: any[];
   clientOpen: boolean;
   setClientOpen: (v: boolean) => void;
+  quotes: any[];
 }
 
-export default function ItineraryFormHeader({ form, setForm }: Props) {
+export default function ItineraryFormHeader({ form, setForm, quotes }: Props) {
+  const [quoteOpen, setQuoteOpen] = useState(false);
+
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-2">
       <div className="col-span-2">
         <Label className="text-xs">Título *</Label>
         <Input className="h-8 text-sm" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex: Roteiro França 2026" />
+      </div>
+      <div className="col-span-2">
+        <Label className="text-xs">Cotação</Label>
+        <Popover open={quoteOpen} onOpenChange={setQuoteOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" role="combobox" className="w-full justify-between font-normal h-8 text-sm">
+              {form.quote_id ? quotes.find((q: any) => q.id === form.quote_id)?.title ?? "Selecione..." : "Nenhuma"}
+              <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[320px] p-0">
+            <Command>
+              <CommandInput placeholder="Buscar cotação..." />
+              <CommandList>
+                <CommandEmpty>Nenhuma cotação encontrada</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem onSelect={() => { setForm({ ...form, quote_id: "" }); setQuoteOpen(false); }}>
+                    <Check className={cn("mr-2 h-3 w-3", !form.quote_id ? "opacity-100" : "opacity-0")} />
+                    Nenhuma
+                  </CommandItem>
+                  {quotes.map((q: any) => (
+                    <CommandItem key={q.id} onSelect={() => { setForm({ ...form, quote_id: q.id }); setQuoteOpen(false); }}>
+                      <Check className={cn("mr-2 h-3 w-3", form.quote_id === q.id ? "opacity-100" : "opacity-0")} />
+                      {q.title || `Cotação ${q.destination || ""}`} {q.clients?.full_name ? `— ${q.clients.full_name}` : ""}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
       <div>
         <Label className="text-xs">Aeroporto Destino</Label>
