@@ -157,6 +157,7 @@ Deno.serve(async (req) => {
         items: items ?? [],
         passengers: allPassengers,
         agency: agency ?? null,
+        itinerary: itinerary?.public_token ? { title: itinerary.title, public_token: itinerary.public_token } : null,
       }),
       {
         status: 200,
