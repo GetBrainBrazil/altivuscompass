@@ -2,10 +2,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, MapPin, Clock, Car, Train, Ship, Plane, Footprints, Bus, Pencil } from "lucide-react";
+import { Trash2, MapPin, Clock, Car, Train, Ship, Plane, Footprints, Bus, Pencil, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import ActivityEditDialog from "./ActivityEditDialog";
 
 interface Props {
