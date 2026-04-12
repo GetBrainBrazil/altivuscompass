@@ -145,6 +145,40 @@ export default function PublicQuote() {
     fetchQuote();
   }, [id]);
 
+  // Fetch hotel photos from Google Places
+  useEffect(() => {
+    if (!data) return;
+    const hotelItems = data.items.filter((i: any) => i.item_type === "hotel" && i.title);
+    if (hotelItems.length === 0) return;
+
+    const fetchPhotos = async () => {
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const res = await fetch(`${supabaseUrl}/functions/v1/get-maps-key`);
+        const json = await res.json();
+        const apiKey = json?.key;
+        if (!apiKey) return;
+
+        const photos: Record<string, string> = {};
+        for (const item of hotelItems) {
+          try {
+            const query = encodeURIComponent(`${item.title} hotel`);
+            const searchRes = await fetch(
+              `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${query}&inputtype=textquery&fields=photos,place_id&key=${apiKey}`
+            );
+            const searchJson = await searchRes.json();
+            const candidate = searchJson?.candidates?.[0];
+            if (candidate?.photos?.[0]?.photo_reference) {
+              photos[item.title] = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${candidate.photos[0].photo_reference}&key=${apiKey}`;
+            }
+          } catch {}
+        }
+        setHotelPhotos(photos);
+      } catch {}
+    };
+    fetchPhotos();
+  }, [data]);
+
   const translateContent = useCallback(async (targetLang: QuoteLang) => {
     if (!data || targetLang === "pt") {
       setTranslatedContent({});
