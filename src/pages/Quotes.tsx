@@ -1568,7 +1568,54 @@ export default function Quotes() {
                             )}
                           </>
                         );
-                      })() : (
+                      })() : type.id === "hotel" ? (
+                        /* Hotel-specific form */
+                        <>
+                          <button type="button" onClick={() => removeItem(globalIdx)} className="absolute top-2.5 right-2.5 text-destructive hover:text-destructive/80 transition-colors">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                          <div className="space-y-2 p-3 pr-8">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <div className="space-y-0.5">
+                                <Label className="text-[11px] font-body">Nome da Hospedagem</Label>
+                                <Input value={item.title} onChange={(e) => updateItem(globalIdx, { title: e.target.value })} placeholder="Nome do hotel / pousada" className="h-8 text-xs" />
+                              </div>
+                              <div className="space-y-0.5">
+                                <Label className="text-[11px] font-body">Endereço</Label>
+                                <Input value={d.address || ""} onChange={(e) => updateDetail("address", e.target.value)} placeholder="Buscar endereço..." className="h-8 text-xs" id={`hotel-address-${globalIdx}`} />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                              <div className="space-y-0.5">
+                                <Label className="text-[11px] font-body">Data Check-in</Label>
+                                <Input type="date" value={d.checkin_date || ""} onChange={(e) => updateDetail("checkin_date", e.target.value)} className="h-8 text-xs" />
+                              </div>
+                              <div className="space-y-0.5">
+                                <Label className="text-[11px] font-body">Hora Check-in</Label>
+                                <Input type="time" value={d.checkin_time || ""} onChange={(e) => updateDetail("checkin_time", e.target.value)} className="h-8 text-xs" />
+                              </div>
+                              <div className="space-y-0.5">
+                                <Label className="text-[11px] font-body">Data Check-out</Label>
+                                <Input type="date" value={d.checkout_date || ""} onChange={(e) => updateDetail("checkout_date", e.target.value)} className="h-8 text-xs" />
+                              </div>
+                              <div className="space-y-0.5">
+                                <Label className="text-[11px] font-body">Hora Check-out</Label>
+                                <Input type="time" value={d.checkout_time || ""} onChange={(e) => updateDetail("checkout_time", e.target.value)} className="h-8 text-xs" />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <div className="space-y-0.5">
+                                <Label className="text-[11px] font-body">Detalhes</Label>
+                                <Input value={d.hotel_details || ""} onChange={(e) => updateDetail("hotel_details", e.target.value)} placeholder="Tipo de quarto, regime, etc." className="h-8 text-xs" />
+                              </div>
+                              <div className="space-y-0.5">
+                                <Label className="text-[11px] font-body">Descrição</Label>
+                                <Input value={item.description} onChange={(e) => updateItem(globalIdx, { description: e.target.value })} placeholder="Informações adicionais" className="h-8 text-xs" />
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
                         /* Generic form for non-flight items */
                         <>
                           <button type="button" onClick={() => removeItem(globalIdx)} className="absolute top-2.5 right-2.5 text-destructive hover:text-destructive/80 transition-colors">
