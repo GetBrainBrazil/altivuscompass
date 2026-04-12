@@ -224,12 +224,21 @@ export default function ItineraryMapView({ itineraryId, selectedDayId, selectedA
       }
     }
 
-    if (!bounds.isEmpty()) {
-      mapInstanceRef.current.fitBounds(bounds);
-      if (geoActivities.length === 1) mapInstanceRef.current.setZoom(15);
-    } else if (geoActivities.length > 0) {
-      mapInstanceRef.current.setCenter({ lat: geoActivities[0].latitude, lng: geoActivities[0].longitude });
-      mapInstanceRef.current.setZoom(12);
+    try {
+      if (!bounds.isEmpty()) {
+        const boundsLiteral = bounds.toJSON();
+        mapInstanceRef.current.fitBounds(boundsLiteral);
+        if (geoActivities.length === 1) mapInstanceRef.current.setZoom(15);
+      } else if (geoActivities.length > 0) {
+        mapInstanceRef.current.setCenter({ lat: geoActivities[0].latitude, lng: geoActivities[0].longitude });
+        mapInstanceRef.current.setZoom(12);
+      }
+    } catch (e) {
+      console.warn("fitBounds error, falling back to setCenter", e);
+      if (geoActivities.length > 0) {
+        mapInstanceRef.current.setCenter({ lat: geoActivities[0].latitude, lng: geoActivities[0].longitude });
+        mapInstanceRef.current.setZoom(12);
+      }
     }
   }, [activities, mapReady]);
 
