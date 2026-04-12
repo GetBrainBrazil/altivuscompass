@@ -130,19 +130,6 @@ REGRAS PARA AJUSTE:
 5. Respeite TODAS as regras do prompt de sistema (horários, transporte, coordenadas, etc).
 6. O aeroporto de chegada e saída são os definidos nos DADOS DO FORMULÁRIO acima. NÃO invente outros aeroportos.`;
     } else {
-      const arrivalDate = itinerary.arrival_datetime ? new Date(itinerary.arrival_datetime) : null;
-      const departureDate = itinerary.departure_datetime ? new Date(itinerary.departure_datetime) : null;
-
-      let arrivalAirportLabel = "Não especificado";
-      let departureAirportLabel = "Não especificado";
-      if (itinerary.arrival_airport_id) {
-        const { data: ap } = await supabase.from("airports").select("iata_code, name, city").eq("id", itinerary.arrival_airport_id).single();
-        if (ap) arrivalAirportLabel = `${ap.iata_code} — ${ap.name}, ${ap.city}`;
-      }
-      if (itinerary.departure_airport_id) {
-        const { data: ap } = await supabase.from("airports").select("iata_code, name, city").eq("id", itinerary.departure_airport_id).single();
-        if (ap) departureAirportLabel = `${ap.iata_code} — ${ap.name}, ${ap.city}`;
-      }
 
       userPrompt = `CRIE UM ROTEIRO COMPLETO:
 
