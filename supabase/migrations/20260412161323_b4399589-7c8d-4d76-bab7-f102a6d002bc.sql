@@ -1,0 +1,1 @@
+ALTER TABLE public.itineraries ADD COLUMN summary text DEFAULT NULL;

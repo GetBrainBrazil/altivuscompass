@@ -90,6 +90,7 @@ export default function ItineraryAIPanel({ itineraryId, aiStatus, onStatusChange
       onStatusChange("completed");
       queryClient.invalidateQueries({ queryKey: ["itinerary-days", itineraryId] });
       queryClient.invalidateQueries({ queryKey: ["itinerary-day-activities"] });
+      queryClient.invalidateQueries({ queryKey: ["itinerary", itineraryId] });
       toast({ title: `Roteiro gerado com sucesso! ${data.days_count} dias criados.` });
       setChatMessage("");
     } catch (e: any) {

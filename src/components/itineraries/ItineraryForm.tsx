@@ -31,6 +31,7 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
   const [aiStatus, setAiStatus] = useState<string>("none");
+  const [summary, setSummary] = useState<string>("");
 
   const [form, setForm] = useState({
     title: "", destination: "", traveler_profile: "", travel_date_start: "", travel_date_end: "",
@@ -109,6 +110,7 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
         quote_id: itinerary.quote_id || "",
       });
       setAiStatus(itinerary.ai_status || "none");
+      setSummary(itinerary.summary || "");
       setPublicEditable(itinerary.public_editable || false);
       setPublicToken(itinerary.public_token || null);
     }
@@ -144,6 +146,7 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
         preferred_hotels: form.preferred_hotels,
         quote_id: form.quote_id || null,
         public_editable: publicEditable,
+        summary: summary || null,
       };
 
       if (currentId) {
@@ -239,6 +242,8 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
                     onSelectDay={setSelectedDayId}
                     selectedActivityId={selectedActivityId}
                     onSelectActivity={setSelectedActivityId}
+                    summary={summary}
+                    onSummaryChange={setSummary}
                   />
                 </div>
                 <div className="w-1/2">
