@@ -94,6 +94,65 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
     }
   }, [selectedActivityId]);
 
+  // Fetch photos for hotel/attraction/restaurant activities
+  const PHOTO_TYPES = ["hotel", "attraction", "restaurant", "cultural", "nature", "entertainment", "shopping"];
+  useEffect(() => {
+    const eligible = activities.filter((a: any) => PHOTO_TYPES.includes(a.activity_type) && a.activity_name);
+    const uncached = eligible.filter((a: any) => !photoCacheRef.current[a.activity_name]);
+    if (uncached.length === 0) {
+      const photos: Record<string, string> = {};
+      eligible.forEach((a: any) => { if (photoCacheRef.current[a.activity_name]) photos[a.activity_name] = photoCacheRef.current[a.activity_name]; });
+      if (Object.keys(photos).length > 0) setActivityPhotos(photos);
+      return;
+    }
+
+    const fetchPhotos = async () => {
+      try {
+        if (!(window as any).google?.maps?.places) {
+          const { data } = await supabase.functions.invoke("get-maps-key");
+          const apiKey = data?.key;
+          if (!apiKey) return;
+          await new Promise<void>((resolve, reject) => {
+            if ((window as any).google?.maps?.places) { resolve(); return; }
+            const s = document.createElement("script");
+            s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+            s.async = true;
+            s.onload = () => resolve();
+            s.onerror = () => reject();
+            document.head.appendChild(s);
+          });
+        }
+        if (!placesServiceRef.current) {
+          const mapDiv = document.createElement("div");
+          placesServiceRef.current = new (window as any).google.maps.places.PlacesService(mapDiv);
+        }
+        const service = placesServiceRef.current;
+        const photos: Record<string, string> = {};
+        Object.assign(photos, photoCacheRef.current);
+
+        for (const act of uncached) {
+          try {
+            await new Promise<void>((resolve) => {
+              service.findPlaceFromQuery(
+                { query: act.activity_name, fields: ["photos"] },
+                (results: any, status: any) => {
+                  if (status === "OK" && results?.[0]?.photos?.[0]) {
+                    const url = results[0].photos[0].getUrl({ maxWidth: 120, maxHeight: 90 });
+                    photos[act.activity_name] = url;
+                    photoCacheRef.current[act.activity_name] = url;
+                  }
+                  resolve();
+                }
+              );
+            });
+          } catch {}
+        }
+        setActivityPhotos(photos);
+      } catch {}
+    };
+    fetchPhotos();
+  }, [activities]);
+
   const deleteActivity = async (id: string) => {
     await supabase.from("itinerary_day_activities").delete().eq("id", id);
     queryClient.invalidateQueries({ queryKey: ["itinerary-day-activities", selectedDayId] });
