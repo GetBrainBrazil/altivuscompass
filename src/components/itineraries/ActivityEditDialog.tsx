@@ -171,6 +171,7 @@ export default function ActivityEditDialog({ activity, dayId, open, onOpenChange
 
       queryClient.invalidateQueries({ queryKey: ["itinerary-day-activities", dayId] });
       toast({ title: "Atividade atualizada" });
+      clearPersistence();
       onOpenChange(false);
     } catch (err: any) {
       toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
