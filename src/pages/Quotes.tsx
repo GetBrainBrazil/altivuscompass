@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandInput, CommandList, CommandEmpty, CommandItem } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, Map, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle } from "lucide-react";
+import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, Map, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle, FileText } from "lucide-react";
 import { Dialog as WhatsAppDialog, DialogContent as WhatsAppDialogContent, DialogHeader as WhatsAppDialogHeader, DialogTitle as WhatsAppDialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -82,7 +82,7 @@ export default function Quotes() {
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc" | null>(null);
-  const [activeTab, setActiveTab] = useState("flight");
+  const [activeTab, setActiveTab] = useState("main");
   const [items, setItems] = useState<QuoteItem[]>([]);
   const [selectedPassengers, setSelectedPassengers] = useState<string[]>([]);
   const [selectedLinkedClients, setSelectedLinkedClients] = useState<string[]>([]);
@@ -488,7 +488,7 @@ export default function Quotes() {
     setSelectedDestinations([]);
     setCoverFile(null);
     setCoverPreview(null);
-    setActiveTab("flight");
+    setActiveTab("main");
     setDialogOpen(true);
   };
 
@@ -517,7 +517,7 @@ export default function Quotes() {
     setClientSelfTraveling(pb?.client_self_traveling ?? false);
     setCoverFile(null);
     setCoverPreview(q.cover_image_url || null);
-    setActiveTab("flight");
+    setActiveTab("main");
     setDialogOpen(true);
   };
 
@@ -1027,70 +1027,6 @@ export default function Quotes() {
               )}
             </div>
           </div>
-
-          {/* Details section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pt-2 border-t border-border/50 mt-3">
-            <div className="lg:col-span-2 space-y-1">
-              <div className="flex items-center gap-1.5">
-                <Label className="font-body text-xs">Detalhes</Label>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="w-3 h-3 text-muted-foreground cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="max-w-xs text-xs z-[9999]">
-                      A IA gera automaticamente uma descrição da viagem com base no título e destinos selecionados. Você pode editar o texto depois.
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const dest = selectedDestinations.length > 0 ? selectedDestinations.join(", ") : form.destination;
-                    const title = form.title;
-                    if (!dest && !title) {
-                      toast({ title: "Preencha o título ou destino antes de gerar com IA", variant: "destructive" });
-                      return;
-                    }
-                    setGeneratingDetails(true);
-                    try {
-                      const { data, error } = await supabase.functions.invoke("generate-quote-details", {
-                        body: { title, destinations: dest },
-                      });
-                      if (error) throw error;
-                      if (data?.error) throw new Error(data.error);
-                      if (data?.text) {
-                        setForm((f: any) => ({ ...f, details: data.text }));
-                        toast({ title: "Texto gerado com sucesso!" });
-                      }
-                    } catch (e: any) {
-                      toast({ title: e.message || "Erro ao gerar texto", variant: "destructive" });
-                    } finally {
-                      setGeneratingDetails(false);
-                    }
-                  }}
-                  disabled={generatingDetails}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 border border-dashed border-accent rounded-md text-accent-foreground hover:bg-accent/10 transition-colors text-[10px] disabled:opacity-50"
-                >
-                  {generatingDetails ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
-                  {generatingDetails ? "Gerando..." : "Gerar com IA"}
-                </button>
-              </div>
-              <Textarea value={form.details ?? ""} onChange={(e) => setForm({ ...form, details: e.target.value })} rows={3} className="text-sm" placeholder="Descrição geral da viagem, roteiro resumido..." />
-            </div>
-            <div className="space-y-1">
-              <Label className="font-body text-xs">Forma de Pagamento</Label>
-              <Textarea value={form.payment_terms ?? ""} onChange={(e) => setForm({ ...form, payment_terms: e.target.value })} rows={2} className="text-sm" placeholder="Ex: 50% na confirmação, 50% até 30 dias antes" />
-            </div>
-            <div className="space-y-1">
-              <Label className="font-body text-xs">Termos e Condições</Label>
-              <Textarea value={form.terms_conditions ?? ""} onChange={(e) => setForm({ ...form, terms_conditions: e.target.value })} rows={2} className="text-sm" placeholder="Políticas de cancelamento, reembolso..." />
-            </div>
-            <div className="lg:col-span-2 space-y-1">
-              <Label className="font-body text-xs">Outras Informações</Label>
-              <Textarea value={form.other_info ?? ""} onChange={(e) => setForm({ ...form, other_info: e.target.value })} rows={2} className="text-sm" placeholder="Informações complementares..." />
-            </div>
-          </div>
         </div>
 
         {/* Tabs for items */}
@@ -1104,12 +1040,10 @@ export default function Quotes() {
             }
           }}>
             <TabsList className="flex flex-wrap h-auto gap-0.5 bg-muted p-0.5 w-full justify-start">
-              {editingQuote && (
-                <TabsTrigger value="history" className="flex items-center gap-1 text-[11px] px-2 py-1 bg-primary/15 text-primary border border-primary/30 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary">
-                  <History className="w-3 h-3" />
-                  Histórico
-                </TabsTrigger>
-              )}
+              <TabsTrigger value="main" className="flex items-center gap-1 text-[11px] px-2 py-1">
+                <FileText className="w-3 h-3" />
+                Principal
+              </TabsTrigger>
               {ITEM_TYPES.map((type) => {
                 const count = itemCount(type.id);
                 const Icon = type.icon;
@@ -1121,7 +1055,78 @@ export default function Quotes() {
                   </TabsTrigger>
                 );
               })}
+              {editingQuote && (
+                <TabsTrigger value="history" className="flex items-center gap-1 text-[11px] px-2 py-1 bg-primary/15 text-primary border border-primary/30 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary">
+                  <History className="w-3 h-3" />
+                  Histórico
+                </TabsTrigger>
+              )}
             </TabsList>
+
+            <TabsContent value="main" className="mt-3">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                <div className="lg:col-span-2 space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <Label className="font-body text-xs">Detalhes</Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-3 h-3 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-xs text-xs z-[9999]">
+                          A IA gera automaticamente uma descrição da viagem com base no título e destinos selecionados. Você pode editar o texto depois.
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const dest = selectedDestinations.length > 0 ? selectedDestinations.join(", ") : form.destination;
+                        const title = form.title;
+                        if (!dest && !title) {
+                          toast({ title: "Preencha o título ou destino antes de gerar com IA", variant: "destructive" });
+                          return;
+                        }
+                        setGeneratingDetails(true);
+                        try {
+                          const { data, error } = await supabase.functions.invoke("generate-quote-details", {
+                            body: { title, destinations: dest },
+                          });
+                          if (error) throw error;
+                          if (data?.error) throw new Error(data.error);
+                          if (data?.text) {
+                            setForm((f: any) => ({ ...f, details: data.text }));
+                            toast({ title: "Texto gerado com sucesso!" });
+                          }
+                        } catch (e: any) {
+                          toast({ title: e.message || "Erro ao gerar texto", variant: "destructive" });
+                        } finally {
+                          setGeneratingDetails(false);
+                        }
+                      }}
+                      disabled={generatingDetails}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 border border-dashed border-accent rounded-md text-accent-foreground hover:bg-accent/10 transition-colors text-[10px] disabled:opacity-50"
+                    >
+                      {generatingDetails ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
+                      {generatingDetails ? "Gerando..." : "Gerar com IA"}
+                    </button>
+                  </div>
+                  <Textarea value={form.details ?? ""} onChange={(e) => setForm({ ...form, details: e.target.value })} rows={3} className="text-sm" placeholder="Descrição geral da viagem, roteiro resumido..." />
+                </div>
+                <div className="space-y-1">
+                  <Label className="font-body text-xs">Forma de Pagamento</Label>
+                  <Textarea value={form.payment_terms ?? ""} onChange={(e) => setForm({ ...form, payment_terms: e.target.value })} rows={2} className="text-sm" placeholder="Ex: 50% na confirmação, 50% até 30 dias antes" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="font-body text-xs">Termos e Condições</Label>
+                  <Textarea value={form.terms_conditions ?? ""} onChange={(e) => setForm({ ...form, terms_conditions: e.target.value })} rows={2} className="text-sm" placeholder="Políticas de cancelamento, reembolso..." />
+                </div>
+                <div className="lg:col-span-2 space-y-1">
+                  <Label className="font-body text-xs">Outras Informações</Label>
+                  <Textarea value={form.other_info ?? ""} onChange={(e) => setForm({ ...form, other_info: e.target.value })} rows={2} className="text-sm" placeholder="Informações complementares..." />
+                </div>
+              </div>
+            </TabsContent>
 
             {ITEM_TYPES.map((type) => (
               <TabsContent key={type.id} value={type.id} className="mt-3 space-y-2">
