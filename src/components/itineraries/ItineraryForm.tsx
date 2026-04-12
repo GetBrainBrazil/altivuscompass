@@ -33,7 +33,7 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
   const [form, setForm] = useState({
     title: "", destination: "", traveler_profile: "", travel_date_start: "", travel_date_end: "",
     main_bases: "", base_file: "", notes: "", client_id: "",
-    arrival_datetime: "", departure_datetime: "", arrival_airport: "", departure_airport: "",
+    arrival_datetime: "", departure_datetime: "", arrival_airport_id: "", departure_airport_id: "",
     traveler_type: "", trip_style: "", wake_time: "08:00", sleep_time: "22:00",
     desired_places: [] as string[], defined_hotels: [] as string[], preferred_hotels: [] as string[],
     quote_id: "",

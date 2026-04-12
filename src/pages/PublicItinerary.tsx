@@ -67,8 +67,8 @@ export default function PublicItinerary() {
             {itinerary.traveler_type && (
               <div className="flex items-center gap-1"><Users className="h-4 w-4" />{itinerary.traveler_type}</div>
             )}
-            {itinerary.arrival_airport && (
-              <div className="flex items-center gap-1"><Plane className="h-4 w-4" />{itinerary.arrival_airport}</div>
+            {itinerary.arrival_airport_id && (
+              <div className="flex items-center gap-1"><Plane className="h-4 w-4" />Aeroporto vinculado</div>
             )}
           </div>
         </div>
