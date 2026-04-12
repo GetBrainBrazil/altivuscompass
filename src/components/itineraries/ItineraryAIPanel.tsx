@@ -147,23 +147,23 @@ export default function ItineraryAIPanel({ itineraryId, aiStatus, onStatusChange
       </div>
 
       <Dialog open={promptOpen} onOpenChange={setPromptOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh]">
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Configurar Prompt da IA</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            <Label className="text-sm text-muted-foreground">
+          <div className="space-y-3 flex-1 overflow-hidden flex flex-col min-h-0">
+            <Label className="text-sm text-muted-foreground shrink-0">
               Este prompt define como a IA deve se comportar ao gerar roteiros. Ele é enviado como instrução de sistema para a IA.
             </Label>
             <Textarea
               value={editPrompt}
               onChange={(e) => setEditPrompt(e.target.value)}
               rows={16}
-              className="text-sm font-mono"
+              className="text-sm font-mono flex-1 resize-none overflow-y-auto"
               placeholder="Escreva as instruções para a IA..."
             />
           </div>
-          <DialogFooter>
+          <DialogFooter className="shrink-0">
             <Button size="sm" onClick={savePrompt} disabled={savingPrompt}>
               {savingPrompt ? "Salvando..." : "Salvar"}
             </Button>
