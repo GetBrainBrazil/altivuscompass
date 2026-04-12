@@ -161,30 +161,30 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <ItineraryFormHeader form={form} setForm={setForm} clients={clients} clientOpen={clientOpen} setClientOpen={setClientOpen} />
 
       <div className="flex justify-between items-center gap-2 flex-wrap">
         <div className="flex gap-2">
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : currentId ? "Salvar Alterações" : "Criar Roteiro"}</Button>
+          <Button variant="outline" size="sm" onClick={onClose}>Cancelar</Button>
+          <Button size="sm" onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : currentId ? "Salvar Alterações" : "Criar Roteiro"}</Button>
           {onDelete && (
-            <Button variant="destructive" onClick={onDelete} className="gap-1">
-              <Trash2 className="h-4 w-4" /> Excluir
+            <Button variant="destructive" size="sm" onClick={onDelete} className="gap-1">
+              <Trash2 className="h-3 w-3" /> Excluir
             </Button>
           )}
         </div>
 
         {currentId && publicUrl && (
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <Switch checked={publicEditable} onCheckedChange={togglePublic} />
-              <Label className="text-xs">Cliente pode editar</Label>
+              <Label className="text-xs">Cliente edita</Label>
             </div>
-            <Button variant="outline" size="sm" onClick={copyPublicUrl} className="gap-1">
-              <Copy className="h-3 w-3" /> Link Público
+            <Button variant="outline" size="sm" onClick={copyPublicUrl} className="gap-1 h-7 text-xs">
+              <Copy className="h-3 w-3" /> Link
             </Button>
-            <Button variant="ghost" size="sm" asChild>
+            <Button variant="ghost" size="sm" className="h-7" asChild>
               <a href={publicUrl} target="_blank" rel="noopener"><ExternalLink className="h-3 w-3" /></a>
             </Button>
           </div>
@@ -195,21 +195,21 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
         <>
           <ItineraryAIPanel itineraryId={currentId} aiStatus={aiStatus} onStatusChange={setAiStatus} />
 
-          <Tabs defaultValue="timeline" className="mt-4">
-            <TabsList>
-              <TabsTrigger value="timeline">📋 Roteiro Visual</TabsTrigger>
-              <TabsTrigger value="map">🗺️ Mapa</TabsTrigger>
-              <TabsTrigger value="days">📅 Fluxo Diário</TabsTrigger>
-              <TabsTrigger value="hotels">🏨 Hotéis</TabsTrigger>
-              <TabsTrigger value="restaurants">🍽️ Restaurantes</TabsTrigger>
-              <TabsTrigger value="activities">🎯 Passeios</TabsTrigger>
+          <Tabs defaultValue="timeline" className="mt-2">
+            <TabsList className="h-8">
+              <TabsTrigger value="timeline" className="text-xs px-2 py-1">📋 Roteiro</TabsTrigger>
+              <TabsTrigger value="map" className="text-xs px-2 py-1">🗺️ Mapa</TabsTrigger>
+              <TabsTrigger value="days" className="text-xs px-2 py-1">📅 Dias</TabsTrigger>
+              <TabsTrigger value="hotels" className="text-xs px-2 py-1">🏨 Hotéis</TabsTrigger>
+              <TabsTrigger value="restaurants" className="text-xs px-2 py-1">🍽️ Restaurantes</TabsTrigger>
+              <TabsTrigger value="activities" className="text-xs px-2 py-1">🎯 Passeios</TabsTrigger>
             </TabsList>
             <TabsContent value="timeline">
               <ItineraryTimeline itineraryId={currentId} selectedDayId={selectedDayId} onSelectDay={setSelectedDayId} />
             </TabsContent>
             <TabsContent value="map">
               <ItineraryMapView itineraryId={currentId} selectedDayId={selectedDayId} />
-              {!selectedDayId && <p className="text-xs text-muted-foreground mt-2 text-center">Selecione um dia na aba "Roteiro Visual" para ver no mapa.</p>}
+              {!selectedDayId && <p className="text-xs text-muted-foreground mt-1 text-center">Selecione um dia na aba "Roteiro" para ver no mapa.</p>}
             </TabsContent>
             <TabsContent value="days"><ItineraryDaysTab itineraryId={currentId} /></TabsContent>
             <TabsContent value="hotels"><ItineraryHotelsTab itineraryId={currentId} /></TabsContent>
