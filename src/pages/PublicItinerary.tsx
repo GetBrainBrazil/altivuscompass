@@ -6,7 +6,7 @@ import ItineraryTimeline from "@/components/itineraries/ItineraryTimeline";
 import ItineraryMapView from "@/components/itineraries/ItineraryMapView";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { MapPin, Calendar, Users, Plane } from "lucide-react";
+import { MapPin, Calendar, Plane } from "lucide-react";
 
 export default function PublicItinerary() {
   const { token } = useParams<{ token: string }>();
@@ -63,9 +63,6 @@ export default function PublicItinerary() {
                 {format(new Date(itinerary.travel_date_start + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}
                 {itinerary.travel_date_end && ` a ${format(new Date(itinerary.travel_date_end + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}`}
               </div>
-            )}
-            {itinerary.traveler_type && (
-              <div className="flex items-center gap-1"><Users className="h-3 w-3" />{itinerary.traveler_type}</div>
             )}
             {itinerary.arrival_airport && (
               <div className="flex items-center gap-1"><Plane className="h-3 w-3" />{(itinerary.arrival_airport as any).iata_code} — {(itinerary.arrival_airport as any).city}</div>
