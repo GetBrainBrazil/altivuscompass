@@ -19,9 +19,10 @@ import ItineraryActivitiesTab from "./ItineraryActivitiesTab";
 interface Props {
   itineraryId: string | null;
   onClose: () => void;
+  onDelete?: () => void;
 }
 
-export default function ItineraryForm({ itineraryId, onClose }: Props) {
+export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props) {
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [currentId, setCurrentId] = useState<string | null>(itineraryId);
