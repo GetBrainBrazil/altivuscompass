@@ -622,6 +622,78 @@ export default function PublicQuote() {
                         );
                       }
 
+                      // Rich hotel card
+                      if (type === "hotel") {
+                        const formatDate = (ds: string) => ds ? ds.split("-").reverse().join("/") : "";
+                        const tripAdvisorUrl = title ? `https://www.tripadvisor.com/Search?q=${encodeURIComponent(title)}` : null;
+                        const photoUrl = title ? hotelPhotos[title] : null;
+
+                        return (
+                          <div key={idx} className="border border-gray-200 rounded-lg overflow-hidden">
+                            <div className="flex flex-col sm:flex-row">
+                              {/* Thumbnail */}
+                              <div className="sm:w-36 sm:min-h-[120px] h-32 sm:h-auto bg-gray-100 flex-shrink-0 relative overflow-hidden">
+                                {photoUrl ? (
+                                  <img src={photoUrl} alt={title || ""} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <Hotel className="w-8 h-8 text-gray-300" />
+                                  </div>
+                                )}
+                              </div>
+                              {/* Info */}
+                              <div className="flex-1 p-3 sm:p-4 space-y-2">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div>
+                                    {title && <p className="pq-fs-sm sm:text-sm font-bold text-gray-900 font-body">{title}</p>}
+                                    {d.address && (
+                                      <p className="pq-fs-xs sm:text-xs text-gray-500 font-body flex items-center gap-1 mt-0.5">
+                                        <MapPin className="w-3 h-3 flex-shrink-0" /> {d.address}
+                                      </p>
+                                    )}
+                                  </div>
+                                  {tripAdvisorUrl && (
+                                    <a href={tripAdvisorUrl} target="_blank" rel="noopener noreferrer"
+                                       className="flex items-center gap-1 px-2 py-1 rounded-full border border-gray-200 pq-fs-3xs text-gray-500 hover:text-green-700 hover:border-green-300 transition-colors flex-shrink-0">
+                                      <ExternalLink className="w-3 h-3" />
+                                      <span className="hidden sm:inline">TripAdvisor</span>
+                                    </a>
+                                  )}
+                                </div>
+
+                                {/* Dates */}
+                                {(d.checkin_date || d.checkout_date) && (
+                                  <div className="flex flex-wrap gap-3 pq-fs-xs sm:text-xs font-body">
+                                    {d.checkin_date && (
+                                      <div className="flex items-center gap-1.5">
+                                        <Clock className="w-3 h-3 text-gray-400" />
+                                        <span className="text-gray-400">Check-in:</span>
+                                        <span className="font-medium text-gray-700">{formatDate(d.checkin_date)}{d.checkin_time ? ` · ${d.checkin_time}` : ""}</span>
+                                      </div>
+                                    )}
+                                    {d.checkout_date && (
+                                      <div className="flex items-center gap-1.5">
+                                        <Clock className="w-3 h-3 text-gray-400" />
+                                        <span className="text-gray-400">Check-out:</span>
+                                        <span className="font-medium text-gray-700">{formatDate(d.checkout_date)}{d.checkout_time ? ` · ${d.checkout_time}` : ""}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Details & Description */}
+                                {d.hotel_details && (
+                                  <p className="pq-fs-xs sm:text-xs text-gray-600 font-body">{d.hotel_details}</p>
+                                )}
+                                {description && (
+                                  <p className="pq-fs-xs sm:text-xs text-gray-500 font-body italic">{description}</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+
                       return (
                         <div key={idx} className="border border-gray-200 rounded-lg p-3">
                           {title && <p className="pq-fs-sm sm:text-sm font-medium text-gray-900 font-body">{title}</p>}
