@@ -9,6 +9,12 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 
+const LOCATION_SEPARATION_RULES = [
+  "13. CADA ATIVIDADE DEVE REPRESENTAR UM ÚNICO LOCAL FÍSICO. Nunca combine dois locais em uma mesma atividade/card, seja aeroporto, hotel, restaurante, estação, atração ou qualquer outro ponto",
+  "14. Os campos de transporte (transport_mode, horários, duração, custo e notas) descrevem como o viajante CHEGOU naquele local, vindo do card anterior. A primeira atividade do dia não precisa de transporte",
+  "15. Em voos, trens, barcos ou deslocamentos entre cidades/terminais, crie sempre cards separados para origem e destino. Exemplo: aeroporto CDG deve ser um card e aeroporto de Nice outro card; o voo fica apenas no conector de transporte entre eles",
+].join("\n");
+
 const DEFAULT_AI_PROMPT = `Você é um especialista em planejamento de viagens para a agência Altivus Turismo.
 Sua tarefa é criar roteiros detalhados dia a dia com horários precisos.
 
@@ -25,8 +31,31 @@ REGRAS CRÍTICAS:
 10. Considere o trânsito (tráfego) local no dia e hora do deslocamento
 11. Consulte feriados e grandes eventos no local e informe no início do roteiro
 12. Dê sua opinião sobre o tempo e se dá para fazer todos os pontos solicitados; se não der, sugira os melhores pontos, priorizando os solicitados
-13. CADA ATIVIDADE DEVE REPRESENTAR UM ÚNICO LOCAL FÍSICO. Nunca combine dois locais em uma mesma atividade. Ex: aeroporto CDG e aeroporto de Nice devem ser dois cards separados, com o transporte (avião) como conector entre eles
-14. Os campos de transporte (transport_mode, horários, duração, custo) descrevem como o viajante CHEGOU naquele local (vindo do anterior). A primeira atividade do dia não precisa de transporte`;
+${LOCATION_SEPARATION_RULES}`;
+
+const normalizePrompt = (prompt?: string | null) => {
+  const trimmedPrompt = prompt?.trim();
+
+  if (!trimmedPrompt) {
+    return DEFAULT_AI_PROMPT;
+  }
+
+  const missingRules: string[] = [];
+
+  if (!/CADA ATIVIDADE DEVE REPRESENTAR UM ÚNICO LOCAL FÍSICO/i.test(trimmedPrompt)) {
+    missingRules.push("13. CADA ATIVIDADE DEVE REPRESENTAR UM ÚNICO LOCAL FÍSICO. Nunca combine dois locais em uma mesma atividade/card, seja aeroporto, hotel, restaurante, estação, atração ou qualquer outro ponto");
+  }
+
+  if (!/campos de transporte .*CHEGOU naquele local/i.test(trimmedPrompt)) {
+    missingRules.push("14. Os campos de transporte (transport_mode, horários, duração, custo e notas) descrevem como o viajante CHEGOU naquele local, vindo do card anterior. A primeira atividade do dia não precisa de transporte");
+  }
+
+  if (!/cards separados para origem e destino|CDG.*Nice|origem e destino/i.test(trimmedPrompt)) {
+    missingRules.push("15. Em voos, trens, barcos ou deslocamentos entre cidades/terminais, crie sempre cards separados para origem e destino. Exemplo: aeroporto CDG deve ser um card e aeroporto de Nice outro card; o voo fica apenas no conector de transporte entre eles");
+  }
+
+  return missingRules.length > 0 ? `${trimmedPrompt}\n${missingRules.join("\n")}` : trimmedPrompt;
+};
 
 interface Props {
   itineraryId: string;
@@ -52,7 +81,26 @@ export default function ItineraryAIPanel({ itineraryId, aiStatus, onStatusChange
     },
   });
 
-  const currentPrompt = agencySettings?.ai_prompt || DEFAULT_AI_PROMPT;
+  const currentPrompt = normalizePrompt(agencySettings?.ai_prompt);
+
+  useEffect(() => {
+    if (!agencySettings?.id) return;
+
+    const normalizedPrompt = normalizePrompt(agencySettings.ai_prompt);
+    const storedPrompt = agencySettings.ai_prompt?.trim() || "";
+
+    if (normalizedPrompt === storedPrompt) return;
+
+    void supabase
+      .from("agency_settings")
+      .update({ ai_prompt: normalizedPrompt })
+      .eq("id", agencySettings.id)
+      .then(({ error }) => {
+        if (!error) {
+          queryClient.invalidateQueries({ queryKey: ["agency-settings-prompt"] });
+        }
+      });
+  }, [agencySettings?.id, agencySettings?.ai_prompt, queryClient]);
 
   const openPromptEditor = () => {
     setEditPrompt(currentPrompt);
