@@ -138,7 +138,7 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
                 { query: act.activity_name, fields: ["photos"] },
                 (results: any, status: any) => {
                   if (status === "OK" && results?.[0]?.photos?.[0]) {
-                    const url = results[0].photos[0].getUrl({ maxWidth: 800, maxHeight: 600 });
+                    const url = results[0].photos[0].getUrl({ maxWidth: 1600, maxHeight: 1200 });
                     photos[act.activity_name] = url;
                     photoCacheRef.current[act.activity_name] = url;
                   }
