@@ -1064,6 +1064,7 @@ export type Database = {
           public_token: string | null
           quote_id: string | null
           sleep_time: string | null
+          summary: string | null
           title: string
           travel_date_end: string | null
           travel_date_start: string | null
@@ -1094,6 +1095,7 @@ export type Database = {
           public_token?: string | null
           quote_id?: string | null
           sleep_time?: string | null
+          summary?: string | null
           title: string
           travel_date_end?: string | null
           travel_date_start?: string | null
@@ -1124,6 +1126,7 @@ export type Database = {
           public_token?: string | null
           quote_id?: string | null
           sleep_time?: string | null
+          summary?: string | null
           title?: string
           travel_date_end?: string | null
           travel_date_start?: string | null
