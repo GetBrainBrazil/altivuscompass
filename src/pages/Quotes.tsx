@@ -244,6 +244,39 @@ export default function Quotes() {
     },
   });
 
+  // Fetch itinerary linked to current quote
+  const currentQuoteId = editingQuote?.id;
+  const { data: linkedItinerary, refetch: refetchLinkedItinerary } = useQuery({
+    queryKey: ["quote-itinerary", currentQuoteId],
+    enabled: !!currentQuoteId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("itineraries")
+        .select("id, title, destination, travel_date_start, travel_date_end")
+        .eq("quote_id", currentQuoteId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch all itineraries for association picker
+  const { data: allItineraries = [] } = useQuery({
+    queryKey: ["itineraries-for-link"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("itineraries")
+        .select("id, title, destination, quote_id")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
+  const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
+  const [itineraryLinkOpen, setItineraryLinkOpen] = useState(false);
+
   useEffect(() => {
     try {
       const storedDraft = localStorage.getItem(QUOTE_EDITOR_DRAFT_KEY);
