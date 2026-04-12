@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +43,8 @@ const TRANSPORT_MODES = [
 export default function ActivityEditDialog({ activity, dayId, open, onOpenChange }: Props) {
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
+  const addressInputRef = useRef<HTMLInputElement>(null);
+  const autocompleteRef = useRef<any>(null);
   const [form, setForm] = useState({
     activity_name: "",
     description: "",
@@ -84,6 +86,49 @@ export default function ActivityEditDialog({ activity, dayId, open, onOpenChange
       });
     }
   }, [activity]);
+
+  // Setup Google Places Autocomplete
+  useEffect(() => {
+    if (!open || !addressInputRef.current || !window.google?.maps?.places) return;
+
+    // Small delay to ensure the input is in the DOM
+    const timer = setTimeout(() => {
+      if (autocompleteRef.current) return;
+      if (!addressInputRef.current) return;
+
+      const autocomplete = new window.google.maps.places.Autocomplete(addressInputRef.current, {
+        types: ["establishment", "geocode"],
+      });
+
+      autocomplete.addListener("place_changed", () => {
+        const place = autocomplete.getPlace();
+        if (!place) return;
+
+        const lat = place.geometry?.location?.lat();
+        const lng = place.geometry?.location?.lng();
+
+        setForm((f) => ({
+          ...f,
+          address: place.formatted_address || place.name || f.address,
+          latitude: lat?.toString() || f.latitude,
+          longitude: lng?.toString() || f.longitude,
+        }));
+      });
+
+      autocompleteRef.current = autocomplete;
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [open]);
+
+  // Cleanup autocomplete on close
+  useEffect(() => {
+    if (!open) {
+      autocompleteRef.current = null;
+    }
+  }, [open]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -169,19 +214,13 @@ export default function ActivityEditDialog({ activity, dayId, open, onOpenChange
           </div>
 
           <div>
-            <Label className="text-xs">Endereço</Label>
-            <Input value={form.address} onChange={(e) => set("address", e.target.value)} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs">Latitude</Label>
-              <Input type="number" step="any" value={form.latitude} onChange={(e) => set("latitude", e.target.value)} />
-            </div>
-            <div>
-              <Label className="text-xs">Longitude</Label>
-              <Input type="number" step="any" value={form.longitude} onChange={(e) => set("longitude", e.target.value)} />
-            </div>
+            <Label className="text-xs">Endereço (busca no Google Maps)</Label>
+            <Input
+              ref={addressInputRef}
+              value={form.address}
+              onChange={(e) => set("address", e.target.value)}
+              placeholder="Digite o nome do local ou endereço..."
+            />
           </div>
 
           <div>
