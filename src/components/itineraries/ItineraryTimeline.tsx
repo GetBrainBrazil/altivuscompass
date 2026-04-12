@@ -2,10 +2,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, MapPin, Clock, Car, Train, Ship, Plane, Footprints, Bus } from "lucide-react";
+import { Trash2, MapPin, Clock, Car, Train, Ship, Plane, Footprints, Bus, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import ActivityEditDialog from "./ActivityEditDialog";
 
 interface Props {
   itineraryId: string;
@@ -46,6 +47,7 @@ const TYPE_LABELS: Record<string, string> = {
 export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelectDay, readOnly, selectedActivityId, onSelectActivity }: Props) {
   const queryClient = useQueryClient();
   const activityRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [editingActivity, setEditingActivity] = useState<any>(null);
 
   const { data: days = [] } = useQuery({
     queryKey: ["itinerary-days", itineraryId],
@@ -75,14 +77,12 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
     enabled: !!selectedDayId,
   });
 
-  // Auto-select first day
   useEffect(() => {
     if (!selectedDayId && days.length > 0) {
       onSelectDay(days[0].id);
     }
   }, [days, selectedDayId, onSelectDay]);
 
-  // Scroll to selected activity
   useEffect(() => {
     if (selectedActivityId && activityRefs.current[selectedActivityId]) {
       activityRefs.current[selectedActivityId]?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -181,9 +181,14 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
                   </div>
 
                   {!readOnly && (
-                    <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={(e) => { e.stopPropagation(); deleteActivity(act.id); }}>
-                      <Trash2 className="h-3 w-3 text-destructive" />
-                    </Button>
+                    <div className="flex flex-col gap-1 shrink-0">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setEditingActivity(act); }}>
+                        <Pencil className="h-3 w-3 text-muted-foreground" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); deleteActivity(act.id); }}>
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </Button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -202,6 +207,16 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
 
       {days.length === 0 && (
         <p className="text-sm text-muted-foreground text-center py-8">Nenhum dia no roteiro. Use a IA para gerar automaticamente.</p>
+      )}
+
+      {/* Edit dialog */}
+      {editingActivity && selectedDayId && (
+        <ActivityEditDialog
+          activity={editingActivity}
+          dayId={selectedDayId}
+          open={!!editingActivity}
+          onOpenChange={(open) => { if (!open) setEditingActivity(null); }}
+        />
       )}
     </div>
   );
