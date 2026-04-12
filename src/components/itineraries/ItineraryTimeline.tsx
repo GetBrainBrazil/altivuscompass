@@ -231,6 +231,13 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
                     )}
                   </div>
 
+                  {/* Thumbnail */}
+                  {PHOTO_TYPES.includes(act.activity_type) && activityPhotos[act.activity_name] && (
+                    <div className="w-14 h-14 rounded-md overflow-hidden flex-shrink-0 bg-muted">
+                      <img src={activityPhotos[act.activity_name]} alt="" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium text-sm text-foreground">{act.activity_name}</span>
@@ -241,6 +248,18 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
                       )}
                       {act.is_ai_suggested && (
                         <Badge variant="outline" className="text-[10px]">IA</Badge>
+                      )}
+                      {PHOTO_TYPES.includes(act.activity_type) && (
+                        <a
+                          href={`https://www.tripadvisor.com/Search?q=${encodeURIComponent(act.activity_name)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-green-700 transition-colors"
+                        >
+                          <ExternalLink className="h-2.5 w-2.5" />
+                          TripAdvisor
+                        </a>
                       )}
                     </div>
                     {act.description && <p className="text-xs text-muted-foreground mt-1">{act.description}</p>}
