@@ -568,9 +568,23 @@ export default function PublicQuote() {
                               </div>
                               {d.airline && (
                                 <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2 sm:gap-1.5">
-                                  <span className="pq-fs-xs sm:text-xs text-gray-500 font-body">
-                                    {d.airline}{d.flight_number ? ` (${d.flight_number})` : ""}
-                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    {(() => {
+                                      const iataMatch = d.airline.match(/\(([A-Z0-9]{2})\)/);
+                                      const iata = iataMatch?.[1];
+                                      return iata ? (
+                                        <img
+                                          src={`https://pics.avs.io/60/60/${iata}.png`}
+                                          alt={d.airline}
+                                          className="w-6 h-6 object-contain"
+                                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                                        />
+                                      ) : null;
+                                    })()}
+                                    <span className="pq-fs-xs sm:text-xs text-gray-500 font-body">
+                                      {d.airline}{d.flight_number ? ` (${d.flight_number})` : ""}
+                                    </span>
+                                  </div>
                                   <div className="flex items-center gap-1">
                                     <div className="flex flex-col items-center border border-gray-200 rounded px-1.5 py-1 min-w-[36px]">
                                       <Backpack className="w-3.5 h-3.5 text-blue-800" />
