@@ -23,6 +23,7 @@ type QuoteData = {
   items: any[];
   passengers: { full_name: string; relationship_type: string | null }[];
   agency: AgencyData | null;
+  itinerary: { title: string; public_token: string } | null;
 };
 
 // Keys of translatable content fields
