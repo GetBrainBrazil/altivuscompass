@@ -7,6 +7,22 @@ import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { format } from "date-fns";
+
+function formatQuoteLabel(q: any): string {
+  const title = q.title || q.destination || "Sem título";
+  const client = q.clients?.full_name ? ` — ${q.clients.full_name}` : "";
+  const pb = q.price_breakdown as any;
+  const isFlexible = pb?.flexible_dates;
+  let period = "";
+  if (isFlexible && pb?.flexible_dates_description) {
+    period = ` — ${pb.flexible_dates_description}`;
+  } else if (q.travel_date_start) {
+    period = ` — ${format(new Date(q.travel_date_start), "dd/MM/yyyy")}`;
+    if (q.travel_date_end) period += ` a ${format(new Date(q.travel_date_end), "dd/MM/yyyy")}`;
+  }
+  return `${title}${client}${period}`;
+}
 
 interface FormData {
   title: string;
@@ -125,8 +141,8 @@ export default function ItineraryFormHeader({ form, setForm, quotes, airports }:
         <Label className="text-xs">Cotação</Label>
         <Popover open={quoteOpen} onOpenChange={setQuoteOpen}>
           <PopoverTrigger asChild>
-            <Button variant="outline" role="combobox" className="w-full justify-between font-normal h-8 text-sm">
-              {form.quote_id ? quotes.find((q: any) => q.id === form.quote_id)?.title ?? "Selecione..." : "Nenhuma"}
+            <Button variant="outline" role="combobox" className="w-full justify-between font-normal h-8 text-sm truncate">
+              {form.quote_id ? formatQuoteLabel(quotes.find((q: any) => q.id === form.quote_id) || {}) : "Nenhuma"}
               <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
@@ -143,7 +159,7 @@ export default function ItineraryFormHeader({ form, setForm, quotes, airports }:
                   {quotes.map((q: any) => (
                     <CommandItem key={q.id} onSelect={() => { setForm({ ...form, quote_id: q.id }); setQuoteOpen(false); }}>
                       <Check className={cn("mr-2 h-3 w-3", form.quote_id === q.id ? "opacity-100" : "opacity-0")} />
-                      {q.title || `Cotação ${q.destination || ""}`} {q.clients?.full_name ? `— ${q.clients.full_name}` : ""}
+                      {formatQuoteLabel(q)}
                     </CommandItem>
                   ))}
                 </CommandGroup>

@@ -26,7 +26,7 @@ export default function Itineraries() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("itineraries")
-        .select("*, clients(full_name), quotes(title)")
+        .select("*, clients(full_name), quotes(title, travel_date_start, travel_date_end, price_breakdown, clients(full_name))")
         .order(sortField, { ascending: sortDir === "asc" });
       if (error) throw error;
       return data;
@@ -127,7 +127,23 @@ export default function Itineraries() {
                       ? `${format(new Date(item.arrival_datetime), "dd/MM/yyyy HH:mm")}${item.departure_datetime ? ` a ${format(new Date(item.departure_datetime), "dd/MM/yyyy HH:mm")}` : ""}`
                       : "—"}
                   </TableCell>
-                  <TableCell>{item.quotes?.title ?? "—"}</TableCell>
+                  <TableCell>
+                    {item.quotes ? (() => {
+                      const q = item.quotes as any;
+                      const title = q.title || "Sem título";
+                      const client = q.clients?.full_name ? ` — ${q.clients.full_name}` : "";
+                      const pb = q.price_breakdown as any;
+                      const isFlexible = pb?.flexible_dates;
+                      let period = "";
+                      if (isFlexible && pb?.flexible_dates_description) {
+                        period = ` — ${pb.flexible_dates_description}`;
+                      } else if (q.travel_date_start) {
+                        period = ` — ${format(new Date(q.travel_date_start), "dd/MM/yyyy")}`;
+                        if (q.travel_date_end) period += ` a ${format(new Date(q.travel_date_end), "dd/MM/yyyy")}`;
+                      }
+                      return `${title}${client}${period}`;
+                    })() : "—"}
+                  </TableCell>
                   <TableCell>{format(new Date(item.created_at), "dd/MM/yyyy", { locale: ptBR })}</TableCell>
                 </TableRow>
               ))
