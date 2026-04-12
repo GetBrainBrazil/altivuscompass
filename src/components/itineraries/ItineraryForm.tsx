@@ -2,16 +2,15 @@ import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Copy, ExternalLink } from "lucide-react";
+import ItineraryFormHeader from "./ItineraryFormHeader";
+import ItineraryAIPanel from "./ItineraryAIPanel";
+import ItineraryTimeline from "./ItineraryTimeline";
+import ItineraryMapView from "./ItineraryMapView";
 import ItineraryDaysTab from "./ItineraryDaysTab";
 import ItineraryHotelsTab from "./ItineraryHotelsTab";
 import ItineraryRestaurantsTab from "./ItineraryRestaurantsTab";
@@ -27,18 +26,19 @@ export default function ItineraryForm({ itineraryId, onClose }: Props) {
   const [saving, setSaving] = useState(false);
   const [currentId, setCurrentId] = useState<string | null>(itineraryId);
   const [clientOpen, setClientOpen] = useState(false);
+  const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
+  const [aiStatus, setAiStatus] = useState<string>("none");
 
   const [form, setForm] = useState({
-    title: "",
-    destination: "",
-    traveler_profile: "",
-    travel_date_start: "",
-    travel_date_end: "",
-    main_bases: "",
-    base_file: "",
-    notes: "",
-    client_id: "",
+    title: "", destination: "", traveler_profile: "", travel_date_start: "", travel_date_end: "",
+    main_bases: "", base_file: "", notes: "", client_id: "",
+    arrival_datetime: "", departure_datetime: "", arrival_airport: "", departure_airport: "",
+    traveler_type: "", trip_style: "", wake_time: "08:00", sleep_time: "22:00",
+    desired_places: [] as string[], defined_hotels: [] as string[], preferred_hotels: [] as string[],
   });
+
+  const [publicEditable, setPublicEditable] = useState(false);
+  const [publicToken, setPublicToken] = useState<string | null>(null);
 
   const { data: clients = [] } = useQuery({
     queryKey: ["clients-list"],
@@ -71,7 +71,21 @@ export default function ItineraryForm({ itineraryId, onClose }: Props) {
         base_file: itinerary.base_file || "",
         notes: itinerary.notes || "",
         client_id: itinerary.client_id || "",
+        arrival_datetime: itinerary.arrival_datetime ? new Date(itinerary.arrival_datetime).toISOString().slice(0, 16) : "",
+        departure_datetime: itinerary.departure_datetime ? new Date(itinerary.departure_datetime).toISOString().slice(0, 16) : "",
+        arrival_airport: itinerary.arrival_airport || "",
+        departure_airport: itinerary.departure_airport || "",
+        traveler_type: itinerary.traveler_type || "",
+        trip_style: itinerary.trip_style || "",
+        wake_time: itinerary.wake_time || "08:00",
+        sleep_time: itinerary.sleep_time || "22:00",
+        desired_places: itinerary.desired_places || [],
+        defined_hotels: itinerary.defined_hotels || [],
+        preferred_hotels: itinerary.preferred_hotels || [],
       });
+      setAiStatus(itinerary.ai_status || "none");
+      setPublicEditable(itinerary.public_editable || false);
+      setPublicToken(itinerary.public_token || null);
     }
   }, [itinerary]);
 
@@ -82,7 +96,7 @@ export default function ItineraryForm({ itineraryId, onClose }: Props) {
     }
     setSaving(true);
     try {
-      const payload = {
+      const payload: any = {
         title: form.title,
         destination: form.destination || null,
         traveler_profile: form.traveler_profile || null,
@@ -92,6 +106,18 @@ export default function ItineraryForm({ itineraryId, onClose }: Props) {
         base_file: form.base_file || null,
         notes: form.notes || null,
         client_id: form.client_id || null,
+        arrival_datetime: form.arrival_datetime || null,
+        departure_datetime: form.departure_datetime || null,
+        arrival_airport: form.arrival_airport || null,
+        departure_airport: form.departure_airport || null,
+        traveler_type: form.traveler_type || null,
+        trip_style: form.trip_style || null,
+        wake_time: form.wake_time || null,
+        sleep_time: form.sleep_time || null,
+        desired_places: form.desired_places,
+        defined_hotels: form.defined_hotels,
+        preferred_hotels: form.preferred_hotels,
+        public_editable: publicEditable,
       };
 
       if (currentId) {
@@ -99,12 +125,16 @@ export default function ItineraryForm({ itineraryId, onClose }: Props) {
         if (error) throw error;
         toast({ title: "Roteiro atualizado" });
       } else {
+        const token = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+        payload.public_token = token;
         const { data, error } = await supabase.from("itineraries").insert(payload).select().single();
         if (error) throw error;
         setCurrentId(data.id);
-        toast({ title: "Roteiro criado! Agora adicione os detalhes nas abas abaixo." });
+        setPublicToken(token);
+        toast({ title: "Roteiro criado! Use a IA para gerar o fluxo diário." });
       }
       queryClient.invalidateQueries({ queryKey: ["itineraries"] });
+      queryClient.invalidateQueries({ queryKey: ["itinerary", currentId] });
     } catch (e: any) {
       toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" });
     } finally {
@@ -112,98 +142,75 @@ export default function ItineraryForm({ itineraryId, onClose }: Props) {
     }
   };
 
+  const togglePublic = async () => {
+    if (!currentId) return;
+    const newVal = !publicEditable;
+    setPublicEditable(newVal);
+    await supabase.from("itineraries").update({ public_editable: newVal }).eq("id", currentId);
+    toast({ title: newVal ? "Edição pública habilitada" : "Edição pública desabilitada" });
+  };
+
+  const publicUrl = publicToken ? `${window.location.origin}/roteiro/${publicToken}` : null;
+
+  const copyPublicUrl = () => {
+    if (publicUrl) {
+      navigator.clipboard.writeText(publicUrl);
+      toast({ title: "Link copiado!" });
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header form */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2">
-          <Label>Título *</Label>
-          <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex: Roteiro África do Sul" />
-        </div>
-        <div>
-          <Label>Destino</Label>
-          <Input value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })} placeholder="Ex: África do Sul" />
+      <ItineraryFormHeader form={form} setForm={setForm} clients={clients} clientOpen={clientOpen} setClientOpen={setClientOpen} />
+
+      <div className="flex justify-between items-center gap-2 flex-wrap">
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : currentId ? "Salvar Alterações" : "Criar Roteiro"}</Button>
         </div>
 
-        <div>
-          <Label>Cliente</Label>
-          <Popover open={clientOpen} onOpenChange={setClientOpen}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
-                {form.client_id ? clients.find((c: any) => c.id === form.client_id)?.full_name ?? "Selecione..." : "Selecione..."}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[300px] p-0">
-              <Command>
-                <CommandInput placeholder="Buscar cliente..." />
-                <CommandList>
-                  <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
-                  <CommandGroup>
-                    <CommandItem onSelect={() => { setForm({ ...form, client_id: "" }); setClientOpen(false); }}>
-                      <Check className={cn("mr-2 h-4 w-4", !form.client_id ? "opacity-100" : "opacity-0")} />
-                      Nenhum
-                    </CommandItem>
-                    {clients.map((c: any) => (
-                      <CommandItem key={c.id} onSelect={() => { setForm({ ...form, client_id: c.id }); setClientOpen(false); }}>
-                        <Check className={cn("mr-2 h-4 w-4", form.client_id === c.id ? "opacity-100" : "opacity-0")} />
-                        {c.full_name}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        <div>
-          <Label>Perfil do Viajante</Label>
-          <Input value={form.traveler_profile} onChange={(e) => setForm({ ...form, traveler_profile: e.target.value })} placeholder="Ex: 1 casal + 1 adulto" />
-        </div>
-        <div>
-          <Label>Bases Principais</Label>
-          <Input value={form.main_bases} onChange={(e) => setForm({ ...form, main_bases: e.target.value })} placeholder="Ex: Kruger / Stellenbosch" />
-        </div>
-
-        <div>
-          <Label>Data Início</Label>
-          <Input type="date" value={form.travel_date_start} onChange={(e) => setForm({ ...form, travel_date_start: e.target.value })} />
-        </div>
-        <div>
-          <Label>Data Fim</Label>
-          <Input type="date" value={form.travel_date_end} onChange={(e) => setForm({ ...form, travel_date_end: e.target.value })} />
-        </div>
-        <div>
-          <Label>Arquivo Base</Label>
-          <Input value={form.base_file} onChange={(e) => setForm({ ...form, base_file: e.target.value })} placeholder="Nome do arquivo de referência" />
-        </div>
-
-        <div className="lg:col-span-3">
-          <Label>Notas</Label>
-          <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
-        </div>
+        {currentId && publicUrl && (
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Switch checked={publicEditable} onCheckedChange={togglePublic} />
+              <Label className="text-xs">Cliente pode editar</Label>
+            </div>
+            <Button variant="outline" size="sm" onClick={copyPublicUrl} className="gap-1">
+              <Copy className="h-3 w-3" /> Link Público
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <a href={publicUrl} target="_blank" rel="noopener"><ExternalLink className="h-3 w-3" /></a>
+            </Button>
+          </div>
+        )}
       </div>
 
-      <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={onClose}>Cancelar</Button>
-        <Button onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : currentId ? "Salvar Alterações" : "Criar Roteiro"}</Button>
-      </div>
-
-      {/* Detail tabs only shown after saving */}
       {currentId && (
-        <Tabs defaultValue="days" className="mt-4">
-          <TabsList>
-            <TabsTrigger value="days">Fluxo Diário</TabsTrigger>
-            <TabsTrigger value="hotels">Hotéis</TabsTrigger>
-            <TabsTrigger value="restaurants">Restaurantes</TabsTrigger>
-            <TabsTrigger value="activities">Passeios</TabsTrigger>
-          </TabsList>
-          <TabsContent value="days"><ItineraryDaysTab itineraryId={currentId} /></TabsContent>
-          <TabsContent value="hotels"><ItineraryHotelsTab itineraryId={currentId} /></TabsContent>
-          <TabsContent value="restaurants"><ItineraryRestaurantsTab itineraryId={currentId} /></TabsContent>
-          <TabsContent value="activities"><ItineraryActivitiesTab itineraryId={currentId} /></TabsContent>
-        </Tabs>
+        <>
+          <ItineraryAIPanel itineraryId={currentId} aiStatus={aiStatus} onStatusChange={setAiStatus} />
+
+          <Tabs defaultValue="timeline" className="mt-4">
+            <TabsList>
+              <TabsTrigger value="timeline">📋 Roteiro Visual</TabsTrigger>
+              <TabsTrigger value="map">🗺️ Mapa</TabsTrigger>
+              <TabsTrigger value="days">📅 Fluxo Diário</TabsTrigger>
+              <TabsTrigger value="hotels">🏨 Hotéis</TabsTrigger>
+              <TabsTrigger value="restaurants">🍽️ Restaurantes</TabsTrigger>
+              <TabsTrigger value="activities">🎯 Passeios</TabsTrigger>
+            </TabsList>
+            <TabsContent value="timeline">
+              <ItineraryTimeline itineraryId={currentId} selectedDayId={selectedDayId} onSelectDay={setSelectedDayId} />
+            </TabsContent>
+            <TabsContent value="map">
+              <ItineraryMapView itineraryId={currentId} selectedDayId={selectedDayId} />
+              {!selectedDayId && <p className="text-xs text-muted-foreground mt-2 text-center">Selecione um dia na aba "Roteiro Visual" para ver no mapa.</p>}
+            </TabsContent>
+            <TabsContent value="days"><ItineraryDaysTab itineraryId={currentId} /></TabsContent>
+            <TabsContent value="hotels"><ItineraryHotelsTab itineraryId={currentId} /></TabsContent>
+            <TabsContent value="restaurants"><ItineraryRestaurantsTab itineraryId={currentId} /></TabsContent>
+            <TabsContent value="activities"><ItineraryActivitiesTab itineraryId={currentId} /></TabsContent>
+          </Tabs>
+        </>
       )}
     </div>
   );
