@@ -22,6 +22,8 @@ let mapsLoaded = false;
 let mapsLoading = false;
 const loadCallbacks: (() => void)[] = [];
 
+const DRIVING_MODES = new Set(["uber", "taxi", "transfer", "carro", "car", "ônibus", "onibus", "bus"]);
+
 function loadGoogleMaps(apiKey: string): Promise<void> {
   if (mapsLoaded) return Promise.resolve();
   return new Promise((resolve) => {
