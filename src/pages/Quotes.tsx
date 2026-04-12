@@ -1022,13 +1022,13 @@ export default function Quotes() {
                         </PopoverContent>
                       </Popover>
                     </div>
-                    <div className="col-span-1 lg:col-span-2 space-y-1">
+                    <div className="space-y-1">
                       <Label className="font-body text-xs">Data Fim</Label>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className={cn("w-full h-9 justify-start text-left text-sm font-normal", !form.travel_date_end && "text-muted-foreground")}>
-                            <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                            {form.travel_date_end ? format(parseISO(form.travel_date_end), "dd/MM/yyyy") : "Selecionar"}
+                          <Button variant="outline" className={cn("w-full h-9 justify-start text-left text-sm font-normal overflow-hidden", !form.travel_date_end && "text-muted-foreground")}>
+                            <CalendarIcon className="mr-2 h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">{form.travel_date_end ? format(parseISO(form.travel_date_end), "dd/MM/yyyy") : "Selecionar"}</span>
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
