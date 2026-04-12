@@ -165,7 +165,7 @@ export default function ItineraryMapView({ itineraryId, selectedDayId, selectedA
       const origin = { lat: geoActivities[i].latitude, lng: geoActivities[i].longitude };
       const dest = { lat: geoActivities[i + 1].latitude, lng: geoActivities[i + 1].longitude };
       const nextAct = geoActivities[i + 1];
-      const mode = (nextAct.transport_mode || "").toLowerCase().trim();
+      const mode = (nextAct.transport_mode || "").toLowerCase().trim().replace(/_/g, " ");
       const useDriving = DRIVING_MODES.has(mode);
       const useWalking = WALKING_MODES.has(mode);
       const isFlying = ["avião", "aviao", "voo", "flight"].includes(mode);
