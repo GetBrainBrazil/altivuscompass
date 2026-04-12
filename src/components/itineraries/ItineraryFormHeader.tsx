@@ -20,8 +20,8 @@ interface FormData {
   client_id: string;
   arrival_datetime: string;
   departure_datetime: string;
-  arrival_airport: string;
-  departure_airport: string;
+  arrival_airport_id: string;
+  departure_airport_id: string;
   traveler_type: string;
   trip_style: string;
   wake_time: string;
@@ -32,6 +32,15 @@ interface FormData {
   quote_id: string;
 }
 
+interface Airport {
+  id: string;
+  iata_code: string;
+  name: string;
+  city: string;
+  state: string | null;
+  country: string;
+}
+
 interface Props {
   form: FormData;
   setForm: (f: FormData) => void;
@@ -39,9 +48,63 @@ interface Props {
   clientOpen: boolean;
   setClientOpen: (v: boolean) => void;
   quotes: any[];
+  airports: Airport[];
 }
 
-export default function ItineraryFormHeader({ form, setForm, quotes }: Props) {
+function AirportCombobox({ value, onChange, airports, label }: { value: string; onChange: (v: string) => void; airports: Airport[]; label: string }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const selected = airports.find(a => a.id === value);
+
+  const filtered = search.length > 0
+    ? airports.filter(a => {
+        const q = search.toLowerCase();
+        return a.iata_code.toLowerCase().includes(q) ||
+          a.name.toLowerCase().includes(q) ||
+          a.city.toLowerCase().includes(q) ||
+          (a.state || "").toLowerCase().includes(q) ||
+          a.country.toLowerCase().includes(q);
+      }).slice(0, 50)
+    : airports.slice(0, 50);
+
+  return (
+    <div>
+      <Label className="text-xs">{label}</Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" role="combobox" className="w-full justify-between font-normal h-8 text-sm">
+            {selected ? `${selected.iata_code} — ${selected.city}` : "Selecione..."}
+            <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[350px] p-0">
+          <Command shouldFilter={false}>
+            <CommandInput placeholder="Buscar por código, nome, cidade..." value={search} onValueChange={setSearch} />
+            <CommandList>
+              <CommandEmpty>Nenhum aeroporto encontrado</CommandEmpty>
+              <CommandGroup>
+                {value && (
+                  <CommandItem onSelect={() => { onChange(""); setOpen(false); setSearch(""); }}>
+                    <Check className={cn("mr-2 h-3 w-3", !value ? "opacity-100" : "opacity-0")} />
+                    Nenhum
+                  </CommandItem>
+                )}
+                {filtered.map(a => (
+                  <CommandItem key={a.id} onSelect={() => { onChange(a.id); setOpen(false); setSearch(""); }}>
+                    <Check className={cn("mr-2 h-3 w-3", value === a.id ? "opacity-100" : "opacity-0")} />
+                    <span className="font-mono font-bold mr-1">{a.iata_code}</span> — {a.name}, {a.city}{a.state ? `, ${a.state}` : ""} ({a.country})
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
+export default function ItineraryFormHeader({ form, setForm, quotes, airports }: Props) {
   const [quoteOpen, setQuoteOpen] = useState(false);
 
   return (
@@ -51,10 +114,7 @@ export default function ItineraryFormHeader({ form, setForm, quotes }: Props) {
         <Label className="text-xs">Título *</Label>
         <Input className="h-8 text-sm" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex: Roteiro França 2026" />
       </div>
-      <div>
-        <Label className="text-xs">Aeroporto Chegada</Label>
-        <Input className="h-8 text-sm" value={form.arrival_airport} onChange={(e) => setForm({ ...form, arrival_airport: e.target.value })} placeholder="Ex: CDG" />
-      </div>
+      <AirportCombobox label="Aeroporto Chegada" value={form.arrival_airport_id} onChange={(v) => setForm({ ...form, arrival_airport_id: v })} airports={airports} />
       <div>
         <Label className="text-xs">Data/Hora Chegada</Label>
         <Input className="h-8 text-sm" type="datetime-local" value={form.arrival_datetime} onChange={(e) => setForm({ ...form, arrival_datetime: e.target.value })} />
@@ -92,10 +152,7 @@ export default function ItineraryFormHeader({ form, setForm, quotes }: Props) {
           </PopoverContent>
         </Popover>
       </div>
-      <div>
-        <Label className="text-xs">Aeroporto Saída</Label>
-        <Input className="h-8 text-sm" value={form.departure_airport} onChange={(e) => setForm({ ...form, departure_airport: e.target.value })} placeholder="Ex: NCE" />
-      </div>
+      <AirportCombobox label="Aeroporto Saída" value={form.departure_airport_id} onChange={(v) => setForm({ ...form, departure_airport_id: v })} airports={airports} />
       <div>
         <Label className="text-xs">Data/Hora Saída</Label>
         <Input className="h-8 text-sm" type="datetime-local" value={form.departure_datetime} onChange={(e) => setForm({ ...form, departure_datetime: e.target.value })} />
