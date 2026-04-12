@@ -38,8 +38,6 @@ const ITEM_TYPES = [
   { id: "experience", label: "Experiências", icon: Sparkles },
   { id: "insurance", label: "Seguros", icon: Shield },
   { id: "other_service", label: "Outros Serviços", icon: Package },
-  { id: "itinerary", label: "Roteiro Dia a Dia", icon: CalendarDays },
-  { id: "map", label: "Mapa", icon: Map },
 ];
 
 type Quote = {
