@@ -23,6 +23,7 @@ let mapsLoading = false;
 const loadCallbacks: (() => void)[] = [];
 
 const DRIVING_MODES = new Set(["uber", "taxi", "transfer", "carro", "car", "ônibus", "onibus", "bus"]);
+const WALKING_MODES = new Set(["a pé", "a pe", "walking", "caminhada", "walk"]);
 
 function loadGoogleMaps(apiKey: string): Promise<void> {
   if (mapsLoaded) return Promise.resolve();
@@ -166,15 +167,16 @@ export default function ItineraryMapView({ itineraryId, selectedDayId, selectedA
       const nextAct = geoActivities[i + 1];
       const mode = (nextAct.transport_mode || "").toLowerCase().trim();
       const useDriving = DRIVING_MODES.has(mode);
+      const useWalking = WALKING_MODES.has(mode);
       const isFlying = ["avião", "aviao", "voo", "flight"].includes(mode);
 
-      if (useDriving) {
+      if (useDriving || useWalking) {
+        const travelMode = useWalking
+          ? window.google.maps.TravelMode.WALKING
+          : window.google.maps.TravelMode.DRIVING;
+        const strokeColor = useWalking ? "#10b981" : "#3b82f6";
         directionsService.route(
-          {
-            origin,
-            destination: dest,
-            travelMode: window.google.maps.TravelMode.DRIVING,
-          },
+          { origin, destination: dest, travelMode },
           (result: any, status: any) => {
             if (status === "OK") {
               const renderer = new window.google.maps.DirectionsRenderer({
@@ -182,16 +184,19 @@ export default function ItineraryMapView({ itineraryId, selectedDayId, selectedA
                 directions: result,
                 suppressMarkers: true,
                 polylineOptions: {
-                  strokeColor: "#3b82f6",
+                  strokeColor,
                   strokeOpacity: 0.8,
-                  strokeWeight: 4,
+                  strokeWeight: useWalking ? 3 : 4,
+                  ...(useWalking ? {
+                    strokePattern: [{ icon: { path: "M 0,-0.5 0,0.5", strokeColor, strokeWeight: 3, scale: 3 }, offset: "0", repeat: "10px" }],
+                  } : {}),
                 },
               });
               directionsRenderersRef.current.push(renderer);
             } else {
               const fallback = new window.google.maps.Polyline({
-                path: [origin, dest], geodesic: true, strokeColor: "#3b82f6", strokeOpacity: 0.7, strokeWeight: 3,
-                icons: [{ icon: { path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 3, strokeColor: "#3b82f6" }, offset: "50%" }],
+                path: [origin, dest], geodesic: true, strokeColor, strokeOpacity: 0.7, strokeWeight: 3,
+                icons: [{ icon: { path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 3, strokeColor }, offset: "50%" }],
               });
               fallback.setMap(mapInstanceRef.current);
               polylinesRef.current.push(fallback);
