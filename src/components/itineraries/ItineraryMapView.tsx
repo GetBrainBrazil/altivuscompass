@@ -51,6 +51,7 @@ export default function ItineraryMapView({ itineraryId, selectedDayId, selectedA
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const polylinesRef = useRef<any[]>([]);
+  const directionsRenderersRef = useRef<any[]>([]);
   const infoWindowsRef = useRef<any[]>([]);
   const activityIdsRef = useRef<string[]>([]);
   const [mapReady, setMapReady] = useState(false);
