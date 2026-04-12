@@ -1042,14 +1042,14 @@ export type Database = {
       itineraries: {
         Row: {
           ai_status: string | null
-          arrival_airport: string | null
+          arrival_airport_id: string | null
           arrival_datetime: string | null
           base_file: string | null
           client_id: string | null
           created_at: string
           created_by: string | null
           defined_hotels: string[] | null
-          departure_airport: string | null
+          departure_airport_id: string | null
           departure_datetime: string | null
           desired_places: string[] | null
           destination: string | null
@@ -1072,14 +1072,14 @@ export type Database = {
         }
         Insert: {
           ai_status?: string | null
-          arrival_airport?: string | null
+          arrival_airport_id?: string | null
           arrival_datetime?: string | null
           base_file?: string | null
           client_id?: string | null
           created_at?: string
           created_by?: string | null
           defined_hotels?: string[] | null
-          departure_airport?: string | null
+          departure_airport_id?: string | null
           departure_datetime?: string | null
           desired_places?: string[] | null
           destination?: string | null
@@ -1102,14 +1102,14 @@ export type Database = {
         }
         Update: {
           ai_status?: string | null
-          arrival_airport?: string | null
+          arrival_airport_id?: string | null
           arrival_datetime?: string | null
           base_file?: string | null
           client_id?: string | null
           created_at?: string
           created_by?: string | null
           defined_hotels?: string[] | null
-          departure_airport?: string | null
+          departure_airport_id?: string | null
           departure_datetime?: string | null
           desired_places?: string[] | null
           destination?: string | null
@@ -1132,10 +1132,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "itineraries_arrival_airport_id_fkey"
+            columns: ["arrival_airport_id"]
+            isOneToOne: false
+            referencedRelation: "airports"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "itineraries_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "itineraries_departure_airport_id_fkey"
+            columns: ["departure_airport_id"]
+            isOneToOne: false
+            referencedRelation: "airports"
             referencedColumns: ["id"]
           },
           {
