@@ -5,12 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Trash2, MapPin, Clock, Car, Train, Ship, Plane, Footprints, Bus } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useEffect, useRef } from "react";
 
 interface Props {
   itineraryId: string;
   selectedDayId: string | null;
   onSelectDay: (id: string | null) => void;
   readOnly?: boolean;
+  selectedActivityId?: string | null;
+  onSelectActivity?: (id: string | null) => void;
 }
 
 const TRANSPORT_ICONS: Record<string, any> = {
@@ -40,8 +43,9 @@ const TYPE_LABELS: Record<string, string> = {
   nature: "Natureza", cultural: "Cultural",
 };
 
-export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelectDay, readOnly }: Props) {
+export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelectDay, readOnly, selectedActivityId, onSelectActivity }: Props) {
   const queryClient = useQueryClient();
+  const activityRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const { data: days = [] } = useQuery({
     queryKey: ["itinerary-days", itineraryId],
@@ -70,6 +74,20 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
     },
     enabled: !!selectedDayId,
   });
+
+  // Auto-select first day
+  useEffect(() => {
+    if (!selectedDayId && days.length > 0) {
+      onSelectDay(days[0].id);
+    }
+  }, [days, selectedDayId, onSelectDay]);
+
+  // Scroll to selected activity
+  useEffect(() => {
+    if (selectedActivityId && activityRefs.current[selectedActivityId]) {
+      activityRefs.current[selectedActivityId]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [selectedActivityId]);
 
   const deleteActivity = async (id: string) => {
     await supabase.from("itinerary_day_activities").delete().eq("id", id);
@@ -102,6 +120,7 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
         <div className="space-y-1">
           {activities.map((act: any, i: number) => {
             const TransportIcon = act.transport_mode ? TRANSPORT_ICONS[act.transport_mode] || Car : null;
+            const isSelected = selectedActivityId === act.id;
 
             return (
               <div key={act.id}>
@@ -123,7 +142,13 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
                 )}
 
                 {/* Activity card */}
-                <div className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:shadow-sm transition-shadow">
+                <div
+                  ref={(el) => { activityRefs.current[act.id] = el; }}
+                  className={`flex items-start gap-3 p-3 rounded-lg border bg-card hover:shadow-sm transition-all cursor-pointer ${
+                    isSelected ? "ring-2 ring-primary border-primary shadow-md" : ""
+                  }`}
+                  onClick={() => onSelectActivity?.(isSelected ? null : act.id)}
+                >
                   <div className="flex flex-col items-center min-w-[50px] text-center">
                     {act.start_time && (
                       <span className="text-sm font-semibold text-foreground">{act.start_time.slice(0,5)}</span>
@@ -156,7 +181,7 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
                   </div>
 
                   {!readOnly && (
-                    <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => deleteActivity(act.id)}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={(e) => { e.stopPropagation(); deleteActivity(act.id); }}>
                       <Trash2 className="h-3 w-3 text-destructive" />
                     </Button>
                   )}

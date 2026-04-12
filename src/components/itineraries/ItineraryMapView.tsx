@@ -6,6 +6,9 @@ import { Loader2 } from "lucide-react";
 interface Props {
   itineraryId: string;
   selectedDayId: string | null;
+  selectedActivityId?: string | null;
+  onSelectActivity?: (id: string | null) => void;
+  height?: string;
 }
 
 declare global {
@@ -41,11 +44,13 @@ const TYPE_MARKERS: Record<string, string> = {
   shopping: "🛍️", entertainment: "🎭", nature: "🌿", cultural: "🎨",
 };
 
-export default function ItineraryMapView({ itineraryId, selectedDayId }: Props) {
+export default function ItineraryMapView({ itineraryId, selectedDayId, selectedActivityId, onSelectActivity, height = "h-[400px]" }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const polylinesRef = useRef<any[]>([]);
+  const infoWindowsRef = useRef<any[]>([]);
+  const activityIdsRef = useRef<string[]>([]);
   const [mapReady, setMapReady] = useState(false);
   const [loading, setLoading] = useState(true);
   const [noKey, setNoKey] = useState(false);
@@ -94,6 +99,8 @@ export default function ItineraryMapView({ itineraryId, selectedDayId }: Props) 
     markersRef.current = [];
     polylinesRef.current.forEach((p) => p.setMap(null));
     polylinesRef.current = [];
+    infoWindowsRef.current = [];
+    activityIdsRef.current = [];
 
     const geoActivities = activities.filter((a: any) => a.latitude && a.longitude);
     if (geoActivities.length === 0) return;
@@ -105,6 +112,7 @@ export default function ItineraryMapView({ itineraryId, selectedDayId }: Props) 
       const pos = { lat: act.latitude, lng: act.longitude };
       bounds.extend(pos);
       path.push(pos);
+      activityIdsRef.current.push(act.id);
 
       const marker = new window.google.maps.Marker({
         position: pos, map: mapInstanceRef.current,
@@ -128,8 +136,16 @@ export default function ItineraryMapView({ itineraryId, selectedDayId }: Props) 
           ${transportInfo}
         </div>`,
       });
-      marker.addListener("click", () => infoWindow.open(mapInstanceRef.current, marker));
+
+      marker.addListener("click", () => {
+        // Close all other info windows
+        infoWindowsRef.current.forEach((iw) => iw.close());
+        infoWindow.open(mapInstanceRef.current, marker);
+        onSelectActivity?.(act.id);
+      });
+
       markersRef.current.push(marker);
+      infoWindowsRef.current.push(infoWindow);
     });
 
     if (path.length > 1) {
@@ -145,22 +161,50 @@ export default function ItineraryMapView({ itineraryId, selectedDayId }: Props) 
     if (geoActivities.length === 1) mapInstanceRef.current.setZoom(15);
   }, [activities, mapReady]);
 
+  // Highlight selected activity on map
+  useEffect(() => {
+    if (!mapReady || !mapInstanceRef.current) return;
+    const idx = activityIdsRef.current.indexOf(selectedActivityId || "");
+    if (idx === -1) {
+      // Close all info windows if nothing selected
+      infoWindowsRef.current.forEach((iw) => iw.close());
+      // Reset all markers to default
+      markersRef.current.forEach((m, i) => {
+        m.setAnimation(null);
+      });
+      return;
+    }
+
+    // Close all, then open selected
+    infoWindowsRef.current.forEach((iw) => iw.close());
+    markersRef.current.forEach((m) => m.setAnimation(null));
+    
+    const marker = markersRef.current[idx];
+    const infoWindow = infoWindowsRef.current[idx];
+    if (marker && infoWindow) {
+      infoWindow.open(mapInstanceRef.current, marker);
+      marker.setAnimation(window.google.maps.Animation.BOUNCE);
+      setTimeout(() => marker.setAnimation(null), 1400);
+      mapInstanceRef.current.panTo(marker.getPosition());
+    }
+  }, [selectedActivityId, mapReady]);
+
   if (noKey) {
     return (
-      <div className="h-[400px] bg-muted/30 rounded-lg flex items-center justify-center text-muted-foreground text-sm">
+      <div className={`${height} bg-muted/30 rounded-lg flex items-center justify-center text-muted-foreground text-sm`}>
         Mapa indisponível — chave do Google Maps não configurada
       </div>
     );
   }
 
   return (
-    <div className="relative rounded-lg overflow-hidden border">
+    <div className="relative rounded-lg overflow-hidden border h-full">
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted/50 z-10">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       )}
-      <div ref={mapRef} className="h-[400px] w-full" />
+      <div ref={mapRef} className={`${height} w-full`} />
     </div>
   );
 }
