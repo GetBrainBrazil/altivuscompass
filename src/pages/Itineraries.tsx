@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Search, Pencil, Trash2, Eye, ArrowUpDown } from "lucide-react";
+import { Plus, Search, ArrowUpDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -109,17 +109,16 @@ export default function Itineraries() {
               <TableHead className="cursor-pointer" onClick={() => toggleSort("created_at")}>
                 Criado em <ArrowUpDown className="inline h-3 w-3 ml-1" />
               </TableHead>
-              <TableHead className="w-[100px]">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
             ) : filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhum roteiro encontrado</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum roteiro encontrado</TableCell></TableRow>
             ) : (
               filtered.map((item: any) => (
-                <TableRow key={item.id}>
+                <TableRow key={item.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleEdit(item.id)}>
                   <TableCell className="font-medium">{item.title}</TableCell>
                   <TableCell>{item.destination}</TableCell>
                   <TableCell>{item.clients?.full_name ?? "—"}</TableCell>
@@ -130,16 +129,6 @@ export default function Itineraries() {
                   </TableCell>
                   <TableCell>{item.traveler_profile ?? "—"}</TableCell>
                   <TableCell>{format(new Date(item.created_at), "dd/MM/yyyy", { locale: ptBR })}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(item.id)} title="Editar">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => setDeleteId(item.id)} title="Excluir">
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -152,7 +141,7 @@ export default function Itineraries() {
           <DialogHeader>
             <DialogTitle>{editingId ? "Editar Roteiro" : "Novo Roteiro"}</DialogTitle>
           </DialogHeader>
-          <ItineraryForm itineraryId={editingId} onClose={handleClose} />
+          <ItineraryForm itineraryId={editingId} onClose={handleClose} onDelete={editingId ? () => { setDialogOpen(false); setDeleteId(editingId); } : undefined} />
         </DialogContent>
       </Dialog>
 
