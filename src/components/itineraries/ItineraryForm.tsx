@@ -15,6 +15,7 @@ import ItineraryDaysTab from "./ItineraryDaysTab";
 import ItineraryHotelsTab from "./ItineraryHotelsTab";
 import ItineraryRestaurantsTab from "./ItineraryRestaurantsTab";
 import ItineraryActivitiesTab from "./ItineraryActivitiesTab";
+import { useFormPersistence } from "@/hooks/useFormPersistence";
 
 interface Props {
   itineraryId: string | null;
