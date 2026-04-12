@@ -126,7 +126,7 @@ export default function ItineraryFormHeader({ form, setForm, quotes, airports }:
   return (
     <div className="space-y-2 min-w-0">
       {/* Linha 1: Título | Aeroporto Chegada | Data/Hora Chegada */}
-      <div className="grid grid-cols-[1.5fr_1.2fr_auto] gap-3 items-end">
+      <div className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end">
         <div>
           <Label className="text-xs">Título *</Label>
           <Input className="h-8 text-sm" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex: Roteiro França 2026" />
@@ -139,7 +139,7 @@ export default function ItineraryFormHeader({ form, setForm, quotes, airports }:
       </div>
 
       {/* Linha 2: Cotação | Aeroporto Saída | Data/Hora Saída */}
-      <div className="grid grid-cols-[1.5fr_1.2fr_auto] gap-3 items-end">
+      <div className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end">
         <div>
           <Label className="text-xs">Cotação</Label>
           <Popover open={quoteOpen} onOpenChange={setQuoteOpen}>
