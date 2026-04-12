@@ -98,12 +98,23 @@ Ajuste o roteiro conforme solicitado mantendo a mesma estrutura JSON.`;
       const arrivalDate = itinerary.arrival_datetime ? new Date(itinerary.arrival_datetime) : null;
       const departureDate = itinerary.departure_datetime ? new Date(itinerary.departure_datetime) : null;
 
+      let arrivalAirportLabel = "Não especificado";
+      let departureAirportLabel = "Não especificado";
+      if (itinerary.arrival_airport_id) {
+        const { data: ap } = await supabase.from("airports").select("iata_code, name, city").eq("id", itinerary.arrival_airport_id).single();
+        if (ap) arrivalAirportLabel = `${ap.iata_code} — ${ap.name}, ${ap.city}`;
+      }
+      if (itinerary.departure_airport_id) {
+        const { data: ap } = await supabase.from("airports").select("iata_code, name, city").eq("id", itinerary.departure_airport_id).single();
+        if (ap) departureAirportLabel = `${ap.iata_code} — ${ap.name}, ${ap.city}`;
+      }
+
       userPrompt = `CRIE UM ROTEIRO COMPLETO:
 
 CHEGADA: ${arrivalDate ? arrivalDate.toISOString() : "Não especificado"}
-AEROPORTO CHEGADA: ${itinerary.arrival_airport || "Não especificado"}
+AEROPORTO CHEGADA: ${arrivalAirportLabel}
 SAÍDA: ${departureDate ? departureDate.toISOString() : "Não especificado"}
-AEROPORTO SAÍDA: ${itinerary.departure_airport || "Não especificado"}
+AEROPORTO SAÍDA: ${departureAirportLabel}
 
 HORÁRIO ACORDAR: ${itinerary.wake_time || "08:00"}
 HORÁRIO DORMIR: ${itinerary.sleep_time || "22:00"}
