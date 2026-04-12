@@ -59,7 +59,7 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
   const { data: quotes = [] } = useQuery({
     queryKey: ["quotes-list"],
     queryFn: async () => {
-      const { data } = await supabase.from("quotes").select("id, title, destination, clients(full_name)").order("created_at", { ascending: false });
+      const { data } = await supabase.from("quotes").select("id, title, destination, travel_date_start, travel_date_end, price_breakdown, clients(full_name)").order("created_at", { ascending: false });
       return data || [];
     },
   });
