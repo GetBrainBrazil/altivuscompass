@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Copy, ExternalLink } from "lucide-react";
+import { Copy, ExternalLink, Trash2 } from "lucide-react";
 import ItineraryFormHeader from "./ItineraryFormHeader";
 import ItineraryAIPanel from "./ItineraryAIPanel";
 import ItineraryTimeline from "./ItineraryTimeline";
@@ -168,6 +168,11 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
         <div className="flex gap-2">
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : currentId ? "Salvar Alterações" : "Criar Roteiro"}</Button>
+          {onDelete && (
+            <Button variant="destructive" onClick={onDelete} className="gap-1">
+              <Trash2 className="h-4 w-4" /> Excluir
+            </Button>
+          )}
         </div>
 
         {currentId && publicUrl && (
