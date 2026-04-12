@@ -107,6 +107,8 @@ export default function ItineraryMapView({ itineraryId, selectedDayId, selectedA
     markersRef.current = [];
     polylinesRef.current.forEach((p) => p.setMap(null));
     polylinesRef.current = [];
+    directionsRenderersRef.current.forEach((r) => r.setMap(null));
+    directionsRenderersRef.current = [];
     infoWindowsRef.current = [];
     activityIdsRef.current = [];
 
