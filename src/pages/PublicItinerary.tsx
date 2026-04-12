@@ -11,6 +11,7 @@ import { Calendar, Plane } from "lucide-react";
 
 export default function PublicItinerary() {
   const { token } = useParams<{ token: string }>();
+  const isMobile = useIsMobile();
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
 
