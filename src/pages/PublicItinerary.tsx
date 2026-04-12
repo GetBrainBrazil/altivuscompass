@@ -18,7 +18,7 @@ export default function PublicItinerary() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("itineraries")
-        .select("*, clients(full_name)")
+        .select("*, clients(full_name), arrival_airport:airports!itineraries_arrival_airport_id_fkey(iata_code, name, city), departure_airport:airports!itineraries_departure_airport_id_fkey(iata_code, name, city)")
         .eq("public_token", token)
         .single();
       if (error) throw error;
@@ -67,8 +67,8 @@ export default function PublicItinerary() {
             {itinerary.traveler_type && (
               <div className="flex items-center gap-1"><Users className="h-4 w-4" />{itinerary.traveler_type}</div>
             )}
-            {itinerary.arrival_airport_id && (
-              <div className="flex items-center gap-1"><Plane className="h-4 w-4" />Aeroporto vinculado</div>
+            {itinerary.arrival_airport && (
+              <div className="flex items-center gap-1"><Plane className="h-4 w-4" />{(itinerary.arrival_airport as any).iata_code} — {(itinerary.arrival_airport as any).city}</div>
             )}
           </div>
         </div>
