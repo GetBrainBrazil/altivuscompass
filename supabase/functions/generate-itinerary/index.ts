@@ -51,9 +51,15 @@ REGRAS CRÍTICAS:
 9. CADA ATIVIDADE DEVE REPRESENTAR UM ÚNICO LOCAL FÍSICO. Nunca combine dois locais em uma mesma atividade. Ex: se o viajante chega no aeroporto CDG às 10:30 e pega voo para Nice chegando às 14:30, crie DUAS atividades separadas: uma para CDG (chegada 10:30, saída quando embarca) e outra para o aeroporto de Nice (chegada 14:30), com o transporte (avião) como conector entre elas.
 10. Os campos de transporte descrevem como o viajante CHEGOU naquele local (vindo do anterior). A primeira atividade do dia não precisa de transporte.`;
 
+    const structuralRules = `
+
+REGRAS ESTRUTURAIS OBRIGATÓRIAS (sempre aplicar):
+- CADA ATIVIDADE DEVE REPRESENTAR UM ÚNICO LOCAL FÍSICO. Nunca combine dois locais em uma mesma atividade. Ex: se o viajante chega no aeroporto CDG às 10:30 e pega voo para Nice chegando às 14:30, crie DUAS atividades separadas: uma para CDG (chegada 10:30, saída quando embarca) e outra para o aeroporto de Nice (chegada 14:30), com o transporte (avião) como conector entre elas.
+- Os campos de transporte (transport_mode, transport_departure_time, transport_arrival_time, etc.) descrevem como o viajante CHEGOU naquele local (vindo do local anterior). A primeira atividade do dia não precisa de transporte.`;
+
     const userRules = custom_prompt || defaultPromptRules;
 
-    const systemPrompt = `${userRules}
+    const systemPrompt = `${userRules}${structuralRules}
 
 RESPONDA SEMPRE em JSON válido com a seguinte estrutura:
 {
