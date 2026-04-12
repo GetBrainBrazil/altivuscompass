@@ -1013,8 +1013,8 @@ export default function Quotes() {
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button variant="outline" className={cn("w-full h-9 justify-start text-left text-sm font-normal overflow-hidden", !form.travel_date_start && "text-muted-foreground")}>
-                            <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                            {form.travel_date_start ? format(parseISO(form.travel_date_start), "dd/MM/yyyy") : "Selecionar"}
+                            <CalendarIcon className="mr-2 h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">{form.travel_date_start ? format(parseISO(form.travel_date_start), "dd/MM/yyyy") : "Selecionar"}</span>
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
