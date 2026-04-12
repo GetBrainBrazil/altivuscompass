@@ -37,14 +37,8 @@ function loadGoogleMaps(apiKey: string): Promise<void> {
 }
 
 const TYPE_MARKERS: Record<string, string> = {
-  attraction: "🏛️",
-  restaurant: "🍽️",
-  hotel: "🏨",
-  transport_hub: "🚉",
-  shopping: "🛍️",
-  entertainment: "🎭",
-  nature: "🌿",
-  cultural: "🎨",
+  attraction: "🏛️", restaurant: "🍽️", hotel: "🏨", transport_hub: "🚉",
+  shopping: "🛍️", entertainment: "🎭", nature: "🌿", cultural: "🎨",
 };
 
 export default function ItineraryMapView({ itineraryId, selectedDayId }: Props) {
@@ -54,6 +48,7 @@ export default function ItineraryMapView({ itineraryId, selectedDayId }: Props) 
   const polylinesRef = useRef<any[]>([]);
   const [mapReady, setMapReady] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [noKey, setNoKey] = useState(false);
 
   const { data: activities = [] } = useQuery({
     queryKey: ["itinerary-day-activities", selectedDayId],
@@ -70,33 +65,31 @@ export default function ItineraryMapView({ itineraryId, selectedDayId }: Props) 
     enabled: !!selectedDayId,
   });
 
-  // Load Google Maps
+  // Load Google Maps via edge function key
   useEffect(() => {
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-    if (!apiKey) {
-      setLoading(false);
-      return;
-    }
-    loadGoogleMaps(apiKey).then(() => {
-      if (mapRef.current && !mapInstanceRef.current) {
-        mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
-          zoom: 12,
-          center: { lat: 0, lng: 0 },
-          mapTypeControl: false,
-          streetViewControl: false,
-          fullscreenControl: true,
-        });
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke("get-maps-key");
+        const apiKey = data?.key;
+        if (!apiKey) { setNoKey(true); setLoading(false); return; }
+        await loadGoogleMaps(apiKey);
+        if (mapRef.current && !mapInstanceRef.current) {
+          mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
+            zoom: 12, center: { lat: 0, lng: 0 },
+            mapTypeControl: false, streetViewControl: false, fullscreenControl: true,
+          });
+        }
+        setMapReady(true);
+      } catch {
+        setNoKey(true);
       }
-      setMapReady(true);
       setLoading(false);
-    });
+    })();
   }, []);
 
-  // Update markers when activities change
+  // Update markers
   useEffect(() => {
     if (!mapReady || !mapInstanceRef.current) return;
-
-    // Clear old markers and polylines
     markersRef.current.forEach((m) => m.setMap(null));
     markersRef.current = [];
     polylinesRef.current.forEach((p) => p.setMap(null));
@@ -114,14 +107,8 @@ export default function ItineraryMapView({ itineraryId, selectedDayId }: Props) 
       path.push(pos);
 
       const marker = new window.google.maps.Marker({
-        position: pos,
-        map: mapInstanceRef.current,
-        label: {
-          text: String(i + 1),
-          color: "white",
-          fontWeight: "bold",
-          fontSize: "12px",
-        },
+        position: pos, map: mapInstanceRef.current,
+        label: { text: String(i + 1), color: "white", fontWeight: "bold", fontSize: "12px" },
         title: act.activity_name,
       });
 
@@ -130,8 +117,7 @@ export default function ItineraryMapView({ itineraryId, selectedDayId }: Props) 
         ? `<div style="margin-top:4px;padding:4px 8px;background:#f3f4f6;border-radius:4px;font-size:11px">
             🚗 ${act.transport_mode} · ${act.transport_duration_min || "?"}min
             ${act.transport_cost_estimate ? ` · ${act.transport_currency || "BRL"} ${Number(act.transport_cost_estimate).toFixed(2)}` : ""}
-          </div>`
-        : "";
+          </div>` : "";
 
       const infoWindow = new window.google.maps.InfoWindow({
         content: `<div style="max-width:250px">
@@ -142,19 +128,13 @@ export default function ItineraryMapView({ itineraryId, selectedDayId }: Props) 
           ${transportInfo}
         </div>`,
       });
-
       marker.addListener("click", () => infoWindow.open(mapInstanceRef.current, marker));
       markersRef.current.push(marker);
     });
 
-    // Draw path
     if (path.length > 1) {
       const polyline = new window.google.maps.Polyline({
-        path,
-        geodesic: true,
-        strokeColor: "#3b82f6",
-        strokeOpacity: 0.7,
-        strokeWeight: 3,
+        path, geodesic: true, strokeColor: "#3b82f6", strokeOpacity: 0.7, strokeWeight: 3,
         icons: [{ icon: { path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 3, strokeColor: "#3b82f6" }, offset: "50%" }],
       });
       polyline.setMap(mapInstanceRef.current);
@@ -165,10 +145,10 @@ export default function ItineraryMapView({ itineraryId, selectedDayId }: Props) 
     if (geoActivities.length === 1) mapInstanceRef.current.setZoom(15);
   }, [activities, mapReady]);
 
-  if (!import.meta.env.VITE_GOOGLE_MAPS_API_KEY) {
+  if (noKey) {
     return (
       <div className="h-[400px] bg-muted/30 rounded-lg flex items-center justify-center text-muted-foreground text-sm">
-        Configure VITE_GOOGLE_MAPS_API_KEY para visualizar o mapa
+        Mapa indisponível — chave do Google Maps não configurada
       </div>
     );
   }
