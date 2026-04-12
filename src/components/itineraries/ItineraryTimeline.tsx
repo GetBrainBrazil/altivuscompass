@@ -53,6 +53,7 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
   const [activityPhotos, setActivityPhotos] = useState<Record<string, string>>({});
   const placesServiceRef = useRef<any>(null);
   const photoCacheRef = useRef<Record<string, string>>({});
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   const { data: days = [] } = useQuery({
     queryKey: ["itinerary-days", itineraryId],
@@ -137,7 +138,7 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
                 { query: act.activity_name, fields: ["photos"] },
                 (results: any, status: any) => {
                   if (status === "OK" && results?.[0]?.photos?.[0]) {
-                    const url = results[0].photos[0].getUrl({ maxWidth: 120, maxHeight: 90 });
+                    const url = results[0].photos[0].getUrl({ maxWidth: 800, maxHeight: 600 });
                     photos[act.activity_name] = url;
                     photoCacheRef.current[act.activity_name] = url;
                   }
@@ -233,7 +234,10 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
 
                   {/* Thumbnail */}
                   {PHOTO_TYPES.includes(act.activity_type) && activityPhotos[act.activity_name] && (
-                    <div className="w-14 h-14 rounded-md overflow-hidden flex-shrink-0 bg-muted">
+                    <div
+                      className="w-14 h-14 rounded-md overflow-hidden flex-shrink-0 bg-muted cursor-zoom-in"
+                      onClick={(e) => { e.stopPropagation(); setLightboxUrl(activityPhotos[act.activity_name]); }}
+                    >
                       <img src={activityPhotos[act.activity_name]} alt="" className="w-full h-full object-cover" />
                     </div>
                   )}
@@ -327,6 +331,16 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
           open={!!editingActivity}
           onOpenChange={(open) => { if (!open) setEditingActivity(null); }}
         />
+      )}
+
+      {/* Photo lightbox */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 cursor-zoom-out"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <img src={lightboxUrl} alt="" className="max-w-[90vw] max-h-[85vh] rounded-lg shadow-2xl object-contain" />
+        </div>
       )}
     </div>
   );
