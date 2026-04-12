@@ -137,9 +137,9 @@ export default function Itineraries() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingId ? "Editar Roteiro" : "Novo Roteiro"}</DialogTitle>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-4">
+          <DialogHeader className="pb-0">
+            <DialogTitle className="text-base">{editingId ? "Editar Roteiro" : "Novo Roteiro"}</DialogTitle>
           </DialogHeader>
           <ItineraryForm itineraryId={editingId} onClose={handleClose} onDelete={editingId ? () => { setDialogOpen(false); setDeleteId(editingId); } : undefined} />
         </DialogContent>
