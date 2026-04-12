@@ -124,7 +124,7 @@ export default function ItineraryFormHeader({ form, setForm, quotes, airports }:
   const [quoteOpen, setQuoteOpen] = useState(false);
 
   return (
-    <div className="grid grid-cols-[2fr_1fr_1fr] gap-x-3 gap-y-2">
+    <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr] gap-x-3 gap-y-2 min-w-0">
       {/* Linha 1 */}
       <div>
         <Label className="text-xs">Título *</Label>
@@ -175,7 +175,7 @@ export default function ItineraryFormHeader({ form, setForm, quotes, airports }:
       </div>
 
       {/* Descritivo */}
-      <div className="col-span-3">
+      <div className="col-span-1 sm:col-span-3">
         <Label className="text-xs">Pontos de Interesse</Label>
         <Textarea
           className="text-sm"
