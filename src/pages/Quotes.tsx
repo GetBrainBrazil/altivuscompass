@@ -962,6 +962,11 @@ export default function Quotes() {
                   </TabsTrigger>
                 );
               })}
+              <TabsTrigger value="roteiro" className="flex items-center gap-1 text-[11px] px-2 py-1">
+                <CalendarDays className="w-3 h-3" />
+                Roteiro
+                {linkedItinerary && <Badge variant="secondary" className="text-[9px] h-3.5 px-1 ml-0.5">1</Badge>}
+              </TabsTrigger>
               {editingQuote && (
                 <TabsTrigger value="history" className="flex items-center gap-1 text-[11px] px-2 py-1 bg-primary/15 text-primary border border-primary/30 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary">
                   <History className="w-3 h-3" />
