@@ -219,8 +219,13 @@ export default function ItineraryMapView({ itineraryId, selectedDayId, selectedA
       }
     }
 
-    mapInstanceRef.current.fitBounds(bounds);
-    if (geoActivities.length === 1) mapInstanceRef.current.setZoom(15);
+    if (!bounds.isEmpty()) {
+      mapInstanceRef.current.fitBounds(bounds);
+      if (geoActivities.length === 1) mapInstanceRef.current.setZoom(15);
+    } else if (geoActivities.length > 0) {
+      mapInstanceRef.current.setCenter({ lat: geoActivities[0].latitude, lng: geoActivities[0].longitude });
+      mapInstanceRef.current.setZoom(12);
+    }
   }, [activities, mapReady]);
 
   // Highlight selected activity on map
