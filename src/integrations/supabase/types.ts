@@ -17,6 +17,7 @@ export type Database = {
       agency_settings: {
         Row: {
           address: string | null
+          ai_prompt: string | null
           cnpj: string | null
           created_at: string
           email: string | null
@@ -30,6 +31,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          ai_prompt?: string | null
           cnpj?: string | null
           created_at?: string
           email?: string | null
@@ -43,6 +45,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          ai_prompt?: string | null
           cnpj?: string | null
           created_at?: string
           email?: string | null
