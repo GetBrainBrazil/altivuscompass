@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import ItineraryDaysTab from "./ItineraryDaysTab";
 import ItineraryHotelsTab from "./ItineraryHotelsTab";
 import ItineraryRestaurantsTab from "./ItineraryRestaurantsTab";
 import ItineraryActivitiesTab from "./ItineraryActivitiesTab";
+import { useFormPersistence } from "@/hooks/useFormPersistence";
 
 interface Props {
   itineraryId: string | null;
@@ -42,6 +43,10 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
 
   const [publicEditable, setPublicEditable] = useState(false);
   const [publicToken, setPublicToken] = useState<string | null>(null);
+
+  const persistenceKey = `itinerary-${currentId || "new"}`;
+  const setFormCallback = useCallback((data: typeof form) => setForm(data), []);
+  const { clearPersistence } = useFormPersistence(persistenceKey, form, setFormCallback);
 
   const { data: clients = [] } = useQuery({
     queryKey: ["clients-list"],
@@ -145,6 +150,7 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
         const { error } = await supabase.from("itineraries").update(payload).eq("id", currentId);
         if (error) throw error;
         toast({ title: "Roteiro atualizado" });
+        clearPersistence();
       } else {
         const token = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
         payload.public_token = token;
@@ -153,6 +159,7 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
         setCurrentId(data.id);
         setPublicToken(token);
         toast({ title: "Roteiro criado! Use a IA para gerar o fluxo diário." });
+        clearPersistence();
       }
       queryClient.invalidateQueries({ queryKey: ["itineraries"] });
       queryClient.invalidateQueries({ queryKey: ["itinerary", currentId] });

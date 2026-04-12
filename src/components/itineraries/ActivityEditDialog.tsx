@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
+import { useFormPersistence } from "@/hooks/useFormPersistence";
 
 interface Props {
   activity: any;
@@ -63,6 +64,10 @@ export default function ActivityEditDialog({ activity, dayId, open, onOpenChange
     transport_currency: "EUR",
     transport_notes: "",
   });
+
+  const persistKey = `activity-edit-${activity?.id || "new"}`;
+  const setFormCallback = useCallback((data: typeof form) => setForm(data), []);
+  const { clearPersistence } = useFormPersistence(persistKey, form, setFormCallback, open);
 
   useEffect(() => {
     if (activity) {
@@ -166,6 +171,7 @@ export default function ActivityEditDialog({ activity, dayId, open, onOpenChange
 
       queryClient.invalidateQueries({ queryKey: ["itinerary-day-activities", dayId] });
       toast({ title: "Atividade atualizada" });
+      clearPersistence();
       onOpenChange(false);
     } catch (err: any) {
       toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
