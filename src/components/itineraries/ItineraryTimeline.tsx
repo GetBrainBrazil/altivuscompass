@@ -168,18 +168,12 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
                   }`}
                   onClick={() => onSelectActivity?.(isSelected ? null : act.id)}
                 >
-                  <div className="flex flex-col items-center min-w-[56px] text-center gap-0.5">
+                  <div className="flex flex-col items-center min-w-[50px] text-center">
                     {act.start_time && (
-                      <div className="flex flex-col items-center">
-                        <span className="text-[9px] uppercase text-muted-foreground leading-none">Cheg.</span>
-                        <span className="text-sm font-semibold text-foreground">{act.start_time.slice(0,5)}</span>
-                      </div>
+                      <span className="text-sm font-semibold text-foreground">{act.start_time.slice(0,5)}</span>
                     )}
                     {act.end_time && (
-                      <div className="flex flex-col items-center">
-                        <span className="text-[9px] uppercase text-muted-foreground leading-none">Saída</span>
-                        <span className="text-xs text-muted-foreground">{act.end_time.slice(0,5)}</span>
-                      </div>
+                      <span className="text-xs text-muted-foreground">{act.end_time.slice(0,5)}</span>
                     )}
                   </div>
 
