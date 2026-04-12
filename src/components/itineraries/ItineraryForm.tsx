@@ -44,6 +44,10 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
   const [publicEditable, setPublicEditable] = useState(false);
   const [publicToken, setPublicToken] = useState<string | null>(null);
 
+  const persistenceKey = `itinerary-${currentId || "new"}`;
+  const setFormCallback = useCallback((data: typeof form) => setForm(data), []);
+  const { clearPersistence } = useFormPersistence(persistenceKey, form, setFormCallback, !itineraryId || !itinerary);
+
   const { data: clients = [] } = useQuery({
     queryKey: ["clients-list"],
     queryFn: async () => {
