@@ -998,8 +998,8 @@ export default function Quotes() {
               </div>
 
               {/* Row 2: Datas / Data Flexível */}
-              <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-3 items-start">
-                <div className="col-span-1 lg:col-span-1 space-y-1">
+              <div className="grid grid-cols-[auto_1fr_1fr] lg:grid-cols-[auto_minmax(130px,1fr)_minmax(130px,1fr)] gap-x-3 gap-y-3 items-start">
+                <div className="space-y-1">
                   <Label className="font-body text-xs whitespace-nowrap">Flexível</Label>
                   <div className="flex items-center h-9">
                     <Switch checked={!!form.flexible_dates} onCheckedChange={(v) => setForm({ ...form, flexible_dates: v, ...(v ? { travel_date_start: "", travel_date_end: "" } : {}) })} />
@@ -1008,11 +1008,11 @@ export default function Quotes() {
 
                 {!form.flexible_dates ? (
                   <>
-                    <div className="col-span-1 lg:col-span-2 space-y-1">
+                    <div className="space-y-1">
                       <Label className="font-body text-xs">Data Início</Label>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className={cn("w-full h-9 justify-start text-left text-sm font-normal", !form.travel_date_start && "text-muted-foreground")}>
+                          <Button variant="outline" className={cn("w-full h-9 justify-start text-left text-sm font-normal overflow-hidden", !form.travel_date_start && "text-muted-foreground")}>
                             <CalendarIcon className="mr-2 h-3.5 w-3.5" />
                             {form.travel_date_start ? format(parseISO(form.travel_date_start), "dd/MM/yyyy") : "Selecionar"}
                           </Button>
