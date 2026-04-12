@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const { itinerary_id, mode, chat_message } = await req.json();
+    const { itinerary_id, mode, chat_message, custom_prompt } = await req.json();
     if (!itinerary_id) {
       return new Response(JSON.stringify({ error: "itinerary_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
 
     await supabase.from("itineraries").update({ ai_status: "generating" }).eq("id", itinerary_id);
 
-    const systemPrompt = `Você é um especialista em planejamento de viagens para a agência Altivus Turismo.
+    const defaultPromptRules = `Você é um especialista em planejamento de viagens para a agência Altivus Turismo.
 Sua tarefa é criar roteiros detalhados dia a dia com horários precisos.
 
 REGRAS CRÍTICAS:
@@ -47,7 +47,11 @@ REGRAS CRÍTICAS:
 5. Considere horários de funcionamento reais dos locais
 6. Respeite os horários de acordar e dormir do viajante
 7. Organize a rota para minimizar deslocamentos desnecessários
-8. Use as informações do descritivo da viagem para entender cidades, pontos de interesse, hotéis e preferências
+8. Use as informações do descritivo da viagem para entender cidades, pontos de interesse, hotéis e preferências`;
+
+    const userRules = custom_prompt || defaultPromptRules;
+
+    const systemPrompt = `${userRules}
 
 RESPONDA SEMPRE em JSON válido com a seguinte estrutura:
 {
