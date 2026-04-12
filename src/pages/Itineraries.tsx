@@ -26,7 +26,7 @@ export default function Itineraries() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("itineraries")
-        .select("*, clients(full_name)")
+        .select("*, clients(full_name), quotes(title)")
         .order(sortField, { ascending: sortDir === "asc" });
       if (error) throw error;
       return data;
@@ -102,10 +102,10 @@ export default function Itineraries() {
                 Destino <ArrowUpDown className="inline h-3 w-3 ml-1" />
               </TableHead>
               <TableHead>Cliente</TableHead>
-              <TableHead className="cursor-pointer" onClick={() => toggleSort("travel_date_start")}>
+              <TableHead className="cursor-pointer" onClick={() => toggleSort("arrival_datetime")}>
                 Período <ArrowUpDown className="inline h-3 w-3 ml-1" />
               </TableHead>
-              <TableHead>Perfil</TableHead>
+              <TableHead>Cotação</TableHead>
               <TableHead className="cursor-pointer" onClick={() => toggleSort("created_at")}>
                 Criado em <ArrowUpDown className="inline h-3 w-3 ml-1" />
               </TableHead>
@@ -123,11 +123,11 @@ export default function Itineraries() {
                   <TableCell>{item.destination}</TableCell>
                   <TableCell>{item.clients?.full_name ?? "—"}</TableCell>
                   <TableCell>
-                    {item.travel_date_start
-                      ? `${format(new Date(item.travel_date_start + "T00:00:00"), "dd/MM/yyyy")}${item.travel_date_end ? ` a ${format(new Date(item.travel_date_end + "T00:00:00"), "dd/MM/yyyy")}` : ""}`
+                    {item.arrival_datetime
+                      ? `${format(new Date(item.arrival_datetime), "dd/MM/yyyy HH:mm")}${item.departure_datetime ? ` a ${format(new Date(item.departure_datetime), "dd/MM/yyyy HH:mm")}` : ""}`
                       : "—"}
                   </TableCell>
-                  <TableCell>{item.traveler_profile ?? "—"}</TableCell>
+                  <TableCell>{item.quotes?.title ?? "—"}</TableCell>
                   <TableCell>{format(new Date(item.created_at), "dd/MM/yyyy", { locale: ptBR })}</TableCell>
                 </TableRow>
               ))
