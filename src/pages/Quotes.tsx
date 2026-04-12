@@ -112,6 +112,8 @@ export default function Quotes() {
   const [destOpen, setDestOpen] = useState(false);
   const [collapsedFlights, setCollapsedFlights] = useState<Set<number>>(new Set());
   const [coverZoom, setCoverZoom] = useState(false);
+  const hotelAutocompleteRefs = useRef<Map<string, any>>(new Map());
+  const hotelMapsLoaded = useRef(false);
   const [draggedQuoteId, setDraggedQuoteId] = useState<string | null>(null);
   const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [whatsappPhone, setWhatsappPhone] = useState("");
@@ -361,6 +363,58 @@ export default function Quotes() {
       document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, [draftRestored, persistQuoteEditorDraft]);
+
+  // Google Places Autocomplete for hotel address fields
+  useEffect(() => {
+    if (activeTab !== "hotel" || !dialogOpen) return;
+
+    const loadAndAttach = async () => {
+      // Load Google Maps if not loaded yet
+      if (!hotelMapsLoaded.current && !(window as any).google?.maps?.places) {
+        try {
+          const { data } = await supabase.functions.invoke("get-maps-key");
+          const apiKey = data?.key;
+          if (!apiKey) return;
+          if (!(window as any).google?.maps) {
+            await new Promise<void>((resolve) => {
+              (window as any).__hotelMapsInit = () => { resolve(); };
+              const script = document.createElement("script");
+              script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=__hotelMapsInit&libraries=places`;
+              script.async = true;
+              document.head.appendChild(script);
+            });
+          }
+          hotelMapsLoaded.current = true;
+        } catch { return; }
+      }
+
+      // Attach autocomplete to each hotel address input
+      const hotelItems = items.filter(i => i.item_type === "hotel");
+      hotelItems.forEach((item) => {
+        const globalIdx = items.indexOf(item);
+        const inputId = `hotel-address-${globalIdx}`;
+        const inputEl = document.getElementById(inputId) as HTMLInputElement | null;
+        if (!inputEl || hotelAutocompleteRefs.current.has(inputId)) return;
+
+        const autocomplete = new (window as any).google.maps.places.Autocomplete(inputEl, {
+          types: ["establishment", "geocode"],
+        });
+        autocomplete.addListener("place_changed", () => {
+          const place = autocomplete.getPlace();
+          if (!place) return;
+          const addr = place.formatted_address || place.name || "";
+          const newDetails = { ...items[globalIdx].details, address: addr };
+          const updated = [...items];
+          updated[globalIdx] = { ...updated[globalIdx], details: newDetails };
+          setItems(updated);
+        });
+        hotelAutocompleteRefs.current.set(inputId, autocomplete);
+      });
+    };
+
+    const timer = setTimeout(loadAndAttach, 300);
+    return () => clearTimeout(timer);
+  }, [activeTab, dialogOpen, items]);
 
   // Load existing quote items when editing
   useEffect(() => {
@@ -1582,7 +1636,7 @@ export default function Quotes() {
                               </div>
                               <div className="space-y-0.5">
                                 <Label className="text-[11px] font-body">Endereço</Label>
-                                <Input value={d.address || ""} onChange={(e) => updateDetail("address", e.target.value)} placeholder="Buscar endereço..." className="h-8 text-xs" id={`hotel-address-${globalIdx}`} />
+                                <Input key={`addr-${globalIdx}-${d.address?.length || 0}`} defaultValue={d.address || ""} onBlur={(e) => updateDetail("address", e.target.value)} placeholder="Buscar endereço..." className="h-8 text-xs" id={`hotel-address-${globalIdx}`} />
                               </div>
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
