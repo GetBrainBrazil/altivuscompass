@@ -150,6 +150,7 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
         const { error } = await supabase.from("itineraries").update(payload).eq("id", currentId);
         if (error) throw error;
         toast({ title: "Roteiro atualizado" });
+        clearPersistence();
       } else {
         const token = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
         payload.public_token = token;
@@ -158,6 +159,7 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
         setCurrentId(data.id);
         setPublicToken(token);
         toast({ title: "Roteiro criado! Use a IA para gerar o fluxo diário." });
+        clearPersistence();
       }
       queryClient.invalidateQueries({ queryKey: ["itineraries"] });
       queryClient.invalidateQueries({ queryKey: ["itinerary", currentId] });
