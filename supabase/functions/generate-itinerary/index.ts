@@ -88,7 +88,7 @@ RESPONDA SEMPRE em JSON válido com a seguinte estrutura:
     let userPrompt = "";
 
     if (mode === "chat" && chat_message) {
-      userPrompt = `ROTEIRO ATUAL:
+      userPrompt = `ROTEIRO ATUAL (MANTENHA TODOS OS DIAS E ATIVIDADES QUE NÃO FOREM AFETADOS PELO PEDIDO):
 ${JSON.stringify(existingDays, null, 2)}
 
 HOTÉIS CADASTRADOS: ${JSON.stringify(hotels)}
@@ -97,7 +97,12 @@ PASSEIOS CADASTRADOS: ${JSON.stringify(activities)}
 
 PEDIDO DO USUÁRIO: ${chat_message}
 
-Ajuste o roteiro conforme solicitado mantendo a mesma estrutura JSON.`;
+REGRAS PARA AJUSTE:
+1. NÃO refaça o roteiro inteiro. Altere SOMENTE o que foi pedido pelo usuário.
+2. Mantenha todos os dias, horários, atividades e deslocamentos que não foram mencionados no pedido.
+3. Se o ajuste exigir mudanças em outros pontos por logística (ex: horários de deslocamento), ajuste apenas o mínimo necessário.
+4. Retorne o roteiro COMPLETO no JSON (todos os dias, incluindo os não alterados), pois ele será salvo por inteiro.
+5. Respeite TODAS as regras do prompt de sistema (horários, transporte, coordenadas, etc).`;
     } else {
       const arrivalDate = itinerary.arrival_datetime ? new Date(itinerary.arrival_datetime) : null;
       const departureDate = itinerary.departure_datetime ? new Date(itinerary.departure_datetime) : null;
@@ -195,12 +200,11 @@ Gere o roteiro completo com todos os dias. Cada dia deve iniciar no hotel e term
     }
 
     // Save to database
-    if (mode !== "chat") {
-      if (existingDays && existingDays.length > 0) {
-        const dayIds = existingDays.map((d: any) => d.id);
-        await supabase.from("itinerary_day_activities").delete().in("itinerary_day_id", dayIds);
-        await supabase.from("itinerary_days").delete().eq("itinerary_id", itinerary_id);
-      }
+    // Always clear existing days before saving (chat mode returns full updated itinerary)
+    if (existingDays && existingDays.length > 0) {
+      const dayIds = existingDays.map((d: any) => d.id);
+      await supabase.from("itinerary_day_activities").delete().in("itinerary_day_id", dayIds);
+      await supabase.from("itinerary_days").delete().eq("itinerary_id", itinerary_id);
     }
 
     for (let i = 0; i < (parsed.days || []).length; i++) {
