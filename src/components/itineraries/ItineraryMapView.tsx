@@ -47,6 +47,11 @@ const TYPE_MARKERS: Record<string, string> = {
   shopping: "🛍️", entertainment: "🎭", nature: "🌿", cultural: "🎨",
 };
 
+const TRANSPORT_EMOJIS: Record<string, string> = {
+  uber: "🚗", taxi: "🚕", transfer: "🚐", trem: "🚆", metro: "🚇",
+  barco: "⛴️", aviao: "✈️", a_pe: "🚶", onibus: "🚌",
+};
+
 export default function ItineraryMapView({ itineraryId, selectedDayId, selectedActivityId, onSelectActivity, height = "h-[400px]" }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -132,9 +137,10 @@ export default function ItineraryMapView({ itineraryId, selectedDayId, selectedA
       });
 
       const emoji = TYPE_MARKERS[act.activity_type] || "📍";
+      const transportEmoji = TRANSPORT_EMOJIS[act.transport_mode] || "🚗";
       const transportInfo = act.transport_mode
         ? `<div style="margin-top:4px;padding:4px 8px;background:#f3f4f6;border-radius:4px;font-size:11px">
-            🚗 ${act.transport_mode} · ${act.transport_duration_min || "?"}min
+            ${transportEmoji} ${act.transport_mode} · ${act.transport_duration_min || "?"}min
             ${act.transport_cost_estimate ? ` · ${act.transport_currency || "BRL"} ${Number(act.transport_cost_estimate).toFixed(2)}` : ""}
           </div>` : "";
 
