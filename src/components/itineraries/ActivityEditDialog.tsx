@@ -65,7 +65,10 @@ export default function ActivityEditDialog({ activity, dayId, open, onOpenChange
     transport_notes: "",
   });
 
-  useEffect(() => {
+  const persistKey = `activity-edit-${activity?.id || "new"}`;
+  const setFormCallback = useCallback((data: typeof form) => setForm(data), []);
+  const { clearPersistence } = useFormPersistence(persistKey, form, setFormCallback, open);
+
     if (activity) {
       setForm({
         activity_name: activity.activity_name || "",
