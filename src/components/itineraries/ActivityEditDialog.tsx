@@ -91,10 +91,14 @@ export default function ActivityEditDialog({ activity, dayId, open, onOpenChange
   useEffect(() => {
     if (!open || !addressInputRef.current || !window.google?.maps?.places) return;
 
-    // Small delay to ensure the input is in the DOM
-    const timer = setTimeout(() => {
-      if (autocompleteRef.current) return;
-      if (!addressInputRef.current) return;
+  // Setup Google Places Autocomplete
+  useEffect(() => {
+    if (!open) return;
+
+    const tryInit = () => {
+      if (!addressInputRef.current) return false;
+      if (!window.google?.maps?.places) return false;
+      if (autocompleteRef.current) return true;
 
       const autocomplete = new window.google.maps.places.Autocomplete(addressInputRef.current, {
         types: ["establishment", "geocode"],
@@ -116,11 +120,16 @@ export default function ActivityEditDialog({ activity, dayId, open, onOpenChange
       });
 
       autocompleteRef.current = autocomplete;
-    }, 300);
-
-    return () => {
-      clearTimeout(timer);
+      return true;
     };
+
+    // Retry until Google Maps is loaded (may load async from map component)
+    const interval = setInterval(() => {
+      if (tryInit()) clearInterval(interval);
+    }, 200);
+
+    // Cleanup
+    return () => clearInterval(interval);
   }, [open]);
 
   // Cleanup autocomplete on close
