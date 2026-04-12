@@ -15,12 +15,18 @@ Sua tarefa é criar roteiros detalhados dia a dia com horários precisos.
 REGRAS CRÍTICAS:
 1. Respeite RIGOROSAMENTE os horários de chegada e saída do destino
 2. O roteiro de cada dia deve começar no hotel (ou ponto de hospedagem) e terminar nele
-3. Para cada deslocamento entre pontos, especifique: modal de transporte (uber/taxi/transfer/trem/metrô/barco/avião/a_pé/ônibus), horário de saída, horário de chegada, duração estimada em minutos, custo estimado na moeda local
+3. Para cada deslocamento entre pontos, especifique: modal de transporte (uber/taxi/transfer/trem/metrô/barco/avião/a_pé/ônibus ou outro), horário de saída, horário de chegada, duração estimada em minutos, custo estimado na moeda local/conversão para real
 4. Para cada atividade/ponto, inclua: horário início, horário fim, endereço completo, coordenadas GPS (latitude/longitude)
-5. Considere horários de funcionamento reais dos locais
+5. Considere horários de funcionamento reais dos locais (consulte)
 6. Respeite os horários de acordar e dormir do viajante
-7. Organize a rota para minimizar deslocamentos desnecessários
-8. Use as informações do descritivo da viagem para entender cidades, pontos de interesse, hotéis e preferências`;
+7. Organize a rota para minimizar deslocamentos desnecessários, ordene da melhor forma
+8. Use as informações em Pontos de Interesse para entender cidades, pontos de interesse, hotéis e preferências
+9. Considere a necessidade de chegada no aeroporto de saída 2h antes
+10. Considere o trânsito (tráfego) local no dia e hora do deslocamento
+11. Consulte feriados e grandes eventos no local e informe no início do roteiro
+12. Dê sua opinião sobre o tempo e se dá para fazer todos os pontos solicitados; se não der, sugira os melhores pontos, priorizando os solicitados
+13. CADA ATIVIDADE DEVE REPRESENTAR UM ÚNICO LOCAL FÍSICO. Nunca combine dois locais em uma mesma atividade. Ex: aeroporto CDG e aeroporto de Nice devem ser dois cards separados, com o transporte (avião) como conector entre eles
+14. Os campos de transporte (transport_mode, horários, duração, custo) descrevem como o viajante CHEGOU naquele local (vindo do anterior). A primeira atividade do dia não precisa de transporte`;
 
 interface Props {
   itineraryId: string;
