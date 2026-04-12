@@ -886,7 +886,7 @@ export default function Quotes() {
               </>
             ) : (
               <div className="col-span-1 lg:col-span-4 space-y-1">
-                <Label className="font-body text-xs">Descrição das Datas</Label>
+                <Label className="font-body text-xs">Período desejado</Label>
                 <Input className="h-9 text-sm" value={form.flexible_dates_description ?? ""} onChange={(e) => setForm({ ...form, flexible_dates_description: e.target.value })} placeholder="Ex: Qualquer semana em julho..." />
               </div>
             )}
