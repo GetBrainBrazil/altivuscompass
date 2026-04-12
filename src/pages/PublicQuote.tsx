@@ -145,7 +145,7 @@ export default function PublicQuote() {
     fetchQuote();
   }, [id]);
 
-  // Fetch hotel photos from Google Places
+  // Fetch hotel photos from Google Places JS API
   useEffect(() => {
     if (!data) return;
     const hotelItems = data.items.filter((i: any) => i.item_type === "hotel" && i.title);
@@ -159,18 +159,35 @@ export default function PublicQuote() {
         const apiKey = json?.key;
         if (!apiKey) return;
 
+        // Load Google Maps JS API if not loaded
+        if (!(window as any).google?.maps?.places) {
+          await new Promise<void>((resolve, reject) => {
+            const s = document.createElement("script");
+            s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+            s.async = true;
+            s.onload = () => resolve();
+            s.onerror = () => reject();
+            document.head.appendChild(s);
+          });
+        }
+
+        const mapDiv = document.createElement("div");
+        const service = new (window as any).google.maps.places.PlacesService(mapDiv);
+
         const photos: Record<string, string> = {};
         for (const item of hotelItems) {
           try {
-            const query = encodeURIComponent(`${item.title} hotel`);
-            const searchRes = await fetch(
-              `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${query}&inputtype=textquery&fields=photos,place_id&key=${apiKey}`
-            );
-            const searchJson = await searchRes.json();
-            const candidate = searchJson?.candidates?.[0];
-            if (candidate?.photos?.[0]?.photo_reference) {
-              photos[item.title] = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${candidate.photos[0].photo_reference}&key=${apiKey}`;
-            }
+            await new Promise<void>((resolve) => {
+              service.findPlaceFromQuery(
+                { query: `${item.title} hotel`, fields: ["photos", "place_id"] },
+                (results: any, status: any) => {
+                  if (status === "OK" && results?.[0]?.photos?.[0]) {
+                    photos[item.title] = results[0].photos[0].getUrl({ maxWidth: 400, maxHeight: 300 });
+                  }
+                  resolve();
+                }
+              );
+            });
           } catch {}
         }
         setHotelPhotos(photos);
