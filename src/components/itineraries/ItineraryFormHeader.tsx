@@ -103,7 +103,7 @@ export default function ItineraryFormHeader({ form, setForm, quotes }: Props) {
 
       {/* Descritivo */}
       <div className="col-span-3">
-        <Label className="text-xs">Descritivo da Viagem</Label>
+        <Label className="text-xs">Pontos de Interesse</Label>
         <Textarea
           className="text-sm"
           value={form.notes}
