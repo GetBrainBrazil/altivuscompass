@@ -364,6 +364,58 @@ export default function Quotes() {
     };
   }, [draftRestored, persistQuoteEditorDraft]);
 
+  // Google Places Autocomplete for hotel address fields
+  useEffect(() => {
+    if (activeTab !== "hotel" || !dialogOpen) return;
+
+    const loadAndAttach = async () => {
+      // Load Google Maps if not loaded yet
+      if (!hotelMapsLoaded.current && !(window as any).google?.maps?.places) {
+        try {
+          const { data } = await supabase.functions.invoke("get-maps-key");
+          const apiKey = data?.key;
+          if (!apiKey) return;
+          if (!(window as any).google?.maps) {
+            await new Promise<void>((resolve) => {
+              (window as any).__hotelMapsInit = () => { resolve(); };
+              const script = document.createElement("script");
+              script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=__hotelMapsInit&libraries=places`;
+              script.async = true;
+              document.head.appendChild(script);
+            });
+          }
+          hotelMapsLoaded.current = true;
+        } catch { return; }
+      }
+
+      // Attach autocomplete to each hotel address input
+      const hotelItems = items.filter(i => i.item_type === "hotel");
+      hotelItems.forEach((item) => {
+        const globalIdx = items.indexOf(item);
+        const inputId = `hotel-address-${globalIdx}`;
+        const inputEl = document.getElementById(inputId) as HTMLInputElement | null;
+        if (!inputEl || hotelAutocompleteRefs.current.has(inputId)) return;
+
+        const autocomplete = new (window as any).google.maps.places.Autocomplete(inputEl, {
+          types: ["establishment", "geocode"],
+        });
+        autocomplete.addListener("place_changed", () => {
+          const place = autocomplete.getPlace();
+          if (!place) return;
+          const addr = place.formatted_address || place.name || "";
+          const newDetails = { ...items[globalIdx].details, address: addr };
+          const updated = [...items];
+          updated[globalIdx] = { ...updated[globalIdx], details: newDetails };
+          setItems(updated);
+        });
+        hotelAutocompleteRefs.current.set(inputId, autocomplete);
+      });
+    };
+
+    const timer = setTimeout(loadAndAttach, 300);
+    return () => clearTimeout(timer);
+  }, [activeTab, dialogOpen, items]);
+
   // Load existing quote items when editing
   useEffect(() => {
     if (editingQuote && !draftRestored) return;
