@@ -88,7 +88,6 @@ export default function ItineraryMapView({ itineraryId, selectedDayId, selectedA
             },
             streetViewControl: false, fullscreenControl: true,
           });
-          });
         }
         setMapReady(true);
       } catch {
