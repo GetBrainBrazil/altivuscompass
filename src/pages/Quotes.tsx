@@ -782,8 +782,8 @@ export default function Quotes() {
           )}
         </div>
 
-        {/* Main fields - will be rendered inside Principal tab */}
-        <div className="hidden" id="main-fields-placeholder">
+        {/* Tabs for items */}
+        <div className="glass-card rounded-xl p-4">
           {/* Row 1: Título, Cliente, Imagem de Capa */}
           <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-3">
             <div className="col-span-2 lg:col-span-4 space-y-1">
