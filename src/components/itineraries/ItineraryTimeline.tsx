@@ -136,31 +136,17 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
 
       {/* Activities timeline */}
       {selectedDayId && activities.length > 0 && (
-        <div className="space-y-1">
+        <div className="space-y-0">
           {activities.map((act: any, i: number) => {
-            const TransportIcon = act.transport_mode ? TRANSPORT_ICONS[act.transport_mode] || Car : null;
             const isSelected = selectedActivityId === act.id;
+            // Transport for the NEXT activity (shown between this card and the next)
+            const nextAct = activities[i + 1];
+            const nextTransportMode = nextAct?.transport_mode;
+            const NextTransportIcon = nextTransportMode ? TRANSPORT_ICONS[nextTransportMode] || Car : null;
 
             return (
               <div key={act.id}>
-                {/* Transport between activities */}
-                {i > 0 && act.transport_mode && (
-                  <div className="flex items-center gap-2 py-2 px-4 ml-4 border-l-2 border-dashed border-muted-foreground/30">
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-full">
-                      {TransportIcon && <TransportIcon className="h-3 w-3" />}
-                      <span>{TRANSPORT_LABELS[act.transport_mode] || act.transport_mode}</span>
-                      {act.transport_duration_min && <span>· {act.transport_duration_min}min</span>}
-                      {act.transport_cost_estimate && (
-                        <span>· {act.transport_currency || "BRL"} {Number(act.transport_cost_estimate).toFixed(2)}</span>
-                      )}
-                      {act.transport_departure_time && act.transport_arrival_time && (
-                        <span>· {act.transport_departure_time.slice(0,5)} → {act.transport_arrival_time.slice(0,5)}</span>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Activity card */}
+                {/* Activity card — each card is a location */}
                 <div
                   ref={(el) => { activityRefs.current[act.id] = el; }}
                   className={`flex items-start gap-3 p-3 rounded-lg border bg-card hover:shadow-sm transition-all cursor-pointer ${
@@ -170,10 +156,16 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
                 >
                   <div className="flex flex-col items-center min-w-[50px] text-center">
                     {act.start_time && (
-                      <span className="text-sm font-semibold text-foreground">{act.start_time.slice(0,5)}</span>
+                      <div className="flex flex-col items-center">
+                        <span className="text-[9px] text-muted-foreground uppercase leading-none">Chegada</span>
+                        <span className="text-sm font-semibold text-foreground">{act.start_time.slice(0,5)}</span>
+                      </div>
                     )}
                     {act.end_time && (
-                      <span className="text-xs text-muted-foreground">{act.end_time.slice(0,5)}</span>
+                      <div className="flex flex-col items-center mt-1">
+                        <span className="text-[9px] text-muted-foreground uppercase leading-none">Saída</span>
+                        <span className="text-xs text-muted-foreground">{act.end_time.slice(0,5)}</span>
+                      </div>
                     )}
                   </div>
 
@@ -210,6 +202,24 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
                     </div>
                   )}
                 </div>
+
+                {/* Transport connector between this card and the next */}
+                {nextAct && nextTransportMode && (
+                  <div className="flex items-center gap-2 py-2 px-4 ml-6 border-l-2 border-dashed border-muted-foreground/30">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-full">
+                      {NextTransportIcon && <NextTransportIcon className="h-3.5 w-3.5" />}
+                      <span className="font-medium">{TRANSPORT_LABELS[nextTransportMode] || nextTransportMode}</span>
+                      {nextAct.transport_duration_min && <span>· {nextAct.transport_duration_min}min</span>}
+                      {nextAct.transport_cost_estimate && (
+                        <span>· {nextAct.transport_currency || "BRL"} {Number(nextAct.transport_cost_estimate).toFixed(2)}</span>
+                      )}
+                      {nextAct.transport_departure_time && nextAct.transport_arrival_time && (
+                        <span>· {nextAct.transport_departure_time.slice(0,5)} → {nextAct.transport_arrival_time.slice(0,5)}</span>
+                      )}
+                      {nextAct.transport_notes && <span>· {nextAct.transport_notes}</span>}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
