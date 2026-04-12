@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Send, MessageSquare, FileEdit, Plus, Trash2, ArrowRightLeft } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Send, MessageSquare, FileEdit, Plus, Trash2, ArrowRightLeft, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -28,6 +30,8 @@ export default function QuoteHistoryTab({ quoteId }: QuoteHistoryTabProps) {
   const queryClient = useQueryClient();
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
+  const [actionFilter, setActionFilter] = useState<string>("all");
 
   const { data: history = [], isLoading } = useQuery({
     queryKey: ["quote-history", quoteId],
@@ -75,6 +79,19 @@ export default function QuoteHistoryTab({ quoteId }: QuoteHistoryTabProps) {
     }
   };
 
+  const filteredHistory = useMemo(() => {
+    return history.filter((entry: any) => {
+      if (actionFilter !== "all" && entry.action !== actionFilter) return false;
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        const matchDesc = entry.description?.toLowerCase().includes(q);
+        const matchUser = entry.user_name?.toLowerCase().includes(q);
+        if (!matchDesc && !matchUser) return false;
+      }
+      return true;
+    });
+  }, [history, actionFilter, search]);
+
   return (
     <div className="space-y-4">
       {/* Input for client interaction */}
@@ -99,17 +116,45 @@ export default function QuoteHistoryTab({ quoteId }: QuoteHistoryTabProps) {
         </div>
       </div>
 
+      {/* Search & Filter */}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar no histórico..."
+            className="pl-8 h-8 text-xs font-body"
+          />
+        </div>
+        <Select value={actionFilter} onValueChange={setActionFilter}>
+          <SelectTrigger className="w-full sm:w-[180px] h-8 text-xs font-body">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os tipos</SelectItem>
+            <SelectItem value="interaction">Interações</SelectItem>
+            <SelectItem value="stage_change">Mudanças de Etapa</SelectItem>
+            <SelectItem value="updated">Alterações</SelectItem>
+            <SelectItem value="created">Criações</SelectItem>
+            <SelectItem value="deleted">Exclusões</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Timeline */}
       {isLoading ? (
         <p className="text-xs text-muted-foreground font-body animate-pulse py-4 text-center">Carregando histórico...</p>
-      ) : history.length === 0 ? (
-        <p className="text-xs text-muted-foreground font-body py-4 text-center">Nenhum registro no histórico.</p>
+      ) : filteredHistory.length === 0 ? (
+        <p className="text-xs text-muted-foreground font-body py-4 text-center">
+          {search || actionFilter !== "all" ? "Nenhum resultado encontrado." : "Nenhum registro no histórico."}
+        </p>
       ) : (
         <div className="relative space-y-0">
           {/* Vertical line */}
           <div className="absolute left-[15px] top-2 bottom-2 w-px bg-border" />
 
-          {history.map((entry: any) => {
+          {filteredHistory.map((entry: any) => {
             const meta = ACTION_META[entry.action] || ACTION_META.updated;
             const Icon = meta.icon;
             const ts = new Date(entry.created_at);
