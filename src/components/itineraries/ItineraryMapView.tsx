@@ -158,13 +158,65 @@ export default function ItineraryMapView({ itineraryId, selectedDayId, selectedA
       infoWindowsRef.current.push(infoWindow);
     });
 
-    if (path.length > 1) {
-      const polyline = new window.google.maps.Polyline({
-        path, geodesic: true, strokeColor: "#3b82f6", strokeOpacity: 0.7, strokeWeight: 3,
-        icons: [{ icon: { path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 3, strokeColor: "#3b82f6" }, offset: "50%" }],
-      });
-      polyline.setMap(mapInstanceRef.current);
-      polylinesRef.current.push(polyline);
+    const directionsService = new window.google.maps.DirectionsService();
+
+    for (let i = 0; i < geoActivities.length - 1; i++) {
+      const origin = { lat: geoActivities[i].latitude, lng: geoActivities[i].longitude };
+      const dest = { lat: geoActivities[i + 1].latitude, lng: geoActivities[i + 1].longitude };
+      const nextAct = geoActivities[i + 1];
+      const mode = (nextAct.transport_mode || "").toLowerCase().trim();
+      const useDriving = DRIVING_MODES.has(mode);
+      const isFlying = ["avião", "aviao", "voo", "flight"].includes(mode);
+
+      if (useDriving) {
+        directionsService.route(
+          {
+            origin,
+            destination: dest,
+            travelMode: window.google.maps.TravelMode.DRIVING,
+          },
+          (result: any, status: any) => {
+            if (status === "OK") {
+              const renderer = new window.google.maps.DirectionsRenderer({
+                map: mapInstanceRef.current,
+                directions: result,
+                suppressMarkers: true,
+                polylineOptions: {
+                  strokeColor: "#3b82f6",
+                  strokeOpacity: 0.8,
+                  strokeWeight: 4,
+                },
+              });
+              directionsRenderersRef.current.push(renderer);
+            } else {
+              const fallback = new window.google.maps.Polyline({
+                path: [origin, dest], geodesic: true, strokeColor: "#3b82f6", strokeOpacity: 0.7, strokeWeight: 3,
+                icons: [{ icon: { path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 3, strokeColor: "#3b82f6" }, offset: "50%" }],
+              });
+              fallback.setMap(mapInstanceRef.current);
+              polylinesRef.current.push(fallback);
+            }
+          }
+        );
+      } else if (isFlying) {
+        const polyline = new window.google.maps.Polyline({
+          path: [origin, dest], geodesic: true, strokeColor: "#f59e0b", strokeOpacity: 0.6, strokeWeight: 2,
+          strokeDashArray: [10, 6],
+          icons: [
+            { icon: { path: "M -1,-1 1,1 M -1,1 1,-1", strokeColor: "#f59e0b", strokeWeight: 2, scale: 3 }, offset: "0", repeat: "16px" },
+            { icon: { path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 3, strokeColor: "#f59e0b" }, offset: "50%" },
+          ],
+        });
+        polyline.setMap(mapInstanceRef.current);
+        polylinesRef.current.push(polyline);
+      } else {
+        const polyline = new window.google.maps.Polyline({
+          path: [origin, dest], geodesic: true, strokeColor: "#3b82f6", strokeOpacity: 0.7, strokeWeight: 3,
+          icons: [{ icon: { path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 3, strokeColor: "#3b82f6" }, offset: "50%" }],
+        });
+        polyline.setMap(mapInstanceRef.current);
+        polylinesRef.current.push(polyline);
+      }
     }
 
     mapInstanceRef.current.fitBounds(bounds);
