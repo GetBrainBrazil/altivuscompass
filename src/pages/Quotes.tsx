@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandInput, CommandList, CommandEmpty, CommandItem } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, Map, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle, FileText } from "lucide-react";
+import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle, FileText } from "lucide-react";
 import { Dialog as WhatsAppDialog, DialogContent as WhatsAppDialogContent, DialogHeader as WhatsAppDialogHeader, DialogTitle as WhatsAppDialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -22,6 +22,8 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
 import QuoteHistoryTab from "@/components/quotes/QuoteHistoryTab";
+import ItineraryTimeline from "@/components/itineraries/ItineraryTimeline";
+import ItineraryMapView from "@/components/itineraries/ItineraryMapView";
 
 const stages = [
   { id: "new", label: "Nova Cotação", color: "bg-soft-blue" },
@@ -38,8 +40,6 @@ const ITEM_TYPES = [
   { id: "experience", label: "Experiências", icon: Sparkles },
   { id: "insurance", label: "Seguros", icon: Shield },
   { id: "other_service", label: "Outros Serviços", icon: Package },
-  { id: "itinerary", label: "Roteiro Dia a Dia", icon: CalendarDays },
-  { id: "map", label: "Mapa", icon: Map },
 ];
 
 type Quote = {
@@ -243,6 +243,39 @@ export default function Quotes() {
       });
     },
   });
+
+  // Fetch itinerary linked to current quote
+  const currentQuoteId = editingQuote?.id;
+  const { data: linkedItinerary, refetch: refetchLinkedItinerary } = useQuery({
+    queryKey: ["quote-itinerary", currentQuoteId],
+    enabled: !!currentQuoteId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("itineraries")
+        .select("id, title, destination, travel_date_start, travel_date_end")
+        .eq("quote_id", currentQuoteId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch all itineraries for association picker
+  const { data: allItineraries = [] } = useQuery({
+    queryKey: ["itineraries-for-link"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("itineraries")
+        .select("id, title, destination, quote_id")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
+  const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
+  const [itineraryLinkOpen, setItineraryLinkOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -929,6 +962,11 @@ export default function Quotes() {
                   </TabsTrigger>
                 );
               })}
+              <TabsTrigger value="roteiro" className="flex items-center gap-1 text-[11px] px-2 py-1">
+                <CalendarDays className="w-3 h-3" />
+                Roteiro
+                {linkedItinerary && <Badge variant="secondary" className="text-[9px] h-3.5 px-1 ml-0.5">1</Badge>}
+              </TabsTrigger>
               {editingQuote && (
                 <TabsTrigger value="history" className="flex items-center gap-1 text-[11px] px-2 py-1 bg-primary/15 text-primary border border-primary/30 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary">
                   <History className="w-3 h-3" />
@@ -1557,6 +1595,117 @@ export default function Quotes() {
                 </Button>
               </TabsContent>
             ))}
+
+            <TabsContent value="roteiro" className="mt-3">
+              {linkedItinerary ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-semibold">{linkedItinerary.title}</h3>
+                      <p className="text-xs text-muted-foreground">
+                        {[
+                          linkedItinerary.destination,
+                          linkedItinerary.travel_date_start ? format(parseISO(linkedItinerary.travel_date_start), "dd/MM/yyyy") : null,
+                          linkedItinerary.travel_date_end ? `a ${format(parseISO(linkedItinerary.travel_date_end), "dd/MM/yyyy")}` : null,
+                        ].filter(Boolean).join(" — ")}
+                      </p>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <Button variant="outline" size="sm" className="text-xs h-7 gap-1" onClick={() => window.open(`/itineraries?edit=${linkedItinerary.id}`, "_blank")}>
+                        <ExternalLink className="w-3 h-3" /> Abrir Roteiro
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-xs h-7 text-destructive hover:text-destructive gap-1" onClick={async () => {
+                        if (!confirm("Desvincular roteiro desta cotação?")) return;
+                        await supabase.from("itineraries").update({ quote_id: null }).eq("id", linkedItinerary.id);
+                        refetchLinkedItinerary();
+                        queryClient.invalidateQueries({ queryKey: ["itineraries-for-link"] });
+                        toast({ title: "Roteiro desvinculado" });
+                      }}>
+                        <X className="w-3 h-3" /> Desvincular
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 min-h-[400px]">
+                    <div className="w-1/2 overflow-y-auto max-h-[500px] pr-2">
+                      <ItineraryTimeline
+                        itineraryId={linkedItinerary.id}
+                        selectedDayId={selectedDayId}
+                        onSelectDay={setSelectedDayId}
+                        selectedActivityId={selectedActivityId}
+                        onSelectActivity={setSelectedActivityId}
+                      />
+                    </div>
+                    <div className="w-1/2">
+                      <ItineraryMapView
+                        itineraryId={linkedItinerary.id}
+                        selectedDayId={selectedDayId}
+                        selectedActivityId={selectedActivityId}
+                        onSelectActivity={setSelectedActivityId}
+                        height="h-[500px]"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">Nenhum roteiro associado a esta cotação.</p>
+                  <div className="flex gap-2 items-center flex-wrap">
+                    {editingQuote && (
+                      <>
+                        <Button variant="outline" size="sm" className="text-xs h-8 gap-1" onClick={async () => {
+                          const token = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+                          const { data: newIt, error } = await supabase.from("itineraries").insert({
+                            title: form.title || "Roteiro",
+                            destination: selectedDestinations.join(", ") || form.destination || null,
+                            travel_date_start: form.travel_date_start || null,
+                            travel_date_end: form.travel_date_end || null,
+                            client_id: form.client_id || null,
+                            quote_id: editingQuote.id,
+                            public_token: token,
+                          }).select("id").single();
+                          if (error) { toast({ title: "Erro ao criar roteiro", description: error.message, variant: "destructive" }); return; }
+                          refetchLinkedItinerary();
+                          queryClient.invalidateQueries({ queryKey: ["itineraries-for-link"] });
+                          toast({ title: "Roteiro criado e vinculado!" });
+                        }}>
+                          <Plus className="w-3 h-3" /> Criar Novo Roteiro
+                        </Button>
+
+                        <span className="text-xs text-muted-foreground">ou</span>
+
+                        <Popover open={itineraryLinkOpen} onOpenChange={setItineraryLinkOpen}>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" size="sm" className="text-xs h-8 gap-1">
+                              <CalendarDays className="w-3 h-3" /> Vincular Roteiro Existente
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[350px] p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder="Buscar roteiro..." className="h-8 text-xs" />
+                              <CommandList>
+                                <CommandEmpty className="py-3 text-xs">Nenhum roteiro encontrado.</CommandEmpty>
+                                {allItineraries.filter((it: any) => !it.quote_id).map((it: any) => (
+                                  <CommandItem key={it.id} onSelect={async () => {
+                                    await supabase.from("itineraries").update({ quote_id: editingQuote.id }).eq("id", it.id);
+                                    setItineraryLinkOpen(false);
+                                    refetchLinkedItinerary();
+                                    queryClient.invalidateQueries({ queryKey: ["itineraries-for-link"] });
+                                    toast({ title: "Roteiro vinculado!" });
+                                  }} className="text-xs cursor-pointer">
+                                    <span className="truncate font-medium">{it.title}</span>
+                                    {it.destination && <span className="ml-auto text-[10px] text-muted-foreground truncate">{it.destination}</span>}
+                                  </CommandItem>
+                                ))}
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </TabsContent>
 
             {editingQuote && (
               <TabsContent value="history" className="mt-3">
