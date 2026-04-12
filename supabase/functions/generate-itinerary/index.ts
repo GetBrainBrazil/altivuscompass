@@ -47,7 +47,9 @@ REGRAS CRÍTICAS:
 5. Considere horários de funcionamento reais dos locais
 6. Respeite os horários de acordar e dormir do viajante
 7. Organize a rota para minimizar deslocamentos desnecessários
-8. Use as informações do descritivo da viagem para entender cidades, pontos de interesse, hotéis e preferências`;
+8. Use as informações do descritivo da viagem para entender cidades, pontos de interesse, hotéis e preferências
+9. CADA ATIVIDADE DEVE REPRESENTAR UM ÚNICO LOCAL FÍSICO. Nunca combine dois locais em uma mesma atividade. Ex: se o viajante chega no aeroporto CDG às 10:30 e pega voo para Nice chegando às 14:30, crie DUAS atividades separadas: uma para CDG (chegada 10:30, saída quando embarca) e outra para o aeroporto de Nice (chegada 14:30), com o transporte (avião) como conector entre elas.
+10. Os campos de transporte descrevem como o viajante CHEGOU naquele local (vindo do anterior). A primeira atividade do dia não precisa de transporte.`;
 
     const userRules = custom_prompt || defaultPromptRules;
 
