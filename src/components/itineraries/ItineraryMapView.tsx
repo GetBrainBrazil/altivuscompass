@@ -138,8 +138,12 @@ export default function ItineraryMapView({ itineraryId, selectedDayId, selectedA
             ${act.transport_cost_estimate ? ` · ${act.transport_currency || "BRL"} ${Number(act.transport_cost_estimate).toFixed(2)}` : ""}
           </div>` : "";
 
+      const headerEl = document.createElement("div");
+      headerEl.style.cssText = "font-weight:bold;font-size:13px;line-height:1.2;padding-right:8px;";
+      headerEl.textContent = `${emoji} ${act.activity_name}`;
+
       const infoWindow = new window.google.maps.InfoWindow({
-        headerContent: `<div style="font-weight:bold;font-size:13px;line-height:1.2;padding-right:8px">${emoji} ${act.activity_name}</div>`,
+        headerContent: headerEl,
         content: `<div style="max-width:260px;overflow:visible">
           ${act.start_time ? `<div style="font-size:12px;color:#666">${act.start_time.slice(0,5)}${act.end_time ? ` - ${act.end_time.slice(0,5)}` : ""}</div>` : ""}
           ${act.description ? `<div style="font-size:12px;margin-top:4px">${act.description}</div>` : ""}
