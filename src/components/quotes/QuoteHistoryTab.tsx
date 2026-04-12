@@ -145,14 +145,16 @@ export default function QuoteHistoryTab({ quoteId }: QuoteHistoryTabProps) {
       {/* Timeline */}
       {isLoading ? (
         <p className="text-xs text-muted-foreground font-body animate-pulse py-4 text-center">Carregando histórico...</p>
-      ) : history.length === 0 ? (
-        <p className="text-xs text-muted-foreground font-body py-4 text-center">Nenhum registro no histórico.</p>
+      ) : filteredHistory.length === 0 ? (
+        <p className="text-xs text-muted-foreground font-body py-4 text-center">
+          {search || actionFilter !== "all" ? "Nenhum resultado encontrado." : "Nenhum registro no histórico."}
+        </p>
       ) : (
         <div className="relative space-y-0">
           {/* Vertical line */}
           <div className="absolute left-[15px] top-2 bottom-2 w-px bg-border" />
 
-          {history.map((entry: any) => {
+          {filteredHistory.map((entry: any) => {
             const meta = ACTION_META[entry.action] || ACTION_META.updated;
             const Icon = meta.icon;
             const ts = new Date(entry.created_at);
