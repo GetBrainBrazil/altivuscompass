@@ -15,6 +15,8 @@ interface Props {
   readOnly?: boolean;
   selectedActivityId?: string | null;
   onSelectActivity?: (id: string | null) => void;
+  summary?: string | null;
+  onSummaryChange?: (summary: string) => void;
 }
 
 const TRANSPORT_ICONS: Record<string, any> = {
@@ -44,7 +46,7 @@ const TYPE_LABELS: Record<string, string> = {
   nature: "Natureza", cultural: "Cultural",
 };
 
-export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelectDay, readOnly, selectedActivityId, onSelectActivity }: Props) {
+export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelectDay, readOnly, selectedActivityId, onSelectActivity, summary, onSummaryChange }: Props) {
   const queryClient = useQueryClient();
   const activityRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [editingActivity, setEditingActivity] = useState<any>(null);
@@ -96,6 +98,23 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
 
   return (
     <div className="space-y-4">
+      {/* Summary */}
+      {summary && (
+        <div className="bg-muted/30 border rounded-lg p-3 space-y-1">
+          <p className="text-xs font-semibold text-foreground">📝 Resumo do Roteiro</p>
+          {readOnly || !onSummaryChange ? (
+            <p className="text-sm text-muted-foreground whitespace-pre-line">{summary}</p>
+          ) : (
+            <textarea
+              className="w-full text-sm bg-transparent border border-border rounded p-2 text-foreground resize-none focus:outline-none focus:ring-1 focus:ring-primary"
+              value={summary}
+              onChange={(e) => onSummaryChange(e.target.value)}
+              rows={3}
+            />
+          )}
+        </div>
+      )}
+
       {/* Day selector */}
       <div className="flex gap-2 flex-wrap">
         {days.map((day: any, i: number) => (

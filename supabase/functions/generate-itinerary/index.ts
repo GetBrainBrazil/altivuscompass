@@ -257,7 +257,7 @@ Gere o roteiro completo com todos os dias. Cada dia deve iniciar no hotel e term
       }
     }
 
-    await supabase.from("itineraries").update({ ai_status: "completed" }).eq("id", itinerary_id);
+    await supabase.from("itineraries").update({ ai_status: "completed", summary: parsed.summary || null }).eq("id", itinerary_id);
 
     return new Response(JSON.stringify({
       success: true,
