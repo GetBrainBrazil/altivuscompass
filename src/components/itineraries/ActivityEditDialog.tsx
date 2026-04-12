@@ -69,6 +69,7 @@ export default function ActivityEditDialog({ activity, dayId, open, onOpenChange
   const setFormCallback = useCallback((data: typeof form) => setForm(data), []);
   const { clearPersistence } = useFormPersistence(persistKey, form, setFormCallback, open);
 
+  useEffect(() => {
     if (activity) {
       setForm({
         activity_name: activity.activity_name || "",
