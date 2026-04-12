@@ -1636,7 +1636,7 @@ export default function Quotes() {
                               </div>
                               <div className="space-y-0.5">
                                 <Label className="text-[11px] font-body">Endereço</Label>
-                                <Input value={d.address || ""} onChange={(e) => updateDetail("address", e.target.value)} placeholder="Buscar endereço..." className="h-8 text-xs" id={`hotel-address-${globalIdx}`} />
+                                <Input key={`addr-${globalIdx}-${d.address?.length || 0}`} defaultValue={d.address || ""} onBlur={(e) => updateDetail("address", e.target.value)} placeholder="Buscar endereço..." className="h-8 text-xs" id={`hotel-address-${globalIdx}`} />
                               </div>
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
