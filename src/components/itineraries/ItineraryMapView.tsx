@@ -23,7 +23,7 @@ let mapsLoading = false;
 const loadCallbacks: (() => void)[] = [];
 
 const DRIVING_MODES = new Set(["uber", "taxi", "transfer", "carro", "car", "ônibus", "onibus", "bus"]);
-const WALKING_MODES = new Set(["a pé", "a pe", "walking", "caminhada", "walk"]);
+const WALKING_MODES = new Set(["a pé", "a pe", "a_pe", "a_pé", "walking", "caminhada", "walk"]);
 
 function loadGoogleMaps(apiKey: string): Promise<void> {
   if (mapsLoaded) return Promise.resolve();
@@ -165,7 +165,7 @@ export default function ItineraryMapView({ itineraryId, selectedDayId, selectedA
       const origin = { lat: geoActivities[i].latitude, lng: geoActivities[i].longitude };
       const dest = { lat: geoActivities[i + 1].latitude, lng: geoActivities[i + 1].longitude };
       const nextAct = geoActivities[i + 1];
-      const mode = (nextAct.transport_mode || "").toLowerCase().trim();
+      const mode = (nextAct.transport_mode || "").toLowerCase().trim().replace(/_/g, " ");
       const useDriving = DRIVING_MODES.has(mode);
       const useWalking = WALKING_MODES.has(mode);
       const isFlying = ["avião", "aviao", "voo", "flight"].includes(mode);
@@ -224,12 +224,21 @@ export default function ItineraryMapView({ itineraryId, selectedDayId, selectedA
       }
     }
 
-    if (!bounds.isEmpty()) {
-      mapInstanceRef.current.fitBounds(bounds);
-      if (geoActivities.length === 1) mapInstanceRef.current.setZoom(15);
-    } else if (geoActivities.length > 0) {
-      mapInstanceRef.current.setCenter({ lat: geoActivities[0].latitude, lng: geoActivities[0].longitude });
-      mapInstanceRef.current.setZoom(12);
+    try {
+      if (!bounds.isEmpty()) {
+        const boundsLiteral = bounds.toJSON();
+        mapInstanceRef.current.fitBounds(boundsLiteral);
+        if (geoActivities.length === 1) mapInstanceRef.current.setZoom(15);
+      } else if (geoActivities.length > 0) {
+        mapInstanceRef.current.setCenter({ lat: geoActivities[0].latitude, lng: geoActivities[0].longitude });
+        mapInstanceRef.current.setZoom(12);
+      }
+    } catch (e) {
+      console.warn("fitBounds error, falling back to setCenter", e);
+      if (geoActivities.length > 0) {
+        mapInstanceRef.current.setCenter({ lat: geoActivities[0].latitude, lng: geoActivities[0].longitude });
+        mapInstanceRef.current.setZoom(12);
+      }
     }
   }, [activities, mapReady]);
 
