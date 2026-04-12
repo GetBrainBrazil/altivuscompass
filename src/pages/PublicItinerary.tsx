@@ -6,7 +6,7 @@ import ItineraryTimeline from "@/components/itineraries/ItineraryTimeline";
 import ItineraryMapView from "@/components/itineraries/ItineraryMapView";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { MapPin, Calendar, Plane } from "lucide-react";
+import { Calendar, Plane } from "lucide-react";
 
 export default function PublicItinerary() {
   const { token } = useParams<{ token: string }>();
