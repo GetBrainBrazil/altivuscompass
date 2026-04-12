@@ -36,6 +36,7 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
     arrival_datetime: "", departure_datetime: "", arrival_airport: "", departure_airport: "",
     traveler_type: "", trip_style: "", wake_time: "08:00", sleep_time: "22:00",
     desired_places: [] as string[], defined_hotels: [] as string[], preferred_hotels: [] as string[],
+    quote_id: "",
   });
 
   const [publicEditable, setPublicEditable] = useState(false);
@@ -45,6 +46,14 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
     queryKey: ["clients-list"],
     queryFn: async () => {
       const { data } = await supabase.from("clients").select("id, full_name").order("full_name");
+      return data || [];
+    },
+  });
+
+  const { data: quotes = [] } = useQuery({
+    queryKey: ["quotes-list"],
+    queryFn: async () => {
+      const { data } = await supabase.from("quotes").select("id, title, destination, clients(full_name)").order("created_at", { ascending: false });
       return data || [];
     },
   });
@@ -83,6 +92,7 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
         desired_places: itinerary.desired_places || [],
         defined_hotels: itinerary.defined_hotels || [],
         preferred_hotels: itinerary.preferred_hotels || [],
+        quote_id: itinerary.quote_id || "",
       });
       setAiStatus(itinerary.ai_status || "none");
       setPublicEditable(itinerary.public_editable || false);
@@ -118,6 +128,7 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
         desired_places: form.desired_places,
         defined_hotels: form.defined_hotels,
         preferred_hotels: form.preferred_hotels,
+        quote_id: form.quote_id || null,
         public_editable: publicEditable,
       };
 
@@ -162,7 +173,7 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
 
   return (
     <div className="space-y-4">
-      <ItineraryFormHeader form={form} setForm={setForm} clients={clients} clientOpen={clientOpen} setClientOpen={setClientOpen} />
+      <ItineraryFormHeader form={form} setForm={setForm} clients={clients} clientOpen={clientOpen} setClientOpen={setClientOpen} quotes={quotes} />
 
       <div className="flex justify-between items-center gap-2 flex-wrap">
         <div className="flex gap-2">

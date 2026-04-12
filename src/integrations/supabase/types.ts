@@ -1059,6 +1059,7 @@ export type Database = {
           preferred_hotels: string[] | null
           public_editable: boolean
           public_token: string | null
+          quote_id: string | null
           sleep_time: string | null
           title: string
           travel_date_end: string | null
@@ -1088,6 +1089,7 @@ export type Database = {
           preferred_hotels?: string[] | null
           public_editable?: boolean
           public_token?: string | null
+          quote_id?: string | null
           sleep_time?: string | null
           title: string
           travel_date_end?: string | null
@@ -1117,6 +1119,7 @@ export type Database = {
           preferred_hotels?: string[] | null
           public_editable?: boolean
           public_token?: string | null
+          quote_id?: string | null
           sleep_time?: string | null
           title?: string
           travel_date_end?: string | null
@@ -1133,6 +1136,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "itineraries_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
             referencedColumns: ["id"]
           },
         ]
