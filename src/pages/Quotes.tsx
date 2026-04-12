@@ -1657,13 +1657,15 @@ export default function Quotes() {
                                 <Input type="time" value={d.checkout_time || ""} onChange={(e) => updateDetail("checkout_time", e.target.value)} className="h-8 text-xs" />
                               </div>
                             </div>
-                            <div className="space-y-0.5">
-                              <Label className="text-[11px] font-body">Detalhes</Label>
-                              <Input value={d.hotel_details || ""} onChange={(e) => updateDetail("hotel_details", e.target.value)} placeholder="Tipo de quarto, regime, etc." className="h-8 text-xs" />
-                            </div>
-                            <div className="space-y-0.5">
-                              <Label className="text-[11px] font-body">Descrição</Label>
-                              <Input value={item.description} onChange={(e) => updateItem(globalIdx, { description: e.target.value })} placeholder="Informações adicionais" className="h-8 text-xs" />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <div className="space-y-0.5">
+                                <Label className="text-[11px] font-body">Detalhes</Label>
+                                <Input value={d.hotel_details || ""} onChange={(e) => updateDetail("hotel_details", e.target.value)} placeholder="Tipo de quarto, regime, etc." className="h-8 text-xs" />
+                              </div>
+                              <div className="space-y-0.5">
+                                <Label className="text-[11px] font-body">Descrição</Label>
+                                <Input value={item.description} onChange={(e) => updateItem(globalIdx, { description: e.target.value })} placeholder="Informações adicionais" className="h-8 text-xs" />
+                              </div>
                             </div>
                           </div>
                         </>
