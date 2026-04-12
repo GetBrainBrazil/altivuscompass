@@ -328,11 +328,17 @@ Gere o roteiro completo com todos os dias. Cada dia deve iniciar no hotel e term
       }
     }
 
-    await supabase.from("itineraries").update({ ai_status: "completed", summary: parsed.summary || null }).eq("id", itinerary_id);
+    // Combine summary + tips into one observations field
+    let fullSummary = parsed.summary || "";
+    if (parsed.tips && parsed.tips.length > 0) {
+      fullSummary += "\n\n🔸 Dicas:\n" + parsed.tips.map((t: string) => `• ${t}`).join("\n");
+    }
+
+    await supabase.from("itineraries").update({ ai_status: "completed", summary: fullSummary || null }).eq("id", itinerary_id);
 
     return new Response(JSON.stringify({
       success: true,
-      summary: parsed.summary,
+      summary: fullSummary,
       tips: parsed.tips,
       days_count: parsed.days?.length || 0,
     }), {

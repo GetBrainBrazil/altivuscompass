@@ -101,7 +101,7 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
       {/* Summary */}
       {summary && (
         <div className="bg-muted/30 border rounded-lg p-3 space-y-1">
-          <p className="text-xs font-semibold text-foreground">📝 Resumo do Roteiro</p>
+          <p className="text-xs font-semibold text-foreground">📝 Observações</p>
           {readOnly || !onSummaryChange ? (
             <p className="text-sm text-muted-foreground whitespace-pre-line">{summary}</p>
           ) : (
