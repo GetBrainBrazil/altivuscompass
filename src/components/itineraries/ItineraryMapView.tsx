@@ -81,7 +81,12 @@ export default function ItineraryMapView({ itineraryId, selectedDayId, selectedA
         if (mapRef.current && !mapInstanceRef.current) {
           mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
             zoom: 12, center: { lat: 0, lng: 0 },
-            mapTypeControl: false, streetViewControl: false, fullscreenControl: true,
+            mapTypeControl: true, mapTypeControlOptions: {
+              style: window.google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+              position: window.google.maps.ControlPosition.TOP_RIGHT,
+              mapTypeIds: ["roadmap", "satellite", "hybrid"],
+            },
+            streetViewControl: false, fullscreenControl: true,
           });
         }
         setMapReady(true);
