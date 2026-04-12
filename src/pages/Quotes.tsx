@@ -782,253 +782,6 @@ export default function Quotes() {
           )}
         </div>
 
-        {/* Main fields card */}
-        <div className="glass-card rounded-xl p-4 space-y-3">
-          {/* Row 1: Título, Cliente, Imagem de Capa */}
-          <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-3">
-            <div className="col-span-2 lg:col-span-4 space-y-1">
-              <Label className="font-body text-xs">Título da Cotação</Label>
-              <Input className="h-9 text-sm" value={form.title ?? ""} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex: Viagem Europa - Família Silva" />
-            </div>
-
-            <div className="col-span-2 lg:col-span-4 space-y-1">
-              <Label className="font-body text-xs">Cliente</Label>
-              <Select value={form.client_id ?? ""} onValueChange={(v) => { setForm({ ...form, client_id: v }); setSelectedPassengers([]); setSelectedLinkedClients([]); setClientSelfTraveling(false); }}>
-                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar cliente" /></SelectTrigger>
-                <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-
-            <div className="col-span-2 lg:col-span-4 space-y-1">
-              <div className="flex items-center gap-1.5">
-                <Label className="font-body text-xs">Imagem de Capa</Label>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-[280px] text-xs">
-                      <p>A IA usa o <strong>título da cotação</strong> para gerar a imagem automaticamente.</p>
-                      <p className="mt-1">Para upload manual, a largura ideal é <strong>1200×630px</strong> (proporção 1.9:1).</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <div className="flex items-center gap-2">
-                {coverPreview ? (
-                  <div className="relative">
-                    <img src={coverPreview} alt="Capa" className="h-9 w-16 object-cover rounded border border-border cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setCoverZoom(true)} />
-                    <button type="button" onClick={() => { setCoverFile(null); setCoverPreview(null); setForm({ ...form, cover_image_url: "" }); }} className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full p-0.5">
-                      <X className="w-2.5 h-2.5" />
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <button type="button" onClick={() => fileInputRef.current?.click()} className="h-9 px-3 border border-dashed border-border rounded-md flex items-center gap-1.5 text-muted-foreground hover:border-primary hover:text-primary transition-colors text-xs">
-                      <ImageIcon className="w-3.5 h-3.5" /> Adicionar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={generateCoverWithAI}
-                      disabled={generatingCover}
-                      className="h-9 px-3 border border-dashed border-accent rounded-md flex items-center gap-1.5 text-accent-foreground hover:bg-accent/10 hover:border-accent transition-colors text-xs disabled:opacity-50"
-                    >
-                      {generatingCover ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
-                      {generatingCover ? "Gerando..." : "Gerar com IA"}
-                    </button>
-                  </>
-                )}
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
-              </div>
-            </div>
-          </div>
-
-          {/* Row 2: Datas / Data Flexível, Destinos */}
-          <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-3 items-start">
-            {/* Data Flexível toggle */}
-            <div className="col-span-1 lg:col-span-1 space-y-1">
-              <Label className="font-body text-xs whitespace-nowrap">Flexível</Label>
-              <div className="flex items-center h-9">
-                <Switch checked={!!form.flexible_dates} onCheckedChange={(v) => setForm({ ...form, flexible_dates: v, ...(v ? { travel_date_start: "", travel_date_end: "" } : {}) })} />
-              </div>
-            </div>
-
-            {!form.flexible_dates ? (
-              <>
-                <div className="col-span-1 lg:col-span-2 space-y-1">
-                  <Label className="font-body text-xs">Data Início</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className={cn("w-full h-9 justify-start text-left text-sm font-normal", !form.travel_date_start && "text-muted-foreground")}>
-                        <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                        {form.travel_date_start ? format(parseISO(form.travel_date_start), "dd/MM/yyyy") : "Selecionar"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar mode="single" selected={form.travel_date_start ? parseISO(form.travel_date_start) : undefined} onSelect={(date) => setForm({ ...form, travel_date_start: date ? format(date, "yyyy-MM-dd") : "" })} initialFocus locale={ptBR} className={cn("p-3 pointer-events-auto")} />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div className="col-span-1 lg:col-span-2 space-y-1">
-                  <Label className="font-body text-xs">Data Fim</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className={cn("w-full h-9 justify-start text-left text-sm font-normal", !form.travel_date_end && "text-muted-foreground")}>
-                        <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                        {form.travel_date_end ? format(parseISO(form.travel_date_end), "dd/MM/yyyy") : "Selecionar"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar mode="single" selected={form.travel_date_end ? parseISO(form.travel_date_end) : undefined} onSelect={(date) => setForm({ ...form, travel_date_end: date ? format(date, "yyyy-MM-dd") : "" })} initialFocus locale={ptBR} className={cn("p-3 pointer-events-auto")} />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </>
-            ) : (
-              <div className="col-span-1 lg:col-span-4 space-y-1">
-                <Label className="font-body text-xs">Período desejado</Label>
-                <Input className="h-9 text-sm" value={form.flexible_dates_description ?? ""} onChange={(e) => setForm({ ...form, flexible_dates_description: e.target.value })} placeholder="Ex: Qualquer semana em julho..." />
-              </div>
-            )}
-          </div>
-
-          {/* Row 3: Viajantes + Destino(s) side by side */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-3 gap-y-3 items-start">
-            {/* Viajantes (shown when client selected) */}
-            {form.client_id && (
-              <div className="space-y-1">
-                <Label className="font-body text-xs">Viajantes</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between h-9 text-sm font-normal">
-                      {(() => {
-                        const total = (clientSelfTraveling ? 1 : 0) + selectedPassengers.length + selectedLinkedClients.length;
-                        return total === 0 ? "Selecionar viajantes..." : `${total} selecionado(s)`;
-                      })()}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                    <Command>
-                      <CommandInput placeholder="Buscar..." className="h-8 text-xs" />
-                      <CommandList>
-                        <CommandEmpty className="py-3 text-xs">Nenhum encontrado.</CommandEmpty>
-                        {(() => {
-                          const selectedClient = clients.find((c: any) => c.id === form.client_id);
-                          if (!selectedClient) return null;
-                          return (
-                            <CommandItem key={`self-${selectedClient.id}`} onSelect={() => setClientSelfTraveling(prev => !prev)} className="text-xs cursor-pointer">
-                              <Check className={cn("mr-2 h-3.5 w-3.5", clientSelfTraveling ? "opacity-100" : "opacity-0")} />
-                              <Badge className="text-[9px] h-4 px-1 shrink-0 mr-1 bg-primary/20 text-primary border-primary/30">Cliente</Badge>
-                              <span className="truncate font-medium">{selectedClient.full_name}</span>
-                            </CommandItem>
-                          );
-                        })()}
-                        {clientPassengers.map((p) => (
-                          <CommandItem key={`p-${p.id}`} onSelect={() => togglePassenger(p.id)} className="text-xs cursor-pointer">
-                            <Check className={cn("mr-2 h-3.5 w-3.5", selectedPassengers.includes(p.id) ? "opacity-100" : "opacity-0")} />
-                            <Badge variant="secondary" className="text-[9px] h-4 px-1 shrink-0 mr-1">Passageiro</Badge>
-                            <span className="truncate">{p.full_name}</span>
-                            {p.relationship_type && <span className="ml-auto text-[10px] text-muted-foreground">({RELATIONSHIP_LABELS[p.relationship_type] || p.relationship_type})</span>}
-                          </CommandItem>
-                        ))}
-                        {linkedClients.map((lc: any) => (
-                          <CommandItem key={`lc-${lc.id}`} onSelect={() => toggleLinkedClient(lc.id)} className="text-xs cursor-pointer">
-                            <Check className={cn("mr-2 h-3.5 w-3.5", selectedLinkedClients.includes(lc.id) ? "opacity-100" : "opacity-0")} />
-                            <Badge variant="outline" className="text-[9px] h-4 px-1 shrink-0 mr-1">{RELATIONSHIP_LABELS[lc.relationship_type] || lc.relationship_type}</Badge>
-                            <span className="truncate">{lc.full_name}</span>
-                          </CommandItem>
-                        ))}
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-                {(clientSelfTraveling || selectedPassengers.length > 0 || selectedLinkedClients.length > 0) && (
-                  <div className="flex flex-wrap gap-1 pt-1">
-                    {clientSelfTraveling && (() => {
-                      const selectedClient = clients.find((c: any) => c.id === form.client_id);
-                      if (!selectedClient) return null;
-                      return (
-                        <Badge key="self-client" className="text-xs gap-1 pr-1 bg-primary/20 text-primary border-primary/30">
-                          {selectedClient.full_name}
-                          <span className="text-[9px]">(Cliente)</span>
-                          {renderPrefsTooltip(selectedClient)}
-                          <button type="button" onClick={() => setClientSelfTraveling(false)} className="ml-0.5 hover:text-destructive transition-colors"><X className="w-3 h-3" /></button>
-                        </Badge>
-                      );
-                    })()}
-                    {selectedPassengers.map((pid) => {
-                      const p = clientPassengers.find((cp) => cp.id === pid);
-                      if (!p) return null;
-                      return (
-                        <Badge key={`sp-${pid}`} variant="secondary" className="text-xs gap-1 pr-1">
-                          {p.full_name}
-                          {p.relationship_type && <span className="text-[9px] text-muted-foreground">({RELATIONSHIP_LABELS[p.relationship_type] || p.relationship_type})</span>}
-                          <button type="button" onClick={() => togglePassenger(pid)} className="ml-0.5 hover:text-destructive transition-colors"><X className="w-3 h-3" /></button>
-                        </Badge>
-                      );
-                    })}
-                    {selectedLinkedClients.map((cid) => {
-                      const lc = linkedClients.find((l: any) => l.id === cid);
-                      if (!lc) return null;
-                      return (
-                        <Badge key={`slc-${cid}`} variant="outline" className="text-xs gap-1 pr-1">
-                          {(lc as any).full_name}
-                          <span className="text-[9px] text-muted-foreground">({RELATIONSHIP_LABELS[(lc as any).relationship_type] || (lc as any).relationship_type})</span>
-                          {renderPrefsTooltip(lc)}
-                          <button type="button" onClick={() => toggleLinkedClient(cid)} className="ml-0.5 hover:text-destructive transition-colors"><X className="w-3 h-3" /></button>
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Destino(s) */}
-            <div className="space-y-1">
-              <Label className="font-body text-xs">Destino(s)</Label>
-              <Popover open={destOpen} onOpenChange={setDestOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between h-9 text-sm font-normal">
-                    {selectedDestinations.length === 0
-                      ? "Buscar destino..."
-                      : `${selectedDestinations.length} destino(s)`}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="Buscar cidade, país..." className="h-8 text-xs" />
-                    <CommandList>
-                      <CommandEmpty className="py-3 text-xs">Nenhum destino encontrado.</CommandEmpty>
-                      {allDestinations.map((d) => (
-                        <CommandItem key={d.value} onSelect={() => toggleDestination(d.value)} className="text-xs cursor-pointer">
-                          <Check className={cn("mr-2 h-3.5 w-3.5", selectedDestinations.includes(d.value) ? "opacity-100" : "opacity-0")} />
-                          <Badge variant="secondary" className="text-[9px] h-4 px-1 shrink-0 mr-1">{d.group}</Badge>
-                          <span className="truncate">{d.label}</span>
-                        </CommandItem>
-                      ))}
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              {selectedDestinations.length > 0 && (
-                <div className="flex flex-wrap gap-1 pt-1">
-                  {selectedDestinations.map((dest) => (
-                    <Badge key={dest} variant="secondary" className="text-xs gap-1 pr-1">
-                      {dest}
-                      <button type="button" onClick={() => toggleDestination(dest)} className="ml-0.5 hover:text-destructive transition-colors">
-                        <X className="w-3 h-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
         {/* Tabs for items */}
         <div className="glass-card rounded-xl p-4">
           <Tabs value={activeTab} onValueChange={(v) => {
@@ -1063,7 +816,252 @@ export default function Quotes() {
               )}
             </TabsList>
 
-            <TabsContent value="main" className="mt-3">
+            <TabsContent value="main" className="mt-3 space-y-3">
+              {/* Row 1: Título, Cliente, Imagem de Capa */}
+              <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-3">
+                <div className="col-span-2 lg:col-span-4 space-y-1">
+                  <Label className="font-body text-xs">Título da Cotação</Label>
+                  <Input className="h-9 text-sm" value={form.title ?? ""} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex: Viagem Europa - Família Silva" />
+                </div>
+
+                <div className="col-span-2 lg:col-span-4 space-y-1">
+                  <Label className="font-body text-xs">Cliente</Label>
+                  <Select value={form.client_id ?? ""} onValueChange={(v) => { setForm({ ...form, client_id: v }); setSelectedPassengers([]); setSelectedLinkedClients([]); setClientSelfTraveling(false); }}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar cliente" /></SelectTrigger>
+                    <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+
+                <div className="col-span-2 lg:col-span-4 space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <Label className="font-body text-xs">Imagem de Capa</Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-[280px] text-xs">
+                          <p>A IA usa o <strong>título da cotação</strong> para gerar a imagem automaticamente.</p>
+                          <p className="mt-1">Para upload manual, a largura ideal é <strong>1200×630px</strong> (proporção 1.9:1).</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {coverPreview ? (
+                      <div className="relative">
+                        <img src={coverPreview} alt="Capa" className="h-9 w-16 object-cover rounded border border-border cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setCoverZoom(true)} />
+                        <button type="button" onClick={() => { setCoverFile(null); setCoverPreview(null); setForm({ ...form, cover_image_url: "" }); }} className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full p-0.5">
+                          <X className="w-2.5 h-2.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <button type="button" onClick={() => fileInputRef.current?.click()} className="h-9 px-3 border border-dashed border-border rounded-md flex items-center gap-1.5 text-muted-foreground hover:border-primary hover:text-primary transition-colors text-xs">
+                          <ImageIcon className="w-3.5 h-3.5" /> Adicionar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={generateCoverWithAI}
+                          disabled={generatingCover}
+                          className="h-9 px-3 border border-dashed border-accent rounded-md flex items-center gap-1.5 text-accent-foreground hover:bg-accent/10 hover:border-accent transition-colors text-xs disabled:opacity-50"
+                        >
+                          {generatingCover ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+                          {generatingCover ? "Gerando..." : "Gerar com IA"}
+                        </button>
+                      </>
+                    )}
+                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 2: Datas / Data Flexível */}
+              <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-3 items-start">
+                <div className="col-span-1 lg:col-span-1 space-y-1">
+                  <Label className="font-body text-xs whitespace-nowrap">Flexível</Label>
+                  <div className="flex items-center h-9">
+                    <Switch checked={!!form.flexible_dates} onCheckedChange={(v) => setForm({ ...form, flexible_dates: v, ...(v ? { travel_date_start: "", travel_date_end: "" } : {}) })} />
+                  </div>
+                </div>
+
+                {!form.flexible_dates ? (
+                  <>
+                    <div className="col-span-1 lg:col-span-2 space-y-1">
+                      <Label className="font-body text-xs">Data Início</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className={cn("w-full h-9 justify-start text-left text-sm font-normal", !form.travel_date_start && "text-muted-foreground")}>
+                            <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                            {form.travel_date_start ? format(parseISO(form.travel_date_start), "dd/MM/yyyy") : "Selecionar"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar mode="single" selected={form.travel_date_start ? parseISO(form.travel_date_start) : undefined} onSelect={(date) => setForm({ ...form, travel_date_start: date ? format(date, "yyyy-MM-dd") : "" })} initialFocus locale={ptBR} className={cn("p-3 pointer-events-auto")} />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="col-span-1 lg:col-span-2 space-y-1">
+                      <Label className="font-body text-xs">Data Fim</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className={cn("w-full h-9 justify-start text-left text-sm font-normal", !form.travel_date_end && "text-muted-foreground")}>
+                            <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                            {form.travel_date_end ? format(parseISO(form.travel_date_end), "dd/MM/yyyy") : "Selecionar"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar mode="single" selected={form.travel_date_end ? parseISO(form.travel_date_end) : undefined} onSelect={(date) => setForm({ ...form, travel_date_end: date ? format(date, "yyyy-MM-dd") : "" })} initialFocus locale={ptBR} className={cn("p-3 pointer-events-auto")} />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </>
+                ) : (
+                  <div className="col-span-1 lg:col-span-4 space-y-1">
+                    <Label className="font-body text-xs">Período desejado</Label>
+                    <Input className="h-9 text-sm" value={form.flexible_dates_description ?? ""} onChange={(e) => setForm({ ...form, flexible_dates_description: e.target.value })} placeholder="Ex: Qualquer semana em julho..." />
+                  </div>
+                )}
+              </div>
+
+              {/* Row 3: Viajantes + Destino(s) */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-3 gap-y-3 items-start">
+                {form.client_id && (
+                  <div className="space-y-1">
+                    <Label className="font-body text-xs">Viajantes</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-between h-9 text-sm font-normal">
+                          {(() => {
+                            const total = (clientSelfTraveling ? 1 : 0) + selectedPassengers.length + selectedLinkedClients.length;
+                            return total === 0 ? "Selecionar viajantes..." : `${total} selecionado(s)`;
+                          })()}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar..." className="h-8 text-xs" />
+                          <CommandList>
+                            <CommandEmpty className="py-3 text-xs">Nenhum encontrado.</CommandEmpty>
+                            {(() => {
+                              const selectedClient = clients.find((c: any) => c.id === form.client_id);
+                              if (!selectedClient) return null;
+                              return (
+                                <CommandItem key={`self-${selectedClient.id}`} onSelect={() => setClientSelfTraveling(prev => !prev)} className="text-xs cursor-pointer">
+                                  <Check className={cn("mr-2 h-3.5 w-3.5", clientSelfTraveling ? "opacity-100" : "opacity-0")} />
+                                  <Badge className="text-[9px] h-4 px-1 shrink-0 mr-1 bg-primary/20 text-primary border-primary/30">Cliente</Badge>
+                                  <span className="truncate font-medium">{selectedClient.full_name}</span>
+                                </CommandItem>
+                              );
+                            })()}
+                            {clientPassengers.map((p) => (
+                              <CommandItem key={`p-${p.id}`} onSelect={() => togglePassenger(p.id)} className="text-xs cursor-pointer">
+                                <Check className={cn("mr-2 h-3.5 w-3.5", selectedPassengers.includes(p.id) ? "opacity-100" : "opacity-0")} />
+                                <Badge variant="secondary" className="text-[9px] h-4 px-1 shrink-0 mr-1">Passageiro</Badge>
+                                <span className="truncate">{p.full_name}</span>
+                                {p.relationship_type && <span className="ml-auto text-[10px] text-muted-foreground">({RELATIONSHIP_LABELS[p.relationship_type] || p.relationship_type})</span>}
+                              </CommandItem>
+                            ))}
+                            {linkedClients.map((lc: any) => (
+                              <CommandItem key={`lc-${lc.id}`} onSelect={() => toggleLinkedClient(lc.id)} className="text-xs cursor-pointer">
+                                <Check className={cn("mr-2 h-3.5 w-3.5", selectedLinkedClients.includes(lc.id) ? "opacity-100" : "opacity-0")} />
+                                <Badge variant="outline" className="text-[9px] h-4 px-1 shrink-0 mr-1">{RELATIONSHIP_LABELS[(lc as any).relationship_type] || (lc as any).relationship_type}</Badge>
+                                <span className="truncate">{(lc as any).full_name}</span>
+                              </CommandItem>
+                            ))}
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    {(clientSelfTraveling || selectedPassengers.length > 0 || selectedLinkedClients.length > 0) && (
+                      <div className="flex flex-wrap gap-1 pt-1">
+                        {clientSelfTraveling && (() => {
+                          const selectedClient = clients.find((c: any) => c.id === form.client_id);
+                          if (!selectedClient) return null;
+                          return (
+                            <Badge key="self-client" className="text-xs gap-1 pr-1 bg-primary/20 text-primary border-primary/30">
+                              {selectedClient.full_name}
+                              <span className="text-[9px]">(Cliente)</span>
+                              {renderPrefsTooltip(selectedClient)}
+                              <button type="button" onClick={() => setClientSelfTraveling(false)} className="ml-0.5 hover:text-destructive transition-colors"><X className="w-3 h-3" /></button>
+                            </Badge>
+                          );
+                        })()}
+                        {selectedPassengers.map((pid) => {
+                          const p = clientPassengers.find((cp) => cp.id === pid);
+                          if (!p) return null;
+                          return (
+                            <Badge key={`sp-${pid}`} variant="secondary" className="text-xs gap-1 pr-1">
+                              {p.full_name}
+                              {p.relationship_type && <span className="text-[9px] text-muted-foreground">({RELATIONSHIP_LABELS[p.relationship_type] || p.relationship_type})</span>}
+                              <button type="button" onClick={() => togglePassenger(pid)} className="ml-0.5 hover:text-destructive transition-colors"><X className="w-3 h-3" /></button>
+                            </Badge>
+                          );
+                        })}
+                        {selectedLinkedClients.map((cid) => {
+                          const lc = linkedClients.find((l: any) => l.id === cid);
+                          if (!lc) return null;
+                          return (
+                            <Badge key={`slc-${cid}`} variant="outline" className="text-xs gap-1 pr-1">
+                              {(lc as any).full_name}
+                              <span className="text-[9px] text-muted-foreground">({RELATIONSHIP_LABELS[(lc as any).relationship_type] || (lc as any).relationship_type})</span>
+                              {renderPrefsTooltip(lc)}
+                              <button type="button" onClick={() => toggleLinkedClient(cid)} className="ml-0.5 hover:text-destructive transition-colors"><X className="w-3 h-3" /></button>
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="space-y-1">
+                  <Label className="font-body text-xs">Destino(s)</Label>
+                  <Popover open={destOpen} onOpenChange={setDestOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between h-9 text-sm font-normal">
+                        {selectedDestinations.length === 0
+                          ? "Buscar destino..."
+                          : `${selectedDestinations.length} destino(s)`}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Buscar cidade, país..." className="h-8 text-xs" />
+                        <CommandList>
+                          <CommandEmpty className="py-3 text-xs">Nenhum destino encontrado.</CommandEmpty>
+                          {allDestinations.map((d) => (
+                            <CommandItem key={d.value} onSelect={() => toggleDestination(d.value)} className="text-xs cursor-pointer">
+                              <Check className={cn("mr-2 h-3.5 w-3.5", selectedDestinations.includes(d.value) ? "opacity-100" : "opacity-0")} />
+                              <Badge variant="secondary" className="text-[9px] h-4 px-1 shrink-0 mr-1">{d.group}</Badge>
+                              <span className="truncate">{d.label}</span>
+                            </CommandItem>
+                          ))}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  {selectedDestinations.length > 0 && (
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {selectedDestinations.map((dest) => (
+                        <Badge key={dest} variant="secondary" className="text-xs gap-1 pr-1">
+                          {dest}
+                          <button type="button" onClick={() => toggleDestination(dest)} className="ml-0.5 hover:text-destructive transition-colors">
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Separator */}
+              <div className="border-t border-border/50 pt-3"></div>
+
+              {/* Detalhes, Pagamento, Termos */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 <div className="lg:col-span-2 space-y-1">
                   <div className="flex items-center gap-1.5">
