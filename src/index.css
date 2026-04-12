@@ -211,3 +211,8 @@
     .pq-fs-xl { font-size: calc(1.25rem + var(--pq-font-step-px)); }
   }
 }
+
+/* Google Places Autocomplete dropdown above dialogs */
+.pac-container {
+  z-index: 10000 !important;
+}
