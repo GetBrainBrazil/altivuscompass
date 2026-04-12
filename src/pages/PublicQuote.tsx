@@ -313,7 +313,7 @@ export default function PublicQuote() {
     );
   }
 
-  const { quote, items, passengers, agency } = data;
+  const { quote, items, passengers, agency, itinerary } = data;
   const formatCurrency = (v: number | null) =>
     v != null ? v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—";
 
