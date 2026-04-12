@@ -73,6 +73,21 @@ type QuoteItem = {
   _isNew?: boolean;
 };
 
+const QUOTE_EDITOR_DRAFT_KEY = "quotes-editor-draft";
+
+type QuoteEditorDraft = {
+  dialogOpen: boolean;
+  editingQuote: Quote | null;
+  form: Record<string, any>;
+  items: QuoteItem[];
+  activeTab: string;
+  selectedPassengers: string[];
+  selectedLinkedClients: string[];
+  clientSelfTraveling: boolean;
+  selectedDestinations: string[];
+  coverPreview: string | null;
+};
+
 export default function Quotes() {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -91,6 +106,7 @@ export default function Quotes() {
   const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [draftRestored, setDraftRestored] = useState(false);
   const [generatingCover, setGeneratingCover] = useState(false);
   const [generatingDetails, setGeneratingDetails] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
