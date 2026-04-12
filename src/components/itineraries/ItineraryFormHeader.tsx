@@ -73,7 +73,7 @@ function AirportCombobox({ value, onChange, airports, label }: { value: string; 
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button variant="outline" role="combobox" className="w-full justify-between font-normal h-8 text-sm">
-            {selected ? `${selected.iata_code} — ${selected.city}` : "Selecione..."}
+            {selected ? `${selected.iata_code} — ${selected.name}` : "Selecione..."}
             <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
