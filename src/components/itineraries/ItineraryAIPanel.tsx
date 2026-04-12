@@ -163,8 +163,7 @@ export default function ItineraryAIPanel({ itineraryId, aiStatus, onStatusChange
               placeholder="Escreva as instruções para a IA..."
             />
           </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" size="sm" onClick={resetPrompt}>Restaurar Padrão</Button>
+          <DialogFooter>
             <Button size="sm" onClick={savePrompt} disabled={savingPrompt}>
               {savingPrompt ? "Salvando..." : "Salvar"}
             </Button>
