@@ -28,7 +28,13 @@ import Itineraries from "./pages/Itineraries";
 import PublicItinerary from "./pages/PublicItinerary";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
