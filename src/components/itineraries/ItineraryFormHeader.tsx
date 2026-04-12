@@ -132,7 +132,7 @@ export default function ItineraryFormHeader({ form, setForm, quotes, airports }:
           <Input className="h-8 text-sm" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex: Roteiro França 2026" />
         </div>
         <AirportCombobox label="Aeroporto Chegada" value={form.arrival_airport_id} onChange={(v) => setForm({ ...form, arrival_airport_id: v })} airports={airports} />
-        <div className="w-[175px]">
+        <div className="w-[190px] shrink-0">
           <Label className="text-xs">Data/Hora Chegada</Label>
           <Input className="h-8 text-sm" type="datetime-local" value={form.arrival_datetime} onChange={(e) => setForm({ ...form, arrival_datetime: e.target.value })} />
         </div>
@@ -172,7 +172,7 @@ export default function ItineraryFormHeader({ form, setForm, quotes, airports }:
           </Popover>
         </div>
         <AirportCombobox label="Aeroporto Saída" value={form.departure_airport_id} onChange={(v) => setForm({ ...form, departure_airport_id: v })} airports={airports} />
-        <div className="w-[175px]">
+        <div className="w-[190px] shrink-0">
           <Label className="text-xs">Data/Hora Saída</Label>
           <Input className="h-8 text-sm" type="datetime-local" value={form.departure_datetime} onChange={(e) => setForm({ ...form, departure_datetime: e.target.value })} />
         </div>
