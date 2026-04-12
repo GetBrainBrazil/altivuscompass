@@ -112,7 +112,7 @@ export default function Quotes() {
   const [destOpen, setDestOpen] = useState(false);
   const [collapsedFlights, setCollapsedFlights] = useState<Set<number>>(new Set());
   const [coverZoom, setCoverZoom] = useState(false);
-  const hotelAutocompleteRefs = useRef<Map<string, google.maps.places.Autocomplete>>(new Map());
+  const hotelAutocompleteRefs = useRef<Map<string, any>>(new Map());
   const hotelMapsLoaded = useRef(false);
   const [draggedQuoteId, setDraggedQuoteId] = useState<string | null>(null);
   const [whatsappOpen, setWhatsappOpen] = useState(false);
