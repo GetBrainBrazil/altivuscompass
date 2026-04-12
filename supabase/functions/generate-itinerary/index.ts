@@ -68,7 +68,14 @@ RESPONDA SEMPRE em JSON válido com a seguinte estrutura:
   ],
   "summary": "Resumo geral do roteiro",
   "tips": ["Dica 1", "Dica 2"]
-}`;
+}
+
+REGRAS OBRIGATÓRIAS DE TRANSPORTE:
+- O campo transport_mode de cada atividade indica como o viajante CHEGOU a esse local vindo do local anterior.
+- Quando o deslocamento é entre dois AEROPORTOS ou entre cidades distantes (>200km), o transport_mode DEVE ser "aviao".
+- Quando o destino ou origem é um aeroporto e o outro ponto fica na mesma cidade/região, use "uber", "taxi" ou "transfer".
+- Para deslocamentos curtos (<3km) em áreas urbanas com calçadas, prefira "a_pe".
+- NUNCA coloque "uber" ou "taxi" entre dois aeroportos de cidades diferentes.`;
 
     let userPrompt = "";
 
