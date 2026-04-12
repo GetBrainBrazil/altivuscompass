@@ -33,7 +33,7 @@ function loadGoogleMaps(apiKey: string): Promise<void> {
       loadCallbacks.forEach((cb) => cb());
     };
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initItineraryMap&libraries=geometry`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initItineraryMap&libraries=geometry,places`;
     script.async = true;
     document.head.appendChild(script);
   });
