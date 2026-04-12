@@ -2,10 +2,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, MapPin, Clock, Car, Train, Ship, Plane, Footprints, Bus, Pencil } from "lucide-react";
+import { Trash2, MapPin, Clock, Car, Train, Ship, Plane, Footprints, Bus, Pencil, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import ActivityEditDialog from "./ActivityEditDialog";
 
 interface Props {
@@ -50,6 +50,9 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
   const queryClient = useQueryClient();
   const activityRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [editingActivity, setEditingActivity] = useState<any>(null);
+  const [activityPhotos, setActivityPhotos] = useState<Record<string, string>>({});
+  const placesServiceRef = useRef<any>(null);
+  const photoCacheRef = useRef<Record<string, string>>({});
 
   const { data: days = [] } = useQuery({
     queryKey: ["itinerary-days", itineraryId],
@@ -90,6 +93,65 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
       activityRefs.current[selectedActivityId]?.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [selectedActivityId]);
+
+  // Fetch photos for hotel/attraction/restaurant activities
+  const PHOTO_TYPES = ["hotel", "attraction", "restaurant", "cultural", "nature", "entertainment", "shopping"];
+  useEffect(() => {
+    const eligible = activities.filter((a: any) => PHOTO_TYPES.includes(a.activity_type) && a.activity_name);
+    const uncached = eligible.filter((a: any) => !photoCacheRef.current[a.activity_name]);
+    if (uncached.length === 0) {
+      const photos: Record<string, string> = {};
+      eligible.forEach((a: any) => { if (photoCacheRef.current[a.activity_name]) photos[a.activity_name] = photoCacheRef.current[a.activity_name]; });
+      if (Object.keys(photos).length > 0) setActivityPhotos(photos);
+      return;
+    }
+
+    const fetchPhotos = async () => {
+      try {
+        if (!(window as any).google?.maps?.places) {
+          const { data } = await supabase.functions.invoke("get-maps-key");
+          const apiKey = data?.key;
+          if (!apiKey) return;
+          await new Promise<void>((resolve, reject) => {
+            if ((window as any).google?.maps?.places) { resolve(); return; }
+            const s = document.createElement("script");
+            s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+            s.async = true;
+            s.onload = () => resolve();
+            s.onerror = () => reject();
+            document.head.appendChild(s);
+          });
+        }
+        if (!placesServiceRef.current) {
+          const mapDiv = document.createElement("div");
+          placesServiceRef.current = new (window as any).google.maps.places.PlacesService(mapDiv);
+        }
+        const service = placesServiceRef.current;
+        const photos: Record<string, string> = {};
+        Object.assign(photos, photoCacheRef.current);
+
+        for (const act of uncached) {
+          try {
+            await new Promise<void>((resolve) => {
+              service.findPlaceFromQuery(
+                { query: act.activity_name, fields: ["photos"] },
+                (results: any, status: any) => {
+                  if (status === "OK" && results?.[0]?.photos?.[0]) {
+                    const url = results[0].photos[0].getUrl({ maxWidth: 120, maxHeight: 90 });
+                    photos[act.activity_name] = url;
+                    photoCacheRef.current[act.activity_name] = url;
+                  }
+                  resolve();
+                }
+              );
+            });
+          } catch {}
+        }
+        setActivityPhotos(photos);
+      } catch {}
+    };
+    fetchPhotos();
+  }, [activities]);
 
   const deleteActivity = async (id: string) => {
     await supabase.from("itinerary_day_activities").delete().eq("id", id);
@@ -169,6 +231,13 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
                     )}
                   </div>
 
+                  {/* Thumbnail */}
+                  {PHOTO_TYPES.includes(act.activity_type) && activityPhotos[act.activity_name] && (
+                    <div className="w-14 h-14 rounded-md overflow-hidden flex-shrink-0 bg-muted">
+                      <img src={activityPhotos[act.activity_name]} alt="" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium text-sm text-foreground">{act.activity_name}</span>
@@ -179,6 +248,18 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
                       )}
                       {act.is_ai_suggested && (
                         <Badge variant="outline" className="text-[10px]">IA</Badge>
+                      )}
+                      {PHOTO_TYPES.includes(act.activity_type) && (
+                        <a
+                          href={`https://www.tripadvisor.com/Search?q=${encodeURIComponent(act.activity_name)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-green-700 transition-colors"
+                        >
+                          <ExternalLink className="h-2.5 w-2.5" />
+                          TripAdvisor
+                        </a>
                       )}
                     </div>
                     {act.description && <p className="text-xs text-muted-foreground mt-1">{act.description}</p>}
