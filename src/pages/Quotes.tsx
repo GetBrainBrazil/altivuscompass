@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -72,6 +72,21 @@ type QuoteItem = {
   _isNew?: boolean;
 };
 
+const QUOTE_EDITOR_DRAFT_KEY = "quotes-editor-draft";
+
+type QuoteEditorDraft = {
+  dialogOpen: boolean;
+  editingQuote: Quote | null;
+  form: Record<string, any>;
+  items: QuoteItem[];
+  activeTab: string;
+  selectedPassengers: string[];
+  selectedLinkedClients: string[];
+  clientSelfTraveling: boolean;
+  selectedDestinations: string[];
+  coverPreview: string | null;
+};
+
 export default function Quotes() {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -90,6 +105,7 @@ export default function Quotes() {
   const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [draftRestored, setDraftRestored] = useState(false);
   const [generatingCover, setGeneratingCover] = useState(false);
   const [generatingDetails, setGeneratingDetails] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -228,30 +244,115 @@ export default function Quotes() {
     },
   });
 
+  useEffect(() => {
+    try {
+      const storedDraft = localStorage.getItem(QUOTE_EDITOR_DRAFT_KEY);
+      if (!storedDraft) {
+        setDraftRestored(true);
+        return;
+      }
+
+      const draft = JSON.parse(storedDraft) as QuoteEditorDraft;
+      if (!draft?.dialogOpen) {
+        setDraftRestored(true);
+        return;
+      }
+
+      setDialogOpen(true);
+      setEditingQuote(draft.editingQuote ?? null);
+      setForm(draft.form ?? {});
+      setItems((draft.items ?? []).map((item) => ({ ...item, details: item.details ?? {} })));
+      setActiveTab(draft.activeTab || "main");
+      setSelectedPassengers(draft.selectedPassengers ?? []);
+      setSelectedLinkedClients(draft.selectedLinkedClients ?? []);
+      setClientSelfTraveling(!!draft.clientSelfTraveling);
+      setSelectedDestinations(draft.selectedDestinations ?? []);
+      setCoverPreview(draft.coverPreview ?? null);
+    } catch {
+      localStorage.removeItem(QUOTE_EDITOR_DRAFT_KEY);
+    } finally {
+      setDraftRestored(true);
+    }
+  }, []);
+
+  const persistQuoteEditorDraft = useCallback(() => {
+    try {
+      if (!dialogOpen) {
+        localStorage.removeItem(QUOTE_EDITOR_DRAFT_KEY);
+        return;
+      }
+
+      const draft: QuoteEditorDraft = {
+        dialogOpen,
+        editingQuote,
+        form,
+        items,
+        activeTab,
+        selectedPassengers,
+        selectedLinkedClients,
+        clientSelfTraveling,
+        selectedDestinations,
+        coverPreview,
+      };
+
+      localStorage.setItem(QUOTE_EDITOR_DRAFT_KEY, JSON.stringify(draft));
+    } catch {
+      // ignore persistence errors
+    }
+  }, [dialogOpen, editingQuote, form, items, activeTab, selectedPassengers, selectedLinkedClients, clientSelfTraveling, selectedDestinations, coverPreview]);
+
+  useEffect(() => {
+    if (!draftRestored) return;
+    const timer = window.setTimeout(() => {
+      persistQuoteEditorDraft();
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [draftRestored, persistQuoteEditorDraft]);
+
+  useEffect(() => {
+    if (!draftRestored) return;
+
+    const saveDraft = () => persistQuoteEditorDraft();
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        persistQuoteEditorDraft();
+      }
+    };
+
+    window.addEventListener("beforeunload", saveDraft);
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      window.removeEventListener("beforeunload", saveDraft);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [draftRestored, persistQuoteEditorDraft]);
+
   // Load existing quote items when editing
   useEffect(() => {
-    if (editingQuote) {
+    if (editingQuote && !draftRestored) return;
+
+    if (editingQuote && items.length === 0) {
       supabase.from("quote_items").select("*").eq("quote_id", editingQuote.id).order("sort_order").then(({ data }) => {
         const loadedItems = (data ?? []).map((i: any) => ({ ...i, details: i.details ?? {} }));
-        setItems(loadedItems);
-        // Collapse all flight items by default
+        setItems((current) => current.length > 0 ? current : loadedItems);
         const flightIndices = new Set<number>();
         loadedItems.forEach((it: any, idx: number) => { if (it.item_type === "flight") flightIndices.add(idx); });
         setCollapsedFlights(flightIndices);
       });
       supabase.from("quote_passengers").select("passenger_id").eq("quote_id", editingQuote.id).then(({ data }) => {
-        setSelectedPassengers((data ?? []).map((p: any) => p.passenger_id));
+        setSelectedPassengers((current) => current.length > 0 ? current : (data ?? []).map((p: any) => p.passenger_id));
       });
-      // Load linked client IDs from price_breakdown
       const pb = (editingQuote as any).price_breakdown;
       if (pb && typeof pb === 'object') {
         if (Array.isArray((pb as any).linked_client_ids)) {
-          setSelectedLinkedClients((pb as any).linked_client_ids);
+          setSelectedLinkedClients((current) => current.length > 0 ? current : (pb as any).linked_client_ids);
         }
-        setClientSelfTraveling(!!(pb as any).client_self_traveling);
+        setClientSelfTraveling((current) => current || !!(pb as any).client_self_traveling);
       }
     }
-  }, [editingQuote]);
+  }, [editingQuote, draftRestored, items.length]);
 
   const uploadCoverImage = async (quoteId: string): Promise<string | null> => {
     if (!coverFile) return form.cover_image_url || null;
@@ -437,6 +538,7 @@ export default function Quotes() {
       }
 
       toast({ title: editingQuote ? "Cotação atualizada" : "Cotação criada", duration: 2000 });
+      localStorage.removeItem(QUOTE_EDITOR_DRAFT_KEY);
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
       queryClient.invalidateQueries({ queryKey: ["sales"] });
 
@@ -513,6 +615,9 @@ export default function Quotes() {
       flexible_dates: pb?.flexible_dates ?? false,
       flexible_dates_description: pb?.flexible_dates_description ?? "",
     });
+    setItems([]);
+    setSelectedPassengers([]);
+    setSelectedLinkedClients([]);
     setSelectedDestinations(q.destination ? q.destination.split(", ").filter(Boolean) : []);
     setClientSelfTraveling(pb?.client_self_traveling ?? false);
     setCoverFile(null);
@@ -522,6 +627,7 @@ export default function Quotes() {
   };
 
   const closeDialog = () => {
+    localStorage.removeItem(QUOTE_EDITOR_DRAFT_KEY);
     setDialogOpen(false);
     setEditingQuote(null);
     setForm({});
