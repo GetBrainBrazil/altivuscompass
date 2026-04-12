@@ -218,7 +218,6 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
                   onClick={() => onSelectActivity?.(isSelected ? null : act.id)}
                 >
                   <div className="flex flex-col items-center min-w-[50px] text-center">
-                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold mb-1">{i + 1}</span>
                     {act.start_time && (
                       <div className="flex flex-col items-center">
                         <span className="text-[9px] text-muted-foreground uppercase leading-none">Chegada</span>
@@ -231,6 +230,13 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
                         <span className="text-xs text-muted-foreground">{act.end_time.slice(0,5)}</span>
                       </div>
                     )}
+                    {/* Map-style marker pin */}
+                    <div className="relative mt-1.5 flex flex-col items-center">
+                      <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center shadow-md">
+                        <span className="text-[10px] font-bold text-white leading-none">{i + 1}</span>
+                      </div>
+                      <div className="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] border-l-transparent border-r-transparent border-t-red-500 -mt-[1px]" />
+                    </div>
                   </div>
 
                   {/* Thumbnail */}
