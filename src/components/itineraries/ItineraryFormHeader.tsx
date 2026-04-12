@@ -125,12 +125,21 @@ export default function ItineraryFormHeader({ form, setForm, quotes, airports }:
 
   return (
     <div className="space-y-2 min-w-0">
-      {/* Linha 1: Título + Cotação */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {/* Linha 1: Título | Aeroporto Chegada | Data/Hora Chegada */}
+      <div className="grid grid-cols-[2fr_1.2fr_auto] gap-3 items-end">
         <div>
           <Label className="text-xs">Título *</Label>
           <Input className="h-8 text-sm" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex: Roteiro França 2026" />
         </div>
+        <AirportCombobox label="Aeroporto Chegada" value={form.arrival_airport_id} onChange={(v) => setForm({ ...form, arrival_airport_id: v })} airports={airports} />
+        <div className="w-[175px]">
+          <Label className="text-xs">Data/Hora Chegada</Label>
+          <Input className="h-8 text-sm" type="datetime-local" value={form.arrival_datetime} onChange={(e) => setForm({ ...form, arrival_datetime: e.target.value })} />
+        </div>
+      </div>
+
+      {/* Linha 2: Cotação | Aeroporto Saída | Data/Hora Saída */}
+      <div className="grid grid-cols-[2fr_1.2fr_auto] gap-3 items-end">
         <div>
           <Label className="text-xs">Cotação</Label>
           <Popover open={quoteOpen} onOpenChange={setQuoteOpen}>
@@ -162,17 +171,8 @@ export default function ItineraryFormHeader({ form, setForm, quotes, airports }:
             </PopoverContent>
           </Popover>
         </div>
-      </div>
-
-      {/* Linha 2: Aeroportos + Datas (4 colunas) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <AirportCombobox label="Aeroporto Chegada" value={form.arrival_airport_id} onChange={(v) => setForm({ ...form, arrival_airport_id: v })} airports={airports} />
-        <div>
-          <Label className="text-xs">Data/Hora Chegada</Label>
-          <Input className="h-8 text-sm" type="datetime-local" value={form.arrival_datetime} onChange={(e) => setForm({ ...form, arrival_datetime: e.target.value })} />
-        </div>
         <AirportCombobox label="Aeroporto Saída" value={form.departure_airport_id} onChange={(v) => setForm({ ...form, departure_airport_id: v })} airports={airports} />
-        <div>
+        <div className="w-[175px]">
           <Label className="text-xs">Data/Hora Saída</Label>
           <Input className="h-8 text-sm" type="datetime-local" value={form.departure_datetime} onChange={(e) => setForm({ ...form, departure_datetime: e.target.value })} />
         </div>
