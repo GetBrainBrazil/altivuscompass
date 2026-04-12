@@ -81,6 +81,7 @@ export default function PublicItinerary() {
             readOnly={!itinerary.public_editable}
             selectedActivityId={selectedActivityId}
             onSelectActivity={setSelectedActivityId}
+            summary={itinerary.summary}
           />
         </div>
 
