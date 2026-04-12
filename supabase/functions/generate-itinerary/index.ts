@@ -87,8 +87,33 @@ RESPONDA SEMPRE em JSON válido com a seguinte estrutura:
 
     let userPrompt = "";
 
+    // Fetch airport labels for both modes
+    let arrivalAirportLabel = "Não especificado";
+    let departureAirportLabel = "Não especificado";
+    if (itinerary.arrival_airport_id) {
+      const { data: ap } = await supabase.from("airports").select("iata_code, name, city").eq("id", itinerary.arrival_airport_id).single();
+      if (ap) arrivalAirportLabel = `${ap.iata_code} — ${ap.name}, ${ap.city}`;
+    }
+    if (itinerary.departure_airport_id) {
+      const { data: ap } = await supabase.from("airports").select("iata_code, name, city").eq("id", itinerary.departure_airport_id).single();
+      if (ap) departureAirportLabel = `${ap.iata_code} — ${ap.name}, ${ap.city}`;
+    }
+
+    const arrivalDate = itinerary.arrival_datetime ? new Date(itinerary.arrival_datetime) : null;
+    const departureDate = itinerary.departure_datetime ? new Date(itinerary.departure_datetime) : null;
+
     if (mode === "chat" && chat_message) {
-      userPrompt = `ROTEIRO ATUAL (MANTENHA TODOS OS DIAS E ATIVIDADES QUE NÃO FOREM AFETADOS PELO PEDIDO):
+      userPrompt = `DADOS DO FORMULÁRIO (SEMPRE RESPEITAR — SÃO A BASE DO ROTEIRO):
+CHEGADA: ${arrivalDate ? arrivalDate.toISOString() : "Não especificado"}
+AEROPORTO CHEGADA: ${arrivalAirportLabel}
+SAÍDA: ${departureDate ? departureDate.toISOString() : "Não especificado"}
+AEROPORTO SAÍDA: ${departureAirportLabel}
+HORÁRIO ACORDAR: ${itinerary.wake_time || "08:00"}
+HORÁRIO DORMIR: ${itinerary.sleep_time || "22:00"}
+DESTINO: ${itinerary.destination || "Não especificado"}
+DESCRITIVO DA VIAGEM: ${itinerary.notes || "Nenhum descritivo fornecido"}
+
+ROTEIRO ATUAL (MANTENHA TODOS OS DIAS E ATIVIDADES QUE NÃO FOREM AFETADOS PELO PEDIDO):
 ${JSON.stringify(existingDays, null, 2)}
 
 HOTÉIS CADASTRADOS: ${JSON.stringify(hotels)}
@@ -102,7 +127,8 @@ REGRAS PARA AJUSTE:
 2. Mantenha todos os dias, horários, atividades e deslocamentos que não foram mencionados no pedido.
 3. Se o ajuste exigir mudanças em outros pontos por logística (ex: horários de deslocamento), ajuste apenas o mínimo necessário.
 4. Retorne o roteiro COMPLETO no JSON (todos os dias, incluindo os não alterados), pois ele será salvo por inteiro.
-5. Respeite TODAS as regras do prompt de sistema (horários, transporte, coordenadas, etc).`;
+5. Respeite TODAS as regras do prompt de sistema (horários, transporte, coordenadas, etc).
+6. O aeroporto de chegada e saída são os definidos nos DADOS DO FORMULÁRIO acima. NÃO invente outros aeroportos.`;
     } else {
       const arrivalDate = itinerary.arrival_datetime ? new Date(itinerary.arrival_datetime) : null;
       const departureDate = itinerary.departure_datetime ? new Date(itinerary.departure_datetime) : null;
