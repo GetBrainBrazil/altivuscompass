@@ -220,7 +220,7 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
 
       {currentId && (
         <>
-          <ItineraryAIPanel itineraryId={currentId} aiStatus={aiStatus} onStatusChange={setAiStatus} />
+          <ItineraryAIPanel itineraryId={currentId} aiStatus={aiStatus} onStatusChange={setAiStatus} onBeforeGenerate={handleSave} />
 
            <Tabs defaultValue="timeline" className="mt-2">
             <TabsList className="h-8">
