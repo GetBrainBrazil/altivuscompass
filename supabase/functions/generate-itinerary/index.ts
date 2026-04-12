@@ -36,30 +36,7 @@ Deno.serve(async (req) => {
 
     await supabase.from("itineraries").update({ ai_status: "generating" }).eq("id", itinerary_id);
 
-    const defaultPromptRules = `Você é um especialista em planejamento de viagens para a agência Altivus Turismo.
-Sua tarefa é criar roteiros detalhados dia a dia com horários precisos.
-
-REGRAS CRÍTICAS:
-1. Respeite RIGOROSAMENTE os horários de chegada e saída do destino
-2. O roteiro de cada dia deve começar no hotel (ou ponto de hospedagem) e terminar nele
-3. Para cada deslocamento entre pontos, especifique: modal de transporte (uber/taxi/transfer/trem/metrô/barco/avião/a_pé/ônibus), horário de saída, horário de chegada, duração estimada em minutos, custo estimado na moeda local
-4. Para cada atividade/ponto, inclua: horário início, horário fim, endereço completo, coordenadas GPS (latitude/longitude)
-5. Considere horários de funcionamento reais dos locais
-6. Respeite os horários de acordar e dormir do viajante
-7. Organize a rota para minimizar deslocamentos desnecessários
-8. Use as informações do descritivo da viagem para entender cidades, pontos de interesse, hotéis e preferências
-9. CADA ATIVIDADE DEVE REPRESENTAR UM ÚNICO LOCAL FÍSICO. Nunca combine dois locais em uma mesma atividade. Ex: se o viajante chega no aeroporto CDG às 10:30 e pega voo para Nice chegando às 14:30, crie DUAS atividades separadas: uma para CDG (chegada 10:30, saída quando embarca) e outra para o aeroporto de Nice (chegada 14:30), com o transporte (avião) como conector entre elas.
-10. Os campos de transporte descrevem como o viajante CHEGOU naquele local (vindo do anterior). A primeira atividade do dia não precisa de transporte.`;
-
-    const structuralRules = `
-
-REGRAS ESTRUTURAIS OBRIGATÓRIAS (sempre aplicar):
-- CADA ATIVIDADE DEVE REPRESENTAR UM ÚNICO LOCAL FÍSICO. Nunca combine dois locais em uma mesma atividade. Ex: se o viajante chega no aeroporto CDG às 10:30 e pega voo para Nice chegando às 14:30, crie DUAS atividades separadas: uma para CDG (chegada 10:30, saída quando embarca) e outra para o aeroporto de Nice (chegada 14:30), com o transporte (avião) como conector entre elas.
-- Os campos de transporte (transport_mode, transport_departure_time, transport_arrival_time, etc.) descrevem como o viajante CHEGOU naquele local (vindo do local anterior). A primeira atividade do dia não precisa de transporte.`;
-
-    const userRules = custom_prompt || defaultPromptRules;
-
-    const systemPrompt = `${userRules}${structuralRules}
+    const systemPrompt = `${custom_prompt || "Você é um especialista em planejamento de viagens."}
 
 RESPONDA SEMPRE em JSON válido com a seguinte estrutura:
 {
