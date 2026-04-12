@@ -54,9 +54,6 @@ export default function PublicItinerary() {
           <p className="text-xs opacity-80 mb-0.5">Roteiro de Viagem · Altivus Turismo</p>
           <h1 className="text-xl font-bold">{itinerary.title}</h1>
           <div className="flex flex-wrap gap-4 mt-2 text-xs opacity-90">
-            {itinerary.destination && (
-              <div className="flex items-center gap-1"><MapPin className="h-3 w-3" />{itinerary.destination}</div>
-            )}
             {itinerary.travel_date_start && (
               <div className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
