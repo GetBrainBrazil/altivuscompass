@@ -356,6 +356,13 @@ export default function PublicQuote() {
               <span className="hidden sm:inline">{t.printPdf}</span>
               <span className="sm:hidden">PDF</span>
             </Button>
+            {itinerary && (
+              <Button variant="outline" size="sm" className="public-quote-control-button gap-1 font-body h-8 px-2 sm:px-3" onClick={() => window.open(`/roteiro/${itinerary.public_token}`, '_blank')}>
+                <Map className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Ver Roteiro</span>
+                <span className="sm:hidden">Roteiro</span>
+              </Button>
+            )}
 
             <div className="flex items-center gap-0.5 sm:hidden shrink-0">
               <Button
