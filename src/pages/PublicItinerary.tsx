@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import ItineraryTimeline from "@/components/itineraries/ItineraryTimeline";
@@ -10,6 +11,7 @@ import { Calendar, Plane } from "lucide-react";
 
 export default function PublicItinerary() {
   const { token } = useParams<{ token: string }>();
+  const isMobile = useIsMobile();
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
 
@@ -69,9 +71,9 @@ export default function PublicItinerary() {
       </div>
 
       {/* Split content */}
-      <div className="flex-1 flex min-h-0">
-        {/* Timeline - left side */}
-        <div className="w-1/2 overflow-y-auto p-4 border-r">
+      <div className={`flex-1 flex min-h-0 ${isMobile ? "flex-col" : "flex-row"}`}>
+        {/* Timeline */}
+        <div className={`overflow-y-auto p-4 ${isMobile ? "flex-1 border-b" : "w-1/2 border-r"}`}>
           <ItineraryTimeline
             itineraryId={itinerary.id}
             selectedDayId={selectedDayId}
@@ -82,8 +84,8 @@ export default function PublicItinerary() {
           />
         </div>
 
-        {/* Map - right side */}
-        <div className="w-1/2">
+        {/* Map */}
+        <div className={isMobile ? "h-[45vh] shrink-0" : "w-1/2"}>
           <ItineraryMapView
             itineraryId={itinerary.id}
             selectedDayId={selectedDayId}
