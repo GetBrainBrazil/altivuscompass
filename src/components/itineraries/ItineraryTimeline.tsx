@@ -218,6 +218,7 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
                   onClick={() => onSelectActivity?.(isSelected ? null : act.id)}
                 >
                   <div className="flex flex-col items-center min-w-[50px] text-center">
+                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold mb-1">{i + 1}</span>
                     {act.start_time && (
                       <div className="flex flex-col items-center">
                         <span className="text-[9px] text-muted-foreground uppercase leading-none">Chegada</span>
