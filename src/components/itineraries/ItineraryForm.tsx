@@ -58,6 +58,14 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
     },
   });
 
+  const { data: airports = [] } = useQuery({
+    queryKey: ["airports-list"],
+    queryFn: async () => {
+      const { data } = await supabase.from("airports").select("id, iata_code, name, city, state, country").order("iata_code");
+      return data || [];
+    },
+  });
+
   const { data: itinerary } = useQuery({
     queryKey: ["itinerary", currentId],
     queryFn: async () => {
@@ -83,8 +91,8 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
         client_id: itinerary.client_id || "",
         arrival_datetime: itinerary.arrival_datetime ? new Date(itinerary.arrival_datetime).toISOString().slice(0, 16) : "",
         departure_datetime: itinerary.departure_datetime ? new Date(itinerary.departure_datetime).toISOString().slice(0, 16) : "",
-        arrival_airport: itinerary.arrival_airport || "",
-        departure_airport: itinerary.departure_airport || "",
+        arrival_airport_id: itinerary.arrival_airport_id || "",
+        departure_airport_id: itinerary.departure_airport_id || "",
         traveler_type: itinerary.traveler_type || "",
         trip_style: itinerary.trip_style || "",
         wake_time: itinerary.wake_time || "08:00",
@@ -119,8 +127,8 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
         client_id: form.client_id || null,
         arrival_datetime: form.arrival_datetime || null,
         departure_datetime: form.departure_datetime || null,
-        arrival_airport: form.arrival_airport || null,
-        departure_airport: form.departure_airport || null,
+        arrival_airport_id: form.arrival_airport_id || null,
+        departure_airport_id: form.departure_airport_id || null,
         traveler_type: form.traveler_type || null,
         trip_style: form.trip_style || null,
         wake_time: form.wake_time || null,
@@ -173,7 +181,7 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
 
   return (
     <div className="space-y-4">
-      <ItineraryFormHeader form={form} setForm={setForm} clients={clients} clientOpen={clientOpen} setClientOpen={setClientOpen} quotes={quotes} />
+      <ItineraryFormHeader form={form} setForm={setForm} clients={clients} clientOpen={clientOpen} setClientOpen={setClientOpen} quotes={quotes} airports={airports} />
 
       <div className="flex justify-between items-center gap-2 flex-wrap">
         <div className="flex gap-2">
