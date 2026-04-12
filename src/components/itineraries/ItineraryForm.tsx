@@ -28,6 +28,7 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
   const [currentId, setCurrentId] = useState<string | null>(itineraryId);
   const [clientOpen, setClientOpen] = useState(false);
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
+  const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
   const [aiStatus, setAiStatus] = useState<string>("none");
 
   const [form, setForm] = useState({
@@ -214,21 +215,35 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
         <>
           <ItineraryAIPanel itineraryId={currentId} aiStatus={aiStatus} onStatusChange={setAiStatus} />
 
-          <Tabs defaultValue="timeline" className="mt-2">
+           <Tabs defaultValue="timeline" className="mt-2">
             <TabsList className="h-8">
-              <TabsTrigger value="timeline" className="text-xs px-2 py-1">📋 Roteiro</TabsTrigger>
-              <TabsTrigger value="map" className="text-xs px-2 py-1">🗺️ Mapa</TabsTrigger>
+              <TabsTrigger value="timeline" className="text-xs px-2 py-1">📋 Roteiro + Mapa</TabsTrigger>
               <TabsTrigger value="days" className="text-xs px-2 py-1">📅 Dias</TabsTrigger>
               <TabsTrigger value="hotels" className="text-xs px-2 py-1">🏨 Hotéis</TabsTrigger>
               <TabsTrigger value="restaurants" className="text-xs px-2 py-1">🍽️ Restaurantes</TabsTrigger>
               <TabsTrigger value="activities" className="text-xs px-2 py-1">🎯 Passeios</TabsTrigger>
             </TabsList>
             <TabsContent value="timeline">
-              <ItineraryTimeline itineraryId={currentId} selectedDayId={selectedDayId} onSelectDay={setSelectedDayId} />
-            </TabsContent>
-            <TabsContent value="map">
-              <ItineraryMapView itineraryId={currentId} selectedDayId={selectedDayId} />
-              {!selectedDayId && <p className="text-xs text-muted-foreground mt-1 text-center">Selecione um dia na aba "Roteiro" para ver no mapa.</p>}
+              <div className="flex gap-3 min-h-[400px]">
+                <div className="w-1/2 overflow-y-auto max-h-[500px] pr-2">
+                  <ItineraryTimeline
+                    itineraryId={currentId}
+                    selectedDayId={selectedDayId}
+                    onSelectDay={setSelectedDayId}
+                    selectedActivityId={selectedActivityId}
+                    onSelectActivity={setSelectedActivityId}
+                  />
+                </div>
+                <div className="w-1/2">
+                  <ItineraryMapView
+                    itineraryId={currentId}
+                    selectedDayId={selectedDayId}
+                    selectedActivityId={selectedActivityId}
+                    onSelectActivity={setSelectedActivityId}
+                    height="h-[500px]"
+                  />
+                </div>
+              </div>
             </TabsContent>
             <TabsContent value="days"><ItineraryDaysTab itineraryId={currentId} /></TabsContent>
             <TabsContent value="hotels"><ItineraryHotelsTab itineraryId={currentId} /></TabsContent>
