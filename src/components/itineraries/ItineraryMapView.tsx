@@ -139,11 +139,11 @@ export default function ItineraryMapView({ itineraryId, selectedDayId, selectedA
           </div>` : "";
 
       const infoWindow = new window.google.maps.InfoWindow({
-        content: `<div style="max-width:250px;padding-top:2px">
-          <div style="font-weight:bold;font-size:13px;margin-bottom:4px">${emoji} ${act.activity_name}</div>
-          ${act.start_time ? `<div style="font-size:12px;color:#666">${act.start_time.slice(0,5)}${act.end_time ? ` - ${act.end_time.slice(0,5)}` : ""}</div>` : ""}
-          ${act.description ? `<div style="font-size:12px;margin-top:4px">${act.description}</div>` : ""}
-          ${act.address ? `<div style="font-size:11px;color:#888;margin-top:4px">📍 ${act.address}</div>` : ""}
+        content: `<div style="max-width:250px;margin:-8px -2px 0 -2px">
+          <div style="font-weight:bold;font-size:13px;padding:0 2px 4px 2px;margin:0">${emoji} ${act.activity_name}</div>
+          ${act.start_time ? `<div style="font-size:12px;color:#666;padding:0 2px">${act.start_time.slice(0,5)}${act.end_time ? ` - ${act.end_time.slice(0,5)}` : ""}</div>` : ""}
+          ${act.description ? `<div style="font-size:12px;margin-top:4px;padding:0 2px">${act.description}</div>` : ""}
+          ${act.address ? `<div style="font-size:11px;color:#888;margin-top:4px;padding:0 2px">📍 ${act.address}</div>` : ""}
           ${transportInfo}
         </div>`,
       });
