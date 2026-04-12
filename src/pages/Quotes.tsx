@@ -82,7 +82,7 @@ export default function Quotes() {
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc" | null>(null);
-  const [activeTab, setActiveTab] = useState("flight");
+  const [activeTab, setActiveTab] = useState("main");
   const [items, setItems] = useState<QuoteItem[]>([]);
   const [selectedPassengers, setSelectedPassengers] = useState<string[]>([]);
   const [selectedLinkedClients, setSelectedLinkedClients] = useState<string[]>([]);
@@ -488,7 +488,7 @@ export default function Quotes() {
     setSelectedDestinations([]);
     setCoverFile(null);
     setCoverPreview(null);
-    setActiveTab("flight");
+    setActiveTab("main");
     setDialogOpen(true);
   };
 
@@ -517,7 +517,7 @@ export default function Quotes() {
     setClientSelfTraveling(pb?.client_self_traveling ?? false);
     setCoverFile(null);
     setCoverPreview(q.cover_image_url || null);
-    setActiveTab("flight");
+    setActiveTab("main");
     setDialogOpen(true);
   };
 
