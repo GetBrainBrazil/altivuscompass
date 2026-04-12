@@ -124,58 +124,62 @@ export default function ItineraryFormHeader({ form, setForm, quotes, airports }:
   const [quoteOpen, setQuoteOpen] = useState(false);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr] gap-x-3 gap-y-2 min-w-0">
-      {/* Linha 1 */}
-      <div>
-        <Label className="text-xs">Título *</Label>
-        <Input className="h-8 text-sm" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex: Roteiro França 2026" />
-      </div>
-      <AirportCombobox label="Aeroporto Chegada" value={form.arrival_airport_id} onChange={(v) => setForm({ ...form, arrival_airport_id: v })} airports={airports} />
-      <div>
-        <Label className="text-xs">Data/Hora Chegada</Label>
-        <Input className="h-8 text-sm" type="datetime-local" value={form.arrival_datetime} onChange={(e) => setForm({ ...form, arrival_datetime: e.target.value })} />
+    <div className="space-y-2 min-w-0">
+      {/* Linha 1: Título + Cotação */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <Label className="text-xs">Título *</Label>
+          <Input className="h-8 text-sm" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex: Roteiro França 2026" />
+        </div>
+        <div>
+          <Label className="text-xs">Cotação</Label>
+          <Popover open={quoteOpen} onOpenChange={setQuoteOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" role="combobox" className="w-full justify-between font-normal h-8 text-sm truncate">
+                {form.quote_id ? formatQuoteLabel(quotes.find((q: any) => q.id === form.quote_id) || {}) : "Nenhuma"}
+                <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[320px] p-0">
+              <Command>
+                <CommandInput placeholder="Buscar cotação..." />
+                <CommandList>
+                  <CommandEmpty>Nenhuma cotação encontrada</CommandEmpty>
+                  <CommandGroup>
+                    <CommandItem onSelect={() => { setForm({ ...form, quote_id: "" }); setQuoteOpen(false); }}>
+                      <Check className={cn("mr-2 h-3 w-3", !form.quote_id ? "opacity-100" : "opacity-0")} />
+                      Nenhuma
+                    </CommandItem>
+                    {quotes.map((q: any) => (
+                      <CommandItem key={q.id} onSelect={() => { setForm({ ...form, quote_id: q.id }); setQuoteOpen(false); }}>
+                        <Check className={cn("mr-2 h-3 w-3", form.quote_id === q.id ? "opacity-100" : "opacity-0")} />
+                        {formatQuoteLabel(q)}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
 
-      {/* Linha 2 */}
-      <div>
-        <Label className="text-xs">Cotação</Label>
-        <Popover open={quoteOpen} onOpenChange={setQuoteOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="outline" role="combobox" className="w-full justify-between font-normal h-8 text-sm truncate">
-              {form.quote_id ? formatQuoteLabel(quotes.find((q: any) => q.id === form.quote_id) || {}) : "Nenhuma"}
-              <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[320px] p-0">
-            <Command>
-              <CommandInput placeholder="Buscar cotação..." />
-              <CommandList>
-                <CommandEmpty>Nenhuma cotação encontrada</CommandEmpty>
-                <CommandGroup>
-                  <CommandItem onSelect={() => { setForm({ ...form, quote_id: "" }); setQuoteOpen(false); }}>
-                    <Check className={cn("mr-2 h-3 w-3", !form.quote_id ? "opacity-100" : "opacity-0")} />
-                    Nenhuma
-                  </CommandItem>
-                  {quotes.map((q: any) => (
-                    <CommandItem key={q.id} onSelect={() => { setForm({ ...form, quote_id: q.id }); setQuoteOpen(false); }}>
-                      <Check className={cn("mr-2 h-3 w-3", form.quote_id === q.id ? "opacity-100" : "opacity-0")} />
-                      {formatQuoteLabel(q)}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-      </div>
-      <AirportCombobox label="Aeroporto Saída" value={form.departure_airport_id} onChange={(v) => setForm({ ...form, departure_airport_id: v })} airports={airports} />
-      <div>
-        <Label className="text-xs">Data/Hora Saída</Label>
-        <Input className="h-8 text-sm" type="datetime-local" value={form.departure_datetime} onChange={(e) => setForm({ ...form, departure_datetime: e.target.value })} />
+      {/* Linha 2: Aeroportos + Datas (4 colunas) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <AirportCombobox label="Aeroporto Chegada" value={form.arrival_airport_id} onChange={(v) => setForm({ ...form, arrival_airport_id: v })} airports={airports} />
+        <div>
+          <Label className="text-xs">Data/Hora Chegada</Label>
+          <Input className="h-8 text-sm" type="datetime-local" value={form.arrival_datetime} onChange={(e) => setForm({ ...form, arrival_datetime: e.target.value })} />
+        </div>
+        <AirportCombobox label="Aeroporto Saída" value={form.departure_airport_id} onChange={(v) => setForm({ ...form, departure_airport_id: v })} airports={airports} />
+        <div>
+          <Label className="text-xs">Data/Hora Saída</Label>
+          <Input className="h-8 text-sm" type="datetime-local" value={form.departure_datetime} onChange={(e) => setForm({ ...form, departure_datetime: e.target.value })} />
+        </div>
       </div>
 
       {/* Descritivo */}
-      <div className="col-span-1 sm:col-span-3">
+      <div>
         <Label className="text-xs">Pontos de Interesse</Label>
         <Textarea
           className="text-sm"
