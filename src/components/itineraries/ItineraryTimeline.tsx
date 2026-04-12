@@ -50,6 +50,9 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
   const queryClient = useQueryClient();
   const activityRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [editingActivity, setEditingActivity] = useState<any>(null);
+  const [activityPhotos, setActivityPhotos] = useState<Record<string, string>>({});
+  const placesServiceRef = useRef<any>(null);
+  const photoCacheRef = useRef<Record<string, string>>({});
 
   const { data: days = [] } = useQuery({
     queryKey: ["itinerary-days", itineraryId],
