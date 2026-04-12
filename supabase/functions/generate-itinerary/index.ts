@@ -179,31 +179,102 @@ Gere o roteiro completo com todos os dias. Cada dia deve iniciar no hotel e term
     // Parse JSON from response
     let parsed;
     try {
+      // Extract JSON from markdown fences if present
       const jsonMatch = content.match(/(?:```|''')(?:json)?\s*([\s\S]*?)(?:```|''')/);
       let jsonStr = jsonMatch ? jsonMatch[1].trim() : content.trim();
 
+      // Find JSON boundaries
       const jsonStart = jsonStr.search(/[\{\[]/);
       const jsonEnd = Math.max(jsonStr.lastIndexOf('}'), jsonStr.lastIndexOf(']'));
       if (jsonStart !== -1 && jsonEnd !== -1) {
         jsonStr = jsonStr.substring(jsonStart, jsonEnd + 1);
       }
 
+      // Clean trailing commas
       jsonStr = jsonStr.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
+      // Remove control characters that break JSON
+      jsonStr = jsonStr.replace(/[\x00-\x1F\x7F]/g, (c) => c === '\n' || c === '\r' || c === '\t' ? c : '');
 
-      const openBraces = (jsonStr.match(/{/g) || []).length;
-      const closeBraces = (jsonStr.match(/}/g) || []).length;
-      const openBrackets = (jsonStr.match(/\[/g) || []).length;
-      const closeBrackets = (jsonStr.match(/\]/g) || []).length;
+      try {
+        parsed = JSON.parse(jsonStr);
+      } catch (_firstErr) {
+        // Truncation repair: find the last complete activity/day object
+        console.warn("First parse failed, attempting truncation repair...");
+        
+        // Remove the last potentially broken object/value after the last complete entry
+        // Strategy: find the last valid closing of an activity array item
+        let repaired = jsonStr;
+        
+        // Try to find the last complete "}" that closes an activity
+        // and truncate everything after it, then close all open structures
+        const lastCompleteActivity = repaired.lastIndexOf('"notes"');
+        const lastCompleteBlock = repaired.lastIndexOf('}', lastCompleteActivity > -1 ? undefined : undefined);
+        
+        // More robust: iteratively remove trailing broken content
+        // Find where JSON breaks by trying to parse progressively shorter strings
+        let fixed = false;
+        
+        // First attempt: close all open brackets/braces
+        const openBraces = (repaired.match(/{/g) || []).length;
+        const closeBraces = (repaired.match(/}/g) || []).length;
+        const openBrackets = (repaired.match(/\[/g) || []).length;
+        const closeBrackets = (repaired.match(/\]/g) || []).length;
 
-      if (openBraces !== closeBraces || openBrackets !== closeBrackets) {
-        let fix = jsonStr;
-        for (let k = 0; k < (openBrackets - closeBrackets); k++) fix += "]";
-        for (let k = 0; k < (openBraces - closeBraces); k++) fix += "}";
-        fix = fix.replace(/,\s*]/g, "]").replace(/,\s*}/g, "}");
-        jsonStr = fix;
+        if (openBraces !== closeBraces || openBrackets !== closeBrackets) {
+          // Find the last complete JSON value (string, number, bool, null, }, or ])
+          // by removing broken trailing content
+          repaired = repaired.replace(/,?\s*"[^"]*$/, ''); // remove incomplete key
+          repaired = repaired.replace(/,?\s*"[^"]*"\s*:\s*("[^"]*)?$/, ''); // remove incomplete key:value
+          repaired = repaired.replace(/,?\s*"[^"]*"\s*:\s*$/, ''); // remove key with no value
+          repaired = repaired.replace(/,?\s*$/, ''); // remove trailing comma
+          
+          // Re-count and close
+          const ob = (repaired.match(/{/g) || []).length;
+          const cb = (repaired.match(/}/g) || []).length;
+          const oB = (repaired.match(/\[/g) || []).length;
+          const cB = (repaired.match(/\]/g) || []).length;
+          
+          for (let k = 0; k < (oB - cB); k++) repaired += "]";
+          for (let k = 0; k < (ob - cb); k++) repaired += "}";
+          repaired = repaired.replace(/,\s*]/g, "]").replace(/,\s*}/g, "}");
+        }
+
+        try {
+          parsed = JSON.parse(repaired);
+          fixed = true;
+          console.log("Truncation repair succeeded");
+        } catch (_secondErr) {
+          // Last resort: progressively trim from the end until parseable
+          let trimmed = repaired;
+          for (let attempt = 0; attempt < 50 && !fixed; attempt++) {
+            // Remove last property or value
+            const lastComma = trimmed.lastIndexOf(',');
+            const lastBrace = Math.max(trimmed.lastIndexOf('}'), trimmed.lastIndexOf(']'));
+            const cutPoint = Math.max(lastComma, lastBrace);
+            if (cutPoint <= 0) break;
+            
+            trimmed = trimmed.substring(0, cutPoint);
+            trimmed = trimmed.replace(/,\s*$/, '');
+            
+            // Close open structures
+            let candidate = trimmed;
+            const cob = (candidate.match(/{/g) || []).length - (candidate.match(/}/g) || []).length;
+            const coB = (candidate.match(/\[/g) || []).length - (candidate.match(/\]/g) || []).length;
+            for (let k = 0; k < coB; k++) candidate += "]";
+            for (let k = 0; k < cob; k++) candidate += "}";
+            
+            try {
+              parsed = JSON.parse(candidate);
+              fixed = true;
+              console.log(`Progressive trim succeeded after ${attempt + 1} attempts`);
+            } catch { /* continue */ }
+          }
+        }
+
+        if (!fixed) {
+          throw _firstErr;
+        }
       }
-
-      parsed = JSON.parse(jsonStr);
     } catch (parseErr: any) {
       console.error("JSON parse error:", parseErr.message, "Raw length:", content.length);
       await supabase.from("itineraries").update({ ai_status: "error" }).eq("id", itinerary_id);
