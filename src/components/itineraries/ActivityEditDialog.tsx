@@ -89,10 +89,6 @@ export default function ActivityEditDialog({ activity, dayId, open, onOpenChange
 
   // Setup Google Places Autocomplete
   useEffect(() => {
-    if (!open || !addressInputRef.current || !window.google?.maps?.places) return;
-
-  // Setup Google Places Autocomplete
-  useEffect(() => {
     if (!open) return;
 
     const tryInit = () => {
