@@ -144,7 +144,7 @@ export default function ItineraryFormHeader({ form, setForm, quotes, airports }:
           <Label className="text-xs">Cotação</Label>
           <Popover open={quoteOpen} onOpenChange={setQuoteOpen}>
             <PopoverTrigger asChild>
-              <Button variant="outline" role="combobox" className="w-full justify-between font-normal h-8 text-sm truncate">
+              <Button variant="outline" role="combobox" className="w-full justify-between font-normal h-auto min-h-[32px] text-sm whitespace-normal text-left py-1 leading-tight">
                 {form.quote_id ? formatQuoteLabel(quotes.find((q: any) => q.id === form.quote_id) || {}) : "Nenhuma"}
                 <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
               </Button>
