@@ -316,7 +316,7 @@ export default function AuditLogsTab() {
         <div className="p-8 text-center text-muted-foreground font-body">Nenhum log encontrado.</div>
       ) : (
         <div className="rounded-lg border border-border overflow-hidden">
-          <div className="overflow-x-auto">
+          <div>
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-muted/50 border-b border-border">

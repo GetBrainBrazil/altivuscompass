@@ -159,11 +159,11 @@ export default function Sales() {
       ) : (
         <>
           {/* Kanban */}
-          <div className={`${viewMode === "list" ? "hidden sm:flex" : "flex"} gap-3 sm:gap-4 overflow-x-auto pb-4 -mx-3 px-3 sm:mx-0 sm:px-0`}>
+          <div className={`${viewMode === "list" ? "hidden sm:flex" : "flex"} flex-col sm:flex-row gap-3 sm:gap-4 pb-4`}>
             {saleStages.map((stage) => {
               const stageSales = sales.filter((s: Sale) => s.stage === stage.id);
               return (
-                <div key={stage.id} className="min-w-[240px] sm:min-w-[280px] flex-shrink-0">
+                <div key={stage.id} className="w-full sm:min-w-[280px] sm:flex-shrink-0">
                   <div className="flex items-center gap-2 mb-3 px-1">
                     <div className={`w-2 h-2 rounded-full ${stage.color}`} />
                     <span className="text-xs font-medium text-foreground font-body">{stage.label}</span>

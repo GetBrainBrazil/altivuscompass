@@ -140,7 +140,7 @@ export default function BankAccountsTab() {
         </Button>
       </div>
 
-      <div className="glass-card rounded-xl overflow-x-auto">
+      <div className="glass-card rounded-xl">
         {isLoading ? (
           <div className="p-8 text-center text-muted-foreground font-body">Carregando...</div>
         ) : accounts.length === 0 ? (
