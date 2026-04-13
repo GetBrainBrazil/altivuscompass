@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -75,12 +76,14 @@ export default function Itineraries() {
     setEditingId(null);
   };
 
+  const isMobile = useIsMobile();
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Roteiros</h1>
-        <Button onClick={handleNew}>
-          <Plus className="h-4 w-4 mr-2" /> Novo Roteiro
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">Roteiros</h1>
+        <Button onClick={handleNew} size={isMobile ? "sm" : "default"}>
+          <Plus className="h-4 w-4 mr-1 sm:mr-2" /> {isMobile ? "Novo" : "Novo Roteiro"}
         </Button>
       </div>
 
@@ -91,69 +94,106 @@ export default function Itineraries() {
         </div>
       </div>
 
-      <div className="border rounded-lg">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="cursor-pointer" onClick={() => toggleSort("title")}>
-                Título <ArrowUpDown className="inline h-3 w-3 ml-1" />
-              </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => toggleSort("destination")}>
-                Destino <ArrowUpDown className="inline h-3 w-3 ml-1" />
-              </TableHead>
-              <TableHead>Cliente</TableHead>
-              <TableHead className="cursor-pointer" onClick={() => toggleSort("arrival_datetime")}>
-                Período <ArrowUpDown className="inline h-3 w-3 ml-1" />
-              </TableHead>
-              <TableHead>Cotação</TableHead>
-              <TableHead className="cursor-pointer" onClick={() => toggleSort("created_at")}>
-                Criado em <ArrowUpDown className="inline h-3 w-3 ml-1" />
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
-            ) : filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum roteiro encontrado</TableCell></TableRow>
-            ) : (
-              filtered.map((item: any) => (
-                <TableRow key={item.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleEdit(item.id)}>
-                  <TableCell className="font-medium">{item.title}</TableCell>
-                  <TableCell>{item.destination}</TableCell>
-                  <TableCell>{item.clients?.full_name ?? "—"}</TableCell>
-                  <TableCell>
-                    {item.arrival_datetime
-                      ? `${format(new Date(item.arrival_datetime), "dd/MM/yyyy HH:mm")}${item.departure_datetime ? ` a ${format(new Date(item.departure_datetime), "dd/MM/yyyy HH:mm")}` : ""}`
-                      : "—"}
-                  </TableCell>
-                  <TableCell>
-                    {item.quotes ? (() => {
+      {/* Mobile: Card view */}
+      {isMobile ? (
+        <div className="space-y-3">
+          {isLoading ? (
+            <p className="text-center py-8 text-muted-foreground text-sm">Carregando...</p>
+          ) : filtered.length === 0 ? (
+            <p className="text-center py-8 text-muted-foreground text-sm">Nenhum roteiro encontrado</p>
+          ) : (
+            filtered.map((item: any) => (
+              <div
+                key={item.id}
+                className="border rounded-lg p-3 bg-card cursor-pointer hover:bg-muted/50 active:bg-muted transition-colors space-y-1.5"
+                onClick={() => handleEdit(item.id)}
+              >
+                <p className="font-medium text-sm text-foreground">{item.title}</p>
+                {item.destination && <p className="text-xs text-muted-foreground">{item.destination}</p>}
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                  {item.clients?.full_name && <span>👤 {item.clients.full_name}</span>}
+                  {item.arrival_datetime && (
+                    <span>📅 {format(new Date(item.arrival_datetime), "dd/MM/yyyy")}</span>
+                  )}
+                </div>
+                {item.quotes && (
+                  <p className="text-xs text-muted-foreground truncate">
+                    📋 {(() => {
                       const q = item.quotes as any;
-                      const title = q.title || "Sem título";
-                      const client = q.clients?.full_name ? ` — ${q.clients.full_name}` : "";
-                      const pb = q.price_breakdown as any;
-                      const isFlexible = pb?.flexible_dates;
-                      let period = "";
-                      if (isFlexible && pb?.flexible_dates_description) {
-                        period = ` — ${pb.flexible_dates_description}`;
-                      } else if (q.travel_date_start) {
-                        period = ` — ${format(new Date(q.travel_date_start), "dd/MM/yyyy")}`;
-                        if (q.travel_date_end) period += ` a ${format(new Date(q.travel_date_end), "dd/MM/yyyy")}`;
-                      }
-                      return `${title}${client}${period}`;
-                    })() : "—"}
-                  </TableCell>
-                  <TableCell>{format(new Date(item.created_at), "dd/MM/yyyy", { locale: ptBR })}</TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                      return q.title || "Cotação vinculada";
+                    })()}
+                  </p>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      ) : (
+        /* Desktop: Table view */
+        <div className="border rounded-lg">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="cursor-pointer" onClick={() => toggleSort("title")}>
+                  Título <ArrowUpDown className="inline h-3 w-3 ml-1" />
+                </TableHead>
+                <TableHead className="cursor-pointer" onClick={() => toggleSort("destination")}>
+                  Destino <ArrowUpDown className="inline h-3 w-3 ml-1" />
+                </TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead className="cursor-pointer" onClick={() => toggleSort("arrival_datetime")}>
+                  Período <ArrowUpDown className="inline h-3 w-3 ml-1" />
+                </TableHead>
+                <TableHead>Cotação</TableHead>
+                <TableHead className="cursor-pointer" onClick={() => toggleSort("created_at")}>
+                  Criado em <ArrowUpDown className="inline h-3 w-3 ml-1" />
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
+              ) : filtered.length === 0 ? (
+                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum roteiro encontrado</TableCell></TableRow>
+              ) : (
+                filtered.map((item: any) => (
+                  <TableRow key={item.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleEdit(item.id)}>
+                    <TableCell className="font-medium">{item.title}</TableCell>
+                    <TableCell>{item.destination}</TableCell>
+                    <TableCell>{item.clients?.full_name ?? "—"}</TableCell>
+                    <TableCell>
+                      {item.arrival_datetime
+                        ? `${format(new Date(item.arrival_datetime), "dd/MM/yyyy HH:mm")}${item.departure_datetime ? ` a ${format(new Date(item.departure_datetime), "dd/MM/yyyy HH:mm")}` : ""}`
+                        : "—"}
+                    </TableCell>
+                    <TableCell>
+                      {item.quotes ? (() => {
+                        const q = item.quotes as any;
+                        const title = q.title || "Sem título";
+                        const client = q.clients?.full_name ? ` — ${q.clients.full_name}` : "";
+                        const pb = q.price_breakdown as any;
+                        const isFlexible = pb?.flexible_dates;
+                        let period = "";
+                        if (isFlexible && pb?.flexible_dates_description) {
+                          period = ` — ${pb.flexible_dates_description}`;
+                        } else if (q.travel_date_start) {
+                          period = ` — ${format(new Date(q.travel_date_start), "dd/MM/yyyy")}`;
+                          if (q.travel_date_end) period += ` a ${format(new Date(q.travel_date_end), "dd/MM/yyyy")}`;
+                        }
+                        return `${title}${client}${period}`;
+                      })() : "—"}
+                    </TableCell>
+                    <TableCell>{format(new Date(item.created_at), "dd/MM/yyyy", { locale: ptBR })}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-4">
+        <DialogContent className="md:max-w-5xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-3 sm:p-4">
           <DialogHeader className="pb-0">
             <DialogTitle className="text-base">{editingId ? "Editar Roteiro" : "Novo Roteiro"}</DialogTitle>
           </DialogHeader>

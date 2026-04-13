@@ -937,8 +937,8 @@ export default function Quotes() {
         </div>
 
         {/* Stage stepper */}
-        <div className="glass-card rounded-xl px-4 py-3">
-          <div className="flex items-center gap-1">
+        <div className="glass-card rounded-xl px-3 sm:px-4 py-3">
+          <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto scrollbar-hide">
             {stages.map((stage, idx) => {
               const currentIdx = stages.findIndex(s => s.id === (form.stage || "new"));
               const isActive = stage.id === form.stage;
@@ -950,7 +950,7 @@ export default function Quotes() {
                     type="button"
                     onClick={() => setForm({ ...form, stage: stage.id })}
                     className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-body font-medium transition-all cursor-pointer whitespace-nowrap",
+                      "flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-body font-medium transition-all cursor-pointer whitespace-nowrap",
                       isActive
                         ? "bg-primary text-primary-foreground shadow-sm"
                         : isPast
@@ -1818,8 +1818,8 @@ export default function Quotes() {
 
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-1 pb-3">
-          <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-1 pb-3">
+          <div className="flex flex-wrap gap-2">
             {editingQuote && (
               <>
                 <Button type="button" variant="ghost" size="sm" className="text-destructive hover:text-destructive font-body gap-1.5 text-xs"
@@ -1832,20 +1832,20 @@ export default function Quotes() {
                     navigator.clipboard.writeText(url);
                     toast({ title: "Link copiado!", description: "Compartilhe com seu cliente." });
                   }}>
-                  <Copy className="w-3.5 h-3.5" /> Copiar Link
+                  <Copy className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Copiar Link</span><span className="sm:hidden">Link</span>
                 </Button>
                 <Button type="button" variant="outline" size="sm" className="font-body gap-1.5 text-xs"
                   onClick={() => window.open(`/quote/${editingQuote.id}`, "_blank")}>
-                  <ExternalLink className="w-3.5 h-3.5" /> Visualizar
+                  <ExternalLink className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Visualizar</span>
                 </Button>
                 <Button type="button" variant="outline" size="sm" className="font-body gap-1.5 text-xs text-green-600 border-green-300 hover:bg-green-50"
                   onClick={openWhatsappDialog}>
-                  <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+                  <MessageCircle className="w-3.5 h-3.5" /> <span className="hidden sm:inline">WhatsApp</span>
                 </Button>
               </>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 justify-end">
             <Button type="button" variant="outline" size="sm" onClick={closeDialog} className="font-body gap-1.5">
               <ArrowLeft className="w-3.5 h-3.5" /> Voltar
             </Button>

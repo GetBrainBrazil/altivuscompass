@@ -125,21 +125,20 @@ export default function ItineraryFormHeader({ form, setForm, quotes, airports }:
 
   return (
     <div className="space-y-2 min-w-0">
-      {/* Linha 1: Título | Aeroporto Chegada | Data/Hora Chegada */}
-      <div className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end">
+      {/* Mobile: stack all fields vertically. Desktop: grid layout */}
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
         <div>
           <Label className="text-xs">Título *</Label>
           <Input className="h-8 text-sm" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex: Roteiro França 2026" />
         </div>
         <AirportCombobox label="Aeroporto Chegada" value={form.arrival_airport_id} onChange={(v) => setForm({ ...form, arrival_airport_id: v })} airports={airports} />
-        <div className="w-[190px] shrink-0">
+        <div className="w-full md:w-[190px] shrink-0">
           <Label className="text-xs">Data/Hora Chegada</Label>
           <Input className="h-8 text-sm" type="datetime-local" value={form.arrival_datetime} onChange={(e) => setForm({ ...form, arrival_datetime: e.target.value })} />
         </div>
       </div>
 
-      {/* Linha 2: Cotação | Aeroporto Saída | Data/Hora Saída */}
-      <div className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end">
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
         <div>
           <Label className="text-xs">Cotação</Label>
           <Popover open={quoteOpen} onOpenChange={setQuoteOpen}>
@@ -172,7 +171,7 @@ export default function ItineraryFormHeader({ form, setForm, quotes, airports }:
           </Popover>
         </div>
         <AirportCombobox label="Aeroporto Saída" value={form.departure_airport_id} onChange={(v) => setForm({ ...form, departure_airport_id: v })} airports={airports} />
-        <div className="w-[190px] shrink-0">
+        <div className="w-full md:w-[190px] shrink-0">
           <Label className="text-xs">Data/Hora Saída</Label>
           <Input className="h-8 text-sm" type="datetime-local" value={form.departure_datetime} onChange={(e) => setForm({ ...form, departure_datetime: e.target.value })} />
         </div>
