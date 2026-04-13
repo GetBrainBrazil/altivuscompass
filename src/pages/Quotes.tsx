@@ -937,8 +937,8 @@ export default function Quotes() {
         </div>
 
         {/* Stage stepper */}
-        <div className="glass-card rounded-xl px-4 py-3">
-          <div className="flex items-center gap-1">
+        <div className="glass-card rounded-xl px-3 sm:px-4 py-3">
+          <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto scrollbar-hide">
             {stages.map((stage, idx) => {
               const currentIdx = stages.findIndex(s => s.id === (form.stage || "new"));
               const isActive = stage.id === form.stage;
