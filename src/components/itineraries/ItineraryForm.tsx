@@ -27,6 +27,7 @@ interface Props {
 
 export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props) {
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
   const [saving, setSaving] = useState(false);
   const [currentId, setCurrentId] = useState<string | null>(itineraryId);
   const [clientOpen, setClientOpen] = useState(false);
@@ -196,10 +197,10 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
     <div className="space-y-4">
       <ItineraryFormHeader form={form} setForm={setForm} clients={clients} clientOpen={clientOpen} setClientOpen={setClientOpen} quotes={quotes} airports={airports} />
 
-      <div className="flex justify-between items-center gap-2 flex-wrap">
-        <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 flex-wrap">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={onClose}>Cancelar</Button>
-          <Button size="sm" onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : currentId ? "Salvar Alterações" : "Criar Roteiro"}</Button>
+          <Button size="sm" onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : currentId ? "Salvar" : "Criar Roteiro"}</Button>
           {onDelete && (
             <Button variant="destructive" size="sm" onClick={onDelete} className="gap-1">
               <Trash2 className="h-3 w-3" /> Excluir
@@ -231,16 +232,17 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
           </div>
 
            <Tabs defaultValue="timeline" className="mt-2">
-            <TabsList className="h-8">
-              <TabsTrigger value="timeline" className="text-xs px-2 py-1">📋 Roteiro + Mapa</TabsTrigger>
+            <TabsList className="h-auto flex-wrap">
+              <TabsTrigger value="timeline" className="text-xs px-2 py-1">📋 Roteiro</TabsTrigger>
+              {!isMobile && <TabsTrigger value="timeline" className="hidden">hidden</TabsTrigger>}
               <TabsTrigger value="days" className="text-xs px-2 py-1">📅 Dias</TabsTrigger>
               <TabsTrigger value="hotels" className="text-xs px-2 py-1">🏨 Hotéis</TabsTrigger>
-              <TabsTrigger value="restaurants" className="text-xs px-2 py-1">🍽️ Restaurantes</TabsTrigger>
+              <TabsTrigger value="restaurants" className="text-xs px-2 py-1">🍽️ Rest.</TabsTrigger>
               <TabsTrigger value="activities" className="text-xs px-2 py-1">🎯 Passeios</TabsTrigger>
             </TabsList>
             <TabsContent value="timeline">
-              <div className="flex gap-3 min-h-[400px]">
-                <div className="w-1/2 overflow-y-auto max-h-[500px] pr-2">
+              <div className={`flex gap-3 min-h-[400px] ${isMobile ? "flex-col" : "flex-row"}`}>
+                <div className={`overflow-y-auto max-h-[500px] pr-2 ${isMobile ? "w-full" : "w-1/2"}`}>
                   <ItineraryTimeline
                     itineraryId={currentId}
                     selectedDayId={selectedDayId}
@@ -251,13 +253,13 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
                     onSummaryChange={setSummary}
                   />
                 </div>
-                <div className="w-1/2">
+                <div className={isMobile ? "w-full h-[300px]" : "w-1/2"}>
                   <ItineraryMapView
                     itineraryId={currentId}
                     selectedDayId={selectedDayId}
                     selectedActivityId={selectedActivityId}
                     onSelectActivity={setSelectedActivityId}
-                    height="h-[500px]"
+                    height={isMobile ? "h-[300px]" : "h-[500px]"}
                   />
                 </div>
               </div>
