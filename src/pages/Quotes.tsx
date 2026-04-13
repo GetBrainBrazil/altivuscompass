@@ -938,7 +938,7 @@ export default function Quotes() {
 
         {/* Stage stepper */}
         <div className="glass-card rounded-xl px-3 sm:px-4 py-3">
-          <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto scrollbar-hide">
+          <div className="flex items-center gap-0.5 sm:gap-1 flex-wrap">
             {stages.map((stage, idx) => {
               const currentIdx = stages.findIndex(s => s.id === (form.stage || "new"));
               const isActive = stage.id === form.stage;
@@ -1963,11 +1963,11 @@ export default function Quotes() {
       ) : (
         <>
           {viewMode === "kanban" ? (
-            <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 -mx-3 px-3 sm:mx-0 sm:px-0">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pb-4">
               {stages.map((stage) => {
                 const stageQuotes = quotes.filter((q: Quote) => q.stage === stage.id);
                 return (
-                   <div key={stage.id} className="min-w-[240px] sm:min-w-[280px] flex-shrink-0"
+                   <div key={stage.id} className="w-full sm:min-w-[280px] sm:flex-shrink-0"
                      onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("bg-accent/10"); }}
                      onDragLeave={(e) => { e.currentTarget.classList.remove("bg-accent/10"); }}
                      onDrop={(e) => {

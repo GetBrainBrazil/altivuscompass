@@ -793,7 +793,7 @@ export default function Clients() {
           {/* ====== LOWER SECTION: Tabs ====== */}
           <div className="glass-card rounded-xl p-4">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="w-full justify-start overflow-x-auto overflow-y-hidden flex-nowrap scrollbar-hide">
+              <TabsList className="w-full justify-start flex-wrap h-auto">
                 <TabsTrigger value="contact" className="font-body text-xs">Contato</TabsTrigger>
                 <TabsTrigger value="preferences" className="font-body text-xs">Preferências</TabsTrigger>
                 <TabsTrigger value="documents" className="font-body text-xs">Documentos</TabsTrigger>
@@ -1348,7 +1348,7 @@ export default function Clients() {
                   {milesPrograms.length === 0 ? (
                     <p className="text-xs text-muted-foreground font-body">Nenhum programa de milhagem cadastrado.</p>
                   ) : (
-                    <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
+                    <div className="sm:mx-0 sm:px-0">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b border-border/50">
@@ -1568,7 +1568,7 @@ export default function Clients() {
           <input type="text" placeholder="Buscar clientes e passageiros..." value={search} onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-card text-sm font-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/30" />
         </div>
-        <div className="flex gap-1 p-1 rounded-lg bg-muted overflow-x-auto">
+        <div className="flex gap-1 p-1 rounded-lg bg-muted flex-wrap">
           {["all", "economic", "opportunity", "sophisticated"].map((p) => (
             <button key={p} onClick={() => setProfileFilter(p)}
               className={`px-3 py-1.5 rounded-md text-xs font-medium font-body transition-colors whitespace-nowrap ${profileFilter === p ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>

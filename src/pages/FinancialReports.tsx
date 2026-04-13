@@ -433,7 +433,7 @@ export default function FinancialReports() {
       </div>
 
       <Tabs defaultValue="management" className="space-y-6">
-        <TabsList className="w-full justify-start overflow-x-auto overflow-y-hidden flex-nowrap scrollbar-hide">
+        <TabsList className="w-full justify-start flex-wrap h-auto">
           <TabsTrigger value="management" className="font-body text-xs sm:text-sm">Gerencial</TabsTrigger>
           <TabsTrigger value="dre" className="font-body text-xs sm:text-sm">DRE</TabsTrigger>
           <TabsTrigger value="cashflow" className="font-body text-xs sm:text-sm">Fluxo de Caixa</TabsTrigger>
