@@ -234,7 +234,6 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
            <Tabs defaultValue="timeline" className="mt-2">
             <TabsList className="h-auto flex-wrap">
               <TabsTrigger value="timeline" className="text-xs px-2 py-1">📋 Roteiro</TabsTrigger>
-              {!isMobile && <TabsTrigger value="timeline" className="hidden">hidden</TabsTrigger>}
               <TabsTrigger value="days" className="text-xs px-2 py-1">📅 Dias</TabsTrigger>
               <TabsTrigger value="hotels" className="text-xs px-2 py-1">🏨 Hotéis</TabsTrigger>
               <TabsTrigger value="restaurants" className="text-xs px-2 py-1">🍽️ Rest.</TabsTrigger>
