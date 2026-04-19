@@ -16,6 +16,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import QuoteItemCommercialFields from "@/components/quotes/QuoteItemCommercialFields";
 import QuoteItemSupplierFields from "@/components/quotes/QuoteItemSupplierFields";
 import QuoteItemAttachments from "@/components/quotes/QuoteItemAttachments";
+import QuoteOptionsManager from "@/components/quotes/QuoteOptionsManager";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle, FileText } from "lucide-react";
@@ -88,6 +89,12 @@ type QuoteItem = {
   commission_status?: string | null;
   attachment_urls?: string[] | null;
   external_url?: string | null;
+  // Option grouping fields
+  option_group?: string | null;
+  option_label?: string | null;
+  option_order?: number | null;
+  is_recommended?: boolean;
+  is_selected?: boolean;
 };
 
 const QUOTE_EDITOR_DRAFT_KEY = "quotes-editor-draft";
@@ -643,6 +650,28 @@ export default function Quotes() {
         const toDelete = (dbItems ?? []).filter(d => !existingIds.includes(d.id)).map(d => d.id);
         if (toDelete.length) await supabase.from("quote_items").delete().in("id", toDelete);
 
+        // Auto-correct: ensure exactly one is_recommended per option_group
+        const groupMap = new Map<string, number[]>();
+        items.forEach((it, idx) => {
+          if (it.option_group) {
+            if (!groupMap.has(it.option_group)) groupMap.set(it.option_group, []);
+            groupMap.get(it.option_group)!.push(idx);
+          }
+        });
+        groupMap.forEach((indices) => {
+          const sorted = [...indices].sort(
+            (a, b) => (items[a].option_order ?? 0) - (items[b].option_order ?? 0)
+          );
+          const recommendedIndices = sorted.filter((i) => items[i].is_recommended);
+          if (recommendedIndices.length === 0) {
+            items[sorted[0]].is_recommended = true;
+          } else if (recommendedIndices.length > 1) {
+            recommendedIndices.slice(1).forEach((i) => {
+              items[i].is_recommended = false;
+            });
+          }
+        });
+
         // Upsert items
         for (let i = 0; i < items.length; i++) {
           const item = items[i];
@@ -673,6 +702,11 @@ export default function Quotes() {
             commission_status: item.commission_status || "pending",
             attachment_urls: item.attachment_urls ?? [],
             external_url: item.external_url || null,
+            option_group: item.option_group ?? null,
+            option_label: item.option_label ?? null,
+            option_order: item.option_order ?? null,
+            is_recommended: !!item.is_recommended,
+            is_selected: !!item.is_selected,
           };
           if (item.id && !item._isNew) {
             await supabase.from("quote_items").update(itemPayload).eq("id", item.id);
@@ -911,7 +945,7 @@ export default function Quotes() {
     }
   };
 
-  const addItem = (type: string) => {
+  const addItem = (type: string, extra?: Partial<QuoteItem>) => {
     setItems([...items, {
       item_type: type,
       title: "",
@@ -928,6 +962,7 @@ export default function Quotes() {
       commission_status: "pending",
       attachment_urls: [],
       external_url: null,
+      ...(extra || {}),
     }]);
   };
 
@@ -1556,8 +1591,16 @@ export default function Quotes() {
 
             {ITEM_TYPES.map((type) => (
               <TabsContent key={type.id} value={type.id} className="mt-3 space-y-2">
-                {itemsForType(type.id).map((item, idx) => {
-                  const globalIdx = items.indexOf(item);
+                <QuoteOptionsManager<QuoteItem>
+                  itemType={type.id}
+                  itemTypeLabel={type.label}
+                  items={itemsForType(type.id)}
+                  allItems={items}
+                  addButtonLabel={`Adicionar ${type.label}`}
+                  onAddItem={(extra) => addItem(type.id, extra)}
+                  onUpdateItemGlobal={(gi, patch) => updateItem(gi, patch)}
+                  onRemoveItemGlobal={(gi) => removeItem(gi)}
+                  renderItem={(item, globalIdx, idx) => {
                   const d = item.details || {};
                   const updateDetail = (key: string, value: any) => {
                     const newDetails = { ...d, [key]: value };
@@ -1947,11 +1990,8 @@ export default function Quotes() {
                       </div>
                     </div>
                   );
-                })}
-
-                <Button type="button" variant="outline" size="sm" className="gap-1 font-body text-xs h-8" onClick={() => addItem(type.id)}>
-                  <Plus className="w-3 h-3" /> Adicionar {type.label}
-                </Button>
+                  }}
+                />
               </TabsContent>
             ))}
 
