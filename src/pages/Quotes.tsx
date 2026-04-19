@@ -1939,9 +1939,16 @@ export default function Quotes() {
             <Button type="button" variant="outline" size="sm" className="font-body" onClick={() => saveQuote(true)}>
               Salvar e Voltar
             </Button>
-            <Button type="button" size="sm" className="font-body" onClick={() => saveQuote(false)}>
-              Salvar
-            </Button>
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button type="button" size="sm" className="font-body" onClick={() => saveQuote(false)}>
+                    Salvar
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">Salvar (Ctrl+S)</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </div>
@@ -2045,7 +2052,7 @@ export default function Quotes() {
       </div>
 
       {isLoading ? (
-        <div className="p-8 text-center text-muted-foreground font-body">Carregando...</div>
+        viewMode === "kanban" ? <KanbanSkeleton columns={4} cardsPerColumn={3} /> : <TableSkeleton rows={6} columns={6} />
       ) : (
         <>
           {viewMode === "kanban" ? (
