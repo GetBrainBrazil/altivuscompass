@@ -1,54 +1,57 @@
 
-## Avaliação honesta
+## Problema
 
-O Claude tem razão na ressalva: **testes de integração mockando Supabase são frágeis**. Mas a maior parte do prompt é sobre **extrair funções puras + testá-las**, o que é genuinamente valioso. O problema é que ele é AMBICIOSO demais para um único prompt:
+No `/quotes`, view kanban (linhas 2371–2444 de `Quotes.tsx`):
 
-- `Quotes.tsx` tem **2.617 linhas**. Extrair 7 grupos de funções ao mesmo tempo = risco real de quebrar coisa.
-- Várias funções listadas (`autoFixRecommendedOption`, `buildAcceptancePayload`, `getDeadlineTone`, `filterQuotes`, etc.) podem nem existir como função nomeada — estão inline no JSX. Extrair vira reescrever.
-- Cobertura proposta é boa (resumo, validade, filtros, validadores), mas misturar tudo num prompt = risco de regressão silenciosa.
+```tsx
+<div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pb-4">
+  {stages.map(stage => (
+    <div className="w-full sm:min-w-[280px] sm:flex-shrink-0">
+```
 
-## Vale a pena? Sim, mas em fases
+- Layout `flex-row` + `min-w-[280px]` + `flex-shrink-0` → cada coluna trava em ≥280px e empurra pra scroll horizontal.
+- Com 5 estágios (`new`, `sent`, `negotiating`, `confirmed`, `cancelled`) em 1384px de viewport sobra espaço pra cada coluna ficar enorme ou aparecer scroll.
 
-Recomendo **dividir em 3 prompts menores**, do mais seguro pro mais arriscado:
+## Solução
 
-### Fase 1 — Quick wins (BAIXO RISCO, ALTO VALOR)
-Funções que **já existem isoladas** ou são triviais de extrair:
-- `quote-summary.ts` já existe — só escrever testes (8 casos do Claude).
-- Criar `validators.ts` (email/CPF/phone) — funções novas, não extrai nada.
-- Criar `quote-status.ts` com `getDeadlineTone`, `getAgeTone`, `getValidityBadge` — funções pequenas, fáceis de espelhar a lógica inline sem mexer no Quotes.tsx (deixa a inline lá, testa a versão extraída como "fonte da verdade" futura).
-- Setup de fixtures + mock do Supabase.
+Trocar pra **grid responsivo de 5 colunas em telas médias+**, mantendo empilhamento no mobile:
 
-Resultado: ~25 testes passando, zero risco de quebrar UI.
+```tsx
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4 pb-4">
+  {stages.map(stage => (
+    <div className="min-w-0">  {/* sem min-w fixo, sem flex-shrink */}
+```
 
-### Fase 2 — Extração de filtros/sort (MÉDIO RISCO)
-- `quote-filters.ts` (`filterQuotes`, `sortQuotes`) — extração mecânica do que está inline no Quotes.tsx, com substituição da inline por import.
-- Testes correspondentes.
+Mudanças pontuais:
 
-Por que separar: aqui SIM mexe no Quotes.tsx. Isolar o blast radius.
+1. **Container**: `flex flex-col sm:flex-row` → `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5`. Todas as 5 colunas cabem lado a lado em ≥1024px (cada uma ~260px no viewport atual de 1384px), sem scroll horizontal.
+2. **Cada coluna**: `w-full sm:min-w-[280px] sm:flex-shrink-0` → `min-w-0 flex flex-col` pra permitir encolhimento e respeitar o grid.
+3. **Cards internos**: ajustar pra `p-3` (sem `sm:p-4`) e garantir `min-w-0` + `truncate` no título — em coluna de ~260px, o `flex justify-between` do header do card precisa não estourar. Trocar `text-sm` do título por `text-sm truncate` e o bloco do valor + dropdown já tem `shrink-0`.
+4. **KanbanSkeleton** (`src/components/ui/loading-skeletons.tsx`): aplicar a mesma mudança de `flex-row` → `grid lg:grid-cols-5` pra esqueleto bater com o layout real.
 
-### Fase 3 — Pular ou adiar (ALTO RISCO, BAIXO ROI)
-- **`duplicateQuote` mockado**: o Claude mesmo avisa que mock de Supabase é frágil. Para um fluxo crítico desses, **teste manual com checklist** vale mais que mock.
-- **`buildAcceptancePayload`**: a validação real está espalhada entre o form do `PublicQuote.tsx` e a edge function `accept-quote`. Extrair "só o pedaço de validação" é artificial — o teste vai cobrir uma função que ninguém chama em produção.
-- **`autoFixRecommendedOption`**: precisaria localizar primeiro se essa lógica existe; pelos prompts anteriores, options são manuais.
+## Breakpoints finais
 
-Recomendo **pular esses três** ou só fazer se houver bug real.
+- **Mobile** (`<640px`): 1 coluna, empilhado (igual hoje).
+- **Tablet** (`640–1024px`): 2 colunas (melhora o uso de espaço vs. hoje que vira scroll horizontal).
+- **Desktop** (`≥1024px`): **5 colunas lado a lado**, sem scroll horizontal — todas visíveis na mesma tela, conforme pedido.
 
-## O que NÃO fazer do prompt original
+## Drag & drop
 
-- Não criar `test:coverage` agora — overkill, ninguém vai olhar.
-- Não criar `src/test/mocks/supabase.ts` se não vai usar (Fase 3 caindo fora).
-- Não tentar testar `Quotes.tsx` montado.
+Mantém-se 100% — handlers `onDragOver/onDragLeave/onDrop` vivem em cada coluna e não dependem do layout de container.
 
-## Minha recomendação
+## Arquivos
 
-**Roda só a Fase 1 agora.** É ~70% do valor com ~10% do risco. Se gostar do ritmo, faz a Fase 2 depois. A Fase 3 só se aparecer bug específico que justifique.
+- `src/pages/Quotes.tsx` — linhas ~2372–2376 e ajustes finos no card (~2400, 2403–2404).
+- `src/components/ui/loading-skeletons.tsx` — `KanbanSkeleton` pra refletir grid de 5.
 
-## Próximo passo
+## Fora do escopo
 
-Posso preparar o **prompt da Fase 1** já formatado pra você colar (estilo dos prompts anteriores), cobrindo:
-1. Setup: `setup.ts` atualizado, `fixtures/quote.ts`
-2. Testes de `quote-summary.ts` (já existe — 7 casos)
-3. Criar + testar `validators.ts`
-4. Criar + testar `quote-status.ts` (sem mexer no Quotes.tsx ainda; integração inline vira tarefa da Fase 2)
+- Não mexo na view tabela.
+- Não mexo no editor da cotação nem em filtros/busca.
+- Não altero `stages` array nem cores.
 
-Confirma que quer Fase 1 e eu escrevo o prompt enxuto pronto pra colar.
+<lov-actions>
+<lov-suggestion message="Verifique no preview se as 5 colunas do kanban aparecem lado a lado sem scroll horizontal e se o drag-and-drop continua funcionando">Verificar no preview</lov-suggestion>
+<lov-suggestion message="Adicione um indicador de soma de valores (R$ total) por coluna do kanban, embaixo do contador de cotações">Total por coluna no kanban</lov-suggestion>
+<lov-suggestion message="Permita colapsar/expandir colunas individuais do kanban (ex: esconder 'Cancelada' por padrão) com preferência salva no localStorage">Colapsar colunas</lov-suggestion>
+</lov-actions>
