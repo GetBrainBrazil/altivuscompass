@@ -15,8 +15,11 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle, FileText } from "lucide-react";
 import { Dialog as WhatsAppDialog, DialogContent as WhatsAppDialogContent, DialogHeader as WhatsAppDialogHeader, DialogTitle as WhatsAppDialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { PhoneInput, formatBrazilPhone, stripBrazilPhone } from "@/components/ui/phone-input";
+import { KanbanSkeleton, TableSkeleton } from "@/components/ui/loading-skeletons";
 import { Calendar } from "@/components/ui/calendar";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -120,6 +123,8 @@ export default function Quotes() {
   const [whatsappMessage, setWhatsappMessage] = useState("");
   const [whatsappQuoteId, setWhatsappQuoteId] = useState<string | null>(null);
   const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
+  const initialSnapshotRef = useRef<string>("");
   const { data: quotes = [], isLoading } = useQuery({
     queryKey: ["quotes"],
     queryFn: async () => {
@@ -416,6 +421,41 @@ export default function Quotes() {
     return () => clearTimeout(timer);
   }, [activeTab, dialogOpen, items]);
 
+  // Capture initial snapshot when editing an existing quote (after data is hydrated)
+  useEffect(() => {
+    if (!dialogOpen || !editingQuote) return;
+    // wait a tick so items / passengers / linkedClients have settled
+    const t = window.setTimeout(() => {
+      initialSnapshotRef.current = JSON.stringify({
+        form,
+        items,
+        selectedPassengers,
+        selectedLinkedClients,
+        clientSelfTraveling,
+        selectedDestinations,
+        coverPreview,
+      });
+    }, 400);
+    return () => window.clearTimeout(t);
+    // we intentionally only depend on editingQuote.id and dialogOpen — snapshot once per open
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dialogOpen, editingQuote?.id]);
+
+  // Keyboard shortcut: Ctrl/Cmd+S to save inside the quote editor
+  const saveQuoteRef = useRef<((closeAfter: boolean) => Promise<string | null>) | null>(null);
+  useEffect(() => {
+    if (!dialogOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      const isSave = (e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S");
+      if (isSave) {
+        e.preventDefault();
+        saveQuoteRef.current?.(false);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [dialogOpen]);
+
   // Load existing quote items when editing
   useEffect(() => {
     if (editingQuote && !draftRestored) return;
@@ -630,9 +670,22 @@ export default function Quotes() {
       queryClient.invalidateQueries({ queryKey: ["sales"] });
 
       if (closeAfter) {
-        closeDialog();
+        performCloseDialog();
       } else if (!editingQuote && quoteId) {
         setEditingQuote({ ...payload, id: quoteId, created_at: new Date().toISOString() } as Quote);
+        // Reset snapshot baseline so subsequent edits compare correctly
+        initialSnapshotRef.current = "";
+      } else {
+        // Update snapshot baseline post-save so the editor isn't "dirty" anymore
+        initialSnapshotRef.current = JSON.stringify({
+          form,
+          items,
+          selectedPassengers,
+          selectedLinkedClients,
+          clientSelfTraveling,
+          selectedDestinations,
+          coverPreview,
+        });
       }
       return quoteId ?? null;
     } catch (err: any) {
@@ -678,6 +731,7 @@ export default function Quotes() {
     setCoverFile(null);
     setCoverPreview(null);
     setActiveTab("main");
+    initialSnapshotRef.current = ""; // empty = "new quote" mode
     setDialogOpen(true);
   };
 
@@ -711,9 +765,30 @@ export default function Quotes() {
     setCoverPreview(q.cover_image_url || null);
     setActiveTab("main");
     setDialogOpen(true);
+    // Snapshot captured shortly after, once items load (handled by effect below)
   };
 
-  const closeDialog = () => {
+  const buildEditorSnapshot = useCallback(() => {
+    return JSON.stringify({
+      form,
+      items,
+      selectedPassengers,
+      selectedLinkedClients,
+      clientSelfTraveling,
+      selectedDestinations,
+      coverPreview,
+    });
+  }, [form, items, selectedPassengers, selectedLinkedClients, clientSelfTraveling, selectedDestinations, coverPreview]);
+
+  const hasUnsavedChanges = useCallback(() => {
+    if (!initialSnapshotRef.current) {
+      // New quote: dirty if any field filled or any item present
+      return Object.values(form ?? {}).some((v) => v !== "" && v !== null && v !== undefined && v !== false) || items.length > 0;
+    }
+    return buildEditorSnapshot() !== initialSnapshotRef.current;
+  }, [buildEditorSnapshot, form, items]);
+
+  const performCloseDialog = () => {
     localStorage.removeItem(QUOTE_EDITOR_DRAFT_KEY);
     setDialogOpen(false);
     setEditingQuote(null);
@@ -725,6 +800,15 @@ export default function Quotes() {
     setSelectedDestinations([]);
     setCoverFile(null);
     setCoverPreview(null);
+    initialSnapshotRef.current = "";
+  };
+
+  const closeDialog = () => {
+    if (hasUnsavedChanges()) {
+      setConfirmCloseOpen(true);
+      return;
+    }
+    performCloseDialog();
   };
 
   const openWhatsappDialog = async () => {
@@ -902,6 +986,9 @@ export default function Quotes() {
     spouse: "Cônjuge", child: "Filho(a)", parent: "Pai/Mãe", employee: "Funcionário(a)",
     partner: "Sócio(a)", sibling: "Irmão(ã)", other: "Outro",
   };
+
+  // Keep the saveQuote ref pointing at the latest closure for the keyboard shortcut
+  saveQuoteRef.current = saveQuote;
 
   // ─── FORM VIEW ─────────────────────────────────────────────
   if (dialogOpen) {
@@ -1852,9 +1939,16 @@ export default function Quotes() {
             <Button type="button" variant="outline" size="sm" className="font-body" onClick={() => saveQuote(true)}>
               Salvar e Voltar
             </Button>
-            <Button type="button" size="sm" className="font-body" onClick={() => saveQuote(false)}>
-              Salvar
-            </Button>
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button type="button" size="sm" className="font-body" onClick={() => saveQuote(false)}>
+                    Salvar
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">Salvar (Ctrl+S)</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </div>
@@ -1871,10 +1965,9 @@ export default function Quotes() {
             <div className="flex items-end gap-2">
               <div className="flex-1 space-y-0.5">
                 <Label className="font-body text-xs">Telefone do cliente</Label>
-                <Input
-                  placeholder="5511999999999"
+                <PhoneInput
                   value={whatsappPhone}
-                  onChange={(e) => setWhatsappPhone(e.target.value)}
+                  onChange={(digits) => setWhatsappPhone(digits)}
                   className="font-body h-8 text-sm"
                 />
               </div>
@@ -1931,6 +2024,22 @@ export default function Quotes() {
           </div>
         </div>
       )}
+
+      {/* Unsaved changes confirmation */}
+      <AlertDialog open={confirmCloseOpen} onOpenChange={setConfirmCloseOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display">Descartar alterações?</AlertDialogTitle>
+            <AlertDialogDescription className="font-body">As mudanças não salvas serão perdidas.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="font-body">Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="font-body bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => { setConfirmCloseOpen(false); performCloseDialog(); }}>
+              Descartar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       </>
     );
   }
@@ -1959,7 +2068,7 @@ export default function Quotes() {
       </div>
 
       {isLoading ? (
-        <div className="p-8 text-center text-muted-foreground font-body">Carregando...</div>
+        viewMode === "kanban" ? <KanbanSkeleton columns={4} cardsPerColumn={3} /> : <TableSkeleton rows={6} columns={6} />
       ) : (
         <>
           {viewMode === "kanban" ? (
@@ -2112,10 +2221,9 @@ export default function Quotes() {
             <div className="flex items-end gap-2">
               <div className="flex-1 space-y-0.5">
                 <Label className="font-body text-xs">Telefone do cliente</Label>
-                <Input
-                  placeholder="5511999999999"
+                <PhoneInput
                   value={whatsappPhone}
-                  onChange={(e) => setWhatsappPhone(e.target.value)}
+                  onChange={(digits) => setWhatsappPhone(digits)}
                   className="font-body h-8 text-sm"
                 />
               </div>

@@ -20,6 +20,7 @@ import { useCountries, useStates, useCities, useContinents, useCustomDestination
 import { COUNTRY_CODES, applyPhoneMask } from "@/lib/phone-masks";
 import { ImageEditor } from "@/components/ImageEditor";
 import { ClientTravelersTab } from "@/components/ClientTravelersTab";
+import { ListSkeleton, TableSkeleton } from "@/components/ui/loading-skeletons";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccessFeature } from "@/lib/permissions";
 import { logAuditEvent } from "@/lib/audit";
@@ -441,6 +442,22 @@ export default function Clients() {
   };
 
   const shouldGoBackRef = useRef(false);
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
+  const initialClientSnapshotRef = useRef<string>("");
+
+  const buildClientSnapshot = () => JSON.stringify({ form, phones, emails, socials, passports, milesPrograms, selectedAirports, selectedTags, selectedDestinations });
+  const hasUnsavedClientChanges = () => {
+    if (!editingId) {
+      // New client: dirty if name filled or any sub-list has data
+      return !!form.full_name || phones.length > 0 || emails.length > 0 || socials.length > 0 || passports.length > 0 || milesPrograms.length > 0;
+    }
+    return !!initialClientSnapshotRef.current && buildClientSnapshot() !== initialClientSnapshotRef.current;
+  };
+  const performGoToList = () => {
+    setView("list"); setEditingId(null); setForm(emptyForm); setActiveTab("contact");
+    setSelectedAirports([]); setSelectedTags([]); setSelectedDestinations([]); setPhones([]); setEmails([]); setSocials([]); setPassports([]); setMilesPrograms([]); setShowPasswords({});
+    initialClientSnapshotRef.current = "";
+  };
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -543,7 +560,10 @@ export default function Clients() {
       toast({ title: editingId ? "Cliente atualizado" : "Cliente criado" });
       qc.invalidateQueries({ queryKey: ["clients"] });
       if (shouldGoBackRef.current) {
-        goToList();
+        performGoToList();
+      } else {
+        // Reset baseline so the form is no longer dirty after save
+        initialClientSnapshotRef.current = buildClientSnapshot();
       }
       shouldGoBackRef.current = false;
     },
@@ -566,8 +586,11 @@ export default function Clients() {
   });
 
   const goToList = () => {
-    setView("list"); setEditingId(null); setForm(emptyForm); setActiveTab("contact");
-    setSelectedAirports([]); setSelectedTags([]); setSelectedDestinations([]); setPhones([]); setEmails([]); setSocials([]); setPassports([]); setMilesPrograms([]); setShowPasswords({});
+    if (hasUnsavedClientChanges()) {
+      setConfirmCloseOpen(true);
+      return;
+    }
+    performGoToList();
   };
 
   const openCreate = () => {
@@ -597,6 +620,8 @@ export default function Clients() {
     setSelectedTags(c.tags ?? []);
     setSelectedDestinations((c as any).desired_destinations ?? []);
     setView("form");
+    // Capture snapshot once form is hydrated
+    setTimeout(() => { initialClientSnapshotRef.current = buildClientSnapshot(); }, 500);
   };
 
   const quickAddMutation = useMutation({
@@ -1519,7 +1544,30 @@ export default function Clients() {
               </Button>
             </div>
           </div>
+
+          {/* Disclaimer LGPD */}
+          <div className="border-t pt-3">
+            <p className="text-xs text-muted-foreground font-body leading-relaxed">
+              Os dados cadastrados serão utilizados exclusivamente para atendimento, emissão de passagens e comunicação referente às viagens contratadas. Não compartilhamos informações com terceiros sem autorização do cliente.
+            </p>
+          </div>
         </form>
+
+        {/* Unsaved changes confirmation */}
+        <AlertDialog open={confirmCloseOpen} onOpenChange={setConfirmCloseOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="font-display">Descartar alterações?</AlertDialogTitle>
+              <AlertDialogDescription className="font-body">As mudanças não salvas serão perdidas.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="font-body">Cancelar</AlertDialogCancel>
+              <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-body" onClick={() => { setConfirmCloseOpen(false); performGoToList(); }}>
+                Descartar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Quick-add location dialog */}
         <Dialog open={quickAddType !== null} onOpenChange={(o) => { if (!o) { setQuickAddType(null); setQuickAddName(""); } }}>
@@ -1611,7 +1659,7 @@ export default function Clients() {
       {/* Desktop table */}
       <div className="glass-card rounded-xl overflow-hidden hidden md:block">
         {isLoading ? (
-          <div className="p-8 text-center text-muted-foreground font-body">Carregando...</div>
+          <div className="p-4"><TableSkeleton rows={6} columns={5} /></div>
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground font-body">Nenhum cliente encontrado.</div>
         ) : (
