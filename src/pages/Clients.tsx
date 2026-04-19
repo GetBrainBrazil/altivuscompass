@@ -20,6 +20,7 @@ import { useCountries, useStates, useCities, useContinents, useCustomDestination
 import { COUNTRY_CODES, applyPhoneMask } from "@/lib/phone-masks";
 import { ImageEditor } from "@/components/ImageEditor";
 import { ClientTravelersTab } from "@/components/ClientTravelersTab";
+import { ListSkeleton, TableSkeleton } from "@/components/ui/loading-skeletons";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccessFeature } from "@/lib/permissions";
 import { logAuditEvent } from "@/lib/audit";
@@ -441,6 +442,22 @@ export default function Clients() {
   };
 
   const shouldGoBackRef = useRef(false);
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
+  const initialClientSnapshotRef = useRef<string>("");
+
+  const buildClientSnapshot = () => JSON.stringify({ form, phones, emails, socials, passports, milesPrograms, selectedAirports, selectedTags, selectedDestinations });
+  const hasUnsavedClientChanges = () => {
+    if (!editingId) {
+      // New client: dirty if name filled or any sub-list has data
+      return !!form.full_name || phones.length > 0 || emails.length > 0 || socials.length > 0 || passports.length > 0 || milesPrograms.length > 0;
+    }
+    return !!initialClientSnapshotRef.current && buildClientSnapshot() !== initialClientSnapshotRef.current;
+  };
+  const performGoToList = () => {
+    setView("list"); setEditingId(null); setForm(emptyForm); setActiveTab("contact");
+    setSelectedAirports([]); setSelectedTags([]); setSelectedDestinations([]); setPhones([]); setEmails([]); setSocials([]); setPassports([]); setMilesPrograms([]); setShowPasswords({});
+    initialClientSnapshotRef.current = "";
+  };
 
   const saveMutation = useMutation({
     mutationFn: async () => {
