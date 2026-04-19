@@ -186,6 +186,7 @@ export default function Quotes() {
   const [pipelineSort, setPipelineSort] = useState<"recent" | "oldest" | "value_desc" | "value_asc" | "updated">("recent");
   const [archiveTarget, setArchiveTarget] = useState<Quote | null>(null);
   const [unarchiveTarget, setUnarchiveTarget] = useState<Quote | null>(null);
+  const [inlineValueEdit, setInlineValueEdit] = useState<{ id: string; value: string } | null>(null);
 
   // Debounce search
   useEffect(() => {
@@ -1428,6 +1429,12 @@ export default function Quotes() {
                 {linkedItinerary && <Badge variant="secondary" className="text-[9px] h-3.5 px-1 ml-0.5">1</Badge>}
               </TabsTrigger>
               {editingQuote && (
+                <TabsTrigger value="interactions" className="flex items-center gap-1 text-[11px] px-2 py-1">
+                  <MessageCircle className="w-3 h-3" />
+                  Interações
+                </TabsTrigger>
+              )}
+              {editingQuote && (
                 <TabsTrigger value="history" className="flex items-center gap-1 text-[11px] px-2 py-1 bg-primary/15 text-primary border border-primary/30 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary">
                   <History className="w-3 h-3" />
                   Histórico
@@ -2412,6 +2419,12 @@ export default function Quotes() {
                 </div>
               )}
             </TabsContent>
+
+            {editingQuote && (
+              <TabsContent value="interactions" className="mt-3">
+                <QuoteInteractionsTab quoteId={editingQuote.id} />
+              </TabsContent>
+            )}
 
             {editingQuote && (
               <TabsContent value="history" className="mt-3">
