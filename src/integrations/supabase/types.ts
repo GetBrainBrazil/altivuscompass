@@ -1881,6 +1881,7 @@ export type Database = {
           travel_date_end: string | null
           travel_date_start: string | null
           updated_at: string
+          validity_warning_sent_at: string | null
         }
         Insert: {
           airline_options?: string | null
@@ -1920,6 +1921,7 @@ export type Database = {
           travel_date_end?: string | null
           travel_date_start?: string | null
           updated_at?: string
+          validity_warning_sent_at?: string | null
         }
         Update: {
           airline_options?: string | null
@@ -1959,6 +1961,7 @@ export type Database = {
           travel_date_end?: string | null
           travel_date_start?: string | null
           updated_at?: string
+          validity_warning_sent_at?: string | null
         }
         Relationships: [
           {
