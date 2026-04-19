@@ -650,6 +650,28 @@ export default function Quotes() {
         const toDelete = (dbItems ?? []).filter(d => !existingIds.includes(d.id)).map(d => d.id);
         if (toDelete.length) await supabase.from("quote_items").delete().in("id", toDelete);
 
+        // Auto-correct: ensure exactly one is_recommended per option_group
+        const groupMap = new Map<string, number[]>();
+        items.forEach((it, idx) => {
+          if (it.option_group) {
+            if (!groupMap.has(it.option_group)) groupMap.set(it.option_group, []);
+            groupMap.get(it.option_group)!.push(idx);
+          }
+        });
+        groupMap.forEach((indices) => {
+          const sorted = [...indices].sort(
+            (a, b) => (items[a].option_order ?? 0) - (items[b].option_order ?? 0)
+          );
+          const recommendedIndices = sorted.filter((i) => items[i].is_recommended);
+          if (recommendedIndices.length === 0) {
+            items[sorted[0]].is_recommended = true;
+          } else if (recommendedIndices.length > 1) {
+            recommendedIndices.slice(1).forEach((i) => {
+              items[i].is_recommended = false;
+            });
+          }
+        });
+
         // Upsert items
         for (let i = 0; i < items.length; i++) {
           const item = items[i];
