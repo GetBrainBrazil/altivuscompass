@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.accept-quote]
 verify_jwt = false
+
+[functions.check-quote-validity]
+verify_jwt = false
