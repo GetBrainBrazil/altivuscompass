@@ -620,6 +620,8 @@ export default function Clients() {
     setSelectedTags(c.tags ?? []);
     setSelectedDestinations((c as any).desired_destinations ?? []);
     setView("form");
+    // Capture snapshot once form is hydrated
+    setTimeout(() => { initialClientSnapshotRef.current = buildClientSnapshot(); }, 500);
   };
 
   const quickAddMutation = useMutation({
@@ -1542,7 +1544,30 @@ export default function Clients() {
               </Button>
             </div>
           </div>
+
+          {/* Disclaimer LGPD */}
+          <div className="border-t pt-3">
+            <p className="text-xs text-muted-foreground font-body leading-relaxed">
+              Os dados cadastrados serão utilizados exclusivamente para atendimento, emissão de passagens e comunicação referente às viagens contratadas. Não compartilhamos informações com terceiros sem autorização do cliente.
+            </p>
+          </div>
         </form>
+
+        {/* Unsaved changes confirmation */}
+        <AlertDialog open={confirmCloseOpen} onOpenChange={setConfirmCloseOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="font-display">Descartar alterações?</AlertDialogTitle>
+              <AlertDialogDescription className="font-body">As mudanças não salvas serão perdidas.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="font-body">Cancelar</AlertDialogCancel>
+              <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-body" onClick={() => { setConfirmCloseOpen(false); performGoToList(); }}>
+                Descartar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Quick-add location dialog */}
         <Dialog open={quickAddType !== null} onOpenChange={(o) => { if (!o) { setQuickAddType(null); setQuickAddName(""); } }}>
@@ -1634,7 +1659,7 @@ export default function Clients() {
       {/* Desktop table */}
       <div className="glass-card rounded-xl overflow-hidden hidden md:block">
         {isLoading ? (
-          <div className="p-8 text-center text-muted-foreground font-body">Carregando...</div>
+          <div className="p-4"><TableSkeleton rows={6} columns={5} /></div>
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground font-body">Nenhum cliente encontrado.</div>
         ) : (
