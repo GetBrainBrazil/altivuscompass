@@ -1429,9 +1429,19 @@ export default function Quotes() {
             <TabsContent value="main" className="mt-3 space-y-3">
               {/* Row 1: Título, Cliente, Imagem de Capa */}
               <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-3">
-                <div className="col-span-2 lg:col-span-4 space-y-1">
+                <div className="col-span-2 lg:col-span-3 space-y-1">
                   <Label className="font-body text-xs">Título da Cotação</Label>
                   <Input className="h-9 text-sm" value={form.title ?? ""} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex: Viagem Europa - Família Silva" />
+                </div>
+                <div className="col-span-2 lg:col-span-2 space-y-1">
+                  <Label className="font-body text-xs">Origem do lead</Label>
+                  <Select value={form.lead_source || "_none"} onValueChange={(v) => setForm({ ...form, lead_source: v === "_none" ? "" : v })}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">Não definido</SelectItem>
+                      {LEAD_SOURCE_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="col-span-2 lg:col-span-4 space-y-1">
@@ -2643,7 +2653,7 @@ export default function Quotes() {
                            draggable
                            onDragStart={() => setDraggedQuoteId(quote.id)}
                            onDragEnd={() => setDraggedQuoteId(null)}
-                          className={cn("glass-card rounded-xl p-3 cursor-grab hover:shadow-md transition-all animate-fade-in active:cursor-grabbing", draggedQuoteId === quote.id && "opacity-40")}
+                          className={cn("glass-card rounded-xl p-3 cursor-grab hover:shadow-md transition-all animate-fade-in active:cursor-grabbing", draggedQuoteId === quote.id && "opacity-40", showArchived && "opacity-60")}
                            onClick={() => openEdit(quote)}
                          >
                            <div className="flex items-start justify-between mb-1 gap-2">
