@@ -1242,6 +1242,23 @@ export default function Quotes() {
     }
   };
 
+  const saveInlineQuoteField = async (
+    quoteId: string,
+    field: "total_value" | "close_probability",
+    newValue: any,
+    description: string,
+  ) => {
+    try {
+      const { error } = await supabase.from("quotes").update({ [field]: newValue }).eq("id", quoteId);
+      if (error) throw error;
+      try { await logHistory(quoteId, "inline_edit", description, { field, value: newValue }); } catch {}
+      queryClient.invalidateQueries({ queryKey: ["quotes"] });
+      queryClient.invalidateQueries({ queryKey: ["quotes-metrics"] });
+    } catch (err: any) {
+      toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
+    }
+  };
+
   const sortedQuotes = [...quotes].sort((a: any, b: any) => {
     if (!sortField) return 0;
     let aValue = a[sortField];
