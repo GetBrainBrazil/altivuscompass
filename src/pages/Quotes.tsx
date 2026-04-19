@@ -1468,6 +1468,90 @@ export default function Quotes() {
                   <Textarea value={form.other_info ?? ""} onChange={(e) => setForm({ ...form, other_info: e.target.value })} rows={2} className="text-sm" placeholder="Informações complementares..." />
                 </div>
               </div>
+
+              {/* Desconto geral */}
+              {(() => {
+                const discountMode: "amount" | "percent" =
+                  Number(form.discount_percent) > 0 && !Number(form.discount_amount)
+                    ? "percent"
+                    : "amount";
+                const totalValue = Number(form.total_value) || 0;
+                const discountAmount = Number(form.discount_amount) || 0;
+                const discountPercent = Number(form.discount_percent) || 0;
+                const computedDiscount =
+                  discountMode === "percent"
+                    ? (totalValue * discountPercent) / 100
+                    : discountAmount;
+                const totalWithDiscount = Math.max(0, totalValue - computedDiscount);
+                return (
+                  <div className="border-t border-border/50 pt-3 space-y-2">
+                    <Label className="font-body text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Desconto geral
+                    </Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto] gap-3 items-end">
+                      <RadioGroup
+                        value={discountMode}
+                        onValueChange={(v) => {
+                          if (v === "amount") {
+                            setForm({ ...form, discount_percent: "" });
+                          } else {
+                            setForm({ ...form, discount_amount: "" });
+                          }
+                        }}
+                        className="flex gap-3 h-9 items-center"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <RadioGroupItem value="amount" id="disc-amount" />
+                          <Label htmlFor="disc-amount" className="text-xs font-body cursor-pointer">
+                            Valor (R$)
+                          </Label>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <RadioGroupItem value="percent" id="disc-percent" />
+                          <Label htmlFor="disc-percent" className="text-xs font-body cursor-pointer">
+                            Porcentagem (%)
+                          </Label>
+                        </div>
+                      </RadioGroup>
+                      <div className="space-y-0.5">
+                        <Label className="text-[11px] font-body">
+                          {discountMode === "amount" ? "Desconto em R$" : "Desconto em %"}
+                        </Label>
+                        <div className="relative">
+                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground pointer-events-none">
+                            {discountMode === "amount" ? "R$" : "%"}
+                          </span>
+                          <Input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            max={discountMode === "percent" ? 100 : undefined}
+                            value={discountMode === "amount" ? (form.discount_amount ?? "") : (form.discount_percent ?? "")}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              if (discountMode === "amount") {
+                                setForm({ ...form, discount_amount: v, discount_percent: "" });
+                              } else {
+                                setForm({ ...form, discount_percent: v, discount_amount: "" });
+                              }
+                            }}
+                            placeholder="0"
+                            className="h-9 text-sm pl-7"
+                          />
+                        </div>
+                      </div>
+                      <div className="text-right space-y-0.5">
+                        <Label className="text-[11px] font-body text-muted-foreground">
+                          Total com desconto
+                        </Label>
+                        <div className="text-base font-semibold font-body text-foreground">
+                          {formatCurrency(totalWithDiscount)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </TabsContent>
 
             {ITEM_TYPES.map((type) => (
