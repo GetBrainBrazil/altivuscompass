@@ -1804,6 +1804,8 @@ export type Database = {
       quotes: {
         Row: {
           airline_options: string | null
+          archived_at: string | null
+          archived_by: string | null
           assigned_to: string | null
           client_id: string | null
           conclusion_type: string | null
@@ -1820,6 +1822,7 @@ export type Database = {
           hotel_options: string | null
           id: string
           is_template: boolean
+          lead_source: string | null
           notes: string | null
           other_info: string | null
           payment_terms: string | null
@@ -1836,6 +1839,8 @@ export type Database = {
         }
         Insert: {
           airline_options?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           assigned_to?: string | null
           client_id?: string | null
           conclusion_type?: string | null
@@ -1852,6 +1857,7 @@ export type Database = {
           hotel_options?: string | null
           id?: string
           is_template?: boolean
+          lead_source?: string | null
           notes?: string | null
           other_info?: string | null
           payment_terms?: string | null
@@ -1868,6 +1874,8 @@ export type Database = {
         }
         Update: {
           airline_options?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           assigned_to?: string | null
           client_id?: string | null
           conclusion_type?: string | null
@@ -1884,6 +1892,7 @@ export type Database = {
           hotel_options?: string | null
           id?: string
           is_template?: boolean
+          lead_source?: string | null
           notes?: string | null
           other_info?: string | null
           payment_terms?: string | null
