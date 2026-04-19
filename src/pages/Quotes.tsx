@@ -2771,6 +2771,15 @@ export default function Quotes() {
                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleOpenInWhatsapp(quote); }}>
                                      <MessageCircle className="w-3.5 h-3.5 mr-2" /> Abrir no WhatsApp
                                    </DropdownMenuItem>
+                                   {quote.archived_at ? (
+                                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setUnarchiveTarget(quote); }}>
+                                       <ArchiveRestore className="w-3.5 h-3.5 mr-2" /> Desarquivar
+                                     </DropdownMenuItem>
+                                   ) : (
+                                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setArchiveTarget(quote); }}>
+                                       <Archive className="w-3.5 h-3.5 mr-2" /> Arquivar
+                                     </DropdownMenuItem>
+                                   )}
                                  </DropdownMenuContent>
                                </DropdownMenu>
                              </div>
