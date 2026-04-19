@@ -101,7 +101,7 @@ export default function Tasks() {
   const { data: quotes = [] } = useQuery({
     queryKey: ["quotes-list-for-tasks"],
     queryFn: async () => {
-      const { data } = await supabase.from("quotes").select("id, title, destination, clients(full_name)").order("created_at", { ascending: false }).limit(100);
+      const { data } = await supabase.from("quotes").select("id, title, destination, clients(full_name)").eq("is_template", false).is("archived_at", null).order("created_at", { ascending: false }).limit(100);
       return data ?? [];
     },
   });
