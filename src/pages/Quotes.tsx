@@ -1023,6 +1023,85 @@ export default function Quotes() {
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
   };
 
+  // ----- WhatsApp summary helpers (productivity) -----
+  const fetchSummaryDataFor = async (quote: Quote) => {
+    if (editingQuote && editingQuote.id === quote.id) {
+      const pax = (clientPassengers as any[]).filter((p: any) => selectedPassengers.includes(p.id));
+      return { items, passengers: pax };
+    }
+    const [{ data: itemsData }, { data: paxLink }] = await Promise.all([
+      supabase.from("quote_items").select("*").eq("quote_id", quote.id).order("sort_order"),
+      supabase.from("quote_passengers").select("passenger_id").eq("quote_id", quote.id),
+    ]);
+    let pax: any[] = [];
+    const ids = (paxLink ?? []).map((r: any) => r.passenger_id).filter(Boolean);
+    if (ids.length) {
+      const { data: paxData } = await supabase.from("passengers").select("id, full_name").in("id", ids);
+      pax = paxData ?? [];
+    }
+    return { items: (itemsData ?? []) as any[], passengers: pax };
+  };
+
+  const fallbackCopyToClipboard = (text: string): boolean => {
+    try {
+      const el = document.createElement("textarea");
+      el.value = text;
+      el.setAttribute("readonly", "");
+      el.style.position = "fixed";
+      el.style.left = "-9999px";
+      document.body.appendChild(el);
+      el.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(el);
+      return ok;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleCopySummary = async (quote: Quote) => {
+    try {
+      const { items: qItems, passengers: qPax } = await fetchSummaryDataFor(quote);
+      const summary = buildQuoteSummary(quote, qItems, qPax, clients as any[]);
+      let copied = false;
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(summary);
+          copied = true;
+        } catch {
+          copied = fallbackCopyToClipboard(summary);
+        }
+      } else {
+        copied = fallbackCopyToClipboard(summary);
+      }
+      if (copied) {
+        toast({ title: "Resumo copiado", description: "Cole no WhatsApp do cliente." });
+        try { await logHistory(quote.id, "summary_copied", "Resumo copiado pro WhatsApp"); } catch {}
+      } else {
+        setSummaryFallbackText(summary);
+      }
+    } catch (err: any) {
+      toast({ title: "Erro ao copiar", description: err?.message ?? "Tente novamente.", variant: "destructive" });
+    }
+  };
+
+  const handleOpenInWhatsapp = async (quote: Quote) => {
+    try {
+      const phone = pickClientWhatsappNumber(quote, clients as any[]);
+      if (!phone) {
+        toast({ title: "Cliente sem telefone", description: "Cadastre um telefone para o cliente antes.", variant: "destructive" });
+        return;
+      }
+      const { items: qItems, passengers: qPax } = await fetchSummaryDataFor(quote);
+      const summary = buildQuoteSummary(quote, qItems, qPax, clients as any[]);
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(summary)}`;
+      window.open(url, "_blank", "noopener,noreferrer");
+      try { await logHistory(quote.id, "summary_whatsapp_opened", "Resumo aberto no WhatsApp"); } catch {}
+    } catch (err: any) {
+      toast({ title: "Erro", description: err?.message ?? "Tente novamente.", variant: "destructive" });
+    }
+  };
+
   const updateQuoteStage = async (quoteId: string, newStage: string) => {
     try {
       const q = quotes.find((q: Quote) => q.id === quoteId);
