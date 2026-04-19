@@ -16,6 +16,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import QuoteItemCommercialFields from "@/components/quotes/QuoteItemCommercialFields";
 import QuoteItemSupplierFields from "@/components/quotes/QuoteItemSupplierFields";
 import QuoteItemAttachments from "@/components/quotes/QuoteItemAttachments";
+import QuoteOptionsManager from "@/components/quotes/QuoteOptionsManager";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle, FileText } from "lucide-react";
@@ -679,6 +680,11 @@ export default function Quotes() {
             commission_status: item.commission_status || "pending",
             attachment_urls: item.attachment_urls ?? [],
             external_url: item.external_url || null,
+            option_group: item.option_group ?? null,
+            option_label: item.option_label ?? null,
+            option_order: item.option_order ?? null,
+            is_recommended: !!item.is_recommended,
+            is_selected: !!item.is_selected,
           };
           if (item.id && !item._isNew) {
             await supabase.from("quote_items").update(itemPayload).eq("id", item.id);
@@ -917,7 +923,7 @@ export default function Quotes() {
     }
   };
 
-  const addItem = (type: string) => {
+  const addItem = (type: string, extra?: Partial<QuoteItem>) => {
     setItems([...items, {
       item_type: type,
       title: "",
@@ -934,6 +940,7 @@ export default function Quotes() {
       commission_status: "pending",
       attachment_urls: [],
       external_url: null,
+      ...(extra || {}),
     }]);
   };
 
