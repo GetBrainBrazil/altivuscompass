@@ -1591,8 +1591,16 @@ export default function Quotes() {
 
             {ITEM_TYPES.map((type) => (
               <TabsContent key={type.id} value={type.id} className="mt-3 space-y-2">
-                {itemsForType(type.id).map((item, idx) => {
-                  const globalIdx = items.indexOf(item);
+                <QuoteOptionsManager<QuoteItem>
+                  itemType={type.id}
+                  itemTypeLabel={type.label}
+                  items={itemsForType(type.id)}
+                  allItems={items}
+                  addButtonLabel={`Adicionar ${type.label}`}
+                  onAddItem={(extra) => addItem(type.id, extra)}
+                  onUpdateItemGlobal={(gi, patch) => updateItem(gi, patch)}
+                  onRemoveItemGlobal={(gi) => removeItem(gi)}
+                  renderItem={(item, globalIdx, idx) => {
                   const d = item.details || {};
                   const updateDetail = (key: string, value: any) => {
                     const newDetails = { ...d, [key]: value };
