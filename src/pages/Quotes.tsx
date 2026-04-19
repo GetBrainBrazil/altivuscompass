@@ -1990,11 +1990,8 @@ export default function Quotes() {
                       </div>
                     </div>
                   );
-                })}
-
-                <Button type="button" variant="outline" size="sm" className="gap-1 font-body text-xs h-8" onClick={() => addItem(type.id)}>
-                  <Plus className="w-3 h-3" /> Adicionar {type.label}
-                </Button>
+                  }}
+                />
               </TabsContent>
             ))}
 
