@@ -19,7 +19,9 @@ import QuoteItemAttachments from "@/components/quotes/QuoteItemAttachments";
 import QuoteOptionsManager from "@/components/quotes/QuoteOptionsManager";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle, FileText, MoreVertical, ClipboardCopy } from "lucide-react";
+import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle, FileText, MoreVertical, ClipboardCopy, Search, Archive, ArchiveRestore, TrendingUp, DollarSign, Target } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { MetricCard } from "@/components/MetricCard";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { buildQuoteSummary, pickClientWhatsappNumber } from "@/lib/quote-summary";
 import { Dialog as WhatsAppDialog, DialogContent as WhatsAppDialogContent, DialogHeader as WhatsAppDialogHeader, DialogTitle as WhatsAppDialogTitle } from "@/components/ui/dialog";
@@ -42,6 +44,17 @@ const stages = [
   { id: "negotiation", label: "Negociação", color: "bg-warning" },
   { id: "confirmed", label: "Concluída", color: "bg-muted-foreground" },
 ];
+
+const LEAD_SOURCE_OPTIONS: { value: string; label: string }[] = [
+  { value: "whatsapp", label: "WhatsApp" },
+  { value: "instagram", label: "Instagram" },
+  { value: "site", label: "Site" },
+  { value: "indication", label: "Indicação" },
+  { value: "other", label: "Outro" },
+];
+const LEAD_SOURCE_LABEL: Record<string, string> = LEAD_SOURCE_OPTIONS.reduce(
+  (acc, o) => ({ ...acc, [o.value]: o.label }), {} as Record<string, string>,
+);
 
 const ITEM_TYPES = [
   { id: "flight", label: "Voos", icon: Plane },
@@ -67,10 +80,16 @@ type Quote = {
   stage: string;
   conclusion_type: string | null;
   created_at: string;
+  updated_at?: string | null;
   client_name?: string;
   travel_date_start: string | null;
   travel_date_end: string | null;
   notes: string | null;
+  lead_source?: string | null;
+  assigned_to?: string | null;
+  archived_at?: string | null;
+  archived_by?: string | null;
+  is_template?: boolean | null;
 };
 
 type QuoteItem = {
@@ -150,15 +169,65 @@ export default function Quotes() {
   const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
   const [summaryFallbackText, setSummaryFallbackText] = useState<string | null>(null);
   const initialSnapshotRef = useRef<string>("");
+
+  // Pipeline filters / search / sort / archive view
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [showArchived, setShowArchived] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterAssignee, setFilterAssignee] = useState<string>("all");
+  const [filterLeadSource, setFilterLeadSource] = useState<string>("all");
+  const [pipelineSort, setPipelineSort] = useState<"recent" | "oldest" | "value_desc" | "value_asc" | "updated">("recent");
+  const [archiveTarget, setArchiveTarget] = useState<Quote | null>(null);
+  const [unarchiveTarget, setUnarchiveTarget] = useState<Quote | null>(null);
+
+  // Debounce search
+  useEffect(() => {
+    const t = setTimeout(() => setSearchTerm(searchInput.trim().toLowerCase()), 200);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
   const { data: quotes = [], isLoading } = useQuery({
-    queryKey: ["quotes"],
+    queryKey: ["quotes", showArchived],
+    queryFn: async () => {
+      let query = supabase
+        .from("quotes")
+        .select("*, clients(full_name)")
+        .eq("is_template", false)
+        .order("created_at", { ascending: false });
+      if (showArchived) {
+        query = query.not("archived_at", "is", null);
+      } else {
+        query = query.is("archived_at", null);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data ?? []).map((q: any) => ({ ...q, client_name: q.clients?.full_name ?? "Sem cliente" }));
+    },
+  });
+
+  // Active (non-archived, non-template) quotes for global metrics — independent of filters/search
+  const { data: metricsQuotes = [] } = useQuery({
+    queryKey: ["quotes-metrics"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("quotes")
-        .select("*, clients(full_name)")
-        .order("created_at", { ascending: false });
+        .select("id, stage, total_value, conclusion_type, archived_at, is_template")
+        .eq("is_template", false)
+        .is("archived_at", null);
       if (error) throw error;
-      return (data ?? []).map((q: any) => ({ ...q, client_name: q.clients?.full_name ?? "Sem cliente" }));
+      return data ?? [];
+    },
+  });
+
+  // Sellers list for the assignee filter
+  const { data: sellers = [] } = useQuery({
+    queryKey: ["profiles-sellers"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("user_id, full_name").order("full_name");
+      if (error) throw error;
+      return data ?? [];
     },
   });
 
@@ -596,6 +665,7 @@ export default function Quotes() {
         travel_date_start: form.travel_date_start || null,
         travel_date_end: form.travel_date_end || null,
         notes: form.notes || null,
+        lead_source: form.lead_source || null,
         price_breakdown: { linked_client_ids: selectedLinkedClients, client_self_traveling: clientSelfTraveling, flexible_dates: !!form.flexible_dates, flexible_dates_description: form.flexible_dates_description || null },
       };
 
@@ -783,9 +853,43 @@ export default function Quotes() {
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
 
-  const openCreate = () => {
+  const archiveMutation = useMutation({
+    mutationFn: async (q: Quote) => {
+      const { error } = await supabase
+        .from("quotes")
+        .update({ archived_at: new Date().toISOString(), archived_by: user?.id ?? null } as any)
+        .eq("id", q.id);
+      if (error) throw error;
+      try { await logHistory(q.id, "archived", "Cotação arquivada"); } catch {}
+    },
+    onSuccess: () => {
+      toast({ title: "Cotação arquivada" });
+      queryClient.invalidateQueries({ queryKey: ["quotes"] });
+      queryClient.invalidateQueries({ queryKey: ["quotes-metrics"] });
+    },
+    onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
+  });
+
+  const unarchiveMutation = useMutation({
+    mutationFn: async (q: Quote) => {
+      const { error } = await supabase
+        .from("quotes")
+        .update({ archived_at: null, archived_by: null } as any)
+        .eq("id", q.id);
+      if (error) throw error;
+      try { await logHistory(q.id, "unarchived", "Cotação desarquivada"); } catch {}
+    },
+    onSuccess: () => {
+      toast({ title: "Cotação desarquivada" });
+      queryClient.invalidateQueries({ queryKey: ["quotes"] });
+      queryClient.invalidateQueries({ queryKey: ["quotes-metrics"] });
+    },
+    onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
+  });
+
+  const openCreate = (preset?: { client_id?: string }) => {
     setEditingQuote(null);
-    setForm({ stage: "new", total_value: "" });
+    setForm({ stage: "new", total_value: "", ...(preset?.client_id ? { client_id: preset.client_id } : {}) });
     setItems([]);
     setSelectedPassengers([]);
     setSelectedLinkedClients([]);
@@ -797,6 +901,16 @@ export default function Quotes() {
     initialSnapshotRef.current = ""; // empty = "new quote" mode
     setDialogOpen(true);
   };
+
+  // Open editor pre-filled when navigated from elsewhere (e.g. Clients page)
+  useEffect(() => {
+    const state = (location.state ?? {}) as { newQuote?: boolean; clientId?: string };
+    if (state.newQuote) {
+      openCreate({ client_id: state.clientId });
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
 
   const openEdit = (q: Quote) => {
     setEditingQuote(q);
@@ -818,6 +932,7 @@ export default function Quotes() {
       travel_date_start: q.travel_date_start ?? "",
       travel_date_end: q.travel_date_end ?? "",
       notes: q.notes ?? "",
+      lead_source: (q as any).lead_source ?? "",
       flexible_dates: pb?.flexible_dates ?? false,
       flexible_dates_description: pb?.flexible_dates_description ?? "",
     });
@@ -1151,6 +1266,40 @@ export default function Quotes() {
   // Keep the saveQuote ref pointing at the latest closure for the keyboard shortcut
   saveQuoteRef.current = saveQuote;
 
+  // Apply search + assignee + lead source filters then sort (must be before any early return)
+  const filteredQuotes = useMemo(() => {
+    let list = quotes as Quote[];
+    if (searchTerm) {
+      list = list.filter((q) => {
+        const hay = `${q.title ?? ""} ${q.destination ?? ""} ${q.client_name ?? ""} ${q.id}`.toLowerCase();
+        return hay.includes(searchTerm);
+      });
+    }
+    if (filterAssignee !== "all") {
+      list = list.filter((q) => (q.assigned_to ?? "") === filterAssignee);
+    }
+    if (filterLeadSource !== "all") {
+      list = list.filter((q) => (q.lead_source ?? "") === filterLeadSource);
+    }
+    const sorted = [...list];
+    sorted.sort((a: any, b: any) => {
+      switch (pipelineSort) {
+        case "oldest":
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case "value_desc":
+          return Number(b.total_value ?? 0) - Number(a.total_value ?? 0);
+        case "value_asc":
+          return Number(a.total_value ?? 0) - Number(b.total_value ?? 0);
+        case "updated":
+          return new Date(b.updated_at ?? b.created_at).getTime() - new Date(a.updated_at ?? a.created_at).getTime();
+        case "recent":
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+    return sorted;
+  }, [quotes, searchTerm, filterAssignee, filterLeadSource, pipelineSort]);
+
   // ─── FORM VIEW ─────────────────────────────────────────────
   if (dialogOpen) {
     const itemsForType = (type: string) => items.filter(i => i.item_type === type);
@@ -1280,9 +1429,19 @@ export default function Quotes() {
             <TabsContent value="main" className="mt-3 space-y-3">
               {/* Row 1: Título, Cliente, Imagem de Capa */}
               <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-3">
-                <div className="col-span-2 lg:col-span-4 space-y-1">
+                <div className="col-span-2 lg:col-span-3 space-y-1">
                   <Label className="font-body text-xs">Título da Cotação</Label>
                   <Input className="h-9 text-sm" value={form.title ?? ""} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex: Viagem Europa - Família Silva" />
+                </div>
+                <div className="col-span-2 lg:col-span-2 space-y-1">
+                  <Label className="font-body text-xs">Origem do lead</Label>
+                  <Select value={form.lead_source || "_none"} onValueChange={(v) => setForm({ ...form, lead_source: v === "_none" ? "" : v })}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">Não definido</SelectItem>
+                      {LEAD_SOURCE_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="col-span-2 lg:col-span-4 space-y-1">
@@ -2341,15 +2500,35 @@ export default function Quotes() {
     );
   }
 
+  // Aggregate metrics (always over the global active set, not the filtered list)
+  const activeStages = ["new", "sent", "negotiation"];
+  const activeQuotesCount = (metricsQuotes as any[]).filter((q) => activeStages.includes(q.stage)).length;
+  const negotiatingValue = (metricsQuotes as any[])
+    .filter((q) => ["sent", "negotiation"].includes(q.stage))
+    .reduce((sum, q) => sum + Number(q.total_value ?? 0), 0);
+  const closedQuotes = (metricsQuotes as any[]).filter((q) => ["confirmed", "completed"].includes(q.stage));
+  const wonCount = closedQuotes.filter((q) => q.conclusion_type === "won").length;
+  const conversionRate = closedQuotes.length === 0
+    ? "—"
+    : `${Math.round((wonCount / closedQuotes.length) * 100)}%`;
+
+  const hasActiveFilters = searchTerm !== "" || filterAssignee !== "all" || filterLeadSource !== "all";
+
   // ─── LIST VIEW (pipeline / table) ─────────────────────────
   return (
     <div className="max-w-full mx-auto space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">Pipeline de Cotações</h1>
-          <p className="text-muted-foreground font-body mt-1 text-sm">{quotes.length} cotações</p>
+          <p className="text-muted-foreground font-body mt-1 text-sm">
+            {filteredQuotes.length} de {quotes.length} cotações{showArchived ? " arquivadas" : ""}
+          </p>
         </div>
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center flex-wrap">
+          <label className="flex items-center gap-2 text-xs font-body text-muted-foreground cursor-pointer select-none">
+            <Switch checked={showArchived} onCheckedChange={setShowArchived} />
+            Ver arquivadas
+          </label>
           <div className="flex gap-1 p-1 rounded-lg bg-muted">
             <button onClick={() => setViewMode("kanban")} className={`p-2 rounded-md transition-colors ${viewMode === "kanban" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:bg-background/50"}`} title="Kanban">
               <LayoutGrid className="w-4 h-4" />
@@ -2358,11 +2537,88 @@ export default function Quotes() {
               <TableIcon className="w-4 h-4" />
             </button>
           </div>
-          <Button onClick={openCreate} className="font-body">
+          <Button onClick={() => openCreate()} className="font-body">
             <Plus className="w-4 h-4" /> Nova Cotação
           </Button>
         </div>
       </div>
+
+      {/* Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        <MetricCard
+          title="Cotações ativas"
+          value={String(activeQuotesCount)}
+          icon={<TrendingUp className="w-4 h-4 text-soft-blue" />}
+        />
+        <MetricCard
+          title="Valor em negociação"
+          value={formatCurrency(negotiatingValue)}
+          icon={<DollarSign className="w-4 h-4 text-gold" />}
+        />
+        <MetricCard
+          title="Taxa de conversão"
+          value={conversionRate}
+          subtitle={closedQuotes.length > 0 ? `${wonCount} de ${closedQuotes.length} fechadas` : undefined}
+          icon={<Target className="w-4 h-4 text-success" />}
+        />
+      </div>
+
+      {/* Search + filters */}
+      <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <Input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Buscar por título, destino, cliente ou ID..."
+            className="pl-9 h-9 font-body text-sm"
+          />
+        </div>
+        <Select value={filterAssignee} onValueChange={setFilterAssignee}>
+          <SelectTrigger className="h-9 w-full sm:w-[180px] font-body text-sm"><SelectValue placeholder="Vendedor" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os vendedores</SelectItem>
+            {(sellers as any[]).map((s) => (
+              <SelectItem key={s.user_id} value={s.user_id}>{s.full_name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={filterLeadSource} onValueChange={setFilterLeadSource}>
+          <SelectTrigger className="h-9 w-full sm:w-[170px] font-body text-sm"><SelectValue placeholder="Origem" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as origens</SelectItem>
+            {LEAD_SOURCE_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={pipelineSort} onValueChange={(v) => setPipelineSort(v as any)}>
+          <SelectTrigger className="h-9 w-full sm:w-[180px] font-body text-sm"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="recent">Mais recentes</SelectItem>
+            <SelectItem value="oldest">Mais antigas</SelectItem>
+            <SelectItem value="value_desc">Maior valor</SelectItem>
+            <SelectItem value="value_asc">Menor valor</SelectItem>
+            <SelectItem value="updated">Atualização recente</SelectItem>
+          </SelectContent>
+        </Select>
+        {hasActiveFilters && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="font-body h-9 gap-1.5"
+            onClick={() => { setSearchInput(""); setFilterAssignee("all"); setFilterLeadSource("all"); }}
+          >
+            <X className="w-3.5 h-3.5" /> Limpar
+          </Button>
+        )}
+      </div>
+
+      {showArchived && (
+        <div className="rounded-lg border border-dashed border-border bg-muted/40 px-3 py-2 text-xs font-body text-muted-foreground flex items-center gap-2">
+          <Archive className="w-3.5 h-3.5" /> Mostrando apenas cotações arquivadas. Clique no toggle no topo para voltar.
+        </div>
+      )}
 
       {isLoading ? (
         viewMode === "kanban" ? <KanbanSkeleton columns={4} cardsPerColumn={3} /> : <TableSkeleton rows={6} columns={6} />
@@ -2371,7 +2627,7 @@ export default function Quotes() {
           {viewMode === "kanban" ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4 pb-4">
               {stages.map((stage) => {
-                const stageQuotes = quotes.filter((q: Quote) => q.stage === stage.id);
+                const stageQuotes = filteredQuotes.filter((q: Quote) => q.stage === stage.id);
                 return (
                    <div key={stage.id} className="min-w-0 flex flex-col"
                      onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("bg-accent/10"); }}
@@ -2397,7 +2653,7 @@ export default function Quotes() {
                            draggable
                            onDragStart={() => setDraggedQuoteId(quote.id)}
                            onDragEnd={() => setDraggedQuoteId(null)}
-                          className={cn("glass-card rounded-xl p-3 cursor-grab hover:shadow-md transition-all animate-fade-in active:cursor-grabbing", draggedQuoteId === quote.id && "opacity-40")}
+                          className={cn("glass-card rounded-xl p-3 cursor-grab hover:shadow-md transition-all animate-fade-in active:cursor-grabbing", draggedQuoteId === quote.id && "opacity-40", showArchived && "opacity-60")}
                            onClick={() => openEdit(quote)}
                          >
                            <div className="flex items-start justify-between mb-1 gap-2">
@@ -2466,12 +2722,12 @@ export default function Quotes() {
                    </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedQuotes.length === 0 ? (
+                  {filteredQuotes.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center p-8 text-muted-foreground font-body">Nenhuma cotação encontrada.</TableCell>
                     </TableRow>
                   ) : (
-                    sortedQuotes.map((quote: Quote) => {
+                    filteredQuotes.map((quote: Quote) => {
                       const stage = stages.find((s) => s.id === quote.stage) ?? stages[0];
                       return (
                         <TableRow key={quote.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(quote)}>
@@ -2525,6 +2781,15 @@ export default function Quotes() {
                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleOpenInWhatsapp(quote); }}>
                                      <MessageCircle className="w-3.5 h-3.5 mr-2" /> Abrir no WhatsApp
                                    </DropdownMenuItem>
+                                   {quote.archived_at ? (
+                                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setUnarchiveTarget(quote); }}>
+                                       <ArchiveRestore className="w-3.5 h-3.5 mr-2" /> Desarquivar
+                                     </DropdownMenuItem>
+                                   ) : (
+                                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setArchiveTarget(quote); }}>
+                                       <Archive className="w-3.5 h-3.5 mr-2" /> Arquivar
+                                     </DropdownMenuItem>
+                                   )}
                                  </DropdownMenuContent>
                                </DropdownMenu>
                              </div>
