@@ -2473,7 +2473,7 @@ export default function Quotes() {
               <TableIcon className="w-4 h-4" />
             </button>
           </div>
-          <Button onClick={openCreate} className="font-body">
+          <Button onClick={() => openCreate()} className="font-body">
             <Plus className="w-4 h-4" /> Nova Cotação
           </Button>
         </div>
