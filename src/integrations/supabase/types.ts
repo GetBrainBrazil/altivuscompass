@@ -1849,6 +1849,7 @@ export type Database = {
           archived_by: string | null
           assigned_to: string | null
           client_id: string | null
+          client_notes: string | null
           close_probability: string | null
           conclusion_type: string | null
           cover_image_url: string | null
@@ -1864,6 +1865,7 @@ export type Database = {
           hotel_options: string | null
           id: string
           internal_due_date: string | null
+          internal_notes: string | null
           is_template: boolean
           lead_source: string | null
           notes: string | null
@@ -1886,6 +1888,7 @@ export type Database = {
           archived_by?: string | null
           assigned_to?: string | null
           client_id?: string | null
+          client_notes?: string | null
           close_probability?: string | null
           conclusion_type?: string | null
           cover_image_url?: string | null
@@ -1901,6 +1904,7 @@ export type Database = {
           hotel_options?: string | null
           id?: string
           internal_due_date?: string | null
+          internal_notes?: string | null
           is_template?: boolean
           lead_source?: string | null
           notes?: string | null
@@ -1923,6 +1927,7 @@ export type Database = {
           archived_by?: string | null
           assigned_to?: string | null
           client_id?: string | null
+          client_notes?: string | null
           close_probability?: string | null
           conclusion_type?: string | null
           cover_image_url?: string | null
@@ -1938,6 +1943,7 @@ export type Database = {
           hotel_options?: string | null
           id?: string
           internal_due_date?: string | null
+          internal_notes?: string | null
           is_template?: boolean
           lead_source?: string | null
           notes?: string | null
