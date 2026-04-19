@@ -2456,15 +2456,69 @@ export default function Quotes() {
     );
   }
 
+  // Aggregate metrics (always over the global active set, not the filtered list)
+  const activeStages = ["new", "sent", "negotiation"];
+  const activeQuotesCount = (metricsQuotes as any[]).filter((q) => activeStages.includes(q.stage)).length;
+  const negotiatingValue = (metricsQuotes as any[])
+    .filter((q) => ["sent", "negotiation"].includes(q.stage))
+    .reduce((sum, q) => sum + Number(q.total_value ?? 0), 0);
+  const closedQuotes = (metricsQuotes as any[]).filter((q) => ["confirmed", "completed"].includes(q.stage));
+  const wonCount = closedQuotes.filter((q) => q.conclusion_type === "won").length;
+  const conversionRate = closedQuotes.length === 0
+    ? "—"
+    : `${Math.round((wonCount / closedQuotes.length) * 100)}%`;
+
+  // Apply search + assignee + lead source filters then sort
+  const filteredQuotes = useMemo(() => {
+    let list = quotes as Quote[];
+    if (searchTerm) {
+      list = list.filter((q) => {
+        const hay = `${q.title ?? ""} ${q.destination ?? ""} ${q.client_name ?? ""} ${q.id}`.toLowerCase();
+        return hay.includes(searchTerm);
+      });
+    }
+    if (filterAssignee !== "all") {
+      list = list.filter((q) => (q.assigned_to ?? "") === filterAssignee);
+    }
+    if (filterLeadSource !== "all") {
+      list = list.filter((q) => (q.lead_source ?? "") === filterLeadSource);
+    }
+    const sorted = [...list];
+    sorted.sort((a: any, b: any) => {
+      switch (pipelineSort) {
+        case "oldest":
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case "value_desc":
+          return Number(b.total_value ?? 0) - Number(a.total_value ?? 0);
+        case "value_asc":
+          return Number(a.total_value ?? 0) - Number(b.total_value ?? 0);
+        case "updated":
+          return new Date(b.updated_at ?? b.created_at).getTime() - new Date(a.updated_at ?? a.created_at).getTime();
+        case "recent":
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+    return sorted;
+  }, [quotes, searchTerm, filterAssignee, filterLeadSource, pipelineSort]);
+
+  const hasActiveFilters = searchTerm !== "" || filterAssignee !== "all" || filterLeadSource !== "all";
+
   // ─── LIST VIEW (pipeline / table) ─────────────────────────
   return (
     <div className="max-w-full mx-auto space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">Pipeline de Cotações</h1>
-          <p className="text-muted-foreground font-body mt-1 text-sm">{quotes.length} cotações</p>
+          <p className="text-muted-foreground font-body mt-1 text-sm">
+            {filteredQuotes.length} de {quotes.length} cotações{showArchived ? " arquivadas" : ""}
+          </p>
         </div>
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center flex-wrap">
+          <label className="flex items-center gap-2 text-xs font-body text-muted-foreground cursor-pointer select-none">
+            <Switch checked={showArchived} onCheckedChange={setShowArchived} />
+            Ver arquivadas
+          </label>
           <div className="flex gap-1 p-1 rounded-lg bg-muted">
             <button onClick={() => setViewMode("kanban")} className={`p-2 rounded-md transition-colors ${viewMode === "kanban" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:bg-background/50"}`} title="Kanban">
               <LayoutGrid className="w-4 h-4" />
@@ -2478,6 +2532,83 @@ export default function Quotes() {
           </Button>
         </div>
       </div>
+
+      {/* Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        <MetricCard
+          title="Cotações ativas"
+          value={String(activeQuotesCount)}
+          icon={<TrendingUp className="w-4 h-4 text-soft-blue" />}
+        />
+        <MetricCard
+          title="Valor em negociação"
+          value={formatCurrency(negotiatingValue)}
+          icon={<DollarSign className="w-4 h-4 text-gold" />}
+        />
+        <MetricCard
+          title="Taxa de conversão"
+          value={conversionRate}
+          subtitle={closedQuotes.length > 0 ? `${wonCount} de ${closedQuotes.length} fechadas` : undefined}
+          icon={<Target className="w-4 h-4 text-success" />}
+        />
+      </div>
+
+      {/* Search + filters */}
+      <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <Input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Buscar por título, destino, cliente ou ID..."
+            className="pl-9 h-9 font-body text-sm"
+          />
+        </div>
+        <Select value={filterAssignee} onValueChange={setFilterAssignee}>
+          <SelectTrigger className="h-9 w-full sm:w-[180px] font-body text-sm"><SelectValue placeholder="Vendedor" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os vendedores</SelectItem>
+            {(sellers as any[]).map((s) => (
+              <SelectItem key={s.user_id} value={s.user_id}>{s.full_name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={filterLeadSource} onValueChange={setFilterLeadSource}>
+          <SelectTrigger className="h-9 w-full sm:w-[170px] font-body text-sm"><SelectValue placeholder="Origem" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as origens</SelectItem>
+            {LEAD_SOURCE_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={pipelineSort} onValueChange={(v) => setPipelineSort(v as any)}>
+          <SelectTrigger className="h-9 w-full sm:w-[180px] font-body text-sm"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="recent">Mais recentes</SelectItem>
+            <SelectItem value="oldest">Mais antigas</SelectItem>
+            <SelectItem value="value_desc">Maior valor</SelectItem>
+            <SelectItem value="value_asc">Menor valor</SelectItem>
+            <SelectItem value="updated">Atualização recente</SelectItem>
+          </SelectContent>
+        </Select>
+        {hasActiveFilters && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="font-body h-9 gap-1.5"
+            onClick={() => { setSearchInput(""); setFilterAssignee("all"); setFilterLeadSource("all"); }}
+          >
+            <X className="w-3.5 h-3.5" /> Limpar
+          </Button>
+        )}
+      </div>
+
+      {showArchived && (
+        <div className="rounded-lg border border-dashed border-border bg-muted/40 px-3 py-2 text-xs font-body text-muted-foreground flex items-center gap-2">
+          <Archive className="w-3.5 h-3.5" /> Mostrando apenas cotações arquivadas. Clique no toggle no topo para voltar.
+        </div>
+      )}
 
       {isLoading ? (
         viewMode === "kanban" ? <KanbanSkeleton columns={4} cardsPerColumn={3} /> : <TableSkeleton rows={6} columns={6} />
