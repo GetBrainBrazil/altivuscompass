@@ -442,14 +442,14 @@ export default function Quotes() {
   }, [dialogOpen, editingQuote?.id]);
 
   // Keyboard shortcut: Ctrl/Cmd+S to save inside the quote editor
+  const saveQuoteRef = useRef<((closeAfter: boolean) => Promise<string | null>) | null>(null);
   useEffect(() => {
     if (!dialogOpen) return;
     const onKey = (e: KeyboardEvent) => {
       const isSave = (e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S");
       if (isSave) {
         e.preventDefault();
-        // saveQuote is defined later — use the function reference at call time via window
-        (window as any).__quoteEditorSave?.();
+        saveQuoteRef.current?.(false);
       }
     };
     document.addEventListener("keydown", onKey);
