@@ -2024,6 +2024,22 @@ export default function Quotes() {
           </div>
         </div>
       )}
+
+      {/* Unsaved changes confirmation */}
+      <AlertDialog open={confirmCloseOpen} onOpenChange={setConfirmCloseOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display">Descartar alterações?</AlertDialogTitle>
+            <AlertDialogDescription className="font-body">As mudanças não salvas serão perdidas.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="font-body">Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="font-body bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => { setConfirmCloseOpen(false); performCloseDialog(); }}>
+              Descartar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       </>
     );
   }
