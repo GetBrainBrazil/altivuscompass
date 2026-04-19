@@ -19,7 +19,7 @@ import QuoteItemAttachments from "@/components/quotes/QuoteItemAttachments";
 import QuoteOptionsManager from "@/components/quotes/QuoteOptionsManager";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle, FileText, MoreVertical, ClipboardCopy, Search, Archive, ArchiveRestore, TrendingUp, DollarSign, Target } from "lucide-react";
+import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle, FileText, MoreVertical, ClipboardCopy, Search, Archive, ArchiveRestore, TrendingUp, DollarSign, Target, Pencil } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { MetricCard } from "@/components/MetricCard";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -35,6 +35,8 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
 import QuoteHistoryTab from "@/components/quotes/QuoteHistoryTab";
+import QuoteInteractionsTab from "@/components/quotes/QuoteInteractionsTab";
+import { QuoteCardBadges, ProbabilityBadge, PROBABILITY_OPTIONS } from "@/components/quotes/QuoteCardBadges";
 import ItineraryTimeline from "@/components/itineraries/ItineraryTimeline";
 import ItineraryMapView from "@/components/itineraries/ItineraryMapView";
 
@@ -90,6 +92,9 @@ type Quote = {
   archived_at?: string | null;
   archived_by?: string | null;
   is_template?: boolean | null;
+  close_probability?: string | null;
+  internal_due_date?: string | null;
+  quote_validity?: string | null;
 };
 
 type QuoteItem = {
@@ -181,6 +186,7 @@ export default function Quotes() {
   const [pipelineSort, setPipelineSort] = useState<"recent" | "oldest" | "value_desc" | "value_asc" | "updated">("recent");
   const [archiveTarget, setArchiveTarget] = useState<Quote | null>(null);
   const [unarchiveTarget, setUnarchiveTarget] = useState<Quote | null>(null);
+  const [inlineValueEdit, setInlineValueEdit] = useState<{ id: string; value: string } | null>(null);
 
   // Debounce search
   useEffect(() => {
@@ -666,6 +672,8 @@ export default function Quotes() {
         travel_date_end: form.travel_date_end || null,
         notes: form.notes || null,
         lead_source: form.lead_source || null,
+        close_probability: form.close_probability || null,
+        internal_due_date: form.internal_due_date || null,
         price_breakdown: { linked_client_ids: selectedLinkedClients, client_self_traveling: clientSelfTraveling, flexible_dates: !!form.flexible_dates, flexible_dates_description: form.flexible_dates_description || null },
       };
 
@@ -933,6 +941,8 @@ export default function Quotes() {
       travel_date_end: q.travel_date_end ?? "",
       notes: q.notes ?? "",
       lead_source: (q as any).lead_source ?? "",
+      close_probability: (q as any).close_probability ?? "",
+      internal_due_date: (q as any).internal_due_date ?? "",
       flexible_dates: pb?.flexible_dates ?? false,
       flexible_dates_description: pb?.flexible_dates_description ?? "",
     });
@@ -1232,6 +1242,23 @@ export default function Quotes() {
     }
   };
 
+  const saveInlineQuoteField = async (
+    quoteId: string,
+    field: "total_value" | "close_probability",
+    newValue: any,
+    description: string,
+  ) => {
+    try {
+      const { error } = await supabase.from("quotes").update({ [field]: newValue }).eq("id", quoteId);
+      if (error) throw error;
+      try { await logHistory(quoteId, "inline_edit", description, { field, value: newValue }); } catch {}
+      queryClient.invalidateQueries({ queryKey: ["quotes"] });
+      queryClient.invalidateQueries({ queryKey: ["quotes-metrics"] });
+    } catch (err: any) {
+      toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
+    }
+  };
+
   const sortedQuotes = [...quotes].sort((a: any, b: any) => {
     if (!sortField) return 0;
     let aValue = a[sortField];
@@ -1419,6 +1446,12 @@ export default function Quotes() {
                 {linkedItinerary && <Badge variant="secondary" className="text-[9px] h-3.5 px-1 ml-0.5">1</Badge>}
               </TabsTrigger>
               {editingQuote && (
+                <TabsTrigger value="interactions" className="flex items-center gap-1 text-[11px] px-2 py-1">
+                  <MessageCircle className="w-3 h-3" />
+                  Interações
+                </TabsTrigger>
+              )}
+              {editingQuote && (
                 <TabsTrigger value="history" className="flex items-center gap-1 text-[11px] px-2 py-1 bg-primary/15 text-primary border border-primary/30 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary">
                   <History className="w-3 h-3" />
                   Histórico
@@ -1544,7 +1577,64 @@ export default function Quotes() {
                 )}
               </div>
 
-              {/* Row 3: Viajantes + Destino(s) */}
+              {/* Probabilidade de fechar + Prazo interno */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="font-body text-xs">Probabilidade de fechar</Label>
+                  <Select
+                    value={form.close_probability || "_none"}
+                    onValueChange={(v) => setForm({ ...form, close_probability: v === "_none" ? "" : v })}
+                  >
+                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {PROBABILITY_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          <span className="flex items-center gap-2">
+                            {o.dot && <span className={cn("w-2 h-2 rounded-full", o.dot)} />}
+                            {o.label}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="font-body text-xs">Prazo interno (dar retorno até)</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className={cn("w-full h-9 justify-start text-left text-sm font-normal", !form.internal_due_date && "text-muted-foreground")}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4 opacity-60" />
+                        {form.internal_due_date ? format(parseISO(form.internal_due_date), "dd/MM/yyyy") : "Selecionar data"}
+                        {form.internal_due_date && (
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => { e.stopPropagation(); setForm({ ...form, internal_due_date: "" }); }}
+                            className="ml-auto inline-flex p-0.5 rounded hover:bg-muted"
+                          >
+                            <X className="h-3 w-3" />
+                          </span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={form.internal_due_date ? parseISO(form.internal_due_date) : undefined}
+                        onSelect={(date) => setForm({ ...form, internal_due_date: date ? format(date, "yyyy-MM-dd") : "" })}
+                        initialFocus locale={ptBR}
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <p className="text-[10px] text-muted-foreground font-body">Apenas interno — não aparece para o cliente.</p>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-3 gap-y-3 items-start">
                 {form.client_id && (
                   <div className="space-y-1">
@@ -2348,6 +2438,12 @@ export default function Quotes() {
             </TabsContent>
 
             {editingQuote && (
+              <TabsContent value="interactions" className="mt-3">
+                <QuoteInteractionsTab quoteId={editingQuote.id} />
+              </TabsContent>
+            )}
+
+            {editingQuote && (
               <TabsContent value="history" className="mt-3">
                 <QuoteHistoryTab quoteId={editingQuote.id} />
               </TabsContent>
@@ -2659,7 +2755,45 @@ export default function Quotes() {
                            <div className="flex items-start justify-between mb-1 gap-2">
                               <p className="text-sm font-medium font-body text-foreground flex-1 min-w-0 truncate">{quote.title || quote.destination || "Sem título"}</p>
                               <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-                                <span className="text-xs font-semibold text-foreground font-body">{formatCurrency(quote.total_value)}</span>
+                                {inlineValueEdit?.id === quote.id ? (
+                                  <Input
+                                    autoFocus
+                                    type="number"
+                                    inputMode="decimal"
+                                    className="h-6 w-24 text-xs px-1 py-0"
+                                    value={inlineValueEdit.value}
+                                    onChange={(e) => setInlineValueEdit({ id: quote.id, value: e.target.value })}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") {
+                                        const newVal = Number(inlineValueEdit.value) || 0;
+                                        if (newVal !== Number(quote.total_value ?? 0)) {
+                                          saveInlineQuoteField(quote.id, "total_value", newVal,
+                                            `Valor alterado para ${formatCurrency(newVal)}`);
+                                        }
+                                        setInlineValueEdit(null);
+                                      } else if (e.key === "Escape") setInlineValueEdit(null);
+                                    }}
+                                    onBlur={() => {
+                                      const newVal = Number(inlineValueEdit.value) || 0;
+                                      if (newVal !== Number(quote.total_value ?? 0)) {
+                                        saveInlineQuoteField(quote.id, "total_value", newVal,
+                                          `Valor alterado para ${formatCurrency(newVal)}`);
+                                      }
+                                      setInlineValueEdit(null);
+                                    }}
+                                  />
+                                ) : (
+                                  <>
+                                    <span className="text-xs font-semibold text-foreground font-body">{formatCurrency(quote.total_value)}</span>
+                                    <Button
+                                      variant="ghost" size="icon" className="h-5 w-5"
+                                      onClick={(e) => { e.stopPropagation(); setInlineValueEdit({ id: quote.id, value: String(quote.total_value ?? "") }); }}
+                                      aria-label="Editar valor"
+                                    >
+                                      <Pencil className="w-3 h-3 text-muted-foreground" />
+                                    </Button>
+                                  </>
+                                )}
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => e.stopPropagation()} aria-label="Ações">
@@ -2673,16 +2807,67 @@ export default function Quotes() {
                                     <DropdownMenuItem onClick={() => handleOpenInWhatsapp(quote)}>
                                       <MessageCircle className="w-3.5 h-3.5 mr-2" /> Abrir no WhatsApp
                                     </DropdownMenuItem>
+                                    {quote.archived_at ? (
+                                      <DropdownMenuItem onClick={() => setUnarchiveTarget(quote)}>
+                                        <ArchiveRestore className="w-3.5 h-3.5 mr-2" /> Desarquivar
+                                      </DropdownMenuItem>
+                                    ) : (
+                                      <DropdownMenuItem onClick={() => setArchiveTarget(quote)}>
+                                        <Archive className="w-3.5 h-3.5 mr-2" /> Arquivar
+                                      </DropdownMenuItem>
+                                    )}
                                   </DropdownMenuContent>
                                 </DropdownMenu>
                               </div>
                             </div>
                            <p className="text-xs text-muted-foreground font-body mb-2">{quote.client_name}</p>
-                           {stage.id === "confirmed" && quote.conclusion_type && (
-                             <Badge variant={quote.conclusion_type === "won" ? "default" : "destructive"} className="text-[10px] mb-2">
-                               {quote.conclusion_type === "won" ? "Convertida" : "Perdida"}
-                             </Badge>
-                           )}
+                           <QuoteCardBadges
+                             internalDueDate={(quote as any).internal_due_date}
+                             createdAt={quote.created_at}
+                             quoteValidity={(quote as any).quote_validity}
+                             stage={quote.stage}
+                           />
+                           <div className="flex items-center gap-1 mb-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
+                             <Popover>
+                               <PopoverTrigger asChild>
+                                 <button type="button" className="inline-flex">
+                                   {(quote as any).close_probability ? (
+                                     <ProbabilityBadge value={(quote as any).close_probability} className="cursor-pointer hover:opacity-80" />
+                                   ) : (
+                                     <span className="text-[9px] text-muted-foreground hover:text-foreground border border-dashed border-border rounded-full px-1.5 py-0.5 font-body cursor-pointer">
+                                       + probabilidade
+                                     </span>
+                                   )}
+                                 </button>
+                               </PopoverTrigger>
+                               <PopoverContent align="start" className="w-44 p-1">
+                                 {PROBABILITY_OPTIONS.map((o) => (
+                                   <button
+                                     key={o.value}
+                                     type="button"
+                                     className="w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded hover:bg-accent text-left font-body"
+                                     onClick={() => {
+                                       const newVal = o.value === "_none" ? null : o.value;
+                                       const cur = (quote as any).close_probability ?? null;
+                                       if (newVal !== cur) {
+                                         saveInlineQuoteField(quote.id, "close_probability", newVal,
+                                           `Probabilidade alterada para "${o.label}"`);
+                                       }
+                                     }}
+                                   >
+                                     {o.dot && <span className={cn("w-2 h-2 rounded-full", o.dot)} />}
+                                     {!o.dot && <span className="w-2 h-2" />}
+                                     {o.label}
+                                   </button>
+                                 ))}
+                               </PopoverContent>
+                             </Popover>
+                             {stage.id === "confirmed" && quote.conclusion_type && (
+                               <Badge variant={quote.conclusion_type === "won" ? "default" : "destructive"} className="text-[10px]">
+                                 {quote.conclusion_type === "won" ? "Convertida" : "Perdida"}
+                               </Badge>
+                             )}
+                           </div>
                            <div className="text-[10px] text-muted-foreground font-body">
                              <span>{quote.travel_date_start ? quote.travel_date_start.split("-").reverse().join("/") : ""} {quote.travel_date_end ? `– ${quote.travel_date_end.split("-").reverse().join("/")}` : ""}</span>
                            </div>
