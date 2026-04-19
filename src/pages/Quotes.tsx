@@ -88,6 +88,12 @@ type QuoteItem = {
   commission_status?: string | null;
   attachment_urls?: string[] | null;
   external_url?: string | null;
+  // Option grouping fields
+  option_group?: string | null;
+  option_label?: string | null;
+  option_order?: number | null;
+  is_recommended?: boolean;
+  is_selected?: boolean;
 };
 
 const QUOTE_EDITOR_DRAFT_KEY = "quotes-editor-draft";
