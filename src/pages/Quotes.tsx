@@ -123,6 +123,8 @@ export default function Quotes() {
   const [whatsappMessage, setWhatsappMessage] = useState("");
   const [whatsappQuoteId, setWhatsappQuoteId] = useState<string | null>(null);
   const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
+  const initialSnapshotRef = useRef<string>("");
   const { data: quotes = [], isLoading } = useQuery({
     queryKey: ["quotes"],
     queryFn: async () => {
@@ -716,7 +718,27 @@ export default function Quotes() {
     setDialogOpen(true);
   };
 
-  const closeDialog = () => {
+  const buildEditorSnapshot = useCallback(() => {
+    return JSON.stringify({
+      form,
+      items,
+      selectedPassengers,
+      selectedLinkedClients,
+      clientSelfTraveling,
+      selectedDestinations,
+      coverPreview,
+    });
+  }, [form, items, selectedPassengers, selectedLinkedClients, clientSelfTraveling, selectedDestinations, coverPreview]);
+
+  const hasUnsavedChanges = useCallback(() => {
+    if (!initialSnapshotRef.current) {
+      // New quote: dirty if any field filled or any item present
+      return Object.values(form ?? {}).some((v) => v !== "" && v !== null && v !== undefined && v !== false) || items.length > 0;
+    }
+    return buildEditorSnapshot() !== initialSnapshotRef.current;
+  }, [buildEditorSnapshot, form, items]);
+
+  const performCloseDialog = () => {
     localStorage.removeItem(QUOTE_EDITOR_DRAFT_KEY);
     setDialogOpen(false);
     setEditingQuote(null);
@@ -728,6 +750,15 @@ export default function Quotes() {
     setSelectedDestinations([]);
     setCoverFile(null);
     setCoverPreview(null);
+    initialSnapshotRef.current = "";
+  };
+
+  const closeDialog = () => {
+    if (hasUnsavedChanges()) {
+      setConfirmCloseOpen(true);
+      return;
+    }
+    performCloseDialog();
   };
 
   const openWhatsappDialog = async () => {
