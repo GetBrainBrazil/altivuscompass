@@ -80,10 +80,16 @@ type Quote = {
   stage: string;
   conclusion_type: string | null;
   created_at: string;
+  updated_at?: string | null;
   client_name?: string;
   travel_date_start: string | null;
   travel_date_end: string | null;
   notes: string | null;
+  lead_source?: string | null;
+  assigned_to?: string | null;
+  archived_at?: string | null;
+  archived_by?: string | null;
+  is_template?: boolean | null;
 };
 
 type QuoteItem = {
