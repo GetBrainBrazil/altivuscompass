@@ -1550,6 +1550,7 @@ export default function Quotes() {
                     <Label className="font-body text-xs">Período desejado</Label>
                     <Input className="h-9 text-sm" value={form.flexible_dates_description ?? ""} onChange={(e) => setForm({ ...form, flexible_dates_description: e.target.value })} placeholder="Ex: Qualquer semana em julho..." />
                   </div>
+                )}
               </div>
 
               {/* Probabilidade de fechar + Prazo interno */}
