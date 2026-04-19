@@ -1677,36 +1677,63 @@ export type Database = {
       }
       quote_items: {
         Row: {
+          attachment_urls: string[] | null
+          commission_amount: number | null
+          commission_status: string | null
           created_at: string
           description: string | null
           details: Json | null
+          external_url: string | null
           id: string
           item_type: string
+          payment_source: string | null
+          quantity: number | null
           quote_id: string
           sort_order: number | null
+          supplier_id: string | null
           title: string | null
+          unit_cost: number | null
+          unit_price: number | null
           updated_at: string
         }
         Insert: {
+          attachment_urls?: string[] | null
+          commission_amount?: number | null
+          commission_status?: string | null
           created_at?: string
           description?: string | null
           details?: Json | null
+          external_url?: string | null
           id?: string
           item_type: string
+          payment_source?: string | null
+          quantity?: number | null
           quote_id: string
           sort_order?: number | null
+          supplier_id?: string | null
           title?: string | null
+          unit_cost?: number | null
+          unit_price?: number | null
           updated_at?: string
         }
         Update: {
+          attachment_urls?: string[] | null
+          commission_amount?: number | null
+          commission_status?: string | null
           created_at?: string
           description?: string | null
           details?: Json | null
+          external_url?: string | null
           id?: string
           item_type?: string
+          payment_source?: string | null
+          quantity?: number | null
           quote_id?: string
           sort_order?: number | null
+          supplier_id?: string | null
           title?: string | null
+          unit_cost?: number | null
+          unit_price?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -1715,6 +1742,13 @@ export type Database = {
             columns: ["quote_id"]
             isOneToOne: false
             referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_items_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -1766,6 +1800,8 @@ export type Database = {
           destination: string | null
           destination_images: string[] | null
           details: string | null
+          discount_amount: number | null
+          discount_percent: number | null
           hotel_options: string | null
           id: string
           notes: string | null
@@ -1794,6 +1830,8 @@ export type Database = {
           destination?: string | null
           destination_images?: string[] | null
           details?: string | null
+          discount_amount?: number | null
+          discount_percent?: number | null
           hotel_options?: string | null
           id?: string
           notes?: string | null
@@ -1822,6 +1860,8 @@ export type Database = {
           destination?: string | null
           destination_images?: string[] | null
           details?: string | null
+          discount_amount?: number | null
+          discount_percent?: number | null
           hotel_options?: string | null
           id?: string
           notes?: string | null
