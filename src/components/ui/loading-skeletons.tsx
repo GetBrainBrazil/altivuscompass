@@ -1,11 +1,11 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
 /** Kanban-style loading: N columns, each with a few card skeletons. */
-export function KanbanSkeleton({ columns = 4, cardsPerColumn = 3 }: { columns?: number; cardsPerColumn?: number }) {
+export function KanbanSkeleton({ columns = 5, cardsPerColumn = 3 }: { columns?: number; cardsPerColumn?: number }) {
   return (
-    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pb-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4 pb-4">
       {Array.from({ length: columns }).map((_, c) => (
-        <div key={c} className="w-full sm:min-w-[280px] sm:flex-shrink-0">
+        <div key={c} className="min-w-0 flex flex-col">
           <div className="flex items-center gap-2 mb-3 px-1">
             <Skeleton className="w-2 h-2 rounded-full" />
             <Skeleton className="h-3 w-24" />
@@ -13,7 +13,7 @@ export function KanbanSkeleton({ columns = 4, cardsPerColumn = 3 }: { columns?: 
           </div>
           <div className="space-y-3">
             {Array.from({ length: cardsPerColumn }).map((_, i) => (
-              <div key={i} className="glass-card rounded-xl p-3 sm:p-4 space-y-2">
+              <div key={i} className="glass-card rounded-xl p-3 space-y-2">
                 <div className="flex items-start justify-between">
                   <Skeleton className="h-4 w-32" />
                   <Skeleton className="h-3 w-16 ml-2" />

@@ -2369,11 +2369,11 @@ export default function Quotes() {
       ) : (
         <>
           {viewMode === "kanban" ? (
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4 pb-4">
               {stages.map((stage) => {
                 const stageQuotes = quotes.filter((q: Quote) => q.stage === stage.id);
                 return (
-                   <div key={stage.id} className="w-full sm:min-w-[280px] sm:flex-shrink-0"
+                   <div key={stage.id} className="min-w-0 flex flex-col"
                      onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("bg-accent/10"); }}
                      onDragLeave={(e) => { e.currentTarget.classList.remove("bg-accent/10"); }}
                      onDrop={(e) => {
@@ -2397,11 +2397,11 @@ export default function Quotes() {
                            draggable
                            onDragStart={() => setDraggedQuoteId(quote.id)}
                            onDragEnd={() => setDraggedQuoteId(null)}
-                           className={cn("glass-card rounded-xl p-3 sm:p-4 cursor-grab hover:shadow-md transition-all animate-fade-in active:cursor-grabbing", draggedQuoteId === quote.id && "opacity-40")}
+                          className={cn("glass-card rounded-xl p-3 cursor-grab hover:shadow-md transition-all animate-fade-in active:cursor-grabbing", draggedQuoteId === quote.id && "opacity-40")}
                            onClick={() => openEdit(quote)}
                          >
                            <div className="flex items-start justify-between mb-1 gap-2">
-                              <p className="text-sm font-medium font-body text-foreground flex-1 min-w-0">{quote.title || quote.destination || "Sem título"}</p>
+                              <p className="text-sm font-medium font-body text-foreground flex-1 min-w-0 truncate">{quote.title || quote.destination || "Sem título"}</p>
                               <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                                 <span className="text-xs font-semibold text-foreground font-body">{formatCurrency(quote.total_value)}</span>
                                 <DropdownMenu>
