@@ -665,6 +665,7 @@ export default function Quotes() {
         travel_date_start: form.travel_date_start || null,
         travel_date_end: form.travel_date_end || null,
         notes: form.notes || null,
+        lead_source: form.lead_source || null,
         price_breakdown: { linked_client_ids: selectedLinkedClients, client_self_traveling: clientSelfTraveling, flexible_dates: !!form.flexible_dates, flexible_dates_description: form.flexible_dates_description || null },
       };
 
@@ -852,9 +853,43 @@ export default function Quotes() {
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
 
-  const openCreate = () => {
+  const archiveMutation = useMutation({
+    mutationFn: async (q: Quote) => {
+      const { error } = await supabase
+        .from("quotes")
+        .update({ archived_at: new Date().toISOString(), archived_by: user?.id ?? null } as any)
+        .eq("id", q.id);
+      if (error) throw error;
+      try { await logHistory(q.id, "archived", "Cotação arquivada"); } catch {}
+    },
+    onSuccess: () => {
+      toast({ title: "Cotação arquivada" });
+      queryClient.invalidateQueries({ queryKey: ["quotes"] });
+      queryClient.invalidateQueries({ queryKey: ["quotes-metrics"] });
+    },
+    onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
+  });
+
+  const unarchiveMutation = useMutation({
+    mutationFn: async (q: Quote) => {
+      const { error } = await supabase
+        .from("quotes")
+        .update({ archived_at: null, archived_by: null } as any)
+        .eq("id", q.id);
+      if (error) throw error;
+      try { await logHistory(q.id, "unarchived", "Cotação desarquivada"); } catch {}
+    },
+    onSuccess: () => {
+      toast({ title: "Cotação desarquivada" });
+      queryClient.invalidateQueries({ queryKey: ["quotes"] });
+      queryClient.invalidateQueries({ queryKey: ["quotes-metrics"] });
+    },
+    onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
+  });
+
+  const openCreate = (preset?: { client_id?: string }) => {
     setEditingQuote(null);
-    setForm({ stage: "new", total_value: "" });
+    setForm({ stage: "new", total_value: "", ...(preset?.client_id ? { client_id: preset.client_id } : {}) });
     setItems([]);
     setSelectedPassengers([]);
     setSelectedLinkedClients([]);
@@ -866,6 +901,16 @@ export default function Quotes() {
     initialSnapshotRef.current = ""; // empty = "new quote" mode
     setDialogOpen(true);
   };
+
+  // Open editor pre-filled when navigated from elsewhere (e.g. Clients page)
+  useEffect(() => {
+    const state = (location.state ?? {}) as { newQuote?: boolean; clientId?: string };
+    if (state.newQuote) {
+      openCreate({ client_id: state.clientId });
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
 
   const openEdit = (q: Quote) => {
     setEditingQuote(q);
@@ -887,6 +932,7 @@ export default function Quotes() {
       travel_date_start: q.travel_date_start ?? "",
       travel_date_end: q.travel_date_end ?? "",
       notes: q.notes ?? "",
+      lead_source: (q as any).lead_source ?? "",
       flexible_dates: pb?.flexible_dates ?? false,
       flexible_dates_description: pb?.flexible_dates_description ?? "",
     });
