@@ -148,6 +148,7 @@ export default function Quotes() {
   const [whatsappQuoteId, setWhatsappQuoteId] = useState<string | null>(null);
   const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
   const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
+  const [summaryFallbackText, setSummaryFallbackText] = useState<string | null>(null);
   const initialSnapshotRef = useRef<string>("");
   const { data: quotes = [], isLoading } = useQuery({
     queryKey: ["quotes"],
@@ -2216,6 +2217,10 @@ export default function Quotes() {
                 <Button type="button" variant="outline" size="sm" className="font-body gap-1.5 text-xs"
                   onClick={() => window.open(`/quote/${editingQuote.id}`, "_blank")}>
                   <ExternalLink className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Visualizar</span>
+                </Button>
+                <Button type="button" variant="outline" size="sm" className="font-body gap-1.5 text-xs"
+                  onClick={() => handleCopySummary(editingQuote)}>
+                  <ClipboardCopy className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Copiar resumo</span><span className="sm:hidden">Resumo</span>
                 </Button>
                 <Button type="button" variant="outline" size="sm" className="font-body gap-1.5 text-xs text-green-600 border-green-300 hover:bg-green-50"
                   onClick={openWhatsappDialog}>
