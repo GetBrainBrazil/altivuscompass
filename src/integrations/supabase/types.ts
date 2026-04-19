@@ -1598,6 +1598,59 @@ export type Database = {
         }
         Relationships: []
       }
+      quote_acceptances: {
+        Row: {
+          accepted_at: string
+          accepter_cpf: string
+          accepter_email: string
+          accepter_name: string
+          accepter_phone: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          quote_id: string
+          selected_item_ids: string[] | null
+          terms_accepted: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          accepted_at?: string
+          accepter_cpf: string
+          accepter_email: string
+          accepter_name: string
+          accepter_phone: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          quote_id: string
+          selected_item_ids?: string[] | null
+          terms_accepted?: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          accepted_at?: string
+          accepter_cpf?: string
+          accepter_email?: string
+          accepter_name?: string
+          accepter_phone?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          quote_id?: string
+          selected_item_ids?: string[] | null
+          terms_accepted?: boolean
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_acceptances_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quote_financial_parties: {
         Row: {
           financial_party_id: string
