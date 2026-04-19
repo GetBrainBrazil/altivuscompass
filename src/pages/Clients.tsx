@@ -583,8 +583,11 @@ export default function Clients() {
   });
 
   const goToList = () => {
-    setView("list"); setEditingId(null); setForm(emptyForm); setActiveTab("contact");
-    setSelectedAirports([]); setSelectedTags([]); setSelectedDestinations([]); setPhones([]); setEmails([]); setSocials([]); setPassports([]); setMilesPrograms([]); setShowPasswords({});
+    if (hasUnsavedClientChanges()) {
+      setConfirmCloseOpen(true);
+      return;
+    }
+    performGoToList();
   };
 
   const openCreate = () => {
