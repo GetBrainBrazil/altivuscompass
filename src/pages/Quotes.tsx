@@ -1902,6 +1902,49 @@ export default function Quotes() {
                           </div>
                         </>
                       )}
+
+                      {/* Commercial fields shared across all item types */}
+                      <div className="px-3 pb-3 space-y-3">
+                        <QuoteItemCommercialFields
+                          quantity={Number(item.quantity ?? 1)}
+                          unitCost={Number(item.unit_cost ?? 0)}
+                          unitPrice={Number(item.unit_price ?? 0)}
+                          onChange={(patch) =>
+                            updateItem(globalIdx, {
+                              ...(patch.quantity !== undefined ? { quantity: patch.quantity } : {}),
+                              ...(patch.unitCost !== undefined ? { unit_cost: patch.unitCost } : {}),
+                              ...(patch.unitPrice !== undefined ? { unit_price: patch.unitPrice } : {}),
+                            })
+                          }
+                        />
+                        <QuoteItemSupplierFields
+                          supplierId={item.supplier_id ?? null}
+                          paymentSource={item.payment_source ?? null}
+                          commissionAmount={Number(item.commission_amount ?? 0)}
+                          commissionStatus={item.commission_status ?? "pending"}
+                          onChange={(patch) =>
+                            updateItem(globalIdx, {
+                              ...(patch.supplierId !== undefined ? { supplier_id: patch.supplierId } : {}),
+                              ...(patch.paymentSource !== undefined ? { payment_source: patch.paymentSource } : {}),
+                              ...(patch.commissionAmount !== undefined ? { commission_amount: patch.commissionAmount } : {}),
+                              ...(patch.commissionStatus !== undefined ? { commission_status: patch.commissionStatus } : {}),
+                            })
+                          }
+                        />
+                        <QuoteItemAttachments
+                          externalUrl={item.external_url ?? null}
+                          attachmentUrls={item.attachment_urls ?? []}
+                          quoteId={editingQuote?.id}
+                          itemId={item.id}
+                          isNew={!!item._isNew}
+                          onChange={(patch) =>
+                            updateItem(globalIdx, {
+                              ...(patch.externalUrl !== undefined ? { external_url: patch.externalUrl } : {}),
+                              ...(patch.attachmentUrls !== undefined ? { attachment_urls: patch.attachmentUrls } : {}),
+                            })
+                          }
+                        />
+                      </div>
                     </div>
                   );
                 })}
