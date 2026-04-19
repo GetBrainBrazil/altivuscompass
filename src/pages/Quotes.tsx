@@ -670,9 +670,22 @@ export default function Quotes() {
       queryClient.invalidateQueries({ queryKey: ["sales"] });
 
       if (closeAfter) {
-        closeDialog();
+        performCloseDialog();
       } else if (!editingQuote && quoteId) {
         setEditingQuote({ ...payload, id: quoteId, created_at: new Date().toISOString() } as Quote);
+        // Reset snapshot baseline so subsequent edits compare correctly
+        initialSnapshotRef.current = "";
+      } else {
+        // Update snapshot baseline post-save so the editor isn't "dirty" anymore
+        initialSnapshotRef.current = JSON.stringify({
+          form,
+          items,
+          selectedPassengers,
+          selectedLinkedClients,
+          clientSelfTraveling,
+          selectedDestinations,
+          coverPreview,
+        });
       }
       return quoteId ?? null;
     } catch (err: any) {
