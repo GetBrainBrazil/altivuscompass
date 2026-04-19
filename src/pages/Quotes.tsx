@@ -683,6 +683,7 @@ export default function Quotes() {
     setCoverFile(null);
     setCoverPreview(null);
     setActiveTab("main");
+    initialSnapshotRef.current = ""; // empty = "new quote" mode
     setDialogOpen(true);
   };
 
@@ -716,6 +717,7 @@ export default function Quotes() {
     setCoverPreview(q.cover_image_url || null);
     setActiveTab("main");
     setDialogOpen(true);
+    // Snapshot captured shortly after, once items load (handled by effect below)
   };
 
   const buildEditorSnapshot = useCallback(() => {
