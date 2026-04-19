@@ -421,6 +421,41 @@ export default function Quotes() {
     return () => clearTimeout(timer);
   }, [activeTab, dialogOpen, items]);
 
+  // Capture initial snapshot when editing an existing quote (after data is hydrated)
+  useEffect(() => {
+    if (!dialogOpen || !editingQuote) return;
+    // wait a tick so items / passengers / linkedClients have settled
+    const t = window.setTimeout(() => {
+      initialSnapshotRef.current = JSON.stringify({
+        form,
+        items,
+        selectedPassengers,
+        selectedLinkedClients,
+        clientSelfTraveling,
+        selectedDestinations,
+        coverPreview,
+      });
+    }, 400);
+    return () => window.clearTimeout(t);
+    // we intentionally only depend on editingQuote.id and dialogOpen — snapshot once per open
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dialogOpen, editingQuote?.id]);
+
+  // Keyboard shortcut: Ctrl/Cmd+S to save inside the quote editor
+  useEffect(() => {
+    if (!dialogOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      const isSave = (e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S");
+      if (isSave) {
+        e.preventDefault();
+        // saveQuote is defined later — use the function reference at call time via window
+        (window as any).__quoteEditorSave?.();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [dialogOpen]);
+
   // Load existing quote items when editing
   useEffect(() => {
     if (editingQuote && !draftRestored) return;
