@@ -19,7 +19,9 @@ import QuoteItemAttachments from "@/components/quotes/QuoteItemAttachments";
 import QuoteOptionsManager from "@/components/quotes/QuoteOptionsManager";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle, FileText } from "lucide-react";
+import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle, FileText, MoreVertical, ClipboardCopy } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { buildQuoteSummary, pickClientWhatsappNumber } from "@/lib/quote-summary";
 import { Dialog as WhatsAppDialog, DialogContent as WhatsAppDialogContent, DialogHeader as WhatsAppDialogHeader, DialogTitle as WhatsAppDialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -146,6 +148,7 @@ export default function Quotes() {
   const [whatsappQuoteId, setWhatsappQuoteId] = useState<string | null>(null);
   const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
   const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
+  const [summaryFallbackText, setSummaryFallbackText] = useState<string | null>(null);
   const initialSnapshotRef = useRef<string>("");
   const { data: quotes = [], isLoading } = useQuery({
     queryKey: ["quotes"],
@@ -1019,6 +1022,85 @@ export default function Quotes() {
   const formatCurrency = (value: number | null) => {
     if (!value) return "R$ 0";
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+  };
+
+  // ----- WhatsApp summary helpers (productivity) -----
+  const fetchSummaryDataFor = async (quote: Quote) => {
+    if (editingQuote && editingQuote.id === quote.id) {
+      const pax = (clientPassengers as any[]).filter((p: any) => selectedPassengers.includes(p.id));
+      return { items, passengers: pax };
+    }
+    const [{ data: itemsData }, { data: paxLink }] = await Promise.all([
+      supabase.from("quote_items").select("*").eq("quote_id", quote.id).order("sort_order"),
+      supabase.from("quote_passengers").select("passenger_id").eq("quote_id", quote.id),
+    ]);
+    let pax: any[] = [];
+    const ids = (paxLink ?? []).map((r: any) => r.passenger_id).filter(Boolean);
+    if (ids.length) {
+      const { data: paxData } = await supabase.from("passengers").select("id, full_name").in("id", ids);
+      pax = paxData ?? [];
+    }
+    return { items: (itemsData ?? []) as any[], passengers: pax };
+  };
+
+  const fallbackCopyToClipboard = (text: string): boolean => {
+    try {
+      const el = document.createElement("textarea");
+      el.value = text;
+      el.setAttribute("readonly", "");
+      el.style.position = "fixed";
+      el.style.left = "-9999px";
+      document.body.appendChild(el);
+      el.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(el);
+      return ok;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleCopySummary = async (quote: Quote) => {
+    try {
+      const { items: qItems, passengers: qPax } = await fetchSummaryDataFor(quote);
+      const summary = buildQuoteSummary(quote, qItems, qPax, clients as any[]);
+      let copied = false;
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(summary);
+          copied = true;
+        } catch {
+          copied = fallbackCopyToClipboard(summary);
+        }
+      } else {
+        copied = fallbackCopyToClipboard(summary);
+      }
+      if (copied) {
+        toast({ title: "Resumo copiado", description: "Cole no WhatsApp do cliente." });
+        try { await logHistory(quote.id, "summary_copied", "Resumo copiado pro WhatsApp"); } catch {}
+      } else {
+        setSummaryFallbackText(summary);
+      }
+    } catch (err: any) {
+      toast({ title: "Erro ao copiar", description: err?.message ?? "Tente novamente.", variant: "destructive" });
+    }
+  };
+
+  const handleOpenInWhatsapp = async (quote: Quote) => {
+    try {
+      const phone = pickClientWhatsappNumber(quote, clients as any[]);
+      if (!phone) {
+        toast({ title: "Cliente sem telefone", description: "Cadastre um telefone para o cliente antes.", variant: "destructive" });
+        return;
+      }
+      const { items: qItems, passengers: qPax } = await fetchSummaryDataFor(quote);
+      const summary = buildQuoteSummary(quote, qItems, qPax, clients as any[]);
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(summary)}`;
+      window.open(url, "_blank", "noopener,noreferrer");
+      try { await logHistory(quote.id, "summary_whatsapp_opened", "Resumo aberto no WhatsApp"); } catch {}
+    } catch (err: any) {
+      toast({ title: "Erro", description: err?.message ?? "Tente novamente.", variant: "destructive" });
+    }
   };
 
   const updateQuoteStage = async (quoteId: string, newStage: string) => {
@@ -2136,6 +2218,10 @@ export default function Quotes() {
                   onClick={() => window.open(`/quote/${editingQuote.id}`, "_blank")}>
                   <ExternalLink className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Visualizar</span>
                 </Button>
+                <Button type="button" variant="outline" size="sm" className="font-body gap-1.5 text-xs"
+                  onClick={() => handleCopySummary(editingQuote)}>
+                  <ClipboardCopy className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Copiar resumo</span><span className="sm:hidden">Resumo</span>
+                </Button>
                 <Button type="button" variant="outline" size="sm" className="font-body gap-1.5 text-xs text-green-600 border-green-300 hover:bg-green-50"
                   onClick={openWhatsappDialog}>
                   <MessageCircle className="w-3.5 h-3.5" /> <span className="hidden sm:inline">WhatsApp</span>
@@ -2314,10 +2400,27 @@ export default function Quotes() {
                            className={cn("glass-card rounded-xl p-3 sm:p-4 cursor-grab hover:shadow-md transition-all animate-fade-in active:cursor-grabbing", draggedQuoteId === quote.id && "opacity-40")}
                            onClick={() => openEdit(quote)}
                          >
-                          <div className="flex items-start justify-between mb-1">
-                             <p className="text-sm font-medium font-body text-foreground">{quote.title || quote.destination || "Sem título"}</p>
-                             <span className="text-xs font-semibold text-foreground font-body ml-2">{formatCurrency(quote.total_value)}</span>
-                           </div>
+                           <div className="flex items-start justify-between mb-1 gap-2">
+                              <p className="text-sm font-medium font-body text-foreground flex-1 min-w-0">{quote.title || quote.destination || "Sem título"}</p>
+                              <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                <span className="text-xs font-semibold text-foreground font-body">{formatCurrency(quote.total_value)}</span>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => e.stopPropagation()} aria-label="Ações">
+                                      <MoreVertical className="w-3.5 h-3.5" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="font-body" onClick={(e) => e.stopPropagation()}>
+                                    <DropdownMenuItem onClick={() => handleCopySummary(quote)}>
+                                      <ClipboardCopy className="w-3.5 h-3.5 mr-2" /> Copiar resumo
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleOpenInWhatsapp(quote)}>
+                                      <MessageCircle className="w-3.5 h-3.5 mr-2" /> Abrir no WhatsApp
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </div>
                            <p className="text-xs text-muted-foreground font-body mb-2">{quote.client_name}</p>
                            {stage.id === "confirmed" && quote.conclusion_type && (
                              <Badge variant={quote.conclusion_type === "won" ? "default" : "destructive"} className="text-[10px] mb-2">
@@ -2389,25 +2492,42 @@ export default function Quotes() {
                             </div>
                           </TableCell>
                            <TableCell className="font-body font-medium">{formatCurrency(quote.total_value)}</TableCell>
-                           <TableCell>
-                             <TooltipProvider>
-                               <Tooltip>
-                                 <TooltipTrigger asChild>
-                                   <Button
-                                     variant="ghost"
-                                     size="icon"
-                                     className="h-7 w-7"
-                                     onClick={(e) => {
-                                       e.stopPropagation();
-                                       window.open(`/orcamento/${quote.id}`, "_blank");
-                                     }}
-                                   >
-                                     <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+                           <TableCell onClick={(e) => e.stopPropagation()}>
+                             <div className="flex items-center gap-1">
+                               <TooltipProvider>
+                                 <Tooltip>
+                                   <TooltipTrigger asChild>
+                                     <Button
+                                       variant="ghost"
+                                       size="icon"
+                                       className="h-7 w-7"
+                                       onClick={(e) => {
+                                         e.stopPropagation();
+                                         window.open(`/orcamento/${quote.id}`, "_blank");
+                                       }}
+                                     >
+                                       <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+                                     </Button>
+                                   </TooltipTrigger>
+                                   <TooltipContent>Ver cotação pública</TooltipContent>
+                                 </Tooltip>
+                               </TooltipProvider>
+                               <DropdownMenu>
+                                 <DropdownMenuTrigger asChild>
+                                   <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Ações">
+                                     <MoreVertical className="w-3.5 h-3.5 text-muted-foreground" />
                                    </Button>
-                                 </TooltipTrigger>
-                                 <TooltipContent>Ver cotação pública</TooltipContent>
-                               </Tooltip>
-                             </TooltipProvider>
+                                 </DropdownMenuTrigger>
+                                 <DropdownMenuContent align="end" className="font-body">
+                                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleCopySummary(quote); }}>
+                                     <ClipboardCopy className="w-3.5 h-3.5 mr-2" /> Copiar resumo
+                                   </DropdownMenuItem>
+                                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleOpenInWhatsapp(quote); }}>
+                                     <MessageCircle className="w-3.5 h-3.5 mr-2" /> Abrir no WhatsApp
+                                   </DropdownMenuItem>
+                                 </DropdownMenuContent>
+                               </DropdownMenu>
+                             </div>
                            </TableCell>
                          </TableRow>
                       );
@@ -2419,6 +2539,19 @@ export default function Quotes() {
           )}
         </>
       )}
+
+      {/* Summary fallback dialog (when clipboard API is unavailable) */}
+      <WhatsAppDialog open={!!summaryFallbackText} onOpenChange={(o) => { if (!o) setSummaryFallbackText(null); }}>
+        <WhatsAppDialogContent className="max-w-lg">
+          <WhatsAppDialogHeader>
+            <WhatsAppDialogTitle className="font-body text-base">Copie o resumo manualmente</WhatsAppDialogTitle>
+          </WhatsAppDialogHeader>
+          <Textarea readOnly value={summaryFallbackText ?? ""} rows={14} className="font-mono text-xs" onFocus={(e) => e.currentTarget.select()} />
+          <div className="flex justify-end">
+            <Button size="sm" onClick={() => setSummaryFallbackText(null)}>Fechar</Button>
+          </div>
+        </WhatsAppDialogContent>
+      </WhatsAppDialog>
 
       {/* WhatsApp Dialog */}
       <WhatsAppDialog open={whatsappOpen} onOpenChange={setWhatsappOpen}>
