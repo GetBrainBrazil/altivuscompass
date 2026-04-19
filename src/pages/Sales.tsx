@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { KanbanSkeleton } from "@/components/ui/loading-skeletons";
 
 const saleStages = [
   { id: "issued", label: "Bilhete Emitido", color: "bg-soft-blue" },
@@ -155,7 +156,7 @@ export default function Sales() {
       </Dialog>
 
       {isLoading ? (
-        <div className="p-8 text-center text-muted-foreground font-body">Carregando...</div>
+        <KanbanSkeleton columns={4} cardsPerColumn={2} />
       ) : (
         <>
           {/* Kanban */}
