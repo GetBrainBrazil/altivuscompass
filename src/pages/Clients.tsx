@@ -560,7 +560,10 @@ export default function Clients() {
       toast({ title: editingId ? "Cliente atualizado" : "Cliente criado" });
       qc.invalidateQueries({ queryKey: ["clients"] });
       if (shouldGoBackRef.current) {
-        goToList();
+        performGoToList();
+      } else {
+        // Reset baseline so the form is no longer dirty after save
+        initialClientSnapshotRef.current = buildClientSnapshot();
       }
       shouldGoBackRef.current = false;
     },
