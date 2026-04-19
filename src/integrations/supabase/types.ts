@@ -1675,6 +1675,47 @@ export type Database = {
           },
         ]
       }
+      quote_interactions: {
+        Row: {
+          channel: string | null
+          content: string
+          created_at: string
+          id: string
+          interaction_date: string
+          quote_id: string
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          channel?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          interaction_date?: string
+          quote_id: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          channel?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          interaction_date?: string
+          quote_id?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_interactions_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quote_items: {
         Row: {
           attachment_urls: string[] | null
@@ -1808,6 +1849,7 @@ export type Database = {
           archived_by: string | null
           assigned_to: string | null
           client_id: string | null
+          close_probability: string | null
           conclusion_type: string | null
           cover_image_url: string | null
           created_at: string
@@ -1821,6 +1863,7 @@ export type Database = {
           discount_percent: number | null
           hotel_options: string | null
           id: string
+          internal_due_date: string | null
           is_template: boolean
           lead_source: string | null
           notes: string | null
@@ -1843,6 +1886,7 @@ export type Database = {
           archived_by?: string | null
           assigned_to?: string | null
           client_id?: string | null
+          close_probability?: string | null
           conclusion_type?: string | null
           cover_image_url?: string | null
           created_at?: string
@@ -1856,6 +1900,7 @@ export type Database = {
           discount_percent?: number | null
           hotel_options?: string | null
           id?: string
+          internal_due_date?: string | null
           is_template?: boolean
           lead_source?: string | null
           notes?: string | null
@@ -1878,6 +1923,7 @@ export type Database = {
           archived_by?: string | null
           assigned_to?: string | null
           client_id?: string | null
+          close_probability?: string | null
           conclusion_type?: string | null
           cover_image_url?: string | null
           created_at?: string
@@ -1891,6 +1937,7 @@ export type Database = {
           discount_percent?: number | null
           hotel_options?: string | null
           id?: string
+          internal_due_date?: string | null
           is_template?: boolean
           lead_source?: string | null
           notes?: string | null
