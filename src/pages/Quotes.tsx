@@ -2400,10 +2400,27 @@ export default function Quotes() {
                            className={cn("glass-card rounded-xl p-3 sm:p-4 cursor-grab hover:shadow-md transition-all animate-fade-in active:cursor-grabbing", draggedQuoteId === quote.id && "opacity-40")}
                            onClick={() => openEdit(quote)}
                          >
-                          <div className="flex items-start justify-between mb-1">
-                             <p className="text-sm font-medium font-body text-foreground">{quote.title || quote.destination || "Sem título"}</p>
-                             <span className="text-xs font-semibold text-foreground font-body ml-2">{formatCurrency(quote.total_value)}</span>
-                           </div>
+                           <div className="flex items-start justify-between mb-1 gap-2">
+                              <p className="text-sm font-medium font-body text-foreground flex-1 min-w-0">{quote.title || quote.destination || "Sem título"}</p>
+                              <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                <span className="text-xs font-semibold text-foreground font-body">{formatCurrency(quote.total_value)}</span>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => e.stopPropagation()} aria-label="Ações">
+                                      <MoreVertical className="w-3.5 h-3.5" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="font-body" onClick={(e) => e.stopPropagation()}>
+                                    <DropdownMenuItem onClick={() => handleCopySummary(quote)}>
+                                      <ClipboardCopy className="w-3.5 h-3.5 mr-2" /> Copiar resumo
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleOpenInWhatsapp(quote)}>
+                                      <MessageCircle className="w-3.5 h-3.5 mr-2" /> Abrir no WhatsApp
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </div>
                            <p className="text-xs text-muted-foreground font-body mb-2">{quote.client_name}</p>
                            {stage.id === "confirmed" && quote.conclusion_type && (
                              <Badge variant={quote.conclusion_type === "won" ? "default" : "destructive"} className="text-[10px] mb-2">
@@ -2475,25 +2492,42 @@ export default function Quotes() {
                             </div>
                           </TableCell>
                            <TableCell className="font-body font-medium">{formatCurrency(quote.total_value)}</TableCell>
-                           <TableCell>
-                             <TooltipProvider>
-                               <Tooltip>
-                                 <TooltipTrigger asChild>
-                                   <Button
-                                     variant="ghost"
-                                     size="icon"
-                                     className="h-7 w-7"
-                                     onClick={(e) => {
-                                       e.stopPropagation();
-                                       window.open(`/orcamento/${quote.id}`, "_blank");
-                                     }}
-                                   >
-                                     <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+                           <TableCell onClick={(e) => e.stopPropagation()}>
+                             <div className="flex items-center gap-1">
+                               <TooltipProvider>
+                                 <Tooltip>
+                                   <TooltipTrigger asChild>
+                                     <Button
+                                       variant="ghost"
+                                       size="icon"
+                                       className="h-7 w-7"
+                                       onClick={(e) => {
+                                         e.stopPropagation();
+                                         window.open(`/orcamento/${quote.id}`, "_blank");
+                                       }}
+                                     >
+                                       <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+                                     </Button>
+                                   </TooltipTrigger>
+                                   <TooltipContent>Ver cotação pública</TooltipContent>
+                                 </Tooltip>
+                               </TooltipProvider>
+                               <DropdownMenu>
+                                 <DropdownMenuTrigger asChild>
+                                   <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Ações">
+                                     <MoreVertical className="w-3.5 h-3.5 text-muted-foreground" />
                                    </Button>
-                                 </TooltipTrigger>
-                                 <TooltipContent>Ver cotação pública</TooltipContent>
-                               </Tooltip>
-                             </TooltipProvider>
+                                 </DropdownMenuTrigger>
+                                 <DropdownMenuContent align="end" className="font-body">
+                                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleCopySummary(quote); }}>
+                                     <ClipboardCopy className="w-3.5 h-3.5 mr-2" /> Copiar resumo
+                                   </DropdownMenuItem>
+                                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleOpenInWhatsapp(quote); }}>
+                                     <MessageCircle className="w-3.5 h-3.5 mr-2" /> Abrir no WhatsApp
+                                   </DropdownMenuItem>
+                                 </DropdownMenuContent>
+                               </DropdownMenu>
+                             </div>
                            </TableCell>
                          </TableRow>
                       );
