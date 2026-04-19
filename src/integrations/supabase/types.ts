@@ -1685,7 +1685,12 @@ export type Database = {
           details: Json | null
           external_url: string | null
           id: string
+          is_recommended: boolean | null
+          is_selected: boolean | null
           item_type: string
+          option_group: string | null
+          option_label: string | null
+          option_order: number | null
           payment_source: string | null
           quantity: number | null
           quote_id: string
@@ -1705,7 +1710,12 @@ export type Database = {
           details?: Json | null
           external_url?: string | null
           id?: string
+          is_recommended?: boolean | null
+          is_selected?: boolean | null
           item_type: string
+          option_group?: string | null
+          option_label?: string | null
+          option_order?: number | null
           payment_source?: string | null
           quantity?: number | null
           quote_id: string
@@ -1725,7 +1735,12 @@ export type Database = {
           details?: Json | null
           external_url?: string | null
           id?: string
+          is_recommended?: boolean | null
+          is_selected?: boolean | null
           item_type?: string
+          option_group?: string | null
+          option_label?: string | null
+          option_order?: number | null
           payment_source?: string | null
           quantity?: number | null
           quote_id?: string
