@@ -2617,7 +2617,7 @@ export default function Quotes() {
           {viewMode === "kanban" ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4 pb-4">
               {stages.map((stage) => {
-                const stageQuotes = quotes.filter((q: Quote) => q.stage === stage.id);
+                const stageQuotes = filteredQuotes.filter((q: Quote) => q.stage === stage.id);
                 return (
                    <div key={stage.id} className="min-w-0 flex flex-col"
                      onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("bg-accent/10"); }}
@@ -2712,12 +2712,12 @@ export default function Quotes() {
                    </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedQuotes.length === 0 ? (
+                  {filteredQuotes.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center p-8 text-muted-foreground font-body">Nenhuma cotação encontrada.</TableCell>
                     </TableRow>
                   ) : (
-                    sortedQuotes.map((quote: Quote) => {
+                    filteredQuotes.map((quote: Quote) => {
                       const stage = stages.find((s) => s.id === quote.stage) ?? stages[0];
                       return (
                         <TableRow key={quote.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(quote)}>
