@@ -11,6 +11,11 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandItem } from "@/components/ui/command";
+import { Separator } from "@/components/ui/separator";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import QuoteItemCommercialFields from "@/components/quotes/QuoteItemCommercialFields";
+import QuoteItemSupplierFields from "@/components/quotes/QuoteItemSupplierFields";
+import QuoteItemAttachments from "@/components/quotes/QuoteItemAttachments";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle, FileText } from "lucide-react";
@@ -73,6 +78,16 @@ type QuoteItem = {
   details: Record<string, any>;
   sort_order: number;
   _isNew?: boolean;
+  // Commercial fields (real columns in quote_items)
+  unit_cost?: number | null;
+  unit_price?: number | null;
+  quantity?: number | null;
+  supplier_id?: string | null;
+  payment_source?: string | null;
+  commission_amount?: number | null;
+  commission_status?: string | null;
+  attachment_urls?: string[] | null;
+  external_url?: string | null;
 };
 
 const QUOTE_EDITOR_DRAFT_KEY = "quotes-editor-draft";
@@ -564,6 +579,8 @@ export default function Quotes() {
         other_info: form.other_info || null,
         destination: selectedDestinations.length > 0 ? selectedDestinations.join(", ") : null,
         total_value: form.total_value ? Number(form.total_value) : 0,
+        discount_amount: form.discount_amount ? Number(form.discount_amount) : 0,
+        discount_percent: form.discount_percent ? Number(form.discount_percent) : 0,
         stage,
         conclusion_type,
         travel_date_start: form.travel_date_start || null,
@@ -647,6 +664,15 @@ export default function Quotes() {
             description: item.description || null,
             details: item.details || {},
             sort_order: i,
+            unit_cost: Number(item.unit_cost) || 0,
+            unit_price: Number(item.unit_price) || 0,
+            quantity: Number(item.quantity) || 1,
+            supplier_id: item.supplier_id || null,
+            payment_source: item.payment_source || null,
+            commission_amount: Number(item.commission_amount) || 0,
+            commission_status: item.commission_status || "pending",
+            attachment_urls: item.attachment_urls ?? [],
+            external_url: item.external_url || null,
           };
           if (item.id && !item._isNew) {
             await supabase.from("quote_items").update(itemPayload).eq("id", item.id);
@@ -748,6 +774,8 @@ export default function Quotes() {
       other_info: q.other_info ?? "",
       destination: q.destination ?? "",
       total_value: q.total_value ?? "",
+      discount_amount: (q as any).discount_amount ?? "",
+      discount_percent: (q as any).discount_percent ?? "",
       stage: q.stage,
       conclusion_type: q.conclusion_type ?? "won",
       travel_date_start: q.travel_date_start ?? "",
@@ -884,7 +912,23 @@ export default function Quotes() {
   };
 
   const addItem = (type: string) => {
-    setItems([...items, { item_type: type, title: "", description: "", details: {}, sort_order: items.length, _isNew: true }]);
+    setItems([...items, {
+      item_type: type,
+      title: "",
+      description: "",
+      details: {},
+      sort_order: items.length,
+      _isNew: true,
+      quantity: 1,
+      unit_cost: 0,
+      unit_price: 0,
+      supplier_id: null,
+      payment_source: null,
+      commission_amount: 0,
+      commission_status: "pending",
+      attachment_urls: [],
+      external_url: null,
+    }]);
   };
 
   const updateItem = (index: number, updates: Partial<QuoteItem>) => {
@@ -1424,6 +1468,90 @@ export default function Quotes() {
                   <Textarea value={form.other_info ?? ""} onChange={(e) => setForm({ ...form, other_info: e.target.value })} rows={2} className="text-sm" placeholder="Informações complementares..." />
                 </div>
               </div>
+
+              {/* Desconto geral */}
+              {(() => {
+                const discountMode: "amount" | "percent" =
+                  Number(form.discount_percent) > 0 && !Number(form.discount_amount)
+                    ? "percent"
+                    : "amount";
+                const totalValue = Number(form.total_value) || 0;
+                const discountAmount = Number(form.discount_amount) || 0;
+                const discountPercent = Number(form.discount_percent) || 0;
+                const computedDiscount =
+                  discountMode === "percent"
+                    ? (totalValue * discountPercent) / 100
+                    : discountAmount;
+                const totalWithDiscount = Math.max(0, totalValue - computedDiscount);
+                return (
+                  <div className="border-t border-border/50 pt-3 space-y-2">
+                    <Label className="font-body text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Desconto geral
+                    </Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto] gap-3 items-end">
+                      <RadioGroup
+                        value={discountMode}
+                        onValueChange={(v) => {
+                          if (v === "amount") {
+                            setForm({ ...form, discount_percent: "" });
+                          } else {
+                            setForm({ ...form, discount_amount: "" });
+                          }
+                        }}
+                        className="flex gap-3 h-9 items-center"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <RadioGroupItem value="amount" id="disc-amount" />
+                          <Label htmlFor="disc-amount" className="text-xs font-body cursor-pointer">
+                            Valor (R$)
+                          </Label>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <RadioGroupItem value="percent" id="disc-percent" />
+                          <Label htmlFor="disc-percent" className="text-xs font-body cursor-pointer">
+                            Porcentagem (%)
+                          </Label>
+                        </div>
+                      </RadioGroup>
+                      <div className="space-y-0.5">
+                        <Label className="text-[11px] font-body">
+                          {discountMode === "amount" ? "Desconto em R$" : "Desconto em %"}
+                        </Label>
+                        <div className="relative">
+                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground pointer-events-none">
+                            {discountMode === "amount" ? "R$" : "%"}
+                          </span>
+                          <Input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            max={discountMode === "percent" ? 100 : undefined}
+                            value={discountMode === "amount" ? (form.discount_amount ?? "") : (form.discount_percent ?? "")}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              if (discountMode === "amount") {
+                                setForm({ ...form, discount_amount: v, discount_percent: "" });
+                              } else {
+                                setForm({ ...form, discount_percent: v, discount_amount: "" });
+                              }
+                            }}
+                            placeholder="0"
+                            className="h-9 text-sm pl-7"
+                          />
+                        </div>
+                      </div>
+                      <div className="text-right space-y-0.5">
+                        <Label className="text-[11px] font-body text-muted-foreground">
+                          Total com desconto
+                        </Label>
+                        <div className="text-base font-semibold font-body text-foreground">
+                          {formatCurrency(totalWithDiscount)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </TabsContent>
 
             {ITEM_TYPES.map((type) => (
@@ -1774,6 +1902,49 @@ export default function Quotes() {
                           </div>
                         </>
                       )}
+
+                      {/* Commercial fields shared across all item types */}
+                      <div className="px-3 pb-3 space-y-3">
+                        <QuoteItemCommercialFields
+                          quantity={Number(item.quantity ?? 1)}
+                          unitCost={Number(item.unit_cost ?? 0)}
+                          unitPrice={Number(item.unit_price ?? 0)}
+                          onChange={(patch) =>
+                            updateItem(globalIdx, {
+                              ...(patch.quantity !== undefined ? { quantity: patch.quantity } : {}),
+                              ...(patch.unitCost !== undefined ? { unit_cost: patch.unitCost } : {}),
+                              ...(patch.unitPrice !== undefined ? { unit_price: patch.unitPrice } : {}),
+                            })
+                          }
+                        />
+                        <QuoteItemSupplierFields
+                          supplierId={item.supplier_id ?? null}
+                          paymentSource={item.payment_source ?? null}
+                          commissionAmount={Number(item.commission_amount ?? 0)}
+                          commissionStatus={item.commission_status ?? "pending"}
+                          onChange={(patch) =>
+                            updateItem(globalIdx, {
+                              ...(patch.supplierId !== undefined ? { supplier_id: patch.supplierId } : {}),
+                              ...(patch.paymentSource !== undefined ? { payment_source: patch.paymentSource } : {}),
+                              ...(patch.commissionAmount !== undefined ? { commission_amount: patch.commissionAmount } : {}),
+                              ...(patch.commissionStatus !== undefined ? { commission_status: patch.commissionStatus } : {}),
+                            })
+                          }
+                        />
+                        <QuoteItemAttachments
+                          externalUrl={item.external_url ?? null}
+                          attachmentUrls={item.attachment_urls ?? []}
+                          quoteId={editingQuote?.id}
+                          itemId={item.id}
+                          isNew={!!item._isNew}
+                          onChange={(patch) =>
+                            updateItem(globalIdx, {
+                              ...(patch.externalUrl !== undefined ? { external_url: patch.externalUrl } : {}),
+                              ...(patch.attachmentUrls !== undefined ? { attachment_urls: patch.attachmentUrls } : {}),
+                            })
+                          }
+                        />
+                      </div>
                     </div>
                   );
                 })}
