@@ -35,6 +35,8 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
 import QuoteHistoryTab from "@/components/quotes/QuoteHistoryTab";
+import QuoteInteractionsTab from "@/components/quotes/QuoteInteractionsTab";
+import { QuoteCardBadges, ProbabilityBadge, PROBABILITY_OPTIONS } from "@/components/quotes/QuoteCardBadges";
 import ItineraryTimeline from "@/components/itineraries/ItineraryTimeline";
 import ItineraryMapView from "@/components/itineraries/ItineraryMapView";
 
@@ -90,6 +92,9 @@ type Quote = {
   archived_at?: string | null;
   archived_by?: string | null;
   is_template?: boolean | null;
+  close_probability?: string | null;
+  internal_due_date?: string | null;
+  quote_validity?: string | null;
 };
 
 type QuoteItem = {
