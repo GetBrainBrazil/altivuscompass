@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ItineraryForm from "@/components/itineraries/ItineraryForm";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ListSkeleton, TableSkeleton } from "@/components/ui/loading-skeletons";
 
 export default function Itineraries() {
   const queryClient = useQueryClient();
@@ -98,7 +99,7 @@ export default function Itineraries() {
       {isMobile ? (
         <div className="space-y-3">
           {isLoading ? (
-            <p className="text-center py-8 text-muted-foreground text-sm">Carregando...</p>
+            <ListSkeleton items={5} />
           ) : filtered.length === 0 ? (
             <p className="text-center py-8 text-muted-foreground text-sm">Nenhum roteiro encontrado</p>
           ) : (
@@ -152,7 +153,7 @@ export default function Itineraries() {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="p-0"><div className="p-4"><TableSkeleton rows={5} columns={6} /></div></TableCell></TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum roteiro encontrado</TableCell></TableRow>
               ) : (

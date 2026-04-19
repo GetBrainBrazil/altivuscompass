@@ -1815,7 +1815,7 @@ export default function Clients() {
       {/* Mobile cards */}
       <div className="md:hidden space-y-3">
         {isLoading ? (
-          <div className="p-8 text-center text-muted-foreground font-body">Carregando...</div>
+          <ListSkeleton items={5} />
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground font-body">Nenhum cliente encontrado.</div>
         ) : (
