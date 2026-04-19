@@ -579,6 +579,8 @@ export default function Quotes() {
         other_info: form.other_info || null,
         destination: selectedDestinations.length > 0 ? selectedDestinations.join(", ") : null,
         total_value: form.total_value ? Number(form.total_value) : 0,
+        discount_amount: form.discount_amount ? Number(form.discount_amount) : 0,
+        discount_percent: form.discount_percent ? Number(form.discount_percent) : 0,
         stage,
         conclusion_type,
         travel_date_start: form.travel_date_start || null,
@@ -662,6 +664,15 @@ export default function Quotes() {
             description: item.description || null,
             details: item.details || {},
             sort_order: i,
+            unit_cost: Number(item.unit_cost) || 0,
+            unit_price: Number(item.unit_price) || 0,
+            quantity: Number(item.quantity) || 1,
+            supplier_id: item.supplier_id || null,
+            payment_source: item.payment_source || null,
+            commission_amount: Number(item.commission_amount) || 0,
+            commission_status: item.commission_status || "pending",
+            attachment_urls: item.attachment_urls ?? [],
+            external_url: item.external_url || null,
           };
           if (item.id && !item._isNew) {
             await supabase.from("quote_items").update(itemPayload).eq("id", item.id);
@@ -763,6 +774,8 @@ export default function Quotes() {
       other_info: q.other_info ?? "",
       destination: q.destination ?? "",
       total_value: q.total_value ?? "",
+      discount_amount: (q as any).discount_amount ?? "",
+      discount_percent: (q as any).discount_percent ?? "",
       stage: q.stage,
       conclusion_type: q.conclusion_type ?? "won",
       travel_date_start: q.travel_date_start ?? "",
@@ -899,7 +912,23 @@ export default function Quotes() {
   };
 
   const addItem = (type: string) => {
-    setItems([...items, { item_type: type, title: "", description: "", details: {}, sort_order: items.length, _isNew: true }]);
+    setItems([...items, {
+      item_type: type,
+      title: "",
+      description: "",
+      details: {},
+      sort_order: items.length,
+      _isNew: true,
+      quantity: 1,
+      unit_cost: 0,
+      unit_price: 0,
+      supplier_id: null,
+      payment_source: null,
+      commission_amount: 0,
+      commission_status: "pending",
+      attachment_urls: [],
+      external_url: null,
+    }]);
   };
 
   const updateItem = (index: number, updates: Partial<QuoteItem>) => {
