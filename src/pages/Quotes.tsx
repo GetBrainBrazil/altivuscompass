@@ -2540,6 +2540,19 @@ export default function Quotes() {
         </>
       )}
 
+      {/* Summary fallback dialog (when clipboard API is unavailable) */}
+      <WhatsAppDialog open={!!summaryFallbackText} onOpenChange={(o) => { if (!o) setSummaryFallbackText(null); }}>
+        <WhatsAppDialogContent className="max-w-lg">
+          <WhatsAppDialogHeader>
+            <WhatsAppDialogTitle className="font-body text-base">Copie o resumo manualmente</WhatsAppDialogTitle>
+          </WhatsAppDialogHeader>
+          <Textarea readOnly value={summaryFallbackText ?? ""} rows={14} className="font-mono text-xs" onFocus={(e) => e.currentTarget.select()} />
+          <div className="flex justify-end">
+            <Button size="sm" onClick={() => setSummaryFallbackText(null)}>Fechar</Button>
+          </div>
+        </WhatsAppDialogContent>
+      </WhatsAppDialog>
+
       {/* WhatsApp Dialog */}
       <WhatsAppDialog open={whatsappOpen} onOpenChange={setWhatsappOpen}>
         <WhatsAppDialogContent className="max-w-md p-4 gap-0">
