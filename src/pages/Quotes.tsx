@@ -2397,11 +2397,11 @@ export default function Quotes() {
                            draggable
                            onDragStart={() => setDraggedQuoteId(quote.id)}
                            onDragEnd={() => setDraggedQuoteId(null)}
-                           className={cn("glass-card rounded-xl p-3 sm:p-4 cursor-grab hover:shadow-md transition-all animate-fade-in active:cursor-grabbing", draggedQuoteId === quote.id && "opacity-40")}
+                          className={cn("glass-card rounded-xl p-3 cursor-grab hover:shadow-md transition-all animate-fade-in active:cursor-grabbing", draggedQuoteId === quote.id && "opacity-40")}
                            onClick={() => openEdit(quote)}
                          >
                            <div className="flex items-start justify-between mb-1 gap-2">
-                              <p className="text-sm font-medium font-body text-foreground flex-1 min-w-0">{quote.title || quote.destination || "Sem título"}</p>
+                              <p className="text-sm font-medium font-body text-foreground flex-1 min-w-0 truncate">{quote.title || quote.destination || "Sem título"}</p>
                               <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                                 <span className="text-xs font-semibold text-foreground font-body">{formatCurrency(quote.total_value)}</span>
                                 <DropdownMenu>
