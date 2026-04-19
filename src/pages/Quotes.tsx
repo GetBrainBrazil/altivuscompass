@@ -11,6 +11,11 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandItem } from "@/components/ui/command";
+import { Separator } from "@/components/ui/separator";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import QuoteItemCommercialFields from "@/components/quotes/QuoteItemCommercialFields";
+import QuoteItemSupplierFields from "@/components/quotes/QuoteItemSupplierFields";
+import QuoteItemAttachments from "@/components/quotes/QuoteItemAttachments";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle, FileText } from "lucide-react";
@@ -73,6 +78,16 @@ type QuoteItem = {
   details: Record<string, any>;
   sort_order: number;
   _isNew?: boolean;
+  // Commercial fields (real columns in quote_items)
+  unit_cost?: number | null;
+  unit_price?: number | null;
+  quantity?: number | null;
+  supplier_id?: string | null;
+  payment_source?: string | null;
+  commission_amount?: number | null;
+  commission_status?: string | null;
+  attachment_urls?: string[] | null;
+  external_url?: string | null;
 };
 
 const QUOTE_EDITOR_DRAFT_KEY = "quotes-editor-draft";
