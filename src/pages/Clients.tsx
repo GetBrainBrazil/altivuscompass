@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { FileText } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -693,6 +695,17 @@ export default function Clients() {
               {editingId ? "Editar Cliente" : "Novo Cliente"}
             </h1>
           </div>
+          {editingId && (
+            <Button
+              type="button"
+              variant="outline"
+              className="font-body shrink-0"
+              onClick={() => navigate("/quotes", { state: { newQuote: true, clientId: editingId } })}
+            >
+              <FileText className="h-4 w-4 mr-1" />
+              Nova cotação
+            </Button>
+          )}
         </div>
 
         <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-4">

@@ -2877,6 +2877,58 @@ export default function Quotes() {
           </div>
         </WhatsAppDialogContent>
       </WhatsAppDialog>
+
+      {/* Archive confirmation */}
+      <AlertDialog open={!!archiveTarget} onOpenChange={(open) => !open && setArchiveTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display">Arquivar cotação?</AlertDialogTitle>
+            <AlertDialogDescription className="font-body">
+              A cotação "{archiveTarget?.title || "sem título"}" será movida para o arquivo e deixará de aparecer no kanban principal. Você poderá desarquivá-la a qualquer momento ativando "Ver arquivadas".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="font-body">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="font-body"
+              onClick={() => {
+                if (archiveTarget) {
+                  archiveMutation.mutate(archiveTarget);
+                  setArchiveTarget(null);
+                }
+              }}
+            >
+              Arquivar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Unarchive confirmation */}
+      <AlertDialog open={!!unarchiveTarget} onOpenChange={(open) => !open && setUnarchiveTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display">Desarquivar cotação?</AlertDialogTitle>
+            <AlertDialogDescription className="font-body">
+              A cotação "{unarchiveTarget?.title || "sem título"}" voltará a aparecer no kanban principal.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="font-body">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="font-body"
+              onClick={() => {
+                if (unarchiveTarget) {
+                  unarchiveMutation.mutate(unarchiveTarget);
+                  setUnarchiveTarget(null);
+                }
+              }}
+            >
+              Desarquivar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
