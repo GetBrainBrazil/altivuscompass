@@ -1,69 +1,54 @@
 
+## Avaliação honesta
 
-## Plano: Cadastro de Contas Pagas via WhatsApp (#pago)
+O Claude tem razão na ressalva: **testes de integração mockando Supabase são frágeis**. Mas a maior parte do prompt é sobre **extrair funções puras + testá-las**, o que é genuinamente valioso. O problema é que ele é AMBICIOSO demais para um único prompt:
 
-### Fluxo da Conversa
+- `Quotes.tsx` tem **2.617 linhas**. Extrair 7 grupos de funções ao mesmo tempo = risco real de quebrar coisa.
+- Várias funções listadas (`autoFixRecommendedOption`, `buildAcceptancePayload`, `getDeadlineTone`, `filterQuotes`, etc.) podem nem existir como função nomeada — estão inline no JSX. Extrair vira reescrever.
+- Cobertura proposta é boa (resumo, validade, filtros, validadores), mas misturar tudo num prompt = risco de regressão silenciosa.
 
-```text
-Você: #pago
-IA: Olá, João! Vou ajudar a cadastrar a conta paga.
-    Me envie a descrição, valor, fornecedor, e se tiver, 
-    a foto ou PDF do boleto ou comprovante de pagamento. 
-    Pode me enviar em várias mensagens.
+## Vale a pena? Sim, mas em fases
 
-Você: [envia foto do boleto]
-IA: Li o boleto! Identifiquei:
-    - Fornecedor: Vivo Telecomunicações
-    - Valor: R$ 189,90
-    - Vencimento: 15/04/2026
-    Está correto? Falta algo?
+Recomendo **dividir em 3 prompts menores**, do mais seguro pro mais arriscado:
 
-Você: sim, paguei hoje
-Você: [envia comprovante]
-IA: Recebi o comprovante. Resumo final:
-    - Descrição: Conta de internet
-    - Valor: R$ 189,90
-    - Fornecedor: Vivo Telecomunicações
-    - Vencimento: 15/04/2026
-    - Data pagamento: 09/04/2026
-    - Anexos: boleto + comprovante
-    - Categoria: Despesa
-    - Status: Pago
-    Confirma? (sim/não)
+### Fase 1 — Quick wins (BAIXO RISCO, ALTO VALOR)
+Funções que **já existem isoladas** ou são triviais de extrair:
+- `quote-summary.ts` já existe — só escrever testes (8 casos do Claude).
+- Criar `validators.ts` (email/CPF/phone) — funções novas, não extrai nada.
+- Criar `quote-status.ts` com `getDeadlineTone`, `getAgeTone`, `getValidityBadge` — funções pequenas, fáceis de espelhar a lógica inline sem mexer no Quotes.tsx (deixa a inline lá, testa a versão extraída como "fonte da verdade" futura).
+- Setup de fixtures + mock do Supabase.
 
-Você: sim
-IA: Esta conta paga foi cadastrada com sucesso em Contas a Pagar!
-```
+Resultado: ~25 testes passando, zero risco de quebrar UI.
 
-O nome do usuário será obtido via Z-API (`get-profile-name` ou campo `senderName` do payload do webhook). Se não encontrar, usa apenas "Olá!".
+### Fase 2 — Extração de filtros/sort (MÉDIO RISCO)
+- `quote-filters.ts` (`filterQuotes`, `sortQuotes`) — extração mecânica do que está inline no Quotes.tsx, com substituição da inline por import.
+- Testes correspondentes.
 
-### Alterações
+Por que separar: aqui SIM mexe no Quotes.tsx. Isolar o blast radius.
 
-#### 1. Migration SQL
-- Criar tabela `whatsapp_sessions` (phone, state jsonb, status, expires_at)
-- Criar bucket privado `financial-attachments`
-- Adicionar coluna `attachment_urls text[]` em `financial_transactions`
+### Fase 3 — Pular ou adiar (ALTO RISCO, BAIXO ROI)
+- **`duplicateQuote` mockado**: o Claude mesmo avisa que mock de Supabase é frágil. Para um fluxo crítico desses, **teste manual com checklist** vale mais que mock.
+- **`buildAcceptancePayload`**: a validação real está espalhada entre o form do `PublicQuote.tsx` e a edge function `accept-quote`. Extrair "só o pedaço de validação" é artificial — o teste vai cobrir uma função que ninguém chama em produção.
+- **`autoFixRecommendedOption`**: precisaria localizar primeiro se essa lógica existe; pelos prompts anteriores, options são manuais.
 
-#### 2. Edge Function `whatsapp-webhook` (nova)
-- Recebe payload da Z-API (texto, imagem, documento)
-- Extrai `senderName` do payload para personalizar a saudação
-- Comando `#pago` inicia sessão
-- Download de arquivos da Z-API e envio ao Gemini 2.5 Flash (multimodal) para OCR/extração de dados
-- Busca mista de fornecedores/categorias/contas no banco
-- Apresenta resumo e aguarda confirmação
-- Insere em `financial_transactions` com status "paid" e anexos
-- Mensagem final: "Esta conta paga foi cadastrada com sucesso em Contas a Pagar!"
+Recomendo **pular esses três** ou só fazer se houver bug real.
 
-#### 3. Leitura inteligente de documentos
-- Imagens/PDFs enviados são processados pelo Gemini (multimodal) para extrair valor, fornecedor, vencimento, data de pagamento
-- Dados extraídos são sugeridos para confirmação antes de salvar
+## O que NÃO fazer do prompt original
 
-#### 4. Campos vinculados (busca mista)
-- Fornecedor: busca aproximada em `clients`/`suppliers`/`financial_parties`. Se encontrar, vincula. Se não, pergunta se salva como texto livre
-- Categoria: busca em `financial_categories`, sugere com base no conteúdo
-- Conta bancária: lista contas ativas, opcional
+- Não criar `test:coverage` agora — overkill, ninguém vai olhar.
+- Não criar `src/test/mocks/supabase.ts` se não vai usar (Fase 3 caindo fora).
+- Não tentar testar `Quotes.tsx` montado.
 
-#### 5. Configuração Z-API
-- Webhook de recebimento apontando para: `https://fuaaackbubqxkkdvbvpi.supabase.co/functions/v1/whatsapp-webhook`
-- Você precisará configurar isso no painel da Z-API
+## Minha recomendação
 
+**Roda só a Fase 1 agora.** É ~70% do valor com ~10% do risco. Se gostar do ritmo, faz a Fase 2 depois. A Fase 3 só se aparecer bug específico que justifique.
+
+## Próximo passo
+
+Posso preparar o **prompt da Fase 1** já formatado pra você colar (estilo dos prompts anteriores), cobrindo:
+1. Setup: `setup.ts` atualizado, `fixtures/quote.ts`
+2. Testes de `quote-summary.ts` (já existe — 7 casos)
+3. Criar + testar `validators.ts`
+4. Criar + testar `quote-status.ts` (sem mexer no Quotes.tsx ainda; integração inline vira tarefa da Fase 2)
+
+Confirma que quer Fase 1 e eu escrevo o prompt enxuto pronto pra colar.
