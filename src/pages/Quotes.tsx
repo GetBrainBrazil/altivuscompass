@@ -2502,40 +2502,6 @@ export default function Quotes() {
     ? "—"
     : `${Math.round((wonCount / closedQuotes.length) * 100)}%`;
 
-  // Apply search + assignee + lead source filters then sort
-  const filteredQuotes = useMemo(() => {
-    let list = quotes as Quote[];
-    if (searchTerm) {
-      list = list.filter((q) => {
-        const hay = `${q.title ?? ""} ${q.destination ?? ""} ${q.client_name ?? ""} ${q.id}`.toLowerCase();
-        return hay.includes(searchTerm);
-      });
-    }
-    if (filterAssignee !== "all") {
-      list = list.filter((q) => (q.assigned_to ?? "") === filterAssignee);
-    }
-    if (filterLeadSource !== "all") {
-      list = list.filter((q) => (q.lead_source ?? "") === filterLeadSource);
-    }
-    const sorted = [...list];
-    sorted.sort((a: any, b: any) => {
-      switch (pipelineSort) {
-        case "oldest":
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-        case "value_desc":
-          return Number(b.total_value ?? 0) - Number(a.total_value ?? 0);
-        case "value_asc":
-          return Number(a.total_value ?? 0) - Number(b.total_value ?? 0);
-        case "updated":
-          return new Date(b.updated_at ?? b.created_at).getTime() - new Date(a.updated_at ?? a.created_at).getTime();
-        case "recent":
-        default:
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      }
-    });
-    return sorted;
-  }, [quotes, searchTerm, filterAssignee, filterLeadSource, pipelineSort]);
-
   const hasActiveFilters = searchTerm !== "" || filterAssignee !== "all" || filterLeadSource !== "all";
 
   // ─── LIST VIEW (pipeline / table) ─────────────────────────
