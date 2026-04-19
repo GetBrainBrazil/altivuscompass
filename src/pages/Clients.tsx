@@ -127,6 +127,7 @@ export default function Clients() {
   const [profileFilter, setProfileFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [sort, setSort] = useState<SortState>(null);
+  const navigate = useNavigate();
   const [view, setView] = useState<"list" | "form">("list");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
