@@ -169,15 +169,65 @@ export default function Quotes() {
   const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
   const [summaryFallbackText, setSummaryFallbackText] = useState<string | null>(null);
   const initialSnapshotRef = useRef<string>("");
+
+  // Pipeline filters / search / sort / archive view
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [showArchived, setShowArchived] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterAssignee, setFilterAssignee] = useState<string>("all");
+  const [filterLeadSource, setFilterLeadSource] = useState<string>("all");
+  const [pipelineSort, setPipelineSort] = useState<"recent" | "oldest" | "value_desc" | "value_asc" | "updated">("recent");
+  const [archiveTarget, setArchiveTarget] = useState<Quote | null>(null);
+  const [unarchiveTarget, setUnarchiveTarget] = useState<Quote | null>(null);
+
+  // Debounce search
+  useEffect(() => {
+    const t = setTimeout(() => setSearchTerm(searchInput.trim().toLowerCase()), 200);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
   const { data: quotes = [], isLoading } = useQuery({
-    queryKey: ["quotes"],
+    queryKey: ["quotes", showArchived],
+    queryFn: async () => {
+      let query = supabase
+        .from("quotes")
+        .select("*, clients(full_name)")
+        .eq("is_template", false)
+        .order("created_at", { ascending: false });
+      if (showArchived) {
+        query = query.not("archived_at", "is", null);
+      } else {
+        query = query.is("archived_at", null);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data ?? []).map((q: any) => ({ ...q, client_name: q.clients?.full_name ?? "Sem cliente" }));
+    },
+  });
+
+  // Active (non-archived, non-template) quotes for global metrics — independent of filters/search
+  const { data: metricsQuotes = [] } = useQuery({
+    queryKey: ["quotes-metrics"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("quotes")
-        .select("*, clients(full_name)")
-        .order("created_at", { ascending: false });
+        .select("id, stage, total_value, conclusion_type, archived_at, is_template")
+        .eq("is_template", false)
+        .is("archived_at", null);
       if (error) throw error;
-      return (data ?? []).map((q: any) => ({ ...q, client_name: q.clients?.full_name ?? "Sem cliente" }));
+      return data ?? [];
+    },
+  });
+
+  // Sellers list for the assignee filter
+  const { data: sellers = [] } = useQuery({
+    queryKey: ["profiles-sellers"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("user_id, full_name").order("full_name");
+      if (error) throw error;
+      return data ?? [];
     },
   });
 
