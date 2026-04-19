@@ -2369,11 +2369,11 @@ export default function Quotes() {
       ) : (
         <>
           {viewMode === "kanban" ? (
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4 pb-4">
               {stages.map((stage) => {
                 const stageQuotes = quotes.filter((q: Quote) => q.stage === stage.id);
                 return (
-                   <div key={stage.id} className="w-full sm:min-w-[280px] sm:flex-shrink-0"
+                   <div key={stage.id} className="min-w-0 flex flex-col"
                      onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("bg-accent/10"); }}
                      onDragLeave={(e) => { e.currentTarget.classList.remove("bg-accent/10"); }}
                      onDrop={(e) => {
