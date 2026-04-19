@@ -1819,12 +1819,14 @@ export type Database = {
           discount_percent: number | null
           hotel_options: string | null
           id: string
+          is_template: boolean
           notes: string | null
           other_info: string | null
           payment_terms: string | null
           price_breakdown: Json | null
           quote_validity: string | null
           stage: Database["public"]["Enums"]["quote_stage"]
+          template_name: string | null
           terms_conditions: string | null
           title: string | null
           total_value: number | null
@@ -1849,12 +1851,14 @@ export type Database = {
           discount_percent?: number | null
           hotel_options?: string | null
           id?: string
+          is_template?: boolean
           notes?: string | null
           other_info?: string | null
           payment_terms?: string | null
           price_breakdown?: Json | null
           quote_validity?: string | null
           stage?: Database["public"]["Enums"]["quote_stage"]
+          template_name?: string | null
           terms_conditions?: string | null
           title?: string | null
           total_value?: number | null
@@ -1879,12 +1883,14 @@ export type Database = {
           discount_percent?: number | null
           hotel_options?: string | null
           id?: string
+          is_template?: boolean
           notes?: string | null
           other_info?: string | null
           payment_terms?: string | null
           price_breakdown?: Json | null
           quote_validity?: string | null
           stage?: Database["public"]["Enums"]["quote_stage"]
+          template_name?: string | null
           terms_conditions?: string | null
           title?: string | null
           total_value?: number | null
