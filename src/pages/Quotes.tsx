@@ -987,6 +987,9 @@ export default function Quotes() {
     partner: "Sócio(a)", sibling: "Irmão(ã)", other: "Outro",
   };
 
+  // Keep the saveQuote ref pointing at the latest closure for the keyboard shortcut
+  saveQuoteRef.current = saveQuote;
+
   // ─── FORM VIEW ─────────────────────────────────────────────
   if (dialogOpen) {
     const itemsForType = (type: string) => items.filter(i => i.item_type === type);
@@ -1955,10 +1958,9 @@ export default function Quotes() {
             <div className="flex items-end gap-2">
               <div className="flex-1 space-y-0.5">
                 <Label className="font-body text-xs">Telefone do cliente</Label>
-                <Input
-                  placeholder="5511999999999"
+                <PhoneInput
                   value={whatsappPhone}
-                  onChange={(e) => setWhatsappPhone(e.target.value)}
+                  onChange={(digits) => setWhatsappPhone(digits)}
                   className="font-body h-8 text-sm"
                 />
               </div>
