@@ -57,7 +57,7 @@ function AirportsTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { userRole } = useAuth();
-  const isAdmin = userRole === "admin";
+  const isAdmin = userRole === "admin" || userRole === "manager";
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
@@ -247,7 +247,7 @@ function AirlinesTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { userRole } = useAuth();
-  const isAdmin = userRole === "admin";
+  const isAdmin = userRole === "admin" || userRole === "manager";
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
@@ -430,7 +430,7 @@ function TagsTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { userRole } = useAuth();
-  const isAdmin = userRole === "admin";
+  const isAdmin = userRole === "admin" || userRole === "manager";
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
