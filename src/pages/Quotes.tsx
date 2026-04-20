@@ -37,6 +37,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import QuoteHistoryTab from "@/components/quotes/QuoteHistoryTab";
 import QuoteInteractionsTab from "@/components/quotes/QuoteInteractionsTab";
 import { QuoteCardBadges, ProbabilityBadge, PROBABILITY_OPTIONS } from "@/components/quotes/QuoteCardBadges";
+import QuoteAcceptanceInfo from "@/components/quotes/QuoteAcceptanceInfo";
 import ItineraryTimeline from "@/components/itineraries/ItineraryTimeline";
 import ItineraryMapView from "@/components/itineraries/ItineraryMapView";
 
@@ -150,6 +151,7 @@ export default function Quotes() {
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc" | null>(null);
   const [activeTab, setActiveTab] = useState("main");
+  const [hasAcceptances, setHasAcceptances] = useState(false);
   const [items, setItems] = useState<QuoteItem[]>([]);
   const [selectedPassengers, setSelectedPassengers] = useState<string[]>([]);
   const [selectedLinkedClients, setSelectedLinkedClients] = useState<string[]>([]);
@@ -601,6 +603,23 @@ export default function Quotes() {
       }
     }
   }, [editingQuote, draftRestored, items.length]);
+
+  // Detect if this quote has any client acceptance (drives the "Aceite" tab visibility)
+  useEffect(() => {
+    if (!editingQuote) {
+      setHasAcceptances(false);
+      return;
+    }
+    let active = true;
+    supabase
+      .from("quote_acceptances")
+      .select("id", { count: "exact", head: true })
+      .eq("quote_id", editingQuote.id)
+      .then(({ count }) => {
+        if (active) setHasAcceptances((count ?? 0) > 0);
+      });
+    return () => { active = false; };
+  }, [editingQuote]);
 
   const uploadCoverImage = async (quoteId: string): Promise<string | null> => {
     if (!coverFile) return form.cover_image_url || null;
@@ -1664,6 +1683,12 @@ export default function Quotes() {
                 Roteiro
                 {linkedItinerary && <Badge variant="secondary" className="text-[9px] h-3.5 px-1 ml-0.5">1</Badge>}
               </TabsTrigger>
+              {editingQuote && hasAcceptances && (
+                <TabsTrigger value="acceptance" className="flex items-center gap-1 text-[11px] px-2 py-1 bg-emerald-500/15 text-emerald-700 border border-emerald-500/40 data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=active]:border-emerald-500">
+                  <Check className="w-3 h-3" />
+                  Aceite
+                </TabsTrigger>
+              )}
               {editingQuote && (
                 <TabsTrigger value="interactions" className="flex items-center gap-1 text-[11px] px-2 py-1">
                   <MessageCircle className="w-3 h-3" />
@@ -2687,6 +2712,12 @@ export default function Quotes() {
                 </div>
               )}
             </TabsContent>
+
+            {editingQuote && hasAcceptances && (
+              <TabsContent value="acceptance" className="mt-3">
+                <QuoteAcceptanceInfo quoteId={editingQuote.id} />
+              </TabsContent>
+            )}
 
             {editingQuote && (
               <TabsContent value="interactions" className="mt-3">
