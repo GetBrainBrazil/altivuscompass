@@ -95,9 +95,9 @@ export default function PublicItinerary() {
                 size="sm"
                 variant="secondary"
                 onClick={() => setMobileMapVisible(false)}
-                className="absolute top-2 right-2 z-10 h-8 px-2 shadow-md"
+                className="absolute bottom-2 left-2 z-10 h-8 px-2 shadow-md"
               >
-                <EyeOff className="h-3.5 w-3.5 mr-1" /> Ocultar
+                <EyeOff className="h-3.5 w-3.5 mr-1" /> Ocultar mapa
               </Button>
             )}
             <ItineraryMapView
