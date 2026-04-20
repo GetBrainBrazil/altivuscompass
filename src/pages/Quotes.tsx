@@ -2825,6 +2825,9 @@ export default function Quotes() {
               <TableIcon className="w-4 h-4" />
             </button>
           </div>
+          <Button variant="outline" onClick={() => setTemplatesDialogOpen(true)} className="font-body">
+            <LayoutTemplate className="w-4 h-4" /> Templates {templates.length > 0 && <span className="ml-1 text-xs text-muted-foreground">({templates.length})</span>}
+          </Button>
           <Button onClick={() => openCreate()} className="font-body">
             <Plus className="w-4 h-4" /> Nova Cotação
           </Button>
