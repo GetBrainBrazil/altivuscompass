@@ -19,7 +19,7 @@ import QuoteItemAttachments from "@/components/quotes/QuoteItemAttachments";
 import QuoteOptionsManager from "@/components/quotes/QuoteOptionsManager";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle, FileText, MoreVertical, ClipboardCopy, Search, Archive, ArchiveRestore, TrendingUp, DollarSign, Target, Pencil } from "lucide-react";
+import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle, FileText, MoreVertical, ClipboardCopy, Search, Archive, ArchiveRestore, TrendingUp, DollarSign, Target, Pencil, BookmarkPlus, LayoutTemplate } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { MetricCard } from "@/components/MetricCard";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -92,6 +92,7 @@ type Quote = {
   archived_at?: string | null;
   archived_by?: string | null;
   is_template?: boolean | null;
+  template_name?: string | null;
   close_probability?: string | null;
   internal_due_date?: string | null;
   quote_validity?: string | null;
@@ -187,6 +188,12 @@ export default function Quotes() {
   const [archiveTarget, setArchiveTarget] = useState<Quote | null>(null);
   const [unarchiveTarget, setUnarchiveTarget] = useState<Quote | null>(null);
   const [inlineValueEdit, setInlineValueEdit] = useState<{ id: string; value: string } | null>(null);
+  const [templatesDialogOpen, setTemplatesDialogOpen] = useState(false);
+  const [saveAsTemplateOpen, setSaveAsTemplateOpen] = useState(false);
+  const [saveAsTemplateSource, setSaveAsTemplateSource] = useState<Quote | null>(null);
+  const [saveAsTemplateName, setSaveAsTemplateName] = useState("");
+  const [deleteTemplateTarget, setDeleteTemplateTarget] = useState<Quote | null>(null);
+  const [duplicating, setDuplicating] = useState(false);
 
   // Debounce search
   useEffect(() => {
@@ -234,6 +241,20 @@ export default function Quotes() {
       const { data, error } = await supabase.from("profiles").select("user_id, full_name").order("full_name");
       if (error) throw error;
       return data ?? [];
+    },
+  });
+
+  // Templates (is_template = true)
+  const { data: templates = [] } = useQuery({
+    queryKey: ["quote-templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("quotes")
+        .select("*")
+        .eq("is_template", true)
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Quote[];
     },
   });
 
@@ -895,6 +916,177 @@ export default function Quotes() {
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
 
+  /**
+   * Duplicate a quote (or template). Modes:
+   *  - "duplicate": copy as a regular new quote (title + " (cópia)")
+   *  - "template":  copy and mark as template (uses templateName as title/template_name; clears client+dates+passengers)
+   *  - "use_template": copy a template into a new regular quote, clearing client+dates and resetting selections
+   * Returns the new quote id (or null on failure).
+   */
+  const duplicateQuote = async (
+    sourceId: string,
+    mode: "duplicate" | "template" | "use_template",
+    templateName?: string,
+  ): Promise<string | null> => {
+    setDuplicating(true);
+    try {
+      // Fetch full source quote + items + passengers
+      const [{ data: source, error: srcErr }, { data: srcItems, error: itemsErr }, { data: srcPax, error: paxErr }] = await Promise.all([
+        supabase.from("quotes").select("*").eq("id", sourceId).single(),
+        supabase.from("quote_items").select("*").eq("quote_id", sourceId).order("sort_order"),
+        supabase.from("quote_passengers").select("passenger_id").eq("quote_id", sourceId),
+      ]);
+      if (srcErr || !source) throw srcErr ?? new Error("Cotação de origem não encontrada");
+      if (itemsErr) throw itemsErr;
+      if (paxErr) throw paxErr;
+
+      const isTemplate = mode === "template";
+      const baseTitle = source.title ?? "Cotação";
+      const newTitle = isTemplate
+        ? (templateName || baseTitle)
+        : mode === "use_template"
+          ? baseTitle
+          : `${baseTitle} (cópia)`;
+
+      // Build payload — copy everything except identity/audit/lifecycle fields
+      const {
+        id: _id,
+        created_at: _ca,
+        updated_at: _ua,
+        archived_at: _aa,
+        archived_by: _ab,
+        validity_warning_sent_at: _vws,
+        ...rest
+      } = source as any;
+
+      const newQuote: any = {
+        ...rest,
+        title: newTitle,
+        stage: "new",
+        conclusion_type: null,
+        is_template: isTemplate,
+        template_name: isTemplate ? (templateName || baseTitle) : null,
+        created_by: user?.id ?? null,
+        archived_at: null,
+        archived_by: null,
+        validity_warning_sent_at: null,
+      };
+
+      if (isTemplate || mode === "use_template") {
+        newQuote.client_id = null;
+        newQuote.travel_date_start = null;
+        newQuote.travel_date_end = null;
+      }
+
+      const { data: inserted, error: insErr } = await supabase
+        .from("quotes")
+        .insert(newQuote)
+        .select("id")
+        .single();
+      if (insErr || !inserted) throw insErr ?? new Error("Falha ao criar cotação");
+      const newId = inserted.id as string;
+
+      // Duplicate items (skip attachment_urls; reset is_selected when using a template)
+      let attachmentsSkipped = 0;
+      if (srcItems && srcItems.length > 0) {
+        const itemPayloads = srcItems.map((it: any) => {
+          const { id: _iid, created_at: _ic, updated_at: _iu, attachment_urls, quote_id: _qid, ...itemRest } = it;
+          if (Array.isArray(attachment_urls) && attachment_urls.length > 0) attachmentsSkipped += attachment_urls.length;
+          return {
+            ...itemRest,
+            quote_id: newId,
+            attachment_urls: [],
+            is_selected: mode === "use_template" ? false : itemRest.is_selected,
+          };
+        });
+        const { error: itemsInsErr } = await supabase.from("quote_items").insert(itemPayloads);
+        if (itemsInsErr) throw itemsInsErr;
+      }
+
+      // Duplicate passengers (skip when template / use_template)
+      if (mode === "duplicate" && srcPax && srcPax.length > 0) {
+        const paxPayloads = srcPax.map((p: any) => ({ quote_id: newId, passenger_id: p.passenger_id }));
+        await supabase.from("quote_passengers").insert(paxPayloads);
+      }
+
+      // Log history on the NEW quote
+      try {
+        const action = mode === "template" ? "saved_as_template" : mode === "use_template" ? "created_from_template" : "duplicated";
+        const description = mode === "template"
+          ? `Template criado a partir da cotação ${sourceId.slice(0, 8)}`
+          : mode === "use_template"
+            ? `Cotação criada a partir do template "${baseTitle}"`
+            : `Cotação duplicada a partir de ${sourceId.slice(0, 8)}`;
+        await logHistory(newId, action, description, { source_quote_id: sourceId });
+      } catch {}
+
+      if (attachmentsSkipped > 0) {
+        toast({ title: "Anexos não copiados", description: `${attachmentsSkipped} anexo(s) ficaram apenas na cotação original.` });
+      }
+
+      return newId;
+    } catch (err: any) {
+      toast({ title: "Erro ao duplicar", description: err?.message ?? "Falha desconhecida", variant: "destructive" });
+      return null;
+    } finally {
+      setDuplicating(false);
+    }
+  };
+
+  const handleDuplicate = async (q: Quote) => {
+    const newId = await duplicateQuote(q.id, "duplicate");
+    if (!newId) return;
+    toast({ title: "Cotação duplicada" });
+    queryClient.invalidateQueries({ queryKey: ["quotes"] });
+    queryClient.invalidateQueries({ queryKey: ["quotes-metrics"] });
+    // Fetch the new quote and open editor
+    const { data } = await supabase.from("quotes").select("*, clients(full_name)").eq("id", newId).single();
+    if (data) openEdit({ ...(data as any), client_name: (data as any).clients?.full_name } as Quote);
+  };
+
+  const handleSaveAsTemplate = async () => {
+    if (!saveAsTemplateSource || !saveAsTemplateName.trim()) return;
+    const newId = await duplicateQuote(saveAsTemplateSource.id, "template", saveAsTemplateName.trim());
+    if (!newId) return;
+    toast({ title: "Template criado" });
+    queryClient.invalidateQueries({ queryKey: ["quote-templates"] });
+    setSaveAsTemplateOpen(false);
+    setSaveAsTemplateSource(null);
+    setSaveAsTemplateName("");
+  };
+
+  const handleUseTemplate = async (tpl: Quote) => {
+    const newId = await duplicateQuote(tpl.id, "use_template");
+    if (!newId) return;
+    toast({ title: "Cotação criada a partir do template" });
+    queryClient.invalidateQueries({ queryKey: ["quotes"] });
+    queryClient.invalidateQueries({ queryKey: ["quotes-metrics"] });
+    setTemplatesDialogOpen(false);
+    const { data } = await supabase.from("quotes").select("*, clients(full_name)").eq("id", newId).single();
+    if (data) openEdit({ ...(data as any), client_name: (data as any).clients?.full_name } as Quote);
+  };
+
+  const handleEditTemplate = (tpl: Quote) => {
+    setTemplatesDialogOpen(false);
+    openEdit(tpl);
+  };
+
+  const handleDeleteTemplate = async () => {
+    if (!deleteTemplateTarget) return;
+    try {
+      await supabase.from("quote_items").delete().eq("quote_id", deleteTemplateTarget.id);
+      await supabase.from("quote_passengers").delete().eq("quote_id", deleteTemplateTarget.id);
+      const { error } = await supabase.from("quotes").delete().eq("id", deleteTemplateTarget.id);
+      if (error) throw error;
+      toast({ title: "Template excluído" });
+      queryClient.invalidateQueries({ queryKey: ["quote-templates"] });
+    } catch (err: any) {
+      toast({ title: "Erro", description: err?.message ?? "Falha ao excluir", variant: "destructive" });
+    } finally {
+      setDeleteTemplateTarget(null);
+    }
+  };
+
   const openCreate = (preset?: { client_id?: string }) => {
     setEditingQuote(null);
     setForm({ stage: "new", total_value: "", ...(preset?.client_id ? { client_id: preset.client_id } : {}) });
@@ -1342,25 +1534,37 @@ export default function Quotes() {
           </Button>
           <div>
             <h1 className="text-xl font-display font-semibold text-foreground">
-              {editingQuote ? "Editar Cotação" : "Nova Cotação"}
+              {editingQuote?.is_template ? "Editar Template" : editingQuote ? "Editar Cotação" : "Nova Cotação"}
             </h1>
             {editingQuote && (
               <p className="text-sm text-muted-foreground mt-0.5">
-                {[
-                  form.title,
-                  clients.find((c: any) => c.id === form.client_id)?.full_name,
-                  form.flexible_dates
-                    ? (form.flexible_dates_description || null)
-                    : form.travel_date_start
-                      ? `${format(parseISO(form.travel_date_start), "dd/MM/yyyy")}${form.travel_date_end ? ` a ${format(parseISO(form.travel_date_end), "dd/MM/yyyy")}` : ""}`
-                      : null,
-                ].filter(Boolean).join(" — ")}
+                {editingQuote.is_template
+                  ? (editingQuote.template_name || form.title || "Template")
+                  : [
+                      form.title,
+                      clients.find((c: any) => c.id === form.client_id)?.full_name,
+                      form.flexible_dates
+                        ? (form.flexible_dates_description || null)
+                        : form.travel_date_start
+                          ? `${format(parseISO(form.travel_date_start), "dd/MM/yyyy")}${form.travel_date_end ? ` a ${format(parseISO(form.travel_date_end), "dd/MM/yyyy")}` : ""}`
+                          : null,
+                    ].filter(Boolean).join(" — ")}
               </p>
             )}
           </div>
         </div>
 
-        {/* Stage stepper */}
+        {editingQuote?.is_template && (
+          <div className="rounded-lg border border-warning/40 bg-warning/10 px-4 py-2.5 flex items-center gap-2 text-sm font-body text-foreground">
+            <BookmarkPlus className="w-4 h-4 text-warning shrink-0" />
+            <span>
+              Você está editando um <strong>template</strong>. Cliente, datas, passageiros e etapa não se aplicam aqui.
+            </span>
+          </div>
+        )}
+
+        {/* Stage stepper — hidden in template mode */}
+        {!editingQuote?.is_template && (
         <div className="glass-card rounded-xl px-3 sm:px-4 py-3">
           <div className="flex items-center gap-0.5 sm:gap-1 flex-wrap">
             {stages.map((stage, idx) => {
@@ -1413,6 +1617,7 @@ export default function Quotes() {
             </div>
           )}
         </div>
+        )}
 
         {/* Tabs for items */}
         <div className="glass-card rounded-xl p-4">
@@ -1477,6 +1682,7 @@ export default function Quotes() {
                   </Select>
                 </div>
 
+                {!editingQuote?.is_template && (
                 <div className="col-span-2 lg:col-span-4 space-y-1">
                   <Label className="font-body text-xs">Cliente</Label>
                   <Select value={form.client_id ?? ""} onValueChange={(v) => { setForm({ ...form, client_id: v }); setSelectedPassengers([]); setSelectedLinkedClients([]); setClientSelfTraveling(false); }}>
@@ -1484,6 +1690,7 @@ export default function Quotes() {
                     <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
+                )}
 
                 <div className="col-span-2 lg:col-span-4 space-y-1">
                   <div className="flex items-center gap-1.5">
@@ -1529,7 +1736,8 @@ export default function Quotes() {
                 </div>
               </div>
 
-              {/* Row 2: Datas / Data Flexível */}
+              {/* Row 2: Datas / Data Flexível — hidden in template mode */}
+              {!editingQuote?.is_template && (
               <div className="grid grid-cols-[auto_1fr_1fr] lg:grid-cols-[auto_minmax(130px,1fr)_minmax(130px,1fr)] gap-x-3 gap-y-3 items-start">
                 <div className="space-y-1">
                   <Label className="font-body text-xs whitespace-nowrap">Flexível</Label>
@@ -1576,6 +1784,7 @@ export default function Quotes() {
                   </div>
                 )}
               </div>
+              )}
 
               {/* Probabilidade de fechar + Prazo interno */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -2633,6 +2842,9 @@ export default function Quotes() {
               <TableIcon className="w-4 h-4" />
             </button>
           </div>
+          <Button variant="outline" onClick={() => setTemplatesDialogOpen(true)} className="font-body">
+            <LayoutTemplate className="w-4 h-4" /> Templates {templates.length > 0 && <span className="ml-1 text-xs text-muted-foreground">({templates.length})</span>}
+          </Button>
           <Button onClick={() => openCreate()} className="font-body">
             <Plus className="w-4 h-4" /> Nova Cotação
           </Button>
@@ -2807,6 +3019,12 @@ export default function Quotes() {
                                     <DropdownMenuItem onClick={() => handleOpenInWhatsapp(quote)}>
                                       <MessageCircle className="w-3.5 h-3.5 mr-2" /> Abrir no WhatsApp
                                     </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleDuplicate(quote)} disabled={duplicating}>
+                                      <Copy className="w-3.5 h-3.5 mr-2" /> Duplicar
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => { setSaveAsTemplateSource(quote); setSaveAsTemplateName(quote.title ?? ""); setSaveAsTemplateOpen(true); }}>
+                                      <BookmarkPlus className="w-3.5 h-3.5 mr-2" /> Salvar como template
+                                    </DropdownMenuItem>
                                     {quote.archived_at ? (
                                       <DropdownMenuItem onClick={() => setUnarchiveTarget(quote)}>
                                         <ArchiveRestore className="w-3.5 h-3.5 mr-2" /> Desarquivar
@@ -2963,9 +3181,15 @@ export default function Quotes() {
                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleCopySummary(quote); }}>
                                      <ClipboardCopy className="w-3.5 h-3.5 mr-2" /> Copiar resumo
                                    </DropdownMenuItem>
-                                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleOpenInWhatsapp(quote); }}>
-                                     <MessageCircle className="w-3.5 h-3.5 mr-2" /> Abrir no WhatsApp
-                                   </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleOpenInWhatsapp(quote); }}>
+                                      <MessageCircle className="w-3.5 h-3.5 mr-2" /> Abrir no WhatsApp
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDuplicate(quote); }} disabled={duplicating}>
+                                      <Copy className="w-3.5 h-3.5 mr-2" /> Duplicar
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setSaveAsTemplateSource(quote); setSaveAsTemplateName(quote.title ?? ""); setSaveAsTemplateOpen(true); }}>
+                                      <BookmarkPlus className="w-3.5 h-3.5 mr-2" /> Salvar como template
+                                    </DropdownMenuItem>
                                    {quote.archived_at ? (
                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setUnarchiveTarget(quote); }}>
                                        <ArchiveRestore className="w-3.5 h-3.5 mr-2" /> Desarquivar
@@ -3110,6 +3334,93 @@ export default function Quotes() {
               }}
             >
               Desarquivar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Templates list dialog */}
+      <WhatsAppDialog open={templatesDialogOpen} onOpenChange={setTemplatesDialogOpen}>
+        <WhatsAppDialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <WhatsAppDialogHeader>
+            <WhatsAppDialogTitle className="font-display flex items-center gap-2">
+              <LayoutTemplate className="w-5 h-5" /> Templates de cotação
+            </WhatsAppDialogTitle>
+          </WhatsAppDialogHeader>
+          {templates.length === 0 ? (
+            <p className="text-sm text-muted-foreground font-body py-8 text-center">
+              Nenhum template criado ainda. Use "Salvar como template" no menu de uma cotação.
+            </p>
+          ) : (
+            <div className="space-y-2 mt-2">
+              {templates.map((tpl) => (
+                <div key={tpl.id} className="border border-border rounded-lg p-3 flex items-start justify-between gap-3 hover:bg-muted/40 transition-colors">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-body font-semibold text-sm text-foreground truncate">{tpl.template_name || tpl.title}</h4>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground font-body">
+                      {tpl.destination && <span className="truncate">📍 {tpl.destination}</span>}
+                      {tpl.total_value != null && <span>R$ {Number(tpl.total_value).toLocaleString("pt-BR")}</span>}
+                    </div>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <Button size="sm" variant="default" disabled={duplicating} onClick={() => handleUseTemplate(tpl)}>Usar</Button>
+                    <Button size="sm" variant="outline" onClick={() => handleEditTemplate(tpl)}>Editar</Button>
+                    <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDeleteTemplateTarget(tpl)}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </WhatsAppDialogContent>
+      </WhatsAppDialog>
+
+      {/* Save as template dialog */}
+      <WhatsAppDialog open={saveAsTemplateOpen} onOpenChange={(open) => { setSaveAsTemplateOpen(open); if (!open) { setSaveAsTemplateSource(null); setSaveAsTemplateName(""); } }}>
+        <WhatsAppDialogContent className="max-w-md">
+          <WhatsAppDialogHeader>
+            <WhatsAppDialogTitle className="font-display flex items-center gap-2">
+              <BookmarkPlus className="w-5 h-5" /> Salvar como template
+            </WhatsAppDialogTitle>
+          </WhatsAppDialogHeader>
+          <div className="space-y-3 mt-2">
+            <div className="space-y-1">
+              <Label className="font-body text-xs">Nome do template</Label>
+              <Input
+                value={saveAsTemplateName}
+                onChange={(e) => setSaveAsTemplateName(e.target.value)}
+                placeholder="Ex: Paris 7 dias clássico"
+                className="h-9 text-sm"
+                autoFocus
+              />
+              <p className="text-xs text-muted-foreground font-body">
+                O template fica disponível pra reutilização. Cliente, datas e passageiros não são copiados.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setSaveAsTemplateOpen(false)}>Cancelar</Button>
+              <Button onClick={handleSaveAsTemplate} disabled={!saveAsTemplateName.trim() || duplicating}>
+                {duplicating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Criar template"}
+              </Button>
+            </div>
+          </div>
+        </WhatsAppDialogContent>
+      </WhatsAppDialog>
+
+      {/* Delete template confirmation */}
+      <AlertDialog open={!!deleteTemplateTarget} onOpenChange={(open) => !open && setDeleteTemplateTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display">Excluir template?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O template "{deleteTemplateTarget?.template_name || deleteTemplateTarget?.title}" será removido permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTemplate} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
