@@ -1,14 +1,14 @@
 import { ReactNode } from "react";
-import { AlertTriangle, CheckCircle2, MoreVertical } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
  * Card redesenhado do kanban de cotações.
- * - Estado normal: fundo claro, borda esquerda colorida do stage.
- * - Estado crítico: fundo rosado, borda esquerda vermelha, badge de alerta.
+ * - Estado normal: fundo claro, borda esquerda colorida do stage, menu "⋮" no canto.
+ * - Estado crítico: fundo rosado, borda esquerda vermelha, badge de alerta no canto;
+ *   menu acessível via hover (aparece no canto inferior direito).
  *
- * Mantém drag-and-drop e click para abrir o editor (delegado ao container pai).
+ * Mantém drag-and-drop e click para abrir o editor (delegado via callbacks).
  */
 
 const CLOSED_STAGES = new Set(["confirmed", "completed", "lost", "canceled"]);
@@ -64,13 +64,12 @@ function getInitials(name?: string | null): string {
 
 function formatCurrencyShort(value: number | null | undefined): string {
   if (value == null || isNaN(Number(value))) return "";
-  const n = Number(value);
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(n);
+  }).format(Number(value));
 }
 
 type Critical = {
@@ -79,9 +78,8 @@ type Critical = {
 };
 
 /**
- * Determina se o card está em estado crítico e qual o motivo.
- * Prioridade: validade > prazo interno > idade.
- * Stages fechados nunca ficam críticos.
+ * Determina se o card está em estado crítico e o motivo.
+ * Prioridade: validade > prazo interno > idade. Stages fechados nunca ficam críticos.
  */
 function getCritical(
   quoteValidity: string | null | undefined,
@@ -95,35 +93,27 @@ function getCritical(
   const validity = parseDateOnly(quoteValidity);
   if (validity) {
     const days = diffDays(validity, today);
-    if (days < 0) {
-      return { badge: "URGENTE", context: `Expirada · ${formatBR(quoteValidity)}` };
-    }
-    if (days === 0) {
-      return { badge: "URGENTE", context: `Expira hoje · ${formatBR(quoteValidity)}` };
-    }
+    if (days < 0) return { badge: "URGENTE", context: `Expirada · ${formatBR(quoteValidity)}` };
+    if (days === 0) return { badge: "URGENTE", context: `Expira hoje · ${formatBR(quoteValidity)}` };
   }
 
   const due = parseDateOnly(internalDueDate);
   if (due) {
     const days = diffDays(due, today);
-    if (days < 0) {
-      return { badge: "ATRASADA", context: `Retorno atrasado · ${Math.abs(days)} dias` };
-    }
+    if (days < 0) return { badge: "ATRASADA", context: `Retorno atrasado · ${Math.abs(days)} dias` };
   }
 
   const created = parseDateOnly(createdAt);
   if (created) {
     const age = diffDays(today, created);
-    if (age > 30) {
-      return { badge: "ATRASADA", context: `Criada há ${age} dias` };
-    }
+    if (age > 30) return { badge: "ATRASADA", context: `Criada há ${age} dias` };
   }
 
   return null;
 }
 
 /**
- * Determina o texto da linha de contexto quando o card NÃO é crítico.
+ * Linha de contexto quando o card NÃO é crítico.
  * Prioridade: prazo próximo (1-3 dias) > datas de viagem > vazio.
  */
 function getNormalContext(
@@ -165,7 +155,7 @@ export interface QuoteKanbanCardProps {
   onClick: () => void;
   onDragStart: () => void;
   onDragEnd: () => void;
-  /** Renderizado dentro do DropdownMenu — passe o conteúdo do menu (DropdownMenuContent + items). */
+  /** Trigger do menu "⋮" (DropdownMenu completo: trigger + content). */
   menu: ReactNode;
 }
 
@@ -191,6 +181,7 @@ export function QuoteKanbanCard({
 
   const showWonBadge = quote.stage === "confirmed" && quote.conclusion_type === "won";
   const stageBorder = STAGE_BORDER[quote.stage] ?? "border-l-muted-foreground";
+  const cornerHasBadge = !!critical || showWonBadge;
 
   return (
     <div
@@ -207,50 +198,32 @@ export function QuoteKanbanCard({
       )}
     >
       <div className="px-3.5 py-3">
-        {/* Topo: título + indicador de situação */}
+        {/* Topo: título + canto direito (badge crítico/convertida OU menu ⋮) */}
         <div className="flex items-start justify-between gap-2 mb-1">
           <p className="text-sm font-medium font-body text-foreground flex-1 min-w-0 truncate leading-snug">
             {quote.title || quote.destination || "Sem título"}
           </p>
-          <div className="shrink-0 flex items-center" onClick={(e) => e.stopPropagation()}>
-            {critical ? (
+          <div className="shrink-0 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            {critical && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-destructive/15 text-destructive">
                 <AlertTriangle className="w-3 h-3" />
                 {critical.badge}
               </span>
-            ) : showWonBadge ? (
+            )}
+            {!critical && showWonBadge && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-success/15 text-success">
                 <CheckCircle2 className="w-3 h-3" />
                 Convertida
               </span>
-            ) : (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 text-muted-foreground opacity-60 group-hover:opacity-100"
-                onClick={(e) => e.stopPropagation()}
-                aria-label="Ações"
-                asChild={false}
-              >
-                {/* O trigger real do menu é renderizado pelo pai via prop `menu` (DropdownMenu wraps this). */}
-                <MoreVertical className="w-3.5 h-3.5" />
-              </Button>
             )}
-            {/* Menu sempre disponível (overlay) — fica posicionado pra hover/secundário quando há badge */}
-            {(critical || showWonBadge) && (
-              <div className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                {menu}
-              </div>
-            )}
-            {!critical && !showWonBadge && (
-              <div className="absolute right-2 top-2 opacity-0 pointer-events-none">
-                {/* placeholder — menu real é injetado abaixo */}
-              </div>
-            )}
+            {/* Menu: visível sempre quando não há badge no canto; quando há, aparece no hover */}
+            <div className={cn(cornerHasBadge && "opacity-0 group-hover:opacity-100 transition-opacity")}>
+              {menu}
+            </div>
           </div>
         </div>
 
-        {/* Linha de contexto */}
+        {/* Linha de contexto (reservada altura mínima pra evitar shift) */}
         <div className="min-h-[16px] mb-2.5">
           {critical ? (
             <p className="text-xs font-medium text-destructive font-body truncate">
@@ -268,7 +241,7 @@ export function QuoteKanbanCard({
           ) : null}
         </div>
 
-        {/* Divisor */}
+        {/* Divisor sutil */}
         <div className="h-px bg-border/60 -mx-3.5" />
 
         {/* Rodapé: avatar + vendedor + valor */}
