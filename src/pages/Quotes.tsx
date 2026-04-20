@@ -1534,23 +1534,34 @@ export default function Quotes() {
           </Button>
           <div>
             <h1 className="text-xl font-display font-semibold text-foreground">
-              {editingQuote ? "Editar Cotação" : "Nova Cotação"}
+              {editingQuote?.is_template ? "Editar Template" : editingQuote ? "Editar Cotação" : "Nova Cotação"}
             </h1>
             {editingQuote && (
               <p className="text-sm text-muted-foreground mt-0.5">
-                {[
-                  form.title,
-                  clients.find((c: any) => c.id === form.client_id)?.full_name,
-                  form.flexible_dates
-                    ? (form.flexible_dates_description || null)
-                    : form.travel_date_start
-                      ? `${format(parseISO(form.travel_date_start), "dd/MM/yyyy")}${form.travel_date_end ? ` a ${format(parseISO(form.travel_date_end), "dd/MM/yyyy")}` : ""}`
-                      : null,
-                ].filter(Boolean).join(" — ")}
+                {editingQuote.is_template
+                  ? (editingQuote.template_name || form.title || "Template")
+                  : [
+                      form.title,
+                      clients.find((c: any) => c.id === form.client_id)?.full_name,
+                      form.flexible_dates
+                        ? (form.flexible_dates_description || null)
+                        : form.travel_date_start
+                          ? `${format(parseISO(form.travel_date_start), "dd/MM/yyyy")}${form.travel_date_end ? ` a ${format(parseISO(form.travel_date_end), "dd/MM/yyyy")}` : ""}`
+                          : null,
+                    ].filter(Boolean).join(" — ")}
               </p>
             )}
           </div>
         </div>
+
+        {editingQuote?.is_template && (
+          <div className="rounded-lg border border-warning/40 bg-warning/10 px-4 py-2.5 flex items-center gap-2 text-sm font-body text-foreground">
+            <BookmarkPlus className="w-4 h-4 text-warning shrink-0" />
+            <span>
+              Você está editando um <strong>template</strong>. Cliente, datas, passageiros e etapa não se aplicam aqui.
+            </span>
+          </div>
+        )}
 
         {/* Stage stepper */}
         <div className="glass-card rounded-xl px-3 sm:px-4 py-3">
