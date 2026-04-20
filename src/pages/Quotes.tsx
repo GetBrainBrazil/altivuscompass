@@ -19,7 +19,7 @@ import QuoteItemAttachments from "@/components/quotes/QuoteItemAttachments";
 import QuoteOptionsManager from "@/components/quotes/QuoteOptionsManager";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle, FileText, MoreVertical, ClipboardCopy, Search, Archive, ArchiveRestore, TrendingUp, DollarSign, Target, Pencil, BookmarkPlus, LayoutTemplate } from "lucide-react";
+import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle, FileText, MoreVertical, ClipboardCopy, Search, Archive, ArchiveRestore, TrendingUp, DollarSign, Target, Pencil, BookmarkPlus, LayoutTemplate, Eye, EyeOff } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { MetricCard } from "@/components/MetricCard";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -683,6 +683,8 @@ export default function Quotes() {
         payment_terms: form.payment_terms || null,
         terms_conditions: form.terms_conditions || null,
         other_info: form.other_info || null,
+        client_notes: form.client_notes || null,
+        internal_notes: form.internal_notes || null,
         destination: selectedDestinations.length > 0 ? selectedDestinations.join(", ") : null,
         total_value: form.total_value ? Number(form.total_value) : 0,
         discount_amount: form.discount_amount ? Number(form.discount_amount) : 0,
@@ -1132,6 +1134,11 @@ export default function Quotes() {
       travel_date_start: q.travel_date_start ?? "",
       travel_date_end: q.travel_date_end ?? "",
       notes: q.notes ?? "",
+      // client_notes falls back to legacy `notes` if empty (does not overwrite legacy on save)
+      client_notes: ((q as any).client_notes && String((q as any).client_notes).trim())
+        ? (q as any).client_notes
+        : (q.notes ?? ""),
+      internal_notes: (q as any).internal_notes ?? "",
       lead_source: (q as any).lead_source ?? "",
       close_probability: (q as any).close_probability ?? "",
       internal_due_date: (q as any).internal_due_date ?? "",
@@ -2041,6 +2048,34 @@ export default function Quotes() {
                 <div className="lg:col-span-2 space-y-1">
                   <Label className="font-body text-xs">Outras Informações</Label>
                   <Textarea value={form.other_info ?? ""} onChange={(e) => setForm({ ...form, other_info: e.target.value })} rows={2} className="text-sm" placeholder="Informações complementares..." />
+                </div>
+                <div className="lg:col-span-2 space-y-1">
+                  <Label className="font-body text-xs flex items-center gap-1.5">
+                    <Eye className="w-3.5 h-3.5 text-muted-foreground" />
+                    Observações para o cliente
+                  </Label>
+                  <p className="text-[10px] text-muted-foreground font-body -mt-0.5">Aparece na proposta enviada</p>
+                  <Textarea
+                    value={form.client_notes ?? ""}
+                    onChange={(e) => setForm({ ...form, client_notes: e.target.value })}
+                    rows={3}
+                    className="text-sm"
+                    placeholder="Ex: Tarifas sujeitas a confirmação no momento da emissão..."
+                  />
+                </div>
+                <div className="lg:col-span-2 space-y-1">
+                  <Label className="font-body text-xs flex items-center gap-1.5">
+                    <EyeOff className="w-3.5 h-3.5 text-amber-600" />
+                    Observações internas
+                  </Label>
+                  <p className="text-[10px] text-muted-foreground font-body -mt-0.5">Só a equipe vê — não aparece na proposta</p>
+                  <Textarea
+                    value={form.internal_notes ?? ""}
+                    onChange={(e) => setForm({ ...form, internal_notes: e.target.value })}
+                    rows={3}
+                    className="text-sm bg-amber-50/40 border-amber-200 focus-visible:ring-amber-300"
+                    placeholder="Ex: cliente pediu desconto, segurar resposta até sexta..."
+                  />
                 </div>
               </div>
 
