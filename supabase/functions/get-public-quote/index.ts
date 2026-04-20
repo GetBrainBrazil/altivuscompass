@@ -200,6 +200,7 @@ Deno.serve(async (req) => {
           client_name: quote.clients?.full_name ?? null,
           client_phone: clientPhone,
           clients: undefined,
+          client_id: undefined,
         },
         items: items ?? [],
         passengers: allPassengers,
