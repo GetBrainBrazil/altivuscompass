@@ -92,6 +92,7 @@ type Quote = {
   archived_at?: string | null;
   archived_by?: string | null;
   is_template?: boolean | null;
+  template_name?: string | null;
   close_probability?: string | null;
   internal_due_date?: string | null;
   quote_validity?: string | null;
