@@ -188,6 +188,12 @@ export default function Quotes() {
   const [archiveTarget, setArchiveTarget] = useState<Quote | null>(null);
   const [unarchiveTarget, setUnarchiveTarget] = useState<Quote | null>(null);
   const [inlineValueEdit, setInlineValueEdit] = useState<{ id: string; value: string } | null>(null);
+  const [templatesDialogOpen, setTemplatesDialogOpen] = useState(false);
+  const [saveAsTemplateOpen, setSaveAsTemplateOpen] = useState(false);
+  const [saveAsTemplateSource, setSaveAsTemplateSource] = useState<Quote | null>(null);
+  const [saveAsTemplateName, setSaveAsTemplateName] = useState("");
+  const [deleteTemplateTarget, setDeleteTemplateTarget] = useState<Quote | null>(null);
+  const [duplicating, setDuplicating] = useState(false);
 
   // Debounce search
   useEffect(() => {
