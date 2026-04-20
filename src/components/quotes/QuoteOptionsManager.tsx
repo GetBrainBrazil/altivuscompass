@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Star, Layers, Undo2, Trash2 } from "lucide-react";
+import { Plus, Star, Layers, Undo2, Trash2, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type AnyItem = {
@@ -87,6 +87,9 @@ export default function QuoteOptionsManager<T extends AnyItem>({
   const sortedGrouped = [...groupedItems].sort(
     (a, b) => (a.item.option_order ?? 0) - (b.item.option_order ?? 0)
   );
+
+  // Algum item do grupo foi escolhido pelo cliente no aceite?
+  const hasSelectedInGroup = sortedGrouped.some(({ item }) => item.is_selected);
 
   const handleTransformToOptions = () => {
     if (looseItems.length === 1) {
@@ -239,9 +242,15 @@ export default function QuoteOptionsManager<T extends AnyItem>({
                   value={String(idx)}
                   className={cn(
                     "text-xs h-7 px-3 gap-1.5",
-                    item.is_recommended && "data-[state=active]:text-gold"
+                    item.is_recommended && "data-[state=active]:text-gold",
+                    item.is_selected &&
+                      "ring-2 ring-emerald-500/70 data-[state=active]:bg-emerald-500 data-[state=active]:text-white",
+                    hasSelectedInGroup && !item.is_selected && "opacity-50"
                   )}
                 >
+                  {item.is_selected && (
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600 data-[state=active]:text-white" />
+                  )}
                   {item.is_recommended && (
                     <Star className="w-3 h-3 fill-gold text-gold" />
                   )}
@@ -265,10 +274,31 @@ export default function QuoteOptionsManager<T extends AnyItem>({
               key={idx}
               value={String(idx)}
               className={cn(
-                "mt-2 rounded-md border border-border p-2.5 space-y-2.5",
-                item.is_recommended && "border-gold/60 ring-1 ring-gold/20"
+                "mt-2 rounded-md border p-2.5 space-y-2.5",
+                item.is_selected
+                  ? "border-2 border-emerald-500 ring-2 ring-emerald-500/30 bg-emerald-50/40"
+                  : item.is_recommended
+                  ? "border-gold/60 ring-1 ring-gold/20"
+                  : "border-border",
+                hasSelectedInGroup && !item.is_selected && "opacity-60"
               )}
             >
+              {/* Banner: escolhida pelo cliente */}
+              {item.is_selected && (
+                <div className="flex items-center gap-2 rounded-md bg-emerald-500/15 border border-emerald-500/40 px-2.5 py-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span className="text-xs font-semibold text-emerald-800 font-body">
+                    Escolhida pelo cliente no aceite
+                  </span>
+                  {item.is_recommended && (
+                    <span className="ml-auto inline-flex items-center gap-1 text-[11px] text-gold/90">
+                      <Star className="w-3 h-3 fill-gold text-gold" />
+                      também recomendada
+                    </span>
+                  )}
+                </div>
+              )}
+
               {/* Toolbar da opção */}
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
