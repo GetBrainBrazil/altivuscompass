@@ -545,9 +545,16 @@ export default function Quotes() {
   }, [activeTab, dialogOpen, items]);
 
   // Capture initial snapshot when editing an existing quote (after data is hydrated)
+  const snapshotCapturedRef = useRef(false);
+  useEffect(() => {
+    snapshotCapturedRef.current = false;
+  }, [dialogOpen, editingQuote?.id]);
   useEffect(() => {
     if (!dialogOpen || !editingQuote) return;
-    // wait a tick so items / passengers / linkedClients have settled
+    if (snapshotCapturedRef.current) return;
+    // For existing quotes, wait until items have loaded (or draft was restored) before snapshotting.
+    // Otherwise we snapshot an empty state and later diff against the loaded items, falsely triggering "unsaved changes".
+    if (editingQuote.id && items.length === 0 && !draftRestored) return;
     const t = window.setTimeout(() => {
       initialSnapshotRef.current = JSON.stringify({
         form,
@@ -558,11 +565,11 @@ export default function Quotes() {
         selectedDestinations,
         coverPreview,
       });
+      snapshotCapturedRef.current = true;
     }, 400);
     return () => window.clearTimeout(t);
-    // we intentionally only depend on editingQuote.id and dialogOpen — snapshot once per open
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dialogOpen, editingQuote?.id]);
+  }, [dialogOpen, editingQuote?.id, items.length, draftRestored]);
 
   // Keyboard shortcut: Ctrl/Cmd+S to save inside the quote editor
   const saveQuoteRef = useRef<((closeAfter: boolean) => Promise<string | null>) | null>(null);
