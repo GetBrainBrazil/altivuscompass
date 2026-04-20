@@ -1736,7 +1736,8 @@ export default function Quotes() {
                 </div>
               </div>
 
-              {/* Row 2: Datas / Data Flexível */}
+              {/* Row 2: Datas / Data Flexível — hidden in template mode */}
+              {!editingQuote?.is_template && (
               <div className="grid grid-cols-[auto_1fr_1fr] lg:grid-cols-[auto_minmax(130px,1fr)_minmax(130px,1fr)] gap-x-3 gap-y-3 items-start">
                 <div className="space-y-1">
                   <Label className="font-body text-xs whitespace-nowrap">Flexível</Label>
