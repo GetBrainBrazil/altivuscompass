@@ -697,12 +697,19 @@ export default function Quotes() {
         lead_source: form.lead_source || null,
         close_probability: form.close_probability || null,
         internal_due_date: form.internal_due_date || null,
+        quote_validity: form.quote_validity || null,
         price_breakdown: { linked_client_ids: selectedLinkedClients, client_self_traveling: clientSelfTraveling, flexible_dates: !!form.flexible_dates, flexible_dates_description: form.flexible_dates_description || null },
       };
 
       if (editingQuote) {
         const coverUrl = await uploadCoverImage(editingQuote.id);
         payload.cover_image_url = coverUrl;
+        // Bug fix: reset validity warning when validity date changes, so cron can fire again
+        const oldValidity = (editingQuote as any).quote_validity ?? null;
+        const newValidity = payload.quote_validity ?? null;
+        if (oldValidity !== newValidity) {
+          payload.validity_warning_sent_at = null;
+        }
         const { error } = await supabase.from("quotes").update(payload).eq("id", editingQuote.id);
         if (error) throw error;
 
