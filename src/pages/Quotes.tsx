@@ -1563,7 +1563,8 @@ export default function Quotes() {
           </div>
         )}
 
-        {/* Stage stepper */}
+        {/* Stage stepper — hidden in template mode */}
+        {!editingQuote?.is_template && (
         <div className="glass-card rounded-xl px-3 sm:px-4 py-3">
           <div className="flex items-center gap-0.5 sm:gap-1 flex-wrap">
             {stages.map((stage, idx) => {
