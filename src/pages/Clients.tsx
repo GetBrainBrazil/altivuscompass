@@ -709,7 +709,7 @@ export default function Clients() {
           )}
         </div>
 
-        <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-4">
+        <form onSubmit={(e) => { e.preventDefault(); if (saveMutation.isPending) return; saveMutation.mutate(); }} className="space-y-4">
           {/* ====== UPPER SECTION: Compact header with key data ====== */}
           <div className="glass-card rounded-xl p-4 space-y-3">
             {/* Row 1: Name + Rating + Birth + Gender + Active */}
