@@ -1784,6 +1784,7 @@ export default function Quotes() {
                   </div>
                 )}
               </div>
+              )}
 
               {/* Probabilidade de fechar + Prazo interno */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
