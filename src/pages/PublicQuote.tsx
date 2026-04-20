@@ -772,6 +772,14 @@ export default function PublicQuote() {
           </div>
         )}
 
+        {/* Client-facing notes (with legacy fallback to `notes`) */}
+        {(quote.client_notes || quote.notes) && (
+          <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 sm:p-5 space-y-1">
+            <h2 className="pq-fs-sm sm:text-sm font-semibold text-gray-900 font-body">Observações</h2>
+            <p className="pq-fs-sm sm:text-sm text-gray-500 font-body whitespace-pre-line leading-relaxed">{quote.client_notes || quote.notes}</p>
+          </div>
+        )}
+
         {/* Acceptance section */}
         <QuoteAcceptance
           quoteId={quote.id}
