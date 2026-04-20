@@ -1087,6 +1087,7 @@ export default function Quotes() {
     }
   };
 
+  const openCreate = (preset?: { client_id?: string }) => {
     setEditingQuote(null);
     setForm({ stage: "new", total_value: "", ...(preset?.client_id ? { client_id: preset.client_id } : {}) });
     setItems([]);
