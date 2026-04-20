@@ -27,10 +27,37 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Whitelist of fields safe to expose to the public client.
+    // IMPORTANT: never use select("*") here — internal/commercial fields
+    // (cost, commission, supplier, internal notes, etc.) must NEVER leak.
+    const PUBLIC_QUOTE_FIELDS = [
+      "id",
+      "title",
+      "destination",
+      "travel_date_start",
+      "travel_date_end",
+      "total_value",
+      "discount_amount",
+      "discount_percent",
+      "details",
+      "payment_terms",
+      "terms_conditions",
+      "other_info",
+      "client_notes",
+      "notes",
+      "cover_image_url",
+      "quote_validity",
+      "stage",
+      "price_breakdown",
+      "client_id",
+      "created_at",
+      "updated_at",
+    ].join(", ");
+
     // Fetch quote with client name and phone
     const { data: quote, error: quoteError } = await supabase
       .from("quotes")
-      .select("*, clients(full_name, phone)")
+      .select(`${PUBLIC_QUOTE_FIELDS}, clients(full_name, phone)`)
       .eq("id", quoteId)
       .single();
 
@@ -64,10 +91,30 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Whitelist of quote_items fields safe to expose. Excludes:
+    // unit_cost, commission_amount, commission_status, supplier_id,
+    // payment_source, attachment_urls, created_at, updated_at.
+    const PUBLIC_ITEM_FIELDS = [
+      "id",
+      "item_type",
+      "title",
+      "description",
+      "details",
+      "sort_order",
+      "quantity",
+      "unit_price",
+      "option_group",
+      "option_label",
+      "option_order",
+      "is_recommended",
+      "is_selected",
+      "external_url",
+    ].join(", ");
+
     // Fetch quote items
     const { data: items } = await supabase
       .from("quote_items")
-      .select("*")
+      .select(PUBLIC_ITEM_FIELDS)
       .eq("quote_id", quoteId)
       .order("sort_order");
 
