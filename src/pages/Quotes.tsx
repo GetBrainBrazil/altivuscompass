@@ -37,6 +37,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import QuoteHistoryTab from "@/components/quotes/QuoteHistoryTab";
 import QuoteInteractionsTab from "@/components/quotes/QuoteInteractionsTab";
 import { QuoteCardBadges, ProbabilityBadge, PROBABILITY_OPTIONS } from "@/components/quotes/QuoteCardBadges";
+import { QuoteKanbanCard } from "@/components/quotes/QuoteKanbanCard";
 import QuoteAcceptanceInfo from "@/components/quotes/QuoteAcceptanceInfo";
 import ItineraryTimeline from "@/components/itineraries/ItineraryTimeline";
 import ItineraryMapView from "@/components/itineraries/ItineraryMapView";
