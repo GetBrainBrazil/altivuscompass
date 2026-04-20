@@ -244,8 +244,19 @@ export default function Quotes() {
     },
   });
 
-  const { data: clients = [] } = useQuery({
-    queryKey: ["clients-list"],
+  // Templates (is_template = true)
+  const { data: templates = [] } = useQuery({
+    queryKey: ["quote-templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("quotes")
+        .select("*")
+        .eq("is_template", true)
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Quote[];
+    },
+  });
     queryFn: async () => {
       const { data, error } = await supabase.from("clients").select("id, full_name, phone, seat_preference, preferred_airports, travel_profile, travel_preferences, desired_destinations").order("full_name");
       if (error) throw error;
