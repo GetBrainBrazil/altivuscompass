@@ -1682,6 +1682,7 @@ export default function Quotes() {
                   </Select>
                 </div>
 
+                {!editingQuote?.is_template && (
                 <div className="col-span-2 lg:col-span-4 space-y-1">
                   <Label className="font-body text-xs">Cliente</Label>
                   <Select value={form.client_id ?? ""} onValueChange={(v) => { setForm({ ...form, client_id: v }); setSelectedPassengers([]); setSelectedLinkedClients([]); setClientSelfTraveling(false); }}>
@@ -1689,6 +1690,7 @@ export default function Quotes() {
                     <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
+                )}
 
                 <div className="col-span-2 lg:col-span-4 space-y-1">
                   <div className="flex items-center gap-1.5">
