@@ -15,6 +15,14 @@ const json = (body: unknown, status = 200) =>
 const cleanDigits = (s: unknown) => String(s ?? '').replace(/\D/g, '')
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
+/** Z-API espera DDI+DDD+número, só dígitos. Garante prefixo 55 (BR). */
+function normalizeBrPhone(raw: string | null | undefined): string {
+  const d = cleanDigits(raw)
+  if (!d) return ''
+  if (d.startsWith('55') && d.length >= 12) return d
+  return `55${d}`
+}
+
 interface AcceptBody {
   quote_id?: string
   accepter_name?: string
@@ -238,12 +246,12 @@ Deno.serve(async (req) => {
           .eq('user_id', quote.assigned_to)
           .maybeSingle()
 
-        const sellerPhone = cleanDigits(profile?.phone)
+        const sellerPhone = normalizeBrPhone(profile?.phone)
         const ZAPI_INSTANCE_ID = Deno.env.get('ZAPI_INSTANCE_ID')
         const ZAPI_TOKEN = Deno.env.get('ZAPI_TOKEN')
         const ZAPI_SECURITY_TOKEN = Deno.env.get('ZAPI_SECURITY_TOKEN')
 
-        if (sellerPhone && ZAPI_INSTANCE_ID && ZAPI_TOKEN && ZAPI_SECURITY_TOKEN) {
+        if (sellerPhone && sellerPhone.length >= 12 && ZAPI_INSTANCE_ID && ZAPI_TOKEN && ZAPI_SECURITY_TOKEN) {
           const message =
             `🎉 *Proposta aceita!*\n\n` +
             `Cotação: ${quote.title || quote.destination || quote.id}\n\n` +
