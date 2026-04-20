@@ -3161,9 +3161,15 @@ export default function Quotes() {
                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleCopySummary(quote); }}>
                                      <ClipboardCopy className="w-3.5 h-3.5 mr-2" /> Copiar resumo
                                    </DropdownMenuItem>
-                                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleOpenInWhatsapp(quote); }}>
-                                     <MessageCircle className="w-3.5 h-3.5 mr-2" /> Abrir no WhatsApp
-                                   </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleOpenInWhatsapp(quote); }}>
+                                      <MessageCircle className="w-3.5 h-3.5 mr-2" /> Abrir no WhatsApp
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDuplicate(quote); }} disabled={duplicating}>
+                                      <Copy className="w-3.5 h-3.5 mr-2" /> Duplicar
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setSaveAsTemplateSource(quote); setSaveAsTemplateName(quote.title ?? ""); setSaveAsTemplateOpen(true); }}>
+                                      <BookmarkPlus className="w-3.5 h-3.5 mr-2" /> Salvar como template
+                                    </DropdownMenuItem>
                                    {quote.archived_at ? (
                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setUnarchiveTarget(quote); }}>
                                        <ArchiveRestore className="w-3.5 h-3.5 mr-2" /> Desarquivar
