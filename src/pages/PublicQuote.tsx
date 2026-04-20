@@ -771,6 +771,15 @@ export default function PublicQuote() {
             <p className="pq-fs-sm sm:text-sm text-gray-500 font-body whitespace-pre-line leading-relaxed">{getContent("other_info")}</p>
           </div>
         )}
+
+        {/* Acceptance section */}
+        <QuoteAcceptance
+          quoteId={quote.id}
+          stage={quote.stage}
+          quoteValidity={quote.quote_validity}
+          termsConditions={getContent("terms_conditions")}
+          items={items}
+        />
       </main>
 
       {/* Footer */}
