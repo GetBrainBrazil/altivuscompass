@@ -7,13 +7,15 @@ import ItineraryTimeline from "@/components/itineraries/ItineraryTimeline";
 import ItineraryMapView from "@/components/itineraries/ItineraryMapView";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, Plane } from "lucide-react";
+import { Calendar, Plane, Map as MapIcon, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function PublicItinerary() {
   const { token } = useParams<{ token: string }>();
   const isMobile = useIsMobile();
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
+  const [mobileMapVisible, setMobileMapVisible] = useState(true);
 
   const { data: itinerary, isLoading, error } = useQuery({
     queryKey: ["public-itinerary", token],
@@ -86,15 +88,37 @@ export default function PublicItinerary() {
         </div>
 
         {/* Map */}
-        <div className={isMobile ? "h-[45vh] shrink-0" : "w-1/2"}>
-          <ItineraryMapView
-            itineraryId={itinerary.id}
-            selectedDayId={selectedDayId}
-            selectedActivityId={selectedActivityId}
-            onSelectActivity={setSelectedActivityId}
-            height="h-full"
-          />
-        </div>
+        {(!isMobile || mobileMapVisible) && (
+          <div className={isMobile ? "h-[45vh] shrink-0 relative" : "w-1/2"}>
+            {isMobile && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setMobileMapVisible(false)}
+                className="absolute top-2 right-2 z-10 h-8 px-2 shadow-md"
+              >
+                <EyeOff className="h-3.5 w-3.5 mr-1" /> Ocultar
+              </Button>
+            )}
+            <ItineraryMapView
+              itineraryId={itinerary.id}
+              selectedDayId={selectedDayId}
+              selectedActivityId={selectedActivityId}
+              onSelectActivity={setSelectedActivityId}
+              height="h-full"
+            />
+          </div>
+        )}
+
+        {/* Floating button to show map again on mobile */}
+        {isMobile && !mobileMapVisible && (
+          <Button
+            onClick={() => setMobileMapVisible(true)}
+            className="fixed bottom-4 right-4 z-20 shadow-lg rounded-full h-12 px-4"
+          >
+            <MapIcon className="h-4 w-4 mr-2" /> Mostrar mapa
+          </Button>
+        )}
       </div>
     </div>
   );
