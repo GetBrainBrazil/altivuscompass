@@ -916,7 +916,177 @@ export default function Quotes() {
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
 
-  const openCreate = (preset?: { client_id?: string }) => {
+  /**
+   * Duplicate a quote (or template). Modes:
+   *  - "duplicate": copy as a regular new quote (title + " (cópia)")
+   *  - "template":  copy and mark as template (uses templateName as title/template_name; clears client+dates+passengers)
+   *  - "use_template": copy a template into a new regular quote, clearing client+dates and resetting selections
+   * Returns the new quote id (or null on failure).
+   */
+  const duplicateQuote = async (
+    sourceId: string,
+    mode: "duplicate" | "template" | "use_template",
+    templateName?: string,
+  ): Promise<string | null> => {
+    setDuplicating(true);
+    try {
+      // Fetch full source quote + items + passengers
+      const [{ data: source, error: srcErr }, { data: srcItems, error: itemsErr }, { data: srcPax, error: paxErr }] = await Promise.all([
+        supabase.from("quotes").select("*").eq("id", sourceId).single(),
+        supabase.from("quote_items").select("*").eq("quote_id", sourceId).order("sort_order"),
+        supabase.from("quote_passengers").select("passenger_id").eq("quote_id", sourceId),
+      ]);
+      if (srcErr || !source) throw srcErr ?? new Error("Cotação de origem não encontrada");
+      if (itemsErr) throw itemsErr;
+      if (paxErr) throw paxErr;
+
+      const isTemplate = mode === "template";
+      const baseTitle = source.title ?? "Cotação";
+      const newTitle = isTemplate
+        ? (templateName || baseTitle)
+        : mode === "use_template"
+          ? baseTitle
+          : `${baseTitle} (cópia)`;
+
+      // Build payload — copy everything except identity/audit/lifecycle fields
+      const {
+        id: _id,
+        created_at: _ca,
+        updated_at: _ua,
+        archived_at: _aa,
+        archived_by: _ab,
+        validity_warning_sent_at: _vws,
+        ...rest
+      } = source as any;
+
+      const newQuote: any = {
+        ...rest,
+        title: newTitle,
+        stage: "new",
+        conclusion_type: null,
+        is_template: isTemplate,
+        template_name: isTemplate ? (templateName || baseTitle) : null,
+        created_by: user?.id ?? null,
+        archived_at: null,
+        archived_by: null,
+        validity_warning_sent_at: null,
+      };
+
+      if (isTemplate || mode === "use_template") {
+        newQuote.client_id = null;
+        newQuote.travel_date_start = null;
+        newQuote.travel_date_end = null;
+      }
+
+      const { data: inserted, error: insErr } = await supabase
+        .from("quotes")
+        .insert(newQuote)
+        .select("id")
+        .single();
+      if (insErr || !inserted) throw insErr ?? new Error("Falha ao criar cotação");
+      const newId = inserted.id as string;
+
+      // Duplicate items (skip attachment_urls; reset is_selected when using a template)
+      let attachmentsSkipped = 0;
+      if (srcItems && srcItems.length > 0) {
+        const itemPayloads = srcItems.map((it: any) => {
+          const { id: _iid, created_at: _ic, updated_at: _iu, attachment_urls, quote_id: _qid, ...itemRest } = it;
+          if (Array.isArray(attachment_urls) && attachment_urls.length > 0) attachmentsSkipped += attachment_urls.length;
+          return {
+            ...itemRest,
+            quote_id: newId,
+            attachment_urls: [],
+            is_selected: mode === "use_template" ? false : itemRest.is_selected,
+          };
+        });
+        const { error: itemsInsErr } = await supabase.from("quote_items").insert(itemPayloads);
+        if (itemsInsErr) throw itemsInsErr;
+      }
+
+      // Duplicate passengers (skip when template / use_template)
+      if (mode === "duplicate" && srcPax && srcPax.length > 0) {
+        const paxPayloads = srcPax.map((p: any) => ({ quote_id: newId, passenger_id: p.passenger_id }));
+        await supabase.from("quote_passengers").insert(paxPayloads);
+      }
+
+      // Log history on the NEW quote
+      try {
+        const action = mode === "template" ? "saved_as_template" : mode === "use_template" ? "created_from_template" : "duplicated";
+        const description = mode === "template"
+          ? `Template criado a partir da cotação ${sourceId.slice(0, 8)}`
+          : mode === "use_template"
+            ? `Cotação criada a partir do template "${baseTitle}"`
+            : `Cotação duplicada a partir de ${sourceId.slice(0, 8)}`;
+        await logHistory(newId, action, description, { source_quote_id: sourceId });
+      } catch {}
+
+      if (attachmentsSkipped > 0) {
+        toast({ title: "Anexos não copiados", description: `${attachmentsSkipped} anexo(s) ficaram apenas na cotação original.` });
+      }
+
+      return newId;
+    } catch (err: any) {
+      toast({ title: "Erro ao duplicar", description: err?.message ?? "Falha desconhecida", variant: "destructive" });
+      return null;
+    } finally {
+      setDuplicating(false);
+    }
+  };
+
+  const handleDuplicate = async (q: Quote) => {
+    const newId = await duplicateQuote(q.id, "duplicate");
+    if (!newId) return;
+    toast({ title: "Cotação duplicada" });
+    queryClient.invalidateQueries({ queryKey: ["quotes"] });
+    queryClient.invalidateQueries({ queryKey: ["quotes-metrics"] });
+    // Fetch the new quote and open editor
+    const { data } = await supabase.from("quotes").select("*, clients(full_name)").eq("id", newId).single();
+    if (data) openEdit({ ...(data as any), client_name: (data as any).clients?.full_name } as Quote);
+  };
+
+  const handleSaveAsTemplate = async () => {
+    if (!saveAsTemplateSource || !saveAsTemplateName.trim()) return;
+    const newId = await duplicateQuote(saveAsTemplateSource.id, "template", saveAsTemplateName.trim());
+    if (!newId) return;
+    toast({ title: "Template criado" });
+    queryClient.invalidateQueries({ queryKey: ["quote-templates"] });
+    setSaveAsTemplateOpen(false);
+    setSaveAsTemplateSource(null);
+    setSaveAsTemplateName("");
+  };
+
+  const handleUseTemplate = async (tpl: Quote) => {
+    const newId = await duplicateQuote(tpl.id, "use_template");
+    if (!newId) return;
+    toast({ title: "Cotação criada a partir do template" });
+    queryClient.invalidateQueries({ queryKey: ["quotes"] });
+    queryClient.invalidateQueries({ queryKey: ["quotes-metrics"] });
+    setTemplatesDialogOpen(false);
+    const { data } = await supabase.from("quotes").select("*, clients(full_name)").eq("id", newId).single();
+    if (data) openEdit({ ...(data as any), client_name: (data as any).clients?.full_name } as Quote);
+  };
+
+  const handleEditTemplate = (tpl: Quote) => {
+    setTemplatesDialogOpen(false);
+    openEdit(tpl);
+  };
+
+  const handleDeleteTemplate = async () => {
+    if (!deleteTemplateTarget) return;
+    try {
+      await supabase.from("quote_items").delete().eq("quote_id", deleteTemplateTarget.id);
+      await supabase.from("quote_passengers").delete().eq("quote_id", deleteTemplateTarget.id);
+      const { error } = await supabase.from("quotes").delete().eq("id", deleteTemplateTarget.id);
+      if (error) throw error;
+      toast({ title: "Template excluído" });
+      queryClient.invalidateQueries({ queryKey: ["quote-templates"] });
+    } catch (err: any) {
+      toast({ title: "Erro", description: err?.message ?? "Falha ao excluir", variant: "destructive" });
+    } finally {
+      setDeleteTemplateTarget(null);
+    }
+  };
+
     setEditingQuote(null);
     setForm({ stage: "new", total_value: "", ...(preset?.client_id ? { client_id: preset.client_id } : {}) });
     setItems([]);
