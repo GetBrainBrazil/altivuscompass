@@ -37,6 +37,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import QuoteHistoryTab from "@/components/quotes/QuoteHistoryTab";
 import QuoteInteractionsTab from "@/components/quotes/QuoteInteractionsTab";
 import { QuoteCardBadges, ProbabilityBadge, PROBABILITY_OPTIONS } from "@/components/quotes/QuoteCardBadges";
+import { QuoteKanbanCard } from "@/components/quotes/QuoteKanbanCard";
 import QuoteAcceptanceInfo from "@/components/quotes/QuoteAcceptanceInfo";
 import ItineraryTimeline from "@/components/itineraries/ItineraryTimeline";
 import ItineraryMapView from "@/components/itineraries/ItineraryMapView";
@@ -3036,59 +3037,29 @@ export default function Quotes() {
                        <span className="text-xs text-muted-foreground font-body ml-auto">{stageQuotes.length}</span>
                      </div>
                      <div className="space-y-3 min-h-[60px] rounded-lg transition-colors">
-                       {stageQuotes.map((quote: Quote) => (
-                         <div key={quote.id}
-                           draggable
-                           onDragStart={() => setDraggedQuoteId(quote.id)}
-                           onDragEnd={() => setDraggedQuoteId(null)}
-                          className={cn("glass-card rounded-xl p-3 cursor-grab hover:shadow-md transition-all animate-fade-in active:cursor-grabbing", draggedQuoteId === quote.id && "opacity-40", showArchived && "opacity-60")}
-                           onClick={() => openEdit(quote)}
-                         >
-                           <div className="flex items-start justify-between mb-1 gap-2">
-                              <p className="text-sm font-medium font-body text-foreground flex-1 min-w-0 truncate">{quote.title || quote.destination || "Sem título"}</p>
-                              <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-                                {inlineValueEdit?.id === quote.id ? (
-                                  <Input
-                                    autoFocus
-                                    type="number"
-                                    inputMode="decimal"
-                                    className="h-6 w-24 text-xs px-1 py-0"
-                                    value={inlineValueEdit.value}
-                                    onChange={(e) => setInlineValueEdit({ id: quote.id, value: e.target.value })}
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter") {
-                                        const newVal = Number(inlineValueEdit.value) || 0;
-                                        if (newVal !== Number(quote.total_value ?? 0)) {
-                                          saveInlineQuoteField(quote.id, "total_value", newVal,
-                                            `Valor alterado para ${formatCurrency(newVal)}`);
-                                        }
-                                        setInlineValueEdit(null);
-                                      } else if (e.key === "Escape") setInlineValueEdit(null);
-                                    }}
-                                    onBlur={() => {
-                                      const newVal = Number(inlineValueEdit.value) || 0;
-                                      if (newVal !== Number(quote.total_value ?? 0)) {
-                                        saveInlineQuoteField(quote.id, "total_value", newVal,
-                                          `Valor alterado para ${formatCurrency(newVal)}`);
-                                      }
-                                      setInlineValueEdit(null);
-                                    }}
-                                  />
-                                ) : (
-                                  <>
-                                    <span className="text-xs font-semibold text-foreground font-body">{formatCurrency(quote.total_value)}</span>
-                                    <Button
-                                      variant="ghost" size="icon" className="h-5 w-5"
-                                      onClick={(e) => { e.stopPropagation(); setInlineValueEdit({ id: quote.id, value: String(quote.total_value ?? "") }); }}
-                                      aria-label="Editar valor"
-                                    >
-                                      <Pencil className="w-3 h-3 text-muted-foreground" />
-                                    </Button>
-                                  </>
-                                )}
+                        {stageQuotes.map((quote: Quote) => {
+                          const sellerName =
+                            (sellers as any[]).find((s) => s.user_id === (quote as any).assigned_to)?.full_name ?? null;
+                          return (
+                            <QuoteKanbanCard
+                              key={quote.id}
+                              quote={quote as any}
+                              assigneeName={sellerName}
+                              isDragging={draggedQuoteId === quote.id}
+                              isArchivedView={showArchived}
+                              onClick={() => openEdit(quote)}
+                              onDragStart={() => setDraggedQuoteId(quote.id)}
+                              onDragEnd={() => setDraggedQuoteId(null)}
+                              menu={
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => e.stopPropagation()} aria-label="Ações">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6 text-muted-foreground"
+                                      onClick={(e) => e.stopPropagation()}
+                                      aria-label="Ações"
+                                    >
                                       <MoreVertical className="w-3.5 h-3.5" />
                                     </Button>
                                   </DropdownMenuTrigger>
@@ -3116,61 +3087,10 @@ export default function Quotes() {
                                     )}
                                   </DropdownMenuContent>
                                 </DropdownMenu>
-                              </div>
-                            </div>
-                           <p className="text-xs text-muted-foreground font-body mb-2">{quote.client_name}</p>
-                           <QuoteCardBadges
-                             internalDueDate={(quote as any).internal_due_date}
-                             createdAt={quote.created_at}
-                             quoteValidity={(quote as any).quote_validity}
-                             stage={quote.stage}
-                           />
-                           <div className="flex items-center gap-1 mb-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
-                             <Popover>
-                               <PopoverTrigger asChild>
-                                 <button type="button" className="inline-flex">
-                                   {(quote as any).close_probability ? (
-                                     <ProbabilityBadge value={(quote as any).close_probability} className="cursor-pointer hover:opacity-80" />
-                                   ) : (
-                                     <span className="text-[9px] text-muted-foreground hover:text-foreground border border-dashed border-border rounded-full px-1.5 py-0.5 font-body cursor-pointer">
-                                       + probabilidade
-                                     </span>
-                                   )}
-                                 </button>
-                               </PopoverTrigger>
-                               <PopoverContent align="start" className="w-44 p-1">
-                                 {PROBABILITY_OPTIONS.map((o) => (
-                                   <button
-                                     key={o.value}
-                                     type="button"
-                                     className="w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded hover:bg-accent text-left font-body"
-                                     onClick={() => {
-                                       const newVal = o.value === "_none" ? null : o.value;
-                                       const cur = (quote as any).close_probability ?? null;
-                                       if (newVal !== cur) {
-                                         saveInlineQuoteField(quote.id, "close_probability", newVal,
-                                           `Probabilidade alterada para "${o.label}"`);
-                                       }
-                                     }}
-                                   >
-                                     {o.dot && <span className={cn("w-2 h-2 rounded-full", o.dot)} />}
-                                     {!o.dot && <span className="w-2 h-2" />}
-                                     {o.label}
-                                   </button>
-                                 ))}
-                               </PopoverContent>
-                             </Popover>
-                             {stage.id === "confirmed" && quote.conclusion_type && (
-                               <Badge variant={quote.conclusion_type === "won" ? "default" : "destructive"} className="text-[10px]">
-                                 {quote.conclusion_type === "won" ? "Convertida" : "Perdida"}
-                               </Badge>
-                             )}
-                           </div>
-                           <div className="text-[10px] text-muted-foreground font-body">
-                             <span>{quote.travel_date_start ? quote.travel_date_start.split("-").reverse().join("/") : ""} {quote.travel_date_end ? `– ${quote.travel_date_end.split("-").reverse().join("/")}` : ""}</span>
-                           </div>
-                         </div>
-                       ))}
+                              }
+                            />
+                          );
+                        })}
                       {stageQuotes.length === 0 && (
                         <div className="rounded-xl border border-dashed border-border/50 p-4 sm:p-6 text-center">
                           <p className="text-xs text-muted-foreground font-body">Sem cotações</p>
