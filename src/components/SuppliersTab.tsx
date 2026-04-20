@@ -96,7 +96,7 @@ export default function SuppliersTab() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const { userRole } = useAuth();
-  const isAdmin = userRole === "admin";
+  const isAdmin = userRole === "admin" || userRole === "manager";
   const [search, setSearch] = useState("");
   const [view, setView] = useState<"list" | "form">("list");
   const [editing, setEditing] = useState<any>(null);
