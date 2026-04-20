@@ -3038,13 +3038,15 @@ export default function Quotes() {
                      </div>
                      <div className="space-y-3 min-h-[60px] rounded-lg transition-colors">
                         {stageQuotes.map((quote: Quote) => {
-                          const sellerName =
-                            (sellers as any[]).find((s) => s.user_id === (quote as any).assigned_to)?.full_name ?? null;
+                          const clientName =
+                            (quote as any).client_name && (quote as any).client_name !== "Sem cliente"
+                              ? (quote as any).client_name
+                              : null;
                           return (
                             <QuoteKanbanCard
                               key={quote.id}
                               quote={quote as any}
-                              assigneeName={sellerName}
+                              assigneeName={clientName}
                               isDragging={draggedQuoteId === quote.id}
                               isArchivedView={showArchived}
                               onClick={() => openEdit(quote)}

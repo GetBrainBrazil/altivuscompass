@@ -258,7 +258,7 @@ export function QuoteKanbanCard({
             {assigneeName ? getInitials(assigneeName) : "?"}
           </div>
           <span className="text-xs text-muted-foreground font-body truncate flex-1 min-w-0">
-            {assigneeName || "Sem vendedor"}
+            {assigneeName || "Sem cliente"}
           </span>
           {quote.total_value && Number(quote.total_value) > 0 ? (
             <span className="text-[13px] font-medium text-foreground font-body shrink-0">
