@@ -3338,6 +3338,93 @@ export default function Quotes() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Templates list dialog */}
+      <WhatsAppDialog open={templatesDialogOpen} onOpenChange={setTemplatesDialogOpen}>
+        <WhatsAppDialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <WhatsAppDialogHeader>
+            <WhatsAppDialogTitle className="font-display flex items-center gap-2">
+              <LayoutTemplate className="w-5 h-5" /> Templates de cotação
+            </WhatsAppDialogTitle>
+          </WhatsAppDialogHeader>
+          {templates.length === 0 ? (
+            <p className="text-sm text-muted-foreground font-body py-8 text-center">
+              Nenhum template criado ainda. Use "Salvar como template" no menu de uma cotação.
+            </p>
+          ) : (
+            <div className="space-y-2 mt-2">
+              {templates.map((tpl) => (
+                <div key={tpl.id} className="border border-border rounded-lg p-3 flex items-start justify-between gap-3 hover:bg-muted/40 transition-colors">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-body font-semibold text-sm text-foreground truncate">{tpl.template_name || tpl.title}</h4>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground font-body">
+                      {tpl.destination && <span className="truncate">📍 {tpl.destination}</span>}
+                      {tpl.total_value != null && <span>R$ {Number(tpl.total_value).toLocaleString("pt-BR")}</span>}
+                    </div>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <Button size="sm" variant="default" disabled={duplicating} onClick={() => handleUseTemplate(tpl)}>Usar</Button>
+                    <Button size="sm" variant="outline" onClick={() => handleEditTemplate(tpl)}>Editar</Button>
+                    <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDeleteTemplateTarget(tpl)}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </WhatsAppDialogContent>
+      </WhatsAppDialog>
+
+      {/* Save as template dialog */}
+      <WhatsAppDialog open={saveAsTemplateOpen} onOpenChange={(open) => { setSaveAsTemplateOpen(open); if (!open) { setSaveAsTemplateSource(null); setSaveAsTemplateName(""); } }}>
+        <WhatsAppDialogContent className="max-w-md">
+          <WhatsAppDialogHeader>
+            <WhatsAppDialogTitle className="font-display flex items-center gap-2">
+              <BookmarkPlus className="w-5 h-5" /> Salvar como template
+            </WhatsAppDialogTitle>
+          </WhatsAppDialogHeader>
+          <div className="space-y-3 mt-2">
+            <div className="space-y-1">
+              <Label className="font-body text-xs">Nome do template</Label>
+              <Input
+                value={saveAsTemplateName}
+                onChange={(e) => setSaveAsTemplateName(e.target.value)}
+                placeholder="Ex: Paris 7 dias clássico"
+                className="h-9 text-sm"
+                autoFocus
+              />
+              <p className="text-xs text-muted-foreground font-body">
+                O template fica disponível pra reutilização. Cliente, datas e passageiros não são copiados.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setSaveAsTemplateOpen(false)}>Cancelar</Button>
+              <Button onClick={handleSaveAsTemplate} disabled={!saveAsTemplateName.trim() || duplicating}>
+                {duplicating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Criar template"}
+              </Button>
+            </div>
+          </div>
+        </WhatsAppDialogContent>
+      </WhatsAppDialog>
+
+      {/* Delete template confirmation */}
+      <AlertDialog open={!!deleteTemplateTarget} onOpenChange={(open) => !open && setDeleteTemplateTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display">Excluir template?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O template "{deleteTemplateTarget?.template_name || deleteTemplateTarget?.title}" será removido permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTemplate} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
