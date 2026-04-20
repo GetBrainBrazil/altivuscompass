@@ -88,15 +88,37 @@ export default function PublicItinerary() {
         </div>
 
         {/* Map */}
-        <div className={isMobile ? "h-[45vh] shrink-0" : "w-1/2"}>
-          <ItineraryMapView
-            itineraryId={itinerary.id}
-            selectedDayId={selectedDayId}
-            selectedActivityId={selectedActivityId}
-            onSelectActivity={setSelectedActivityId}
-            height="h-full"
-          />
-        </div>
+        {(!isMobile || mobileMapVisible) && (
+          <div className={isMobile ? "h-[45vh] shrink-0 relative" : "w-1/2"}>
+            {isMobile && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setMobileMapVisible(false)}
+                className="absolute top-2 right-2 z-10 h-8 px-2 shadow-md"
+              >
+                <EyeOff className="h-3.5 w-3.5 mr-1" /> Ocultar
+              </Button>
+            )}
+            <ItineraryMapView
+              itineraryId={itinerary.id}
+              selectedDayId={selectedDayId}
+              selectedActivityId={selectedActivityId}
+              onSelectActivity={setSelectedActivityId}
+              height="h-full"
+            />
+          </div>
+        )}
+
+        {/* Floating button to show map again on mobile */}
+        {isMobile && !mobileMapVisible && (
+          <Button
+            onClick={() => setMobileMapVisible(true)}
+            className="fixed bottom-4 right-4 z-20 shadow-lg rounded-full h-12 px-4"
+          >
+            <MapIcon className="h-4 w-4 mr-2" /> Mostrar mapa
+          </Button>
+        )}
       </div>
     </div>
   );
