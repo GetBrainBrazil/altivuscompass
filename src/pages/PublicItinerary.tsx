@@ -7,13 +7,15 @@ import ItineraryTimeline from "@/components/itineraries/ItineraryTimeline";
 import ItineraryMapView from "@/components/itineraries/ItineraryMapView";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, Plane } from "lucide-react";
+import { Calendar, Plane, Map as MapIcon, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function PublicItinerary() {
   const { token } = useParams<{ token: string }>();
   const isMobile = useIsMobile();
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
+  const [mobileMapVisible, setMobileMapVisible] = useState(true);
 
   const { data: itinerary, isLoading, error } = useQuery({
     queryKey: ["public-itinerary", token],
