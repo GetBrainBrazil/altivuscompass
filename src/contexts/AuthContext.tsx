@@ -69,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const hasLoggedLoginRef = useRef(false);
+  const lastUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -76,8 +77,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          setLoading(true);
-          fetchUserRole(session.user.id);
+          // Only show loading spinner on actual user change (login), not on token refresh / tab focus
+          const isNewUser = lastUserIdRef.current !== session.user.id;
+          lastUserIdRef.current = session.user.id;
+          if (isNewUser) {
+            setLoading(true);
+            fetchUserRole(session.user.id);
+          }
           // Log login event once per session
           if (!hasLoggedLoginRef.current) {
             hasLoggedLoginRef.current = true;
@@ -88,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             });
           }
         } else {
+          lastUserIdRef.current = null;
           setRealRole(null);
           setImpersonatingRoleState(null);
           setImpersonatingUserState(null);
@@ -101,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
+        lastUserIdRef.current = session.user.id;
         setLoading(true);
         fetchUserRole(session.user.id);
       } else {
