@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Printer, Globe, Loader2, Backpack, Briefcase, Luggage, Plus, Minus, MapPin, ExternalLink, Clock } from "lucide-react";
+import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Printer, Globe, Loader2, Backpack, Briefcase, Luggage, Plus, Minus, MapPin, ExternalLink, Clock, Download } from "lucide-react";
 import logoAltivusFallback from "@/assets/logo-altivus.png";
 import { QuoteAcceptance } from "@/components/quotes/QuoteAcceptance";
 import { type QuoteLang, LANG_OPTIONS, getTranslations, getItemTypeLabel, getRelationshipLabel, getFlagUrl, getCabinClassLabel, getConnectionsLabel, getFlightDirectionLabel } from "@/lib/quote-translations";
@@ -658,6 +658,25 @@ export default function PublicQuote() {
                             {d.observation && (
                               <p className="pq-fs-2xs text-gray-500 font-body italic sm:pl-6">{d.observation}</p>
                             )}
+
+                            {/* Client-visible attachments */}
+                            {Array.isArray(item.public_attachments) && item.public_attachments.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 sm:pl-6 pt-1">
+                                {item.public_attachments.map((att: any) => (
+                                  <a
+                                    key={att.id}
+                                    href={att.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    download={att.name}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full pq-fs-3xs font-body bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 transition-colors"
+                                  >
+                                    <Download className="w-3 h-3" />
+                                    <span>{(t as any).downloadTicket ?? "Baixar bilhete"}</span>
+                                  </a>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         );
                       }
@@ -728,6 +747,23 @@ export default function PublicQuote() {
                                 {description && (
                                   <p className="pq-fs-xs sm:text-xs text-gray-500 font-body italic">{description}</p>
                                 )}
+                                {Array.isArray(item.public_attachments) && item.public_attachments.length > 0 && (
+                                  <div className="flex flex-wrap gap-1.5 pt-1">
+                                    {item.public_attachments.map((att: any) => (
+                                      <a
+                                        key={att.id}
+                                        href={att.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        download={att.name}
+                                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full pq-fs-3xs font-body bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 transition-colors"
+                                      >
+                                        <Download className="w-3 h-3" />
+                                        <span>{att.name}</span>
+                                      </a>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -735,9 +771,26 @@ export default function PublicQuote() {
                       }
 
                       return (
-                        <div key={idx} className="border border-gray-200 rounded-lg p-3">
+                        <div key={idx} className="border border-gray-200 rounded-lg p-3 space-y-1.5">
                           {title && <p className="pq-fs-sm sm:text-sm font-medium text-gray-900 font-body">{title}</p>}
                           {description && <p className="pq-fs-xs sm:text-xs text-gray-500 font-body mt-0.5">{description}</p>}
+                          {Array.isArray(item.public_attachments) && item.public_attachments.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 pt-1">
+                              {item.public_attachments.map((att: any) => (
+                                <a
+                                  key={att.id}
+                                  href={att.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  download={att.name}
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full pq-fs-3xs font-body bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 transition-colors"
+                                >
+                                  <Download className="w-3 h-3" />
+                                  <span>{att.name}</span>
+                                </a>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       );
                     })}

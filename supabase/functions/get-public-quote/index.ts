@@ -118,6 +118,36 @@ Deno.serve(async (req) => {
       .eq("quote_id", quoteId)
       .order("sort_order");
 
+    // Fetch client-visible attachments per item, with short-lived signed URLs
+    let itemsWithAttachments = items ?? [];
+    if (items && items.length > 0) {
+      const itemIds = items.map((i: any) => i.id);
+      const { data: pubAttachments } = await supabase
+        .from("quote_item_attachments")
+        .select("id, quote_item_id, file_path, original_name, mime_type")
+        .in("quote_item_id", itemIds)
+        .eq("is_public", true);
+
+      const grouped: Record<string, any[]> = {};
+      for (const att of pubAttachments ?? []) {
+        const { data: signed } = await supabase.storage
+          .from("quote-item-attachments")
+          .createSignedUrl(att.file_path, 60 * 60); // 1h
+        if (!signed?.signedUrl) continue;
+        const arr = grouped[att.quote_item_id] ?? (grouped[att.quote_item_id] = []);
+        arr.push({
+          id: att.id,
+          name: att.original_name ?? att.file_path.split("/").pop() ?? "arquivo",
+          url: signed.signedUrl,
+          mime_type: att.mime_type,
+        });
+      }
+      itemsWithAttachments = items.map((i: any) => ({
+        ...i,
+        public_attachments: grouped[i.id] ?? [],
+      }));
+    }
+
     // Fetch passengers linked to this quote
     const { data: quotePassengers } = await supabase
       .from("quote_passengers")
@@ -202,7 +232,7 @@ Deno.serve(async (req) => {
           clients: undefined,
           client_id: undefined,
         },
-        items: items ?? [],
+        items: itemsWithAttachments,
         passengers: allPassengers,
         agency: agency ?? null,
         itinerary: itinerary?.public_token ? { title: itinerary.title, public_token: itinerary.public_token } : null,
