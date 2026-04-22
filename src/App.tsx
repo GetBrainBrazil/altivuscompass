@@ -26,6 +26,8 @@ import Tasks from "./pages/Tasks";
 import PublicQuote from "./pages/PublicQuote";
 import Itineraries from "./pages/Itineraries";
 import PublicItinerary from "./pages/PublicItinerary";
+import ServiceCenter from "./pages/ServiceCenter";
+import CRM from "./pages/CRM";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -64,6 +66,8 @@ const App = () => (
             <Route path="/itineraries" element={<ProtectedRoute><AppLayout><Itineraries /></AppLayout></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><AppLayout><MyProfile /></AppLayout></ProtectedRoute>} />
             <Route path="/system" element={<ProtectedRoute><AppLayout><System /></AppLayout></ProtectedRoute>} />
+            <Route path="/service-center" element={<ProtectedRoute><AppLayout><ServiceCenter /></AppLayout></ProtectedRoute>} />
+            <Route path="/crm" element={<ProtectedRoute><AppLayout><CRM /></AppLayout></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
