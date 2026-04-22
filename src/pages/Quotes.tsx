@@ -1833,7 +1833,7 @@ export default function Quotes() {
               </div>
               )}
 
-              {/* Probabilidade de fechar + Prazo interno */}
+              {/* Probabilidade de fechar */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="font-body text-xs">Probabilidade de fechar</Label>
@@ -1853,41 +1853,6 @@ export default function Quotes() {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="space-y-1">
-                  <Label className="font-body text-xs">Prazo interno (dar retorno até)</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className={cn("w-full h-9 justify-start text-left text-sm font-normal", !form.internal_due_date && "text-muted-foreground")}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4 opacity-60" />
-                        {form.internal_due_date ? format(parseISO(form.internal_due_date), "dd/MM/yyyy") : "Selecionar data"}
-                        {form.internal_due_date && (
-                          <span
-                            role="button"
-                            tabIndex={0}
-                            onClick={(e) => { e.stopPropagation(); setForm({ ...form, internal_due_date: "" }); }}
-                            className="ml-auto inline-flex p-0.5 rounded hover:bg-muted"
-                          >
-                            <X className="h-3 w-3" />
-                          </span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={form.internal_due_date ? parseISO(form.internal_due_date) : undefined}
-                        onSelect={(date) => setForm({ ...form, internal_due_date: date ? format(date, "yyyy-MM-dd") : "" })}
-                        initialFocus locale={ptBR}
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <p className="text-[10px] text-muted-foreground font-body">Apenas interno — não aparece para o cliente.</p>
                 </div>
               </div>
 
