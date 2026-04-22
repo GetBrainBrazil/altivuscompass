@@ -747,6 +747,23 @@ export default function PublicQuote() {
                                 {description && (
                                   <p className="pq-fs-xs sm:text-xs text-gray-500 font-body italic">{description}</p>
                                 )}
+                                {Array.isArray(item.public_attachments) && item.public_attachments.length > 0 && (
+                                  <div className="flex flex-wrap gap-1.5 pt-1">
+                                    {item.public_attachments.map((att: any) => (
+                                      <a
+                                        key={att.id}
+                                        href={att.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        download={att.name}
+                                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full pq-fs-3xs font-body bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 transition-colors"
+                                      >
+                                        <Download className="w-3 h-3" />
+                                        <span>{att.name}</span>
+                                      </a>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -754,9 +771,26 @@ export default function PublicQuote() {
                       }
 
                       return (
-                        <div key={idx} className="border border-gray-200 rounded-lg p-3">
+                        <div key={idx} className="border border-gray-200 rounded-lg p-3 space-y-1.5">
                           {title && <p className="pq-fs-sm sm:text-sm font-medium text-gray-900 font-body">{title}</p>}
                           {description && <p className="pq-fs-xs sm:text-xs text-gray-500 font-body mt-0.5">{description}</p>}
+                          {Array.isArray(item.public_attachments) && item.public_attachments.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 pt-1">
+                              {item.public_attachments.map((att: any) => (
+                                <a
+                                  key={att.id}
+                                  href={att.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  download={att.name}
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full pq-fs-3xs font-body bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 transition-colors"
+                                >
+                                  <Download className="w-3 h-3" />
+                                  <span>{att.name}</span>
+                                </a>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
