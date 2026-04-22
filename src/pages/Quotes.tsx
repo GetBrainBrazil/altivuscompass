@@ -16,6 +16,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import QuoteItemCommercialFields from "@/components/quotes/QuoteItemCommercialFields";
 import QuoteItemSupplierFields from "@/components/quotes/QuoteItemSupplierFields";
 import QuoteItemAttachments from "@/components/quotes/QuoteItemAttachments";
+import QuoteItemAttachmentsV2 from "@/components/quotes/QuoteItemAttachmentsV2";
 import QuoteOptionsManager from "@/components/quotes/QuoteOptionsManager";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -2580,6 +2581,13 @@ export default function Quotes() {
                               ...(patch.attachmentUrls !== undefined ? { attachment_urls: patch.attachmentUrls } : {}),
                             })
                           }
+                        />
+                        <QuoteItemAttachmentsV2
+                          quoteId={editingQuote?.id}
+                          itemId={item.id}
+                          itemType={item.item_type}
+                          locator={(item.details as any)?.locator ?? null}
+                          isNew={!!item._isNew}
                         />
                       </div>
                     </div>
