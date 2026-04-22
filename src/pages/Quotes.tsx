@@ -1208,6 +1208,11 @@ export default function Quotes() {
 
   const hasUnsavedChanges = useCallback(() => {
     if (!initialSnapshotRef.current) {
+      // Editing an existing quote whose baseline snapshot hasn't been captured yet
+      // (async loads still settling). Assume no user-made changes — avoids a false
+      // "discard?" prompt when the user just opens and closes the editor.
+      if (editingQuote) return false;
+
       // New quote: ignore defaults seeded by openCreate (stage="new", total_value="")
       const DEFAULT_KEYS_TO_IGNORE: Record<string, unknown> = { stage: "new", total_value: "" };
       const formDirty = Object.entries(form ?? {}).some(([k, v]) => {
@@ -1224,7 +1229,7 @@ export default function Quotes() {
         || !!coverPreview;
     }
     return buildEditorSnapshot() !== initialSnapshotRef.current;
-  }, [buildEditorSnapshot, form, items, selectedPassengers, selectedLinkedClients, selectedDestinations, clientSelfTraveling, coverPreview]);
+  }, [buildEditorSnapshot, editingQuote, form, items, selectedPassengers, selectedLinkedClients, selectedDestinations, clientSelfTraveling, coverPreview]);
 
   const performCloseDialog = () => {
     localStorage.removeItem(QUOTE_EDITOR_DRAFT_KEY);
