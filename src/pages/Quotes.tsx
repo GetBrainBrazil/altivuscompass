@@ -1479,12 +1479,46 @@ export default function Quotes() {
   const updateQuoteStage = async (quoteId: string, newStage: string) => {
     try {
       const q = quotes.find((q: Quote) => q.id === quoteId);
-      const { error } = await supabase.from("quotes").update({ stage: newStage as any }).eq("id", quoteId);
+      const movingToConfirmed = newStage === "confirmed" && q?.stage !== "confirmed";
+      const updatePayload: any = { stage: newStage };
+      if (movingToConfirmed) updatePayload.conclusion_type = q?.conclusion_type ?? "won";
+      const { error } = await supabase.from("quotes").update(updatePayload).eq("id", quoteId);
       if (error) throw error;
       const oldLabel = stages.find(s => s.id === q?.stage)?.label ?? q?.stage;
       const newLabel = stages.find(s => s.id === newStage)?.label ?? newStage;
       await logHistory(quoteId, "stage_change", `Etapa alterada de "${oldLabel}" para "${newLabel}"`);
+
+      // Cria venda automaticamente ao concluir (won), evitando duplicar
+      if (movingToConfirmed && (updatePayload.conclusion_type === "won")) {
+        const { data: existingSale } = await supabase
+          .from("sales")
+          .select("id")
+          .eq("quote_id", quoteId)
+          .maybeSingle();
+        if (!existingSale) {
+          const { data: fullQuote } = await supabase
+            .from("quotes")
+            .select("client_id, destination, total_value, travel_date_start, travel_date_end")
+            .eq("id", quoteId)
+            .single();
+          if (fullQuote) {
+            await supabase.from("sales").insert({
+              quote_id: quoteId,
+              client_id: fullQuote.client_id,
+              destination: fullQuote.destination,
+              total_value: fullQuote.total_value,
+              travel_date_start: fullQuote.travel_date_start,
+              travel_date_end: fullQuote.travel_date_end,
+              stage: "issued",
+            });
+            try { await logHistory(quoteId, "sale_created", "Venda criada automaticamente no pipeline"); } catch {}
+            toast({ title: "Venda criada no pipeline", duration: 2000 });
+          }
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
+      queryClient.invalidateQueries({ queryKey: ["sales"] });
     } catch (err: any) {
       toast({ title: "Erro ao mover cotação", description: err.message, variant: "destructive" });
     }
