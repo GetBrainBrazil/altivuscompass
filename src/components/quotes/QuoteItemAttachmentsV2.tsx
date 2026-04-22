@@ -15,6 +15,8 @@ interface AttachmentRow {
   is_public: boolean;
 }
 
+const MAX_SIZE_BYTES = 15 * 1024 * 1024; // 15MB
+
 interface Props {
   quoteId?: string;
   itemId?: string;
