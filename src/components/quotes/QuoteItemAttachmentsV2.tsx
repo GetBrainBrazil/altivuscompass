@@ -325,7 +325,7 @@ export default function QuoteItemAttachmentsV2({
               title="Será enviado ao salvar a cotação"
             >
               <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-              <span className="flex-1 truncate text-muted-foreground">
+              <span className="flex-1 min-w-0 truncate text-muted-foreground">
                 {p.file.name}{" "}
                 <span className="italic">(aguardando salvar)</span>
               </span>
