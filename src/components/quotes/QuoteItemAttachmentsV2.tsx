@@ -247,7 +247,7 @@ export default function QuoteItemAttachmentsV2({
                       <TooltipTrigger asChild>
                         <div className="flex items-center gap-1">
                           {row.is_public ? (
-                            <Eye className="w-3.5 h-3.5 text-emerald-600" />
+                            <Eye className="w-3.5 h-3.5 text-primary" />
                           ) : (
                             <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
                           )}
