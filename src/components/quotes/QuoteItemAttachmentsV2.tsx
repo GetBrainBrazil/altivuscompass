@@ -321,7 +321,7 @@ export default function QuoteItemAttachmentsV2({
           {pending.map((p) => (
             <div
               key={p.localId}
-              className="flex items-center gap-2 px-2 py-1.5 border border-dashed border-border rounded-md bg-muted/30 text-xs"
+              className="flex flex-row flex-nowrap items-center gap-2 px-2 py-1.5 border border-dashed border-border rounded-md bg-muted/30 text-xs"
               title="Será enviado ao salvar a cotação"
             >
               <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
