@@ -672,7 +672,7 @@ export default function PublicQuote() {
                                     className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full pq-fs-3xs font-body bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 transition-colors"
                                   >
                                     <Download className="w-3 h-3" />
-                                    <span>{t.downloadTicket ?? "Baixar bilhete"}</span>
+                                    <span>{(t as any).downloadTicket ?? "Baixar bilhete"}</span>
                                   </a>
                                 ))}
                               </div>
