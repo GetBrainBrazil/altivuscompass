@@ -142,6 +142,50 @@ type QuoteEditorDraft = {
   coverPreview: string | null;
 };
 
+const buildQuoteEditorForm = (q: Quote) => {
+  const pb = (q as any).price_breakdown;
+
+  return {
+    title: q.title ?? "",
+    client_id: q.client_id ?? "",
+    cover_image_url: q.cover_image_url ?? "",
+    details: q.details ?? "",
+    payment_terms: q.payment_terms ?? "",
+    terms_conditions: q.terms_conditions ?? "",
+    other_info: q.other_info ?? "",
+    destination: q.destination ?? "",
+    total_value: q.total_value ?? "",
+    discount_amount: (q as any).discount_amount ?? "",
+    discount_percent: (q as any).discount_percent ?? "",
+    stage: q.stage,
+    conclusion_type: q.conclusion_type ?? "won",
+    travel_date_start: q.travel_date_start ?? "",
+    travel_date_end: q.travel_date_end ?? "",
+    notes: q.notes ?? "",
+    client_notes: ((q as any).client_notes && String((q as any).client_notes).trim())
+      ? (q as any).client_notes
+      : (q.notes ?? ""),
+    internal_notes: (q as any).internal_notes ?? "",
+    lead_source: (q as any).lead_source ?? "",
+    close_probability: (q as any).close_probability ?? "",
+    internal_due_date: "",
+    flexible_dates: pb?.flexible_dates ?? false,
+    flexible_dates_description: pb?.flexible_dates_description ?? "",
+  };
+};
+
+const buildQuoteEditorBaseSnapshot = (q: Quote) => {
+  const pb = (q as any).price_breakdown;
+
+  return {
+    form: buildQuoteEditorForm(q),
+    selectedLinkedClients: Array.isArray(pb?.linked_client_ids) ? pb.linked_client_ids : [],
+    clientSelfTraveling: pb?.client_self_traveling ?? false,
+    selectedDestinations: q.destination ? q.destination.split(", ").filter(Boolean) : [],
+    coverPreview: q.cover_image_url || null,
+  };
+};
+
 export default function Quotes() {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -178,6 +222,7 @@ export default function Quotes() {
   const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
   const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
   const [summaryFallbackText, setSummaryFallbackText] = useState<string | null>(null);
+  const [pendingEditLoads, setPendingEditLoads] = useState(0);
   const initialSnapshotRef = useRef<string>("");
 
   // Pipeline filters / search / sort / archive view
