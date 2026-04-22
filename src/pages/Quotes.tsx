@@ -206,6 +206,7 @@ export default function Quotes() {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [draftRestored, setDraftRestored] = useState(false);
+  const [isHydratingEditQuote, setIsHydratingEditQuote] = useState(false);
   const [generatingCover, setGeneratingCover] = useState(false);
   const [generatingDetails, setGeneratingDetails] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -598,6 +599,7 @@ export default function Quotes() {
   useEffect(() => {
     if (!dialogOpen || !editingQuote) return;
     if (snapshotCapturedRef.current) return;
+    if (isHydratingEditQuote) return;
 
     const t = window.setTimeout(() => {
       initialSnapshotRef.current = JSON.stringify({
@@ -616,6 +618,7 @@ export default function Quotes() {
   }, [
     dialogOpen,
     editingQuote,
+    isHydratingEditQuote,
     draftRestored,
     form,
     items,
@@ -646,6 +649,7 @@ export default function Quotes() {
     if (editingQuote && !draftRestored) return;
 
     if (editingQuote && items.length === 0) {
+      setIsHydratingEditQuote(true);
       Promise.all([
         supabase.from("quote_items").select("*").eq("quote_id", editingQuote.id).order("sort_order"),
         supabase.from("quote_passengers").select("passenger_id").eq("quote_id", editingQuote.id),
@@ -669,6 +673,8 @@ export default function Quotes() {
           });
           snapshotCapturedRef.current = true;
         }
+      }).finally(() => {
+        setIsHydratingEditQuote(false);
       });
 
       const pb = (editingQuote as any).price_breakdown;
@@ -1193,6 +1199,7 @@ export default function Quotes() {
   };
 
   const openCreate = (preset?: { client_id?: string }) => {
+    setIsHydratingEditQuote(false);
     setEditingQuote(null);
     setForm({ stage: "new", total_value: "", ...(preset?.client_id ? { client_id: preset.client_id } : {}) });
     setItems([]);
@@ -1218,6 +1225,7 @@ export default function Quotes() {
   }, [location.state]);
 
   const openEdit = (q: Quote) => {
+    setIsHydratingEditQuote(true);
     setEditingQuote(q);
     const pb = (q as any).price_breakdown;
     setForm({
@@ -1277,7 +1285,7 @@ export default function Quotes() {
       // Editing an existing quote whose baseline snapshot hasn't been captured yet
       // (async loads still settling). Assume no user-made changes — avoids a false
       // "discard?" prompt when the user just opens and closes the editor.
-      if (editingQuote) return false;
+      if (editingQuote || isHydratingEditQuote) return false;
 
       // New quote: ignore defaults seeded by openCreate (stage="new", total_value="")
       const DEFAULT_KEYS_TO_IGNORE: Record<string, unknown> = { stage: "new", total_value: "" };
@@ -1295,10 +1303,11 @@ export default function Quotes() {
         || !!coverPreview;
     }
     return buildEditorSnapshot() !== initialSnapshotRef.current;
-  }, [buildEditorSnapshot, editingQuote, form, items, selectedPassengers, selectedLinkedClients, selectedDestinations, clientSelfTraveling, coverPreview]);
+  }, [buildEditorSnapshot, editingQuote, isHydratingEditQuote, form, items, selectedPassengers, selectedLinkedClients, selectedDestinations, clientSelfTraveling, coverPreview]);
 
   const performCloseDialog = () => {
     localStorage.removeItem(QUOTE_EDITOR_DRAFT_KEY);
+    setIsHydratingEditQuote(false);
     setDialogOpen(false);
     setEditingQuote(null);
     setForm({});
