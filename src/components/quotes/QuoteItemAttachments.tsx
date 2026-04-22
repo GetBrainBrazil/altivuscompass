@@ -21,14 +21,7 @@ const BUCKET = "quote-item-attachments";
 const isImage = (path: string) => /\.(png|jpe?g|webp|gif)$/i.test(path);
 const fileNameFromPath = (path: string) => path.split("/").pop() ?? path;
 
-export default function QuoteItemAttachments({
-  externalUrl,
-  attachmentUrls,
-  quoteId,
-  itemId,
-  isNew,
-  onChange,
-}: Props) {
+export default function QuoteItemAttachments({ externalUrl, attachmentUrls, quoteId, itemId, isNew, onChange }: Props) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -90,7 +83,7 @@ export default function QuoteItemAttachments({
       <Label className="text-[11px] font-body font-semibold text-muted-foreground uppercase tracking-wide">
         Referências e anexos
       </Label>
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-2">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-2 content-center">
         <div className="space-y-0.5">
           <Label className="text-[11px] font-body">Link externo</Label>
           <div className="flex items-center gap-1">
