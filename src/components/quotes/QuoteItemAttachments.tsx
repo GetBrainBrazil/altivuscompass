@@ -90,41 +90,36 @@ export default function QuoteItemAttachments({
       <Label className="text-[11px] font-body font-semibold text-muted-foreground uppercase tracking-wide">
         Referências e anexos
       </Label>
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-2">
-        <div className="space-y-0.5">
-          <Label className="text-[11px] font-body">Link externo</Label>
-          <div className="flex items-center gap-1">
-            <Input
-              value={externalUrl ?? ""}
-              onChange={(e) => onChange({ externalUrl: e.target.value || null })}
-              placeholder="URL da busca (Google Flights, Booking, site da companhia...)"
-              className="h-8 text-xs"
-            />
-            {externalUrl && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-8 px-2"
-                onClick={openExternal}
-                title="Abrir em nova aba"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-              </Button>
-            )}
-          </div>
-        </div>
-        <div className="space-y-0.5">
-          <Label className="text-[11px] font-body">Anexos</Label>
+      <div className="space-y-1">
+        <Label className="text-[11px] font-body">Link externo</Label>
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            value={externalUrl ?? ""}
+            onChange={(e) => onChange({ externalUrl: e.target.value || null })}
+            placeholder="URL da busca (Google Flights, Booking, site da companhia...)"
+            className="h-9 flex-1 min-w-[200px] text-xs"
+          />
+          {externalUrl && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-9 px-2 shrink-0"
+              onClick={openExternal}
+              title="Abrir em nova aba"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+            </Button>
+          )}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="inline-block">
+                <span className="inline-block shrink-0">
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-8 text-xs gap-1"
+                    className="h-9 text-xs gap-1"
                     disabled={!canUpload || uploading}
                     onClick={() => fileInputRef.current?.click()}
                   >
