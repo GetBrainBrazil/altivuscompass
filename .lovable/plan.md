@@ -1,44 +1,23 @@
 
+O card do kanban hoje mostra "Sem vendedor" no rodapé quando `assigned_to` está vazio. O usuário quer que, em vez disso, apareça o nome do cliente principal da cotação.
 
-## Alinhar "Anexar arquivo" com o input de Link externo
+**Investigação necessária:**
+- Confirmar como a cotação se relaciona com cliente (campo `client_id` em `quotes`, com nome em `clients.name`).
+- Ver como `sellers`/`clients` são carregados em `Quotes.tsx` para passar o nome ao card.
 
-**Arquivo:** `src/components/quotes/QuoteItemAttachments.tsx`
+**Mudanças propostas:**
 
-### Problema
-Hoje o bloco "Referências e anexos" usa um grid de 2 colunas onde cada coluna tem seu próprio `<Label>` empilhado acima do controle. Isso faz o botão "Anexar arquivo" aparecer com o label "Anexos" em cima e desalinhado do input de "Link externo" ao lado.
+1. **`src/pages/Quotes.tsx`** — onde renderiza `<QuoteKanbanCard />`:
+   - Já existe lookup de vendedor via `sellers`. Adicionar lookup similar de cliente via lista `clients` (já carregada na página).
+   - Passar nova prop `clientName` para o card.
 
-### Solução
-Reorganizar em uma única linha flex onde:
-- O label "Link externo" fica acima do input (como hoje) ocupando toda a largura disponível.
-- O botão "Anexar arquivo" fica posicionado **na mesma linha horizontal do input** (não dos labels), alinhado ao final.
-- Remover o label "Anexos" redundante — o ícone de clipe + texto do botão já comunicam a função.
+2. **`src/components/quotes/QuoteKanbanCard.tsx`** — rodapé:
+   - Receber `clientName` opcional.
+   - Lógica de exibição no rodapé: mostrar **nome do cliente principal** (não o vendedor). 
+   - Avatar usa iniciais do cliente.
+   - Se não houver cliente vinculado, mostra "Sem cliente" em itálico cinza (mesmo padrão atual de "Sem vendedor").
+   - O vendedor (`assigned_to`) deixa de aparecer no card — fica apenas no editor. Isso alinha com o pedido: o card mostra **quem é o cliente**, não quem atende.
 
-### Estrutura nova (JSX)
+**Arquivos:** 2 arquivos editados, ~15 linhas alteradas no total. Sem mudanças de schema ou lógica de drag/menu.
 
-```text
-<div className="space-y-2">
-  <Label> Referências e anexos </Label>
-
-  <div className="space-y-1">
-    <Label className="text-[11px]"> Link externo </Label>
-
-    <div className="flex items-center gap-2">
-      <Input ... className="h-9 flex-1" />               ← cresce
-      {externalUrl && <Button ExternalLink />}            ← abrir link
-      <Button "Anexar arquivo" className="h-9 shrink-0"/> ← MESMA altura/linha do input
-    </div>
-  </div>
-
-  {/* lista de anexos abaixo, inalterada */}
-</div>
-```
-
-### Detalhes técnicos
-- Trocar `grid grid-cols-1 lg:grid-cols-[1fr_auto]` por um único bloco flex.
-- Padronizar altura do input e do botão em `h-9` (em vez de `h-8`) para alinhamento visual perfeito.
-- Manter o `<input type="file" hidden>` e toda a lógica de upload/remoção/abertura intacta — apenas reposicionamento de classes Tailwind.
-- O `TooltipProvider` em torno do botão permanece (mensagem "Salve a cotação primeiro" continua funcionando).
-- No mobile (`< sm`), o botão pode quebrar para baixo do input mantendo `flex-wrap` para evitar scroll horizontal (alinhado com a política Zero Scroll Horizontal).
-
-Nenhuma função, prop ou comportamento muda — apenas o layout das classes Tailwind.
-
+**Confirmação visual:** rodapé fica `[avatar iniciais cliente] Nome do Cliente ............ R$ valor`.
