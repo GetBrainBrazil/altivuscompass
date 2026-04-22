@@ -646,16 +646,31 @@ export default function Quotes() {
     if (editingQuote && !draftRestored) return;
 
     if (editingQuote && items.length === 0) {
-      supabase.from("quote_items").select("*").eq("quote_id", editingQuote.id).order("sort_order").then(({ data }) => {
-        const loadedItems = (data ?? []).map((i: any) => ({ ...i, details: i.details ?? {} }));
+      Promise.all([
+        supabase.from("quote_items").select("*").eq("quote_id", editingQuote.id).order("sort_order"),
+        supabase.from("quote_passengers").select("passenger_id").eq("quote_id", editingQuote.id),
+      ]).then(([itemsResult, passengersResult]) => {
+        const loadedItems = (itemsResult.data ?? []).map((i: any) => ({ ...i, details: i.details ?? {} }));
+        const loadedPassengers = (passengersResult.data ?? []).map((p: any) => p.passenger_id);
+
         setItems((current) => current.length > 0 ? current : loadedItems);
+        setSelectedPassengers((current) => current.length > 0 ? current : loadedPassengers);
+
         const flightIndices = new Set<number>();
         loadedItems.forEach((it: any, idx: number) => { if (it.item_type === "flight") flightIndices.add(idx); });
         setCollapsedFlights(flightIndices);
+
+        if (!snapshotCapturedRef.current) {
+          const baseSnapshot = buildQuoteEditorBaseSnapshot(editingQuote);
+          initialSnapshotRef.current = JSON.stringify({
+            ...baseSnapshot,
+            items: loadedItems,
+            selectedPassengers: loadedPassengers,
+          });
+          snapshotCapturedRef.current = true;
+        }
       });
-      supabase.from("quote_passengers").select("passenger_id").eq("quote_id", editingQuote.id).then(({ data }) => {
-        setSelectedPassengers((current) => current.length > 0 ? current : (data ?? []).map((p: any) => p.passenger_id));
-      });
+
       const pb = (editingQuote as any).price_breakdown;
       if (pb && typeof pb === 'object') {
         if (Array.isArray((pb as any).linked_client_ids)) {
