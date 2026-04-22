@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ExternalLink, Paperclip, Trash2, FileText, Image as ImageIcon, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -18,8 +20,15 @@ interface Props {
 
 const BUCKET = "quote-item-attachments";
 
-const isImage = (path: string) => /\.(png|jpe?g|webp|gif)$/i.test(path);
-const fileNameFromPath = (path: string) => path.split("/").pop() ?? path;
+const isImage = (path: string): boolean => /\.(png|jpe?g|webp|gif)$/i.test(path);
+const fileNameFromPath = (path: string): string => {
+  const rawName = path.split("/").pop() ?? path;
+  return rawName.replace(/^(public_|internal_)/, "");
+};
+const isPublicAttachment = (path: string): boolean => {
+  const name = path.split("/").pop() ?? "";
+  return name.startsWith("public_");
+};
 
 export default function QuoteItemAttachments({
   externalUrl,
@@ -32,6 +41,8 @@ export default function QuoteItemAttachments({
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [isPublic, setIsPublic] = useState(false);
+
   const canUpload = !!quoteId && !!itemId && !isNew;
 
   const handleFiles = async (files: FileList | null) => {
@@ -39,10 +50,13 @@ export default function QuoteItemAttachments({
     setUploading(true);
     try {
       const newPaths: string[] = [];
+      const visibilityPrefix = isPublic ? "public" : "internal";
+
       for (const file of Array.from(files)) {
         const ext = file.name.split(".").pop() || "bin";
         const uuid = crypto.randomUUID();
-        const path = `${quoteId}/${itemId}/${uuid}.${ext}`;
+        const path = `${quoteId}/${itemId}/${visibilityPrefix}_${uuid}.${ext}`;
+
         const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
           cacheControl: "3600",
           upsert: false,
@@ -73,7 +87,7 @@ export default function QuoteItemAttachments({
     try {
       await supabase.storage.from(BUCKET).remove([path]);
     } catch {
-      /* ignore — still remove from list */
+      // continua para remover da lista local mesmo se falhar no storage
     }
     onChange({ attachmentUrls: (attachmentUrls ?? []).filter((p) => p !== path) });
   };
@@ -90,13 +104,14 @@ export default function QuoteItemAttachments({
       <Label className="text-[11px] font-body font-semibold text-muted-foreground uppercase tracking-wide">
         Referências e anexos
       </Label>
+
       <div className="space-y-1">
         <Label className="text-[11px] font-body">Link externo</Label>
         <div className="flex flex-wrap items-center gap-2">
           <Input
             value={externalUrl ?? ""}
             onChange={(e) => onChange({ externalUrl: e.target.value || null })}
-            placeholder="URL da busca (Google Flights, Booking, site da companhia...)"
+            placeholder="URL da busca (Google Flights, Booking...)"
             className="h-9 flex-1 min-w-0 text-xs"
           />
           {externalUrl && (
@@ -111,6 +126,22 @@ export default function QuoteItemAttachments({
               <ExternalLink className="w-3.5 h-3.5" />
             </Button>
           )}
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Switch
+              id="attachment-visibility"
+              checked={isPublic}
+              onCheckedChange={setIsPublic}
+              disabled={!canUpload || uploading}
+            />
+            <Label
+              htmlFor="attachment-visibility"
+              className="text-[11px] font-body text-muted-foreground cursor-pointer"
+            >
+              Visível p/ cliente
+            </Label>
+          </div>
+
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -128,7 +159,7 @@ export default function QuoteItemAttachments({
                     ) : (
                       <Paperclip className="w-3.5 h-3.5" />
                     )}
-                    Anexar arquivo
+                    {uploading ? "Enviando..." : "Anexar arquivo"}
                   </Button>
                 </span>
               </TooltipTrigger>
@@ -139,6 +170,7 @@ export default function QuoteItemAttachments({
               )}
             </Tooltip>
           </TooltipProvider>
+
           <input
             ref={fileInputRef}
             type="file"
@@ -165,15 +197,26 @@ export default function QuoteItemAttachments({
               <button
                 type="button"
                 onClick={() => openAttachment(path)}
-                className="truncate max-w-[180px] hover:text-primary transition-colors"
+                className="truncate max-w-[150px] font-medium hover:text-primary transition-colors text-left"
                 title={fileNameFromPath(path)}
               >
                 {fileNameFromPath(path)}
               </button>
+
+              {isPublicAttachment(path) ? (
+                <Badge variant="default" className="h-4 px-1 text-[9px] font-semibold">
+                  PÚBLICO
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="h-4 px-1 text-[9px] font-semibold">
+                  INTERNO
+                </Badge>
+              )}
+
               <button
                 type="button"
                 onClick={() => removeAttachment(path)}
-                className="text-destructive hover:text-destructive/80 transition-colors"
+                className="text-muted-foreground hover:text-destructive transition-colors"
                 title="Remover anexo"
               >
                 <Trash2 className="w-3 h-3" />
