@@ -1862,6 +1862,60 @@ export type Database = {
           },
         ]
       }
+      quote_item_attachments: {
+        Row: {
+          created_at: string
+          file_path: string
+          id: string
+          is_public: boolean
+          mime_type: string | null
+          original_name: string | null
+          quote_id: string
+          quote_item_id: string
+          size_bytes: number | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_path: string
+          id?: string
+          is_public?: boolean
+          mime_type?: string | null
+          original_name?: string | null
+          quote_id: string
+          quote_item_id: string
+          size_bytes?: number | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_path?: string
+          id?: string
+          is_public?: boolean
+          mime_type?: string | null
+          original_name?: string | null
+          quote_id?: string
+          quote_item_id?: string
+          size_bytes?: number | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_item_attachments_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_item_attachments_quote_item_id_fkey"
+            columns: ["quote_item_id"]
+            isOneToOne: false
+            referencedRelation: "quote_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quote_items: {
         Row: {
           attachment_urls: string[] | null
