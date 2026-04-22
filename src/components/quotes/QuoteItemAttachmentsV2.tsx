@@ -370,7 +370,7 @@ export default function QuoteItemAttachmentsV2({
             return (
               <div
                 key={row.id}
-                className="flex items-center gap-2 px-2 py-1.5 border border-border rounded-md bg-muted/20 text-xs"
+                className="flex flex-row flex-nowrap items-center gap-2 px-2 py-1.5 border border-border rounded-md bg-muted/20 text-xs"
               >
                 {isImage(row.file_path, row.mime_type) ? (
                   <ImageIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
@@ -380,7 +380,7 @@ export default function QuoteItemAttachmentsV2({
                 <button
                   type="button"
                   onClick={() => openAttachment(row)}
-                  className="flex-1 truncate text-left hover:text-primary transition-colors"
+                  className="flex-1 min-w-0 truncate text-left hover:text-primary transition-colors"
                   title={name}
                 >
                   {name}
