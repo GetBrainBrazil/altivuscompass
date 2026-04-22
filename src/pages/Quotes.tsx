@@ -553,9 +553,11 @@ export default function Quotes() {
   useEffect(() => {
     if (!dialogOpen || !editingQuote) return;
     if (snapshotCapturedRef.current) return;
-    // For existing quotes, wait until items have loaded (or draft was restored) before snapshotting.
-    // Otherwise we snapshot an empty state and later diff against the loaded items, falsely triggering "unsaved changes".
-    if (editingQuote.id && items.length === 0 && !draftRestored) return;
+    // Wait for async loads (items, passengers, linked clients) to settle.
+    // For quotes that genuinely have zero items, fall back to a longer delay
+    // so we still capture a baseline and don't falsely report "unsaved changes".
+    const hasItems = items.length > 0;
+    const delay = hasItems || draftRestored ? 400 : 1200;
     const t = window.setTimeout(() => {
       initialSnapshotRef.current = JSON.stringify({
         form,
@@ -567,10 +569,10 @@ export default function Quotes() {
         coverPreview,
       });
       snapshotCapturedRef.current = true;
-    }, 400);
+    }, delay);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dialogOpen, editingQuote?.id, items.length, draftRestored]);
+  }, [dialogOpen, editingQuote?.id, items.length, draftRestored, selectedPassengers.length, selectedLinkedClients.length]);
 
   // Keyboard shortcut: Ctrl/Cmd+S to save inside the quote editor
   const saveQuoteRef = useRef<((closeAfter: boolean) => Promise<string | null>) | null>(null);
@@ -1181,7 +1183,7 @@ export default function Quotes() {
     });
     setItems([]);
     setSelectedPassengers([]);
-    setSelectedLinkedClients([]);
+    setSelectedLinkedClients(Array.isArray(pb?.linked_client_ids) ? pb.linked_client_ids : []);
     setSelectedDestinations(q.destination ? q.destination.split(", ").filter(Boolean) : []);
     setClientSelfTraveling(pb?.client_self_traveling ?? false);
     setCoverFile(null);
