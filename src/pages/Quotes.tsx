@@ -1207,11 +1207,23 @@ export default function Quotes() {
 
   const hasUnsavedChanges = useCallback(() => {
     if (!initialSnapshotRef.current) {
-      // New quote: dirty if any field filled or any item present
-      return Object.values(form ?? {}).some((v) => v !== "" && v !== null && v !== undefined && v !== false) || items.length > 0;
+      // New quote: ignore defaults seeded by openCreate (stage="new", total_value="")
+      const DEFAULT_KEYS_TO_IGNORE: Record<string, unknown> = { stage: "new", total_value: "" };
+      const formDirty = Object.entries(form ?? {}).some(([k, v]) => {
+        if (v === "" || v === null || v === undefined || v === false) return false;
+        if (DEFAULT_KEYS_TO_IGNORE[k] === v) return false;
+        return true;
+      });
+      return formDirty
+        || items.length > 0
+        || selectedPassengers.length > 0
+        || selectedLinkedClients.length > 0
+        || selectedDestinations.length > 0
+        || clientSelfTraveling
+        || !!coverPreview;
     }
     return buildEditorSnapshot() !== initialSnapshotRef.current;
-  }, [buildEditorSnapshot, form, items]);
+  }, [buildEditorSnapshot, form, items, selectedPassengers, selectedLinkedClients, selectedDestinations, clientSelfTraveling, coverPreview]);
 
   const performCloseDialog = () => {
     localStorage.removeItem(QUOTE_EDITOR_DRAFT_KEY);
