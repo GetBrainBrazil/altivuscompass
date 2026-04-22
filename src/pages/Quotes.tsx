@@ -142,6 +142,50 @@ type QuoteEditorDraft = {
   coverPreview: string | null;
 };
 
+const buildQuoteEditorForm = (q: Quote) => {
+  const pb = (q as any).price_breakdown;
+
+  return {
+    title: q.title ?? "",
+    client_id: q.client_id ?? "",
+    cover_image_url: q.cover_image_url ?? "",
+    details: q.details ?? "",
+    payment_terms: q.payment_terms ?? "",
+    terms_conditions: q.terms_conditions ?? "",
+    other_info: q.other_info ?? "",
+    destination: q.destination ?? "",
+    total_value: q.total_value ?? "",
+    discount_amount: (q as any).discount_amount ?? "",
+    discount_percent: (q as any).discount_percent ?? "",
+    stage: q.stage,
+    conclusion_type: q.conclusion_type ?? "won",
+    travel_date_start: q.travel_date_start ?? "",
+    travel_date_end: q.travel_date_end ?? "",
+    notes: q.notes ?? "",
+    client_notes: ((q as any).client_notes && String((q as any).client_notes).trim())
+      ? (q as any).client_notes
+      : (q.notes ?? ""),
+    internal_notes: (q as any).internal_notes ?? "",
+    lead_source: (q as any).lead_source ?? "",
+    close_probability: (q as any).close_probability ?? "",
+    internal_due_date: "",
+    flexible_dates: pb?.flexible_dates ?? false,
+    flexible_dates_description: pb?.flexible_dates_description ?? "",
+  };
+};
+
+const buildQuoteEditorBaseSnapshot = (q: Quote) => {
+  const pb = (q as any).price_breakdown;
+
+  return {
+    form: buildQuoteEditorForm(q),
+    selectedLinkedClients: Array.isArray(pb?.linked_client_ids) ? pb.linked_client_ids : [],
+    clientSelfTraveling: pb?.client_self_traveling ?? false,
+    selectedDestinations: q.destination ? q.destination.split(", ").filter(Boolean) : [],
+    coverPreview: q.cover_image_url || null,
+  };
+};
+
 export default function Quotes() {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -162,6 +206,7 @@ export default function Quotes() {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [draftRestored, setDraftRestored] = useState(false);
+  const [isHydratingEditQuote, setIsHydratingEditQuote] = useState(false);
   const [generatingCover, setGeneratingCover] = useState(false);
   const [generatingDetails, setGeneratingDetails] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -554,11 +599,8 @@ export default function Quotes() {
   useEffect(() => {
     if (!dialogOpen || !editingQuote) return;
     if (snapshotCapturedRef.current) return;
-    // Wait for async loads (items, passengers, linked clients) to settle.
-    // For quotes that genuinely have zero items, fall back to a longer delay
-    // so we still capture a baseline and don't falsely report "unsaved changes".
-    const hasItems = items.length > 0;
-    const delay = hasItems || draftRestored ? 400 : 1200;
+    if (isHydratingEditQuote) return;
+
     const t = window.setTimeout(() => {
       initialSnapshotRef.current = JSON.stringify({
         form,
@@ -570,10 +612,22 @@ export default function Quotes() {
         coverPreview,
       });
       snapshotCapturedRef.current = true;
-    }, delay);
+    }, draftRestored ? 150 : 400);
+
     return () => window.clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dialogOpen, editingQuote?.id, items.length, draftRestored, selectedPassengers.length, selectedLinkedClients.length]);
+  }, [
+    dialogOpen,
+    editingQuote,
+    isHydratingEditQuote,
+    draftRestored,
+    form,
+    items,
+    selectedPassengers,
+    selectedLinkedClients,
+    clientSelfTraveling,
+    selectedDestinations,
+    coverPreview,
+  ]);
 
   // Keyboard shortcut: Ctrl/Cmd+S to save inside the quote editor
   const saveQuoteRef = useRef<((closeAfter: boolean) => Promise<string | null>) | null>(null);
@@ -595,16 +649,34 @@ export default function Quotes() {
     if (editingQuote && !draftRestored) return;
 
     if (editingQuote && items.length === 0) {
-      supabase.from("quote_items").select("*").eq("quote_id", editingQuote.id).order("sort_order").then(({ data }) => {
-        const loadedItems = (data ?? []).map((i: any) => ({ ...i, details: i.details ?? {} }));
+      setIsHydratingEditQuote(true);
+      Promise.all([
+        supabase.from("quote_items").select("*").eq("quote_id", editingQuote.id).order("sort_order"),
+        supabase.from("quote_passengers").select("passenger_id").eq("quote_id", editingQuote.id),
+      ]).then(([itemsResult, passengersResult]) => {
+        const loadedItems = (itemsResult.data ?? []).map((i: any) => ({ ...i, details: i.details ?? {} }));
+        const loadedPassengers = (passengersResult.data ?? []).map((p: any) => p.passenger_id);
+
         setItems((current) => current.length > 0 ? current : loadedItems);
+        setSelectedPassengers((current) => current.length > 0 ? current : loadedPassengers);
+
         const flightIndices = new Set<number>();
         loadedItems.forEach((it: any, idx: number) => { if (it.item_type === "flight") flightIndices.add(idx); });
         setCollapsedFlights(flightIndices);
+
+        if (!snapshotCapturedRef.current) {
+          const baseSnapshot = buildQuoteEditorBaseSnapshot(editingQuote);
+          initialSnapshotRef.current = JSON.stringify({
+            ...baseSnapshot,
+            items: loadedItems,
+            selectedPassengers: loadedPassengers,
+          });
+          snapshotCapturedRef.current = true;
+        }
+      }).finally(() => {
+        setIsHydratingEditQuote(false);
       });
-      supabase.from("quote_passengers").select("passenger_id").eq("quote_id", editingQuote.id).then(({ data }) => {
-        setSelectedPassengers((current) => current.length > 0 ? current : (data ?? []).map((p: any) => p.passenger_id));
-      });
+
       const pb = (editingQuote as any).price_breakdown;
       if (pb && typeof pb === 'object') {
         if (Array.isArray((pb as any).linked_client_ids)) {
@@ -1127,6 +1199,7 @@ export default function Quotes() {
   };
 
   const openCreate = (preset?: { client_id?: string }) => {
+    setIsHydratingEditQuote(false);
     setEditingQuote(null);
     setForm({ stage: "new", total_value: "", ...(preset?.client_id ? { client_id: preset.client_id } : {}) });
     setItems([]);
@@ -1152,6 +1225,7 @@ export default function Quotes() {
   }, [location.state]);
 
   const openEdit = (q: Quote) => {
+    setIsHydratingEditQuote(true);
     setEditingQuote(q);
     const pb = (q as any).price_breakdown;
     setForm({
@@ -1211,7 +1285,7 @@ export default function Quotes() {
       // Editing an existing quote whose baseline snapshot hasn't been captured yet
       // (async loads still settling). Assume no user-made changes — avoids a false
       // "discard?" prompt when the user just opens and closes the editor.
-      if (editingQuote) return false;
+      if (editingQuote || isHydratingEditQuote) return false;
 
       // New quote: ignore defaults seeded by openCreate (stage="new", total_value="")
       const DEFAULT_KEYS_TO_IGNORE: Record<string, unknown> = { stage: "new", total_value: "" };
@@ -1229,10 +1303,11 @@ export default function Quotes() {
         || !!coverPreview;
     }
     return buildEditorSnapshot() !== initialSnapshotRef.current;
-  }, [buildEditorSnapshot, editingQuote, form, items, selectedPassengers, selectedLinkedClients, selectedDestinations, clientSelfTraveling, coverPreview]);
+  }, [buildEditorSnapshot, editingQuote, isHydratingEditQuote, form, items, selectedPassengers, selectedLinkedClients, selectedDestinations, clientSelfTraveling, coverPreview]);
 
   const performCloseDialog = () => {
     localStorage.removeItem(QUOTE_EDITOR_DRAFT_KEY);
+    setIsHydratingEditQuote(false);
     setDialogOpen(false);
     setEditingQuote(null);
     setForm({});
