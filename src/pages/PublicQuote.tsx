@@ -658,6 +658,25 @@ export default function PublicQuote() {
                             {d.observation && (
                               <p className="pq-fs-2xs text-gray-500 font-body italic sm:pl-6">{d.observation}</p>
                             )}
+
+                            {/* Client-visible attachments */}
+                            {Array.isArray(item.public_attachments) && item.public_attachments.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 sm:pl-6 pt-1">
+                                {item.public_attachments.map((att: any) => (
+                                  <a
+                                    key={att.id}
+                                    href={att.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    download={att.name}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full pq-fs-3xs font-body bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 transition-colors"
+                                  >
+                                    <Download className="w-3 h-3" />
+                                    <span>{t.downloadTicket || "Baixar bilhete"}</span>
+                                  </a>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         );
                       }
