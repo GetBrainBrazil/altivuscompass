@@ -97,7 +97,7 @@ export default function QuoteItemAttachments({
             value={externalUrl ?? ""}
             onChange={(e) => onChange({ externalUrl: e.target.value || null })}
             placeholder="URL da busca (Google Flights, Booking, site da companhia...)"
-            className="h-9 flex-1 min-w-[200px] text-xs"
+            className="h-9 flex-1 min-w-0 text-xs"
           />
           {externalUrl && (
             <Button
