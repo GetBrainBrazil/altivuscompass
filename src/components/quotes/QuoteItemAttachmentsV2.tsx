@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Paperclip, Trash2, FileText, Image as ImageIcon, Loader2, Eye, EyeOff, Download } from "lucide-react";
+import { Paperclip, Trash2, FileText, Image as ImageIcon, Loader2, Eye, EyeOff, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface AttachmentRow {
@@ -12,6 +12,12 @@ interface AttachmentRow {
   file_path: string;
   original_name: string | null;
   mime_type: string | null;
+  is_public: boolean;
+}
+
+interface PendingFile {
+  localId: string;
+  file: File;
   is_public: boolean;
 }
 
@@ -48,7 +54,7 @@ function buildSmartName(opts: {
 }) {
   const { quoteId, itemType, locator, ext } = opts;
   const id8 = quoteId.replace(/-/g, "").slice(0, 8);
-  const ts = Date.now();
+  const ts = Date.now() + Math.floor(Math.random() * 1000);
   if (itemType === "flight") {
     const loc = sanitize(locator || "") || "sem-localizador";
     return `cotacao-${id8}_voo-${loc}_${ts}.${ext}`;
@@ -68,8 +74,10 @@ export default function QuoteItemAttachmentsV2({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [rows, setRows] = useState<AttachmentRow[]>([]);
+  const [pending, setPending] = useState<PendingFile[]>([]);
   const ready = !!quoteId && !!itemId && !isNew;
 
+  // Carrega anexos salvos
   useEffect(() => {
     if (!itemId) return;
     let active = true;
@@ -88,22 +96,87 @@ export default function QuoteItemAttachmentsV2({
     };
   }, [itemId]);
 
-  const openFilePicker = () => {
-    if (!ready) {
-      toast({
-        title: "Salve a cotação primeiro",
-        description: "Clique em 'Salvar' para liberar o anexo deste item.",
-        duration: 2500,
-      });
-      return;
-    }
-    fileInputRef.current?.click();
+  const uploadOne = async (
+    file: File,
+    is_public: boolean,
+    qId: string,
+    iId: string,
+  ): Promise<AttachmentRow | null> => {
+    const ext = (file.name.split(".").pop() || "bin").toLowerCase();
+    const filename = buildSmartName({ quoteId: qId, itemType, locator, ext });
+    const path = `${qId}/${iId}/${filename}`;
+    const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type || undefined,
+    });
+    if (upErr) throw upErr;
+
+    const { data: row, error: insErr } = await supabase
+      .from("quote_item_attachments")
+      .insert({
+        quote_id: qId,
+        quote_item_id: iId,
+        file_path: path,
+        original_name: file.name,
+        mime_type: file.type || null,
+        size_bytes: file.size,
+        is_public,
+      })
+      .select("id, file_path, original_name, mime_type, is_public")
+      .single();
+    if (insErr) throw insErr;
+    return row as AttachmentRow;
   };
 
-  const handleFiles = async (files: FileList | null) => {
-    if (!files || !files.length || !ready || !quoteId || !itemId) return;
+  // Sobe arquivos pendentes assim que o item for persistido
+  useEffect(() => {
+    if (!ready || !quoteId || !itemId || pending.length === 0 || uploading) return;
+    let cancelled = false;
+    (async () => {
+      setUploading(true);
+      const progressToast = toast({
+        title: "Enviando anexos pendentes…",
+        description: `${pending.length} arquivo(s)`,
+        duration: 60000,
+      });
+      const ok: AttachmentRow[] = [];
+      const failed: string[] = [];
+      for (const p of pending) {
+        try {
+          const row = await uploadOne(p.file, p.is_public, quoteId, itemId);
+          if (row) ok.push(row);
+        } catch (err: any) {
+          failed.push(`${p.file.name}: ${err?.message ?? "erro"}`);
+        }
+      }
+      if (cancelled) return;
+      progressToast.dismiss();
+      if (ok.length) {
+        setRows((prev) => [...prev, ...ok]);
+        toast({ title: `${ok.length} anexo(s) salvo(s)`, duration: 1500 });
+      }
+      if (failed.length) {
+        toast({
+          title: "Falha em alguns anexos",
+          description: failed.join("\n"),
+          variant: "destructive",
+        });
+      }
+      setPending([]);
+      setUploading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, quoteId, itemId]);
 
-    // Validação de tamanho
+  const openFilePicker = () => fileInputRef.current?.click();
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files || !files.length) return;
+
     const oversized = Array.from(files).find((f) => f.size > MAX_SIZE_BYTES);
     if (oversized) {
       toast({
@@ -115,6 +188,24 @@ export default function QuoteItemAttachmentsV2({
       return;
     }
 
+    // Sem id ainda → guarda em buffer local
+    if (!ready || !quoteId || !itemId) {
+      const buffered: PendingFile[] = Array.from(files).map((file) => ({
+        localId: `pending-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        file,
+        is_public: false,
+      }));
+      setPending((prev) => [...prev, ...buffered]);
+      toast({
+        title: "Anexo na fila",
+        description: "Será enviado automaticamente ao salvar a cotação.",
+        duration: 2000,
+      });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    // Upload imediato
     setUploading(true);
     const progressToast = toast({
       title: "Enviando anexo…",
@@ -124,31 +215,8 @@ export default function QuoteItemAttachmentsV2({
     try {
       const inserted: AttachmentRow[] = [];
       for (const file of Array.from(files)) {
-        const ext = (file.name.split(".").pop() || "bin").toLowerCase();
-        const filename = buildSmartName({ quoteId, itemType, locator, ext });
-        const path = `${quoteId}/${itemId}/${filename}`;
-        const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, {
-          cacheControl: "3600",
-          upsert: false,
-          contentType: file.type || undefined,
-        });
-        if (upErr) throw upErr;
-
-        const { data: row, error: insErr } = await supabase
-          .from("quote_item_attachments")
-          .insert({
-            quote_id: quoteId,
-            quote_item_id: itemId,
-            file_path: path,
-            original_name: file.name,
-            mime_type: file.type || null,
-            size_bytes: file.size,
-            is_public: false,
-          })
-          .select("id, file_path, original_name, mime_type, is_public")
-          .single();
-        if (insErr) throw insErr;
-        if (row) inserted.push(row as AttachmentRow);
+        const row = await uploadOne(file, false, quoteId, itemId);
+        if (row) inserted.push(row);
       }
       setRows((prev) => [...prev, ...inserted]);
       progressToast.dismiss();
@@ -184,10 +252,17 @@ export default function QuoteItemAttachmentsV2({
       .update({ is_public: next })
       .eq("id", row.id);
     if (error) {
-      // revert
       setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, is_public: !next } : r)));
       toast({ title: "Erro ao atualizar visibilidade", variant: "destructive" });
     }
+  };
+
+  const togglePendingPublic = (localId: string, next: boolean) => {
+    setPending((prev) => prev.map((p) => (p.localId === localId ? { ...p, is_public: next } : p)));
+  };
+
+  const removePending = (localId: string) => {
+    setPending((prev) => prev.filter((p) => p.localId !== localId));
   };
 
   const removeAttachment = async (row: AttachmentRow) => {
@@ -204,40 +279,29 @@ export default function QuoteItemAttachmentsV2({
     setRows((prev) => prev.filter((r) => r.id !== row.id));
   };
 
+  const totalCount = rows.length + pending.length;
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <Label className="text-[11px] font-body font-semibold text-muted-foreground uppercase tracking-wide">
           Arquivos {itemType === "flight" ? "do voo" : "do item"}
         </Label>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="inline-block">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-xs gap-1"
-                  disabled={uploading}
-                  onClick={openFilePicker}
-                >
-                  {uploading ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Paperclip className="w-3.5 h-3.5" />
-                  )}
-                  Anexar
-                </Button>
-              </span>
-            </TooltipTrigger>
-            {!ready && (
-              <TooltipContent side="top" className="text-xs">
-                Salve a cotação primeiro pra anexar arquivos a este item.
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-7 text-xs gap-1"
+          disabled={uploading}
+          onClick={openFilePicker}
+        >
+          {uploading ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Paperclip className="w-3.5 h-3.5" />
+          )}
+          Anexar
+        </Button>
         <input
           ref={fileInputRef}
           type="file"
@@ -248,12 +312,59 @@ export default function QuoteItemAttachmentsV2({
         />
       </div>
 
-      {rows.length === 0 ? (
+      {totalCount === 0 ? (
         <p className="text-[11px] text-muted-foreground italic">
           Nenhum arquivo anexado.
         </p>
       ) : (
         <div className="space-y-1.5">
+          {pending.map((p) => (
+            <div
+              key={p.localId}
+              className="flex items-center gap-2 px-2 py-1.5 border border-dashed border-border rounded-md bg-muted/30 text-xs"
+              title="Será enviado ao salvar a cotação"
+            >
+              <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              <span className="flex-1 truncate text-muted-foreground">
+                {p.file.name}{" "}
+                <span className="italic">(aguardando salvar)</span>
+              </span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-1">
+                        {p.is_public ? (
+                          <Eye className="w-3.5 h-3.5 text-primary" />
+                        ) : (
+                          <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
+                        )}
+                        <Switch
+                          checked={p.is_public}
+                          onCheckedChange={(v) => togglePendingPublic(p.localId, v)}
+                          className="scale-75 origin-center"
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs">
+                      {p.is_public ? "Visível para o cliente" : "Apenas uso interno"}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 text-destructive hover:text-destructive/80"
+                  onClick={() => removePending(p.localId)}
+                  title="Remover da fila"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            </div>
+          ))}
+
           {rows.map((row) => {
             const name = row.original_name || row.file_path.split("/").pop() || "arquivo";
             return (
