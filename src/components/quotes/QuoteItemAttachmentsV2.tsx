@@ -15,6 +15,8 @@ interface AttachmentRow {
   is_public: boolean;
 }
 
+const MAX_SIZE_BYTES = 15 * 1024 * 1024; // 15MB
+
 interface Props {
   quoteId?: string;
   itemId?: string;
@@ -66,7 +68,7 @@ export default function QuoteItemAttachmentsV2({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [rows, setRows] = useState<AttachmentRow[]>([]);
-  const canUpload = !!quoteId && !!itemId && !isNew;
+  const ready = !!quoteId && !!itemId && !isNew;
 
   useEffect(() => {
     if (!itemId) return;
@@ -86,9 +88,39 @@ export default function QuoteItemAttachmentsV2({
     };
   }, [itemId]);
 
+  const openFilePicker = () => {
+    if (!ready) {
+      toast({
+        title: "Salve a cotação primeiro",
+        description: "Clique em 'Salvar' para liberar o anexo deste item.",
+        duration: 2500,
+      });
+      return;
+    }
+    fileInputRef.current?.click();
+  };
+
   const handleFiles = async (files: FileList | null) => {
-    if (!files || !files.length || !canUpload || !quoteId || !itemId) return;
+    if (!files || !files.length || !ready || !quoteId || !itemId) return;
+
+    // Validação de tamanho
+    const oversized = Array.from(files).find((f) => f.size > MAX_SIZE_BYTES);
+    if (oversized) {
+      toast({
+        title: "Arquivo muito grande",
+        description: `${oversized.name} ultrapassa 15MB.`,
+        variant: "destructive",
+      });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     setUploading(true);
+    const progressToast = toast({
+      title: "Enviando anexo…",
+      description: files.length > 1 ? `${files.length} arquivos` : files[0].name,
+      duration: 60000,
+    });
     try {
       const inserted: AttachmentRow[] = [];
       for (const file of Array.from(files)) {
@@ -119,11 +151,13 @@ export default function QuoteItemAttachmentsV2({
         if (row) inserted.push(row as AttachmentRow);
       }
       setRows((prev) => [...prev, ...inserted]);
-      toast({ title: "Anexo enviado", duration: 1500 });
+      progressToast.dismiss();
+      toast({ title: "Anexo salvo", duration: 1500 });
     } catch (err: any) {
+      progressToast.dismiss();
       toast({
-        title: "Erro ao enviar",
-        description: err.message ?? String(err),
+        title: "Erro ao enviar anexo",
+        description: err?.message ?? String(err),
         variant: "destructive",
       });
     } finally {
@@ -185,8 +219,8 @@ export default function QuoteItemAttachmentsV2({
                   variant="outline"
                   size="sm"
                   className="h-7 text-xs gap-1"
-                  disabled={!canUpload || uploading}
-                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  onClick={openFilePicker}
                 >
                   {uploading ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -197,7 +231,7 @@ export default function QuoteItemAttachmentsV2({
                 </Button>
               </span>
             </TooltipTrigger>
-            {!canUpload && (
+            {!ready && (
               <TooltipContent side="top" className="text-xs">
                 Salve a cotação primeiro pra anexar arquivos a este item.
               </TooltipContent>
