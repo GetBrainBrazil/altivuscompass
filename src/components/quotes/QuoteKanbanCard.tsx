@@ -79,11 +79,10 @@ type Critical = {
 
 /**
  * Determina se o card está em estado crítico e o motivo.
- * Prioridade: validade > prazo interno > idade. Stages fechados nunca ficam críticos.
+ * Prioridade: validade > idade. Stages fechados nunca ficam críticos.
  */
 function getCritical(
   quoteValidity: string | null | undefined,
-  internalDueDate: string | null | undefined,
   createdAt: string | null | undefined,
   stage: string | null | undefined,
 ): Critical | null {
@@ -97,12 +96,6 @@ function getCritical(
     if (days === 0) return { badge: "URGENTE", context: `Expira hoje · ${formatBR(quoteValidity)}` };
   }
 
-  const due = parseDateOnly(internalDueDate);
-  if (due) {
-    const days = diffDays(due, today);
-    if (days < 0) return { badge: "ATRASADA", context: `Retorno atrasado · ${Math.abs(days)} dias` };
-  }
-
   const created = parseDateOnly(createdAt);
   if (created) {
     const age = diffDays(today, created);
@@ -114,20 +107,12 @@ function getCritical(
 
 /**
  * Linha de contexto quando o card NÃO é crítico.
- * Prioridade: prazo próximo (1-3 dias) > datas de viagem > vazio.
+ * Mostra datas de viagem quando disponíveis.
  */
 function getNormalContext(
-  internalDueDate: string | null | undefined,
   travelStart: string | null | undefined,
   travelEnd: string | null | undefined,
 ): { text: string; tone: "warning" | "muted" } | null {
-  const due = parseDateOnly(internalDueDate);
-  if (due) {
-    const days = diffDays(due, new Date());
-    if (days >= 1 && days <= 3) {
-      return { text: `Retornar em ${days} ${days === 1 ? "dia" : "dias"}`, tone: "warning" };
-    }
-  }
   const travel = formatTravelRange(travelStart, travelEnd);
   if (travel) return { text: travel, tone: "muted" };
   return null;
@@ -143,7 +128,6 @@ export interface QuoteKanbanCardProps {
     travel_date_start?: string | null;
     travel_date_end?: string | null;
     quote_validity?: string | null;
-    internal_due_date?: string | null;
     created_at?: string | null;
     assigned_to?: string | null;
     conclusion_type?: string | null;
@@ -171,12 +155,11 @@ export function QuoteKanbanCard({
 }: QuoteKanbanCardProps) {
   const critical = getCritical(
     quote.quote_validity,
-    quote.internal_due_date,
     quote.created_at,
     quote.stage,
   );
   const normalContext = !critical
-    ? getNormalContext(quote.internal_due_date, quote.travel_date_start, quote.travel_date_end)
+    ? getNormalContext(quote.travel_date_start, quote.travel_date_end)
     : null;
 
   const showWonBadge = quote.stage === "confirmed" && quote.conclusion_type === "won";

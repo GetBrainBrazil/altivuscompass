@@ -723,7 +723,7 @@ export default function Quotes() {
         notes: form.notes || null,
         lead_source: form.lead_source || null,
         close_probability: form.close_probability || null,
-        internal_due_date: form.internal_due_date || null,
+        internal_due_date: null,
         quote_validity: form.quote_validity || null,
         price_breakdown: { linked_client_ids: selectedLinkedClients, client_self_traveling: clientSelfTraveling, flexible_dates: !!form.flexible_dates, flexible_dates_description: form.flexible_dates_description || null },
       };
@@ -1175,7 +1175,7 @@ export default function Quotes() {
       internal_notes: (q as any).internal_notes ?? "",
       lead_source: (q as any).lead_source ?? "",
       close_probability: (q as any).close_probability ?? "",
-      internal_due_date: (q as any).internal_due_date ?? "",
+      internal_due_date: "",
       flexible_dates: pb?.flexible_dates ?? false,
       flexible_dates_description: pb?.flexible_dates_description ?? "",
     });
