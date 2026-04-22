@@ -219,8 +219,8 @@ export default function QuoteItemAttachmentsV2({
                   variant="outline"
                   size="sm"
                   className="h-7 text-xs gap-1"
-                  disabled={!canUpload || uploading}
-                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  onClick={openFilePicker}
                 >
                   {uploading ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -231,7 +231,7 @@ export default function QuoteItemAttachmentsV2({
                 </Button>
               </span>
             </TooltipTrigger>
-            {!canUpload && (
+            {!ready && (
               <TooltipContent side="top" className="text-xs">
                 Salve a cotação primeiro pra anexar arquivos a este item.
               </TooltipContent>
