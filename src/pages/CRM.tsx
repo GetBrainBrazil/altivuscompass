@@ -151,13 +151,13 @@ function KanbanBoard({
   onCardClick: (card: KanbanCardData) => void;
 }) {
   return (
-    <ScrollArea className="flex-1">
-      <div className="flex gap-8 p-8 h-full min-h-0">
+    <div className="flex-1 overflow-x-auto">
+      <div className="flex gap-4 px-6 py-6 min-w-max">
         {columns.map((col) => (
           <KanbanColumnCard key={col.id} column={col} onCardClick={onCardClick} />
         ))}
       </div>
-    </ScrollArea>
+    </div>
   );
 }
 
