@@ -2,10 +2,23 @@ import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, SendHorizontal, MessageSquare, UserRound, Phone } from "lucide-react";
+import {
+  Search,
+  SendHorizontal,
+  MessageSquare,
+  UserRound,
+  Phone,
+  PanelRightClose,
+  PanelRightOpen,
+  MapPin,
+  Users,
+  CalendarRange,
+  Wallet,
+  Sparkles,
+  ArrowRightLeft,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type FilterTab = "all" | "human" | "ai";
@@ -22,12 +35,23 @@ interface Message {
 
 type ConversationStatus = "ai" | "human";
 
+interface LeadSummary {
+  destination?: string;
+  travelers?: string;
+  duration?: string;
+  budget?: string;
+  notes: string[];
+}
+
 interface Conversation {
   id: string;
   leadName: string;
   phone: string;
   status: ConversationStatus;
   messages: Message[];
+  summary: LeadSummary;
+  /** id of the last AI message before human takeover */
+  handoffAfterMessageId?: string;
 }
 
 // ============= Mock Data =============
@@ -45,6 +69,17 @@ const MOCK_CONVERSATIONS: Conversation[] = [
       { id: "m5", sender: "lead", content: "Sim, com meu marido. Queremos algo romântico, com bons hotéis.", timestamp: "2025-04-23T09:16:10" },
       { id: "m6", sender: "ai", content: "Anotado! Casal, foco em conforto e experiências românticas. Posso sugerir Roma, Florença, Paris e talvez uma escapada à Provence. Qual é o orçamento aproximado por pessoa?", timestamp: "2025-04-23T09:16:45" },
     ],
+    summary: {
+      destination: "Itália e França (Roma, Florença, Paris)",
+      travelers: "Casal (2 adultos)",
+      duration: "12 dias — julho/2025",
+      budget: "A confirmar",
+      notes: [
+        "Perfil romântico, foco em conforto.",
+        "Demonstrou interesse em hotéis de categoria superior.",
+        "Lead aguardando sugestão de faixa de orçamento.",
+      ],
+    },
   },
   {
     id: "c2",
@@ -58,6 +93,18 @@ const MOCK_CONVERSATIONS: Conversation[] = [
       { id: "m4", sender: "ai", content: "Maravilha! Tenho ótimas opções como o Soneva Jani, Conrad Rangali e Anantara Kihavah. Posso encaminhar ao consultor especializado para fechar valores?", timestamp: "2025-04-22T08:33:35" },
       { id: "m5", sender: "lead", content: "Sim, por favor. Quero falar com alguém para fechar logo.", timestamp: "2025-04-22T08:35:00" },
     ],
+    handoffAfterMessageId: "m4",
+    summary: {
+      destination: "Maldivas",
+      travelers: "Casal (2 adultos)",
+      duration: "7 noites — setembro/2025",
+      budget: "Premium (resort 5★, bangalô sobre a água)",
+      notes: [
+        "Cliente com alta intenção de compra (\"fechar logo\").",
+        "Resorts de interesse: Soneva Jani, Conrad Rangali, Anantara Kihavah.",
+        "Solicitou explicitamente atendimento humano.",
+      ],
+    },
   },
   {
     id: "c3",
@@ -72,6 +119,17 @@ const MOCK_CONVERSATIONS: Conversation[] = [
       { id: "m5", sender: "lead", content: "Dentro da Disney mesmo, para aproveitar os benefícios.", timestamp: "2025-04-23T14:06:00" },
       { id: "m6", sender: "ai", content: "Ótima escolha! Tenho boas opções nas categorias Value, Moderate e Deluxe. Qual seria a faixa de orçamento ideal?", timestamp: "2025-04-23T14:06:25" },
     ],
+    summary: {
+      destination: "Orlando — Disney",
+      travelers: "Família (2 adultos + 2 crianças, 8 e 11 anos)",
+      duration: "10 dias (sugerido pela IA)",
+      budget: "A confirmar",
+      notes: [
+        "Preferência por hospedagem dentro dos parques Disney.",
+        "Categoria do hotel ainda não definida (Value/Moderate/Deluxe).",
+        "Lead em fase inicial de descoberta.",
+      ],
+    },
   },
 ];
 
@@ -88,7 +146,6 @@ const formatTime = (iso: string) =>
   new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
 const formatPhone = (phone: string) => {
-  // +5511987654321 -> +55 (11) 98765-4321
   const m = phone.match(/^\+(\d{2})(\d{2})(\d{5})(\d{4})$/);
   if (!m) return phone;
   return `+${m[1]} (${m[2]}) ${m[3]}-${m[4]}`;
@@ -168,29 +225,102 @@ interface ChatBubbleProps {
 const ChatBubble = ({ message }: ChatBubbleProps) => {
   const isLead = message.sender === "lead";
   return (
-    <div className={cn("flex w-full", isLead ? "justify-start" : "justify-end")}>
+    <div className={cn("flex w-full flex-col gap-1", isLead ? "items-start" : "items-end")}>
       <div
         className={cn(
-          "max-w-[75%] rounded-2xl px-4 py-2.5 text-sm",
+          "max-w-[75%] rounded-3xl px-5 py-3 text-sm leading-relaxed",
           isLead
-            ? "bg-white text-foreground shadow-sm rounded-bl-none"
-            : "bg-[hsl(var(--navy))] text-[hsl(var(--cream))] rounded-br-none",
+            ? "bg-white text-foreground shadow-sm rounded-bl-md border border-border/40"
+            : "bg-[hsl(var(--navy))] text-[hsl(var(--cream))] rounded-br-md",
         )}
       >
         <p className="whitespace-pre-wrap break-words">{message.content}</p>
-        <p
-          className={cn(
-            "text-[10px] mt-1.5",
-            isLead ? "text-muted-foreground" : "text-[hsl(var(--cream))]/70",
-          )}
-        >
-          {message.sender === "ai" ? "IA · " : ""}
-          {formatTime(message.timestamp)}
-        </p>
       </div>
+      <span className="text-[10px] text-muted-foreground px-2">
+        {message.sender === "ai" ? "IA · " : message.sender === "agent" ? "Agente · " : ""}
+        {formatTime(message.timestamp)}
+      </span>
     </div>
   );
 };
+
+const HandoffDivider = () => (
+  <div className="flex items-center gap-3 py-2" role="separator" aria-label="Transferido para atendimento humano">
+    <div className="flex-1 h-px bg-border" />
+    <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+      <ArrowRightLeft className="h-3 w-3" />
+      Transferido para Atendimento Humano
+    </div>
+    <div className="flex-1 h-px bg-border" />
+  </div>
+);
+
+// ============= Lead Summary Panel =============
+interface SummaryFieldProps {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value?: string;
+}
+
+const SummaryField = ({ icon: Icon, label, value }: SummaryFieldProps) => (
+  <div className="space-y-1">
+    <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+      <Icon className="h-3 w-3" />
+      {label}
+    </div>
+    <p className="text-sm text-foreground pl-[18px]">
+      {value || <span className="text-muted-foreground italic">Não informado</span>}
+    </p>
+  </div>
+);
+
+interface LeadSummaryPanelProps {
+  summary: LeadSummary;
+}
+
+const LeadSummaryPanel = ({ summary }: LeadSummaryPanelProps) => (
+  <div className="h-full flex flex-col bg-white">
+    <div className="px-5 py-4 border-b">
+      <div className="flex items-center gap-2">
+        <Sparkles className="h-4 w-4 text-[hsl(var(--navy))]" />
+        <h2 className="text-sm font-semibold">Resumo do Lead</h2>
+      </div>
+      <p className="text-[11px] text-muted-foreground mt-1">
+        Dados extraídos automaticamente pela IA.
+      </p>
+    </div>
+
+    <ScrollArea className="flex-1">
+      <div className="p-5 space-y-5">
+        <SummaryField icon={MapPin} label="Destino de Interesse" value={summary.destination} />
+        <SummaryField icon={Users} label="Número de Pessoas" value={summary.travelers} />
+        <SummaryField icon={CalendarRange} label="Duração da Viagem" value={summary.duration} />
+        <SummaryField icon={Wallet} label="Orçamento Estimado" value={summary.budget} />
+
+        <div className="pt-4 border-t space-y-2">
+          <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+            <Sparkles className="h-3 w-3" />
+            Anotações da IA
+          </div>
+          {summary.notes.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic">Sem anotações.</p>
+          ) : (
+            <ul className="space-y-2">
+              {summary.notes.map((note, i) => (
+                <li
+                  key={i}
+                  className="text-xs leading-relaxed text-foreground bg-muted/40 rounded-lg px-3 py-2 border border-border/40"
+                >
+                  {note}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </ScrollArea>
+  </div>
+);
 
 // ============= Main Page =============
 export default function ServiceCenter() {
@@ -199,6 +329,7 @@ export default function ServiceCenter() {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [draft, setDraft] = useState("");
+  const [summaryOpen, setSummaryOpen] = useState(true);
 
   const counts = useMemo(
     () => ({
@@ -281,7 +412,7 @@ export default function ServiceCenter() {
         </ScrollArea>
       </aside>
 
-      {/* ===== Right column: chat window ===== */}
+      {/* ===== Center column: chat window ===== */}
       <section className="flex-1 flex flex-col min-w-0 bg-muted/30">
         {!selected ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
@@ -310,17 +441,39 @@ export default function ServiceCenter() {
                   </p>
                 </div>
               </div>
-              <Button variant="outline" size="sm" className="gap-2">
-                <UserRound className="h-4 w-4" />
-                Assumir Conversa
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  className="gap-2 bg-[hsl(var(--navy))] text-[hsl(var(--cream))] hover:bg-[hsl(var(--navy))]/90 shadow-sm"
+                >
+                  <UserRound className="h-4 w-4" />
+                  Assumir Conversa
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={() => setSummaryOpen((o) => !o)}
+                  aria-label={summaryOpen ? "Recolher resumo" : "Expandir resumo"}
+                >
+                  {summaryOpen ? (
+                    <PanelRightClose className="h-4 w-4" />
+                  ) : (
+                    <PanelRightOpen className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             </header>
 
             {/* Messages */}
             <ScrollArea className="flex-1 px-6 py-5">
               <div className="space-y-4 max-w-3xl mx-auto">
                 {selected.messages.map((m) => (
-                  <ChatBubble key={m.id} message={m} />
+                  <div key={m.id} className="space-y-4">
+                    <ChatBubble message={m} />
+                    {selected.handoffAfterMessageId === m.id && <HandoffDivider />}
+                  </div>
                 ))}
               </div>
             </ScrollArea>
@@ -334,8 +487,8 @@ export default function ServiceCenter() {
                   onChange={(e) => setDraft(e.target.value)}
                   className="h-11 rounded-full px-5 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-ring"
                 />
-                <Button 
-                  size="icon" 
+                <Button
+                  size="icon"
                   disabled={!draft.trim()}
                   className="h-11 w-11 rounded-full shrink-0"
                 >
@@ -349,6 +502,13 @@ export default function ServiceCenter() {
           </>
         )}
       </section>
+
+      {/* ===== Right column: lead summary panel ===== */}
+      {selected && summaryOpen && (
+        <aside className="w-[320px] shrink-0 border-l hidden lg:block">
+          <LeadSummaryPanel summary={selected.summary} />
+        </aside>
+      )}
     </div>
   );
 }
