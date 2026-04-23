@@ -243,6 +243,22 @@ export default function ServiceCenter() {
               className="pl-9 h-9"
             />
           </div>
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FilterTab)}>
+            <TabsList className="grid grid-cols-3 w-full h-9 bg-muted/60 p-0.5">
+              <TabsTrigger value="all" className="text-xs gap-1.5">
+                Todos
+                <span className="text-[10px] text-muted-foreground">{counts.all}</span>
+              </TabsTrigger>
+              <TabsTrigger value="human" className="text-xs gap-1.5">
+                Requer Atenção
+                <span className="text-[10px] text-muted-foreground">{counts.human}</span>
+              </TabsTrigger>
+              <TabsTrigger value="ai" className="text-xs gap-1.5">
+                Em triagem
+                <span className="text-[10px] text-muted-foreground">{counts.ai}</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
         <ScrollArea className="flex-1">
