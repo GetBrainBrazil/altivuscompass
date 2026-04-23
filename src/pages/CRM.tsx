@@ -176,18 +176,18 @@ function KanbanColumnCard({
       )}
     >
       {/* Column header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
-        <h3 className="text-sm font-semibold text-foreground tracking-tight">
+      <div className="flex items-center justify-between px-4 py-3">
+        <h3 className="text-sm font-semibold text-foreground/80 tracking-tight">
           {column.title}
         </h3>
-        <span className="text-xs font-medium text-muted-foreground bg-background/80 px-2 py-0.5 rounded-full border border-border/50">
+        <span className="text-xs font-medium text-muted-foreground/70 bg-slate-100/80 dark:bg-slate-800/50 px-2.5 py-0.5 rounded-full">
           {column.cards.length}
         </span>
       </div>
 
       {/* Column body — scrollable when long */}
       <ScrollArea className="flex-1">
-        <div className="p-3 space-y-2 min-h-[200px]">
+        <div className="p-2 space-y-3 min-h-[200px]">
           {column.cards.length === 0 ? (
             <EmptyColumnHint />
           ) : (
@@ -203,7 +203,7 @@ function KanbanColumnCard({
 
 function EmptyColumnHint() {
   return (
-    <div className="flex items-center justify-center h-32 rounded-lg border border-dashed border-border/60 text-xs text-muted-foreground">
+    <div className="flex items-center justify-center h-32 rounded-lg text-xs text-muted-foreground/50">
       Nenhum item
     </div>
   );
