@@ -152,7 +152,7 @@ function KanbanBoard({
 }) {
   return (
     <ScrollArea className="flex-1">
-      <div className="flex gap-4 p-6 h-full min-h-0">
+      <div className="flex gap-8 p-8 h-full min-h-0">
         {columns.map((col) => (
           <KanbanColumnCard key={col.id} column={col} onCardClick={onCardClick} />
         ))}
@@ -171,24 +171,24 @@ function KanbanColumnCard({
   return (
     <div
       className={cn(
-        "flex flex-col w-[300px] shrink-0 rounded-xl border border-border/60",
-        "bg-[#F9FAFB] dark:bg-muted/30",
+        "flex flex-col w-[300px] shrink-0 rounded-xl",
+        "bg-slate-100/50 dark:bg-slate-900/30",
         "max-h-full"
       )}
     >
       {/* Column header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
-        <h3 className="text-sm font-semibold text-foreground tracking-tight">
+      <div className="flex items-center justify-between px-4 py-3">
+        <h3 className="text-sm font-semibold text-foreground/80 tracking-tight">
           {column.title}
         </h3>
-        <span className="text-xs font-medium text-muted-foreground bg-background/80 px-2 py-0.5 rounded-full border border-border/50">
+        <span className="text-xs font-medium text-muted-foreground/70 bg-slate-200/60 dark:bg-slate-800/60 px-2.5 py-0.5 rounded-full">
           {column.cards.length}
         </span>
       </div>
 
       {/* Column body — scrollable when long */}
       <ScrollArea className="flex-1">
-        <div className="p-3 space-y-2 min-h-[200px]">
+        <div className="p-2 space-y-3 min-h-[200px]">
           {column.cards.length === 0 ? (
             <EmptyColumnHint />
           ) : (
@@ -204,7 +204,7 @@ function KanbanColumnCard({
 
 function EmptyColumnHint() {
   return (
-    <div className="flex items-center justify-center h-32 rounded-lg border border-dashed border-border/60 text-xs text-muted-foreground">
+    <div className="flex items-center justify-center h-32 rounded-lg text-xs text-muted-foreground/50">
       Nenhum item
     </div>
   );
@@ -221,7 +221,7 @@ export default function CRM() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-0px)] min-h-0 bg-background">
+    <div className="flex flex-col h-[calc(100vh-0px)] min-h-0 bg-slate-50 dark:bg-slate-950">
       {/* Header */}
       <header className="border-b border-border bg-background">
         <div className="px-6 pt-6 pb-3">
