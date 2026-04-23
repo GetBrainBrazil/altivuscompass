@@ -161,7 +161,13 @@ function KanbanBoard({
   );
 }
 
-function KanbanColumnCard({ column }: { column: KanbanColumn }) {
+function KanbanColumnCard({
+  column,
+  onCardClick,
+}: {
+  column: KanbanColumn;
+  onCardClick: (card: KanbanCardData) => void;
+}) {
   return (
     <div
       className={cn(
@@ -186,7 +192,9 @@ function KanbanColumnCard({ column }: { column: KanbanColumn }) {
           {column.cards.length === 0 ? (
             <EmptyColumnHint />
           ) : (
-            column.cards.map((card) => <KanbanCard key={card.id} card={card} />)
+            column.cards.map((card) => (
+              <KanbanCard key={card.id} card={card} onClick={onCardClick} />
+            ))
           )}
         </div>
       </ScrollArea>
