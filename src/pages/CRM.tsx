@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Plus, MoreVertical, Trash2 } from "lucide-react";
+import {
+  Plus,
+  MoreVertical,
+  Trash2,
+  ArrowLeftToLine,
+  ArrowRightToLine,
+  Pencil,
+} from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +15,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
