@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Plus, MoreVertical, Trash2 } from "lucide-react";
+import {
+  Plus,
+  MoreVertical,
+  Trash2,
+  ArrowLeftToLine,
+  ArrowRightToLine,
+  Pencil,
+} from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +15,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -176,16 +184,19 @@ function KanbanBoard({
   onCardClick,
   onDeleteColumn,
   onAddColumn,
+  onRenameColumn,
+  onAddBefore,
+  onAddAfter,
 }: {
   columns: KanbanColumn[];
   onCardClick: (card: KanbanCardData) => void;
   onDeleteColumn: (columnId: string) => void;
   onAddColumn: () => void;
+  onRenameColumn: (columnId: string) => void;
+  onAddBefore: (columnId: string) => void;
+  onAddAfter: (columnId: string) => void;
 }) {
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    // Convert vertical wheel scroll to horizontal scroll when there's no
-    // horizontal intent (typical mouse wheel). Trackpads already provide
-    // deltaX, so we leave those alone.
     if (e.deltaY !== 0 && e.deltaX === 0) {
       e.currentTarget.scrollLeft += e.deltaY;
     }
@@ -203,6 +214,9 @@ function KanbanBoard({
             column={col}
             onCardClick={onCardClick}
             onDelete={() => onDeleteColumn(col.id)}
+            onRename={() => onRenameColumn(col.id)}
+            onAddBefore={() => onAddBefore(col.id)}
+            onAddAfter={() => onAddAfter(col.id)}
           />
         ))}
         <AddColumnButton onClick={onAddColumn} />
@@ -215,10 +229,16 @@ function KanbanColumnCard({
   column,
   onCardClick,
   onDelete,
+  onRename,
+  onAddBefore,
+  onAddAfter,
 }: {
   column: KanbanColumn;
   onCardClick: (card: KanbanCardData) => void;
   onDelete: () => void;
+  onRename: () => void;
+  onAddBefore: () => void;
+  onAddAfter: () => void;
 }) {
   return (
     <div
@@ -248,13 +268,26 @@ function KanbanColumnCard({
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem onClick={onAddBefore}>
+              <ArrowLeftToLine className="h-4 w-4 mr-2" />
+              Adicionar etapa à esquerda
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onAddAfter}>
+              <ArrowRightToLine className="h-4 w-4 mr-2" />
+              Adicionar etapa à direita
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onRename}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Renomear etapa
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={onDelete}
               className="text-destructive focus:text-destructive"
             >
               <Trash2 className="h-4 w-4 mr-2" />
-              Deletar etapa
+              Excluir etapa
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -314,6 +347,11 @@ export default function CRM() {
   // Add column dialog
   const [addOpen, setAddOpen] = useState(false);
   const [newColumnTitle, setNewColumnTitle] = useState("");
+  const [insertIndex, setInsertIndex] = useState<number | null>(null);
+
+  // Rename column dialog
+  const [columnToRename, setColumnToRename] = useState<KanbanColumn | null>(null);
+  const [renameTitle, setRenameTitle] = useState("");
 
   // Delete confirmation
   const [columnToDelete, setColumnToDelete] = useState<KanbanColumn | null>(null);
@@ -326,6 +364,12 @@ export default function CRM() {
   const setColumns = tab === "sales" ? setSalesColumns : setOpsColumns;
   const columns = tab === "sales" ? salesColumns : opsColumns;
 
+  const openAddAt = (index: number | null) => {
+    setInsertIndex(index);
+    setNewColumnTitle("");
+    setAddOpen(true);
+  };
+
   const handleAddColumn = () => {
     const title = newColumnTitle.trim();
     if (!title) {
@@ -337,10 +381,49 @@ export default function CRM() {
       title,
       cards: [],
     };
-    setColumns((prev) => [...prev, newColumn]);
+    setColumns((prev) => {
+      if (insertIndex === null) return [...prev, newColumn];
+      const next = [...prev];
+      next.splice(insertIndex, 0, newColumn);
+      return next;
+    });
     setNewColumnTitle("");
+    setInsertIndex(null);
     setAddOpen(false);
     toast.success(`Etapa "${title}" adicionada.`);
+  };
+
+  const handleAddBefore = (columnId: string) => {
+    const idx = columns.findIndex((c) => c.id === columnId);
+    if (idx >= 0) openAddAt(idx);
+  };
+
+  const handleAddAfter = (columnId: string) => {
+    const idx = columns.findIndex((c) => c.id === columnId);
+    if (idx >= 0) openAddAt(idx + 1);
+  };
+
+  const handleRequestRename = (columnId: string) => {
+    const col = columns.find((c) => c.id === columnId);
+    if (col) {
+      setColumnToRename(col);
+      setRenameTitle(col.title);
+    }
+  };
+
+  const confirmRename = () => {
+    const title = renameTitle.trim();
+    if (!columnToRename) return;
+    if (!title) {
+      toast.error("Informe um nome para a etapa.");
+      return;
+    }
+    setColumns((prev) =>
+      prev.map((c) => (c.id === columnToRename.id ? { ...c, title } : c))
+    );
+    toast.success(`Etapa renomeada para "${title}".`);
+    setColumnToRename(null);
+    setRenameTitle("");
   };
 
   const handleRequestDelete = (columnId: string) => {
@@ -411,7 +494,10 @@ export default function CRM() {
           columns={columns}
           onCardClick={handleCardClick}
           onDeleteColumn={handleRequestDelete}
-          onAddColumn={() => setAddOpen(true)}
+          onAddColumn={() => openAddAt(null)}
+          onRenameColumn={handleRequestRename}
+          onAddBefore={handleAddBefore}
+          onAddAfter={handleAddAfter}
         />
       </main>
 
@@ -452,6 +538,53 @@ export default function CRM() {
               Cancelar
             </Button>
             <Button onClick={handleAddColumn}>Criar etapa</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rename column dialog */}
+      <Dialog
+        open={!!columnToRename}
+        onOpenChange={(open) => {
+          if (!open) {
+            setColumnToRename(null);
+            setRenameTitle("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Renomear etapa</DialogTitle>
+            <DialogDescription>
+              Atualize o nome desta etapa do funil.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="rename-column-title">Nome da etapa</Label>
+            <Input
+              id="rename-column-title"
+              value={renameTitle}
+              onChange={(e) => setRenameTitle(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  confirmRename();
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setColumnToRename(null);
+                setRenameTitle("");
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={confirmRename}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
