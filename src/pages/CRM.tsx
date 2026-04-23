@@ -206,6 +206,10 @@ function KanbanBoard({
   onRenameColumn,
   onAddBefore,
   onAddAfter,
+  draggedCardId,
+  onCardDragStart,
+  onCardDragEnd,
+  onDropOnColumn,
 }: {
   columns: KanbanColumn[];
   onCardClick: (card: KanbanCardData) => void;
@@ -214,6 +218,10 @@ function KanbanBoard({
   onRenameColumn: (columnId: string) => void;
   onAddBefore: (columnId: string) => void;
   onAddAfter: (columnId: string) => void;
+  draggedCardId: string | null;
+  onCardDragStart: (card: KanbanCardData) => void;
+  onCardDragEnd: () => void;
+  onDropOnColumn: (columnId: string) => void;
 }) {
   return (
     <div className="flex-1 min-h-0 mt-4 pb-5 overflow-x-auto overflow-y-hidden scrollbar-elegant [transform:scaleY(-1)]">
@@ -228,6 +236,10 @@ function KanbanBoard({
             onRename={() => onRenameColumn(col.id)}
             onAddBefore={() => onAddBefore(col.id)}
             onAddAfter={() => onAddAfter(col.id)}
+            draggedCardId={draggedCardId}
+            onCardDragStart={onCardDragStart}
+            onCardDragEnd={onCardDragEnd}
+            onDropOnColumn={onDropOnColumn}
           />
         ))}
         <AddColumnButton onClick={onAddColumn} />
@@ -244,6 +256,10 @@ function KanbanColumnCard({
   onRename,
   onAddBefore,
   onAddAfter,
+  draggedCardId,
+  onCardDragStart,
+  onCardDragEnd,
+  onDropOnColumn,
 }: {
   column: KanbanColumn;
   dotColor: string;
@@ -252,7 +268,13 @@ function KanbanColumnCard({
   onRename: () => void;
   onAddBefore: () => void;
   onAddAfter: () => void;
+  draggedCardId: string | null;
+  onCardDragStart: (card: KanbanCardData) => void;
+  onCardDragEnd: () => void;
+  onDropOnColumn: (columnId: string) => void;
 }) {
+  const [isOver, setIsOver] = useState(false);
+
   return (
     <div className="flex flex-col w-[320px] shrink-0 max-h-full">
       {/* Column header (fixed) — flat, dot + title + count */}
@@ -300,9 +322,30 @@ function KanbanColumnCard({
         </DropdownMenu>
       </div>
 
-      {/* Column body — scrolls vertically when overflowing */}
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin pr-1">
-        <div className="space-y-3 min-h-[120px]">
+      {/* Column body — scrolls vertically and acts as the drop zone */}
+      <div
+        onDragOver={(e) => {
+          if (!draggedCardId) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          if (!isOver) setIsOver(true);
+        }}
+        onDragLeave={(e) => {
+          // só limpa quando o cursor sai realmente do contêiner
+          if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+          setIsOver(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsOver(false);
+          onDropOnColumn(column.id);
+        }}
+        className={cn(
+          "flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin pr-1 rounded-lg transition-colors",
+          isOver && "bg-primary/5 ring-1 ring-primary/30",
+        )}
+      >
+        <div className="space-y-3 min-h-[120px] p-1">
           {column.cards.length === 0 ? (
             <EmptyColumnHint />
           ) : (
@@ -312,6 +355,10 @@ function KanbanColumnCard({
                 card={card}
                 onClick={onCardClick}
                 stageBorderClass={dotColor.replace("bg-", "border-l-")}
+                draggable
+                isDragging={draggedCardId === card.id}
+                onDragStart={(c) => onCardDragStart(c)}
+                onDragEnd={() => onCardDragEnd()}
               />
             ))
           )}
@@ -370,6 +417,36 @@ export default function CRM() {
 
   const setColumns = tab === "sales" ? setSalesColumns : setOpsColumns;
   const columns = tab === "sales" ? salesColumns : opsColumns;
+
+  // ─── Drag & Drop ─────────────────────────────────────────
+  const [draggedCardId, setDraggedCardId] = useState<string | null>(null);
+
+  const handleCardDragStart = (card: KanbanCardData) => setDraggedCardId(card.id);
+  const handleCardDragEnd = () => setDraggedCardId(null);
+
+  const handleDropOnColumn = (targetColumnId: string) => {
+    if (!draggedCardId) return;
+    setColumns((prev) => {
+      let moving: KanbanCardData | null = null;
+      const stripped = prev.map((col) => {
+        const idx = col.cards.findIndex((c) => c.id === draggedCardId);
+        if (idx === -1) return col;
+        moving = col.cards[idx];
+        if (col.id === targetColumnId) return col; // mesmo destino, não mexe
+        return { ...col, cards: col.cards.filter((c) => c.id !== draggedCardId) };
+      });
+      if (!moving) return prev;
+      const sourceColumn = prev.find((c) => c.cards.some((k) => k.id === draggedCardId));
+      if (sourceColumn?.id === targetColumnId) return prev;
+      const next = stripped.map((col) =>
+        col.id === targetColumnId ? { ...col, cards: [moving as KanbanCardData, ...col.cards] } : col,
+      );
+      const target = next.find((c) => c.id === targetColumnId);
+      if (target) toast.success(`Lead movido para "${target.title}".`);
+      return next;
+    });
+    setDraggedCardId(null);
+  };
 
   // ─── Toolbar state (search + filters) ─────────────────────
   const [searchTerm, setSearchTerm] = useState("");
@@ -626,6 +703,10 @@ export default function CRM() {
           onRenameColumn={handleRequestRename}
           onAddBefore={handleAddBefore}
           onAddAfter={handleAddAfter}
+          draggedCardId={draggedCardId}
+          onCardDragStart={handleCardDragStart}
+          onCardDragEnd={handleCardDragEnd}
+          onDropOnColumn={handleDropOnColumn}
         />
       </main>
 
