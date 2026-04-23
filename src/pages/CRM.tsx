@@ -212,6 +212,13 @@ function EmptyColumnHint() {
 
 export default function CRM() {
   const [tab, setTab] = useState<"sales" | "ops">("sales");
+  const [selectedCard, setSelectedCard] = useState<KanbanCardData | null>(null);
+  const [panelOpen, setPanelOpen] = useState(false);
+
+  const handleCardClick = (card: KanbanCardData) => {
+    setSelectedCard(card);
+    setPanelOpen(true);
+  };
 
   return (
     <div className="flex flex-col h-[calc(100vh-0px)] min-h-0 bg-background">
@@ -267,11 +274,18 @@ export default function CRM() {
       {/* Board area — fills remaining height */}
       <main className="flex-1 min-h-0 flex flex-col">
         {tab === "sales" ? (
-          <KanbanBoard columns={SALES_COLUMNS} />
+          <KanbanBoard columns={SALES_COLUMNS} onCardClick={handleCardClick} />
         ) : (
-          <KanbanBoard columns={OPS_COLUMNS} />
+          <KanbanBoard columns={OPS_COLUMNS} onCardClick={handleCardClick} />
         )}
       </main>
+
+      {/* Lead detail slide-over */}
+      <LeadDetailPanel
+        card={selectedCard}
+        open={panelOpen}
+        onOpenChange={setPanelOpen}
+      />
     </div>
   );
 }
