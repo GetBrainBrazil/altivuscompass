@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Plus,
   MoreVertical,
@@ -38,7 +39,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { KanbanCard, type KanbanCardData } from "@/components/crm/KanbanCard";
-import { LeadDetailPanel } from "@/components/crm/LeadDetailPanel";
 import { toast } from "sonner";
 
 type KanbanColumn = {
@@ -330,11 +330,10 @@ function EmptyColumnHint() {
 }
 
 export default function CRM() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<"sales" | "ops">("sales");
   const [salesColumns, setSalesColumns] = useState<KanbanColumn[]>(INITIAL_SALES_COLUMNS);
   const [opsColumns, setOpsColumns] = useState<KanbanColumn[]>(INITIAL_OPS_COLUMNS);
-  const [selectedCard, setSelectedCard] = useState<KanbanCardData | null>(null);
-  const [panelOpen, setPanelOpen] = useState(false);
 
   // Add column dialog
   const [addOpen, setAddOpen] = useState(false);
@@ -348,13 +347,19 @@ export default function CRM() {
   // Delete confirmation
   const [columnToDelete, setColumnToDelete] = useState<KanbanColumn | null>(null);
 
-  const handleCardClick = (card: KanbanCardData) => {
-    setSelectedCard(card);
-    setPanelOpen(true);
-  };
-
   const setColumns = tab === "sales" ? setSalesColumns : setOpsColumns;
   const columns = tab === "sales" ? salesColumns : opsColumns;
+
+  const handleCardClick = (card: KanbanCardData) => {
+    const stage = columns.find((c) => c.cards.some((k) => k.id === card.id));
+    try {
+      sessionStorage.setItem(`crm:lead:${card.id}`, JSON.stringify(card));
+    } catch {
+      /* ignore */
+    }
+    const params = stage ? `?stage=${encodeURIComponent(stage.id)}` : "";
+    navigate(`/crm/lead/${card.id}${params}`);
+  };
 
   const openAddAt = (index: number | null) => {
     setInsertIndex(index);
