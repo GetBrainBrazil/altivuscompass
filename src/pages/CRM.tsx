@@ -152,7 +152,7 @@ function KanbanBoard({
 }) {
   return (
     <ScrollArea className="flex-1">
-      <div className="flex gap-6 p-6 h-full min-h-0">
+      <div className="flex gap-8 p-8 h-full min-h-0">
         {columns.map((col) => (
           <KanbanColumnCard key={col.id} column={col} onCardClick={onCardClick} />
         ))}
@@ -172,6 +172,7 @@ function KanbanColumnCard({
     <div
       className={cn(
         "flex flex-col w-[300px] shrink-0 rounded-xl",
+        "bg-slate-100/50 dark:bg-slate-900/30",
         "max-h-full"
       )}
     >
@@ -180,7 +181,7 @@ function KanbanColumnCard({
         <h3 className="text-sm font-semibold text-foreground/80 tracking-tight">
           {column.title}
         </h3>
-        <span className="text-xs font-medium text-muted-foreground/70 bg-slate-100/80 dark:bg-slate-800/50 px-2.5 py-0.5 rounded-full">
+        <span className="text-xs font-medium text-muted-foreground/70 bg-slate-200/60 dark:bg-slate-800/60 px-2.5 py-0.5 rounded-full">
           {column.cards.length}
         </span>
       </div>
