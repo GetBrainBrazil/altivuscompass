@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, SendHorizontal, MessageSquare, Bot, UserRound, Phone } from "lucide-react";
+import { Search, SendHorizontal, MessageSquare, UserRound, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ============= Types =============
@@ -131,16 +131,16 @@ const ConversationCard = ({ conversation, active, onClick }: ConversationCardPro
           </p>
           <div className="mt-1.5">
             {conversation.status === "ai" ? (
-              <Badge variant="secondary" className="gap-1 text-[10px] py-0 px-1.5 font-normal">
-                <Bot className="h-3 w-3" />
+              <Badge variant="outline" className="gap-1.5 text-[10px] py-0 px-2 font-normal border-muted-foreground/30">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
                 IA Atendendo
               </Badge>
             ) : (
               <Badge
                 variant="outline"
-                className="gap-1 text-[10px] py-0 px-1.5 font-normal border-destructive/40 text-destructive"
+                className="gap-1.5 text-[10px] py-0 px-2 font-normal border-amber-500/50"
               >
-                <UserRound className="h-3 w-3" />
+                <span className="w-2 h-2 rounded-full bg-amber-500" />
                 Intervenção Humana
               </Badge>
             )}
@@ -161,17 +161,17 @@ const ChatBubble = ({ message }: ChatBubbleProps) => {
     <div className={cn("flex w-full", isLead ? "justify-start" : "justify-end")}>
       <div
         className={cn(
-          "max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm",
+          "max-w-[75%] rounded-2xl px-4 py-2.5 text-sm",
           isLead
-            ? "bg-muted text-foreground rounded-bl-sm"
-            : "bg-primary/10 text-foreground border border-primary/20 rounded-br-sm",
+            ? "bg-white text-foreground shadow-sm rounded-bl-none"
+            : "bg-[hsl(var(--navy))] text-[hsl(var(--cream))] rounded-br-none",
         )}
       >
         <p className="whitespace-pre-wrap break-words">{message.content}</p>
         <p
           className={cn(
-            "text-[10px] mt-1 opacity-70",
-            isLead ? "text-muted-foreground" : "text-muted-foreground",
+            "text-[10px] mt-1.5",
+            isLead ? "text-muted-foreground" : "text-[hsl(var(--cream))]/70",
           )}
         >
           {message.sender === "ai" ? "IA · " : ""}
