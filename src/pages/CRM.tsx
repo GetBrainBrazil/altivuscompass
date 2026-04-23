@@ -256,6 +256,10 @@ function KanbanColumnCard({
   onRename,
   onAddBefore,
   onAddAfter,
+  draggedCardId,
+  onCardDragStart,
+  onCardDragEnd,
+  onDropOnColumn,
 }: {
   column: KanbanColumn;
   dotColor: string;
@@ -264,7 +268,13 @@ function KanbanColumnCard({
   onRename: () => void;
   onAddBefore: () => void;
   onAddAfter: () => void;
+  draggedCardId: string | null;
+  onCardDragStart: (card: KanbanCardData) => void;
+  onCardDragEnd: () => void;
+  onDropOnColumn: (columnId: string) => void;
 }) {
+  const [isOver, setIsOver] = useState(false);
+
   return (
     <div className="flex flex-col w-[320px] shrink-0 max-h-full">
       {/* Column header (fixed) — flat, dot + title + count */}
@@ -312,9 +322,30 @@ function KanbanColumnCard({
         </DropdownMenu>
       </div>
 
-      {/* Column body — scrolls vertically when overflowing */}
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin pr-1">
-        <div className="space-y-3 min-h-[120px]">
+      {/* Column body — scrolls vertically and acts as the drop zone */}
+      <div
+        onDragOver={(e) => {
+          if (!draggedCardId) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          if (!isOver) setIsOver(true);
+        }}
+        onDragLeave={(e) => {
+          // só limpa quando o cursor sai realmente do contêiner
+          if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+          setIsOver(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsOver(false);
+          onDropOnColumn(column.id);
+        }}
+        className={cn(
+          "flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin pr-1 rounded-lg transition-colors",
+          isOver && "bg-primary/5 ring-1 ring-primary/30",
+        )}
+      >
+        <div className="space-y-3 min-h-[120px] p-1">
           {column.cards.length === 0 ? (
             <EmptyColumnHint />
           ) : (
@@ -324,6 +355,10 @@ function KanbanColumnCard({
                 card={card}
                 onClick={onCardClick}
                 stageBorderClass={dotColor.replace("bg-", "border-l-")}
+                draggable
+                isDragging={draggedCardId === card.id}
+                onDragStart={(c) => onCardDragStart(c)}
+                onDragEnd={() => onCardDragEnd()}
               />
             ))
           )}
