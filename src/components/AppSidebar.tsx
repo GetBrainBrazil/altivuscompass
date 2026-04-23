@@ -96,9 +96,9 @@ export function AppSidebar() {
                 const prev = visibleItems[idx - 1];
                 const showDivider = !collapsed && prev && prev.group !== item.group;
 
-                const activeBase = "data-[active=true]:bg-primary/10 data-[active=true]:text-primary data-[active=true]:font-medium";
+                const activeBase = "data-[active=true]:bg-primary/15 data-[active=true]:text-white data-[active=true]:font-medium";
                 const linkBase = "flex items-center gap-3 px-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-lg";
-                const linkActive = "bg-primary/10 text-primary font-medium hover:bg-primary/15 hover:text-primary";
+                const linkActive = "bg-primary/15 text-white font-medium hover:bg-primary/20 hover:text-white";
 
                 const renderItem = () => {
                   if (hasSubItems && !collapsed) {
