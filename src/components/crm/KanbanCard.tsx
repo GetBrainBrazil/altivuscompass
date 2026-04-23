@@ -100,22 +100,24 @@ export function KanbanCard({
 
       {/* Title row */}
       <div className="flex items-start justify-between gap-3">
-        <h4 className="text-[15px] font-semibold text-foreground leading-tight tracking-tight font-sans">
-          {card.clientName}
-        </h4>
-        {card.isAILead && (
-          <span
-            title="Lead triado pela IA via WhatsApp"
-            className="shrink-0 inline-flex items-center justify-center h-5 w-5 rounded-md bg-emerald-50 text-emerald-600 ring-1 ring-inset ring-emerald-100"
-          >
-            <Bot className="h-3.5 w-3.5" strokeWidth={2} />
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          <h4 className="text-[15px] font-semibold text-foreground leading-tight tracking-tight font-sans">
+            {card.clientName}
+          </h4>
+          {card.isAILead && (
+            <span
+              title="Lead triado pela IA via WhatsApp"
+              className="shrink-0 inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-50 text-emerald-500"
+            >
+              <Sparkles className="h-2.5 w-2.5" strokeWidth={2} />
+            </span>
+          )}
+        </div>
       </div>
 
       {/* AI summary */}
       {card.isAILead && card.aiSummary && (
-        <p className="mt-3 text-[13px] italic text-muted-foreground/80 leading-relaxed line-clamp-2 font-sans">
+        <p className="mt-3 text-[13px] italic text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2 font-sans">
           "{card.aiSummary}"
         </p>
       )}
