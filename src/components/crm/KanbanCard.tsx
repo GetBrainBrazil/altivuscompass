@@ -80,12 +80,12 @@ export function KanbanCard({
         }
       }}
       className={cn(
-        "group relative cursor-pointer rounded-lg bg-white p-3.5 text-left",
-        "border border-transparent shadow-[0_1px_2px_rgba(16,24,40,0.04)]",
-        "transition-all duration-150",
-        "hover:border-border hover:shadow-[0_2px_6px_rgba(16,24,40,0.06)]",
+        "group relative cursor-pointer rounded-xl bg-white p-5 text-left",
+        "shadow-sm",
+        "transition-all duration-200",
+        "hover:shadow-md hover:-translate-y-0.5",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-        card.isAILead && "overflow-hidden pl-4"
+        card.isAILead && "overflow-hidden pl-5"
       )}
     >
       {/* AI lead: bright green left accent */}
@@ -97,8 +97,8 @@ export function KanbanCard({
       )}
 
       {/* Title row */}
-      <div className="flex items-start justify-between gap-2">
-        <h4 className="text-sm font-semibold text-foreground leading-tight tracking-tight">
+      <div className="flex items-start justify-between gap-3">
+        <h4 className="text-[15px] font-semibold text-foreground leading-tight tracking-tight font-sans">
           {card.clientName}
         </h4>
         {card.isAILead && (
@@ -120,16 +120,16 @@ export function KanbanCard({
 
       {/* Meta */}
       {(card.destination || card.travelDate) && (
-        <div className="mt-2 space-y-1">
+        <div className="mt-3 space-y-1.5">
           {card.destination && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <MapPin className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+            <div className="flex items-center gap-2 text-[13px] text-muted-foreground font-sans">
+              <MapPin className="h-4 w-4 shrink-0" strokeWidth={1.5} />
               <span className="truncate">{card.destination}</span>
             </div>
           )}
           {card.travelDate && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Calendar className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+            <div className="flex items-center gap-2 text-[13px] text-muted-foreground font-sans">
+              <Calendar className="h-4 w-4 shrink-0" strokeWidth={1.5} />
               <span className="truncate">{card.travelDate}</span>
             </div>
           )}
@@ -138,12 +138,12 @@ export function KanbanCard({
 
       {/* Tags */}
       {card.tags && card.tags.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-1.5">
+        <div className="mt-4 flex flex-wrap gap-2">
           {card.tags.map((tag, i) => (
             <span
               key={i}
               className={cn(
-                "inline-flex items-center rounded-md px-1.5 py-0.5 text-[10.5px] font-medium ring-1 ring-inset",
+                "inline-flex items-center rounded-md px-2 py-1 text-[11px] font-medium ring-1 ring-inset font-sans",
                 TAG_TONE_CLASSES[tag.tone ?? "slate"]
               )}
             >
@@ -155,14 +155,14 @@ export function KanbanCard({
 
       {/* Footer */}
       {(card.agent || value) && (
-        <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between">
+        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center">
             {card.agent ? (
-              <Avatar className="h-6 w-6 ring-2 ring-white">
+              <Avatar className="h-7 w-7 ring-2 ring-white shadow-sm">
                 {card.agent.avatarUrl && (
                   <AvatarImage src={card.agent.avatarUrl} alt={card.agent.name} />
                 )}
-                <AvatarFallback className="text-[10px] font-medium bg-muted text-muted-foreground">
+                <AvatarFallback className="text-[10px] font-medium bg-slate-100 text-slate-600">
                   {getInitials(card.agent.name)}
                 </AvatarFallback>
               </Avatar>
@@ -171,7 +171,7 @@ export function KanbanCard({
             )}
           </div>
           {value && (
-            <span className="text-sm font-semibold text-foreground tabular-nums">
+            <span className="text-[15px] font-semibold text-foreground tabular-nums font-sans">
               {value}
             </span>
           )}
