@@ -498,12 +498,7 @@ export default function CRM() {
         />
       </main>
 
-      {/* Lead detail slide-over */}
-      <LeadDetailPanel
-        card={selectedCard}
-        open={panelOpen}
-        onOpenChange={setPanelOpen}
-      />
+
 
       {/* Add column dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
