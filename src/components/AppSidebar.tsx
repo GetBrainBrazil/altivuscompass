@@ -124,7 +124,7 @@ export function AppSidebar() {
                             {item.subItems!.filter(s => canAccess(userRole, s.url)).map((sub) => (
                               <SidebarMenuSubItem key={sub.title}>
                                 <SidebarMenuSubButton asChild>
-                                  <NavLink to={sub.url} className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-md text-[12px] font-body" activeClassName="bg-primary/10 text-primary font-medium">
+                                  <NavLink to={sub.url} className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-md text-[12px] font-body" activeClassName="bg-primary/15 text-white font-medium">
                                     {sub.title}
                                   </NavLink>
                                 </SidebarMenuSubButton>
