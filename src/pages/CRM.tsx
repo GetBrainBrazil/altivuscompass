@@ -196,17 +196,8 @@ function KanbanBoard({
   onAddBefore: (columnId: string) => void;
   onAddAfter: (columnId: string) => void;
 }) {
-  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    if (e.deltaY !== 0 && e.deltaX === 0) {
-      e.currentTarget.scrollLeft += e.deltaY;
-    }
-  };
-
   return (
-    <div
-      className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden scrollbar-thin"
-      onWheel={handleWheel}
-    >
+    <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden scrollbar-thin">
       <div className="flex gap-4 px-6 py-6 min-w-max h-full items-stretch">
         {columns.map((col) => (
           <KanbanColumnCard
