@@ -4,8 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, SendHorizontal, MessageSquare, UserRound, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+type FilterTab = "all" | "human" | "ai";
 
 // ============= Types =============
 type MessageSender = "lead" | "ai" | "agent";
@@ -102,16 +105,26 @@ interface ConversationCardProps {
 
 const ConversationCard = ({ conversation, active, onClick }: ConversationCardProps) => {
   const last = getLastMessage(conversation);
+  const isAi = conversation.status === "ai";
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "w-full text-left px-3 py-3 rounded-lg border border-transparent transition-colors",
-        "hover:bg-accent/60",
-        active && "bg-accent border-border",
+        "relative w-full text-left px-3 py-3 rounded-lg border transition-colors overflow-hidden",
+        "border-transparent bg-white hover:bg-muted/40",
+        active && "bg-muted/60 hover:bg-muted/60",
       )}
     >
+      {active && (
+        <span
+          aria-hidden
+          className={cn(
+            "absolute left-0 top-0 bottom-0 w-[3px] rounded-r",
+            isAi ? "bg-success" : "bg-warning",
+          )}
+        />
+      )}
       <div className="flex items-start gap-3">
         <Avatar className="h-10 w-10 shrink-0">
           <AvatarFallback className="text-xs font-medium">
@@ -130,19 +143,16 @@ const ConversationCard = ({ conversation, active, onClick }: ConversationCardPro
             {last.content}
           </p>
           <div className="mt-1.5">
-            {conversation.status === "ai" ? (
-              <Badge variant="outline" className="gap-1.5 text-[10px] py-0 px-2 font-normal border-muted-foreground/30">
-                <span className="w-2 h-2 rounded-full bg-success" />
+            {isAi ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium bg-success/15 text-success border border-success/25">
+                <span className="w-1.5 h-1.5 rounded-full bg-success" />
                 IA Atendendo
-              </Badge>
+              </span>
             ) : (
-              <Badge
-                variant="outline"
-                className="gap-1.5 text-[10px] py-0 px-2 font-normal border-warning/50"
-              >
-                <span className="w-2 h-2 rounded-full bg-warning" />
+              <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium bg-warning/20 text-warning border border-warning/30">
+                <span className="w-1.5 h-1.5 rounded-full bg-warning" />
                 Intervenção Humana
-              </Badge>
+              </span>
             )}
           </div>
         </div>
@@ -187,18 +197,31 @@ export default function ServiceCenter() {
   const [conversations] = useState<Conversation[]>(MOCK_CONVERSATIONS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [draft, setDraft] = useState("");
+
+  const counts = useMemo(
+    () => ({
+      all: conversations.length,
+      human: conversations.filter((c) => c.status === "human").length,
+      ai: conversations.filter((c) => c.status === "ai").length,
+    }),
+    [conversations],
+  );
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return conversations;
-    return conversations.filter(
-      (c) =>
+    return conversations.filter((c) => {
+      if (activeTab === "human" && c.status !== "human") return false;
+      if (activeTab === "ai" && c.status !== "ai") return false;
+      if (!q) return true;
+      return (
         c.leadName.toLowerCase().includes(q) ||
         c.phone.includes(q) ||
-        getLastMessage(c).content.toLowerCase().includes(q),
-    );
-  }, [conversations, search]);
+        getLastMessage(c).content.toLowerCase().includes(q)
+      );
+    });
+  }, [conversations, search, activeTab]);
 
   const selected = useMemo(
     () => conversations.find((c) => c.id === selectedId) ?? null,
@@ -220,6 +243,22 @@ export default function ServiceCenter() {
               className="pl-9 h-9"
             />
           </div>
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FilterTab)}>
+            <TabsList className="grid grid-cols-3 w-full h-9 bg-muted/60 p-0.5">
+              <TabsTrigger value="all" className="text-xs gap-1.5">
+                Todos
+                <span className="text-[10px] text-muted-foreground">{counts.all}</span>
+              </TabsTrigger>
+              <TabsTrigger value="human" className="text-xs gap-1.5">
+                Requer Atenção
+                <span className="text-[10px] text-muted-foreground">{counts.human}</span>
+              </TabsTrigger>
+              <TabsTrigger value="ai" className="text-xs gap-1.5">
+                Em triagem
+                <span className="text-[10px] text-muted-foreground">{counts.ai}</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
         <ScrollArea className="flex-1">
