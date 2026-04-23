@@ -171,9 +171,8 @@ function KanbanColumnCard({
   return (
     <div
       className={cn(
-        "flex flex-col w-[300px] shrink-0 rounded-xl",
-        "bg-slate-100/50 dark:bg-slate-900/30",
-        "max-h-full"
+        "flex flex-col w-[320px] shrink-0 rounded-xl",
+        "bg-slate-100/50 dark:bg-slate-900/30"
       )}
     >
       {/* Column header */}
@@ -186,9 +185,9 @@ function KanbanColumnCard({
         </span>
       </div>
 
-      {/* Column body — scrollable when long */}
-      <ScrollArea className="flex-1">
-        <div className="p-2 space-y-3 min-h-[200px]">
+      {/* Column body */}
+      <div className="flex-1 px-3 pb-3">
+        <div className="space-y-3 min-h-[200px]">
           {column.cards.length === 0 ? (
             <EmptyColumnHint />
           ) : (
@@ -197,7 +196,7 @@ function KanbanColumnCard({
             ))
           )}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }
