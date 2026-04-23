@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus,
@@ -400,8 +400,45 @@ function EmptyColumnHint() {
 export default function CRM() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<"sales" | "ops">("sales");
-  const [salesColumns, setSalesColumns] = useState<KanbanColumn[]>(INITIAL_SALES_COLUMNS);
-  const [opsColumns, setOpsColumns] = useState<KanbanColumn[]>(INITIAL_OPS_COLUMNS);
+
+  const SALES_STORAGE_KEY = "crm:columns:sales:v1";
+  const OPS_STORAGE_KEY = "crm:columns:ops:v1";
+
+  const loadColumns = (key: string, fallback: KanbanColumn[]): KanbanColumn[] => {
+    if (typeof window === "undefined") return fallback;
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return fallback;
+      const parsed = JSON.parse(raw) as KanbanColumn[];
+      if (!Array.isArray(parsed) || parsed.length === 0) return fallback;
+      return parsed;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const [salesColumns, setSalesColumns] = useState<KanbanColumn[]>(() =>
+    loadColumns(SALES_STORAGE_KEY, INITIAL_SALES_COLUMNS),
+  );
+  const [opsColumns, setOpsColumns] = useState<KanbanColumn[]>(() =>
+    loadColumns(OPS_STORAGE_KEY, INITIAL_OPS_COLUMNS),
+  );
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SALES_STORAGE_KEY, JSON.stringify(salesColumns));
+    } catch {
+      /* ignore */
+    }
+  }, [salesColumns]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(OPS_STORAGE_KEY, JSON.stringify(opsColumns));
+    } catch {
+      /* ignore */
+    }
+  }, [opsColumns]);
 
   // Add column dialog
   const [addOpen, setAddOpen] = useState(false);
