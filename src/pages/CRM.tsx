@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus,
@@ -7,11 +7,18 @@ import {
   ArrowLeftToLine,
   ArrowRightToLine,
   Pencil,
+  Search,
+  Users,
+  DollarSign,
+  Sparkles,
+  X,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MetricCard } from "@/components/MetricCard";
 import {
   DropdownMenu,
   DropdownMenuContent,
