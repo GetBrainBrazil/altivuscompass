@@ -33,12 +33,12 @@ export type KanbanCardData = {
 };
 
 const TAG_TONE_CLASSES: Record<KanbanTagTone, string> = {
-  blue: "bg-blue-50 text-blue-700 ring-blue-100",
-  purple: "bg-purple-50 text-purple-700 ring-purple-100",
-  amber: "bg-amber-50 text-amber-700 ring-amber-100",
-  green: "bg-emerald-50 text-emerald-700 ring-emerald-100",
-  rose: "bg-rose-50 text-rose-700 ring-rose-100",
-  slate: "bg-slate-100 text-slate-700 ring-slate-200",
+  blue: "bg-blue-50/70 text-blue-700",
+  purple: "bg-purple-50/70 text-purple-700",
+  amber: "bg-amber-50/70 text-amber-700",
+  green: "bg-emerald-50/70 text-emerald-700",
+  rose: "bg-rose-50/70 text-rose-700",
+  slate: "bg-slate-100/70 text-slate-700",
 };
 
 function formatBRL(value?: number) {
@@ -132,12 +132,12 @@ export function KanbanCard({
 
       {/* Tags */}
       {card.tags && card.tags.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap gap-1.5">
           {card.tags.map((tag, i) => (
             <span
               key={i}
               className={cn(
-                "inline-flex items-center rounded-md px-2 py-1 text-[11px] font-medium ring-1 ring-inset font-sans",
+                "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium font-sans",
                 TAG_TONE_CLASSES[tag.tone ?? "slate"]
               )}
             >
@@ -165,7 +165,7 @@ export function KanbanCard({
             )}
           </div>
           {value && (
-            <span className="text-[15px] font-semibold text-foreground tabular-nums font-sans">
+            <span className="text-base font-bold text-foreground tabular-nums font-sans">
               {value}
             </span>
           )}
