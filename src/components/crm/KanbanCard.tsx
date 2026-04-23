@@ -88,16 +88,6 @@ export function KanbanCard({
         card.isAILead && "border-t-[3px] border-t-emerald-400"
       )}
     >
-      {/* AI lead: sparkle icon next to name instead of border */}
-      {card.isAILead && (
-        <span
-          aria-hidden
-          className="absolute top-3 right-3 inline-flex items-center justify-center h-5 w-5 rounded-full bg-emerald-50 text-emerald-500"
-        >
-          <Sparkles className="h-3 w-3" strokeWidth={2} />
-        </span>
-      )}
-
       {/* Title row */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
