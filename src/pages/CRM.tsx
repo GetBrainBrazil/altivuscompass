@@ -175,6 +175,7 @@ const INITIAL_SALES_COLUMNS: KanbanColumn[] = [
         ],
         estimatedValue: 15000,
         agent: { name: "Beatriz Rocha" },
+        alert: { label: "Convertido", tone: "success" },
       },
     ],
   },
