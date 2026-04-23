@@ -1,4 +1,4 @@
-import { MapPin, Calendar, Bot } from "lucide-react";
+import { MapPin, Calendar, Sparkles } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
@@ -85,35 +85,29 @@ export function KanbanCard({
         "transition-all duration-200",
         "hover:shadow-md hover:-translate-y-0.5",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-        card.isAILead && "overflow-hidden pl-5"
+        card.isAILead && "border-t-[3px] border-t-emerald-400"
       )}
     >
-      {/* AI lead: bright green left accent */}
-      {card.isAILead && (
-        <span
-          aria-hidden
-          className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-400"
-        />
-      )}
-
       {/* Title row */}
       <div className="flex items-start justify-between gap-3">
-        <h4 className="text-[15px] font-semibold text-foreground leading-tight tracking-tight font-sans">
-          {card.clientName}
-        </h4>
-        {card.isAILead && (
-          <span
-            title="Lead triado pela IA via WhatsApp"
-            className="shrink-0 inline-flex items-center justify-center h-5 w-5 rounded-md bg-emerald-50 text-emerald-600 ring-1 ring-inset ring-emerald-100"
-          >
-            <Bot className="h-3.5 w-3.5" strokeWidth={2} />
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          <h4 className="text-[15px] font-semibold text-foreground leading-tight tracking-tight font-sans">
+            {card.clientName}
+          </h4>
+          {card.isAILead && (
+            <span
+              title="Lead triado pela IA via WhatsApp"
+              className="shrink-0 inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-50 text-emerald-500"
+            >
+              <Sparkles className="h-2.5 w-2.5" strokeWidth={2} />
+            </span>
+          )}
+        </div>
       </div>
 
       {/* AI summary */}
       {card.isAILead && card.aiSummary && (
-        <p className="mt-3 text-[13px] italic text-muted-foreground/80 leading-relaxed line-clamp-2 font-sans">
+        <p className="mt-3 text-[13px] italic text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2 font-sans">
           "{card.aiSummary}"
         </p>
       )}
