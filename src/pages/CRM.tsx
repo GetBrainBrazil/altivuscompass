@@ -536,10 +536,76 @@ export default function CRM() {
         </Tabs>
       </header>
 
+      {/* KPIs + Toolbar (gestão acima do Kanban) */}
+      <section className="px-6 pt-5 pb-2 bg-background border-b border-border space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          <MetricCard
+            title="Leads ativos no funil"
+            value={String(totalLeads)}
+            icon={<Users className="w-4 h-4 text-soft-blue" />}
+          />
+          <MetricCard
+            title="Valor estimado em pipeline"
+            value={formatCurrency(pipelineValue)}
+            icon={<DollarSign className="w-4 h-4 text-gold" />}
+          />
+          <MetricCard
+            title="Leads gerados por IA"
+            value={String(aiLeads)}
+            subtitle={totalLeads > 0 ? `${Math.round((aiLeads / totalLeads) * 100)}% do total` : undefined}
+            icon={<Sparkles className="w-4 h-4 text-success" />}
+          />
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <Input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar por cliente, destino ou tag..."
+              className="pl-9 h-9 text-sm"
+            />
+          </div>
+          <Select value={filterAgent} onValueChange={setFilterAgent}>
+            <SelectTrigger className="h-9 w-full sm:w-[180px] text-sm">
+              <SelectValue placeholder="Responsável" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os responsáveis</SelectItem>
+              {agentOptions.map((name) => (
+                <SelectItem key={name} value={name}>{name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filterTag} onValueChange={setFilterTag}>
+            <SelectTrigger className="h-9 w-full sm:w-[170px] text-sm">
+              <SelectValue placeholder="Tag" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as tags</SelectItem>
+              {tagOptions.map((label) => (
+                <SelectItem key={label} value={label}>{label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 gap-1.5"
+              onClick={() => { setSearchTerm(""); setFilterAgent("all"); setFilterTag("all"); }}
+            >
+              <X className="w-3.5 h-3.5" /> Limpar
+            </Button>
+          )}
+        </div>
+      </section>
+
       {/* Board area */}
       <main className="flex-1 min-h-0 flex flex-col">
         <KanbanBoard
-          columns={columns}
+          columns={filteredColumns}
           onCardClick={handleCardClick}
           onDeleteColumn={handleRequestDelete}
           onAddColumn={() => openAddAt(null)}
