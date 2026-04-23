@@ -244,11 +244,12 @@ function KanbanColumnCard({
     <div
       className={cn(
         "flex flex-col w-[320px] shrink-0 rounded-xl",
-        "bg-slate-100/50 dark:bg-slate-900/30"
+        "bg-slate-100/50 dark:bg-slate-900/30",
+        "max-h-full"
       )}
     >
-      {/* Column header */}
-      <div className="flex items-center justify-between px-4 py-3">
+      {/* Column header (fixed) */}
+      <div className="flex items-center justify-between px-4 py-3 shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <h3 className="text-sm font-semibold text-foreground/80 tracking-tight truncate">
             {column.title}
@@ -293,9 +294,9 @@ function KanbanColumnCard({
         </DropdownMenu>
       </div>
 
-      {/* Column body */}
-      <div className="flex-1 px-3 pb-3">
-        <div className="space-y-3 min-h-[200px]">
+      {/* Column body — scrolls vertically when overflowing */}
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin px-3 pb-3">
+        <div className="space-y-3 min-h-[120px]">
           {column.cards.length === 0 ? (
             <EmptyColumnHint />
           ) : (
