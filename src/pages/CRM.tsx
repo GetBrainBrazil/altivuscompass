@@ -3,6 +3,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { KanbanCard, type KanbanCardData } from "@/components/crm/KanbanCard";
+import { LeadDetailPanel } from "@/components/crm/LeadDetailPanel";
 
 type KanbanColumn = {
   id: string;
@@ -142,12 +143,18 @@ const OPS_COLUMNS: KanbanColumn[] = [
   { id: "post-trip", title: "Pós-Viagem", cards: [] },
 ];
 
-function KanbanBoard({ columns }: { columns: KanbanColumn[] }) {
+function KanbanBoard({
+  columns,
+  onCardClick,
+}: {
+  columns: KanbanColumn[];
+  onCardClick: (card: KanbanCardData) => void;
+}) {
   return (
     <ScrollArea className="flex-1">
       <div className="flex gap-4 p-6 h-full min-h-0">
         {columns.map((col) => (
-          <KanbanColumnCard key={col.id} column={col} />
+          <KanbanColumnCard key={col.id} column={col} onCardClick={onCardClick} />
         ))}
       </div>
     </ScrollArea>
