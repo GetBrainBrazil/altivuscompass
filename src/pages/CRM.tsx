@@ -542,6 +542,53 @@ export default function CRM() {
         </DialogContent>
       </Dialog>
 
+      {/* Rename column dialog */}
+      <Dialog
+        open={!!columnToRename}
+        onOpenChange={(open) => {
+          if (!open) {
+            setColumnToRename(null);
+            setRenameTitle("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Renomear etapa</DialogTitle>
+            <DialogDescription>
+              Atualize o nome desta etapa do funil.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="rename-column-title">Nome da etapa</Label>
+            <Input
+              id="rename-column-title"
+              value={renameTitle}
+              onChange={(e) => setRenameTitle(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  confirmRename();
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setColumnToRename(null);
+                setRenameTitle("");
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={confirmRename}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete confirmation */}
       <AlertDialog
         open={!!columnToDelete}
