@@ -105,16 +105,26 @@ interface ConversationCardProps {
 
 const ConversationCard = ({ conversation, active, onClick }: ConversationCardProps) => {
   const last = getLastMessage(conversation);
+  const isAi = conversation.status === "ai";
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "w-full text-left px-3 py-3 rounded-lg border border-transparent transition-colors",
-        "hover:bg-accent/60",
-        active && "bg-accent border-border",
+        "relative w-full text-left px-3 py-3 rounded-lg border transition-colors overflow-hidden",
+        "border-transparent bg-white hover:bg-muted/40",
+        active && "bg-muted/60 hover:bg-muted/60",
       )}
     >
+      {active && (
+        <span
+          aria-hidden
+          className={cn(
+            "absolute left-0 top-0 bottom-0 w-[3px] rounded-r",
+            isAi ? "bg-success" : "bg-warning",
+          )}
+        />
+      )}
       <div className="flex items-start gap-3">
         <Avatar className="h-10 w-10 shrink-0">
           <AvatarFallback className="text-xs font-medium">
@@ -133,19 +143,16 @@ const ConversationCard = ({ conversation, active, onClick }: ConversationCardPro
             {last.content}
           </p>
           <div className="mt-1.5">
-            {conversation.status === "ai" ? (
-              <Badge variant="outline" className="gap-1.5 text-[10px] py-0 px-2 font-normal border-muted-foreground/30">
-                <span className="w-2 h-2 rounded-full bg-success" />
+            {isAi ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium bg-success/15 text-success-foreground border border-success/30">
+                <span className="w-1.5 h-1.5 rounded-full bg-success" />
                 IA Atendendo
-              </Badge>
+              </span>
             ) : (
-              <Badge
-                variant="outline"
-                className="gap-1.5 text-[10px] py-0 px-2 font-normal border-warning/50"
-              >
-                <span className="w-2 h-2 rounded-full bg-warning" />
+              <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium bg-warning/15 text-warning-foreground border border-warning/30">
+                <span className="w-1.5 h-1.5 rounded-full bg-warning" />
                 Intervenção Humana
-              </Badge>
+              </span>
             )}
           </div>
         </div>
