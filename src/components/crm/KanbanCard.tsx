@@ -83,10 +83,18 @@ export function KanbanCard({
   onClick,
   /** Classe Tailwind de cor da borda esquerda (ex: "border-l-soft-blue"). Sobreposta por alerta destrutivo. */
   stageBorderClass = "border-l-muted-foreground/40",
+  draggable = false,
+  isDragging = false,
+  onDragStart,
+  onDragEnd,
 }: {
   card: KanbanCardData;
   onClick?: (card: KanbanCardData) => void;
   stageBorderClass?: string;
+  draggable?: boolean;
+  isDragging?: boolean;
+  onDragStart?: (card: KanbanCardData, e: React.DragEvent<HTMLDivElement>) => void;
+  onDragEnd?: (card: KanbanCardData, e: React.DragEvent<HTMLDivElement>) => void;
 }) {
   const value = formatBRL(card.estimatedValue);
   const alert = card.alert;
