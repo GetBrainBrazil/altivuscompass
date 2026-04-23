@@ -703,6 +703,10 @@ export default function CRM() {
           onRenameColumn={handleRequestRename}
           onAddBefore={handleAddBefore}
           onAddAfter={handleAddAfter}
+          draggedCardId={draggedCardId}
+          onCardDragStart={handleCardDragStart}
+          onCardDragEnd={handleCardDragEnd}
+          onDropOnColumn={handleDropOnColumn}
         />
       </main>
 
