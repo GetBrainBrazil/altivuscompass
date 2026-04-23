@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Send, MessageSquare, Bot, UserRound, Phone } from "lucide-react";
+import { Search, SendHorizontal, MessageSquare, Bot, UserRound, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ============= Types =============
@@ -243,11 +243,11 @@ export default function ServiceCenter() {
       </aside>
 
       {/* ===== Right column: chat window ===== */}
-      <section className="flex-1 flex flex-col min-w-0">
+      <section className="flex-1 flex flex-col min-w-0 bg-stone-50/70">
         {!selected ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-            <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
-              <MessageSquare className="h-8 w-8 text-muted-foreground" />
+            <div className="h-16 w-16 rounded-full bg-white shadow-sm flex items-center justify-center mb-4">
+              <MessageSquare className="h-7 w-7 text-muted-foreground/70" />
             </div>
             <p className="text-sm text-muted-foreground max-w-xs">
               Selecione uma conversa para visualizar o histórico.
@@ -256,30 +256,30 @@ export default function ServiceCenter() {
         ) : (
           <>
             {/* Chat header */}
-            <header className="px-6 py-3 border-b flex items-center justify-between gap-4">
+            <header className="px-6 py-3 border-b bg-white/80 backdrop-blur-sm flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
                 <Avatar className="h-10 w-10">
-                  <AvatarFallback className="text-xs font-medium">
+                  <AvatarFallback className="text-xs font-medium bg-zinc-100 text-zinc-700">
                     {getInitials(selected.leadName)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
-                  <p className="font-semibold text-sm truncate">{selected.leadName}</p>
+                  <p className="font-medium text-sm truncate">{selected.leadName}</p>
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <Phone className="h-3 w-3" />
                     {formatPhone(selected.phone)}
                   </p>
                 </div>
               </div>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="gap-2">
                 <UserRound className="h-4 w-4" />
                 Assumir Conversa
               </Button>
             </header>
 
             {/* Messages */}
-            <ScrollArea className="flex-1 px-6 py-4">
-              <div className="space-y-3 max-w-3xl mx-auto">
+            <ScrollArea className="flex-1 px-6 py-5">
+              <div className="space-y-4 max-w-3xl mx-auto">
                 {selected.messages.map((m) => (
                   <ChatBubble key={m.id} message={m} />
                 ))}
@@ -287,19 +287,23 @@ export default function ServiceCenter() {
             </ScrollArea>
 
             {/* Composer */}
-            <footer className="border-t p-4">
-              <div className="flex items-center gap-2 max-w-3xl mx-auto">
+            <footer className="border-t bg-white/80 backdrop-blur-sm p-4">
+              <div className="flex items-center gap-3 max-w-3xl mx-auto">
                 <Input
                   placeholder="Digite uma mensagem..."
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
-                  className="h-10"
+                  className="h-11 rounded-full px-5 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-ring"
                 />
-                <Button size="icon" disabled={!draft.trim()}>
-                  <Send className="h-4 w-4" />
+                <Button 
+                  size="icon" 
+                  disabled={!draft.trim()}
+                  className="h-11 w-11 rounded-full shrink-0"
+                >
+                  <SendHorizontal className="h-5 w-5" />
                 </Button>
               </div>
-              <p className="text-[10px] text-muted-foreground text-center mt-2">
+              <p className="text-[10px] text-muted-foreground text-center mt-3">
                 Visualização preliminar — envio de mensagens será habilitado em breve.
               </p>
             </footer>
