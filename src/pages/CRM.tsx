@@ -206,6 +206,10 @@ function KanbanBoard({
   onRenameColumn,
   onAddBefore,
   onAddAfter,
+  draggedCardId,
+  onCardDragStart,
+  onCardDragEnd,
+  onDropOnColumn,
 }: {
   columns: KanbanColumn[];
   onCardClick: (card: KanbanCardData) => void;
@@ -214,6 +218,10 @@ function KanbanBoard({
   onRenameColumn: (columnId: string) => void;
   onAddBefore: (columnId: string) => void;
   onAddAfter: (columnId: string) => void;
+  draggedCardId: string | null;
+  onCardDragStart: (card: KanbanCardData) => void;
+  onCardDragEnd: () => void;
+  onDropOnColumn: (columnId: string) => void;
 }) {
   return (
     <div className="flex-1 min-h-0 mt-4 pb-5 overflow-x-auto overflow-y-hidden scrollbar-elegant [transform:scaleY(-1)]">
@@ -228,6 +236,10 @@ function KanbanBoard({
             onRename={() => onRenameColumn(col.id)}
             onAddBefore={() => onAddBefore(col.id)}
             onAddAfter={() => onAddAfter(col.id)}
+            draggedCardId={draggedCardId}
+            onCardDragStart={onCardDragStart}
+            onCardDragEnd={onCardDragEnd}
+            onDropOnColumn={onDropOnColumn}
           />
         ))}
         <AddColumnButton onClick={onAddColumn} />
