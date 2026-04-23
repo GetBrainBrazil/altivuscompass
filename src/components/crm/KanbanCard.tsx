@@ -1,4 +1,4 @@
-import { MapPin, Calendar, Bot } from "lucide-react";
+import { MapPin, Calendar, Sparkles } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
