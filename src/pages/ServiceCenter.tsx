@@ -344,7 +344,7 @@ export default function ServiceCenter() {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [draft, setDraft] = useState("");
-  const [summaryOpen, setSummaryOpen] = useState(true);
+  const [summaryOpen, setSummaryOpen] = useState(false);
 
   const counts = useMemo(
     () => ({
