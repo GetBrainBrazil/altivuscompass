@@ -2,26 +2,138 @@ import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { KanbanCard, type KanbanCardData } from "@/components/crm/KanbanCard";
 
 type KanbanColumn = {
   id: string;
   title: string;
-  count?: number;
+  cards: KanbanCardData[];
 };
 
 const SALES_COLUMNS: KanbanColumn[] = [
-  { id: "new-leads", title: "Novos Leads (IA)", count: 0 },
-  { id: "qualifying", title: "Em Qualificação", count: 0 },
-  { id: "quote", title: "Cotação", count: 0 },
-  { id: "proposal-sent", title: "Proposta Enviada", count: 0 },
-  { id: "closed", title: "Fechado", count: 0 },
+  {
+    id: "new-leads",
+    title: "Novos Leads (IA)",
+    cards: [
+      {
+        id: "1",
+        clientName: "Marina e Rafael Costa",
+        destination: "Paris, França",
+        travelDate: "Set/2026",
+        tags: [
+          { label: "Casal", tone: "purple" },
+          { label: "Lua de Mel", tone: "rose" },
+          { label: "Europa", tone: "blue" },
+        ],
+        estimatedValue: 28000,
+        agent: { name: "Ana Paula" },
+      },
+      {
+        id: "2",
+        clientName: "Família Mendonça",
+        destination: "Orlando, EUA",
+        travelDate: "Jul/2026",
+        tags: [
+          { label: "Família", tone: "amber" },
+          { label: "Disney", tone: "blue" },
+        ],
+        estimatedValue: 45000,
+        agent: { name: "Daniel Souza" },
+      },
+    ],
+  },
+  {
+    id: "qualifying",
+    title: "Em Qualificação",
+    cards: [
+      {
+        id: "3",
+        clientName: "Carlos Eduardo Lima",
+        destination: "Tóquio, Japão",
+        travelDate: "Mar/2026",
+        tags: [
+          { label: "Solo", tone: "slate" },
+          { label: "Ásia", tone: "rose" },
+        ],
+        estimatedValue: 22000,
+        agent: { name: "Beatriz Rocha" },
+      },
+    ],
+  },
+  {
+    id: "quote",
+    title: "Cotação",
+    cards: [
+      {
+        id: "4",
+        clientName: "Juliana Pereira",
+        destination: "Maldivas",
+        travelDate: "Dez/2025",
+        tags: [
+          { label: "Luxo", tone: "amber" },
+          { label: "Praia", tone: "blue" },
+        ],
+        estimatedValue: 62000,
+        agent: { name: "Ana Paula" },
+      },
+      {
+        id: "5",
+        clientName: "Roberto e Silvia Andrade",
+        destination: "Patagônia, Argentina",
+        travelDate: "Fev/2026",
+        tags: [
+          { label: "Casal", tone: "purple" },
+          { label: "Aventura", tone: "green" },
+        ],
+        estimatedValue: 18500,
+        agent: { name: "Marcos Lima" },
+      },
+    ],
+  },
+  {
+    id: "proposal-sent",
+    title: "Proposta Enviada",
+    cards: [
+      {
+        id: "6",
+        clientName: "Família Tavares",
+        destination: "Roma, Itália",
+        travelDate: "Jun/2026",
+        tags: [
+          { label: "Família", tone: "amber" },
+          { label: "Europa", tone: "blue" },
+          { label: "Cultural", tone: "purple" },
+        ],
+        estimatedValue: 38000,
+        agent: { name: "Daniel Souza" },
+      },
+    ],
+  },
+  {
+    id: "closed",
+    title: "Fechado",
+    cards: [
+      {
+        id: "7",
+        clientName: "Patrícia Nogueira",
+        destination: "Cancún, México",
+        travelDate: "Nov/2025",
+        tags: [
+          { label: "Resort", tone: "green" },
+          { label: "All-Inclusive", tone: "blue" },
+        ],
+        estimatedValue: 15000,
+        agent: { name: "Beatriz Rocha" },
+      },
+    ],
+  },
 ];
 
 const OPS_COLUMNS: KanbanColumn[] = [
-  { id: "pre-trip", title: "Pré-Viagem", count: 0 },
-  { id: "in-trip", title: "Em Viagem", count: 0 },
-  { id: "support", title: "Suporte Ativo", count: 0 },
-  { id: "post-trip", title: "Pós-Viagem", count: 0 },
+  { id: "pre-trip", title: "Pré-Viagem", cards: [] },
+  { id: "in-trip", title: "Em Viagem", cards: [] },
+  { id: "support", title: "Suporte Ativo", cards: [] },
+  { id: "post-trip", title: "Pós-Viagem", cards: [] },
 ];
 
 function KanbanBoard({ columns }: { columns: KanbanColumn[] }) {
@@ -51,14 +163,18 @@ function KanbanColumnCard({ column }: { column: KanbanColumn }) {
           {column.title}
         </h3>
         <span className="text-xs font-medium text-muted-foreground bg-background/80 px-2 py-0.5 rounded-full border border-border/50">
-          {column.count ?? 0}
+          {column.cards.length}
         </span>
       </div>
 
       {/* Column body — scrollable when long */}
       <ScrollArea className="flex-1">
         <div className="p-3 space-y-2 min-h-[200px]">
-          <EmptyColumnHint />
+          {column.cards.length === 0 ? (
+            <EmptyColumnHint />
+          ) : (
+            column.cards.map((card) => <KanbanCard key={card.id} card={card} />)
+          )}
         </div>
       </ScrollArea>
     </div>
