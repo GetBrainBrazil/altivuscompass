@@ -347,6 +347,11 @@ export default function CRM() {
   // Add column dialog
   const [addOpen, setAddOpen] = useState(false);
   const [newColumnTitle, setNewColumnTitle] = useState("");
+  const [insertIndex, setInsertIndex] = useState<number | null>(null);
+
+  // Rename column dialog
+  const [columnToRename, setColumnToRename] = useState<KanbanColumn | null>(null);
+  const [renameTitle, setRenameTitle] = useState("");
 
   // Delete confirmation
   const [columnToDelete, setColumnToDelete] = useState<KanbanColumn | null>(null);
@@ -359,6 +364,12 @@ export default function CRM() {
   const setColumns = tab === "sales" ? setSalesColumns : setOpsColumns;
   const columns = tab === "sales" ? salesColumns : opsColumns;
 
+  const openAddAt = (index: number | null) => {
+    setInsertIndex(index);
+    setNewColumnTitle("");
+    setAddOpen(true);
+  };
+
   const handleAddColumn = () => {
     const title = newColumnTitle.trim();
     if (!title) {
@@ -370,10 +381,49 @@ export default function CRM() {
       title,
       cards: [],
     };
-    setColumns((prev) => [...prev, newColumn]);
+    setColumns((prev) => {
+      if (insertIndex === null) return [...prev, newColumn];
+      const next = [...prev];
+      next.splice(insertIndex, 0, newColumn);
+      return next;
+    });
     setNewColumnTitle("");
+    setInsertIndex(null);
     setAddOpen(false);
     toast.success(`Etapa "${title}" adicionada.`);
+  };
+
+  const handleAddBefore = (columnId: string) => {
+    const idx = columns.findIndex((c) => c.id === columnId);
+    if (idx >= 0) openAddAt(idx);
+  };
+
+  const handleAddAfter = (columnId: string) => {
+    const idx = columns.findIndex((c) => c.id === columnId);
+    if (idx >= 0) openAddAt(idx + 1);
+  };
+
+  const handleRequestRename = (columnId: string) => {
+    const col = columns.find((c) => c.id === columnId);
+    if (col) {
+      setColumnToRename(col);
+      setRenameTitle(col.title);
+    }
+  };
+
+  const confirmRename = () => {
+    const title = renameTitle.trim();
+    if (!columnToRename) return;
+    if (!title) {
+      toast.error("Informe um nome para a etapa.");
+      return;
+    }
+    setColumns((prev) =>
+      prev.map((c) => (c.id === columnToRename.id ? { ...c, title } : c))
+    );
+    toast.success(`Etapa renomeada para "${title}".`);
+    setColumnToRename(null);
+    setRenameTitle("");
   };
 
   const handleRequestDelete = (columnId: string) => {
