@@ -305,7 +305,12 @@ function KanbanColumnCard({
             <EmptyColumnHint />
           ) : (
             column.cards.map((card) => (
-              <KanbanCard key={card.id} card={card} onClick={onCardClick} />
+              <KanbanCard
+                key={card.id}
+                card={card}
+                onClick={onCardClick}
+                stageBorderClass={dotColor.replace("bg-", "border-l-")}
+              />
             ))
           )}
         </div>
