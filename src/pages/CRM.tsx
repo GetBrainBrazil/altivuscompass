@@ -494,7 +494,10 @@ export default function CRM() {
           columns={columns}
           onCardClick={handleCardClick}
           onDeleteColumn={handleRequestDelete}
-          onAddColumn={() => setAddOpen(true)}
+          onAddColumn={() => openAddAt(null)}
+          onRenameColumn={handleRequestRename}
+          onAddBefore={handleAddBefore}
+          onAddAfter={handleAddAfter}
         />
       </main>
 
