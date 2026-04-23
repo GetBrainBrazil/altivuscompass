@@ -357,6 +357,50 @@ export default function CRM() {
   const setColumns = tab === "sales" ? setSalesColumns : setOpsColumns;
   const columns = tab === "sales" ? salesColumns : opsColumns;
 
+  // ─── Toolbar state (search + filters) ─────────────────────
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterAgent, setFilterAgent] = useState<string>("all");
+  const [filterTag, setFilterTag] = useState<string>("all");
+
+  const agentOptions = useMemo(() => {
+    const set = new Set<string>();
+    columns.forEach((c) => c.cards.forEach((k) => k.agent?.name && set.add(k.agent.name)));
+    return Array.from(set).sort();
+  }, [columns]);
+
+  const tagOptions = useMemo(() => {
+    const set = new Set<string>();
+    columns.forEach((c) => c.cards.forEach((k) => k.tags?.forEach((t) => set.add(t.label))));
+    return Array.from(set).sort();
+  }, [columns]);
+
+  const filteredColumns = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    return columns.map((col) => ({
+      ...col,
+      cards: col.cards.filter((card) => {
+        if (filterAgent !== "all" && card.agent?.name !== filterAgent) return false;
+        if (filterTag !== "all" && !card.tags?.some((t) => t.label === filterTag)) return false;
+        if (!q) return true;
+        return (
+          card.clientName.toLowerCase().includes(q) ||
+          card.destination?.toLowerCase().includes(q) ||
+          card.tags?.some((t) => t.label.toLowerCase().includes(q))
+        );
+      }),
+    }));
+  }, [columns, searchTerm, filterAgent, filterTag]);
+
+  // ─── KPIs ────────────────────────────────────────────────
+  const allCards = useMemo(() => columns.flatMap((c) => c.cards), [columns]);
+  const totalLeads = allCards.length;
+  const aiLeads = allCards.filter((c) => c.isAILead).length;
+  const pipelineValue = allCards.reduce((sum, c) => sum + (c.estimatedValue || 0), 0);
+  const formatCurrency = (v: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
+
+  const hasActiveFilters = searchTerm !== "" || filterAgent !== "all" || filterTag !== "all";
+
   const handleCardClick = (card: KanbanCardData) => {
     const stage = columns.find((c) => c.cards.some((k) => k.id === card.id));
     try {
