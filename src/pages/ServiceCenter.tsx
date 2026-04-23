@@ -132,15 +132,15 @@ const ConversationCard = ({ conversation, active, onClick }: ConversationCardPro
           <div className="mt-1.5">
             {conversation.status === "ai" ? (
               <Badge variant="outline" className="gap-1.5 text-[10px] py-0 px-2 font-normal border-muted-foreground/30">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="w-2 h-2 rounded-full bg-success" />
                 IA Atendendo
               </Badge>
             ) : (
               <Badge
                 variant="outline"
-                className="gap-1.5 text-[10px] py-0 px-2 font-normal border-amber-500/50"
+                className="gap-1.5 text-[10px] py-0 px-2 font-normal border-warning/50"
               >
-                <span className="w-2 h-2 rounded-full bg-amber-500" />
+                <span className="w-2 h-2 rounded-full bg-warning" />
                 Intervenção Humana
               </Badge>
             )}
