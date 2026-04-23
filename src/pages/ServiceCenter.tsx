@@ -131,6 +131,22 @@ const MOCK_CONVERSATIONS: Conversation[] = [
       ],
     },
   },
+  {
+    id: "c4",
+    leadName: "Carlos Mendes",
+    phone: "+5511999998888",
+    status: "ai",
+    messages: [
+      { id: "m1", sender: "lead", content: "Oi, tudo bem?", timestamp: "2025-04-23T16:00:00" },
+      { id: "m2", sender: "ai", content: "Olá! Tudo bem, obrigado. Como posso ajudar você hoje?", timestamp: "2025-04-23T16:00:30" },
+    ],
+    summary: {
+      notes: [
+        "Conversa em estágio inicial.",
+        "Aguardando mais informações do lead.",
+      ],
+    },
+  },
 ];
 
 // ============= Helpers =============
