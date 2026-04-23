@@ -197,18 +197,31 @@ export default function ServiceCenter() {
   const [conversations] = useState<Conversation[]>(MOCK_CONVERSATIONS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [draft, setDraft] = useState("");
+
+  const counts = useMemo(
+    () => ({
+      all: conversations.length,
+      human: conversations.filter((c) => c.status === "human").length,
+      ai: conversations.filter((c) => c.status === "ai").length,
+    }),
+    [conversations],
+  );
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return conversations;
-    return conversations.filter(
-      (c) =>
+    return conversations.filter((c) => {
+      if (activeTab === "human" && c.status !== "human") return false;
+      if (activeTab === "ai" && c.status !== "ai") return false;
+      if (!q) return true;
+      return (
         c.leadName.toLowerCase().includes(q) ||
         c.phone.includes(q) ||
-        getLastMessage(c).content.toLowerCase().includes(q),
-    );
-  }, [conversations, search]);
+        getLastMessage(c).content.toLowerCase().includes(q)
+      );
+    });
+  }, [conversations, search, activeTab]);
 
   const selected = useMemo(
     () => conversations.find((c) => c.id === selectedId) ?? null,
