@@ -132,6 +132,18 @@ export function KanbanCard({
     <div
       role="button"
       tabIndex={0}
+      draggable={draggable}
+      onDragStart={(e) => {
+        if (!draggable) return;
+        try {
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", card.id);
+        } catch {
+          /* ignore */
+        }
+        onDragStart?.(card, e);
+      }}
+      onDragEnd={(e) => onDragEnd?.(card, e)}
       onClick={() => onClick?.(card)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -140,9 +152,11 @@ export function KanbanCard({
         }
       }}
       className={cn(
-        "group relative cursor-pointer rounded-lg border border-border bg-card text-left",
+        "group relative rounded-lg border border-border bg-card text-left",
         "border-l-[3px] shadow-sm hover:shadow-md transition-all animate-fade-in",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+        draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
+        isDragging && "opacity-40",
         leftBorder,
         alert?.tone === "destructive" && "bg-destructive/5",
       )}
