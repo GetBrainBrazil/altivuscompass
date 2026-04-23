@@ -107,6 +107,7 @@ const INITIAL_SALES_COLUMNS: KanbanColumn[] = [
         ],
         estimatedValue: 22000,
         agent: { name: "Beatriz Rocha" },
+        alert: { label: "Sem retorno", tone: "warning" },
       },
     ],
   },
@@ -174,6 +175,7 @@ const INITIAL_SALES_COLUMNS: KanbanColumn[] = [
         ],
         estimatedValue: 15000,
         agent: { name: "Beatriz Rocha" },
+        alert: { label: "Convertido", tone: "success" },
       },
     ],
   },
@@ -305,7 +307,12 @@ function KanbanColumnCard({
             <EmptyColumnHint />
           ) : (
             column.cards.map((card) => (
-              <KanbanCard key={card.id} card={card} onClick={onCardClick} />
+              <KanbanCard
+                key={card.id}
+                card={card}
+                onClick={onCardClick}
+                stageBorderClass={dotColor.replace("bg-", "border-l-")}
+              />
             ))
           )}
         </div>

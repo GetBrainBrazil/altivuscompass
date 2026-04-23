@@ -1,5 +1,5 @@
-import { MapPin, Calendar, Sparkles } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ReactNode } from "react";
+import { Sparkles, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type KanbanTagTone =
@@ -13,6 +13,17 @@ export type KanbanTagTone =
 export type KanbanTag = {
   label: string;
   tone?: KanbanTagTone;
+};
+
+/**
+ * Alerta visual exibido como badge no canto superior direito do card.
+ * - tone "destructive": badge vermelho + força borda esquerda destrutiva.
+ * - tone "warning":     badge âmbar.
+ * - tone "success":     badge verde (ex.: lead convertido).
+ */
+export type KanbanCardAlert = {
+  label: string;
+  tone: "destructive" | "warning" | "success";
 };
 
 export type KanbanCardData = {
@@ -30,6 +41,8 @@ export type KanbanCardData = {
   isAILead?: boolean;
   /** Resumo curto da necessidade extraída pela IA. Exibido em itálico, máx. 2 linhas. */
   aiSummary?: string;
+  /** Alerta visual exibido como badge no topo direito (e cor da borda esquerda quando destrutivo). */
+  alert?: KanbanCardAlert;
 };
 
 const TAG_TONE_CLASSES: Record<KanbanTagTone, string> = {
@@ -39,6 +52,12 @@ const TAG_TONE_CLASSES: Record<KanbanTagTone, string> = {
   green: "bg-emerald-50/70 text-emerald-700",
   rose: "bg-rose-50/70 text-rose-700",
   slate: "bg-slate-100/70 text-slate-700",
+};
+
+const ALERT_BADGE_CLASSES: Record<KanbanCardAlert["tone"], string> = {
+  destructive: "bg-destructive/15 text-destructive",
+  warning: "bg-warning/15 text-warning",
+  success: "bg-success/15 text-success",
 };
 
 function formatBRL(value?: number) {
@@ -62,11 +81,44 @@ function getInitials(name: string) {
 export function KanbanCard({
   card,
   onClick,
+  /** Classe Tailwind de cor da borda esquerda (ex: "border-l-soft-blue"). Sobreposta por alerta destrutivo. */
+  stageBorderClass = "border-l-muted-foreground/40",
 }: {
   card: KanbanCardData;
   onClick?: (card: KanbanCardData) => void;
+  stageBorderClass?: string;
 }) {
   const value = formatBRL(card.estimatedValue);
+  const alert = card.alert;
+
+  // Badge mostrado no canto superior direito (alerta tem prioridade sobre IA)
+  let cornerBadge: ReactNode = null;
+  if (alert) {
+    const Icon = alert.tone === "success" ? CheckCircle2 : AlertTriangle;
+    cornerBadge = (
+      <span
+        className={cn(
+          "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide",
+          ALERT_BADGE_CLASSES[alert.tone],
+        )}
+      >
+        <Icon className="w-3 h-3" />
+        {alert.label}
+      </span>
+    );
+  } else if (card.isAILead) {
+    cornerBadge = (
+      <span
+        title="Lead triado pela IA via WhatsApp"
+        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-success/15 text-success"
+      >
+        <Sparkles className="w-3 h-3" />
+        IA
+      </span>
+    );
+  }
+
+  const leftBorder = alert?.tone === "destructive" ? "border-l-destructive" : stageBorderClass;
 
   return (
     <div
@@ -80,97 +132,87 @@ export function KanbanCard({
         }
       }}
       className={cn(
-        "group relative cursor-pointer rounded-xl bg-white p-5 text-left",
-        "shadow-sm",
-        "transition-all duration-200",
-        "hover:shadow-md hover:-translate-y-0.5",
+        "group relative cursor-pointer rounded-lg border border-border bg-card text-left",
+        "border-l-[3px] shadow-sm hover:shadow-md transition-all animate-fade-in",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-        card.isAILead && "border-t-[3px] border-t-emerald-400"
+        leftBorder,
+        alert?.tone === "destructive" && "bg-destructive/5",
       )}
     >
-      {/* Title row */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <h4 className="text-[15px] font-semibold text-foreground leading-tight tracking-tight font-sans">
+      <div className="px-3.5 py-3">
+        {/* Topo: nome + badge no canto superior direito */}
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <p className="text-sm font-medium font-body text-foreground flex-1 min-w-0 truncate leading-snug">
             {card.clientName}
-          </h4>
-          {card.isAILead && (
-            <span
-              title="Lead triado pela IA via WhatsApp"
-              className="shrink-0 inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-50 text-emerald-500"
-            >
-              <Sparkles className="h-2.5 w-2.5" strokeWidth={2} />
+          </p>
+          {cornerBadge && (
+            <div className="shrink-0 flex items-center" onClick={(e) => e.stopPropagation()}>
+              {cornerBadge}
+            </div>
+          )}
+        </div>
+
+        {/* Linha de contexto: destino · data */}
+        <div className="min-h-[16px] mb-2">
+          {(card.destination || card.travelDate) && (
+            <p className="text-xs text-muted-foreground font-body truncate">
+              {[card.destination, card.travelDate].filter(Boolean).join(" · ")}
+            </p>
+          )}
+        </div>
+
+        {/* AI summary (compacto) */}
+        {card.isAILead && card.aiSummary && (
+          <p className="text-[11px] italic text-muted-foreground/80 font-body leading-snug line-clamp-2 mb-2">
+            "{card.aiSummary}"
+          </p>
+        )}
+
+        {/* Tags compactas */}
+        {card.tags && card.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-2.5">
+            {card.tags.map((tag, i) => (
+              <span
+                key={i}
+                className={cn(
+                  "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium font-body",
+                  TAG_TONE_CLASSES[tag.tone ?? "slate"],
+                )}
+              >
+                {tag.label}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Divisor sutil */}
+        <div className="h-px bg-border/60 -mx-3.5" />
+
+        {/* Rodapé: avatar + responsável + valor */}
+        <div className="flex items-center gap-2 pt-2.5">
+          <div
+            className={cn(
+              "shrink-0 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-semibold",
+              card.agent ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
+            )}
+            aria-hidden
+          >
+            {card.agent ? getInitials(card.agent.name) : "?"}
+          </div>
+          <span className="text-xs text-muted-foreground font-body truncate flex-1 min-w-0">
+            {card.agent?.name || "Sem responsável"}
+          </span>
+          {value ? (
+            <span className="text-[13px] font-medium text-foreground font-body shrink-0 tabular-nums">
+              {value}
+            </span>
+          ) : (
+            <span className="text-xs italic text-muted-foreground/70 font-body shrink-0">
+              Sem valor
             </span>
           )}
         </div>
       </div>
-
-      {/* AI summary */}
-      {card.isAILead && card.aiSummary && (
-        <p className="mt-3 text-[13px] italic text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2 font-sans">
-          "{card.aiSummary}"
-        </p>
-      )}
-
-      {/* Meta */}
-      {(card.destination || card.travelDate) && (
-        <div className="mt-3 space-y-1.5">
-          {card.destination && (
-            <div className="flex items-center gap-2 text-[13px] text-muted-foreground font-sans">
-              <MapPin className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-              <span className="truncate">{card.destination}</span>
-            </div>
-          )}
-          {card.travelDate && (
-            <div className="flex items-center gap-2 text-[13px] text-muted-foreground font-sans">
-              <Calendar className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-              <span className="truncate">{card.travelDate}</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Tags */}
-      {card.tags && card.tags.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-1.5">
-          {card.tags.map((tag, i) => (
-            <span
-              key={i}
-              className={cn(
-                "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium font-sans",
-                TAG_TONE_CLASSES[tag.tone ?? "slate"]
-              )}
-            >
-              {tag.label}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* Footer */}
-      {(card.agent || value) && (
-        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <div className="flex items-center">
-            {card.agent ? (
-              <Avatar className="h-7 w-7 ring-2 ring-white shadow-sm">
-                {card.agent.avatarUrl && (
-                  <AvatarImage src={card.agent.avatarUrl} alt={card.agent.name} />
-                )}
-                <AvatarFallback className="text-[10px] font-medium bg-slate-100 text-slate-600">
-                  {getInitials(card.agent.name)}
-                </AvatarFallback>
-              </Avatar>
-            ) : (
-              <span />
-            )}
-          </div>
-          {value && (
-            <span className="text-base font-bold text-foreground tabular-nums font-sans">
-              {value}
-            </span>
-          )}
-        </div>
-      )}
     </div>
   );
 }
