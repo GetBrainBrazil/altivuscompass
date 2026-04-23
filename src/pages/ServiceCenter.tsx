@@ -144,12 +144,12 @@ const ConversationCard = ({ conversation, active, onClick }: ConversationCardPro
           </p>
           <div className="mt-1.5">
             {isAi ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium bg-success/15 text-success-foreground border border-success/30">
+              <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium bg-success/15 text-success border border-success/25">
                 <span className="w-1.5 h-1.5 rounded-full bg-success" />
                 IA Atendendo
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium bg-warning/15 text-warning-foreground border border-warning/30">
+              <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium bg-warning/20 text-warning border border-warning/30">
                 <span className="w-1.5 h-1.5 rounded-full bg-warning" />
                 Intervenção Humana
               </span>
