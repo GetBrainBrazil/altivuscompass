@@ -4,8 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, SendHorizontal, MessageSquare, UserRound, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+type FilterTab = "all" | "human" | "ai";
 
 // ============= Types =============
 type MessageSender = "lead" | "ai" | "agent";
