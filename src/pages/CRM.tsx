@@ -184,16 +184,19 @@ function KanbanBoard({
   onCardClick,
   onDeleteColumn,
   onAddColumn,
+  onRenameColumn,
+  onAddBefore,
+  onAddAfter,
 }: {
   columns: KanbanColumn[];
   onCardClick: (card: KanbanCardData) => void;
   onDeleteColumn: (columnId: string) => void;
   onAddColumn: () => void;
+  onRenameColumn: (columnId: string) => void;
+  onAddBefore: (columnId: string) => void;
+  onAddAfter: (columnId: string) => void;
 }) {
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    // Convert vertical wheel scroll to horizontal scroll when there's no
-    // horizontal intent (typical mouse wheel). Trackpads already provide
-    // deltaX, so we leave those alone.
     if (e.deltaY !== 0 && e.deltaX === 0) {
       e.currentTarget.scrollLeft += e.deltaY;
     }
@@ -211,6 +214,9 @@ function KanbanBoard({
             column={col}
             onCardClick={onCardClick}
             onDelete={() => onDeleteColumn(col.id)}
+            onRename={() => onRenameColumn(col.id)}
+            onAddBefore={() => onAddBefore(col.id)}
+            onAddAfter={() => onAddAfter(col.id)}
           />
         ))}
         <AddColumnButton onClick={onAddColumn} />
@@ -223,10 +229,16 @@ function KanbanColumnCard({
   column,
   onCardClick,
   onDelete,
+  onRename,
+  onAddBefore,
+  onAddAfter,
 }: {
   column: KanbanColumn;
   onCardClick: (card: KanbanCardData) => void;
   onDelete: () => void;
+  onRename: () => void;
+  onAddBefore: () => void;
+  onAddAfter: () => void;
 }) {
   return (
     <div
@@ -256,13 +268,26 @@ function KanbanColumnCard({
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem onClick={onAddBefore}>
+              <ArrowLeftToLine className="h-4 w-4 mr-2" />
+              Adicionar etapa à esquerda
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onAddAfter}>
+              <ArrowRightToLine className="h-4 w-4 mr-2" />
+              Adicionar etapa à direita
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onRename}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Renomear etapa
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={onDelete}
               className="text-destructive focus:text-destructive"
             >
               <Trash2 className="h-4 w-4 mr-2" />
-              Deletar etapa
+              Excluir etapa
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
