@@ -418,6 +418,36 @@ export default function CRM() {
   const setColumns = tab === "sales" ? setSalesColumns : setOpsColumns;
   const columns = tab === "sales" ? salesColumns : opsColumns;
 
+  // ─── Drag & Drop ─────────────────────────────────────────
+  const [draggedCardId, setDraggedCardId] = useState<string | null>(null);
+
+  const handleCardDragStart = (card: KanbanCardData) => setDraggedCardId(card.id);
+  const handleCardDragEnd = () => setDraggedCardId(null);
+
+  const handleDropOnColumn = (targetColumnId: string) => {
+    if (!draggedCardId) return;
+    setColumns((prev) => {
+      let moving: KanbanCardData | null = null;
+      const stripped = prev.map((col) => {
+        const idx = col.cards.findIndex((c) => c.id === draggedCardId);
+        if (idx === -1) return col;
+        moving = col.cards[idx];
+        if (col.id === targetColumnId) return col; // mesmo destino, não mexe
+        return { ...col, cards: col.cards.filter((c) => c.id !== draggedCardId) };
+      });
+      if (!moving) return prev;
+      const sourceColumn = prev.find((c) => c.cards.some((k) => k.id === draggedCardId));
+      if (sourceColumn?.id === targetColumnId) return prev;
+      const next = stripped.map((col) =>
+        col.id === targetColumnId ? { ...col, cards: [moving as KanbanCardData, ...col.cards] } : col,
+      );
+      const target = next.find((c) => c.id === targetColumnId);
+      if (target) toast.success(`Lead movido para "${target.title}".`);
+      return next;
+    });
+    setDraggedCardId(null);
+  };
+
   // ─── Toolbar state (search + filters) ─────────────────────
   const [searchTerm, setSearchTerm] = useState("");
   const [filterAgent, setFilterAgent] = useState<string>("all");
