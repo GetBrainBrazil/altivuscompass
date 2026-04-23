@@ -182,24 +182,23 @@ const ConversationCard = ({ conversation, active, onClick }: ConversationCardPro
           )}
         />
       )}
-      <div className="flex items-start gap-3">
-        <Avatar className="h-10 w-10 shrink-0">
+      <div className="flex items-center gap-3">
+        <Avatar className="h-10 w-10 shrink-0 self-center">
           <AvatarFallback className="text-xs font-medium">
             {getInitials(conversation.leadName)}
           </AvatarFallback>
         </Avatar>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 py-0.5">
           <div className="flex items-center justify-between gap-2">
             <p className="font-medium text-sm truncate">{conversation.leadName}</p>
             <span className="text-[11px] text-muted-foreground shrink-0">
               {formatTime(last.timestamp)}
             </span>
-          </div>
-          <p className="text-xs text-muted-foreground truncate mt-0.5">
+          </div>          <p className="text-xs text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
             {last.sender === "lead" ? "" : "IA: "}
             {last.content}
           </p>
-          <div className="mt-1.5">
+          <div className="mt-2">
             {isAi ? (
               <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium bg-success/15 text-success border border-success/25">
                 <span className="w-1.5 h-1.5 rounded-full bg-success" />
