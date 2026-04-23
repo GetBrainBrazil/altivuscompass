@@ -1,4 +1,4 @@
-import { MapPin, Calendar } from "lucide-react";
+import { MapPin, Calendar, Bot } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +26,10 @@ export type KanbanCardData = {
     name: string;
     avatarUrl?: string;
   };
+  /** Marca o card como lead recém-triado pela IA (WhatsApp). */
+  isAILead?: boolean;
+  /** Resumo curto da necessidade extraída pela IA. Exibido em itálico, máx. 2 linhas. */
+  aiSummary?: string;
 };
 
 const TAG_TONE_CLASSES: Record<KanbanTagTone, string> = {
@@ -61,16 +65,42 @@ export function KanbanCard({ card }: { card: KanbanCardData }) {
   return (
     <div
       className={cn(
-        "group cursor-pointer rounded-lg bg-white p-3.5",
+        "group relative cursor-pointer rounded-lg bg-white p-3.5",
         "border border-transparent shadow-[0_1px_2px_rgba(16,24,40,0.04)]",
         "transition-all duration-150",
-        "hover:border-border hover:shadow-[0_2px_6px_rgba(16,24,40,0.06)]"
+        "hover:border-border hover:shadow-[0_2px_6px_rgba(16,24,40,0.06)]",
+        card.isAILead && "overflow-hidden pl-4"
       )}
     >
-      {/* Title */}
-      <h4 className="text-sm font-semibold text-foreground leading-tight tracking-tight">
-        {card.clientName}
-      </h4>
+      {/* AI lead: bright green left accent */}
+      {card.isAILead && (
+        <span
+          aria-hidden
+          className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-400"
+        />
+      )}
+
+      {/* Title row */}
+      <div className="flex items-start justify-between gap-2">
+        <h4 className="text-sm font-semibold text-foreground leading-tight tracking-tight">
+          {card.clientName}
+        </h4>
+        {card.isAILead && (
+          <span
+            title="Lead triado pela IA via WhatsApp"
+            className="shrink-0 inline-flex items-center justify-center h-5 w-5 rounded-md bg-emerald-50 text-emerald-600 ring-1 ring-inset ring-emerald-100"
+          >
+            <Bot className="h-3.5 w-3.5" strokeWidth={2} />
+          </span>
+        )}
+      </div>
+
+      {/* AI summary */}
+      {card.isAILead && card.aiSummary && (
+        <p className="mt-2 text-xs italic text-muted-foreground leading-snug line-clamp-2">
+          “{card.aiSummary}”
+        </p>
+      )}
 
       {/* Meta */}
       {(card.destination || card.travelDate) && (

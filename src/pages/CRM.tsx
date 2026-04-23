@@ -27,6 +27,9 @@ const SALES_COLUMNS: KanbanColumn[] = [
         ],
         estimatedValue: 28000,
         agent: { name: "Ana Paula" },
+        isAILead: true,
+        aiSummary:
+          "Casal planejando lua de mel de 10 dias em Paris em setembro, busca hotel boutique no centro e jantares românticos.",
       },
       {
         id: "2",
@@ -39,6 +42,9 @@ const SALES_COLUMNS: KanbanColumn[] = [
         ],
         estimatedValue: 45000,
         agent: { name: "Daniel Souza" },
+        isAILead: true,
+        aiSummary:
+          "Família com 2 crianças (6 e 9 anos) quer pacote de 12 dias incluindo Disney e Universal, com transfer e ingressos.",
       },
     ],
   },
