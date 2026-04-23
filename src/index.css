@@ -248,3 +248,40 @@
   background-color: hsl(220 10% 45%);
 }
 
+/* Elegant scrollbar — refined, brand-aligned (Altivus navy), used on Kanban top scroller */
+.scrollbar-elegant {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--primary) / 0.25) transparent;
+}
+.scrollbar-elegant::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+.scrollbar-elegant::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 0 8px;
+}
+.scrollbar-elegant::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--primary) / 0.22);
+  border-radius: 9999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 200ms ease;
+  min-width: 48px;
+}
+.scrollbar-elegant::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--primary) / 0.45);
+}
+.scrollbar-elegant::-webkit-scrollbar-thumb:active {
+  background-color: hsl(var(--primary) / 0.6);
+}
+.dark .scrollbar-elegant {
+  scrollbar-color: hsl(var(--primary) / 0.35) transparent;
+}
+.dark .scrollbar-elegant::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--primary) / 0.35);
+}
+.dark .scrollbar-elegant::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--primary) / 0.55);
+}
+
