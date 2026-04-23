@@ -342,7 +342,7 @@ function KanbanColumnCard({
         }}
         className={cn(
           "flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin pr-1 rounded-lg transition-colors",
-          isOver && "bg-primary/5 ring-1 ring-primary/30",
+          isOver && "bg-primary/10 ring-2 ring-primary/40 ring-inset",
         )}
       >
         <div className="space-y-3 min-h-[120px] p-1">
