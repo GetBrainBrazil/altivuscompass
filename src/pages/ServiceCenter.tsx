@@ -243,7 +243,7 @@ export default function ServiceCenter() {
       </aside>
 
       {/* ===== Right column: chat window ===== */}
-      <section className="flex-1 flex flex-col min-w-0 bg-stone-50/70">
+      <section className="flex-1 flex flex-col min-w-0 bg-muted/30">
         {!selected ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
             <div className="h-16 w-16 rounded-full bg-white shadow-sm flex items-center justify-center mb-4">
@@ -259,7 +259,7 @@ export default function ServiceCenter() {
             <header className="px-6 py-3 border-b bg-white/80 backdrop-blur-sm flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
                 <Avatar className="h-10 w-10">
-                  <AvatarFallback className="text-xs font-medium bg-zinc-100 text-zinc-700">
+                  <AvatarFallback className="text-xs font-medium bg-secondary text-secondary-foreground">
                     {getInitials(selected.leadName)}
                   </AvatarFallback>
                 </Avatar>
