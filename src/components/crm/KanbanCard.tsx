@@ -113,8 +113,8 @@ export function KanbanCard({
 
       {/* AI summary */}
       {card.isAILead && card.aiSummary && (
-        <p className="mt-2 text-xs italic text-muted-foreground leading-snug line-clamp-2">
-          “{card.aiSummary}”
+        <p className="mt-3 text-[13px] italic text-muted-foreground/80 leading-relaxed line-clamp-2 font-sans">
+          "{card.aiSummary}"
         </p>
       )}
 
