@@ -85,15 +85,17 @@ export function KanbanCard({
         "transition-all duration-200",
         "hover:shadow-md hover:-translate-y-0.5",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-        card.isAILead && "overflow-hidden pl-5"
+        card.isAILead && "border-t-[3px] border-t-emerald-400"
       )}
     >
-      {/* AI lead: bright green left accent */}
+      {/* AI lead: sparkle icon next to name instead of border */}
       {card.isAILead && (
         <span
           aria-hidden
-          className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-400"
-        />
+          className="absolute top-3 right-3 inline-flex items-center justify-center h-5 w-5 rounded-full bg-emerald-50 text-emerald-500"
+        >
+          <Sparkles className="h-3 w-3" strokeWidth={2} />
+        </span>
       )}
 
       {/* Title row */}
