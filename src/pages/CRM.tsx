@@ -182,8 +182,20 @@ function KanbanBoard({
   onDeleteColumn: (columnId: string) => void;
   onAddColumn: () => void;
 }) {
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    // Convert vertical wheel scroll to horizontal scroll when there's no
+    // horizontal intent (typical mouse wheel). Trackpads already provide
+    // deltaX, so we leave those alone.
+    if (e.deltaY !== 0 && e.deltaX === 0) {
+      e.currentTarget.scrollLeft += e.deltaY;
+    }
+  };
+
   return (
-    <div className="flex-1 overflow-x-auto">
+    <div
+      className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-thin"
+      onWheel={handleWheel}
+    >
       <div className="flex gap-4 px-6 py-6 min-w-max">
         {columns.map((col) => (
           <KanbanColumnCard
