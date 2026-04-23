@@ -59,16 +59,32 @@ function getInitials(name: string) {
     .join("");
 }
 
-export function KanbanCard({ card }: { card: KanbanCardData }) {
+export function KanbanCard({
+  card,
+  onClick,
+}: {
+  card: KanbanCardData;
+  onClick?: (card: KanbanCardData) => void;
+}) {
   const value = formatBRL(card.estimatedValue);
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onClick?.(card)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick?.(card);
+        }
+      }}
       className={cn(
-        "group relative cursor-pointer rounded-lg bg-white p-3.5",
+        "group relative cursor-pointer rounded-lg bg-white p-3.5 text-left",
         "border border-transparent shadow-[0_1px_2px_rgba(16,24,40,0.04)]",
         "transition-all duration-150",
         "hover:border-border hover:shadow-[0_2px_6px_rgba(16,24,40,0.06)]",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
         card.isAILead && "overflow-hidden pl-4"
       )}
     >

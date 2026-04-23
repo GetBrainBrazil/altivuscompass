@@ -3,6 +3,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { KanbanCard, type KanbanCardData } from "@/components/crm/KanbanCard";
+import { LeadDetailPanel } from "@/components/crm/LeadDetailPanel";
 
 type KanbanColumn = {
   id: string;
@@ -142,19 +143,31 @@ const OPS_COLUMNS: KanbanColumn[] = [
   { id: "post-trip", title: "Pós-Viagem", cards: [] },
 ];
 
-function KanbanBoard({ columns }: { columns: KanbanColumn[] }) {
+function KanbanBoard({
+  columns,
+  onCardClick,
+}: {
+  columns: KanbanColumn[];
+  onCardClick: (card: KanbanCardData) => void;
+}) {
   return (
     <ScrollArea className="flex-1">
       <div className="flex gap-4 p-6 h-full min-h-0">
         {columns.map((col) => (
-          <KanbanColumnCard key={col.id} column={col} />
+          <KanbanColumnCard key={col.id} column={col} onCardClick={onCardClick} />
         ))}
       </div>
     </ScrollArea>
   );
 }
 
-function KanbanColumnCard({ column }: { column: KanbanColumn }) {
+function KanbanColumnCard({
+  column,
+  onCardClick,
+}: {
+  column: KanbanColumn;
+  onCardClick: (card: KanbanCardData) => void;
+}) {
   return (
     <div
       className={cn(
@@ -179,7 +192,9 @@ function KanbanColumnCard({ column }: { column: KanbanColumn }) {
           {column.cards.length === 0 ? (
             <EmptyColumnHint />
           ) : (
-            column.cards.map((card) => <KanbanCard key={card.id} card={card} />)
+            column.cards.map((card) => (
+              <KanbanCard key={card.id} card={card} onClick={onCardClick} />
+            ))
           )}
         </div>
       </ScrollArea>
@@ -197,6 +212,13 @@ function EmptyColumnHint() {
 
 export default function CRM() {
   const [tab, setTab] = useState<"sales" | "ops">("sales");
+  const [selectedCard, setSelectedCard] = useState<KanbanCardData | null>(null);
+  const [panelOpen, setPanelOpen] = useState(false);
+
+  const handleCardClick = (card: KanbanCardData) => {
+    setSelectedCard(card);
+    setPanelOpen(true);
+  };
 
   return (
     <div className="flex flex-col h-[calc(100vh-0px)] min-h-0 bg-background">
@@ -252,11 +274,18 @@ export default function CRM() {
       {/* Board area — fills remaining height */}
       <main className="flex-1 min-h-0 flex flex-col">
         {tab === "sales" ? (
-          <KanbanBoard columns={SALES_COLUMNS} />
+          <KanbanBoard columns={SALES_COLUMNS} onCardClick={handleCardClick} />
         ) : (
-          <KanbanBoard columns={OPS_COLUMNS} />
+          <KanbanBoard columns={OPS_COLUMNS} onCardClick={handleCardClick} />
         )}
       </main>
+
+      {/* Lead detail slide-over */}
+      <LeadDetailPanel
+        card={selectedCard}
+        open={panelOpen}
+        onOpenChange={setPanelOpen}
+      />
     </div>
   );
 }
