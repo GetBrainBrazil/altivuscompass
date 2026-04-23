@@ -28,6 +28,7 @@ import Itineraries from "./pages/Itineraries";
 import PublicItinerary from "./pages/PublicItinerary";
 import ServiceCenter from "./pages/ServiceCenter";
 import CRM from "./pages/CRM";
+import LeadDetail from "./pages/LeadDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -70,6 +71,7 @@ const App = () => (
             <Route path="/atendimento" element={<ProtectedRoute><AppLayout><ServiceCenter /></AppLayout></ProtectedRoute>} />
             <Route path="/inbox" element={<ProtectedRoute><AppLayout><ServiceCenter /></AppLayout></ProtectedRoute>} />
             <Route path="/crm" element={<ProtectedRoute><AppLayout><CRM /></AppLayout></ProtectedRoute>} />
+            <Route path="/crm/lead/:id" element={<ProtectedRoute><AppLayout><LeadDetail /></AppLayout></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
