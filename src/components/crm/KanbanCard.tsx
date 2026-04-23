@@ -138,6 +138,28 @@ export function KanbanCard({
         try {
           e.dataTransfer.effectAllowed = "move";
           e.dataTransfer.setData("text/plain", card.id);
+
+          // Custom drag image: clone do card com sombra forte e leve inclinação
+          const node = e.currentTarget as HTMLDivElement;
+          const rect = node.getBoundingClientRect();
+          const ghost = node.cloneNode(true) as HTMLDivElement;
+          ghost.style.position = "absolute";
+          ghost.style.top = "-1000px";
+          ghost.style.left = "-1000px";
+          ghost.style.width = `${rect.width}px`;
+          ghost.style.pointerEvents = "none";
+          ghost.style.opacity = "1";
+          ghost.style.transform = "rotate(2.5deg)";
+          ghost.style.boxShadow =
+            "0 20px 35px -10px hsl(var(--foreground) / 0.35), 0 8px 16px -6px hsl(var(--foreground) / 0.25)";
+          ghost.style.borderRadius = "0.5rem";
+          ghost.setAttribute("data-drag-ghost", "true");
+          document.body.appendChild(ghost);
+          e.dataTransfer.setDragImage(ghost, e.clientX - rect.left, e.clientY - rect.top);
+          // Remove o clone após o início do drag
+          window.setTimeout(() => {
+            ghost.remove();
+          }, 0);
         } catch {
           /* ignore */
         }
@@ -156,7 +178,7 @@ export function KanbanCard({
         "border-l-[3px] shadow-sm hover:shadow-md transition-all animate-fade-in",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
         draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
-        isDragging && "opacity-40",
+        isDragging && "opacity-30",
         leftBorder,
         alert?.tone === "destructive" && "bg-destructive/5",
       )}
