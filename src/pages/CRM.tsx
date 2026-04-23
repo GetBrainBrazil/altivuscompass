@@ -186,6 +186,16 @@ const INITIAL_OPS_COLUMNS: KanbanColumn[] = [
   { id: "post-trip", title: "Pós-Viagem", cards: [] },
 ];
 
+const STAGE_DOT_COLORS = [
+  "bg-soft-blue",
+  "bg-purple-400",
+  "bg-amber-400",
+  "bg-rose-400",
+  "bg-success",
+  "bg-slate-400",
+  "bg-primary",
+];
+
 function KanbanBoard({
   columns,
   onCardClick,
@@ -206,10 +216,11 @@ function KanbanBoard({
   return (
     <div className="flex-1 min-h-0 mt-4 pb-5 overflow-x-auto overflow-y-hidden scrollbar-elegant [transform:scaleY(-1)]">
       <div className="flex gap-2 px-6 py-2 min-w-max h-full items-stretch [transform:scaleY(-1)]">
-        {columns.map((col) => (
+        {columns.map((col, idx) => (
           <KanbanColumnCard
             key={col.id}
             column={col}
+            dotColor={STAGE_DOT_COLORS[idx % STAGE_DOT_COLORS.length]}
             onCardClick={onCardClick}
             onDelete={() => onDeleteColumn(col.id)}
             onRename={() => onRenameColumn(col.id)}
@@ -218,6 +229,86 @@ function KanbanBoard({
           />
         ))}
         <AddColumnButton onClick={onAddColumn} />
+      </div>
+    </div>
+  );
+}
+
+function KanbanColumnCard({
+  column,
+  dotColor,
+  onCardClick,
+  onDelete,
+  onRename,
+  onAddBefore,
+  onAddAfter,
+}: {
+  column: KanbanColumn;
+  dotColor: string;
+  onCardClick: (card: KanbanCardData) => void;
+  onDelete: () => void;
+  onRename: () => void;
+  onAddBefore: () => void;
+  onAddAfter: () => void;
+}) {
+  return (
+    <div className="flex flex-col w-[320px] shrink-0 max-h-full">
+      {/* Column header (fixed) — flat, dot + title + count */}
+      <div className="flex items-center gap-2 px-1 py-2 mb-1 shrink-0">
+        <div className={cn("w-2 h-2 rounded-full shrink-0", dotColor)} />
+        <span className="text-xs font-medium text-foreground font-body truncate">
+          {column.title}
+        </span>
+        <span className="text-xs text-muted-foreground font-body ml-auto">
+          {column.cards.length}
+        </span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-muted-foreground/60 hover:text-foreground opacity-60 hover:opacity-100"
+              aria-label="Opções da etapa"
+            >
+              <MoreVertical className="h-3.5 w-3.5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem onClick={onAddBefore}>
+              <ArrowLeftToLine className="h-4 w-4 mr-2" />
+              Adicionar etapa à esquerda
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onAddAfter}>
+              <ArrowRightToLine className="h-4 w-4 mr-2" />
+              Adicionar etapa à direita
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onRename}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Renomear etapa
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={onDelete}
+              className="text-destructive focus:text-destructive"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir etapa
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Column body — scrolls vertically when overflowing */}
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin pr-1">
+        <div className="space-y-3 min-h-[120px]">
+          {column.cards.length === 0 ? (
+            <EmptyColumnHint />
+          ) : (
+            column.cards.map((card) => (
+              <KanbanCard key={card.id} card={card} onClick={onCardClick} />
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
