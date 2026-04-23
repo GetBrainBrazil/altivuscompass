@@ -178,7 +178,7 @@ export function KanbanCard({
         "border-l-[3px] shadow-sm hover:shadow-md transition-all animate-fade-in",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
         draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
-        isDragging && "opacity-40",
+        isDragging && "opacity-30",
         leftBorder,
         alert?.tone === "destructive" && "bg-destructive/5",
       )}
