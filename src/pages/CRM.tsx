@@ -204,10 +204,10 @@ function KanbanBoard({
 
   return (
     <div
-      className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-thin"
+      className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden scrollbar-thin"
       onWheel={handleWheel}
     >
-      <div className="flex gap-4 px-6 py-6 min-w-max">
+      <div className="flex gap-4 px-6 py-6 min-w-max h-full items-stretch">
         {columns.map((col) => (
           <KanbanColumnCard
             key={col.id}
