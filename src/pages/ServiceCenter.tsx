@@ -168,7 +168,7 @@ const ConversationCard = ({ conversation, active, onClick }: ConversationCardPro
       type="button"
       onClick={onClick}
       className={cn(
-        "relative w-full text-left px-3 py-3 rounded-lg border transition-colors overflow-hidden",
+        "relative w-full text-left px-4 py-3.5 rounded-xl border transition-colors overflow-hidden",
         "border-transparent bg-white hover:bg-muted/40",
         active && "bg-muted/60 hover:bg-muted/60",
       )}
@@ -393,7 +393,7 @@ export default function ServiceCenter() {
         </div>
 
         <ScrollArea className="flex-1">
-          <div className="p-2 space-y-1">
+          <div className="px-4 py-3 space-y-3">
             {filtered.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-8 px-4">
                 Nenhuma conversa encontrada.
