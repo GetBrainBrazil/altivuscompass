@@ -87,74 +87,91 @@ export function AppSidebar() {
       <SidebarContent className="px-3 py-4">
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-1.5">
             <TooltipProvider delayDuration={0}>
-              {visibleItems.map((item) => {
+              {visibleItems.map((item, idx) => {
                 const hasSubItems = 'subItems' in item && item.subItems && item.subItems.length > 0;
                 const isParentActive = location.pathname === item.url || (hasSubItems && item.subItems!.some(s => location.pathname === s.url));
+                const prev = visibleItems[idx - 1];
+                const showDivider = !collapsed && prev && prev.group !== item.group;
 
-                if (hasSubItems && !collapsed) {
+                const activeBase = "data-[active=true]:bg-primary/10 data-[active=true]:text-primary data-[active=true]:font-medium";
+                const linkBase = "flex items-center gap-3 px-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-lg";
+                const linkActive = "bg-primary/10 text-primary font-medium hover:bg-primary/15 hover:text-primary";
+
+                const renderItem = () => {
+                  if (hasSubItems && !collapsed) {
+                    return (
+                      <Collapsible key={item.title} defaultOpen={isParentActive} className="group/collapsible">
+                        <SidebarMenuItem>
+                          <div className="flex items-center">
+                            <SidebarMenuButton asChild className={cn("h-10 rounded-lg flex-1", activeBase)}>
+                              <NavLink to={item.url} end className={linkBase} activeClassName={linkActive}>
+                                <item.icon />
+                                <span className="text-[13px] font-body flex-1">{item.title}</span>
+                              </NavLink>
+                            </SidebarMenuButton>
+                            <CollapsibleTrigger asChild>
+                              <button className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-sidebar-accent">
+                                <ChevronRight size={14} className="transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                              </button>
+                            </CollapsibleTrigger>
+                          </div>
+                        </SidebarMenuItem>
+                        <CollapsibleContent>
+                          <SidebarMenuSub className="gap-1">
+                            {item.subItems!.filter(s => canAccess(userRole, s.url)).map((sub) => (
+                              <SidebarMenuSubItem key={sub.title}>
+                                <SidebarMenuSubButton asChild>
+                                  <NavLink to={sub.url} className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-md text-[12px] font-body" activeClassName="bg-primary/10 text-primary font-medium">
+                                    {sub.title}
+                                  </NavLink>
+                                </SidebarMenuSubButton>
+                              </SidebarMenuSubItem>
+                            ))}
+                          </SidebarMenuSub>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    );
+                  }
+
                   return (
-                    <Collapsible key={item.title} defaultOpen={isParentActive} className="group/collapsible">
-                      <SidebarMenuItem>
-                        <div className="flex items-center">
-                          <SidebarMenuButton asChild className="h-10 rounded-lg flex-1">
-                            <NavLink to={item.url} end className="flex items-center gap-3 px-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-lg" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                    <SidebarMenuItem key={item.title}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <SidebarMenuButton asChild className={cn("h-10 rounded-lg", activeBase)}>
+                            <NavLink to={item.url} end={item.url === "/"} className={linkBase} activeClassName={linkActive}>
                               <item.icon />
-                              <span className="text-sm font-body flex-1">{item.title}</span>
+                              {!collapsed && <span className="text-[13px] font-body">{item.title}</span>}
                             </NavLink>
                           </SidebarMenuButton>
-                          <CollapsibleTrigger asChild>
-                            <button className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-sidebar-accent">
-                              <ChevronRight size={14} className="transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                            </button>
-                          </CollapsibleTrigger>
-                        </div>
-                      </SidebarMenuItem>
-                      <CollapsibleContent>
-                        <SidebarMenuSub>
-                          {item.subItems!.filter(s => canAccess(userRole, s.url)).map((sub) => (
-                            <SidebarMenuSubItem key={sub.title}>
-                              <SidebarMenuSubButton asChild>
-                                <NavLink to={sub.url} className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-md text-xs font-body" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                                  {sub.title}
-                                </NavLink>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          ))}
-                        </SidebarMenuSub>
-                      </CollapsibleContent>
-                    </Collapsible>
+                        </TooltipTrigger>
+                        {collapsed && (
+                          <TooltipContent side="right" className="font-body">
+                            {item.title}
+                            {hasSubItems && (
+                              <div className="mt-1 space-y-1">
+                                {item.subItems!.filter(s => canAccess(userRole, s.url)).map(s => (
+                                  <Link key={s.url} to={s.url} className="block text-xs text-muted-foreground hover:text-foreground">
+                                    {s.title}
+                                  </Link>
+                                ))}
+                              </div>
+                            )}
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </SidebarMenuItem>
                   );
-                }
+                };
 
                 return (
-                  <SidebarMenuItem key={item.title}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <SidebarMenuButton asChild className="h-10 rounded-lg">
-                          <NavLink to={item.url} end={item.url === "/"} className="flex items-center gap-3 px-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-lg" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                            <item.icon />
-                            {!collapsed && <span className="text-sm font-body">{item.title}</span>}
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </TooltipTrigger>
-                      {collapsed && (
-                        <TooltipContent side="right" className="font-body">
-                          {item.title}
-                          {hasSubItems && (
-                            <div className="mt-1 space-y-1">
-                              {item.subItems!.filter(s => canAccess(userRole, s.url)).map(s => (
-                                <Link key={s.url} to={s.url} className="block text-xs text-muted-foreground hover:text-foreground">
-                                  {s.title}
-                                </Link>
-                              ))}
-                            </div>
-                          )}
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
-                  </SidebarMenuItem>
+                  <div key={item.title}>
+                    {showDivider && (
+                      <div className="my-2 mx-2 border-t border-sidebar-border/50" aria-hidden />
+                    )}
+                    {renderItem()}
+                  </div>
                 );
               })}
             </TooltipProvider>
