@@ -138,7 +138,7 @@ const ConversationCard = ({ conversation, active, onClick }: ConversationCardPro
             ) : (
               <Badge
                 variant="outline"
-                className="gap-1 text-[10px] py-0 px-1.5 font-normal border-amber-500/40 text-amber-600 dark:text-amber-400"
+                className="gap-1 text-[10px] py-0 px-1.5 font-normal border-destructive/40 text-destructive"
               >
                 <UserRound className="h-3 w-3" />
                 Intervenção Humana
