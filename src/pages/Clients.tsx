@@ -1550,10 +1550,12 @@ export default function Clients() {
               </AlertDialog>
             ) : <div />}
             <div className="flex gap-2">
-              <Button type="button" disabled={saveMutation.isPending} className="font-body" variant="secondary" onClick={() => { shouldGoBackRef.current = true; saveMutation.mutate(); }}>
-                {saveMutation.isPending ? "Salvando..." : (editingId ? "Salvar e Voltar" : "Criar e Voltar")}
-              </Button>
-              <Button type="button" disabled={saveMutation.isPending} className="font-body" onClick={() => { shouldGoBackRef.current = false; saveMutation.mutate(); }}>
+              {editingId && (
+                <Button type="button" disabled={saveMutation.isPending} className="font-body" variant="secondary" onClick={() => { shouldGoBackRef.current = true; saveMutation.mutate(); }}>
+                  {saveMutation.isPending ? "Salvando..." : "Salvar e Voltar"}
+                </Button>
+              )}
+              <Button type="button" disabled={saveMutation.isPending} className="font-body" onClick={() => { shouldGoBackRef.current = !editingId; saveMutation.mutate(); }}>
                 {saveMutation.isPending ? "Salvando..." : (editingId ? "Salvar" : "Criar Cliente")}
               </Button>
             </div>
