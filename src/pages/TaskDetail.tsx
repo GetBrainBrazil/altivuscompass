@@ -8,8 +8,9 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { RichTextEditor } from "@/components/RichTextEditor";
+import { TaskAttachments } from "@/components/TaskAttachments";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -50,6 +51,8 @@ export default function TaskDetail() {
     due_date: null as Date | null,
     start_date: new Date() as Date | null,
   });
+
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
   const { data: task, isLoading } = useQuery({
     queryKey: ["task", id],
@@ -125,12 +128,35 @@ export default function TaskDetail() {
         start_date: form.start_date ? format(form.start_date, "yyyy-MM-dd") : null,
         completed_at: form.status === "completed" ? (task?.completed_at ?? new Date().toISOString()) : null,
       };
+      let savedId = id!;
       if (isNew) {
-        const { error } = await supabase.from("tasks").insert({ ...payload, created_by: user?.id });
+        const { data: inserted, error } = await supabase
+          .from("tasks")
+          .insert({ ...payload, created_by: user?.id })
+          .select("id")
+          .single();
         if (error) throw error;
+        savedId = inserted.id;
       } else {
         const { error } = await supabase.from("tasks").update(payload).eq("id", id!);
         if (error) throw error;
+      }
+      // Upload de anexos pendentes (criação)
+      if (pendingFiles.length > 0) {
+        for (const f of pendingFiles) {
+          const ext = f.name.split(".").pop() || "bin";
+          const path = `${savedId}/${crypto.randomUUID()}.${ext}`;
+          const up = await supabase.storage.from("task-attachments").upload(path, f, { contentType: f.type });
+          if (up.error) continue;
+          await supabase.from("task_attachments").insert({
+            task_id: savedId,
+            file_name: f.name,
+            file_path: path,
+            file_type: f.type,
+            file_size: f.size,
+            uploaded_by: user?.id,
+          });
+        }
       }
     },
     onSuccess: () => {
@@ -297,14 +323,21 @@ export default function TaskDetail() {
           <Label className="font-body text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
             <FileText size={12} /> Descrição
           </Label>
-          <Textarea
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            rows={6}
-            placeholder="Descreva os detalhes da tarefa..."
-            className="mt-1.5"
-          />
+          <div className="mt-1.5">
+            <RichTextEditor
+              value={form.description}
+              onChange={(html) => setForm({ ...form, description: html })}
+              placeholder="Descreva os detalhes da tarefa..."
+              uploadFolder={isNew ? "new" : id!}
+            />
+          </div>
         </div>
+
+        <TaskAttachments
+          taskId={isNew ? null : id!}
+          pending={pendingFiles}
+          onPendingChange={setPendingFiles}
+        />
       </div>
 
       {/* Footer actions */}
