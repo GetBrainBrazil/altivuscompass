@@ -128,7 +128,7 @@ export function AppSidebar() {
                         </SidebarMenuItem>
                         <CollapsibleContent>
                           <SidebarMenuSub className="gap-1">
-                            {item.subItems!.filter(s => canAccess(userRole, s.url)).map((sub) => (
+                            {item.subItems!.filter(s => canAccess(userRole, s.url.split("?")[0])).map((sub) => (
                               <SidebarMenuSubItem key={sub.title}>
                                 <SidebarMenuSubButton asChild>
                                   <NavLink to={sub.url} className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-md text-[12px] font-body" activeClassName="bg-primary/15 text-white font-medium">
@@ -159,7 +159,7 @@ export function AppSidebar() {
                             {item.title}
                             {hasSubItems && (
                               <div className="mt-1 space-y-1">
-                                {item.subItems!.filter(s => canAccess(userRole, s.url)).map(s => (
+                                {item.subItems!.filter(s => canAccess(userRole, s.url.split("?")[0])).map(s => (
                                   <Link key={s.url} to={s.url} className="block text-xs text-muted-foreground hover:text-foreground">
                                     {s.title}
                                   </Link>
