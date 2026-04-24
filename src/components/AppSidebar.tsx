@@ -128,15 +128,21 @@ export function AppSidebar() {
                         </SidebarMenuItem>
                         <CollapsibleContent>
                           <SidebarMenuSub className="gap-1">
-                            {item.subItems!.filter(s => canAccess(userRole, s.url.split("?")[0])).map((sub) => (
+                            {item.subItems!.filter(s => canAccess(userRole, s.url.split("?")[0])).map((sub) => {
+                              const [subPath, subQuery] = sub.url.split("?");
+                              const isSubActive = location.pathname === subPath && (
+                                subQuery ? location.search.includes(subQuery) : !location.search
+                              );
+                              return (
                               <SidebarMenuSubItem key={sub.title}>
                                 <SidebarMenuSubButton asChild>
-                                  <NavLink to={sub.url} className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-md text-[12px] font-body" activeClassName="bg-primary/15 text-white font-medium">
+                                  <Link to={sub.url} className={cn("text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-md text-[12px] font-body", isSubActive && "bg-primary/15 text-white font-medium")}>
                                     {sub.title}
-                                  </NavLink>
+                                  </Link>
                                 </SidebarMenuSubButton>
                               </SidebarMenuSubItem>
-                            ))}
+                              );
+                            })}
                           </SidebarMenuSub>
                         </CollapsibleContent>
                       </Collapsible>
