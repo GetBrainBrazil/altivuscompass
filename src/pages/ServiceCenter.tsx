@@ -745,7 +745,12 @@ export default function ServiceCenter() {
         )}
       </aside>
 
-      {/* ===== Center column: chat window ===== */}
+      {/* ===== Center column: chat window OR AI config ===== */}
+      {mainView === "ai-config" ? (
+        <section className="flex-1 min-w-0">
+          <AIConfigPanel />
+        </section>
+      ) : (
       <section className="flex-1 flex flex-col min-w-0 bg-muted/30">
         {!selected ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
