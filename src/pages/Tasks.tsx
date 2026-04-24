@@ -363,8 +363,9 @@ export default function Tasks() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os Status</SelectItem>
-            <SelectItem value="pending">Pendente</SelectItem>
+            <SelectItem value="pending">Aguardando Início</SelectItem>
             <SelectItem value="in_progress">Em Andamento</SelectItem>
+            <SelectItem value="review">Em Revisão</SelectItem>
             <SelectItem value="completed">Concluída</SelectItem>
           </SelectContent>
         </Select>
