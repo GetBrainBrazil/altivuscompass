@@ -63,6 +63,9 @@ export default function Tasks() {
   const [clientFilter, setClientFilter] = useState<string>("all");
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
+  const [view, setView] = useState<"kanban" | "table">(() => (localStorage.getItem("tasks:view") as any) || "kanban");
+  const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
+  const [dragOverStage, setDragOverStage] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     title: "",
