@@ -298,14 +298,21 @@ export default function TaskDetail() {
           <Label className="font-body text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
             <FileText size={12} /> Descrição
           </Label>
-          <Textarea
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            rows={6}
-            placeholder="Descreva os detalhes da tarefa..."
-            className="mt-1.5"
-          />
+          <div className="mt-1.5">
+            <RichTextEditor
+              value={form.description}
+              onChange={(html) => setForm({ ...form, description: html })}
+              placeholder="Descreva os detalhes da tarefa..."
+              uploadFolder={isNew ? "new" : id!}
+            />
+          </div>
         </div>
+
+        <TaskAttachments
+          taskId={isNew ? null : id!}
+          pending={pendingFiles}
+          onPendingChange={setPendingFiles}
+        />
       </div>
 
       {/* Footer actions */}
