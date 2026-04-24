@@ -296,20 +296,39 @@ const ConversationCard = ({ conversation, active, onClick }: ConversationCardPro
             <span className="text-[11px] text-muted-foreground shrink-0">
               {formatTime(last.timestamp)}
             </span>
-          </div>          <p className="text-xs text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
+          </div>
+          <p className="text-xs text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
             {last.sender === "lead" ? "" : "IA: "}
             {last.content}
           </p>
-          <div className="mt-2">
-            {isAi ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium bg-success/15 text-success border border-success/25">
-                <span className="w-1.5 h-1.5 rounded-full bg-success" />
-                IA Atendendo
+          <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+            {/* Categoria CRM detectada pela IA */}
+            {conversation.category === "post-sale" ? (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
+                <LifeBuoy className="w-2.5 h-2.5" />
+                Pós-venda
+              </span>
+            ) : conversation.contactType === "existing-client" ? (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                <UserCheck className="w-2.5 h-2.5" />
+                Cliente
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium bg-warning/20 text-warning border border-warning/30">
-                <span className="w-1.5 h-1.5 rounded-full bg-warning" />
-                Intervenção Humana
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200">
+                <UserPlus className="w-2.5 h-2.5" />
+                Lead novo
+              </span>
+            )}
+            {/* Status humano/IA */}
+            {isAi ? (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-success/15 text-success border border-success/25">
+                <span className="w-1 h-1 rounded-full bg-success" />
+                IA
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-warning/20 text-warning border border-warning/30">
+                <span className="w-1 h-1 rounded-full bg-warning" />
+                Humano
               </span>
             )}
           </div>
