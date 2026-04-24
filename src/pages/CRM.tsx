@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Plus,
   MoreVertical,
@@ -399,7 +399,24 @@ function EmptyColumnHint() {
 
 export default function CRM() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"sales" | "ops">("sales");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") === "ops" ? "ops" : "sales";
+  const [tab, setTabState] = useState<"sales" | "ops">(initialTab);
+
+  useEffect(() => {
+    const urlTab = searchParams.get("tab") === "ops" ? "ops" : "sales";
+    if (urlTab !== tab) setTabState(urlTab);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const setTab = (v: "sales" | "ops") => {
+    setTabState(v);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", v);
+      return next;
+    }, { replace: true });
+  };
 
   const SALES_STORAGE_KEY = "crm:columns:sales:v1";
   const OPS_STORAGE_KEY = "crm:columns:ops:v1";
