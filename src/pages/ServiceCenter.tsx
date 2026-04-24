@@ -27,13 +27,8 @@ import {
   Plane,
   FileText,
   AlertTriangle,
-  MessagesSquare,
-  Settings2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import AIConfigPanel from "@/components/service-center/AIConfigPanel";
-
-type MainView = "chats" | "ai-config";
 
 type FilterTab = "all" | "leads" | "support" | "human";
 
@@ -623,7 +618,6 @@ export default function ServiceCenter() {
   const [draft, setDraft] = useState("");
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [sidePanelTab, setSidePanelTab] = useState<"summary" | "crm">("summary");
-  const [mainView, setMainView] = useState<MainView>("chats");
 
   const counts = useMemo(
     () => ({
@@ -731,12 +725,7 @@ export default function ServiceCenter() {
         )}
       </aside>
 
-      {/* ===== Center column: chat window OR AI config ===== */}
-      {mainView === "ai-config" ? (
-        <section className="flex-1 min-w-0">
-          <AIConfigPanel />
-        </section>
-      ) : (
+      {/* ===== Center column: chat window ===== */}
       <section className="flex-1 flex flex-col min-w-0 bg-muted/30">
         {!selected ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
@@ -837,10 +826,9 @@ export default function ServiceCenter() {
           </>
         )}
       </section>
-      )}
 
       {/* ===== Right column: lead summary + CRM panel ===== */}
-      {mainView === "chats" && selected && summaryOpen && (
+      {selected && summaryOpen && (
         <aside className="w-[340px] shrink-0 border-l hidden lg:flex flex-col bg-white">
           <Tabs
             value={sidePanelTab}
