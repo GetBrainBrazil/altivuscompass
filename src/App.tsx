@@ -32,6 +32,7 @@ import ServiceCenter from "./pages/ServiceCenter";
 import CRM from "./pages/CRM";
 import LeadDetail from "./pages/LeadDetail";
 import AIAgents from "./pages/AIAgents";
+import AIAgentEdit from "./pages/AIAgentEdit";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -80,6 +81,8 @@ const App = () => (
             <Route path="/crm" element={<ProtectedRoute><AppLayout><CRM /></AppLayout></ProtectedRoute>} />
             <Route path="/crm/lead/:id" element={<ProtectedRoute><AppLayout><LeadDetail /></AppLayout></ProtectedRoute>} />
             <Route path="/ai-agents" element={<ProtectedRoute><AppLayout><AIAgents /></AppLayout></ProtectedRoute>} />
+            <Route path="/ai-agents/new" element={<ProtectedRoute><AppLayout><AIAgentEdit /></AppLayout></ProtectedRoute>} />
+            <Route path="/ai-agents/:id" element={<ProtectedRoute><AppLayout><AIAgentEdit /></AppLayout></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

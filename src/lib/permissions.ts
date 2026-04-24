@@ -54,10 +54,14 @@ export function canAccessFeature(userRole: string | null, featureKey: string): b
 export function canAccess(userRole: string | null, path: string): boolean {
   if (!userRole) return false;
   if (userRole === "admin") return true;
-  
-  const page = PAGE_PERMISSIONS.find((p) => p.path === path);
+
+  // Match exato OU prefixo (ex.: /ai-agents/new herda permissão de /ai-agents)
+  const page =
+    PAGE_PERMISSIONS.find((p) => p.path === path) ??
+    PAGE_PERMISSIONS.filter((p) => p.path !== "/" && path.startsWith(p.path + "/"))
+      .sort((a, b) => b.path.length - a.path.length)[0];
   if (!page) return false;
-  
+
   return page.allowedRoles.includes(userRole as AppRole);
 }
 
