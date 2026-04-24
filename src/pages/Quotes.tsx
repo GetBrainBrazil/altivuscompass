@@ -3108,16 +3108,16 @@ export default function Quotes() {
       ) : (
         <>
           {viewMode === "kanban" ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4 pb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pb-4">
               {stages.map((stage) => {
                 const stageQuotes = filteredQuotes.filter((q: Quote) => q.stage === stage.id);
                 return (
-                   <div key={stage.id} className="min-w-0 flex flex-col"
-                     onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("bg-accent/10"); }}
-                     onDragLeave={(e) => { e.currentTarget.classList.remove("bg-accent/10"); }}
+                   <div key={stage.id} className="glass-card rounded-xl p-3 flex flex-col min-h-[300px] min-w-0 transition-colors"
+                     onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("bg-primary/5", "ring-2", "ring-primary/30"); }}
+                     onDragLeave={(e) => { e.currentTarget.classList.remove("bg-primary/5", "ring-2", "ring-primary/30"); }}
                      onDrop={(e) => {
                        e.preventDefault();
-                       e.currentTarget.classList.remove("bg-accent/10");
+                       e.currentTarget.classList.remove("bg-primary/5", "ring-2", "ring-primary/30");
                        if (draggedQuoteId) {
                          const q = quotes.find((q: Quote) => q.id === draggedQuoteId);
                          if (q && q.stage !== stage.id) updateQuoteStage(draggedQuoteId, stage.id);
@@ -3126,11 +3126,11 @@ export default function Quotes() {
                      }}
                    >
                     <div className="flex items-center gap-2 mb-3 px-1">
-                       <div className={`w-2 h-2 rounded-full ${stage.color}`} />
-                       <span className="text-xs font-medium text-foreground font-body">{stage.label}</span>
-                       <span className="text-xs text-muted-foreground font-body ml-auto">{stageQuotes.length}</span>
+                       <div className={`w-2 h-2 rounded-full shrink-0 ${stage.color}`} />
+                       <span className="text-sm font-medium text-foreground font-body truncate">{stage.label}</span>
+                       <span className="text-xs text-muted-foreground font-body tabular-nums ml-auto">{stageQuotes.length}</span>
                      </div>
-                     <div className="space-y-3 min-h-[60px] rounded-lg transition-colors">
+                     <div className="flex-1 space-y-2">
                         {stageQuotes.map((quote: Quote) => {
                           const clientName =
                             (quote as any).client_name && (quote as any).client_name !== "Sem cliente"
