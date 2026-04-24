@@ -156,10 +156,30 @@ export default function Tasks() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["task-reminders"] });
-    },
   });
 
-  const saveReminderMutation = useMutation({
+  const changeStatusMutation = useMutation({
+    mutationFn: async ({ id, newStatus }: { id: string; newStatus: string }) => {
+      const update: any = { status: newStatus };
+      if (newStatus === "completed") update.completed_at = new Date().toISOString();
+      else update.completed_at = null;
+      const { error } = await supabase.from("tasks").update(update).eq("id", id);
+      if (error) throw error;
+    },
+    onMutate: async ({ id, newStatus }) => {
+      await queryClient.cancelQueries({ queryKey: ["tasks"] });
+      const prev = queryClient.getQueriesData({ queryKey: ["tasks"] });
+      queryClient.setQueriesData({ queryKey: ["tasks"] }, (old: any) =>
+        Array.isArray(old) ? old.map((t: any) => (t.id === id ? { ...t, status: newStatus, completed_at: newStatus === "completed" ? new Date().toISOString() : null } : t)) : old,
+      );
+      return { prev };
+    },
+    onError: (_e, _v, ctx: any) => {
+      ctx?.prev?.forEach(([key, data]: any) => queryClient.setQueryData(key, data));
+      toast({ title: "Erro ao mover tarefa", variant: "destructive" });
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+  });
     mutationFn: async ({ taskId, remindAt, existingId }: { taskId: string; remindAt: string; existingId?: string }) => {
       if (existingId) {
         const { error } = await supabase.from("task_reminders").update({ remind_at: remindAt }).eq("id", existingId);
