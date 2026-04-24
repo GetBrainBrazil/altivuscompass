@@ -27,8 +27,13 @@ import {
   Plane,
   FileText,
   AlertTriangle,
+  MessagesSquare,
+  Settings2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import AIConfigPanel from "@/components/service-center/AIConfigPanel";
+
+type MainView = "chats" | "ai-config";
 
 type FilterTab = "all" | "leads" | "support" | "human";
 
