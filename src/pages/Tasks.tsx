@@ -229,18 +229,7 @@ export default function Tasks() {
   };
 
   const openEdit = (task: any) => {
-    setEditingTask(task);
-    setForm({
-      title: task.title,
-      description: task.description ?? "",
-      priority: task.priority,
-      assigned_to: task.assigned_to ?? "",
-      quote_id: task.quote_id ?? "none",
-      client_id: task.client_id ?? "none",
-      due_date: task.due_date ? new Date(task.due_date) : null,
-      start_date: task.start_date ? new Date(task.start_date) : new Date(),
-    });
-    setDialogOpen(true);
+    navigate(`/tasks/${task.id}`);
   };
 
   const handleSave = () => {
@@ -346,7 +335,7 @@ export default function Tasks() {
               <TableIcon size={14} /> Tabela
             </button>
           </div>
-          <Button onClick={() => setDialogOpen(true)} className="gap-2">
+          <Button onClick={() => navigate("/tasks/new")} className="gap-2">
             <Plus size={16} /> Nova Tarefa
           </Button>
         </div>
@@ -689,108 +678,7 @@ export default function Tasks() {
         </div>
       )}
 
-      {/* Task form dialog */}
-      <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) closeDialog(); }}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="font-display">{editingTask ? "Editar Tarefa" : "Nova Tarefa"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label className="font-body text-xs">Título *</Label>
-              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex: Enviar proposta ao cliente" />
-            </div>
-            <div>
-              <Label className="font-body text-xs">Descrição</Label>
-              <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="font-body text-xs">Prioridade</Label>
-                <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Baixa</SelectItem>
-                    <SelectItem value="medium">Média</SelectItem>
-                    <SelectItem value="high">Alta</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="font-body text-xs">Responsável</Label>
-                <Select value={form.assigned_to} onValueChange={(v) => setForm({ ...form, assigned_to: v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {profiles.map((p: any) => (
-                      <SelectItem key={p.user_id} value={p.user_id}>{p.full_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="font-body text-xs">Data Início</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !form.start_date && "text-muted-foreground")}>
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {form.start_date ? format(form.start_date, "dd/MM/yyyy") : "Selecione"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={form.start_date ?? undefined} onSelect={(d) => setForm({ ...form, start_date: d ?? new Date() })} className="p-3 pointer-events-auto" locale={ptBR} />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div>
-                <Label className="font-body text-xs">Prazo</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !form.due_date && "text-muted-foreground")}>
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {form.due_date ? format(form.due_date, "dd/MM/yyyy") : "Selecione"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={form.due_date ?? undefined} onSelect={(d) => setForm({ ...form, due_date: d ?? null })} className="p-3 pointer-events-auto" locale={ptBR} />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-            <div>
-              <Label className="font-body text-xs">Cotação (opcional)</Label>
-              <Select value={form.quote_id} onValueChange={(v) => setForm({ ...form, quote_id: v, client_id: v !== "none" ? "none" : form.client_id })}>
-                <SelectTrigger><SelectValue placeholder="Vincular a uma cotação" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Nenhuma</SelectItem>
-                  {quotes.map((q: any) => (
-                    <SelectItem key={q.id} value={q.id}>
-                      {q.clients?.full_name ?? "—"} — {q.destination ?? q.title ?? "Sem destino"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="font-body text-xs">Cliente (opcional)</Label>
-              <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v, quote_id: v !== "none" ? "none" : form.quote_id })}>
-                <SelectTrigger><SelectValue placeholder="Vincular a um cliente" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Nenhum</SelectItem>
-                  {clients.map((c: any) => (
-                    <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={closeDialog}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={saveMutation.isPending}>{editingTask ? "Salvar" : "Criar"}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Task creation/editing now lives at /tasks/new and /tasks/:id */}
 
       {/* Reminder dialog */}
       <Dialog open={reminderDialogOpen} onOpenChange={setReminderDialogOpen}>
