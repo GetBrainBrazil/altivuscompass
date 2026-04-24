@@ -43,7 +43,7 @@ export default function TaskDetail() {
     title: "",
     description: "",
     priority: "medium",
-    status: "pending",
+    status: initialStatus,
     assigned_to: "",
     quote_id: "none",
     client_id: "none",
