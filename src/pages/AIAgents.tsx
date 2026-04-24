@@ -104,24 +104,6 @@ export default function AIAgents() {
     toast.success(`Agente "${toDelete.name || "sem nome"}" excluído`);
     setToDelete(null);
   };
-    try {
-      const pending = sessionStorage.getItem(SAVE_KEY);
-      if (!pending) return;
-      const saved: Agent = JSON.parse(pending);
-      sessionStorage.removeItem(SAVE_KEY);
-      setAgents((prev) => {
-        const exists = prev.find((a) => a.id === saved.id);
-        if (exists) return prev.map((a) => (a.id === saved.id ? saved : a));
-        return [...prev, saved];
-      });
-    } catch {}
-  }, []);
-
-  const toggleStatus = (id: string) => {
-    setAgents((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, active: !a.active } : a))
-    );
-  };
 
   return (
     <div className="min-h-screen bg-[hsl(220_15%_97%)]">
