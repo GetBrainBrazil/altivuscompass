@@ -578,7 +578,13 @@ export default function Tasks() {
       ) : filteredTasks.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground font-body">Nenhuma tarefa encontrada.</div>
       ) : (
-        <div className="glass-card rounded-xl overflow-hidden">
+        <div className="space-y-2">
+          <div className="flex justify-end px-1">
+            <span className="text-xs text-muted-foreground font-body tabular-nums">
+              {filteredTasks.length} {filteredTasks.length === 1 ? "registro" : "registros"}
+            </span>
+          </div>
+          <div className="glass-card rounded-xl overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
@@ -686,6 +692,7 @@ export default function Tasks() {
               })}
             </TableBody>
           </Table>
+          </div>
         </div>
       )}
 
