@@ -608,18 +608,23 @@ const CRMPanel = ({ conversation }: { conversation: Conversation }) => {
     </div>
   );
 };
+
+// ============= Main Page =============
+export default function ServiceCenter() {
   const [conversations] = useState<Conversation[]>(MOCK_CONVERSATIONS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [draft, setDraft] = useState("");
-  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(true);
+  const [sidePanelTab, setSidePanelTab] = useState<"summary" | "crm">("summary");
 
   const counts = useMemo(
     () => ({
       all: conversations.length,
+      leads: conversations.filter((c) => c.category === "sales").length,
+      support: conversations.filter((c) => c.category === "post-sale").length,
       human: conversations.filter((c) => c.status === "human").length,
-      ai: conversations.filter((c) => c.status === "ai").length,
     }),
     [conversations],
   );
@@ -627,8 +632,9 @@ const CRMPanel = ({ conversation }: { conversation: Conversation }) => {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return conversations.filter((c) => {
+      if (activeTab === "leads" && c.category !== "sales") return false;
+      if (activeTab === "support" && c.category !== "post-sale") return false;
       if (activeTab === "human" && c.status !== "human") return false;
-      if (activeTab === "ai" && c.status !== "ai") return false;
       if (!q) return true;
       return (
         c.leadName.toLowerCase().includes(q) ||
@@ -659,18 +665,22 @@ const CRMPanel = ({ conversation }: { conversation: Conversation }) => {
             />
           </div>
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FilterTab)}>
-            <TabsList className="grid grid-cols-3 w-full h-9 bg-muted/60 p-0.5">
-              <TabsTrigger value="all" className="text-xs gap-1.5">
+            <TabsList className="grid grid-cols-4 w-full h-9 bg-muted/60 p-0.5">
+              <TabsTrigger value="all" className="text-[11px] gap-1">
                 Todos
                 <span className="text-[10px] text-muted-foreground">{counts.all}</span>
               </TabsTrigger>
-              <TabsTrigger value="human" className="text-xs gap-1.5">
-                Requer Atenção
-                <span className="text-[10px] text-muted-foreground">{counts.human}</span>
+              <TabsTrigger value="leads" className="text-[11px] gap-1">
+                Leads
+                <span className="text-[10px] text-muted-foreground">{counts.leads}</span>
               </TabsTrigger>
-              <TabsTrigger value="ai" className="text-xs gap-1.5">
-                Em triagem
-                <span className="text-[10px] text-muted-foreground">{counts.ai}</span>
+              <TabsTrigger value="support" className="text-[11px] gap-1">
+                Suporte
+                <span className="text-[10px] text-muted-foreground">{counts.support}</span>
+              </TabsTrigger>
+              <TabsTrigger value="human" className="text-[11px] gap-1">
+                Humano
+                <span className="text-[10px] text-muted-foreground">{counts.human}</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -787,10 +797,37 @@ const CRMPanel = ({ conversation }: { conversation: Conversation }) => {
         )}
       </section>
 
-      {/* ===== Right column: lead summary panel ===== */}
+      {/* ===== Right column: lead summary + CRM panel ===== */}
       {selected && summaryOpen && (
-        <aside className="w-[320px] shrink-0 border-l hidden lg:block">
-          <LeadSummaryPanel summary={selected.summary} />
+        <aside className="w-[340px] shrink-0 border-l hidden lg:flex flex-col bg-white">
+          <Tabs
+            value={sidePanelTab}
+            onValueChange={(v) => setSidePanelTab(v as "summary" | "crm")}
+            className="flex-1 flex flex-col min-h-0"
+          >
+            <div className="px-4 pt-3 pb-0 border-b">
+              <TabsList className="grid grid-cols-2 w-full h-9 bg-muted/60 p-0.5">
+                <TabsTrigger value="summary" className="text-xs gap-1.5">
+                  <Sparkles className="h-3 w-3" />
+                  Resumo IA
+                </TabsTrigger>
+                <TabsTrigger value="crm" className="text-xs gap-1.5">
+                  {selected.category === "post-sale" ? (
+                    <LifeBuoy className="h-3 w-3" />
+                  ) : (
+                    <TrendingUp className="h-3 w-3" />
+                  )}
+                  CRM
+                </TabsTrigger>
+              </TabsList>
+            </div>
+            <TabsContent value="summary" className="flex-1 min-h-0 m-0 data-[state=inactive]:hidden">
+              <LeadSummaryPanel summary={selected.summary} />
+            </TabsContent>
+            <TabsContent value="crm" className="flex-1 min-h-0 m-0 data-[state=inactive]:hidden">
+              <CRMPanel conversation={selected} />
+            </TabsContent>
+          </Tabs>
         </aside>
       )}
     </div>
