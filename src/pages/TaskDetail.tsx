@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,6 +33,8 @@ export default function TaskDetail() {
   const { id } = useParams<{ id: string }>();
   const isNew = !id || id === "new";
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialStatus = (searchParams.get("status") as string) || "pending";
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -41,7 +43,7 @@ export default function TaskDetail() {
     title: "",
     description: "",
     priority: "medium",
-    status: "pending",
+    status: initialStatus,
     assigned_to: "",
     quote_id: "none",
     client_id: "none",

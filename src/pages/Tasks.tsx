@@ -468,7 +468,18 @@ export default function Tasks() {
                     <span className={cn("h-2 w-2 rounded-full shrink-0", stage.dotClass)} />
                     <h3 className="text-sm font-medium font-body text-foreground truncate">{stage.label}</h3>
                   </div>
-                  <span className="text-xs text-muted-foreground font-body tabular-nums">{stageTasks.length}</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-xs text-muted-foreground font-body tabular-nums">{stageTasks.length}</span>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/tasks/new?status=${stage.id}`)}
+                      title={`Nova tarefa em "${stage.label}"`}
+                      aria-label={`Nova tarefa em ${stage.label}`}
+                      className="inline-flex items-center justify-center h-6 w-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
                 </div>
                 <div className="flex-1 space-y-2">
                   {stageTasks.length === 0 ? (
