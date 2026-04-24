@@ -623,6 +623,7 @@ export default function ServiceCenter() {
   const [draft, setDraft] = useState("");
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [sidePanelTab, setSidePanelTab] = useState<"summary" | "crm">("summary");
+  const [mainView, setMainView] = useState<MainView>("chats");
 
   const counts = useMemo(
     () => ({
