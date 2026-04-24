@@ -81,9 +81,9 @@ export function AppSidebar() {
   const visibleItems = navItems.filter((item) => canAccess(userRole, item.url));
 
   return (
-    <Sidebar collapsible="icon" className="border-r-0">
-      <SidebarHeader className="p-3 border-b border-sidebar-border">
-        <Link to="/" className="flex items-center justify-center">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border/30 bg-gradient-to-b from-sidebar to-[hsl(220_55%_8%)]">
+      <SidebarHeader className="p-3 border-b border-sidebar-border/30">
+        <Link to="/" className="flex items-center justify-center py-1">
           {collapsed ? (
             <img src={logoSymbol} alt="Altivus" className="h-8 w-8 object-contain" />
           ) : (
