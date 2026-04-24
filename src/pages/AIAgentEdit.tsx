@@ -94,6 +94,16 @@ export default function AIAgentEdit() {
     navigate("/ai-agents");
   };
 
+  const handleDelete = () => {
+    try {
+      const list: Agent[] = JSON.parse(sessionStorage.getItem(LIST_KEY) || "[]");
+      const next = list.filter((a) => a.id !== form.id);
+      sessionStorage.setItem(LIST_KEY, JSON.stringify(next));
+    } catch {}
+    toast.success(`Agente "${form.name || "sem nome"}" excluído`);
+    navigate("/ai-agents");
+  };
+
   return (
     <div className="min-h-screen bg-[hsl(220_15%_97%)]">
       {/* Sticky header */}
