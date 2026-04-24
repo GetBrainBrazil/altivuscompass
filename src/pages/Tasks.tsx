@@ -357,98 +357,196 @@ export default function Tasks() {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="space-y-3">
+        <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Buscar tarefas..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <Input placeholder="Buscar tarefa..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-10" />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[160px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os Status</SelectItem>
-            <SelectItem value="pending">Aguardando Início</SelectItem>
-            <SelectItem value="in_progress">Em Andamento</SelectItem>
-            <SelectItem value="review">Em Revisão</SelectItem>
-            <SelectItem value="completed">Concluída</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={userFilter} onValueChange={setUserFilter}>
-          <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Responsável" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os Usuários</SelectItem>
-            {profiles.map((p: any) => (
-              <SelectItem key={p.user_id} value={p.user_id}>{p.full_name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="w-full sm:w-[220px] justify-between font-normal text-sm">
-              {quoteFilter === "all" ? "Todas as Cotações" : quoteFilter === "none" ? "Sem cotação" : (() => { const q = quotesWithTasks.find((q: any) => q.id === quoteFilter); return q ? `${q.clients?.full_name ?? "—"} — ${q.destination ?? q.title ?? ""}` : "Cotação"; })()}
-              <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[260px] p-0" align="start">
-            <Command>
-              <CommandInput placeholder="Buscar cotação..." />
-              <CommandList>
-                <CommandEmpty>Nenhuma cotação encontrada.</CommandEmpty>
-                <CommandGroup>
-                  <CommandItem onSelect={() => setQuoteFilter("all")}>
-                    <Check className={cn("mr-2 h-3.5 w-3.5", quoteFilter === "all" ? "opacity-100" : "opacity-0")} />
-                    Todas as Cotações
-                  </CommandItem>
-                  <CommandItem onSelect={() => setQuoteFilter("none")}>
-                    <Check className={cn("mr-2 h-3.5 w-3.5", quoteFilter === "none" ? "opacity-100" : "opacity-0")} />
-                    Sem cotação
-                  </CommandItem>
-                  {quotesWithTasks.map((q: any) => (
-                    <CommandItem key={q.id} value={`${q.clients?.full_name ?? ""} ${q.destination ?? q.title ?? ""}`} onSelect={() => setQuoteFilter(q.id)}>
-                      <Check className={cn("mr-2 h-3.5 w-3.5", quoteFilter === q.id ? "opacity-100" : "opacity-0")} />
-                      <span className="truncate">{q.clients?.full_name ?? "—"} — {q.destination ?? q.title ?? "Sem destino"}</span>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="w-full sm:w-[200px] justify-between font-normal text-sm">
-              {clientFilter === "all" ? "Todos os Clientes" : clientFilter === "none" ? "Sem cliente" : (clients.find((c: any) => c.id === clientFilter)?.full_name ?? "Cliente")}
-              <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[240px] p-0" align="start">
-            <Command>
-              <CommandInput placeholder="Buscar cliente..." />
-              <CommandList>
-                <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
-                <CommandGroup>
-                  <CommandItem onSelect={() => setClientFilter("all")}>
-                    <Check className={cn("mr-2 h-3.5 w-3.5", clientFilter === "all" ? "opacity-100" : "opacity-0")} />
-                    Todos os Clientes
-                  </CommandItem>
-                  <CommandItem onSelect={() => setClientFilter("none")}>
-                    <Check className={cn("mr-2 h-3.5 w-3.5", clientFilter === "none" ? "opacity-100" : "opacity-0")} />
-                    Sem cliente
-                  </CommandItem>
-                  {clients.map((c: any) => (
-                    <CommandItem key={c.id} value={c.full_name} onSelect={() => setClientFilter(c.id)}>
-                      <Check className={cn("mr-2 h-3.5 w-3.5", clientFilter === c.id ? "opacity-100" : "opacity-0")} />
-                      {c.full_name}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Criador */}
+          <FilterChip
+            label="Criador"
+            active={creatorFilter !== "all"}
+            value={creatorFilter === "all" ? "Criador" : (profiles.find((p: any) => p.user_id === creatorFilter)?.full_name ?? "Criador")}
+            onClear={() => setCreatorFilter("all")}
+          >
+            <SearchableList
+              placeholder="Buscar..."
+              items={[{ id: "all", label: "Todos" }, ...profiles.map((p: any) => ({ id: p.user_id, label: p.full_name }))]}
+              selected={creatorFilter}
+              onSelect={(id) => setCreatorFilter(id)}
+            />
+          </FilterChip>
+
+          {/* Responsável */}
+          <FilterChip
+            label="Responsável"
+            active={userFilter !== "all"}
+            value={userFilter === "all" ? "Responsável" : (profiles.find((p: any) => p.user_id === userFilter)?.full_name ?? "Responsável")}
+            onClear={() => setUserFilter("all")}
+          >
+            <SearchableList
+              placeholder="Buscar..."
+              items={[{ id: "all", label: "Todos" }, ...profiles.map((p: any) => ({ id: p.user_id, label: p.full_name }))]}
+              selected={userFilter}
+              onSelect={(id) => setUserFilter(id)}
+            />
+          </FilterChip>
+
+          {/* Importância */}
+          <FilterChip
+            label="Importância"
+            active={priorityFilter !== "all"}
+            value={priorityFilter === "all" ? "Importância" : (PRIORITY_CONFIG[priorityFilter]?.label ?? "Importância")}
+            onClear={() => setPriorityFilter("all")}
+          >
+            <SearchableList
+              items={[
+                { id: "all", label: "Todas" },
+                { id: "high", label: "Alta" },
+                { id: "medium", label: "Média" },
+                { id: "low", label: "Baixa" },
+              ]}
+              selected={priorityFilter}
+              onSelect={(id) => setPriorityFilter(id)}
+            />
+          </FilterChip>
+
+          {/* Status */}
+          <FilterChip
+            label="Status"
+            active={statusFilter !== "all"}
+            value={statusFilter === "all" ? "Status" : (STATUS_CONFIG[statusFilter]?.label ?? "Status")}
+            onClear={() => setStatusFilter("all")}
+          >
+            <SearchableList
+              items={[
+                { id: "all", label: "Todos" },
+                { id: "pending", label: "Aguardando Início" },
+                { id: "in_progress", label: "Em Andamento" },
+                { id: "review", label: "Em Revisão" },
+                { id: "completed", label: "Concluída" },
+              ]}
+              selected={statusFilter}
+              onSelect={(id) => setStatusFilter(id)}
+            />
+          </FilterChip>
+
+          {/* Evento (Cotação) */}
+          <FilterChip
+            label="Evento"
+            active={quoteFilter !== "all"}
+            value={
+              quoteFilter === "all"
+                ? "Evento"
+                : quoteFilter === "none"
+                ? "Sem evento"
+                : (() => {
+                    const q = quotesWithTasks.find((q: any) => q.id === quoteFilter);
+                    return q ? (q.destination ?? q.title ?? "Evento") : "Evento";
+                  })()
+            }
+            onClear={() => setQuoteFilter("all")}
+            width={300}
+          >
+            <SearchableList
+              placeholder="Buscar evento..."
+              items={[
+                { id: "all", label: "Todos" },
+                { id: "none", label: "Sem evento" },
+                ...quotesWithTasks.map((q: any) => ({
+                  id: q.id,
+                  label: `${q.clients?.full_name ?? "—"} — ${q.destination ?? q.title ?? "Sem destino"}`,
+                })),
+              ]}
+              selected={quoteFilter}
+              onSelect={(id) => setQuoteFilter(id)}
+            />
+          </FilterChip>
+
+          {/* Prazo */}
+          <FilterChip
+            label="Prazo"
+            active={dueFilter !== "all"}
+            value={
+              dueFilter === "all"
+                ? "Prazo"
+                : { overdue: "Atrasadas", today: "Hoje", tomorrow: "Amanhã", week: "Próx. 7 dias", none: "Sem prazo" }[dueFilter] ?? "Prazo"
+            }
+            onClear={() => setDueFilter("all")}
+          >
+            <SearchableList
+              items={[
+                { id: "all", label: "Todos" },
+                { id: "overdue", label: "Atrasadas" },
+                { id: "today", label: "Hoje" },
+                { id: "tomorrow", label: "Amanhã" },
+                { id: "week", label: "Próximos 7 dias" },
+                { id: "none", label: "Sem prazo" },
+              ]}
+              selected={dueFilter}
+              onSelect={(id) => setDueFilter(id)}
+            />
+          </FilterChip>
+
+          {/* Ordenar */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  "inline-flex items-center gap-1.5 h-8 px-3 rounded-full border text-xs font-body transition-colors",
+                  sortField
+                    ? "border-primary/40 bg-primary/5 text-primary"
+                    : "border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                )}
+              >
+                <ArrowUpDown size={12} />
+                {sortField
+                  ? `${{ title: "Título", due_date: "Prazo", priority: "Importância", status: "Status", assigned_to: "Responsável" }[sortField]} ${sortDir === "asc" ? "↑" : "↓"}`
+                  : "Ordenar"}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[200px] p-1" align="start">
+              {([
+                ["due_date", "Prazo"],
+                ["priority", "Importância"],
+                ["title", "Título"],
+                ["status", "Status"],
+                ["assigned_to", "Responsável"],
+              ] as [SortField, string][]).map(([field, label]) => (
+                <div key={field} className="flex items-center justify-between px-2 py-1.5 text-xs hover:bg-muted/60 rounded cursor-pointer" onClick={() => handleSort(field)}>
+                  <span>{label}</span>
+                  {sortField === field && (sortDir === "asc" ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+                </div>
+              ))}
+              {sortField && (
+                <button
+                  type="button"
+                  onClick={() => { setSortField(null); setSortDir(null); }}
+                  className="mt-1 w-full text-left px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted/60 rounded"
+                >
+                  Limpar ordenação
+                </button>
+              )}
+            </PopoverContent>
+          </Popover>
+
+          {(creatorFilter !== "all" || userFilter !== "all" || priorityFilter !== "all" || statusFilter !== "all" || quoteFilter !== "all" || dueFilter !== "all" || sortField) && (
+            <button
+              type="button"
+              onClick={() => {
+                setCreatorFilter("all"); setUserFilter("all"); setPriorityFilter("all");
+                setStatusFilter("all"); setQuoteFilter("all"); setDueFilter("all");
+                setSortField(null); setSortDir(null);
+              }}
+              className="ml-1 text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline font-body"
+            >
+              Limpar filtros
+            </button>
+          )}
+        </div>
       </div>
 
       {isLoading ? (
