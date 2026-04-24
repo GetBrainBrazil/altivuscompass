@@ -688,41 +688,27 @@ export default function ServiceCenter() {
           )}
         </div>
 
-        {mainView === "chats" ? (
-          <ScrollArea className="flex-1">
-            <div className="px-4 py-3 space-y-3">
-              {filtered.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-8 px-4">
-                  Nenhuma conversa encontrada.
-                </p>
-              ) : (
-                filtered.map((c) => (
-                  <ConversationCard
-                    key={c.id}
-                    conversation={c}
-                    active={c.id === selectedId}
-                    onClick={() => {
-                      setSelectedId(c.id);
-                      setSummaryOpen(false);
-                    }}
-                  />
-                ))
-              )}
-            </div>
-          </ScrollArea>
-        ) : (
-          <div className="flex-1 px-4 py-6">
-            <div className="rounded-xl border border-dashed bg-muted/30 p-5 text-center space-y-2">
-              <div className="h-10 w-10 mx-auto rounded-full bg-white shadow-sm flex items-center justify-center">
-                <Settings2 className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <p className="text-xs font-medium">Modo configuração</p>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Você está editando o comportamento do agente. Volte para "Chats Ativos" para retomar o atendimento.
+        <ScrollArea className="flex-1">
+          <div className="px-4 py-3 space-y-3">
+            {filtered.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-8 px-4">
+                Nenhuma conversa encontrada.
               </p>
-            </div>
+            ) : (
+              filtered.map((c) => (
+                <ConversationCard
+                  key={c.id}
+                  conversation={c}
+                  active={c.id === selectedId}
+                  onClick={() => {
+                    setSelectedId(c.id);
+                    setSummaryOpen(false);
+                  }}
+                />
+              ))
+            )}
           </div>
-        )}
+        </ScrollArea>
       </aside>
 
       {/* ===== Center column: chat window ===== */}
