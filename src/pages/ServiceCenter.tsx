@@ -442,8 +442,172 @@ const LeadSummaryPanel = ({ summary }: LeadSummaryPanelProps) => (
   </div>
 );
 
-// ============= Main Page =============
-export default function ServiceCenter() {
+// ============= CRM Panel =============
+const CRMPanel = ({ conversation }: { conversation: Conversation }) => {
+  const navigate = useNavigate();
+  const { category, contactType, crm } = conversation;
+  const isPostSale = category === "post-sale";
+  const isExisting = contactType === "existing-client";
+
+  return (
+    <div className="h-full flex flex-col bg-white">
+      <div className="px-5 py-4 border-b">
+        <div className="flex items-center gap-2">
+          {isPostSale ? (
+            <LifeBuoy className="h-4 w-4 text-rose-600" />
+          ) : (
+            <TrendingUp className="h-4 w-4 text-[hsl(var(--navy))]" />
+          )}
+          <h2 className="text-sm font-semibold">Vínculo no CRM</h2>
+        </div>
+        <p className="text-[11px] text-muted-foreground mt-1">
+          {isPostSale
+            ? "Ticket de pós-venda — não entra no funil de vendas."
+            : "Lead vinculado ao funil de vendas."}
+        </p>
+      </div>
+
+      <ScrollArea className="flex-1">
+        <div className="p-5 space-y-5">
+          {/* Classificação automática */}
+          <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+            <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+              <Sparkles className="h-3 w-3" />
+              Classificação automática
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium border",
+                  isPostSale
+                    ? "bg-rose-50 text-rose-700 border-rose-200"
+                    : "bg-purple-50 text-purple-700 border-purple-200",
+                )}
+              >
+                {isPostSale ? <LifeBuoy className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
+                {isPostSale ? "Pós-venda / Suporte" : "Funil de vendas"}
+              </span>
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium border",
+                  isExisting
+                    ? "bg-blue-50 text-blue-700 border-blue-200"
+                    : "bg-emerald-50 text-emerald-700 border-emerald-200",
+                )}
+              >
+                {isExisting ? <UserCheck className="w-3 h-3" /> : <UserPlus className="w-3 h-3" />}
+                {isExisting ? "Cliente existente" : "Novo lead"}
+              </span>
+            </div>
+          </div>
+
+          {/* Cliente vinculado */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+              <UserRound className="h-3 w-3" />
+              Cliente
+            </div>
+            {crm.clientName ? (
+              <button
+                type="button"
+                onClick={() => crm.clientId && navigate(`/clients`)}
+                className="w-full flex items-center justify-between gap-2 rounded-lg border bg-card p-3 text-left hover:bg-accent/40 transition-colors group"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{crm.clientName}</p>
+                  <p className="text-[11px] text-muted-foreground">Cadastro completo</p>
+                </div>
+                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground shrink-0" />
+              </button>
+            ) : (
+              <div className="rounded-lg border border-dashed p-3 space-y-2">
+                <p className="text-xs text-muted-foreground italic">
+                  Contato ainda não cadastrado.
+                </p>
+                <Button size="sm" variant="outline" className="w-full gap-1.5 h-8 text-xs">
+                  <UserPlus className="h-3 w-3" />
+                  Criar cliente no CRM
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Cotação vinculada */}
+          {crm.quoteTitle && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                <FileText className="h-3 w-3" />
+                Cotação
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate(`/quotes`)}
+                className="w-full flex items-center justify-between gap-2 rounded-lg border bg-card p-3 text-left hover:bg-accent/40 transition-colors group"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{crm.quoteTitle}</p>
+                  <p className="text-[11px] text-muted-foreground">#{crm.quoteId}</p>
+                </div>
+                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground shrink-0" />
+              </button>
+            </div>
+          )}
+
+          {/* Viagem em curso (pós-venda) */}
+          {crm.tripTitle && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                <Plane className="h-3 w-3" />
+                Operação / Viagem
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate(`/crm?tab=ops`)}
+                className="w-full flex items-center justify-between gap-2 rounded-lg border bg-card p-3 text-left hover:bg-accent/40 transition-colors group"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{crm.tripTitle}</p>
+                  <p className="text-[11px] text-muted-foreground">Em acompanhamento</p>
+                </div>
+                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground shrink-0" />
+              </button>
+            </div>
+          )}
+
+          {/* Estágio atual */}
+          {crm.stage && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                <Sparkles className="h-3 w-3" />
+                Estágio atual
+              </div>
+              <div className={cn(
+                "rounded-lg border p-3 text-sm font-medium",
+                isPostSale ? "bg-rose-50/50 border-rose-200 text-rose-900" : "bg-blue-50/50 border-blue-200 text-blue-900",
+              )}>
+                {crm.stage}
+              </div>
+            </div>
+          )}
+
+          {/* Ação principal */}
+          <div className="pt-2 border-t">
+            <Button
+              type="button"
+              variant="default"
+              size="sm"
+              className="w-full gap-2 bg-[hsl(var(--navy))] text-[hsl(var(--cream))] hover:bg-[hsl(var(--navy))]/90"
+              onClick={() => navigate(isPostSale ? "/crm?tab=ops" : "/crm?tab=sales")}
+            >
+              {isPostSale ? <LifeBuoy className="h-3.5 w-3.5" /> : <TrendingUp className="h-3.5 w-3.5" />}
+              Abrir no CRM ({isPostSale ? "Operações" : "Vendas"})
+            </Button>
+          </div>
+        </div>
+      </ScrollArea>
+    </div>
+  );
+};
   const [conversations] = useState<Conversation[]>(MOCK_CONVERSATIONS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
