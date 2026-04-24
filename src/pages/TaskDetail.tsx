@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { TaskAttachments } from "@/components/TaskAttachments";
+import { TaskNotesHistory } from "@/components/tasks/TaskNotesHistory";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -129,6 +130,7 @@ export default function TaskDetail() {
         completed_at: form.status === "completed" ? (task?.completed_at ?? new Date().toISOString()) : null,
       };
       let savedId = id!;
+      const activityRows: any[] = [];
       if (isNew) {
         const { data: inserted, error } = await supabase
           .from("tasks")
@@ -137,9 +139,42 @@ export default function TaskDetail() {
           .single();
         if (error) throw error;
         savedId = inserted.id;
+        activityRows.push({
+          task_id: savedId,
+          user_id: user?.id ?? null,
+          action: "created",
+        });
       } else {
         const { error } = await supabase.from("tasks").update(payload).eq("id", id!);
         if (error) throw error;
+        // Diff de campos relevantes para o histórico
+        const trackable: Array<keyof typeof payload> = [
+          "title", "description", "priority", "status",
+          "assigned_to", "quote_id", "client_id", "due_date", "start_date",
+        ];
+        for (const field of trackable) {
+          const before = (task as any)?.[field] ?? null;
+          const after = payload[field] ?? null;
+          const beforeStr = before == null ? null : String(before);
+          const afterStr = after == null ? null : String(after);
+          if (beforeStr !== afterStr) {
+            activityRows.push({
+              task_id: savedId,
+              user_id: user?.id ?? null,
+              action: field === "status" && afterStr === "completed"
+                ? "completed"
+                : field === "status" ? "status_changed"
+                : field === "assigned_to" ? "assigned"
+                : "updated",
+              field_name: field as string,
+              old_value: beforeStr,
+              new_value: afterStr,
+            });
+          }
+        }
+      }
+      if (activityRows.length > 0) {
+        await supabase.from("task_activity").insert(activityRows);
       }
       // Upload de anexos pendentes (criação)
       if (pendingFiles.length > 0) {
@@ -162,6 +197,7 @@ export default function TaskDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["task", id] });
+      queryClient.invalidateQueries({ queryKey: ["task-activity", id] });
       toast({ title: isNew ? "Tarefa criada" : "Tarefa atualizada" });
       navigate("/tasks");
     },
@@ -181,7 +217,7 @@ export default function TaskDetail() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-start justify-between gap-6 pb-5 border-b border-border">
         <div className="flex items-start gap-3 min-w-0">
@@ -206,9 +242,10 @@ export default function TaskDetail() {
         </div>
       </div>
 
-      {/* Form */}
-      <div className="py-6 space-y-5">
-        <div>
+      <div className={cn("py-6 grid gap-6", !isNew && "lg:grid-cols-[minmax(0,1fr)_360px]")}>
+        {/* Form */}
+        <div className="space-y-5 min-w-0">
+          <div>
           <Label className="font-body text-xs uppercase tracking-wide text-muted-foreground">Título *</Label>
           <Input
             value={form.title}
@@ -338,6 +375,13 @@ export default function TaskDetail() {
           pending={pendingFiles}
           onPendingChange={setPendingFiles}
         />
+        </div>
+        {/* Coluna direita: notas + histórico */}
+        {!isNew && id && (
+          <aside className="lg:border-l lg:border-border lg:pl-6">
+            <TaskNotesHistory taskId={id} />
+          </aside>
+        )}
       </div>
 
       {/* Footer actions */}
