@@ -130,6 +130,7 @@ export default function TaskDetail() {
         completed_at: form.status === "completed" ? (task?.completed_at ?? new Date().toISOString()) : null,
       };
       let savedId = id!;
+      const activityRows: any[] = [];
       if (isNew) {
         const { data: inserted, error } = await supabase
           .from("tasks")
@@ -138,9 +139,42 @@ export default function TaskDetail() {
           .single();
         if (error) throw error;
         savedId = inserted.id;
+        activityRows.push({
+          task_id: savedId,
+          user_id: user?.id ?? null,
+          action: "created",
+        });
       } else {
         const { error } = await supabase.from("tasks").update(payload).eq("id", id!);
         if (error) throw error;
+        // Diff de campos relevantes para o histórico
+        const trackable: Array<keyof typeof payload> = [
+          "title", "description", "priority", "status",
+          "assigned_to", "quote_id", "client_id", "due_date", "start_date",
+        ];
+        for (const field of trackable) {
+          const before = (task as any)?.[field] ?? null;
+          const after = payload[field] ?? null;
+          const beforeStr = before == null ? null : String(before);
+          const afterStr = after == null ? null : String(after);
+          if (beforeStr !== afterStr) {
+            activityRows.push({
+              task_id: savedId,
+              user_id: user?.id ?? null,
+              action: field === "status" && afterStr === "completed"
+                ? "completed"
+                : field === "status" ? "status_changed"
+                : field === "assigned_to" ? "assigned"
+                : "updated",
+              field_name: field as string,
+              old_value: beforeStr,
+              new_value: afterStr,
+            });
+          }
+        }
+      }
+      if (activityRows.length > 0) {
+        await supabase.from("task_activity").insert(activityRows);
       }
       // Upload de anexos pendentes (criação)
       if (pendingFiles.length > 0) {
@@ -163,6 +197,7 @@ export default function TaskDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["task", id] });
+      queryClient.invalidateQueries({ queryKey: ["task-activity", id] });
       toast({ title: isNew ? "Tarefa criada" : "Tarefa atualizada" });
       navigate("/tasks");
     },
