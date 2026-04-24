@@ -115,6 +115,9 @@ const MOCK_CONVERSATIONS: Conversation[] = [
         "Lead aguardando sugestão de faixa de orçamento.",
       ],
     },
+    category: "sales",
+    contactType: "new-lead",
+    crm: { stage: "Novos Leads (IA)" },
   },
   {
     id: "c2",
@@ -140,9 +143,16 @@ const MOCK_CONVERSATIONS: Conversation[] = [
         "Solicitou explicitamente atendimento humano.",
       ],
     },
+    category: "sales",
+    contactType: "existing-client",
+    crm: {
+      clientId: "cli-rafael",
+      clientName: "Rafael Almeida",
+      quoteId: "q-2025-0142",
+      quoteTitle: "Maldivas — 7 noites (Set/2025)",
+      stage: "Cotação",
+    },
   },
-  {
-    id: "c3",
     leadName: "Juliana Pereira",
     phone: "+5531988887777",
     status: "ai",
