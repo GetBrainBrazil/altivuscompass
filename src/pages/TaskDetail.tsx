@@ -217,7 +217,34 @@ export default function TaskDetail() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-6 pb-5 border-b border-border">
+        <div className="flex items-start gap-3 min-w-0">
+          <button
+            onClick={() => navigate("/tasks")}
+            className="mt-1 p-1.5 -ml-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            aria-label="Voltar"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <CheckSquare size={20} className="text-warning" />
+              <h1 className="text-xl sm:text-2xl font-display font-semibold text-foreground truncate">
+                {isNew ? "Nova Tarefa" : form.title || "Editar Tarefa"}
+              </h1>
+            </div>
+            <p className="text-sm text-muted-foreground font-body mt-1">
+              {isNew ? "Preencha os dados para criar uma nova tarefa." : "Atualize os dados da tarefa."}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className={cn("py-6 grid gap-6", !isNew && "lg:grid-cols-[minmax(0,1fr)_360px]")}>
+        {/* Form */}
+        <div className="space-y-5 min-w-0">
       {/* Header */}
       <div className="flex items-start justify-between gap-6 pb-5 border-b border-border">
         <div className="flex items-start gap-3 min-w-0">
