@@ -323,9 +323,33 @@ export default function Tasks() {
           <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">Tarefas</h1>
           <p className="text-muted-foreground font-body mt-1 text-sm">Gerencie suas tarefas e acompanhamentos.</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="gap-2">
-          <Plus size={16} /> Nova Tarefa
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="inline-flex items-center rounded-lg border border-border bg-card p-0.5">
+            <button
+              type="button"
+              onClick={() => { setView("kanban"); localStorage.setItem("tasks:view", "kanban"); }}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium font-body rounded-md transition-colors",
+                view === "kanban" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <LayoutGrid size={14} /> Kanban
+            </button>
+            <button
+              type="button"
+              onClick={() => { setView("table"); localStorage.setItem("tasks:view", "table"); }}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium font-body rounded-md transition-colors",
+                view === "table" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <TableIcon size={14} /> Tabela
+            </button>
+          </div>
+          <Button onClick={() => setDialogOpen(true)} className="gap-2">
+            <Plus size={16} /> Nova Tarefa
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
