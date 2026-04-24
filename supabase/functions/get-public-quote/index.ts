@@ -55,11 +55,12 @@ Deno.serve(async (req) => {
     ].join(", ");
 
     // Fetch quote with client name and phone
-    const { data: quote, error: quoteError } = await supabase
+    const { data: quoteData, error: quoteError } = await supabase
       .from("quotes")
       .select(`${PUBLIC_QUOTE_FIELDS}, clients(full_name, phone)`)
       .eq("id", quoteId)
       .single();
+    const quote = quoteData as any;
 
     if (quoteError || !quote) {
       return new Response(JSON.stringify({ error: "Quote not found" }), {
