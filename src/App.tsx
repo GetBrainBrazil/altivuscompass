@@ -17,6 +17,7 @@ import Miles from "./pages/Miles";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
 import UserManagement from "./pages/UserManagement";
+import UserDetail from "./pages/UserDetail";
 import Permissions from "./pages/Permissions";
 import Registrations from "./pages/Registrations";
 import Sales from "./pages/Sales";
@@ -65,6 +66,8 @@ const App = () => (
             <Route path="/finance/reports" element={<ProtectedRoute><AppLayout><FinancialReports /></AppLayout></ProtectedRoute>} />
             <Route path="/miles" element={<ProtectedRoute><AppLayout><Miles /></AppLayout></ProtectedRoute>} />
             <Route path="/users" element={<ProtectedRoute><AppLayout><UserManagement /></AppLayout></ProtectedRoute>} />
+            <Route path="/users/new" element={<ProtectedRoute><AppLayout><UserDetail /></AppLayout></ProtectedRoute>} />
+            <Route path="/users/:id" element={<ProtectedRoute><AppLayout><UserDetail /></AppLayout></ProtectedRoute>} />
             <Route path="/permissions" element={<ProtectedRoute><AppLayout><Permissions /></AppLayout></ProtectedRoute>} />
             <Route path="/registrations" element={<ProtectedRoute><AppLayout><Registrations /></AppLayout></ProtectedRoute>} />
             <Route path="/itineraries" element={<ProtectedRoute><AppLayout><Itineraries /></AppLayout></ProtectedRoute>} />
