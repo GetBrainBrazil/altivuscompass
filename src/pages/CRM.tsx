@@ -764,25 +764,6 @@ export default function CRM() {
 
       {/* KPIs + Toolbar (gestão acima do Kanban) */}
       <section className="px-6 pt-5 pb-2 bg-background border-b border-border space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-          <MetricCard
-            title="Leads ativos no funil"
-            value={String(totalLeads)}
-            icon={<Users className="w-4 h-4 text-soft-blue" />}
-          />
-          <MetricCard
-            title="Valor estimado em pipeline"
-            value={formatCurrency(pipelineValue)}
-            icon={<DollarSign className="w-4 h-4 text-gold" />}
-          />
-          <MetricCard
-            title="Leads gerados por IA"
-            value={String(aiLeads)}
-            subtitle={totalLeads > 0 ? `${Math.round((aiLeads / totalLeads) * 100)}% do total` : undefined}
-            icon={<Sparkles className="w-4 h-4 text-success" />}
-          />
-        </div>
-
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
