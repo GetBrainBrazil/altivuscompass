@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -11,7 +12,10 @@ import {
 } from "@/components/ui/table";
 import { Plus, Pencil, FlaskConical } from "lucide-react";
 import { toast } from "sonner";
-import { AgentEditDialog, type Agent } from "@/components/ai-agents/AgentEditDialog";
+import type { Agent } from "@/components/ai-agents/AgentEditDialog";
+
+const LIST_KEY = "ai-agents-list";
+const SAVE_KEY = "ai-agents-draft:save";
 
 const INITIAL: Agent[] = [
   {
@@ -45,41 +49,42 @@ const INITIAL: Agent[] = [
   },
 ];
 
+const loadAgents = (): Agent[] => {
+  try {
+    const stored = sessionStorage.getItem(LIST_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return INITIAL;
+};
+
 export default function AIAgents() {
-  const [agents, setAgents] = useState<Agent[]>(INITIAL);
-  const [editing, setEditing] = useState<Agent | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const navigate = useNavigate();
+  const [agents, setAgents] = useState<Agent[]>(loadAgents);
+
+  // Persist list whenever it changes
+  useEffect(() => {
+    sessionStorage.setItem(LIST_KEY, JSON.stringify(agents));
+  }, [agents]);
+
+  // Pick up saves coming from the edit page
+  useEffect(() => {
+    try {
+      const pending = sessionStorage.getItem(SAVE_KEY);
+      if (!pending) return;
+      const saved: Agent = JSON.parse(pending);
+      sessionStorage.removeItem(SAVE_KEY);
+      setAgents((prev) => {
+        const exists = prev.find((a) => a.id === saved.id);
+        if (exists) return prev.map((a) => (a.id === saved.id ? saved : a));
+        return [...prev, saved];
+      });
+    } catch {}
+  }, []);
 
   const toggleStatus = (id: string) => {
     setAgents((prev) =>
       prev.map((a) => (a.id === id ? { ...a, active: !a.active } : a))
     );
-  };
-
-  const openEdit = (agent: Agent) => {
-    setEditing(agent);
-    setDialogOpen(true);
-  };
-
-  const openNew = () => {
-    setEditing({
-      id: crypto.randomUUID(),
-      name: "",
-      model: "google/gemini-2.5-flash",
-      active: true,
-      tone: "amigavel",
-      personality: "",
-      rules: "",
-    });
-    setDialogOpen(true);
-  };
-
-  const handleSave = (agent: Agent) => {
-    setAgents((prev) => {
-      const exists = prev.find((a) => a.id === agent.id);
-      if (exists) return prev.map((a) => (a.id === agent.id ? agent : a));
-      return [...prev, agent];
-    });
   };
 
   return (
@@ -96,7 +101,7 @@ export default function AIAgents() {
           </div>
           <Button
             className="bg-[hsl(220_45%_15%)] hover:bg-[hsl(220_45%_22%)] text-white h-10 px-5"
-            onClick={openNew}
+            onClick={() => navigate("/ai-agents/new")}
           >
             <Plus className="h-4 w-4 mr-2" />
             Novo Agente
@@ -126,7 +131,7 @@ export default function AIAgents() {
                 <TableRow key={agent.id} className="border-b border-border/40 last:border-0">
                   <TableCell
                     className="px-6 py-4 font-medium text-foreground cursor-pointer"
-                    onClick={() => openEdit(agent)}
+                    onClick={() => navigate(`/ai-agents/${agent.id}`)}
                   >
                     {agent.name}
                   </TableCell>
@@ -152,7 +157,7 @@ export default function AIAgents() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                        onClick={() => openEdit(agent)}
+                        onClick={() => navigate(`/ai-agents/${agent.id}`)}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -179,13 +184,6 @@ export default function AIAgents() {
           </Table>
         </div>
       </div>
-
-      <AgentEditDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        agent={editing}
-        onSave={handleSave}
-      />
     </div>
   );
 }
