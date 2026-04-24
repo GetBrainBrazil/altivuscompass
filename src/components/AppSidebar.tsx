@@ -81,9 +81,9 @@ export function AppSidebar() {
   const visibleItems = navItems.filter((item) => canAccess(userRole, item.url));
 
   return (
-    <Sidebar collapsible="icon" className="border-r-0">
-      <SidebarHeader className="p-3 border-b border-sidebar-border">
-        <Link to="/" className="flex items-center justify-center">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border/30 bg-gradient-to-b from-sidebar to-[hsl(220_55%_8%)]">
+      <SidebarHeader className="p-3 border-b border-sidebar-border/30">
+        <Link to="/" className="flex items-center justify-center py-1">
           {collapsed ? (
             <img src={logoSymbol} alt="Altivus" className="h-8 w-8 object-contain" />
           ) : (
@@ -92,10 +92,10 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="px-3 py-4">
+      <SidebarContent className="px-2.5 py-4">
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu className="gap-1.5">
+            <SidebarMenu className="gap-0.5">
             <TooltipProvider delayDuration={0}>
               {visibleItems.map((item, idx) => {
                 const hasSubItems = 'subItems' in item && item.subItems && item.subItems.length > 0;
@@ -103,31 +103,32 @@ export function AppSidebar() {
                 const prev = visibleItems[idx - 1];
                 const showDivider = !collapsed && prev && prev.group !== item.group;
 
-                const activeBase = "data-[active=true]:bg-primary/15 data-[active=true]:text-white data-[active=true]:font-medium";
-                const linkBase = "flex items-center gap-3 px-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-lg";
-                const linkActive = "bg-primary/15 text-white font-medium hover:bg-primary/20 hover:text-white";
+                // Elegant active: subtle white-tinted bg + gold left accent bar; soft hover
+                const linkBase = "relative flex items-center gap-3 px-3 text-sidebar-foreground/85 hover:bg-white/[0.04] hover:text-white transition-all duration-200 rounded-md";
+                const linkActive = "bg-white/[0.06] text-white font-medium shadow-[inset_2px_0_0_0_hsl(var(--gold))] hover:bg-white/[0.08] hover:text-white";
+                const activeBase = "data-[active=true]:bg-white/[0.06] data-[active=true]:text-white data-[active=true]:font-medium data-[active=true]:shadow-[inset_2px_0_0_0_hsl(var(--gold))]";
 
                 const renderItem = () => {
                   if (hasSubItems && !collapsed) {
                     return (
                       <Collapsible key={item.title} defaultOpen={isParentActive} className="group/collapsible">
                         <SidebarMenuItem>
-                          <div className="flex items-center">
-                            <SidebarMenuButton asChild className={cn("h-10 rounded-lg flex-1", activeBase)}>
+                          <div className="flex items-center gap-0.5">
+                            <SidebarMenuButton asChild className={cn("h-9 rounded-md flex-1", activeBase)}>
                               <NavLink to={item.url} end className={linkBase} activeClassName={linkActive}>
                                 <item.icon />
-                                <span className="text-[13px] font-body flex-1">{item.title}</span>
+                                <span className="text-[13px] font-body flex-1 tracking-[0.01em]">{item.title}</span>
                               </NavLink>
                             </SidebarMenuButton>
                             <CollapsibleTrigger asChild>
-                              <button className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-sidebar-accent">
-                                <ChevronRight size={14} className="transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                              <button className="h-7 w-7 flex items-center justify-center text-sidebar-foreground/50 hover:text-white transition-colors rounded-md hover:bg-white/[0.05]">
+                                <ChevronRight size={13} className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                               </button>
                             </CollapsibleTrigger>
                           </div>
                         </SidebarMenuItem>
                         <CollapsibleContent>
-                          <SidebarMenuSub className="gap-1">
+                          <SidebarMenuSub className="gap-0.5 ml-4 border-l border-sidebar-border/40 pl-3 my-1">
                             {item.subItems!.filter(s => canAccess(userRole, s.url.split("?")[0])).map((sub) => {
                               const [subPath, subQuery] = sub.url.split("?");
                               const isSubActive = location.pathname === subPath && (
@@ -136,7 +137,10 @@ export function AppSidebar() {
                               return (
                               <SidebarMenuSubItem key={sub.title}>
                                 <SidebarMenuSubButton asChild>
-                                  <Link to={sub.url} className={cn("text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-md text-[12px] font-body", isSubActive && "bg-primary/15 text-white font-medium")}>
+                                  <Link to={sub.url} className={cn(
+                                    "text-sidebar-foreground/70 hover:bg-white/[0.04] hover:text-white transition-all duration-200 rounded-md text-[12px] font-body tracking-[0.01em] py-1.5",
+                                    isSubActive && "bg-white/[0.06] text-white font-medium hover:bg-white/[0.08]"
+                                  )}>
                                     {sub.title}
                                   </Link>
                                 </SidebarMenuSubButton>
@@ -153,10 +157,10 @@ export function AppSidebar() {
                     <SidebarMenuItem key={item.title}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <SidebarMenuButton asChild className={cn("h-10 rounded-lg", activeBase)}>
+                          <SidebarMenuButton asChild className={cn("h-9 rounded-md", activeBase)}>
                             <NavLink to={item.url} end={item.url === "/"} className={linkBase} activeClassName={linkActive}>
                               <item.icon />
-                              {!collapsed && <span className="text-[13px] font-body">{item.title}</span>}
+                              {!collapsed && <span className="text-[13px] font-body tracking-[0.01em]">{item.title}</span>}
                             </NavLink>
                           </SidebarMenuButton>
                         </TooltipTrigger>
@@ -182,7 +186,7 @@ export function AppSidebar() {
                 return (
                   <div key={item.title}>
                     {showDivider && (
-                      <div className="my-2 mx-2 border-t border-sidebar-border/50" aria-hidden />
+                      <div className="my-2.5 mx-3 h-px bg-gradient-to-r from-transparent via-sidebar-border/60 to-transparent" aria-hidden />
                     )}
                     {renderItem()}
                   </div>
