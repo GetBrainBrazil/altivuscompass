@@ -156,6 +156,7 @@ export default function Tasks() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["task-reminders"] });
+    },
   });
 
   const changeStatusMutation = useMutation({
@@ -180,6 +181,8 @@ export default function Tasks() {
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["tasks"] }),
   });
+
+  const saveReminderMutation = useMutation({
     mutationFn: async ({ taskId, remindAt, existingId }: { taskId: string; remindAt: string; existingId?: string }) => {
       if (existingId) {
         const { error } = await supabase.from("task_reminders").update({ remind_at: remindAt }).eq("id", existingId);
