@@ -18,14 +18,23 @@ import { Calendar } from "@/components/ui/calendar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, Plus, Search, CheckCircle2, Clock, AlertCircle, Bell, ArrowUpDown, ArrowUp, ArrowDown, ChevronsUpDown, Check } from "lucide-react";
+import { CalendarIcon, Plus, Search, CheckCircle2, Clock, AlertCircle, Bell, ArrowUpDown, ArrowUp, ArrowDown, ChevronsUpDown, Check, LayoutGrid, Table as TableIcon } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
-  pending: { label: "Pendente", color: "bg-warning/10 text-warning border-warning/20", icon: Clock },
+  pending: { label: "Aguardando Início", color: "bg-warning/10 text-warning border-warning/20", icon: Clock },
   in_progress: { label: "Em Andamento", color: "bg-soft-blue/10 text-soft-blue border-soft-blue/20", icon: AlertCircle },
+  review: { label: "Em Revisão", color: "bg-purple-500/10 text-purple-600 border-purple-500/20", icon: AlertCircle },
   completed: { label: "Concluída", color: "bg-success/10 text-success border-success/20", icon: CheckCircle2 },
 };
+
+type KanbanStage = { id: string; label: string; accentClass: string; dotClass: string };
+const KANBAN_STAGES: KanbanStage[] = [
+  { id: "pending", label: "Aguardando Início", accentClass: "border-l-warning", dotClass: "bg-warning" },
+  { id: "in_progress", label: "Em Andamento", accentClass: "border-l-soft-blue", dotClass: "bg-soft-blue" },
+  { id: "review", label: "Em Revisão", accentClass: "border-l-purple-500", dotClass: "bg-purple-500" },
+  { id: "completed", label: "Concluída", accentClass: "border-l-success", dotClass: "bg-success" },
+];
 
 const PRIORITY_CONFIG: Record<string, { label: string; color: string }> = {
   low: { label: "Baixa", color: "bg-muted text-muted-foreground" },
