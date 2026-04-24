@@ -426,6 +426,31 @@ export default function Clients() {
     }
   }, [clientMiles, editingId]);
 
+  const isHydratingClientForm = !!editingId && (
+    isLoadingClientPhones ||
+    isLoadingClientEmails ||
+    isLoadingClientSocials ||
+    isLoadingClientPassports ||
+    isLoadingClientMiles
+  );
+
+  useEffect(() => {
+    if (!editingId || isHydratingClientForm) return;
+    initialClientSnapshotRef.current = buildClientSnapshot();
+  }, [
+    editingId,
+    isHydratingClientForm,
+    form,
+    phones,
+    emails,
+    socials,
+    passports,
+    milesPrograms,
+    selectedAirports,
+    selectedTags,
+    selectedDestinations,
+  ]);
+
   // CEP auto-fill
   const handleCepBlur = async () => {
     if (form.country !== "Brasil" || !form.cep || form.cep.replace(/\D/g, "").length !== 8) return;
@@ -626,8 +651,7 @@ export default function Clients() {
     setSelectedTags(c.tags ?? []);
     setSelectedDestinations((c as any).desired_destinations ?? []);
     setView("form");
-    // Capture snapshot once form is hydrated
-    setTimeout(() => { initialClientSnapshotRef.current = buildClientSnapshot(); }, 500);
+    initialClientSnapshotRef.current = "";
   };
 
   const quickAddMutation = useMutation({
