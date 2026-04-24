@@ -328,7 +328,7 @@ export default function Clients() {
   };
 
   // Fetch related data when editing
-  const { data: clientPhones = [] } = useQuery({
+  const { data: clientPhones = [], isLoading: isLoadingClientPhones } = useQuery({
     queryKey: ["client-phones", editingId],
     queryFn: async () => {
       if (!editingId) return [];
@@ -337,7 +337,7 @@ export default function Clients() {
     },
     enabled: !!editingId,
   });
-  const { data: clientEmails = [] } = useQuery({
+  const { data: clientEmails = [], isLoading: isLoadingClientEmails } = useQuery({
     queryKey: ["client-emails", editingId],
     queryFn: async () => {
       if (!editingId) return [];
@@ -346,7 +346,7 @@ export default function Clients() {
     },
     enabled: !!editingId,
   });
-  const { data: clientSocials = [] } = useQuery({
+  const { data: clientSocials = [], isLoading: isLoadingClientSocials } = useQuery({
     queryKey: ["client-socials", editingId],
     queryFn: async () => {
       if (!editingId) return [];
@@ -355,7 +355,7 @@ export default function Clients() {
     },
     enabled: !!editingId,
   });
-  const { data: clientPassports = [] } = useQuery({
+  const { data: clientPassports = [], isLoading: isLoadingClientPassports } = useQuery({
     queryKey: ["client-passports", editingId],
     queryFn: async () => {
       if (!editingId) return [];
@@ -370,7 +370,7 @@ export default function Clients() {
     },
     enabled: !!editingId,
   });
-  const { data: clientMiles = [] } = useQuery({
+  const { data: clientMiles = [], isLoading: isLoadingClientMiles } = useQuery({
     queryKey: ["client-miles", editingId],
     queryFn: async () => {
       if (!editingId) return [];
@@ -425,6 +425,31 @@ export default function Clients() {
       setShowPasswords({});
     }
   }, [clientMiles, editingId]);
+
+  const isHydratingClientForm = !!editingId && (
+    isLoadingClientPhones ||
+    isLoadingClientEmails ||
+    isLoadingClientSocials ||
+    isLoadingClientPassports ||
+    isLoadingClientMiles
+  );
+
+  useEffect(() => {
+    if (!editingId || isHydratingClientForm || initialClientSnapshotRef.current) return;
+    initialClientSnapshotRef.current = buildClientSnapshot();
+  }, [
+    editingId,
+    isHydratingClientForm,
+    form,
+    phones,
+    emails,
+    socials,
+    passports,
+    milesPrograms,
+    selectedAirports,
+    selectedTags,
+    selectedDestinations,
+  ]);
 
   // CEP auto-fill
   const handleCepBlur = async () => {
@@ -626,8 +651,7 @@ export default function Clients() {
     setSelectedTags(c.tags ?? []);
     setSelectedDestinations((c as any).desired_destinations ?? []);
     setView("form");
-    // Capture snapshot once form is hydrated
-    setTimeout(() => { initialClientSnapshotRef.current = buildClientSnapshot(); }, 500);
+    initialClientSnapshotRef.current = "";
   };
 
   const quickAddMutation = useMutation({
