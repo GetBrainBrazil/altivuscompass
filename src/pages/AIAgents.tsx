@@ -70,6 +70,7 @@ const loadAgents = (): Agent[] => {
 export default function AIAgents() {
   const navigate = useNavigate();
   const [agents, setAgents] = useState<Agent[]>(loadAgents);
+  const [toDelete, setToDelete] = useState<Agent | null>(null);
 
   // Persist list whenever it changes
   useEffect(() => {
@@ -78,6 +79,31 @@ export default function AIAgents() {
 
   // Pick up saves coming from the edit page
   useEffect(() => {
+    try {
+      const pending = sessionStorage.getItem(SAVE_KEY);
+      if (!pending) return;
+      const saved: Agent = JSON.parse(pending);
+      sessionStorage.removeItem(SAVE_KEY);
+      setAgents((prev) => {
+        const exists = prev.find((a) => a.id === saved.id);
+        if (exists) return prev.map((a) => (a.id === saved.id ? saved : a));
+        return [...prev, saved];
+      });
+    } catch {}
+  }, []);
+
+  const toggleStatus = (id: string) => {
+    setAgents((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, active: !a.active } : a))
+    );
+  };
+
+  const handleDelete = () => {
+    if (!toDelete) return;
+    setAgents((prev) => prev.filter((a) => a.id !== toDelete.id));
+    toast.success(`Agente "${toDelete.name || "sem nome"}" excluído`);
+    setToDelete(null);
+  };
     try {
       const pending = sessionStorage.getItem(SAVE_KEY);
       if (!pending) return;
