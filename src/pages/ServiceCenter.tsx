@@ -661,43 +661,29 @@ export default function ServiceCenter() {
       <aside className="w-[340px] shrink-0 border-r flex flex-col">
         <div className="p-4 border-b space-y-3">
           <h1 className="text-lg font-semibold">Atendimento</h1>
-          <Tabs value={mainView} onValueChange={(v) => setMainView(v as MainView)}>
-            <TabsList className="grid grid-cols-2 w-full h-9 bg-muted/60 p-0.5">
-              <TabsTrigger value="chats" className="text-xs gap-1.5">
-                <MessagesSquare className="h-3.5 w-3.5" />
-                Chats Ativos
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar conversa..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FilterTab)}>
+            <TabsList className="grid grid-cols-4 w-full h-9 bg-muted/60 p-0.5">
+              <TabsTrigger value="all" className="text-[11px] gap-1">
+                Todos
+                <span className="text-[10px] text-muted-foreground">{counts.all}</span>
               </TabsTrigger>
-              <TabsTrigger value="ai-config" className="text-xs gap-1.5">
-                <Settings2 className="h-3.5 w-3.5" />
-                Configurações da IA
+              <TabsTrigger value="leads" className="text-[11px] gap-1">
+                Leads
+                <span className="text-[10px] text-muted-foreground">{counts.leads}</span>
               </TabsTrigger>
-            </TabsList>
-          </Tabs>
-          {mainView === "chats" && (
-            <>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar conversa..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 h-9"
-                />
-              </div>
-              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FilterTab)}>
-                <TabsList className="grid grid-cols-4 w-full h-9 bg-muted/60 p-0.5">
-                  <TabsTrigger value="all" className="text-[11px] gap-1">
-                    Todos
-                    <span className="text-[10px] text-muted-foreground">{counts.all}</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="leads" className="text-[11px] gap-1">
-                    Leads
-                    <span className="text-[10px] text-muted-foreground">{counts.leads}</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="support" className="text-[11px] gap-1">
-                    Suporte
-                    <span className="text-[10px] text-muted-foreground">{counts.support}</span>
-                  </TabsTrigger>
+              <TabsTrigger value="support" className="text-[11px] gap-1">
+                Suporte
+                <span className="text-[10px] text-muted-foreground">{counts.support}</span>
+              </TabsTrigger>
                   <TabsTrigger value="human" className="text-[11px] gap-1">
                     Humano
                     <span className="text-[10px] text-muted-foreground">{counts.human}</span>
