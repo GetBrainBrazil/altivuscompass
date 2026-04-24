@@ -81,6 +81,12 @@ interface Conversation {
   summary: LeadSummary;
   /** id of the last AI message before human takeover */
   handoffAfterMessageId?: string;
+  /** Categoria detectada pela IA. */
+  category: ContactCategory;
+  /** Se é cliente novo ou já existe no CRM. */
+  contactType: ContactType;
+  /** Vínculo com o CRM (cliente, cotação, viagem). */
+  crm: CRMLink;
 }
 
 // ============= Mock Data =============
