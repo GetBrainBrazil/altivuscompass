@@ -678,14 +678,12 @@ export default function ServiceCenter() {
                 Suporte
                 <span className="text-[10px] text-muted-foreground">{counts.support}</span>
               </TabsTrigger>
-                  <TabsTrigger value="human" className="text-[11px] gap-1">
-                    Humano
-                    <span className="text-[10px] text-muted-foreground">{counts.human}</span>
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </>
-          )}
+              <TabsTrigger value="human" className="text-[11px] gap-1">
+                Humanos
+                <span className="text-[10px] text-muted-foreground">{counts.human}</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
         <ScrollArea className="flex-1">
