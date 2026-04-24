@@ -616,7 +616,7 @@ export default function ServiceCenter() {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [draft, setDraft] = useState("");
-  const [summaryOpen, setSummaryOpen] = useState(true);
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const [sidePanelTab, setSidePanelTab] = useState<"summary" | "crm">("summary");
 
   const counts = useMemo(
@@ -698,7 +698,10 @@ export default function ServiceCenter() {
                   key={c.id}
                   conversation={c}
                   active={c.id === selectedId}
-                  onClick={() => setSelectedId(c.id)}
+                  onClick={() => {
+                    setSelectedId(c.id);
+                    setSummaryOpen(false);
+                  }}
                 />
               ))
             )}
