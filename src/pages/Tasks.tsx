@@ -448,6 +448,133 @@ export default function Tasks() {
 
       {isLoading ? (
         <div className="text-center py-12 text-muted-foreground font-body">Carregando...</div>
+      ) : view === "kanban" ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {KANBAN_STAGES.map((stage) => {
+            const stageTasks = filteredTasks.filter((t: any) => (t.status ?? "pending") === stage.id);
+            const isOver = dragOverStage === stage.id;
+            return (
+              <div
+                key={stage.id}
+                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (dragOverStage !== stage.id) setDragOverStage(stage.id); }}
+                onDragLeave={(e) => { if (e.currentTarget === e.target) setDragOverStage(null); }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const id = e.dataTransfer.getData("text/plain");
+                  setDragOverStage(null);
+                  setDraggingTaskId(null);
+                  if (!id) return;
+                  const task = tasks.find((t: any) => t.id === id);
+                  if (task && task.status !== stage.id) {
+                    changeStatusMutation.mutate({ id, newStatus: stage.id });
+                  }
+                }}
+                className={cn(
+                  "glass-card rounded-xl p-3 flex flex-col min-h-[300px] transition-colors",
+                  isOver && "bg-primary/5 ring-2 ring-primary/30",
+                )}
+              >
+                <div className="flex items-center justify-between mb-3 px-1">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={cn("h-2 w-2 rounded-full shrink-0", stage.dotClass)} />
+                    <h3 className="text-sm font-medium font-body text-foreground truncate">{stage.label}</h3>
+                  </div>
+                  <span className="text-xs text-muted-foreground font-body tabular-nums">{stageTasks.length}</span>
+                </div>
+                <div className="flex-1 space-y-2">
+                  {stageTasks.length === 0 ? (
+                    <div className="text-center text-xs text-muted-foreground/70 font-body py-8 italic">
+                      Solte aqui
+                    </div>
+                  ) : (
+                    stageTasks.map((task: any) => {
+                      const priority = PRIORITY_CONFIG[task.priority] ?? PRIORITY_CONFIG.medium;
+                      const isOverdue = task.due_date && !task.completed_at && new Date(task.due_date) < new Date();
+                      const isDragging = draggingTaskId === task.id;
+                      return (
+                        <div
+                          key={task.id}
+                          role="button"
+                          tabIndex={0}
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.effectAllowed = "move";
+                            e.dataTransfer.setData("text/plain", task.id);
+                            try {
+                              const node = e.currentTarget as HTMLDivElement;
+                              const rect = node.getBoundingClientRect();
+                              const ghost = node.cloneNode(true) as HTMLDivElement;
+                              ghost.style.position = "absolute";
+                              ghost.style.top = "-1000px";
+                              ghost.style.left = "-1000px";
+                              ghost.style.width = `${rect.width}px`;
+                              ghost.style.pointerEvents = "none";
+                              ghost.style.opacity = "1";
+                              ghost.style.transform = "rotate(2.5deg)";
+                              ghost.style.boxShadow = "0 20px 35px -10px hsl(var(--foreground) / 0.35), 0 8px 16px -6px hsl(var(--foreground) / 0.25)";
+                              ghost.style.borderRadius = "0.5rem";
+                              document.body.appendChild(ghost);
+                              e.dataTransfer.setDragImage(ghost, e.clientX - rect.left, e.clientY - rect.top);
+                              window.setTimeout(() => ghost.remove(), 0);
+                            } catch { /* noop */ }
+                            setDraggingTaskId(task.id);
+                          }}
+                          onDragEnd={() => { setDraggingTaskId(null); setDragOverStage(null); }}
+                          onClick={() => openEdit(task)}
+                          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openEdit(task); } }}
+                          className={cn(
+                            "group relative rounded-lg border border-border bg-card text-left",
+                            "border-l-[3px] shadow-sm hover:shadow-md transition-all animate-fade-in",
+                            "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                            "cursor-grab active:cursor-grabbing",
+                            isDragging && "opacity-30",
+                            stage.accentClass,
+                          )}
+                        >
+                          <div className="px-3 py-2.5">
+                            <div className="flex items-start justify-between gap-2 mb-1">
+                              <p className={cn("text-sm font-medium font-body text-foreground flex-1 min-w-0 leading-snug line-clamp-2", task.status === "completed" && "line-through text-muted-foreground")}>
+                                {task.title}
+                              </p>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); openReminderDialog(task); }}
+                                className={cn("shrink-0 p-1 rounded hover:bg-muted transition-colors", getTaskReminder(task.id) ? "text-foreground" : "text-muted-foreground/60 hover:text-foreground")}
+                                title={getTaskReminder(task.id) ? "Editar lembrete" : "Adicionar lembrete"}
+                              >
+                                <Bell size={12} className={getTaskReminder(task.id) ? "fill-current" : ""} />
+                              </button>
+                            </div>
+                            {task.description && (
+                              <p className="text-[11px] text-muted-foreground font-body line-clamp-2 mb-2">{task.description}</p>
+                            )}
+                            <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                              <Badge variant="outline" className={cn("text-[10px] font-body whitespace-nowrap", priority.color)}>{priority.label}</Badge>
+                              {isOverdue && <Badge variant="destructive" className="text-[10px] font-body">Atrasada</Badge>}
+                            </div>
+                            <div className="h-px bg-border/60 -mx-3" />
+                            <div className="flex items-center gap-2 pt-2">
+                              <div className={cn("shrink-0 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-semibold", task.assigned_to ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
+                                {task.assigned_to ? getAssigneeName(task.assigned_to).split(" ").filter(Boolean).slice(0, 2).map((n: string) => n[0]?.toUpperCase()).join("") : "?"}
+                              </div>
+                              <span className="text-[11px] text-muted-foreground font-body truncate flex-1 min-w-0">
+                                {task.assigned_to ? getAssigneeName(task.assigned_to) : "Sem responsável"}
+                              </span>
+                              {task.due_date && (
+                                <span className={cn("text-[11px] font-body shrink-0 tabular-nums", isOverdue ? "text-destructive" : "text-muted-foreground")}>
+                                  {task.due_date.split("-").reverse().slice(0, 2).join("/")}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       ) : filteredTasks.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground font-body">Nenhuma tarefa encontrada.</div>
       ) : (
