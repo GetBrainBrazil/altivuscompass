@@ -3108,7 +3108,7 @@ export default function Quotes() {
       ) : (
         <>
           {viewMode === "kanban" ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4 pb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pb-4">
               {stages.map((stage) => {
                 const stageQuotes = filteredQuotes.filter((q: Quote) => q.stage === stage.id);
                 return (
