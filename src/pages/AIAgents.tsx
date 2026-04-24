@@ -10,8 +10,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Pencil, FlaskConical } from "lucide-react";
+import { Plus, Pencil, FlaskConical, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { Agent } from "@/components/ai-agents/AgentEditDialog";
 
 const LIST_KEY = "ai-agents-list";
@@ -60,6 +70,7 @@ const loadAgents = (): Agent[] => {
 export default function AIAgents() {
   const navigate = useNavigate();
   const [agents, setAgents] = useState<Agent[]>(loadAgents);
+  const [toDelete, setToDelete] = useState<Agent | null>(null);
 
   // Persist list whenever it changes
   useEffect(() => {
@@ -85,6 +96,13 @@ export default function AIAgents() {
     setAgents((prev) =>
       prev.map((a) => (a.id === id ? { ...a, active: !a.active } : a))
     );
+  };
+
+  const handleDelete = () => {
+    if (!toDelete) return;
+    setAgents((prev) => prev.filter((a) => a.id !== toDelete.id));
+    toast.success(`Agente "${toDelete.name || "sem nome"}" excluído`);
+    setToDelete(null);
   };
 
   return (
@@ -121,7 +139,7 @@ export default function AIAgents() {
                 <TableHead className="h-12 px-6 text-xs font-medium uppercase tracking-wider text-muted-foreground w-32">
                   Status
                 </TableHead>
-                <TableHead className="h-12 px-6 text-xs font-medium uppercase tracking-wider text-muted-foreground text-right w-32">
+                <TableHead className="h-12 px-6 text-xs font-medium uppercase tracking-wider text-muted-foreground text-right w-40">
                   Ações
                 </TableHead>
               </TableRow>
@@ -169,6 +187,15 @@ export default function AIAgents() {
                       >
                         <FlaskConical className="h-4 w-4" />
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        onClick={() => setToDelete(agent)}
+                        aria-label={`Excluir ${agent.name}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -184,6 +211,28 @@ export default function AIAgents() {
           </Table>
         </div>
       </div>
+
+      <AlertDialog open={!!toDelete} onOpenChange={(open) => !open && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir agente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O agente{" "}
+              <strong>"{toDelete?.name || "sem nome"}"</strong> e todas as suas
+              configurações serão removidos permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

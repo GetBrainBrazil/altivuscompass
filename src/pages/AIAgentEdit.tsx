@@ -12,8 +12,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Sparkles, Shield, Bot, ArrowLeft, FlaskConical } from "lucide-react";
+import { Sparkles, Shield, Bot, ArrowLeft, FlaskConical, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import type { Agent } from "@/components/ai-agents/AgentEditDialog";
 
 const STORAGE_KEY = "ai-agents-draft";
@@ -83,6 +94,16 @@ export default function AIAgentEdit() {
     navigate("/ai-agents");
   };
 
+  const handleDelete = () => {
+    try {
+      const list: Agent[] = JSON.parse(sessionStorage.getItem(LIST_KEY) || "[]");
+      const next = list.filter((a) => a.id !== form.id);
+      sessionStorage.setItem(LIST_KEY, JSON.stringify(next));
+    } catch {}
+    toast.success(`Agente "${form.name || "sem nome"}" excluído`);
+    navigate("/ai-agents");
+  };
+
   return (
     <div className="min-h-screen bg-[hsl(220_15%_97%)]">
       {/* Sticky header */}
@@ -116,6 +137,38 @@ export default function AIAgentEdit() {
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                 Alterações não salvas
               </span>
+            )}
+            {!isNew && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="h-9 text-destructive hover:text-destructive hover:bg-destructive/5 border-destructive/30"
+                  >
+                    <Trash2 className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Excluir</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir agente?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta ação não pode ser desfeita. O agente{" "}
+                      <strong>"{form.name || "sem nome"}"</strong> e todas as suas
+                      configurações serão removidos permanentemente.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Excluir
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
             <Button variant="outline" onClick={handleCancel} className="h-9">
               Cancelar
