@@ -245,8 +245,7 @@ export default function TaskDetail() {
       <div className={cn("py-6 grid gap-6", !isNew && "lg:grid-cols-[minmax(0,1fr)_360px]")}>
         {/* Form */}
         <div className="space-y-5 min-w-0">
-          <div className="space-y-5">
-            <div>
+          <div>
           <Label className="font-body text-xs uppercase tracking-wide text-muted-foreground">Título *</Label>
           <Input
             value={form.title}
