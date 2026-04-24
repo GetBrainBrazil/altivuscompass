@@ -182,10 +182,91 @@ const INITIAL_SALES_COLUMNS: KanbanColumn[] = [
 ];
 
 const INITIAL_OPS_COLUMNS: KanbanColumn[] = [
-  { id: "pre-trip", title: "Pré-Viagem", cards: [] },
-  { id: "in-trip", title: "Em Viagem", cards: [] },
-  { id: "support", title: "Suporte Ativo", cards: [] },
-  { id: "post-trip", title: "Pós-Viagem", cards: [] },
+  {
+    id: "pre-trip",
+    title: "Pré-Viagem",
+    cards: [
+      {
+        id: "ops-1",
+        clientName: "Família Tavares",
+        destination: "Roma, Itália",
+        travelDate: "Jun/2026",
+        tags: [
+          { label: "Família", tone: "amber" },
+          { label: "Embarque em 18 dias", tone: "blue" },
+        ],
+        agent: { name: "Daniel Souza" },
+      },
+    ],
+  },
+  {
+    id: "in-trip",
+    title: "Em Viagem",
+    cards: [
+      {
+        id: "ops-2",
+        clientName: "Patrícia Nogueira",
+        destination: "Cancún, México",
+        travelDate: "Nov/2025",
+        tags: [
+          { label: "Resort", tone: "green" },
+          { label: "All-Inclusive", tone: "blue" },
+        ],
+        agent: { name: "Beatriz Rocha" },
+        isAILead: true,
+        aiSummary: "Cliente acionou WhatsApp da Central — possível ocorrência em viagem.",
+      },
+    ],
+  },
+  {
+    id: "support",
+    title: "Suporte Ativo",
+    cards: [
+      {
+        id: "ops-3",
+        clientName: "Patrícia Nogueira",
+        destination: "Cancún — voo cancelado",
+        travelDate: "23/Nov — Volta",
+        tags: [
+          { label: "Voo cancelado", tone: "rose" },
+          { label: "Pós-venda", tone: "purple" },
+        ],
+        agent: { name: "Beatriz Rocha" },
+        isAILead: true,
+        aiSummary: "Cliente em Cancún com voo de volta cancelado pela LATAM. Acionado via WhatsApp na Central de Atendimento.",
+        alert: { label: "Urgente", tone: "destructive" },
+      },
+      {
+        id: "ops-4",
+        clientName: "Marcelo e Renata Dias",
+        destination: "Lisboa, Portugal",
+        travelDate: "Em curso",
+        tags: [
+          { label: "Bagagem extraviada", tone: "amber" },
+        ],
+        agent: { name: "Ana Paula" },
+        alert: { label: "Aguarda retorno cia", tone: "warning" },
+      },
+    ],
+  },
+  {
+    id: "post-trip",
+    title: "Pós-Viagem",
+    cards: [
+      {
+        id: "ops-5",
+        clientName: "João Vasconcelos",
+        destination: "Buenos Aires, Argentina",
+        travelDate: "Out/2025",
+        tags: [
+          { label: "Avaliação coletada", tone: "green" },
+          { label: "NPS 9", tone: "blue" },
+        ],
+        agent: { name: "Marcos Lima" },
+        alert: { label: "Concluído", tone: "success" },
+      },
+    ],
+  },
 ];
 
 const STAGE_DOT_COLORS = [
@@ -419,7 +500,7 @@ export default function CRM() {
   };
 
   const SALES_STORAGE_KEY = "crm:columns:sales:v1";
-  const OPS_STORAGE_KEY = "crm:columns:ops:v1";
+  const OPS_STORAGE_KEY = "crm:columns:ops:v2";
 
   const loadColumns = (key: string, fallback: KanbanColumn[]): KanbanColumn[] => {
     if (typeof window === "undefined") return fallback;
