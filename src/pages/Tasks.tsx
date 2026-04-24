@@ -280,6 +280,8 @@ export default function Tasks() {
         if (!t.title?.toLowerCase().includes(q) && !t.description?.toLowerCase().includes(q)) return false;
       }
       if (userFilter !== "all" && t.assigned_to !== userFilter) return false;
+      if (creatorFilter !== "all" && t.created_by !== creatorFilter) return false;
+      if (priorityFilter !== "all" && t.priority !== priorityFilter) return false;
       if (quoteFilter !== "all") {
         if (quoteFilter === "none" && t.quote_id) return false;
         if (quoteFilter !== "none" && t.quote_id !== quoteFilter) return false;
@@ -287,6 +289,17 @@ export default function Tasks() {
       if (clientFilter !== "all") {
         if (clientFilter === "none" && t.client_id) return false;
         if (clientFilter !== "none" && t.client_id !== clientFilter) return false;
+      }
+      if (dueFilter !== "all") {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
+        const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate()+7);
+        const due = t.due_date ? new Date(t.due_date) : null;
+        if (dueFilter === "none" && due) return false;
+        if (dueFilter === "overdue" && !(due && due < today && t.status !== "completed")) return false;
+        if (dueFilter === "today" && !(due && due.getTime() === today.getTime())) return false;
+        if (dueFilter === "tomorrow" && !(due && due.getTime() === tomorrow.getTime())) return false;
+        if (dueFilter === "week" && !(due && due >= today && due <= weekEnd)) return false;
       }
       return true;
     })
