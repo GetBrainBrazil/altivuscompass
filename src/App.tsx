@@ -32,6 +32,7 @@ import ServiceCenter from "./pages/ServiceCenter";
 import CRM from "./pages/CRM";
 import LeadDetail from "./pages/LeadDetail";
 import AIAgents from "./pages/AIAgents";
+import AIAgentEdit from "./pages/AIAgentEdit";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
