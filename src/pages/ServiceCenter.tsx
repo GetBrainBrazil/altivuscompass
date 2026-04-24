@@ -851,9 +851,10 @@ export default function ServiceCenter() {
           </>
         )}
       </section>
+      )}
 
       {/* ===== Right column: lead summary + CRM panel ===== */}
-      {selected && summaryOpen && (
+      {mainView === "chats" && selected && summaryOpen && (
         <aside className="w-[340px] shrink-0 border-l hidden lg:flex flex-col bg-white">
           <Tabs
             value={sidePanelTab}
