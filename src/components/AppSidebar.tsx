@@ -11,9 +11,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton,
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar";
@@ -127,27 +124,35 @@ export function AppSidebar() {
                             </CollapsibleTrigger>
                           </div>
                         </SidebarMenuItem>
-                        <CollapsibleContent>
-                          <SidebarMenuSub className="gap-0.5 ml-4 border-l border-sidebar-border/40 pl-3 my-1">
+                        <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+                          <ul className="mt-1 ml-[18px] pl-3 border-l border-sidebar-border/40 flex flex-col gap-0.5">
                             {item.subItems!.filter(s => canAccess(userRole, s.url.split("?")[0])).map((sub) => {
                               const [subPath, subQuery] = sub.url.split("?");
                               const isSubActive = location.pathname === subPath && (
                                 subQuery ? location.search.includes(subQuery) : !location.search
                               );
                               return (
-                              <SidebarMenuSubItem key={sub.title}>
-                                <SidebarMenuSubButton asChild>
-                                  <Link to={sub.url} className={cn(
-                                    "text-sidebar-foreground/70 hover:bg-white/[0.04] hover:text-white transition-all duration-200 rounded-md text-[12px] font-body tracking-[0.01em] py-1.5",
-                                    isSubActive && "bg-white/[0.06] text-white font-medium hover:bg-white/[0.08]"
-                                  )}>
+                                <li key={sub.title} className="relative">
+                                  {isSubActive && (
+                                    <span
+                                      className="absolute -left-[13px] top-1/2 -translate-y-1/2 h-4 w-px bg-[hsl(var(--gold))]"
+                                      aria-hidden
+                                    />
+                                  )}
+                                  <Link
+                                    to={sub.url}
+                                    className={cn(
+                                      "block w-full px-2.5 py-1.5 rounded-md text-[12px] font-body tracking-[0.01em] leading-snug transition-all duration-200",
+                                      "text-sidebar-foreground/65 hover:bg-white/[0.04] hover:text-white",
+                                      isSubActive && "bg-white/[0.06] text-white font-medium hover:bg-white/[0.08]"
+                                    )}
+                                  >
                                     {sub.title}
                                   </Link>
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
+                                </li>
                               );
                             })}
-                          </SidebarMenuSub>
+                          </ul>
                         </CollapsibleContent>
                       </Collapsible>
                     );
