@@ -11,27 +11,75 @@ import {
 } from "@/components/ui/table";
 import { Plus, Pencil, FlaskConical } from "lucide-react";
 import { toast } from "sonner";
-
-interface Agent {
-  id: string;
-  name: string;
-  model: string;
-  active: boolean;
-}
+import { AgentEditDialog, type Agent } from "@/components/ai-agents/AgentEditDialog";
 
 const INITIAL: Agent[] = [
-  { id: "1", name: "Atendente Principal", model: "google/gemini-2.5-flash", active: true },
-  { id: "2", name: "Qualificador de Leads", model: "google/gemini-2.5-pro", active: true },
-  { id: "3", name: "Pós-venda", model: "openai/gpt-5-mini", active: false },
+  {
+    id: "1",
+    name: "Atendente Principal",
+    model: "google/gemini-2.5-flash",
+    active: true,
+    tone: "amigavel",
+    personality:
+      "Você é o atendente principal da Altivus Turismo. Recepcione clientes com cordialidade e identifique rapidamente o tipo de demanda.",
+    rules:
+      "- Nunca compartilhe preços sem validação\n- Transfira para humano em reclamações\n- Não responda fora do escopo de viagens",
+  },
+  {
+    id: "2",
+    name: "Qualificador de Leads",
+    model: "google/gemini-2.5-pro",
+    active: true,
+    tone: "consultivo",
+    personality: "",
+    rules: "",
+  },
+  {
+    id: "3",
+    name: "Pós-venda",
+    model: "openai/gpt-5-mini",
+    active: false,
+    tone: "amigavel",
+    personality: "",
+    rules: "",
+  },
 ];
 
 export default function AIAgents() {
   const [agents, setAgents] = useState<Agent[]>(INITIAL);
+  const [editing, setEditing] = useState<Agent | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const toggleStatus = (id: string) => {
     setAgents((prev) =>
       prev.map((a) => (a.id === id ? { ...a, active: !a.active } : a))
     );
+  };
+
+  const openEdit = (agent: Agent) => {
+    setEditing(agent);
+    setDialogOpen(true);
+  };
+
+  const openNew = () => {
+    setEditing({
+      id: crypto.randomUUID(),
+      name: "",
+      model: "google/gemini-2.5-flash",
+      active: true,
+      tone: "amigavel",
+      personality: "",
+      rules: "",
+    });
+    setDialogOpen(true);
+  };
+
+  const handleSave = (agent: Agent) => {
+    setAgents((prev) => {
+      const exists = prev.find((a) => a.id === agent.id);
+      if (exists) return prev.map((a) => (a.id === agent.id ? agent : a));
+      return [...prev, agent];
+    });
   };
 
   return (
@@ -48,7 +96,7 @@ export default function AIAgents() {
           </div>
           <Button
             className="bg-[hsl(220_45%_15%)] hover:bg-[hsl(220_45%_22%)] text-white h-10 px-5"
-            onClick={() => toast.info("Em breve: criação de novo agente")}
+            onClick={openNew}
           >
             <Plus className="h-4 w-4 mr-2" />
             Novo Agente
@@ -76,7 +124,10 @@ export default function AIAgents() {
             <TableBody>
               {agents.map((agent) => (
                 <TableRow key={agent.id} className="border-b border-border/40 last:border-0">
-                  <TableCell className="px-6 py-4 font-medium text-foreground">
+                  <TableCell
+                    className="px-6 py-4 font-medium text-foreground cursor-pointer"
+                    onClick={() => openEdit(agent)}
+                  >
                     {agent.name}
                   </TableCell>
                   <TableCell className="px-6 py-4">
@@ -101,7 +152,7 @@ export default function AIAgents() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                        onClick={() => toast.info(`Editar: ${agent.name}`)}
+                        onClick={() => openEdit(agent)}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -128,6 +179,13 @@ export default function AIAgents() {
           </Table>
         </div>
       </div>
+
+      <AgentEditDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        agent={editing}
+        onSave={handleSave}
+      />
     </div>
   );
 }
