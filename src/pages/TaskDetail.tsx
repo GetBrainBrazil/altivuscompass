@@ -33,6 +33,8 @@ export default function TaskDetail() {
   const { id } = useParams<{ id: string }>();
   const isNew = !id || id === "new";
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialStatus = (searchParams.get("status") as string) || "pending";
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
