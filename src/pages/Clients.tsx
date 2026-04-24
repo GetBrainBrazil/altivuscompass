@@ -328,7 +328,7 @@ export default function Clients() {
   };
 
   // Fetch related data when editing
-  const { data: clientPhones = [] } = useQuery({
+  const { data: clientPhones = [], isLoading: isLoadingClientPhones } = useQuery({
     queryKey: ["client-phones", editingId],
     queryFn: async () => {
       if (!editingId) return [];
@@ -337,7 +337,7 @@ export default function Clients() {
     },
     enabled: !!editingId,
   });
-  const { data: clientEmails = [] } = useQuery({
+  const { data: clientEmails = [], isLoading: isLoadingClientEmails } = useQuery({
     queryKey: ["client-emails", editingId],
     queryFn: async () => {
       if (!editingId) return [];
@@ -346,7 +346,7 @@ export default function Clients() {
     },
     enabled: !!editingId,
   });
-  const { data: clientSocials = [] } = useQuery({
+  const { data: clientSocials = [], isLoading: isLoadingClientSocials } = useQuery({
     queryKey: ["client-socials", editingId],
     queryFn: async () => {
       if (!editingId) return [];
@@ -355,7 +355,7 @@ export default function Clients() {
     },
     enabled: !!editingId,
   });
-  const { data: clientPassports = [] } = useQuery({
+  const { data: clientPassports = [], isLoading: isLoadingClientPassports } = useQuery({
     queryKey: ["client-passports", editingId],
     queryFn: async () => {
       if (!editingId) return [];
@@ -370,7 +370,7 @@ export default function Clients() {
     },
     enabled: !!editingId,
   });
-  const { data: clientMiles = [] } = useQuery({
+  const { data: clientMiles = [], isLoading: isLoadingClientMiles } = useQuery({
     queryKey: ["client-miles", editingId],
     queryFn: async () => {
       if (!editingId) return [];
