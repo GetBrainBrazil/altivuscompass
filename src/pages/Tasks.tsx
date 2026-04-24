@@ -434,38 +434,6 @@ export default function Tasks() {
             />
           </FilterChip>
 
-          {/* Evento (Cotação) */}
-          <FilterChip
-            label="Evento"
-            active={quoteFilter !== "all"}
-            value={
-              quoteFilter === "all"
-                ? "Evento"
-                : quoteFilter === "none"
-                ? "Sem evento"
-                : (() => {
-                    const q = quotesWithTasks.find((q: any) => q.id === quoteFilter);
-                    return q ? (q.destination ?? q.title ?? "Evento") : "Evento";
-                  })()
-            }
-            onClear={() => setQuoteFilter("all")}
-            width={300}
-          >
-            <SearchableList
-              placeholder="Buscar evento..."
-              items={[
-                { id: "all", label: "Todos" },
-                { id: "none", label: "Sem evento" },
-                ...quotesWithTasks.map((q: any) => ({
-                  id: q.id,
-                  label: `${q.clients?.full_name ?? "—"} — ${q.destination ?? q.title ?? "Sem destino"}`,
-                })),
-              ]}
-              selected={quoteFilter}
-              onSelect={(id) => setQuoteFilter(id)}
-            />
-          </FilterChip>
-
           {/* Prazo */}
           <FilterChip
             label="Prazo"
