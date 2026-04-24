@@ -435,7 +435,7 @@ export default function Clients() {
   );
 
   useEffect(() => {
-    if (!editingId || isHydratingClientForm) return;
+    if (!editingId || isHydratingClientForm || initialClientSnapshotRef.current) return;
     initialClientSnapshotRef.current = buildClientSnapshot();
   }, [
     editingId,
