@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Search,
   SendHorizontal,
@@ -18,10 +19,38 @@ import {
   Wallet,
   Sparkles,
   ArrowRightLeft,
+  UserPlus,
+  UserCheck,
+  LifeBuoy,
+  TrendingUp,
+  ExternalLink,
+  Plane,
+  FileText,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type FilterTab = "all" | "human" | "ai";
+type FilterTab = "all" | "leads" | "support" | "human";
+
+/** Categoria detectada pela IA: lead de vendas (entra no funil) ou pós-venda/suporte (não entra no funil). */
+type ContactCategory = "sales" | "post-sale";
+
+/** Tipo do contato: novo no sistema ou cliente já existente no CRM. */
+type ContactType = "new-lead" | "existing-client";
+
+interface CRMLink {
+  /** Cliente vinculado (existente ou rascunho criado a partir do lead). */
+  clientId?: string;
+  clientName?: string;
+  /** Cotação relacionada (quando aplicável). */
+  quoteId?: string;
+  quoteTitle?: string;
+  /** Operação/viagem em andamento (para casos de pós-venda). */
+  tripId?: string;
+  tripTitle?: string;
+  /** Estágio atual no kanban do CRM. */
+  stage?: string;
+}
 
 // ============= Types =============
 type MessageSender = "lead" | "ai" | "agent";
