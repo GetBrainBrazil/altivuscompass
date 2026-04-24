@@ -12,8 +12,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Sparkles, Shield, Bot, ArrowLeft, FlaskConical } from "lucide-react";
+import { Sparkles, Shield, Bot, ArrowLeft, FlaskConical, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import type { Agent } from "@/components/ai-agents/AgentEditDialog";
 
 const STORAGE_KEY = "ai-agents-draft";
