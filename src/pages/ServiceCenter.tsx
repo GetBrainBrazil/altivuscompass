@@ -27,13 +27,8 @@ import {
   Plane,
   FileText,
   AlertTriangle,
-  MessagesSquare,
-  Settings2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import AIConfigPanel from "@/components/service-center/AIConfigPanel";
-
-type MainView = "chats" | "ai-config";
 
 type FilterTab = "all" | "leads" | "support" | "human";
 
@@ -623,7 +618,6 @@ export default function ServiceCenter() {
   const [draft, setDraft] = useState("");
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [sidePanelTab, setSidePanelTab] = useState<"summary" | "crm">("summary");
-  const [mainView, setMainView] = useState<MainView>("chats");
 
   const counts = useMemo(
     () => ({
@@ -661,96 +655,61 @@ export default function ServiceCenter() {
       <aside className="w-[340px] shrink-0 border-r flex flex-col">
         <div className="p-4 border-b space-y-3">
           <h1 className="text-lg font-semibold">Atendimento</h1>
-          <Tabs value={mainView} onValueChange={(v) => setMainView(v as MainView)}>
-            <TabsList className="grid grid-cols-2 w-full h-9 bg-muted/60 p-0.5">
-              <TabsTrigger value="chats" className="text-xs gap-1.5">
-                <MessagesSquare className="h-3.5 w-3.5" />
-                Chats Ativos
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar conversa..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FilterTab)}>
+            <TabsList className="grid grid-cols-4 w-full h-9 bg-muted/60 p-0.5">
+              <TabsTrigger value="all" className="text-[11px] gap-1">
+                Todos
+                <span className="text-[10px] text-muted-foreground">{counts.all}</span>
               </TabsTrigger>
-              <TabsTrigger value="ai-config" className="text-xs gap-1.5">
-                <Settings2 className="h-3.5 w-3.5" />
-                Configurações da IA
+              <TabsTrigger value="leads" className="text-[11px] gap-1">
+                Leads
+                <span className="text-[10px] text-muted-foreground">{counts.leads}</span>
+              </TabsTrigger>
+              <TabsTrigger value="support" className="text-[11px] gap-1">
+                Suporte
+                <span className="text-[10px] text-muted-foreground">{counts.support}</span>
+              </TabsTrigger>
+              <TabsTrigger value="human" className="text-[11px] gap-1">
+                Humanos
+                <span className="text-[10px] text-muted-foreground">{counts.human}</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>
-          {mainView === "chats" && (
-            <>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar conversa..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 h-9"
-                />
-              </div>
-              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FilterTab)}>
-                <TabsList className="grid grid-cols-4 w-full h-9 bg-muted/60 p-0.5">
-                  <TabsTrigger value="all" className="text-[11px] gap-1">
-                    Todos
-                    <span className="text-[10px] text-muted-foreground">{counts.all}</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="leads" className="text-[11px] gap-1">
-                    Leads
-                    <span className="text-[10px] text-muted-foreground">{counts.leads}</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="support" className="text-[11px] gap-1">
-                    Suporte
-                    <span className="text-[10px] text-muted-foreground">{counts.support}</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="human" className="text-[11px] gap-1">
-                    Humano
-                    <span className="text-[10px] text-muted-foreground">{counts.human}</span>
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </>
-          )}
         </div>
 
-        {mainView === "chats" ? (
-          <ScrollArea className="flex-1">
-            <div className="px-4 py-3 space-y-3">
-              {filtered.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-8 px-4">
-                  Nenhuma conversa encontrada.
-                </p>
-              ) : (
-                filtered.map((c) => (
-                  <ConversationCard
-                    key={c.id}
-                    conversation={c}
-                    active={c.id === selectedId}
-                    onClick={() => {
-                      setSelectedId(c.id);
-                      setSummaryOpen(false);
-                    }}
-                  />
-                ))
-              )}
-            </div>
-          </ScrollArea>
-        ) : (
-          <div className="flex-1 px-4 py-6">
-            <div className="rounded-xl border border-dashed bg-muted/30 p-5 text-center space-y-2">
-              <div className="h-10 w-10 mx-auto rounded-full bg-white shadow-sm flex items-center justify-center">
-                <Settings2 className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <p className="text-xs font-medium">Modo configuração</p>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Você está editando o comportamento do agente. Volte para "Chats Ativos" para retomar o atendimento.
+        <ScrollArea className="flex-1">
+          <div className="px-4 py-3 space-y-3">
+            {filtered.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-8 px-4">
+                Nenhuma conversa encontrada.
               </p>
-            </div>
+            ) : (
+              filtered.map((c) => (
+                <ConversationCard
+                  key={c.id}
+                  conversation={c}
+                  active={c.id === selectedId}
+                  onClick={() => {
+                    setSelectedId(c.id);
+                    setSummaryOpen(false);
+                  }}
+                />
+              ))
+            )}
           </div>
-        )}
+        </ScrollArea>
       </aside>
 
-      {/* ===== Center column: chat window OR AI config ===== */}
-      {mainView === "ai-config" ? (
-        <section className="flex-1 min-w-0">
-          <AIConfigPanel />
-        </section>
-      ) : (
+      {/* ===== Center column: chat window ===== */}
       <section className="flex-1 flex flex-col min-w-0 bg-muted/30">
         {!selected ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
@@ -851,10 +810,9 @@ export default function ServiceCenter() {
           </>
         )}
       </section>
-      )}
 
       {/* ===== Right column: lead summary + CRM panel ===== */}
-      {mainView === "chats" && selected && summaryOpen && (
+      {selected && summaryOpen && (
         <aside className="w-[340px] shrink-0 border-l hidden lg:flex flex-col bg-white">
           <Tabs
             value={sidePanelTab}
