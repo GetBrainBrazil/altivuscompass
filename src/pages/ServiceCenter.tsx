@@ -777,24 +777,35 @@ export default function ServiceCenter() {
 
             {/* Composer */}
             <footer className="border-t bg-white/80 backdrop-blur-sm p-4">
-              <div className="flex items-center gap-3 max-w-3xl mx-auto">
-                <Input
-                  placeholder="Digite uma mensagem..."
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  className="h-11 rounded-full px-5 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-ring"
-                />
-                <Button
-                  size="icon"
-                  disabled={!draft.trim()}
-                  className="h-11 w-11 rounded-full shrink-0"
-                >
-                  <SendHorizontal className="h-5 w-5" />
-                </Button>
-              </div>
-              <p className="text-[10px] text-muted-foreground text-center mt-3">
-                Visualização preliminar — envio de mensagens será habilitado em breve.
-              </p>
+              {selected.status === "ai" ? (
+                <div className="max-w-3xl mx-auto flex items-center justify-center gap-2 rounded-full border border-dashed border-muted-foreground/30 bg-muted/40 px-5 py-3 text-sm text-muted-foreground">
+                  <UserRound className="h-4 w-4 shrink-0" />
+                  <span>
+                    Assuma esta conversa para poder enviar mensagens.
+                  </span>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3 max-w-3xl mx-auto">
+                    <Input
+                      placeholder="Digite uma mensagem..."
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      className="h-11 rounded-full px-5 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-ring"
+                    />
+                    <Button
+                      size="icon"
+                      disabled={!draft.trim()}
+                      className="h-11 w-11 rounded-full shrink-0"
+                    >
+                      <SendHorizontal className="h-5 w-5" />
+                    </Button>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground text-center mt-3">
+                    Visualização preliminar — envio de mensagens será habilitado em breve.
+                  </p>
+                </>
+              )}
             </footer>
           </>
         )}
