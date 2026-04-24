@@ -692,6 +692,7 @@ export default function Tasks() {
               })}
             </TableBody>
           </Table>
+          </div>
         </div>
       )}
 
