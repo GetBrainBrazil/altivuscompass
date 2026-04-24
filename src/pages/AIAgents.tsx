@@ -139,7 +139,7 @@ export default function AIAgents() {
                 <TableHead className="h-12 px-6 text-xs font-medium uppercase tracking-wider text-muted-foreground w-32">
                   Status
                 </TableHead>
-                <TableHead className="h-12 px-6 text-xs font-medium uppercase tracking-wider text-muted-foreground text-right w-32">
+                <TableHead className="h-12 px-6 text-xs font-medium uppercase tracking-wider text-muted-foreground text-right w-40">
                   Ações
                 </TableHead>
               </TableRow>
