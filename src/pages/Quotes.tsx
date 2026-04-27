@@ -638,6 +638,7 @@ export default function Quotes() {
 
   // Keyboard shortcut: Ctrl/Cmd+S to save inside the quote editor
   const saveQuoteRef = useRef<((closeAfter: boolean) => Promise<string | null>) | null>(null);
+  const [saveBtnState, setSaveBtnState] = useState<"idle" | "saving" | "success">("idle");
   useEffect(() => {
     if (!dialogOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -788,6 +789,7 @@ export default function Quotes() {
   };
 
   const saveQuote = async (closeAfter: boolean): Promise<string | null> => {
+    setSaveBtnState("saving");
     try {
       const stage = form.stage || "new";
       const conclusion_type = stage === "confirmed" ? (form.conclusion_type || "won") : null;
@@ -956,7 +958,9 @@ export default function Quotes() {
         }
       }
 
-      toast({ title: editingQuote ? "Cotação atualizada" : "Cotação criada", duration: 2000 });
+      toast({ title: "Cotação salva com sucesso", duration: 3000 });
+      setSaveBtnState("success");
+      setTimeout(() => setSaveBtnState("idle"), 1500);
       localStorage.removeItem(QUOTE_EDITOR_DRAFT_KEY);
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
       queryClient.invalidateQueries({ queryKey: ["sales"] });
@@ -981,7 +985,8 @@ export default function Quotes() {
       }
       return quoteId ?? null;
     } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      toast({ title: "Erro ao salvar cotação. Tente novamente.", description: err?.message, variant: "destructive" });
+      setSaveBtnState("idle");
       return null;
     }
   };
@@ -3212,14 +3217,32 @@ export default function Quotes() {
             <Button type="button" variant="outline" size="sm" onClick={closeDialog} className="font-body gap-1.5">
               <ArrowLeft className="w-3.5 h-3.5" /> Voltar
             </Button>
-            <Button type="button" variant="outline" size="sm" className="font-body" onClick={() => saveQuote(true)}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="font-body gap-1.5"
+              onClick={() => saveQuote(true)}
+              disabled={saveBtnState === "saving"}
+            >
+              {saveBtnState === "saving" && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               Salvar e Voltar
             </Button>
             <TooltipProvider delayDuration={300}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button type="button" size="sm" className="font-body" onClick={() => saveQuote(false)}>
-                    Salvar
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => saveQuote(false)}
+                    disabled={saveBtnState === "saving"}
+                    className={`font-body gap-1.5 transition-colors ${
+                      saveBtnState === "success" ? "bg-emerald-600 hover:bg-emerald-600 text-white" : ""
+                    }`}
+                  >
+                    {saveBtnState === "saving" && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    {saveBtnState === "success" && <Check className="w-3.5 h-3.5" />}
+                    {saveBtnState === "saving" ? "Salvando..." : saveBtnState === "success" ? "Salvo" : "Salvar"}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs">Salvar (Ctrl+S)</TooltipContent>

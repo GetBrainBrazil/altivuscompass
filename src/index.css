@@ -316,3 +316,16 @@
 .sidebar-scroll::-webkit-scrollbar-thumb:active {
   background-color: hsl(0 0% 100% / 0.4);
 }
+
+/* Toast notification animations (notify helper) */
+@keyframes notify-draw-circle {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes notify-draw-check {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes notify-pulse {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
