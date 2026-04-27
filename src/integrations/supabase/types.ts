@@ -2235,6 +2235,7 @@ export type Database = {
           internal_due_date: string | null
           internal_notes: string | null
           is_template: boolean
+          lead_id: string | null
           lead_source: string | null
           notes: string | null
           other_info: string | null
@@ -2275,6 +2276,7 @@ export type Database = {
           internal_due_date?: string | null
           internal_notes?: string | null
           is_template?: boolean
+          lead_id?: string | null
           lead_source?: string | null
           notes?: string | null
           other_info?: string | null
@@ -2315,6 +2317,7 @@ export type Database = {
           internal_due_date?: string | null
           internal_notes?: string | null
           is_template?: boolean
+          lead_id?: string | null
           lead_source?: string | null
           notes?: string | null
           other_info?: string | null
@@ -2337,6 +2340,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
         ]

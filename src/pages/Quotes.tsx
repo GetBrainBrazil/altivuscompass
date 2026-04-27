@@ -43,6 +43,8 @@ import { QuoteKanbanCard } from "@/components/quotes/QuoteKanbanCard";
 import QuoteAcceptanceInfo from "@/components/quotes/QuoteAcceptanceInfo";
 import ItineraryTimeline from "@/components/itineraries/ItineraryTimeline";
 import ItineraryMapView from "@/components/itineraries/ItineraryMapView";
+import { ClientDataCompletionDialog } from "@/components/contacts/ClientDataCompletionDialog";
+
 
 const stages = [
   { id: "new", label: "Nova Cotação", color: "bg-soft-blue" },
@@ -218,6 +220,9 @@ export default function Quotes() {
   const hotelMapsLoaded = useRef(false);
   const [draggedQuoteId, setDraggedQuoteId] = useState<string | null>(null);
   const [whatsappOpen, setWhatsappOpen] = useState(false);
+  const [completionDialog, setCompletionDialog] = useState<{ open: boolean; clientId: string | null; clientName: string | null; travelersCount: number | null }>({
+    open: false, clientId: null, clientName: null, travelersCount: null,
+  });
   const [whatsappPhone, setWhatsappPhone] = useState("");
   const [whatsappMessage, setWhatsappMessage] = useState("");
   const [whatsappQuoteId, setWhatsappQuoteId] = useState<string | null>(null);
@@ -794,6 +799,7 @@ export default function Quotes() {
         discount_percent: form.discount_percent ? Number(form.discount_percent) : 0,
         stage,
         conclusion_type,
+        lead_id: form.lead_id || null,
         travel_date_start: form.travel_date_start || null,
         travel_date_end: form.travel_date_end || null,
         notes: form.notes || null,
@@ -841,6 +847,7 @@ export default function Quotes() {
 
         if (stage === "confirmed" && conclusion_type === "won" && editingQuote.stage !== "confirmed") {
           await createSaleFromQuote(editingQuote.id, payload);
+          openClientCompletionAfterConfirm(editingQuote.id);
         }
       } else {
         const { data, error } = await supabase.from("quotes").insert(payload).select("id").single();
@@ -853,6 +860,7 @@ export default function Quotes() {
         await logHistory(data.id, "created", "Cotação criada");
         if (stage === "confirmed" && conclusion_type === "won") {
           await createSaleFromQuote(data.id, payload);
+          openClientCompletionAfterConfirm(data.id);
         }
       }
 
@@ -1557,6 +1565,37 @@ export default function Quotes() {
     }
   };
 
+  const openClientCompletionAfterConfirm = async (quoteId: string) => {
+    try {
+      await new Promise((r) => setTimeout(r, 600));
+      const { data: q } = await supabase
+        .from("quotes")
+        .select("client_id, lead_id")
+        .eq("id", quoteId)
+        .single();
+      let clientId = q?.client_id ?? null;
+      let travelersCount: number | null = null;
+      let clientName: string | null = null;
+      if (q?.lead_id) {
+        const { data: lead } = await supabase
+          .from("leads")
+          .select("converted_client_id, travelers_count, full_name")
+          .eq("id", q.lead_id)
+          .single();
+        if (lead) {
+          clientId = clientId ?? lead.converted_client_id;
+          travelersCount = lead.travelers_count ?? null;
+          clientName = lead.full_name ?? null;
+        }
+      }
+      if (clientId) {
+        const { data: c } = await supabase.from("clients").select("full_name").eq("id", clientId).single();
+        clientName = c?.full_name ?? clientName;
+        setCompletionDialog({ open: true, clientId, clientName, travelersCount });
+      }
+    } catch { /* silencioso */ }
+  };
+
   const updateQuoteStage = async (quoteId: string, newStage: string) => {
     try {
       const q = quotes.find((q: Quote) => q.id === quoteId);
@@ -1598,8 +1637,14 @@ export default function Quotes() {
         }
       }
 
+      // Após confirmar/won: trigger DB promove o lead a Cliente. Abrimos o dialog de coleta.
+      if (movingToConfirmed && updatePayload.conclusion_type === "won") {
+        await openClientCompletionAfterConfirm(quoteId);
+      }
+
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
       queryClient.invalidateQueries({ queryKey: ["sales"] });
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
     } catch (err: any) {
       toast({ title: "Erro ao mover cotação", description: err.message, variant: "destructive" });
     }
@@ -3559,6 +3604,18 @@ export default function Quotes() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ClientDataCompletionDialog
+        open={completionDialog.open}
+        onOpenChange={(o) => setCompletionDialog((p) => ({ ...p, open: o }))}
+        clientId={completionDialog.clientId}
+        clientName={completionDialog.clientName}
+        travelersCount={completionDialog.travelersCount}
+        onCompleted={() => {
+          queryClient.invalidateQueries({ queryKey: ["clients"] });
+          queryClient.invalidateQueries({ queryKey: ["contacts"] });
+        }}
+      />
     </div>
   );
 }
