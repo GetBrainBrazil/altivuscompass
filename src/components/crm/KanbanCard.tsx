@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Sparkles, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
 
 export type KanbanTagTone =
   | "blue"
@@ -43,6 +44,8 @@ export type KanbanCardData = {
   aiSummary?: string;
   /** Alerta visual exibido como badge no topo direito (e cor da borda esquerda quando destrutivo). */
   alert?: KanbanCardAlert;
+  /** Nível do contato (Prospect/Lead/Cliente). Quando presente, exibe badge colorido no topo. */
+  contactLevel?: ContactLevel;
 };
 
 const TAG_TONE_CLASSES: Record<KanbanTagTone, string> = {
@@ -196,6 +199,13 @@ export function KanbanCard({
           )}
         </div>
 
+        {/* Badge de nível do contato (Prospect / Lead / Cliente) */}
+        {card.contactLevel && (
+          <div className="mb-1.5">
+            <ContactLevelBadge level={card.contactLevel} size="xs" />
+          </div>
+        )}
+
         {/* Linha de contexto: destino · data */}
         <div className="min-h-[16px] mb-2">
           {(card.destination || card.travelDate) && (
@@ -204,6 +214,7 @@ export function KanbanCard({
             </p>
           )}
         </div>
+
 
         {/* AI summary (compacto) */}
         {card.isAILead && card.aiSummary && (

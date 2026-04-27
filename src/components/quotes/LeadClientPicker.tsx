@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { ChevronsUpDown, Check, Search, UserPlus, Bot, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { PhoneInput, formatBrazilPhone, stripBrazilPhone } from "@/components/ui/phone-input";
 import { toast } from "sonner";
@@ -179,8 +180,18 @@ export function LeadClientPicker({
                     )}
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="font-medium truncate">{lead.full_name}</span>
+                      <ContactLevelBadge
+                        level={
+                          (lead.destination &&
+                            (lead.travel_date_start || lead.travel_date_end || lead.flexible_dates) &&
+                            lead.travelers_count
+                            ? "lead"
+                            : "prospect") as ContactLevel
+                        }
+                        size="xs"
+                      />
                       {lead.source === "whatsapp_ai" && (
                         <Badge
                           variant="outline"
@@ -235,7 +246,8 @@ export function LeadClientPicker({
                       selectedClientId === c.id ? "opacity-100" : "opacity-0",
                     )}
                   />
-                  <span className="truncate">{c.full_name}</span>
+                  <span className="truncate flex-1">{c.full_name}</span>
+                  <ContactLevelBadge level="cliente" size="xs" />
                 </button>
               ))
             )}
