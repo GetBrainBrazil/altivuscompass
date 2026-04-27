@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
-import { FileText } from "lucide-react";
+import { PromoteToLeadDialog } from "@/components/contacts/PromoteToLeadDialog";
+import { FileText, Sparkles } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -125,8 +126,10 @@ export default function Clients() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
+  const [levelFilter, setLevelFilter] = useState<"all" | ContactLevel>("all");
   const [profileFilter, setProfileFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState<string[]>([]);
+  const [promoteTarget, setPromoteTarget] = useState<{ id: string; lead_id: string | null; full_name: string; phone: string | null; email: string | null } | null>(null);
   const [sort, setSort] = useState<SortState>(null);
   const navigate = useNavigate();
   const [view, setView] = useState<"list" | "form">("list");
@@ -286,10 +289,52 @@ export default function Clients() {
         const levelOrder = { urgent: 0, critical: 1, warning: 2 };
         alerts.sort((a, b) => levelOrder[a.level] - levelOrder[b.level]);
 
-        return { ...c, primary_phone: primaryPhone?.phone ?? null, primary_email: primaryEmail?.email ?? null, alerts };
+        return { ...c, _level: "cliente" as ContactLevel, _contactId: null as string | null, primary_phone: primaryPhone?.phone ?? null, primary_email: primaryEmail?.email ?? null, alerts };
       });
     },
   });
+
+  // Fetch contacts (prospects + leads) to display alongside clients
+  const { data: contactsRows = [] } = useQuery({
+    queryKey: ["contacts-for-clients-list"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("contacts")
+        .select("id, level, full_name, phone, email, lead_id, client_id, created_at")
+        .in("level", ["prospect", "lead"]);
+      if (error) throw error;
+      return (data ?? []) as Array<{ id: string; level: ContactLevel; full_name: string; phone: string | null; email: string | null; lead_id: string | null; client_id: string | null; created_at: string }>;
+    },
+  });
+
+  // Merge: clients (cliente) + contacts (prospect/lead) as virtual rows
+  const allRows = useMemo(() => {
+    const virtuals = (contactsRows ?? []).map((c) => ({
+      id: `contact:${c.id}`,
+      _level: c.level,
+      _contactId: c.id,
+      _leadId: c.lead_id,
+      full_name: c.full_name,
+      primary_phone: c.phone,
+      primary_email: c.email,
+      city: null,
+      state: null,
+      travel_profile: null,
+      preferred_airports: [] as string[],
+      tags: [] as string[],
+      alerts: [] as any[],
+      is_active: true,
+      rating: 0,
+      created_at: c.created_at,
+    }));
+    return [...clients, ...virtuals];
+  }, [clients, contactsRows]);
+
+  const levelCounts = useMemo(() => {
+    const c = { all: allRows.length, cliente: 0, lead: 0, prospect: 0 } as Record<string, number>;
+    allRows.forEach((r: any) => { c[r._level] = (c[r._level] ?? 0) + 1; });
+    return c;
+  }, [allRows]);
 
   // Fetch passengers to enable searching clients by passenger name
   const { data: allPassengers = [] } = useQuery({
@@ -775,19 +820,30 @@ export default function Clients() {
     onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
 
-  const filtered = sortData(
-    clients.filter((c: any) => {
-      const q = search.toLowerCase();
-      const matchesSearch = c.full_name.toLowerCase().includes(q) ||
-        (c.email ?? "").toLowerCase().includes(q) ||
-        (c.city ?? "").toLowerCase().includes(q) ||
-        (passengerNamesByClient[c.id] ?? "").includes(q);
-      const matchesProfile = profileFilter === "all" || c.travel_profile === profileFilter;
-      const matchesTags = tagFilter.length === 0 || tagFilter.every(t => (c.tags ?? []).includes(t));
-      return matchesSearch && matchesProfile && matchesTags;
-    }),
-    sort
-  );
+  const levelRank: Record<ContactLevel, number> = { cliente: 0, lead: 1, prospect: 2 };
+  const filteredBase = allRows.filter((c: any) => {
+    const q = search.toLowerCase();
+    const matchesSearch = (c.full_name ?? "").toLowerCase().includes(q) ||
+      (c.primary_email ?? "").toLowerCase().includes(q) ||
+      (c.city ?? "").toLowerCase().includes(q) ||
+      (passengerNamesByClient[c.id] ?? "").includes(q);
+    const matchesLevel = levelFilter === "all" || c._level === levelFilter;
+    // Profile/tags only apply to clients (cliente). For leads/prospects without these fields,
+    // we skip these filters so they remain visible only when filter is "all" — otherwise hide them.
+    const isCliente = c._level === "cliente";
+    const matchesProfile = profileFilter === "all" || (isCliente && c.travel_profile === profileFilter);
+    const matchesTags = tagFilter.length === 0 || (isCliente && tagFilter.every(t => (c.tags ?? []).includes(t)));
+    return matchesSearch && matchesLevel && matchesProfile && matchesTags;
+  });
+
+  const filtered = sort
+    ? sortData(filteredBase, sort)
+    : [...filteredBase].sort((a: any, b: any) => {
+        const lr = levelRank[a._level as ContactLevel] - levelRank[b._level as ContactLevel];
+        if (lr !== 0) return lr;
+        return (a.full_name ?? "").localeCompare(b.full_name ?? "", "pt-BR", { sensitivity: "base" });
+      });
+
 
   const SortableHeader = ({ label, sortKey, className }: { label: string; sortKey: string; className?: string }) => {
     const active = sort?.key === sortKey;
@@ -1767,7 +1823,7 @@ export default function Clients() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">Clientes</h1>
-          <p className="text-muted-foreground font-body mt-1 text-sm">{clients.length} clientes cadastrados</p>
+          <p className="text-muted-foreground font-body mt-1 text-sm">{allRows.length} contatos cadastrados</p>
         </div>
         <Button onClick={openCreate} className="font-body w-full sm:w-auto"><Plus className="h-4 w-4" />Novo Cliente</Button>
       </div>
@@ -1779,13 +1835,38 @@ export default function Clients() {
             className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-card text-sm font-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/30" />
         </div>
         <div className="flex gap-1 p-1 rounded-lg bg-muted flex-wrap">
-          {["all", "economic", "opportunity", "sophisticated"].map((p) => (
-            <button key={p} onClick={() => setProfileFilter(p)}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium font-body transition-colors whitespace-nowrap ${profileFilter === p ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-              {p === "all" ? "Todos" : travelProfiles[p].label}
+          {([
+            { key: "all", label: "Todos" },
+            { key: "cliente", label: "Clientes" },
+            { key: "lead", label: "Leads" },
+            { key: "prospect", label: "Prospects" },
+          ] as const).map((opt) => (
+            <button key={opt.key} onClick={() => setLevelFilter(opt.key as any)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium font-body transition-colors whitespace-nowrap inline-flex items-center gap-1.5 ${levelFilter === opt.key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+              {opt.label}
+              <span className={`inline-flex items-center justify-center min-w-[20px] h-4 px-1 rounded-full text-[10px] font-semibold ${levelFilter === opt.key ? "bg-muted text-foreground" : "bg-card/60 text-muted-foreground"}`}>
+                {levelCounts[opt.key as string] ?? 0}
+              </span>
             </button>
           ))}
         </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="font-body text-xs gap-1.5 h-9">
+              Perfil
+              {profileFilter !== "all" && <span className="ml-1 bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none">{travelProfiles[profileFilter]?.label}</span>}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-44 p-1" align="start">
+            {["all", "economic", "opportunity", "sophisticated"].map((p) => (
+              <button key={p} type="button"
+                onClick={() => setProfileFilter(p)}
+                className={`w-full text-left px-2 py-1.5 rounded text-xs font-body hover:bg-muted/50 ${profileFilter === p ? "bg-muted/40 text-foreground" : "text-muted-foreground"}`}>
+                {p === "all" ? "Todos os perfis" : travelProfiles[p].label}
+              </button>
+            ))}
+          </PopoverContent>
+        </Popover>
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="font-body text-xs gap-1.5 h-9">
@@ -1830,6 +1911,7 @@ export default function Clients() {
               <tr className="border-b border-border/50">
                 <th className="p-2 w-10"></th>
                 <SortableHeader label="Cliente" sortKey="full_name" />
+                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Nível</th>
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Telefone</th>
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">E-mail</th>
                 <SortableHeader label="Localização" sortKey="city" />
@@ -1843,9 +1925,17 @@ export default function Clients() {
                 const clientPassengersList = passengersByClient[client.id] ?? [];
                 const isExpanded = expandedClients.has(client.id);
                 const hasPassengers = clientPassengersList.length > 0;
+                const isVirtual = !!client._contactId;
+                const handleRowOpen = () => {
+                  if (isVirtual) {
+                    navigate(`/clients?contact=${client._contactId}`);
+                  } else {
+                    openEdit(client);
+                  }
+                };
                 return (
                   <React.Fragment key={client.id}>
-                    <tr className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEdit(client)}>
+                    <tr className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={handleRowOpen}>
                       <td className="p-2 text-center">
                         {hasPassengers ? (
                           <button
@@ -1875,6 +1965,9 @@ export default function Clients() {
                           </div>
                           {client.is_active === false && <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-body">Inativo</span>}
                         </div>
+                      </td>
+                      <td className="p-4">
+                        <ContactLevelBadge level={client._level as ContactLevel} size="xs" />
                       </td>
                       <td className="p-4">
                         {client.primary_phone ? (
@@ -1926,6 +2019,25 @@ export default function Clients() {
                                 </button>
                               );
                             })
+                          )}
+                          {isVirtual && (client._level === "prospect" || client._level === "lead") && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPromoteTarget({
+                                  id: client._contactId,
+                                  lead_id: client._leadId ?? null,
+                                  full_name: client.full_name,
+                                  phone: client.primary_phone,
+                                  email: client.primary_email,
+                                });
+                              }}
+                              className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full font-body text-sky-700 hover:bg-sky-50 border border-sky-200 self-start"
+                            >
+                              <Sparkles className="h-3 w-3" />
+                              Promover
+                            </button>
                           )}
                         </div>
                       </td>
@@ -1986,11 +2098,12 @@ export default function Clients() {
             const isExpanded = expandedClients.has(client.id);
             const hasPassengers = clientPassengersList.length > 0;
             return (
-              <div key={client.id} className="glass-card rounded-xl p-4 space-y-3 cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => openEdit(client)}>
+              <div key={client.id} className="glass-card rounded-xl p-4 space-y-3 cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => client._contactId ? navigate(`/clients?contact=${client._contactId}`) : openEdit(client)}>
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <p className="text-sm font-medium font-body text-foreground">{client.full_name}</p>
+                      <ContactLevelBadge level={client._level as ContactLevel} size="xs" />
                       {hasPassengers && (
                         <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground font-body">
                           <Users className="h-3 w-3" />{clientPassengersList.length}
@@ -2036,6 +2149,20 @@ export default function Clients() {
           })
         )}
       </div>
+
+      <PromoteToLeadDialog
+        contactId={promoteTarget?.id ?? null}
+        leadId={promoteTarget?.lead_id ?? null}
+        contactName={promoteTarget?.full_name}
+        contactPhone={promoteTarget?.phone}
+        contactEmail={promoteTarget?.email}
+        open={!!promoteTarget}
+        onOpenChange={(o) => !o && setPromoteTarget(null)}
+        onPromoted={() => {
+          setPromoteTarget(null);
+          qc.invalidateQueries({ queryKey: ["contacts-for-clients-list"] });
+        }}
+      />
     </div>
   );
 }
