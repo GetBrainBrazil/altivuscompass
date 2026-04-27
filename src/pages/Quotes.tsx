@@ -691,15 +691,8 @@ export default function Quotes() {
         loadedItems.forEach((it: any, idx: number) => { if (it.item_type === "flight") flightIndices.add(idx); });
         setCollapsedFlights(flightIndices);
 
-        if (!snapshotCapturedRef.current) {
-          const baseSnapshot = buildQuoteEditorBaseSnapshot(editingQuote);
-          initialSnapshotRef.current = JSON.stringify({
-            ...baseSnapshot,
-            items: loadedItems,
-            selectedPassengers: loadedPassengers,
-          });
-          snapshotCapturedRef.current = true;
-        }
+        // Baseline snapshot is captured by the dedicated effect above once
+        // hydration settles — using the actual editor state (single source of truth).
       }).finally(() => {
         setIsHydratingEditQuote(false);
       });
