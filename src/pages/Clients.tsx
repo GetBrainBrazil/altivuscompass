@@ -1967,6 +1967,9 @@ export default function Clients() {
                         </div>
                       </td>
                       <td className="p-4">
+                        <ContactLevelBadge level={client._level as ContactLevel} size="xs" />
+                      </td>
+                      <td className="p-4">
                         {client.primary_phone ? (
                           <a href={`https://wa.me/${client.primary_phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-sm font-body text-primary hover:underline whitespace-nowrap">{client.primary_phone}</a>
                         ) : <p className="text-sm font-body text-foreground">—</p>}
