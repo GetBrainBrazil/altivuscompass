@@ -59,7 +59,7 @@ export default function Contacts() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [reloadKey]);
 
   const counts = useMemo(() => {
     const c = { all: rows.length, prospect: 0, lead: 0, cliente: 0 };
