@@ -131,8 +131,11 @@ export default function Clients() {
   const navigate = useNavigate();
   const [view, setView] = useState<"list" | "form">("list");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [linkContactId, setLinkContactId] = useState<string | null>(null);
+  const [contactLevel, setContactLevel] = useState<ContactLevel | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [activeTab, setActiveTab] = useState("contact");
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Multi-value entries
   const [phones, setPhones] = useState<PhoneEntry[]>([]);
