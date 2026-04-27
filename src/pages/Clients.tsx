@@ -660,6 +660,8 @@ export default function Clients() {
     setSelectedAirports(c.preferred_airports ?? []);
     setSelectedTags(c.tags ?? []);
     setSelectedDestinations((c as any).desired_destinations ?? []);
+    // When opened from clients list, treat as cliente level by default; URL effect may override
+    setContactLevel((prev) => prev ?? "cliente");
     setView("form");
     initialClientSnapshotRef.current = "";
   };
