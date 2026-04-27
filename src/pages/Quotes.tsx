@@ -598,28 +598,38 @@ export default function Quotes() {
     return () => clearTimeout(timer);
   }, [activeTab, dialogOpen, items]);
 
-  // Capture initial snapshot when editing an existing quote (after data is hydrated)
+  // Capture initial snapshot when editing an existing quote (after data is hydrated).
+  // Strategy: wait for hydration to settle, then re-capture whenever the underlying
+  // state changes during a short stabilization window. The snapshot is "frozen" only
+  // after the state stops changing for `STABILIZE_MS`, ensuring that any async
+  // backfills/normalizations happening right after open are part of the baseline —
+  // never counted as user edits.
   const snapshotCapturedRef = useRef(false);
   useEffect(() => {
     snapshotCapturedRef.current = false;
+    initialSnapshotRef.current = "";
   }, [dialogOpen, editingQuote?.id]);
   useEffect(() => {
     if (!dialogOpen || !editingQuote) return;
-    if (snapshotCapturedRef.current) return;
     if (isHydratingEditQuote) return;
 
+    const STABILIZE_MS = draftRestored ? 200 : 500;
+    const candidate = JSON.stringify({
+      form,
+      items,
+      selectedPassengers,
+      selectedLinkedClients,
+      clientSelfTraveling,
+      selectedDestinations,
+      coverPreview,
+    });
+
+    // Continuously refresh the baseline while state is still settling. The last
+    // value to "stick" for STABILIZE_MS becomes the official baseline.
     const t = window.setTimeout(() => {
-      initialSnapshotRef.current = JSON.stringify({
-        form,
-        items,
-        selectedPassengers,
-        selectedLinkedClients,
-        clientSelfTraveling,
-        selectedDestinations,
-        coverPreview,
-      });
+      initialSnapshotRef.current = candidate;
       snapshotCapturedRef.current = true;
-    }, draftRestored ? 150 : 400);
+    }, STABILIZE_MS);
 
     return () => window.clearTimeout(t);
   }, [
@@ -681,15 +691,8 @@ export default function Quotes() {
         loadedItems.forEach((it: any, idx: number) => { if (it.item_type === "flight") flightIndices.add(idx); });
         setCollapsedFlights(flightIndices);
 
-        if (!snapshotCapturedRef.current) {
-          const baseSnapshot = buildQuoteEditorBaseSnapshot(editingQuote);
-          initialSnapshotRef.current = JSON.stringify({
-            ...baseSnapshot,
-            items: loadedItems,
-            selectedPassengers: loadedPassengers,
-          });
-          snapshotCapturedRef.current = true;
-        }
+        // Baseline snapshot is captured by the dedicated effect above once
+        // hydration settles — using the actual editor state (single source of truth).
       }).finally(() => {
         setIsHydratingEditQuote(false);
       });
