@@ -96,6 +96,8 @@ const flightPt = {
   carryOn: "Mão",
   checkedBag: "Despachada",
   observation: "Observação",
+  connectionIn: "Conexão em",
+  layover: "de parada",
 };
 
 const flightEn = {
