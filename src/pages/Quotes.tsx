@@ -1861,11 +1861,48 @@ export default function Quotes() {
 
                 {!editingQuote?.is_template && (
                 <div className="col-span-2 lg:col-span-4 space-y-1">
-                  <Label className="font-body text-xs">Cliente</Label>
-                  <Select value={form.client_id ?? ""} onValueChange={(v) => { setForm({ ...form, client_id: v }); setSelectedPassengers([]); setSelectedLinkedClients([]); setClientSelfTraveling(false); }}>
-                    <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar cliente" /></SelectTrigger>
-                    <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}</SelectContent>
-                  </Select>
+                  <Label className="font-body text-xs">Cliente ou Lead</Label>
+                  <LeadClientPicker
+                    clients={clients as any}
+                    selectedClientId={form.client_id || undefined}
+                    selectedLeadId={form.lead_id || undefined}
+                    onSelectClient={(id) => {
+                      setForm({ ...form, client_id: id, lead_id: "" });
+                      setSelectedPassengers([]);
+                      setSelectedLinkedClients([]);
+                      setClientSelfTraveling(false);
+                    }}
+                    onSelectLead={(lead: LeadRecord) => {
+                      const destinations = lead.destination
+                        ? lead.destination.split(",").map((s) => s.trim()).filter(Boolean)
+                        : [];
+                      const prefParts = [
+                        lead.preferences,
+                        lead.travelers_count ? `Número de viajantes: ${lead.travelers_count}` : "",
+                        lead.ai_summary ? `Resumo da IA: ${lead.ai_summary}` : "",
+                      ].filter(Boolean);
+                      setForm({
+                        ...form,
+                        client_id: "",
+                        lead_id: lead.id,
+                        title: form.title || (lead.destination ? `Viagem ${lead.destination} - ${lead.full_name}` : `Cotação - ${lead.full_name}`),
+                        destination: lead.destination ?? form.destination,
+                        travel_date_start: lead.travel_date_start ?? form.travel_date_start,
+                        travel_date_end: lead.travel_date_end ?? form.travel_date_end,
+                        flexible_dates: lead.flexible_dates ?? form.flexible_dates,
+                        flexible_dates_description: lead.flexible_dates_description ?? form.flexible_dates_description,
+                        internal_notes: prefParts.length > 0
+                          ? `${form.internal_notes ? form.internal_notes + "\n\n" : ""}${prefParts.join("\n")}`
+                          : form.internal_notes,
+                        lead_source: form.lead_source || (lead.source === "whatsapp_ai" ? "whatsapp" : form.lead_source),
+                      });
+                      if (destinations.length > 0) setSelectedDestinations(destinations);
+                      setSelectedPassengers([]);
+                      setSelectedLinkedClients([]);
+                      setClientSelfTraveling(false);
+                      toast({ title: "Lead carregado", description: "Os dados coletados pela IA foram preenchidos automaticamente." });
+                    }}
+                  />
                 </div>
                 )}
 
