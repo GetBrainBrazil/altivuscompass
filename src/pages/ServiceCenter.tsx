@@ -73,6 +73,11 @@ interface LeadSummary {
   notes: string[];
 }
 
+interface LastTrip {
+  destination: string;
+  date: string; // ISO
+}
+
 interface Conversation {
   id: string;
   leadName: string;
@@ -88,6 +93,12 @@ interface Conversation {
   contactType: ContactType;
   /** Vínculo com o CRM (cliente, cotação, viagem). */
   crm: CRMLink;
+  /** Nível na hierarquia de contatos (Prospect / Lead / Cliente). */
+  level: ContactLevel;
+  /** Última viagem realizada (para clientes). */
+  lastTrip?: LastTrip;
+  /** Cliente está em viagem agora (prioridade máxima na lista). */
+  isTraveling?: boolean;
 }
 
 // ============= Mock Data =============
