@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Pencil, FlaskConical, Trash2 } from "lucide-react";
+import { Plus, Pencil, FlaskConical, Trash2, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -117,13 +117,23 @@ export default function AIAgents() {
               Gerencie seus agentes de inteligência artificial
             </p>
           </div>
-          <Button
-            className="bg-[hsl(220_45%_15%)] hover:bg-[hsl(220_45%_22%)] text-white h-10 px-5"
-            onClick={() => navigate("/ai-agents/new")}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Agente
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              className="h-10 px-4 border-border/70 text-foreground hover:bg-muted"
+              onClick={() => toast.info("Conexão WhatsApp em breve")}
+            >
+              <MessageCircle className="h-4 w-4 mr-2 text-[hsl(142_70%_40%)]" />
+              Conexão WhatsApp
+            </Button>
+            <Button
+              className="bg-[hsl(220_45%_15%)] hover:bg-[hsl(220_45%_22%)] text-white h-10 px-5"
+              onClick={() => navigate("/ai-agents/new")}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Agente
+            </Button>
+          </div>
         </header>
 
         <div className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
