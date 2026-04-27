@@ -618,6 +618,7 @@ async function callLeadCaptureAI(
   sessionState: any,
   currentLead: any,
   senderName: string,
+  contactCtx: any = null,
 ) {
   const today = new Date().toISOString().split('T')[0]
   const knownData = {
