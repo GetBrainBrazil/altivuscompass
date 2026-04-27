@@ -69,6 +69,8 @@ type TranslationKeys = {
   carryOn: string;
   checkedBag: string;
   observation: string;
+  connectionIn: string;
+  layover: string;
 };
 
 const flightPt = {
