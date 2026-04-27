@@ -666,7 +666,86 @@ export default function Clients() {
     initialClientSnapshotRef.current = "";
   };
 
-  const quickAddMutation = useMutation({
+  // ====== URL-driven open: ?id, ?contact, ?new ======
+  const handledUrlRef = useRef<string>("");
+  useEffect(() => {
+    const idParam = searchParams.get("id");
+    const contactParam = searchParams.get("contact");
+    const newParam = searchParams.get("new");
+    const sig = `${idParam ?? ""}|${contactParam ?? ""}|${newParam ?? ""}`;
+    if (!idParam && !contactParam && !newParam) {
+      handledUrlRef.current = "";
+      return;
+    }
+    if (handledUrlRef.current === sig) return;
+
+    if (newParam) {
+      handledUrlRef.current = sig;
+      openCreate();
+      return;
+    }
+
+    if (contactParam) {
+      handledUrlRef.current = sig;
+      (async () => {
+        const { data: contact, error } = await (supabase as any)
+          .from("contacts")
+          .select("*")
+          .eq("id", contactParam)
+          .maybeSingle();
+        if (error || !contact) return;
+        setLinkContactId(contact.id);
+        setContactLevel(contact.level as ContactLevel);
+
+        if (contact.client_id) {
+          const { data: c } = await supabase.from("clients").select("*").eq("id", contact.client_id).maybeSingle();
+          if (c) {
+            openEdit(c);
+            setContactLevel(contact.level as ContactLevel);
+            return;
+          }
+        }
+        // Open form pre-filled (no client row yet)
+        setEditingId(null);
+        setForm({
+          ...emptyForm,
+          full_name: contact.full_name ?? "",
+        });
+        setSelectedAirports([]); setSelectedTags([]); setSelectedDestinations([]);
+        setPhones(contact.phone ? [{ phone: contact.phone, description: "", country_code: "BR", is_primary: true }] : []);
+        setEmails(contact.email ? [{ email: contact.email, description: "", is_primary: true }] : []);
+        setSocials([]); setPassports([]); setMilesPrograms([]); setShowPasswords({});
+        setActiveTab("contact");
+        setView("form");
+        initialClientSnapshotRef.current = "";
+      })();
+      return;
+    }
+
+    if (idParam) {
+      handledUrlRef.current = sig;
+      (async () => {
+        const { data: c } = await supabase.from("clients").select("*").eq("id", idParam).maybeSingle();
+        if (c) {
+          openEdit(c);
+          // Try to find originating contact for level badge
+          const { data: contact } = await (supabase as any)
+            .from("contacts")
+            .select("id, level")
+            .eq("client_id", idParam)
+            .maybeSingle();
+          if (contact) {
+            setLinkContactId(contact.id);
+            setContactLevel(contact.level as ContactLevel);
+          } else {
+            setContactLevel("cliente");
+          }
+        }
+      })();
+    }
+  }, [searchParams]);
+
+
     mutationFn: async () => {
       if (quickAddType === "country") {
         const { error } = await supabase.from("countries").insert({ name: quickAddName });
