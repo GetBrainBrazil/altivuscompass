@@ -39,11 +39,8 @@ const brl = (v: number) =>
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
-type PaymentMode = "single" | "installments" | "recurring";
-
 const emptyForm = {
   type: "payable" as TxType,
-  payment_mode: "single" as PaymentMode,
   description: "",
   category: "",
   cost_center: "",
@@ -59,8 +56,6 @@ const emptyForm = {
   interest_amount: "",
   fine_amount: "",
   admin_fee_amount: "",
-  installment_total: "1",
-  installment_interval_days: "30",
   recurrence_enabled: false,
   recurrence_every: "1",
   recurrence_period: "monthly",
