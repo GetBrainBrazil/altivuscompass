@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowDown, ArrowUp, ArrowLeft, Plus, Repeat, Layers } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowLeft, Plus, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type TxType = "payable" | "receivable";
