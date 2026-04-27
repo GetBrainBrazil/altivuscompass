@@ -71,7 +71,6 @@ export default function AIAgents() {
   const navigate = useNavigate();
   const [agents, setAgents] = useState<Agent[]>(loadAgents);
   const [toDelete, setToDelete] = useState<Agent | null>(null);
-  const [waOpen, setWaOpen] = useState(false);
 
   // Persist list whenever it changes
   useEffect(() => {
