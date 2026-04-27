@@ -63,16 +63,27 @@ export function LeadClientPicker({
     },
   });
 
+  // Apenas leads qualificados (com destino + período + nº viajantes) são selecionáveis.
+  // Prospects não recebem cotação.
+  const qualifiedLeads = useMemo(() => {
+    return leads.filter(
+      (l) =>
+        !!l.destination &&
+        (!!l.travel_date_start || !!l.travel_date_end || !!l.flexible_dates) &&
+        !!l.travelers_count,
+    );
+  }, [leads]);
+
   const filteredLeads = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return leads;
-    return leads.filter(
+    if (!q) return qualifiedLeads;
+    return qualifiedLeads.filter(
       (l) =>
         l.full_name.toLowerCase().includes(q) ||
         (l.phone ?? "").toLowerCase().includes(q) ||
         (l.destination ?? "").toLowerCase().includes(q),
     );
-  }, [leads, query]);
+  }, [qualifiedLeads, query]);
 
   const filteredClients = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -134,86 +145,7 @@ export function LeadClientPicker({
           </div>
 
           <div className="max-h-[320px] overflow-y-auto py-1">
-            {/* LEADS */}
-            <div className="px-2 pt-1 pb-1 flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                <Bot className="h-3 w-3" /> Leads
-                <span className="text-muted-foreground/60 font-normal normal-case">
-                  ({filteredLeads.length})
-                </span>
-              </span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-[10px] text-primary hover:text-primary"
-                onClick={() => {
-                  setOpen(false);
-                  setQuickOpen(true);
-                }}
-              >
-                <UserPlus className="h-3 w-3 mr-1" /> Criar lead rápido
-              </Button>
-            </div>
-            {filteredLeads.length === 0 ? (
-              <p className="text-[11px] text-muted-foreground px-3 py-2">
-                Nenhum lead disponível.
-              </p>
-            ) : (
-              filteredLeads.map((lead) => (
-                <button
-                  type="button"
-                  key={lead.id}
-                  onClick={() => {
-                    onSelectLead(lead);
-                    setOpen(false);
-                  }}
-                  className={cn(
-                    "w-full text-left flex items-start gap-2 px-3 py-1.5 text-xs hover:bg-accent transition-colors",
-                    selectedLeadId === lead.id && "bg-accent/60",
-                  )}
-                >
-                  <Check
-                    className={cn(
-                      "mt-0.5 h-3.5 w-3.5 shrink-0",
-                      selectedLeadId === lead.id ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-medium truncate">{lead.full_name}</span>
-                      <ContactLevelBadge
-                        level={
-                          (lead.destination &&
-                            (lead.travel_date_start || lead.travel_date_end || lead.flexible_dates) &&
-                            lead.travelers_count
-                            ? "lead"
-                            : "prospect") as ContactLevel
-                        }
-                        size="xs"
-                      />
-                      {lead.source === "whatsapp_ai" && (
-                        <Badge
-                          variant="outline"
-                          className="text-[9px] h-3.5 px-1 border-amber-500/40 text-amber-700 bg-amber-500/10"
-                        >
-                          IA
-                        </Badge>
-                      )}
-                    </div>
-                    {lead.phone && (
-                      <p className="text-[10px] text-muted-foreground">
-                        {formatBrazilPhone(lead.phone)}
-                      </p>
-                    )}
-                  </div>
-                </button>
-              ))
-            )}
-
-            <div className="my-1 h-px bg-border" />
-
-            {/* CLIENTS */}
+            {/* CLIENTS — exibidos primeiro */}
             <div className="px-2 pt-1 pb-1">
               <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                 <User className="h-3 w-3" /> Clientes
@@ -248,6 +180,68 @@ export function LeadClientPicker({
                   />
                   <span className="truncate flex-1">{c.full_name}</span>
                   <ContactLevelBadge level="cliente" size="xs" />
+                </button>
+              ))
+            )}
+
+            <div className="my-1 h-px bg-border" />
+
+            {/* LEADS — exibidos em seguida (apenas leads qualificados; prospects ficam de fora) */}
+            <div className="px-2 pt-1 pb-1 flex items-center justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <Bot className="h-3 w-3" /> Leads
+                <span className="text-muted-foreground/60 font-normal normal-case">
+                  ({filteredLeads.length})
+                </span>
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-[10px] text-primary hover:text-primary"
+                onClick={() => {
+                  setOpen(false);
+                  setQuickOpen(true);
+                }}
+              >
+                <UserPlus className="h-3 w-3 mr-1" /> Criar lead rápido
+              </Button>
+            </div>
+            {filteredLeads.length === 0 ? (
+              <p className="text-[11px] text-muted-foreground px-3 py-2">
+                Nenhum lead qualificado disponível.
+              </p>
+            ) : (
+              filteredLeads.map((lead) => (
+                <button
+                  type="button"
+                  key={lead.id}
+                  onClick={() => {
+                    onSelectLead(lead);
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    "w-full text-left flex items-start gap-2 px-3 py-1.5 text-xs hover:bg-accent transition-colors",
+                    selectedLeadId === lead.id && "bg-accent/60",
+                  )}
+                >
+                  <Check
+                    className={cn(
+                      "mt-0.5 h-3.5 w-3.5 shrink-0",
+                      selectedLeadId === lead.id ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-medium truncate">{lead.full_name}</span>
+                      <ContactLevelBadge level="lead" size="xs" />
+                    </div>
+                    {lead.phone && (
+                      <p className="text-[10px] text-muted-foreground">
+                        {formatBrazilPhone(lead.phone)}
+                      </p>
+                    )}
+                  </div>
                 </button>
               ))
             )}
