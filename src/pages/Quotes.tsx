@@ -218,6 +218,9 @@ export default function Quotes() {
   const hotelMapsLoaded = useRef(false);
   const [draggedQuoteId, setDraggedQuoteId] = useState<string | null>(null);
   const [whatsappOpen, setWhatsappOpen] = useState(false);
+  const [completionDialog, setCompletionDialog] = useState<{ open: boolean; clientId: string | null; clientName: string | null; travelersCount: number | null }>({
+    open: false, clientId: null, clientName: null, travelersCount: null,
+  });
   const [whatsappPhone, setWhatsappPhone] = useState("");
   const [whatsappMessage, setWhatsappMessage] = useState("");
   const [whatsappQuoteId, setWhatsappQuoteId] = useState<string | null>(null);
