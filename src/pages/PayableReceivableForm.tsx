@@ -39,8 +39,11 @@ const brl = (v: number) =>
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
+type PaymentMode = "single" | "installments" | "recurring";
+
 const emptyForm = {
   type: "payable" as TxType,
+  payment_mode: "single" as PaymentMode,
   description: "",
   category: "",
   cost_center: "",
