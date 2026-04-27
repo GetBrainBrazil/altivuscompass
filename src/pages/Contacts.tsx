@@ -216,7 +216,7 @@ export default function Contacts() {
                       className="gap-1.5 h-8 text-xs border-sky-300 text-sky-700 hover:bg-sky-50"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setPromoteTarget(r);
+                        navigate(`/contacts/${r.id}/promote`);
                       }}
                     >
                       <Sparkles className="w-3 h-3" />
