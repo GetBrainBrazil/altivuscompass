@@ -1036,59 +1036,116 @@ export type Database = {
       }
       financial_transactions: {
         Row: {
+          admin_fee_amount: number | null
           amount: number
           attachment_urls: string[] | null
+          bank_account_id: string | null
+          base_amount: number | null
           category: string | null
+          client_id: string | null
+          competence_date: string | null
+          cost_center: string | null
           created_at: string
           created_by: string | null
           date: string
           description: string
+          discount_amount: number | null
           due_date: string | null
+          fine_amount: number | null
           id: string
+          installment_group_id: string | null
+          installment_number: number | null
+          installment_total: number | null
+          interest_amount: number | null
+          is_future_recurrence: boolean | null
           is_reconciled: boolean
           observations: string | null
           party_name: string | null
           payment_account: string | null
+          payment_date: string | null
+          payment_method: string | null
+          project: string | null
           quote_id: string | null
+          recurrence_group_id: string | null
+          recurrence_type: string | null
           status: string | null
+          supplier_id: string | null
           type: string
           virtual_account_owner: string | null
         }
         Insert: {
+          admin_fee_amount?: number | null
           amount: number
           attachment_urls?: string[] | null
+          bank_account_id?: string | null
+          base_amount?: number | null
           category?: string | null
+          client_id?: string | null
+          competence_date?: string | null
+          cost_center?: string | null
           created_at?: string
           created_by?: string | null
           date?: string
           description: string
+          discount_amount?: number | null
           due_date?: string | null
+          fine_amount?: number | null
           id?: string
+          installment_group_id?: string | null
+          installment_number?: number | null
+          installment_total?: number | null
+          interest_amount?: number | null
+          is_future_recurrence?: boolean | null
           is_reconciled?: boolean
           observations?: string | null
           party_name?: string | null
           payment_account?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          project?: string | null
           quote_id?: string | null
+          recurrence_group_id?: string | null
+          recurrence_type?: string | null
           status?: string | null
+          supplier_id?: string | null
           type: string
           virtual_account_owner?: string | null
         }
         Update: {
+          admin_fee_amount?: number | null
           amount?: number
           attachment_urls?: string[] | null
+          bank_account_id?: string | null
+          base_amount?: number | null
           category?: string | null
+          client_id?: string | null
+          competence_date?: string | null
+          cost_center?: string | null
           created_at?: string
           created_by?: string | null
           date?: string
           description?: string
+          discount_amount?: number | null
           due_date?: string | null
+          fine_amount?: number | null
           id?: string
+          installment_group_id?: string | null
+          installment_number?: number | null
+          installment_total?: number | null
+          interest_amount?: number | null
+          is_future_recurrence?: boolean | null
           is_reconciled?: boolean
           observations?: string | null
           party_name?: string | null
           payment_account?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          project?: string | null
           quote_id?: string | null
+          recurrence_group_id?: string | null
+          recurrence_type?: string | null
           status?: string | null
+          supplier_id?: string | null
           type?: string
           virtual_account_owner?: string | null
         }
