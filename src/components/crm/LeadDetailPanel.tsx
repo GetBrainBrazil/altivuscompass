@@ -19,13 +19,21 @@ import {
   ExternalLink,
   CircleDot,
 } from "lucide-react";
+import { useState } from "react";
 import type { KanbanCardData } from "@/components/crm/KanbanCard";
+import { LeadConversionDialog } from "@/components/crm/LeadConversionDialog";
 
 type Props = {
   card: KanbanCardData | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
+
+/** Extrai o id real do lead a partir do id do card ("lead-<uuid>"). */
+function getLeadIdFromCard(card: KanbanCardData | null): string | null {
+  if (!card?.id?.startsWith("lead-")) return null;
+  return card.id.slice("lead-".length);
+}
 
 type TimelineEvent = {
   id: string;
