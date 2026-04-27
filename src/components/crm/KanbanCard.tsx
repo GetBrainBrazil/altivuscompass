@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Sparkles, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
 
 export type KanbanTagTone =
   | "blue"
