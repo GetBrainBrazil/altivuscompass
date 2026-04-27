@@ -519,6 +519,10 @@ export default function Clients() {
         if (error) throw error;
         clientId = data.id;
         logAuditEvent({ action: "create", tableName: "clients", recordId: data.id, recordLabel: payload.full_name, newData: payload });
+        // Link back to originating contact if applicable
+        if (linkContactId) {
+          await (supabase as any).from("contacts").update({ client_id: clientId }).eq("id", linkContactId);
+        }
       }
 
       // Save multi-value records
