@@ -794,6 +794,7 @@ export default function Quotes() {
         discount_percent: form.discount_percent ? Number(form.discount_percent) : 0,
         stage,
         conclusion_type,
+        lead_id: form.lead_id || null,
         travel_date_start: form.travel_date_start || null,
         travel_date_end: form.travel_date_end || null,
         notes: form.notes || null,
