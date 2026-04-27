@@ -21,13 +21,12 @@ const tourismCategories = [
   "Experiências/Passeios", "Cruzeiro", "Comissão", "Custo Operacional", "Outros",
 ];
 
-const recurrenceOptions = [
-  { value: "none", label: "Sem recorrência" },
-  { value: "weekly", label: "Semanal" },
-  { value: "biweekly", label: "Quinzenal" },
-  { value: "monthly", label: "Mensal" },
-  { value: "quarterly", label: "Trimestral" },
-  { value: "yearly", label: "Anual" },
+const recurrencePeriods = [
+  { value: "weekly", label: "Semana" },
+  { value: "monthly", label: "Mês" },
+  { value: "quarterly", label: "Trimestre" },
+  { value: "biannual", label: "Semestre" },
+  { value: "yearly", label: "Ano" },
 ];
 
 const paymentMethods = [
