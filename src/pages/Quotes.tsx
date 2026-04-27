@@ -2652,7 +2652,7 @@ export default function Quotes() {
                                   <TooltipContent side="top" className="text-xs">Mochila</TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
-                              <Input type="number" min={0} value={d.pax_adults ?? 1} onChange={(e) => updateDetail("pax_adults", parseInt(e.target.value) || 0)} className="h-8 text-xs text-center" />
+                              <Input type="number" min={0} value={d.pax_adults ?? 0} onChange={(e) => updateDetail("pax_adults", parseInt(e.target.value) || 0)} className="h-8 text-xs text-center" />
                             </div>
                             <div className="col-span-1 space-y-0.5">
                               <TooltipProvider delayDuration={200}>
