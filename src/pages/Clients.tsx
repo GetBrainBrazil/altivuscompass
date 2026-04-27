@@ -820,19 +820,30 @@ export default function Clients() {
     onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
 
-  const filtered = sortData(
-    clients.filter((c: any) => {
-      const q = search.toLowerCase();
-      const matchesSearch = c.full_name.toLowerCase().includes(q) ||
-        (c.email ?? "").toLowerCase().includes(q) ||
-        (c.city ?? "").toLowerCase().includes(q) ||
-        (passengerNamesByClient[c.id] ?? "").includes(q);
-      const matchesProfile = profileFilter === "all" || c.travel_profile === profileFilter;
-      const matchesTags = tagFilter.length === 0 || tagFilter.every(t => (c.tags ?? []).includes(t));
-      return matchesSearch && matchesProfile && matchesTags;
-    }),
-    sort
-  );
+  const levelRank: Record<ContactLevel, number> = { cliente: 0, lead: 1, prospect: 2 };
+  const filteredBase = allRows.filter((c: any) => {
+    const q = search.toLowerCase();
+    const matchesSearch = (c.full_name ?? "").toLowerCase().includes(q) ||
+      (c.primary_email ?? "").toLowerCase().includes(q) ||
+      (c.city ?? "").toLowerCase().includes(q) ||
+      (passengerNamesByClient[c.id] ?? "").includes(q);
+    const matchesLevel = levelFilter === "all" || c._level === levelFilter;
+    // Profile/tags only apply to clients (cliente). For leads/prospects without these fields,
+    // we skip these filters so they remain visible only when filter is "all" — otherwise hide them.
+    const isCliente = c._level === "cliente";
+    const matchesProfile = profileFilter === "all" || (isCliente && c.travel_profile === profileFilter);
+    const matchesTags = tagFilter.length === 0 || (isCliente && tagFilter.every(t => (c.tags ?? []).includes(t)));
+    return matchesSearch && matchesLevel && matchesProfile && matchesTags;
+  });
+
+  const filtered = sort
+    ? sortData(filteredBase, sort)
+    : [...filteredBase].sort((a: any, b: any) => {
+        const lr = levelRank[a._level as ContactLevel] - levelRank[b._level as ContactLevel];
+        if (lr !== 0) return lr;
+        return (a.full_name ?? "").localeCompare(b.full_name ?? "", "pt-BR", { sensitivity: "base" });
+      });
+
 
   const SortableHeader = ({ label, sortKey, className }: { label: string; sortKey: string; className?: string }) => {
     const active = sort?.key === sortKey;
