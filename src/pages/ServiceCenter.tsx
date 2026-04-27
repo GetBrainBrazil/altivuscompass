@@ -323,19 +323,14 @@ const ConversationCard = ({ conversation, active, onClick }: ConversationCardPro
           </p>
           <div className="mt-2 flex items-center gap-1.5 flex-wrap">
             {/* Nível do contato (Prospect / Lead / Cliente) */}
-            <ContactLevelBadge
-              level={
-                (conversation.contactType === "existing-client"
-                  ? "cliente"
-                  : conversation.category === "post-sale"
-                    ? "cliente"
-                    : conversation.crm
-                      ? "lead"
-                      : "prospect") as ContactLevel
-              }
-              size="xs"
-            />
-            {conversation.category === "post-sale" && (
+            <ContactLevelBadge level={conversation.level} size="xs" />
+            {conversation.isTraveling && (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-800 border border-amber-300">
+                <Plane className="w-2.5 h-2.5" />
+                Em viagem
+              </span>
+            )}
+            {conversation.category === "post-sale" && !conversation.isTraveling && (
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
                 <LifeBuoy className="w-2.5 h-2.5" />
                 Pós-venda
