@@ -9,6 +9,7 @@ import { QuoteAcceptance } from "@/components/quotes/QuoteAcceptance";
 import { type QuoteLang, LANG_OPTIONS, getTranslations, getItemTypeLabel, getRelationshipLabel, getFlagUrl, getCabinClassLabel, getConnectionsLabel, getFlightDirectionLabel } from "@/lib/quote-translations";
 import { formatTransportDetails } from "@/lib/transport-format";
 import { formatExperienceDetails } from "@/lib/experience-format";
+import { getAccommodationTypeLabel, getMealPlanLabel, formatHotelDateBR } from "@/lib/hotel-format";
 
 const ITEM_TYPE_ICONS: Record<string, any> = {
   flight: Plane, hotel: Hotel, transport: Bus, cruise: Ship,
@@ -690,9 +691,11 @@ export default function PublicQuote() {
 
                       // Rich hotel card
                       if (type === "hotel") {
-                        const formatDate = (ds: string) => ds ? ds.split("-").reverse().join("/") : "";
+                        const formatDate = formatHotelDateBR;
                         const tripAdvisorUrl = title ? `https://www.tripadvisor.com/Search?q=${encodeURIComponent(title)}` : null;
                         const photoUrl = title ? hotelPhotos[title] : null;
+                        const accommodationLabel = getAccommodationTypeLabel(d.accommodation_type);
+                        const mealPlanLabel = getMealPlanLabel(d.meal_plan);
 
                         return (
                           <div key={idx} className="border border-gray-200 rounded-lg overflow-hidden">
@@ -727,6 +730,22 @@ export default function PublicQuote() {
                                   )}
                                 </div>
 
+                                {/* Accommodation type & meal plan badges */}
+                                {(accommodationLabel || mealPlanLabel) && (
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {accommodationLabel && (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full pq-fs-3xs sm:text-[11px] font-body bg-gray-100 text-gray-700 border border-gray-200">
+                                        {accommodationLabel}
+                                      </span>
+                                    )}
+                                    {mealPlanLabel && (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full pq-fs-3xs sm:text-[11px] font-body bg-amber-50 text-amber-800 border border-amber-200">
+                                        {mealPlanLabel}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+
                                 {/* Dates */}
                                 {(d.checkin_date || d.checkout_date) && (
                                   <div className="flex flex-wrap gap-3 pq-fs-xs sm:text-xs font-body">
@@ -747,7 +766,7 @@ export default function PublicQuote() {
                                   </div>
                                 )}
 
-                                {/* Details & Description */}
+                                {/* Details (room type, etc.) & Description */}
                                 {d.hotel_details && (
                                   <p className="pq-fs-xs sm:text-xs text-gray-600 font-body">{d.hotel_details}</p>
                                 )}
