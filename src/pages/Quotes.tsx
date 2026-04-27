@@ -958,7 +958,9 @@ export default function Quotes() {
         }
       }
 
-      toast({ title: editingQuote ? "Cotação atualizada" : "Cotação criada", duration: 2000 });
+      toast({ title: "Cotação salva com sucesso", duration: 3000 });
+      setSaveBtnState("success");
+      setTimeout(() => setSaveBtnState("idle"), 1500);
       localStorage.removeItem(QUOTE_EDITOR_DRAFT_KEY);
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
       queryClient.invalidateQueries({ queryKey: ["sales"] });
@@ -983,7 +985,8 @@ export default function Quotes() {
       }
       return quoteId ?? null;
     } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      toast({ title: "Erro ao salvar cotação. Tente novamente.", description: err?.message, variant: "destructive" });
+      setSaveBtnState("idle");
       return null;
     }
   };
