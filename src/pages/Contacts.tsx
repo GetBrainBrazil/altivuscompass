@@ -4,8 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search, Phone, Mail, Plus } from "lucide-react";
+import { Search, Phone, Mail, Plus, Sparkles } from "lucide-react";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
+import { PromoteToLeadDialog } from "@/components/contacts/PromoteToLeadDialog";
 import { cn } from "@/lib/utils";
 
 type ContactRow = {
