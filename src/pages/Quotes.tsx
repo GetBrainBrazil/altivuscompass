@@ -29,6 +29,7 @@ import { buildQuoteSummary, pickClientWhatsappNumber } from "@/lib/quote-summary
 import { Dialog as WhatsAppDialog, DialogContent as WhatsAppDialogContent, DialogHeader as WhatsAppDialogHeader, DialogTitle as WhatsAppDialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PhoneInput, formatBrazilPhone, stripBrazilPhone } from "@/components/ui/phone-input";
 import { KanbanSkeleton, TableSkeleton } from "@/components/ui/loading-skeletons";
