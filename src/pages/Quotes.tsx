@@ -29,6 +29,7 @@ import { buildQuoteSummary, pickClientWhatsappNumber } from "@/lib/quote-summary
 import { Dialog as WhatsAppDialog, DialogContent as WhatsAppDialogContent, DialogHeader as WhatsAppDialogHeader, DialogTitle as WhatsAppDialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PhoneInput, formatBrazilPhone, stripBrazilPhone } from "@/components/ui/phone-input";
 import { KanbanSkeleton, TableSkeleton } from "@/components/ui/loading-skeletons";
@@ -2759,6 +2760,104 @@ export default function Quotes() {
                             </div>
                           </div>
                         </>
+                      ) : type.id === "transport" ? (
+                        /* Transport-specific structured form */
+                        (() => {
+                          const transportType = d.transport_type || "";
+                          const showVehicleCategory = transportType === "car" || transportType === "van";
+                          const inclusions: string[] = Array.isArray(d.inclusions) ? d.inclusions : [];
+                          const toggleInclusion = (key: string) => {
+                            const next = inclusions.includes(key) ? inclusions.filter((i) => i !== key) : [...inclusions, key];
+                            updateDetail("inclusions", next);
+                          };
+                          const INCLUSION_OPTIONS = [
+                            { key: "unlimited_km", label: "Km livre" },
+                            { key: "additional_driver", label: "Motorista adicional" },
+                            { key: "basic_insurance", label: "Seguro básico" },
+                            { key: "gps", label: "GPS" },
+                            { key: "child_seat", label: "Cadeirinha infantil" },
+                          ];
+                          return (
+                            <>
+                              <button type="button" onClick={() => removeItem(globalIdx)} className="absolute top-2.5 right-2.5 text-destructive hover:text-destructive/80 transition-colors">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                              <div className="space-y-2 p-3 pr-8">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                  <div className="space-y-0.5">
+                                    <Label className="text-[11px] font-body">Tipo</Label>
+                                    <Select value={transportType} onValueChange={(v) => updateDetail("transport_type", v)}>
+                                      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="car">Carro</SelectItem>
+                                        <SelectItem value="van">Van</SelectItem>
+                                        <SelectItem value="private_driver">Motorista Particular</SelectItem>
+                                        <SelectItem value="hotel_airport_transfer">Transfer Hotel-Aeroporto</SelectItem>
+                                        <SelectItem value="train">Trem</SelectItem>
+                                        <SelectItem value="bus">Ônibus</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  {showVehicleCategory && (
+                                    <div className="space-y-0.5">
+                                      <Label className="text-[11px] font-body">Categoria do veículo</Label>
+                                      <Select value={d.vehicle_category || ""} onValueChange={(v) => updateDetail("vehicle_category", v)}>
+                                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="compact">Compacto</SelectItem>
+                                          <SelectItem value="sedan">Sedan</SelectItem>
+                                          <SelectItem value="suv">SUV</SelectItem>
+                                          <SelectItem value="minivan">Minivan</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  )}
+                                  {showVehicleCategory && (
+                                    <div className="space-y-0.5">
+                                      <Label className="text-[11px] font-body">Câmbio</Label>
+                                      <Select value={d.transmission || ""} onValueChange={(v) => updateDetail("transmission", v)}>
+                                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="automatic">Automático</SelectItem>
+                                          <SelectItem value="manual">Manual</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                  <div className="space-y-0.5">
+                                    <Label className="text-[11px] font-body">Título / Fornecedor</Label>
+                                    <Input value={item.title} onChange={(e) => updateItem(globalIdx, { title: e.target.value })} placeholder="Ex: Localiza, Hertz..." className="h-8 text-xs" />
+                                  </div>
+                                  <div className="space-y-0.5">
+                                    <Label className="text-[11px] font-body">Data de retirada</Label>
+                                    <Input type="date" value={d.pickup_date || ""} onChange={(e) => updateDetail("pickup_date", e.target.value)} className="h-8 text-xs" />
+                                  </div>
+                                  <div className="space-y-0.5">
+                                    <Label className="text-[11px] font-body">Data de devolução</Label>
+                                    <Input type="date" value={d.dropoff_date || ""} onChange={(e) => updateDetail("dropoff_date", e.target.value)} className="h-8 text-xs" />
+                                  </div>
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-[11px] font-body font-semibold">Inclusos</Label>
+                                  <div className="flex flex-wrap gap-x-4 gap-y-1.5 pt-0.5">
+                                    {INCLUSION_OPTIONS.map((opt) => (
+                                      <label key={opt.key} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                                        <Checkbox checked={inclusions.includes(opt.key)} onCheckedChange={() => toggleInclusion(opt.key)} />
+                                        <span>{opt.label}</span>
+                                      </label>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div className="space-y-0.5">
+                                  <Label className="text-[11px] font-body">Observações</Label>
+                                  <Textarea value={item.description} onChange={(e) => updateItem(globalIdx, { description: e.target.value })} placeholder="Informações adicionais sobre o transporte" className="text-xs min-h-[50px]" />
+                                </div>
+                              </div>
+                            </>
+                          );
+                        })()
                       ) : (
                         /* Generic form for non-flight items */
                         <>
