@@ -4,8 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search, Phone, Mail, Plus } from "lucide-react";
+import { Search, Phone, Mail, Plus, Sparkles } from "lucide-react";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
+import { PromoteToLeadDialog } from "@/components/contacts/PromoteToLeadDialog";
 import { cn } from "@/lib/utils";
 
 type ContactRow = {
@@ -35,6 +36,8 @@ export default function Contacts() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | ContactLevel>("all");
   const [search, setSearch] = useState("");
+  const [promoteTarget, setPromoteTarget] = useState<ContactRow | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -56,7 +59,7 @@ export default function Contacts() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [reloadKey]);
 
   const counts = useMemo(() => {
     const c = { all: rows.length, prospect: 0, lead: 0, cliente: 0 };
@@ -145,12 +148,13 @@ export default function Contacts() {
       </Card>
 
       <Card className="overflow-hidden">
-        <div className="hidden md:grid grid-cols-[1fr_140px_220px_220px_140px] gap-3 px-4 py-3 bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground font-body">
+        <div className="hidden md:grid grid-cols-[1fr_140px_200px_200px_120px_140px] gap-3 px-4 py-3 bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground font-body">
           <span>Nome</span>
           <span>Nível</span>
           <span>Telefone</span>
           <span>E-mail</span>
           <span>Origem</span>
+          <span className="text-right">Ações</span>
         </div>
         {loading ? (
           <div className="p-8 text-center text-sm text-muted-foreground">Carregando...</div>
@@ -172,7 +176,7 @@ export default function Contacts() {
                     handleRowClick(r);
                   }
                 }}
-                className="grid grid-cols-1 md:grid-cols-[1fr_140px_220px_220px_140px] gap-2 md:gap-3 px-4 py-3 hover:bg-muted/40 cursor-pointer transition-colors"
+                className="grid grid-cols-1 md:grid-cols-[1fr_140px_200px_200px_120px_140px] gap-2 md:gap-3 px-4 py-3 hover:bg-muted/40 cursor-pointer transition-colors"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="font-medium text-foreground font-body truncate">
@@ -208,11 +212,38 @@ export default function Contacts() {
                 <div className="text-xs text-muted-foreground font-body capitalize">
                   {r.source ?? "manual"}
                 </div>
+                <div className="flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
+                  {r.level === "prospect" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5 h-8 text-xs border-sky-300 text-sky-700 hover:bg-sky-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPromoteTarget(r);
+                      }}
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      Promover
+                    </Button>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
         )}
       </Card>
+
+      <PromoteToLeadDialog
+        contactId={promoteTarget?.id ?? null}
+        leadId={promoteTarget?.lead_id ?? null}
+        contactName={promoteTarget?.full_name}
+        contactPhone={promoteTarget?.phone}
+        contactEmail={promoteTarget?.email}
+        open={!!promoteTarget}
+        onOpenChange={(o) => !o && setPromoteTarget(null)}
+        onPromoted={() => setReloadKey((k) => k + 1)}
+      />
     </div>
   );
 }
