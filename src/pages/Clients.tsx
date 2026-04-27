@@ -1925,9 +1925,17 @@ export default function Clients() {
                 const clientPassengersList = passengersByClient[client.id] ?? [];
                 const isExpanded = expandedClients.has(client.id);
                 const hasPassengers = clientPassengersList.length > 0;
+                const isVirtual = !!client._contactId;
+                const handleRowOpen = () => {
+                  if (isVirtual) {
+                    navigate(`/clients?contact=${client._contactId}`);
+                  } else {
+                    openEdit(client);
+                  }
+                };
                 return (
                   <React.Fragment key={client.id}>
-                    <tr className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEdit(client)}>
+                    <tr className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={handleRowOpen}>
                       <td className="p-2 text-center">
                         {hasPassengers ? (
                           <button
