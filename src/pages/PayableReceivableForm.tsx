@@ -123,8 +123,11 @@ export default function PayableReceivableForm() {
 
   useEffect(() => {
     if (!existing) return;
+    const isRecurring = !!existing.recurrence_type && existing.recurrence_type !== "none";
+    const installmentTotal = parseInt(existing.installment_total ?? "1", 10) || 1;
     setForm({
       type: existing.type,
+      payment_mode: isRecurring ? "recurring" : installmentTotal > 1 ? "installments" : "single",
       description: existing.description ?? "",
       category: existing.category ?? "",
       cost_center: existing.cost_center ?? "",
