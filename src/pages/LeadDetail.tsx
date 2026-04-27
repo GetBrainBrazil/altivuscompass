@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import type { KanbanCardData } from "@/components/crm/KanbanCard";
+import { LeadConversionDialog } from "@/components/crm/LeadConversionDialog";
 
 const FUNNEL_STAGES = [
   { id: "new-leads", title: "Novos Leads (IA)" },
@@ -47,6 +48,8 @@ export default function LeadDetail() {
   const [card, setCard] = useState<KanbanCardData | null>(() =>
     id ? readCard(id) : null
   );
+  const [convertOpen, setConvertOpen] = useState(false);
+  const leadId = id?.startsWith("lead-") ? id.slice("lead-".length) : null;
 
   useEffect(() => {
     if (!card && id) setCard(readCard(id));
@@ -130,7 +133,18 @@ export default function LeadDetail() {
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {leadId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-primary/40 text-primary hover:bg-primary/5"
+                  onClick={() => setConvertOpen(true)}
+                >
+                  <UserCheck className="h-4 w-4 mr-1.5" />
+                  Converter para Cliente
+                </Button>
+              )}
               <Button variant="outline" size="sm">
                 Cancelar
               </Button>
@@ -292,6 +306,13 @@ export default function LeadDetail() {
           </div>
         </Tabs>
       </main>
+
+      <LeadConversionDialog
+        leadId={leadId}
+        open={convertOpen}
+        onOpenChange={setConvertOpen}
+        onConverted={() => navigate("/crm")}
+      />
     </div>
   );
 }

@@ -19,13 +19,21 @@ import {
   ExternalLink,
   CircleDot,
 } from "lucide-react";
+import { useState } from "react";
 import type { KanbanCardData } from "@/components/crm/KanbanCard";
+import { LeadConversionDialog } from "@/components/crm/LeadConversionDialog";
 
 type Props = {
   card: KanbanCardData | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
+
+/** Extrai o id real do lead a partir do id do card ("lead-<uuid>"). */
+function getLeadIdFromCard(card: KanbanCardData | null): string | null {
+  if (!card?.id?.startsWith("lead-")) return null;
+  return card.id.slice("lead-".length);
+}
 
 type TimelineEvent = {
   id: string;
@@ -69,6 +77,8 @@ function buildTimeline(card: KanbanCardData | null): TimelineEvent[] {
 
 export function LeadDetailPanel({ card, open, onOpenChange }: Props) {
   const timeline = buildTimeline(card);
+  const [convertOpen, setConvertOpen] = useState(false);
+  const leadId = getLeadIdFromCard(card);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -157,7 +167,18 @@ export function LeadDetailPanel({ card, open, onOpenChange }: Props) {
             </ScrollArea>
 
             {/* Footer actions */}
-            <div className="border-t border-border px-6 py-3 flex items-center justify-end gap-2">
+            <div className="border-t border-border px-6 py-3 flex items-center justify-end gap-2 flex-wrap">
+              {leadId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mr-auto border-primary/40 text-primary hover:bg-primary/5"
+                  onClick={() => setConvertOpen(true)}
+                >
+                  <UserCheck className="h-4 w-4 mr-1.5" />
+                  Converter para Cliente
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
@@ -218,6 +239,12 @@ export function LeadDetailPanel({ card, open, onOpenChange }: Props) {
           </TabsContent>
         </Tabs>
       </SheetContent>
+      <LeadConversionDialog
+        leadId={leadId}
+        open={convertOpen}
+        onOpenChange={setConvertOpen}
+        onConverted={() => onOpenChange(false)}
+      />
     </Sheet>
   );
 }
