@@ -126,8 +126,10 @@ export default function Clients() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
+  const [levelFilter, setLevelFilter] = useState<"all" | ContactLevel>("all");
   const [profileFilter, setProfileFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState<string[]>([]);
+  const [promoteTarget, setPromoteTarget] = useState<{ id: string; lead_id: string | null; full_name: string; phone: string | null; email: string | null } | null>(null);
   const [sort, setSort] = useState<SortState>(null);
   const navigate = useNavigate();
   const [view, setView] = useState<"list" | "form">("list");
