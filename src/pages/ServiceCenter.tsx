@@ -626,6 +626,72 @@ const CRMPanel = ({ conversation }: { conversation: Conversation }) => {
   );
 };
 
+// ============= Contact Banner (top of chat) =============
+const formatDateBR = (iso: string) => {
+  const d = new Date(iso);
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+};
+
+const ContactBanner = ({ conversation }: { conversation: Conversation }) => {
+  const { level, lastTrip, isTraveling, leadName } = conversation;
+
+  if (level === "cliente") {
+    return (
+      <div
+        className={cn(
+          "px-6 py-3 border-b flex items-center gap-3",
+          isTraveling
+            ? "bg-gradient-to-r from-amber-50 via-amber-50 to-amber-100/60 border-amber-200"
+            : "bg-gradient-to-r from-amber-50/80 to-amber-50/30 border-amber-200/70",
+        )}
+      >
+        <ContactLevelBadge level="cliente" size="md" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-amber-900 truncate">
+            {leadName}
+            {isTraveling && (
+              <span className="ml-2 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-amber-800">
+                <Plane className="h-3 w-3" /> Em viagem agora
+              </span>
+            )}
+          </p>
+          {lastTrip ? (
+            <p className="text-xs text-amber-800/80 mt-0.5">
+              Última viagem: <span className="font-medium">{lastTrip.destination}</span> · {formatDateBR(lastTrip.date)}
+            </p>
+          ) : (
+            <p className="text-xs text-amber-800/70 mt-0.5 italic">Sem viagens registradas ainda.</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (level === "prospect") {
+    const previousCount = Math.max(0, conversation.messages.length - 2);
+    return (
+      <div className="px-6 py-2.5 border-b bg-slate-50 flex items-center gap-3">
+        <ContactLevelBadge level="prospect" size="sm" />
+        <p className="text-xs text-slate-700">
+          {previousCount > 0
+            ? `Contato já conhecido — ${previousCount} mensagem(ns) em conversas anteriores.`
+            : "Novo contato — iniciando qualificação."}
+        </p>
+      </div>
+    );
+  }
+
+  // lead
+  return (
+    <div className="px-6 py-2.5 border-b bg-sky-50/60 flex items-center gap-3">
+      <ContactLevelBadge level="lead" size="sm" />
+      <p className="text-xs text-sky-900">
+        Lead qualificado — IA continuará a conversa de qualificação.
+      </p>
+    </div>
+  );
+};
+
 // ============= Main Page =============
 export default function ServiceCenter() {
   const [conversations] = useState<Conversation[]>(MOCK_CONVERSATIONS);
