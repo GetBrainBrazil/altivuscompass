@@ -1604,8 +1604,14 @@ export default function Quotes() {
         }
       }
 
+      // Após confirmar/won: trigger DB promove o lead a Cliente. Abrimos o dialog de coleta.
+      if (movingToConfirmed && updatePayload.conclusion_type === "won") {
+        await openClientCompletionAfterConfirm(quoteId);
+      }
+
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
       queryClient.invalidateQueries({ queryKey: ["sales"] });
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
     } catch (err: any) {
       toast({ title: "Erro ao mover cotação", description: err.message, variant: "destructive" });
     }
