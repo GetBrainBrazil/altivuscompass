@@ -69,6 +69,8 @@ type TranslationKeys = {
   carryOn: string;
   checkedBag: string;
   observation: string;
+  connectionIn: string;
+  layover: string;
 };
 
 const flightPt = {
@@ -94,6 +96,8 @@ const flightPt = {
   carryOn: "Mão",
   checkedBag: "Despachada",
   observation: "Observação",
+  connectionIn: "Conexão em",
+  layover: "de parada",
 };
 
 const flightEn = {
@@ -119,6 +123,8 @@ const flightEn = {
   carryOn: "Carry-on",
   checkedBag: "Checked",
   observation: "Note",
+  connectionIn: "Connection in",
+  layover: "layover",
 };
 
 const flightEs = {
@@ -144,6 +150,8 @@ const flightEs = {
   carryOn: "Mano",
   checkedBag: "Facturado",
   observation: "Observación",
+  connectionIn: "Conexión en",
+  layover: "de escala",
 };
 
 const flightFr = {
@@ -169,6 +177,8 @@ const flightFr = {
   carryOn: "Cabine",
   checkedBag: "Soute",
   observation: "Observation",
+  connectionIn: "Correspondance à",
+  layover: "d'escale",
 };
 
 const flightDe = {
@@ -194,6 +204,8 @@ const flightDe = {
   carryOn: "Handgepäck",
   checkedBag: "Aufgegeben",
   observation: "Bemerkung",
+  connectionIn: "Umstieg in",
+  layover: "Aufenthalt",
 };
 
 const flightIt = {
@@ -219,6 +231,8 @@ const flightIt = {
   carryOn: "Mano",
   checkedBag: "Stiva",
   observation: "Osservazione",
+  connectionIn: "Scalo a",
+  layover: "di scalo",
 };
 
 const translations: Record<QuoteLang, TranslationKeys> = {

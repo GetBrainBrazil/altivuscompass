@@ -662,6 +662,36 @@ export default function PublicQuote() {
                               )}
                             </div>
 
+                            {/* Detailed connection stops */}
+                            {Array.isArray(d.connection_stops) && d.connection_stops.length > 0 && (
+                              <div className="sm:pl-6 flex flex-col gap-1">
+                                {d.connection_stops
+                                  .filter((s: any) => s && (s.airport || s.layover))
+                                  .map((s: any, i: number) => {
+                                    const raw = String(s.airport || "").trim();
+                                    const [iataPart, ...rest] = raw.split(" - ");
+                                    const namePart = rest.join(" - ").split(",")[0].replace(/^Aeroporto\s+(Internacional\s+)?(de\s+)?/i, "").trim();
+                                    const airportLabel = raw
+                                      ? (namePart ? `${iataPart} — ${namePart}` : iataPart)
+                                      : "";
+                                    return (
+                                      <div
+                                        key={i}
+                                        className="inline-flex items-center gap-1.5 self-start px-2.5 py-1 rounded-md pq-fs-2xs sm:text-xs font-body bg-amber-50 text-amber-900 border border-amber-200"
+                                      >
+                                        <span>↻</span>
+                                        <span className="font-medium">
+                                          {t.connectionIn}
+                                          {airportLabel ? ` ${airportLabel}` : ""}
+                                          {s.layover ? ` (${s.layover} ${t.layover})` : ""}
+                                          {s.flight_number ? ` · ${t.flightNumber} ${s.flight_number}` : ""}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                              </div>
+                            )}
+
                             {/* Observation */}
                             {d.observation && (
                               <p className="pq-fs-2xs text-gray-500 font-body italic sm:pl-6">{d.observation}</p>
