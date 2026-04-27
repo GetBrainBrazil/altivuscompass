@@ -6,6 +6,7 @@
  */
 
 import { formatTransportDetails } from "./transport-format";
+import { formatExperienceDetails } from "./experience-format";
 
 type AnyQuote = Record<string, any>;
 type AnyItem = Record<string, any>;
@@ -93,6 +94,11 @@ function buildItemLine(item: AnyItem): string | null {
     const fmt = formatTransportDetails(item.details);
     if (fmt) {
       descriptor = titleOrDesc ? `${titleOrDesc} — ${fmt.fullLine}` : fmt.fullLine;
+    }
+  } else if (item.item_type === "experience") {
+    const fmt = formatExperienceDetails(item.details);
+    if (fmt) {
+      descriptor = titleOrDesc ? `${titleOrDesc} — ${fmt.detailsLine}` : fmt.detailsLine;
     }
   }
   if (!descriptor) return null;

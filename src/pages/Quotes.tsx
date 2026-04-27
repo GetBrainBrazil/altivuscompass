@@ -2858,6 +2858,53 @@ export default function Quotes() {
                             </>
                           );
                         })()
+                      ) : type.id === "experience" ? (
+                        /* Experience-specific structured form */
+                        <>
+                          <button type="button" onClick={() => removeItem(globalIdx)} className="absolute top-2.5 right-2.5 text-destructive hover:text-destructive/80 transition-colors">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                          <div className="space-y-2 p-3 pr-8">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <div className="space-y-0.5">
+                                <Label className="text-[11px] font-body">Nome da experiência</Label>
+                                <Input value={item.title} onChange={(e) => updateItem(globalIdx, { title: e.target.value })} placeholder='Ex: "Beto Carrero World"' className="h-8 text-xs" />
+                              </div>
+                              <div className="space-y-0.5">
+                                <Label className="text-[11px] font-body">Tipo de ingresso</Label>
+                                <Select value={d.ticket_type || ""} onValueChange={(v) => updateDetail("ticket_type", v)}>
+                                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="1_day">1 dia</SelectItem>
+                                    <SelectItem value="2_days">2 dias</SelectItem>
+                                    <SelectItem value="3_days">3 dias</SelectItem>
+                                    <SelectItem value="weekly">Semanal</SelectItem>
+                                    <SelectItem value="monthly">Mensal</SelectItem>
+                                    <SelectItem value="seasonal">Temporada</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                              <div className="space-y-0.5">
+                                <Label className="text-[11px] font-body">Data de utilização</Label>
+                                <Input type="date" value={d.usage_date || ""} onChange={(e) => updateDetail("usage_date", e.target.value)} className="h-8 text-xs" />
+                              </div>
+                              <div className="space-y-0.5">
+                                <Label className="text-[11px] font-body">Horário (opcional)</Label>
+                                <Input type="time" value={d.usage_time || ""} onChange={(e) => updateDetail("usage_time", e.target.value)} className="h-8 text-xs" />
+                              </div>
+                              <div className="space-y-0.5">
+                                <Label className="text-[11px] font-body">Quantidade de ingressos</Label>
+                                <Input type="number" min={1} value={d.tickets_count ?? ""} onChange={(e) => updateDetail("tickets_count", e.target.value ? Number(e.target.value) : null)} placeholder="Ex: 2" className="h-8 text-xs" />
+                              </div>
+                            </div>
+                            <div className="space-y-0.5">
+                              <Label className="text-[11px] font-body">Observações</Label>
+                              <Textarea value={item.description} onChange={(e) => updateItem(globalIdx, { description: e.target.value })} placeholder="Informações adicionais sobre a experiência" className="text-xs min-h-[50px]" />
+                            </div>
+                          </div>
+                        </>
                       ) : (
                         /* Generic form for non-flight items */
                         <>

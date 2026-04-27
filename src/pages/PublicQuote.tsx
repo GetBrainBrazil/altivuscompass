@@ -8,6 +8,7 @@ import logoAltivusFallback from "@/assets/logo-altivus.png";
 import { QuoteAcceptance } from "@/components/quotes/QuoteAcceptance";
 import { type QuoteLang, LANG_OPTIONS, getTranslations, getItemTypeLabel, getRelationshipLabel, getFlagUrl, getCabinClassLabel, getConnectionsLabel, getFlightDirectionLabel } from "@/lib/quote-translations";
 import { formatTransportDetails } from "@/lib/transport-format";
+import { formatExperienceDetails } from "@/lib/experience-format";
 
 const ITEM_TYPE_ICONS: Record<string, any> = {
   flight: Plane, hotel: Hotel, transport: Bus, cruise: Ship,
@@ -772,11 +773,15 @@ export default function PublicQuote() {
                       }
 
                       const transportFmt = item.item_type === "transport" ? formatTransportDetails(item.details) : null;
+                      const experienceFmt = item.item_type === "experience" ? formatExperienceDetails(item.details) : null;
                       return (
                         <div key={idx} className="border border-gray-200 rounded-lg p-3 space-y-1.5">
                           {title && <p className="pq-fs-sm sm:text-sm font-medium text-gray-900 font-body">{title}</p>}
                           {transportFmt && (
                             <p className="pq-fs-xs sm:text-xs text-gray-700 font-body">{transportFmt.fullLine}</p>
+                          )}
+                          {experienceFmt && (
+                            <p className="pq-fs-xs sm:text-xs text-gray-700 font-body">{experienceFmt.detailsLine}</p>
                           )}
                           {description && <p className="pq-fs-xs sm:text-xs text-gray-500 font-body mt-0.5">{description}</p>}
                           {Array.isArray(item.public_attachments) && item.public_attachments.length > 0 && (
