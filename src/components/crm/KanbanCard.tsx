@@ -44,6 +44,8 @@ export type KanbanCardData = {
   aiSummary?: string;
   /** Alerta visual exibido como badge no topo direito (e cor da borda esquerda quando destrutivo). */
   alert?: KanbanCardAlert;
+  /** Nível do contato (Prospect/Lead/Cliente). Quando presente, exibe badge colorido no topo. */
+  contactLevel?: ContactLevel;
 };
 
 const TAG_TONE_CLASSES: Record<KanbanTagTone, string> = {
