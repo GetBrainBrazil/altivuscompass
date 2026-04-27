@@ -204,6 +204,8 @@ const flightDe = {
   carryOn: "Handgepäck",
   checkedBag: "Aufgegeben",
   observation: "Bemerkung",
+  connectionIn: "Umstieg in",
+  layover: "Aufenthalt",
 };
 
 const flightIt = {
