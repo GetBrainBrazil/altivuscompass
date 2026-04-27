@@ -577,40 +577,42 @@ export default function PublicQuote() {
                                   {d.destination && <span>{d.destination}</span>}
                                 </div>
                               </div>
-                              {d.airline && (
+                              {(d.airline || (d.pax_adults ?? 0) > 0 || (d.pax_children ?? 0) > 0 || (d.pax_infants ?? 0) > 0) && (
                                 <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2 sm:gap-1.5">
-                                  <div className="flex items-center gap-2">
-                                    {(() => {
-                                      const iataMatch = d.airline.match(/\(([A-Z0-9]{2})\)/);
-                                      const iata = iataMatch?.[1];
-                                      return iata ? (
-                                        <img
-                                          src={`https://pics.avs.io/60/60/${iata}.png`}
-                                          alt={d.airline}
-                                          className="w-6 h-6 object-contain"
-                                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                                        />
-                                      ) : null;
-                                    })()}
-                                    <span className="pq-fs-xs sm:text-xs text-gray-500 font-body">
-                                      {d.airline}{d.flight_number ? ` (${d.flight_number})` : ""}
-                                    </span>
-                                  </div>
+                                  {d.airline && (
+                                    <div className="flex items-center gap-2">
+                                      {(() => {
+                                        const iataMatch = d.airline.match(/\(([A-Z0-9]{2})\)/);
+                                        const iata = iataMatch?.[1];
+                                        return iata ? (
+                                          <img
+                                            src={`https://pics.avs.io/60/60/${iata}.png`}
+                                            alt={d.airline}
+                                            className="w-6 h-6 object-contain"
+                                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                                          />
+                                        ) : null;
+                                      })()}
+                                      <span className="pq-fs-xs sm:text-xs text-gray-500 font-body">
+                                        {d.airline}{d.flight_number ? ` (${d.flight_number})` : ""}
+                                      </span>
+                                    </div>
+                                  )}
                                   <div className="flex items-center gap-1">
                                     <div className="flex flex-col items-center border border-gray-200 rounded px-1.5 py-1 min-w-[36px]">
                                       <Backpack className="w-3.5 h-3.5 text-blue-800" />
                                       <span className="pq-fs-4xs text-gray-500 font-body">{t.backpack}</span>
-                                      <span className="pq-fs-3xs font-medium text-gray-900 font-body">{d.pax_adults ?? 0}</span>
+                                      <span className="pq-fs-3xs font-medium text-gray-900 font-body">{Number(d.pax_adults ?? 0)}</span>
                                     </div>
                                     <div className="flex flex-col items-center border border-gray-200 rounded px-1.5 py-1 min-w-[36px]">
                                       <Briefcase className="w-3.5 h-3.5 text-blue-800" />
                                       <span className="pq-fs-4xs text-gray-500 font-body">{t.carryOn}</span>
-                                      <span className="pq-fs-3xs font-medium text-gray-900 font-body">{d.pax_children ?? 0}</span>
+                                      <span className="pq-fs-3xs font-medium text-gray-900 font-body">{Number(d.pax_children ?? 0)}</span>
                                     </div>
                                     <div className="flex flex-col items-center border border-gray-200 rounded px-1.5 py-1 min-w-[36px]">
                                       <Luggage className="w-3.5 h-3.5 text-blue-800" />
                                       <span className="pq-fs-4xs text-gray-500 font-body">{t.checkedBag}</span>
-                                      <span className="pq-fs-3xs font-medium text-gray-900 font-body">{d.pax_infants ?? 0}</span>
+                                      <span className="pq-fs-3xs font-medium text-gray-900 font-body">{Number(d.pax_infants ?? 0)}</span>
                                     </div>
                                   </div>
                                 </div>
