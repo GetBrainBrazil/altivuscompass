@@ -745,7 +745,7 @@ export default function Clients() {
     }
   }, [searchParams]);
 
-
+  const quickAddMutation = useMutation({
     mutationFn: async () => {
       if (quickAddType === "country") {
         const { error } = await supabase.from("countries").insert({ name: quickAddName });
