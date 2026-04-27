@@ -5,6 +5,8 @@
  * internal_notes, close_probability, internal_due_date).
  */
 
+import { formatTransportDetails } from "./transport-format";
+
 type AnyQuote = Record<string, any>;
 type AnyItem = Record<string, any>;
 type AnyClient = Record<string, any>;
