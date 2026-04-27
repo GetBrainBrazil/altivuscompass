@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
 import { FileText } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -130,8 +131,11 @@ export default function Clients() {
   const navigate = useNavigate();
   const [view, setView] = useState<"list" | "form">("list");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [linkContactId, setLinkContactId] = useState<string | null>(null);
+  const [contactLevel, setContactLevel] = useState<ContactLevel | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [activeTab, setActiveTab] = useState("contact");
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Multi-value entries
   const [phones, setPhones] = useState<PhoneEntry[]>([]);
@@ -484,7 +488,12 @@ export default function Clients() {
   const performGoToList = () => {
     setView("list"); setEditingId(null); setForm(emptyForm); setActiveTab("contact");
     setSelectedAirports([]); setSelectedTags([]); setSelectedDestinations([]); setPhones([]); setEmails([]); setSocials([]); setPassports([]); setMilesPrograms([]); setShowPasswords({});
+    setLinkContactId(null); setContactLevel(null);
     initialClientSnapshotRef.current = "";
+    // Clean URL params so we don't auto-reopen
+    if (searchParams.get("contact") || searchParams.get("id") || searchParams.get("new")) {
+      setSearchParams({}, { replace: true });
+    }
   };
 
   const saveMutation = useMutation({
@@ -510,6 +519,10 @@ export default function Clients() {
         if (error) throw error;
         clientId = data.id;
         logAuditEvent({ action: "create", tableName: "clients", recordId: data.id, recordLabel: payload.full_name, newData: payload });
+        // Link back to originating contact if applicable
+        if (linkContactId) {
+          await (supabase as any).from("contacts").update({ client_id: clientId }).eq("id", linkContactId);
+        }
       }
 
       // Save multi-value records
@@ -627,6 +640,7 @@ export default function Clients() {
   const openCreate = () => {
     setEditingId(null); setForm(emptyForm); setSelectedAirports([]); setSelectedTags([]); setSelectedDestinations([]); setActiveTab("contact");
     setPhones([]); setEmails([]); setSocials([]); setPassports([]); setMilesPrograms([]); setShowPasswords({});
+    setLinkContactId(null); setContactLevel(null);
     setView("form");
   };
 
@@ -650,9 +664,90 @@ export default function Clients() {
     setSelectedAirports(c.preferred_airports ?? []);
     setSelectedTags(c.tags ?? []);
     setSelectedDestinations((c as any).desired_destinations ?? []);
+    // When opened from clients list, treat as cliente level by default; URL effect may override
+    setContactLevel((prev) => prev ?? "cliente");
     setView("form");
     initialClientSnapshotRef.current = "";
   };
+
+  // ====== URL-driven open: ?id, ?contact, ?new ======
+  const handledUrlRef = useRef<string>("");
+  useEffect(() => {
+    const idParam = searchParams.get("id");
+    const contactParam = searchParams.get("contact");
+    const newParam = searchParams.get("new");
+    const sig = `${idParam ?? ""}|${contactParam ?? ""}|${newParam ?? ""}`;
+    if (!idParam && !contactParam && !newParam) {
+      handledUrlRef.current = "";
+      return;
+    }
+    if (handledUrlRef.current === sig) return;
+
+    if (newParam) {
+      handledUrlRef.current = sig;
+      openCreate();
+      return;
+    }
+
+    if (contactParam) {
+      handledUrlRef.current = sig;
+      (async () => {
+        const { data: contact, error } = await (supabase as any)
+          .from("contacts")
+          .select("*")
+          .eq("id", contactParam)
+          .maybeSingle();
+        if (error || !contact) return;
+        setLinkContactId(contact.id);
+        setContactLevel(contact.level as ContactLevel);
+
+        if (contact.client_id) {
+          const { data: c } = await supabase.from("clients").select("*").eq("id", contact.client_id).maybeSingle();
+          if (c) {
+            openEdit(c);
+            setContactLevel(contact.level as ContactLevel);
+            return;
+          }
+        }
+        // Open form pre-filled (no client row yet)
+        setEditingId(null);
+        setForm({
+          ...emptyForm,
+          full_name: contact.full_name ?? "",
+        });
+        setSelectedAirports([]); setSelectedTags([]); setSelectedDestinations([]);
+        setPhones(contact.phone ? [{ phone: contact.phone, description: "", country_code: "BR", is_primary: true }] : []);
+        setEmails(contact.email ? [{ email: contact.email, description: "", is_primary: true }] : []);
+        setSocials([]); setPassports([]); setMilesPrograms([]); setShowPasswords({});
+        setActiveTab("contact");
+        setView("form");
+        initialClientSnapshotRef.current = "";
+      })();
+      return;
+    }
+
+    if (idParam) {
+      handledUrlRef.current = sig;
+      (async () => {
+        const { data: c } = await supabase.from("clients").select("*").eq("id", idParam).maybeSingle();
+        if (c) {
+          openEdit(c);
+          // Try to find originating contact for level badge
+          const { data: contact } = await (supabase as any)
+            .from("contacts")
+            .select("id, level")
+            .eq("client_id", idParam)
+            .maybeSingle();
+          if (contact) {
+            setLinkContactId(contact.id);
+            setContactLevel(contact.level as ContactLevel);
+          } else {
+            setContactLevel("cliente");
+          }
+        }
+      })();
+    }
+  }, [searchParams]);
 
   const quickAddMutation = useMutation({
     mutationFn: async () => {
@@ -718,22 +813,49 @@ export default function Clients() {
           <Button variant="ghost" size="icon" onClick={goToList} className="shrink-0">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div className="flex-1">
+          <div className="flex-1 flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-display font-semibold text-foreground">
               {editingId ? "Editar Cliente" : "Novo Cliente"}
             </h1>
+            {contactLevel && (
+              <ContactLevelBadge level={contactLevel} size="md" />
+            )}
           </div>
-          {editingId && (
-            <Button
-              type="button"
-              variant="outline"
-              className="font-body shrink-0"
-              onClick={() => navigate("/quotes", { state: { newQuote: true, clientId: editingId } })}
-            >
-              <FileText className="h-4 w-4 mr-1" />
-              Nova cotação
-            </Button>
-          )}
+          {(() => {
+            const isProspect = contactLevel === "prospect";
+            const canCreateQuote = !!editingId && !isProspect;
+            const btn = (
+              <Button
+                type="button"
+                variant="outline"
+                className="font-body shrink-0"
+                disabled={!canCreateQuote}
+                onClick={() => {
+                  if (!canCreateQuote) return;
+                  navigate("/quotes", { state: { newQuote: true, clientId: editingId } });
+                }}
+              >
+                <FileText className="h-4 w-4 mr-1" />
+                Nova cotação
+              </Button>
+            );
+            if (!editingId) return null;
+            if (isProspect) {
+              return (
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span tabIndex={0}>{btn}</span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-xs font-body text-xs">
+                      É necessário promover este contato para Lead antes de criar uma cotação.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              );
+            }
+            return btn;
+          })()}
         </div>
 
         <form onSubmit={(e) => { e.preventDefault(); if (saveMutation.isPending) return; saveMutation.mutate(); }} className="space-y-4">

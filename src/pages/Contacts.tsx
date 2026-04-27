@@ -83,18 +83,14 @@ export default function Contacts() {
   }, [rows, filter, search]);
 
   const handleRowClick = (row: ContactRow) => {
-    if (row.level === "cliente" && row.client_id) {
-      navigate(`/clients?id=${row.client_id}`);
-    } else if (row.lead_id) {
-      navigate(`/crm/lead/${row.lead_id}`);
-    }
+    navigate(`/clients?contact=${row.id}`);
   };
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-[1400px] mx-auto">
       <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-display text-foreground">Contatos</h1>
+          <h1 className="text-2xl sm:text-3xl font-display text-foreground">Clientes</h1>
           <p className="text-sm text-muted-foreground font-body mt-1">
             Prospects, Leads e Clientes em uma única visão.
           </p>
