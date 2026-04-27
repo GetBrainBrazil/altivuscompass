@@ -2098,11 +2098,12 @@ export default function Clients() {
             const isExpanded = expandedClients.has(client.id);
             const hasPassengers = clientPassengersList.length > 0;
             return (
-              <div key={client.id} className="glass-card rounded-xl p-4 space-y-3 cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => openEdit(client)}>
+              <div key={client.id} className="glass-card rounded-xl p-4 space-y-3 cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => client._contactId ? navigate(`/clients?contact=${client._contactId}`) : openEdit(client)}>
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <p className="text-sm font-medium font-body text-foreground">{client.full_name}</p>
+                      <ContactLevelBadge level={client._level as ContactLevel} size="xs" />
                       {hasPassengers && (
                         <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground font-body">
                           <Users className="h-3 w-3" />{clientPassengersList.length}
