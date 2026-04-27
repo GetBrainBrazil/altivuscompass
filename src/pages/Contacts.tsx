@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Search, Phone, Mail, Plus, Sparkles } from "lucide-react";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
-import { PromoteToLeadDialog } from "@/components/contacts/PromoteToLeadDialog";
+
 import { cn } from "@/lib/utils";
 
 type ContactRow = {
@@ -36,8 +36,7 @@ export default function Contacts() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | ContactLevel>("all");
   const [search, setSearch] = useState("");
-  const [promoteTarget, setPromoteTarget] = useState<ContactRow | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
+  const [reloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -216,7 +215,7 @@ export default function Contacts() {
                       className="gap-1.5 h-8 text-xs border-sky-300 text-sky-700 hover:bg-sky-50"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setPromoteTarget(r);
+                        navigate(`/contacts/${r.id}/promote`);
                       }}
                     >
                       <Sparkles className="w-3 h-3" />
@@ -229,17 +228,6 @@ export default function Contacts() {
           </ul>
         )}
       </Card>
-
-      <PromoteToLeadDialog
-        contactId={promoteTarget?.id ?? null}
-        leadId={promoteTarget?.lead_id ?? null}
-        contactName={promoteTarget?.full_name}
-        contactPhone={promoteTarget?.phone}
-        contactEmail={promoteTarget?.email}
-        open={!!promoteTarget}
-        onOpenChange={(o) => !o && setPromoteTarget(null)}
-        onPromoted={() => setReloadKey((k) => k + 1)}
-      />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
-import { PromoteToLeadDialog } from "@/components/contacts/PromoteToLeadDialog";
+
 import { FileText, Sparkles } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -129,7 +129,7 @@ export default function Clients() {
   const [levelFilter, setLevelFilter] = useState<"all" | ContactLevel>("all");
   const [profileFilter, setProfileFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState<string[]>([]);
-  const [promoteTarget, setPromoteTarget] = useState<{ id: string; lead_id: string | null; full_name: string; phone: string | null; email: string | null } | null>(null);
+  
   const [sort, setSort] = useState<SortState>(null);
   const navigate = useNavigate();
   const [view, setView] = useState<"list" | "form">("list");
@@ -2025,13 +2025,7 @@ export default function Clients() {
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setPromoteTarget({
-                                  id: client._contactId,
-                                  lead_id: client._leadId ?? null,
-                                  full_name: client.full_name,
-                                  phone: client.primary_phone,
-                                  email: client.primary_email,
-                                });
+                                navigate(`/contacts/${client._contactId}/promote`);
                               }}
                               className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full font-body text-sky-700 hover:bg-sky-50 border border-sky-200 self-start"
                             >
@@ -2149,20 +2143,6 @@ export default function Clients() {
           })
         )}
       </div>
-
-      <PromoteToLeadDialog
-        contactId={promoteTarget?.id ?? null}
-        leadId={promoteTarget?.lead_id ?? null}
-        contactName={promoteTarget?.full_name}
-        contactPhone={promoteTarget?.phone}
-        contactEmail={promoteTarget?.email}
-        open={!!promoteTarget}
-        onOpenChange={(o) => !o && setPromoteTarget(null)}
-        onPromoted={() => {
-          setPromoteTarget(null);
-          qc.invalidateQueries({ queryKey: ["contacts-for-clients-list"] });
-        }}
-      />
     </div>
   );
 }
