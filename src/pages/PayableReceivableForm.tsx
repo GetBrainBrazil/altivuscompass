@@ -454,101 +454,47 @@ export default function PayableReceivableForm() {
         </Section>
 
         {!editingId && (
-          <Section title="Parcelamento e Recorrência">
-            <div className="space-y-4">
-              {/* Seletor de tipo de pagamento */}
-              <div className="inline-flex w-full sm:w-auto rounded-lg border border-border bg-muted/40 p-1">
-                {([
-                  { value: "single", label: "Pagamento Único" },
-                  { value: "installments", label: "Parcelado", icon: Layers },
-                  { value: "recurring", label: "Recorrente", icon: Repeat },
-                ] as { value: PaymentMode; label: string; icon?: any }[]).map((opt) => {
-                  const Icon = opt.icon;
-                  const active = form.payment_mode === opt.value;
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setForm({ ...form, payment_mode: opt.value })}
-                      className={cn(
-                        "flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2",
-                        active
-                          ? "bg-background text-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      {Icon && <Icon className="h-3.5 w-3.5" />}
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Parcelado */}
-              {form.payment_mode === "installments" && (
-                <div className="rounded-lg border border-border p-4 space-y-3">
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label>Quantidade de Parcelas</Label>
-                      <Input type="number" min={1} value={form.installment_total}
-                        onChange={(e) => setForm({ ...form, installment_total: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Intervalo entre parcelas (dias)</Label>
-                      <Input type="number" min={1} value={form.installment_interval_days}
-                        onChange={(e) => setForm({ ...form, installment_interval_days: e.target.value })} />
-                    </div>
-                  </div>
-
-                  {installmentsPreview.length > 0 && (
-                    <div className="mt-2 rounded-md border border-border bg-muted/30 divide-y divide-border">
-                      <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Prévia das parcelas
-                      </div>
-                      {installmentsPreview.map((p) => (
-                        <div key={p.n} className="flex items-center justify-between px-3 py-2 text-sm">
-                          <span className="text-muted-foreground">
-                            Parcela {p.n}/{installmentsCount}
-                          </span>
-                          <span className="font-medium">{brl(p.amount)}</span>
-                          <span className="text-muted-foreground tabular-nums">{p.date}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+          <Section title="Recorrência">
+            <div className="rounded-lg border border-border p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Repeat className="h-4 w-4 text-primary" />
+                  <h4 className="font-semibold text-sm">Conta Recorrente</h4>
                 </div>
-              )}
+                <Switch
+                  checked={form.recurrence_enabled}
+                  onCheckedChange={(v) => setForm({ ...form, recurrence_enabled: v })}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Cria automaticamente novas movimentações no intervalo definido.
+                Ideal para despesas fixas como aluguel, assinaturas e salários.
+                Para parcelamentos, configure como recorrência mensal com data de término.
+              </p>
 
-              {/* Recorrente */}
-              {form.payment_mode === "recurring" && (
-                <div className="rounded-lg border border-border p-4 space-y-3">
-                  <p className="text-xs text-muted-foreground">
-                    Cria automaticamente novas movimentações no intervalo definido.
-                    Ideal para despesas fixas como aluguel, assinaturas e salários.
-                  </p>
-                  <div className="grid sm:grid-cols-3 gap-3">
-                    <div className="space-y-2">
-                      <Label>A cada</Label>
-                      <Input type="number" min={1} value={form.recurrence_every}
-                        onChange={(e) => setForm({ ...form, recurrence_every: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Período</Label>
-                      <Select value={form.recurrence_period}
-                        onValueChange={(v) => setForm({ ...form, recurrence_period: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {recurrencePeriods.map((r) => (
-                            <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Repetir até (opcional)</Label>
-                      <Input type="date" value={form.recurrence_until}
-                        onChange={(e) => setForm({ ...form, recurrence_until: e.target.value })} />
-                    </div>
+              {form.recurrence_enabled && (
+                <div className="grid sm:grid-cols-3 gap-3 pt-2">
+                  <div className="space-y-2">
+                    <Label>A cada</Label>
+                    <Input type="number" min={1} value={form.recurrence_every}
+                      onChange={(e) => setForm({ ...form, recurrence_every: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Período</Label>
+                    <Select value={form.recurrence_period}
+                      onValueChange={(v) => setForm({ ...form, recurrence_period: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {recurrencePeriods.map((r) => (
+                          <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Repetir até (opcional)</Label>
+                    <Input type="date" value={form.recurrence_until}
+                      onChange={(e) => setForm({ ...form, recurrence_until: e.target.value })} />
                   </div>
                 </div>
               )}
