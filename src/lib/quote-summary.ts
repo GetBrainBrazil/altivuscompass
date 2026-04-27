@@ -82,7 +82,7 @@ function isExpired(quote_validity?: string | null): boolean {
   return v.getTime() < today.getTime();
 }
 
-import { formatTransportDetails } from "./transport-format";
+
 
 function buildItemLine(item: AnyItem): string | null {
   const titleOrDesc = (item.title || item.description || "").trim();
