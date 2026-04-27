@@ -847,6 +847,7 @@ export default function Quotes() {
 
         if (stage === "confirmed" && conclusion_type === "won" && editingQuote.stage !== "confirmed") {
           await createSaleFromQuote(editingQuote.id, payload);
+          openClientCompletionAfterConfirm(editingQuote.id);
         }
       } else {
         const { data, error } = await supabase.from("quotes").insert(payload).select("id").single();
