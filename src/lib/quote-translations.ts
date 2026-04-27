@@ -231,6 +231,8 @@ const flightIt = {
   carryOn: "Mano",
   checkedBag: "Stiva",
   observation: "Osservazione",
+  connectionIn: "Scalo a",
+  layover: "di scalo",
 };
 
 const translations: Record<QuoteLang, TranslationKeys> = {
