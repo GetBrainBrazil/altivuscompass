@@ -488,7 +488,12 @@ export default function Clients() {
   const performGoToList = () => {
     setView("list"); setEditingId(null); setForm(emptyForm); setActiveTab("contact");
     setSelectedAirports([]); setSelectedTags([]); setSelectedDestinations([]); setPhones([]); setEmails([]); setSocials([]); setPassports([]); setMilesPrograms([]); setShowPasswords({});
+    setLinkContactId(null); setContactLevel(null);
     initialClientSnapshotRef.current = "";
+    // Clean URL params so we don't auto-reopen
+    if (searchParams.get("contact") || searchParams.get("id") || searchParams.get("new")) {
+      setSearchParams({}, { replace: true });
+    }
   };
 
   const saveMutation = useMutation({
