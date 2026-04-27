@@ -177,6 +177,8 @@ const flightFr = {
   carryOn: "Cabine",
   checkedBag: "Soute",
   observation: "Observation",
+  connectionIn: "Correspondance à",
+  layover: "d'escale",
 };
 
 const flightDe = {
