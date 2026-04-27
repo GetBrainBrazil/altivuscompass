@@ -47,6 +47,7 @@ import {
 import { cn } from "@/lib/utils";
 import { KanbanCard, type KanbanCardData } from "@/components/crm/KanbanCard";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 type KanbanColumn = {
   id: string;
@@ -537,6 +538,56 @@ export default function CRM() {
       /* ignore */
     }
   }, [opsColumns]);
+
+  // ─── Sync inbound leads (from WhatsApp AI / manual quick-create) into the
+  // "Novos Leads (IA)" column. We poll every 30s so newly captured leads show
+  // up automatically without a page refresh.
+  useEffect(() => {
+    let cancelled = false;
+    const fetchLeads = async () => {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at")
+        .is("converted_client_id", null)
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error || cancelled || !data) return;
+
+      const leadCards: KanbanCardData[] = data.map((l: any) => ({
+        id: `lead-${l.id}`,
+        clientName: l.full_name,
+        destination: l.destination ?? undefined,
+        travelDate: l.travel_date_start
+          ? new Date(l.travel_date_start).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })
+          : (l.flexible_dates_description ?? undefined),
+        estimatedValue: l.budget_estimate ? Number(l.budget_estimate) : undefined,
+        isAILead: l.source === "whatsapp_ai",
+        aiSummary: l.ai_summary ?? undefined,
+        tags: [
+          l.travelers_count ? { label: `${l.travelers_count} viajante(s)`, tone: "blue" as const } : null,
+          l.source === "whatsapp_ai" ? { label: "WhatsApp", tone: "green" as const } : null,
+        ].filter(Boolean) as KanbanCardData["tags"],
+      }));
+
+      setSalesColumns((prev) => {
+        const newLeadsCol = prev.find((c) => c.id === "new-leads");
+        if (!newLeadsCol) return prev;
+        // Preserve any non-lead cards (mock/manual) in the column, then prepend DB leads.
+        // Avoid duplicates by id.
+        const existingIds = new Set(leadCards.map((c) => c.id));
+        const kept = newLeadsCol.cards.filter((c) => !c.id.startsWith("lead-") || !existingIds.has(c.id));
+        return prev.map((col) =>
+          col.id === "new-leads" ? { ...col, cards: [...leadCards, ...kept.filter((c) => !c.id.startsWith("lead-"))] } : col,
+        );
+      });
+    };
+    fetchLeads();
+    const interval = setInterval(fetchLeads, 30_000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
 
   // Add column dialog
   const [addOpen, setAddOpen] = useState(false);

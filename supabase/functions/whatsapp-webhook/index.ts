@@ -47,11 +47,13 @@ Deno.serve(async (req) => {
     const isPagoCommand = isTextMsg && messageText.trim().toLowerCase() === '#pago'
     const isCancelarCommand = isTextMsg && ['#cancelar', '#cancela', '#sair'].includes(messageText.trim().toLowerCase())
 
-    // Find active session for this phone
+    // Find active financial-entry session for this phone (#pago flow only).
+    // Lead-capture conversations are handled by handleLeadCapture below.
     const { data: existingSession } = await supabase
       .from('whatsapp_sessions')
       .select('*')
       .eq('phone', phone)
+      .eq('session_type', 'financial_entry')
       .eq('status', 'active')
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
@@ -97,9 +99,15 @@ Deno.serve(async (req) => {
       })
     }
 
-    // If no active session, ignore the message
+    // If no active session, route the message to the lead-capture flow (AI conversation)
     if (!existingSession) {
-      return new Response(JSON.stringify({ status: 'ignored', reason: 'no active session' }), {
+      const result = await handleLeadCapture(supabase, lovableApiKey, zapiInstanceId, zapiToken, zapiSecurityToken, {
+        phone,
+        senderName,
+        messageText: isTextMsg ? messageText : '',
+        isTextMsg,
+      })
+      return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
@@ -392,5 +400,274 @@ Não inclua o JSON se ainda estiver coletando informações.`
   } catch (e) {
     console.error('AI call error:', e)
     return { reply: 'Desculpe, tive um problema técnico. Tente novamente em instantes.', extracted_data: null, awaiting_confirmation: false }
+  }
+}
+
+// ============================================================================
+// LEAD CAPTURE FLOW
+// ============================================================================
+// When a new contact (no active #pago session) sends a message, treat the
+// conversation as an inbound sales lead. Auto-create a `leads` row tied to a
+// `whatsapp_sessions` row of type `lead_capture`, then use the AI to extract
+// destination, dates, travelers, budget and preferences from each message and
+// keep the lead row updated. The AI replies in PT-BR like a friendly travel
+// consultant assistant.
+// ============================================================================
+
+async function handleLeadCapture(
+  supabase: any,
+  lovableApiKey: string,
+  zapiInstanceId: string,
+  zapiToken: string,
+  zapiSecurityToken: string,
+  ctx: { phone: string; senderName: string; messageText: string; isTextMsg: boolean },
+) {
+  const { phone, senderName, messageText, isTextMsg } = ctx
+
+  // Find or create the lead-capture session for this phone (regardless of expiry)
+  let { data: leadSession } = await supabase
+    .from('whatsapp_sessions')
+    .select('*')
+    .eq('phone', phone)
+    .eq('session_type', 'lead_capture')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  let leadId: string | null = leadSession?.lead_id ?? null
+  let leadRow: any = null
+
+  if (leadId) {
+    const { data } = await supabase.from('leads').select('*').eq('id', leadId).single()
+    leadRow = data
+  }
+
+  // Create a new lead if none exists for this phone yet
+  if (!leadRow) {
+    const cleanName = (senderName || '').trim() || `Contato ${phone.slice(-4)}`
+    const { data: newLead, error: leadErr } = await supabase
+      .from('leads')
+      .insert({
+        full_name: cleanName,
+        phone,
+        source: 'whatsapp_ai',
+        status: 'new',
+        ai_collected_data: { whatsapp_sender_name: senderName || null },
+      })
+      .select('*')
+      .single()
+    if (leadErr) {
+      console.error('Lead insert error:', leadErr)
+      return { status: 'error', error: leadErr.message }
+    }
+    leadRow = newLead
+    leadId = newLead.id
+  }
+
+  // Create or refresh the session
+  if (!leadSession) {
+    const { data: created } = await supabase
+      .from('whatsapp_sessions')
+      .insert({
+        phone,
+        session_type: 'lead_capture',
+        state: { messages: [], sender_name: senderName },
+        status: 'active',
+        lead_id: leadId,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      })
+      .select('*')
+      .single()
+    leadSession = created
+  }
+
+  const sessionState = (leadSession?.state as any) || { messages: [] }
+
+  // Append user message to history
+  if (isTextMsg && messageText) {
+    sessionState.messages = [...(sessionState.messages || []), { role: 'user', content: messageText }]
+  } else {
+    // Non-text messages: still acknowledge but skip AI extraction this turn
+    await sendZapiText(
+      zapiInstanceId, zapiToken, zapiSecurityToken, phone,
+      'Recebi seu arquivo! Pode me contar em texto também o que você está procurando? (destino, datas, quantas pessoas)',
+    )
+    await supabase.from('whatsapp_sessions').update({
+      state: sessionState,
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    }).eq('id', leadSession!.id)
+    return { status: 'lead_capture_attachment', lead_id: leadId }
+  }
+
+  // Call AI to converse and extract structured data
+  const ai = await callLeadCaptureAI(lovableApiKey, sessionState, leadRow, senderName)
+
+  // Apply extracted updates to the lead row
+  const updates = buildLeadUpdates(ai.extracted, leadRow)
+  if (Object.keys(updates).length > 0) {
+    const { error: updErr } = await supabase
+      .from('leads')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', leadId)
+    if (updErr) console.error('Lead update error:', updErr)
+  }
+
+  sessionState.messages = [...(sessionState.messages || []), { role: 'assistant', content: ai.reply }]
+
+  await supabase.from('whatsapp_sessions').update({
+    state: sessionState,
+    lead_id: leadId,
+    expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+  }).eq('id', leadSession!.id)
+
+  await sendZapiText(zapiInstanceId, zapiToken, zapiSecurityToken, phone, ai.reply)
+
+  return { status: 'lead_capture_processed', lead_id: leadId }
+}
+
+function buildLeadUpdates(extracted: any, current: any): Record<string, any> {
+  if (!extracted || typeof extracted !== 'object') return {}
+  const updates: Record<string, any> = {}
+  const setIfNew = (field: string, value: any) => {
+    if (value === undefined || value === null || value === '') return
+    if (current?.[field] && String(current[field]).trim()) return // don't overwrite
+    updates[field] = value
+  }
+  setIfNew('full_name', extracted.full_name)
+  setIfNew('email', extracted.email)
+  setIfNew('destination', extracted.destination)
+  setIfNew('travel_date_start', extracted.travel_date_start)
+  setIfNew('travel_date_end', extracted.travel_date_end)
+  if (extracted.flexible_dates === true && current?.flexible_dates !== true) {
+    updates.flexible_dates = true
+  }
+  setIfNew('flexible_dates_description', extracted.flexible_dates_description)
+  if (typeof extracted.travelers_count === 'number' && !current?.travelers_count) {
+    updates.travelers_count = extracted.travelers_count
+  }
+  if (typeof extracted.budget_estimate === 'number' && !current?.budget_estimate) {
+    updates.budget_estimate = extracted.budget_estimate
+  }
+  // Append preferences instead of overwriting
+  if (extracted.preferences && typeof extracted.preferences === 'string') {
+    const merged = current?.preferences
+      ? `${current.preferences}\n${extracted.preferences}`.slice(0, 2000)
+      : extracted.preferences
+    updates.preferences = merged
+  }
+  if (extracted.ai_summary && typeof extracted.ai_summary === 'string') {
+    updates.ai_summary = extracted.ai_summary.slice(0, 500)
+  }
+  // Merge ai_collected_data
+  if (extracted.extras && typeof extracted.extras === 'object') {
+    updates.ai_collected_data = {
+      ...(current?.ai_collected_data || {}),
+      ...extracted.extras,
+    }
+  }
+  return updates
+}
+
+async function callLeadCaptureAI(
+  apiKey: string,
+  sessionState: any,
+  currentLead: any,
+  senderName: string,
+) {
+  const today = new Date().toISOString().split('T')[0]
+  const knownData = {
+    full_name: currentLead?.full_name || senderName || null,
+    destination: currentLead?.destination || null,
+    travel_date_start: currentLead?.travel_date_start || null,
+    travel_date_end: currentLead?.travel_date_end || null,
+    flexible_dates: currentLead?.flexible_dates || false,
+    flexible_dates_description: currentLead?.flexible_dates_description || null,
+    travelers_count: currentLead?.travelers_count || null,
+    budget_estimate: currentLead?.budget_estimate || null,
+    preferences: currentLead?.preferences || null,
+  }
+
+  const systemPrompt = `Você é um(a) consultor(a) de viagens da **Altivus Turismo** atendendo um novo contato pelo WhatsApp.
+
+Seu papel:
+1. Conversar de forma calorosa, profissional e em **português brasileiro**
+2. Coletar gradualmente as informações da viagem desejada
+3. Não peça tudo de uma vez — pergunte 1 ou 2 coisas por mensagem, conforme a conversa flui
+4. Se a pessoa já forneceu uma informação, NÃO peça de novo
+5. Use emojis com moderação (✈️ 🏝️ 🗺️)
+6. Mantenha as respostas curtas (máximo 3-4 linhas)
+7. Quando tiver dados suficientes (destino + datas + viajantes), avise que um consultor humano dará continuidade com uma cotação personalizada
+
+Informações que você precisa coletar:
+- Nome completo (se diferente do que veio no WhatsApp)
+- Destino desejado (cidade/país)
+- Datas da viagem (início e fim, ou "flexível")
+- Quantidade de viajantes (adultos e crianças se houver)
+- Orçamento aproximado (opcional, se a pessoa mencionar)
+- Preferências (tipo de hotel, classe do voo, interesses, motivo da viagem)
+
+Hoje é ${today}.
+
+Dados já conhecidos sobre este lead:
+${JSON.stringify(knownData, null, 2)}
+
+**FORMATO DE RESPOSTA OBRIGATÓRIO**:
+Responda primeiro a mensagem em texto natural para o usuário.
+Depois, em uma linha separada no FINAL, retorne EXATAMENTE este bloco JSON com os dados extraídos APENAS desta última mensagem do usuário (use null para campos não mencionados):
+
+###JSON###{"full_name":null,"email":null,"destination":null,"travel_date_start":null,"travel_date_end":null,"flexible_dates":null,"flexible_dates_description":null,"travelers_count":null,"budget_estimate":null,"preferences":null,"ai_summary":null,"extras":{}}
+
+Regras do JSON:
+- "travel_date_start" e "travel_date_end" devem ser strings no formato "YYYY-MM-DD" ou null
+- "flexible_dates" é true só se a pessoa disser que as datas são flexíveis
+- "travelers_count" é o total de viajantes (número inteiro)
+- "budget_estimate" é um número em reais (sem símbolo) ou null
+- "preferences" é um texto curto resumindo preferências mencionadas NESTA mensagem (não repita o que já foi coletado)
+- "ai_summary" é um resumo geral atualizado da viagem (1-2 frases) — só preencha quando tiver mudanças significativas
+- "extras" pode conter qualquer dado extra estruturado relevante (ex: {"motivo":"lua de mel","com_criancas":true})
+- O JSON deve ser válido e na ÚLTIMA linha da resposta`
+
+  const aiMessages: any[] = [{ role: 'system', content: systemPrompt }]
+  for (const msg of (sessionState.messages || [])) {
+    aiMessages.push({ role: msg.role === 'assistant' ? 'assistant' : 'user', content: msg.content })
+  }
+
+  try {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: aiMessages,
+      }),
+    })
+
+    if (!response.ok) {
+      const errText = await response.text()
+      console.error('Lead AI error:', response.status, errText)
+      return { reply: 'Olá! Sou a assistente da Altivus Turismo ✈️ Em que destino você está pensando para a sua próxima viagem?', extracted: null }
+    }
+
+    const data = await response.json()
+    let reply = data.choices?.[0]?.message?.content || 'Pode me contar mais sobre a viagem dos seus sonhos?'
+
+    let extracted: any = null
+    const jsonMatch = reply.match(/###JSON###([\s\S]+)$/)
+    if (jsonMatch) {
+      try {
+        extracted = JSON.parse(jsonMatch[1].trim())
+        reply = reply.replace(/###JSON###[\s\S]+$/, '').trim()
+      } catch (e) {
+        console.error('Failed to parse lead AI JSON:', e)
+      }
+    }
+
+    return { reply, extracted }
+  } catch (e) {
+    console.error('Lead AI call error:', e)
+    return { reply: 'Tive um probleminha técnico aqui. Pode repetir? 😊', extracted: null }
   }
 }
