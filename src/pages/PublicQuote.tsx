@@ -9,6 +9,7 @@ import { QuoteAcceptance } from "@/components/quotes/QuoteAcceptance";
 import { type QuoteLang, LANG_OPTIONS, getTranslations, getItemTypeLabel, getRelationshipLabel, getFlagUrl, getCabinClassLabel, getConnectionsLabel, getFlightDirectionLabel } from "@/lib/quote-translations";
 import { formatTransportDetails } from "@/lib/transport-format";
 import { formatExperienceDetails } from "@/lib/experience-format";
+import { getAccommodationTypeLabel, getMealPlanLabel, formatHotelDateBR } from "@/lib/hotel-format";
 
 const ITEM_TYPE_ICONS: Record<string, any> = {
   flight: Plane, hotel: Hotel, transport: Bus, cruise: Ship,
