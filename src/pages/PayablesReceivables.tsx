@@ -1,17 +1,14 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MetricCard } from "@/components/MetricCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from "@/components/ui/dialog";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -22,7 +19,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import {
   Clock, TrendingUp, AlertTriangle, ArrowDown, ArrowUp,
-  Search, MoreHorizontal, Plus, Pencil, Trash2, CheckCircle2,
+  Search, MoreHorizontal, Pencil, Trash2, CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -94,31 +91,20 @@ function getPresetRange(preset: string): { from?: string; to?: string } {
   }
 }
 
-// ----- empty form -----
-const emptyForm = {
-  type: "payable" as TxType,
-  description: "",
-  category: "",
-  cost_center: "",
-  project: "",
-  client_id: "",
-  supplier_id: "",
-  competence_date: new Date().toISOString().slice(0, 10),
-  due_date: new Date().toISOString().slice(0, 10),
-  bank_account_id: "",
-  payment_method: "",
-  base_amount: "",
-  discount_amount: "",
-  interest_amount: "",
-  fine_amount: "",
-  admin_fee_amount: "",
-  installment_total: "1",
-  installment_interval_days: "30",
-  recurrence_type: "none",
-  observations: "",
-};
+function computeTotal(t: any): number {
+  if (t.base_amount != null) {
+    const b = Number(t.base_amount) || 0;
+    const d = Number(t.discount_amount) || 0;
+    const i = Number(t.interest_amount) || 0;
+    const f = Number(t.fine_amount) || 0;
+    const a = Number(t.admin_fee_amount) || 0;
+    return b - d + i + f + a;
+  }
+  return Number(t.amount) || 0;
+}
 
 export default function PayablesReceivables() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const qc = useQueryClient();
 
@@ -133,10 +119,6 @@ export default function PayablesReceivables() {
   const [bankFilter, setBankFilter] = useState<string>("all");
   const [methodFilter, setMethodFilter] = useState<string>("all");
   const [recurrenceFilter, setRecurrenceFilter] = useState<string>("all");
-
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<typeof emptyForm>(emptyForm);
 
   // ----- data fetching -----
   const { data: transactions = [] } = useQuery({
@@ -173,20 +155,24 @@ export default function PayablesReceivables() {
     queryKey: ["finance-banks"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("bank_accounts").select("id, bank_name, agency, account_number").eq("is_active", true);
+        .from("bank_accounts").select("id, bank_name").eq("is_active", true);
       if (error) throw error;
       return data ?? [];
     },
   });
 
-  // ----- maps for fast lookup -----
+  // ----- maps -----
   const clientsMap = useMemo(
-    () => Object.fromEntries(clients.map((c: any) => [c.id, c.full_name])),
-    [clients],
-  );
+    () => Object.fromEntries(clients.map((c: any) => [c.id, c.full_name])), [clients]);
   const suppliersMap = useMemo(
-    () => Object.fromEntries(suppliers.map((s: any) => [s.id, s.trade_name || s.name])),
-    [suppliers],
+    () => Object.fromEntries(suppliers.map((s: any) => [s.id, s.trade_name || s.name])), [suppliers]);
+
+  const partyOptions = useMemo(
+    () => [
+      ...clients.map((c: any) => ({ id: c.id, name: c.full_name })),
+      ...suppliers.map((s: any) => ({ id: s.id, name: s.trade_name || s.name })),
+    ],
+    [clients, suppliers],
   );
 
   // ----- filtering -----
@@ -220,7 +206,7 @@ export default function PayablesReceivables() {
   }, [transactions, activeTab, hideFutureRecurrence, statusFilter, partyFilter, categoryFilter,
       bankFilter, methodFilter, recurrenceFilter, datePreset, search, clientsMap, suppliersMap]);
 
-  // ----- summary cards (from filtered set) -----
+  // ----- summary cards -----
   const todayStr = new Date().toISOString().slice(0, 10);
   const summary = useMemo(() => {
     let pending = 0, paid = 0, overdue = 0;
@@ -235,79 +221,7 @@ export default function PayablesReceivables() {
     return { pending, paid, overdue };
   }, [filtered, todayStr]);
 
-  // ----- mutations -----
-  const saveMutation = useMutation({
-    mutationFn: async (payload: any) => {
-      const installments = Math.max(1, parseInt(payload.installment_total || "1", 10));
-      const intervalDays = Math.max(1, parseInt(payload.installment_interval_days || "30", 10));
-      const baseAmount = parseFloat(payload.base_amount || "0");
-      const discount = parseFloat(payload.discount_amount || "0");
-      const interest = parseFloat(payload.interest_amount || "0");
-      const fine = parseFloat(payload.fine_amount || "0");
-      const adminFee = parseFloat(payload.admin_fee_amount || "0");
-      const totalPerRow = baseAmount - discount + interest + fine + adminFee;
-
-      const rowBase = {
-        type: payload.type,
-        description: payload.description,
-        category: payload.category || null,
-        cost_center: payload.cost_center || null,
-        project: payload.project || null,
-        client_id: payload.client_id || null,
-        supplier_id: payload.supplier_id || null,
-        competence_date: payload.competence_date || null,
-        bank_account_id: payload.bank_account_id || null,
-        payment_method: payload.payment_method || null,
-        base_amount: baseAmount,
-        discount_amount: discount,
-        interest_amount: interest,
-        fine_amount: fine,
-        admin_fee_amount: adminFee,
-        amount: totalPerRow,
-        date: payload.competence_date || todayStr,
-        observations: payload.observations || null,
-        recurrence_type: payload.recurrence_type === "none" ? null : payload.recurrence_type,
-        status: "pending",
-        party_name:
-          (payload.type === "payable" ? suppliersMap[payload.supplier_id] : clientsMap[payload.client_id]) ?? null,
-      };
-
-      if (editingId) {
-        const { error } = await (supabase.from("financial_transactions") as any)
-          .update({ ...rowBase, due_date: payload.due_date }).eq("id", editingId);
-        if (error) throw error;
-        return;
-      }
-
-      // Build N installment rows
-      const groupId = installments > 1 ? crypto.randomUUID() : null;
-      const rows: any[] = [];
-      const baseDue = new Date(payload.due_date + "T00:00:00");
-      for (let i = 0; i < installments; i++) {
-        const d = new Date(baseDue);
-        d.setDate(d.getDate() + i * intervalDays);
-        rows.push({
-          ...rowBase,
-          due_date: d.toISOString().slice(0, 10),
-          installment_number: installments > 1 ? i + 1 : null,
-          installment_total: installments > 1 ? installments : null,
-          installment_group_id: groupId,
-          is_future_recurrence: i > 0,
-        });
-      }
-      const { error } = await (supabase.from("financial_transactions") as any).insert(rows);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({ title: editingId ? "Movimentação atualizada" : "Movimentação criada" });
-      qc.invalidateQueries({ queryKey: ["finance-transactions"] });
-      setDialogOpen(false);
-      setEditingId(null);
-      setForm(emptyForm);
-    },
-    onError: (e: any) => toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" }),
-  });
-
+  // ----- row mutations -----
   const markPaidMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await (supabase.from("financial_transactions") as any)
@@ -331,56 +245,10 @@ export default function PayablesReceivables() {
     },
   });
 
-  // ----- handlers -----
-  const openNew = (type: TxType) => {
-    setEditingId(null);
-    setForm({ ...emptyForm, type });
-    setDialogOpen(true);
-  };
-
-  const openEdit = (t: any) => {
-    setEditingId(t.id);
-    setForm({
-      type: t.type,
-      description: t.description ?? "",
-      category: t.category ?? "",
-      cost_center: t.cost_center ?? "",
-      project: t.project ?? "",
-      client_id: t.client_id ?? "",
-      supplier_id: t.supplier_id ?? "",
-      competence_date: t.competence_date ?? t.date ?? todayStr,
-      due_date: t.due_date ?? todayStr,
-      bank_account_id: t.bank_account_id ?? "",
-      payment_method: t.payment_method ?? "",
-      base_amount: String(t.base_amount ?? t.amount ?? ""),
-      discount_amount: String(t.discount_amount ?? ""),
-      interest_amount: String(t.interest_amount ?? ""),
-      fine_amount: String(t.fine_amount ?? ""),
-      admin_fee_amount: String(t.admin_fee_amount ?? ""),
-      installment_total: String(t.installment_total ?? "1"),
-      installment_interval_days: "30",
-      recurrence_type: t.recurrence_type ?? "none",
-      observations: t.observations ?? "",
-    });
-    setDialogOpen(true);
-  };
-
-  const totalPreview = useMemo(() => {
-    const b = parseFloat(form.base_amount || "0");
-    const d = parseFloat(form.discount_amount || "0");
-    const i = parseFloat(form.interest_amount || "0");
-    const f = parseFloat(form.fine_amount || "0");
-    const a = parseFloat(form.admin_fee_amount || "0");
-    return b - d + i + f + a;
-  }, [form]);
-
-  const partyOptions = useMemo(() => {
-    const all = [
-      ...clients.map((c: any) => ({ id: c.id, name: c.full_name })),
-      ...suppliers.map((s: any) => ({ id: s.id, name: s.trade_name || s.name })),
-    ];
-    return all;
-  }, [clients, suppliers]);
+  const openNew = (type: TxType) =>
+    navigate(`/finance/payables-receivables/new?type=${type}`);
+  const openEdit = (id: string) =>
+    navigate(`/finance/payables-receivables/${id}/edit`);
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
@@ -531,7 +399,11 @@ export default function PayablesReceivables() {
                 const sb = statusBadge[status];
 
                 return (
-                  <tr key={t.id} className="border-t border-border hover:bg-muted/20">
+                  <tr
+                    key={t.id}
+                    onClick={() => openEdit(t.id)}
+                    className="border-t border-border hover:bg-muted/20 cursor-pointer"
+                  >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <Avatar className="h-7 w-7">
@@ -562,7 +434,7 @@ export default function PayablesReceivables() {
                     <td className="px-4 py-3">
                       <Badge variant="outline" className={cn("border", sb.cls)}>{sb.label}</Badge>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -570,7 +442,7 @@ export default function PayablesReceivables() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openEdit(t)}>
+                          <DropdownMenuItem onClick={() => openEdit(t.id)}>
                             <Pencil className="h-4 w-4 mr-2" /> Editar
                           </DropdownMenuItem>
                           {status !== "paid" && (
@@ -594,281 +466,11 @@ export default function PayablesReceivables() {
           </table>
         </div>
       </div>
-
-      {/* New / edit dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingId ? "Editar movimentação" : "Nova movimentação financeira"}
-            </DialogTitle>
-          </DialogHeader>
-
-          {/* Type cards */}
-          <div className="grid grid-cols-2 gap-3">
-            {(["payable", "receivable"] as TxType[]).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setForm({ ...form, type: t })}
-                className={cn(
-                  "p-4 rounded-lg border-2 text-left transition-all",
-                  form.type === t
-                    ? "border-success bg-success/5"
-                    : "border-border hover:border-muted-foreground/40",
-                )}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  {t === "payable" ? <ArrowDown className="h-4 w-4 text-destructive" /> : <ArrowUp className="h-4 w-4 text-success" />}
-                  <span className="font-semibold">{t === "payable" ? "Conta a Pagar" : "Conta a Receber"}</span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {t === "payable" ? "Despesa ou pagamento a fornecedores" : "Recebimento de cliente ou venda"}
-                </p>
-              </button>
-            ))}
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <Label>Descrição da Movimentação *</Label>
-            <Input
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Ex.: Reserva de hotel — Cliente João"
-            />
-          </div>
-
-          {/* Classification */}
-          <FormSection title="Classificação Financeira">
-            <div className="grid sm:grid-cols-3 gap-3">
-              <div className="space-y-2">
-                <Label>Categoria *</Label>
-                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {tourismCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Centro de Custo</Label>
-                <Input value={form.cost_center} onChange={(e) => setForm({ ...form, cost_center: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>Projeto / Cotação</Label>
-                <Input
-                  value={form.project}
-                  onChange={(e) => setForm({ ...form, project: e.target.value })}
-                  placeholder="Vincular a uma viagem"
-                />
-              </div>
-            </div>
-          </FormSection>
-
-          {/* Linkage */}
-          <FormSection title="Vinculação">
-            <div className="grid sm:grid-cols-2 gap-3">
-              {form.type === "receivable" ? (
-                <div className="space-y-2 sm:col-span-2">
-                  <Label>Cliente</Label>
-                  <div className="flex gap-2">
-                    <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
-                      <SelectTrigger><SelectValue placeholder="Selecione um cliente" /></SelectTrigger>
-                      <SelectContent>
-                        {clients.length === 0 && (
-                          <div className="px-3 py-2 text-xs text-muted-foreground">
-                            Nenhum cliente cadastrado.
-                          </div>
-                        )}
-                        {clients.map((c: any) => (
-                          <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      type="button" variant="outline" size="icon"
-                      onClick={() => window.open("/clients", "_blank")}
-                      title="Cadastrar novo cliente"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    Apenas Clientes da base aparecem (não inclui Leads ou Prospects).
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2 sm:col-span-2">
-                  <Label>Fornecedor</Label>
-                  <Select value={form.supplier_id} onValueChange={(v) => setForm({ ...form, supplier_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Selecione um fornecedor" /></SelectTrigger>
-                    <SelectContent>
-                      {suppliers.map((s: any) => (
-                        <SelectItem key={s.id} value={s.id}>{s.trade_name || s.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </div>
-          </FormSection>
-
-          {/* Dates */}
-          <FormSection title="Datas e Condições">
-            <div className="grid sm:grid-cols-3 gap-3">
-              <div className="space-y-2">
-                <Label>Data de Competência *</Label>
-                <Input type="date" value={form.competence_date}
-                  onChange={(e) => setForm({ ...form, competence_date: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>Data de Vencimento *</Label>
-                <Input type="date" value={form.due_date}
-                  onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>Conta Bancária</Label>
-                <Select value={form.bank_account_id}
-                  onValueChange={(v) => setForm({ ...form, bank_account_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {bankAccounts.map((b: any) => (
-                      <SelectItem key={b.id} value={b.id}>{b.bank_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2 sm:col-span-3">
-                <Label>Meio de Pagamento</Label>
-                <Select value={form.payment_method}
-                  onValueChange={(v) => setForm({ ...form, payment_method: v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {paymentMethods.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </FormSection>
-
-          {/* Amounts */}
-          <FormSection title="Valores e Encargos">
-            <div className="grid sm:grid-cols-3 gap-3">
-              <MoneyField label="Valor Base (R$) *" value={form.base_amount}
-                onChange={(v) => setForm({ ...form, base_amount: v })} />
-              <MoneyField label="Desconto Previsto" value={form.discount_amount}
-                onChange={(v) => setForm({ ...form, discount_amount: v })} />
-              <MoneyField label="Juros Previstos" value={form.interest_amount}
-                onChange={(v) => setForm({ ...form, interest_amount: v })} />
-              <MoneyField label="Multa Prevista" value={form.fine_amount}
-                onChange={(v) => setForm({ ...form, fine_amount: v })} />
-              <MoneyField label="Taxas ADM" value={form.admin_fee_amount}
-                onChange={(v) => setForm({ ...form, admin_fee_amount: v })} />
-              <div className="space-y-2 flex flex-col justify-end">
-                <Label>Total Calculado</Label>
-                <div className="h-10 px-3 rounded-md border border-border bg-muted/30 flex items-center font-semibold">
-                  {brl(totalPreview)}
-                </div>
-              </div>
-            </div>
-          </FormSection>
-
-          {/* Installments + recurrence */}
-          {!editingId && (
-            <FormSection title="Parcelamento e Recorrência">
-              <div className="grid sm:grid-cols-3 gap-3">
-                <div className="space-y-2">
-                  <Label>Quantidade de Parcelas</Label>
-                  <Input type="number" min={1} value={form.installment_total}
-                    onChange={(e) => setForm({ ...form, installment_total: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Intervalo (dias)</Label>
-                  <Input type="number" min={1} value={form.installment_interval_days}
-                    onChange={(e) => setForm({ ...form, installment_interval_days: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Recorrência</Label>
-                  <Select value={form.recurrence_type}
-                    onValueChange={(v) => setForm({ ...form, recurrence_type: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {recurrenceOptions.map((r) => (
-                        <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </FormSection>
-          )}
-
-          <div className="space-y-2">
-            <Label>Observações</Label>
-            <Textarea value={form.observations}
-              onChange={(e) => setForm({ ...form, observations: e.target.value })}
-              rows={2} />
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button
-              onClick={() => {
-                if (!form.description || !form.category || !form.base_amount || !form.due_date || !form.competence_date) {
-                  toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
-                  return;
-                }
-                saveMutation.mutate(form);
-              }}
-              disabled={saveMutation.isPending}
-            >
-              {saveMutation.isPending ? "Salvando…" : "Salvar movimentação"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
 
-// ----- Helpers / sub-components -----
-function computeTotal(t: any): number {
-  if (t.base_amount != null) {
-    const b = Number(t.base_amount) || 0;
-    const d = Number(t.discount_amount) || 0;
-    const i = Number(t.interest_amount) || 0;
-    const f = Number(t.fine_amount) || 0;
-    const a = Number(t.admin_fee_amount) || 0;
-    return b - d + i + f + a;
-  }
-  return Number(t.amount) || 0;
-}
-
-function FormSection({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-3 border-t border-border pt-4">
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{title}</h3>
-      {children}
-    </div>
-  );
-}
-
-function MoneyField({
-  label, value, onChange,
-}: { label: string; value: string; onChange: (v: string) => void }) {
-  return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      <Input
-        type="number" step="0.01" min="0" value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="0,00"
-      />
-    </div>
-  );
-}
-
+// ----- subcomponents -----
 function PillSelect({
   label, value, onChange, options,
 }: {

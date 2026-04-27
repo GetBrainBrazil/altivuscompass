@@ -16,6 +16,7 @@ import Finance from "./pages/Finance";
 import FinancialRegistrations from "./pages/FinancialRegistrations";
 import FinancialReports from "./pages/FinancialReports";
 import PayablesReceivables from "./pages/PayablesReceivables";
+import PayableReceivableForm from "./pages/PayableReceivableForm";
 import Miles from "./pages/Miles";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
@@ -71,6 +72,8 @@ const App = () => (
             <Route path="/campaigns" element={<ProtectedRoute><AppLayout><Campaigns /></AppLayout></ProtectedRoute>} />
             <Route path="/finance" element={<ProtectedRoute><AppLayout><Finance /></AppLayout></ProtectedRoute>} />
             <Route path="/finance/payables-receivables" element={<ProtectedRoute><AppLayout><PayablesReceivables /></AppLayout></ProtectedRoute>} />
+            <Route path="/finance/payables-receivables/new" element={<ProtectedRoute><AppLayout><PayableReceivableForm /></AppLayout></ProtectedRoute>} />
+            <Route path="/finance/payables-receivables/:id/edit" element={<ProtectedRoute><AppLayout><PayableReceivableForm /></AppLayout></ProtectedRoute>} />
             <Route path="/finance/registrations" element={<ProtectedRoute><AppLayout><FinancialRegistrations /></AppLayout></ProtectedRoute>} />
             <Route path="/finance/reports" element={<ProtectedRoute><AppLayout><FinancialReports /></AppLayout></ProtectedRoute>} />
             <Route path="/miles" element={<ProtectedRoute><AppLayout><Miles /></AppLayout></ProtectedRoute>} />
