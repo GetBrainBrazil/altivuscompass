@@ -3604,6 +3604,18 @@ export default function Quotes() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ClientDataCompletionDialog
+        open={completionDialog.open}
+        onOpenChange={(o) => setCompletionDialog((p) => ({ ...p, open: o }))}
+        clientId={completionDialog.clientId}
+        clientName={completionDialog.clientName}
+        travelersCount={completionDialog.travelersCount}
+        onCompleted={() => {
+          queryClient.invalidateQueries({ queryKey: ["clients"] });
+          queryClient.invalidateQueries({ queryKey: ["contacts"] });
+        }}
+      />
     </div>
   );
 }
