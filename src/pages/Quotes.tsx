@@ -1412,11 +1412,13 @@ export default function Quotes() {
   };
 
   const addItem = (type: string, extra?: Partial<QuoteItem>) => {
+    const initialDetails: Record<string, any> =
+      type === "flight" ? { pax_adults: 1, pax_children: 0, pax_infants: 0 } : {};
     setItems([...items, {
       item_type: type,
       title: "",
       description: "",
-      details: {},
+      details: initialDetails,
       sort_order: items.length,
       _isNew: true,
       quantity: 1,
