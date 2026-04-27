@@ -1835,13 +1835,38 @@ export default function Clients() {
             className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-card text-sm font-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/30" />
         </div>
         <div className="flex gap-1 p-1 rounded-lg bg-muted flex-wrap">
-          {["all", "economic", "opportunity", "sophisticated"].map((p) => (
-            <button key={p} onClick={() => setProfileFilter(p)}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium font-body transition-colors whitespace-nowrap ${profileFilter === p ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-              {p === "all" ? "Todos" : travelProfiles[p].label}
+          {([
+            { key: "all", label: "Todos" },
+            { key: "cliente", label: "Clientes" },
+            { key: "lead", label: "Leads" },
+            { key: "prospect", label: "Prospects" },
+          ] as const).map((opt) => (
+            <button key={opt.key} onClick={() => setLevelFilter(opt.key as any)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium font-body transition-colors whitespace-nowrap inline-flex items-center gap-1.5 ${levelFilter === opt.key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+              {opt.label}
+              <span className={`inline-flex items-center justify-center min-w-[20px] h-4 px-1 rounded-full text-[10px] font-semibold ${levelFilter === opt.key ? "bg-muted text-foreground" : "bg-card/60 text-muted-foreground"}`}>
+                {levelCounts[opt.key as string] ?? 0}
+              </span>
             </button>
           ))}
         </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="font-body text-xs gap-1.5 h-9">
+              Perfil
+              {profileFilter !== "all" && <span className="ml-1 bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none">{travelProfiles[profileFilter]?.label}</span>}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-44 p-1" align="start">
+            {["all", "economic", "opportunity", "sophisticated"].map((p) => (
+              <button key={p} type="button"
+                onClick={() => setProfileFilter(p)}
+                className={`w-full text-left px-2 py-1.5 rounded text-xs font-body hover:bg-muted/50 ${profileFilter === p ? "bg-muted/40 text-foreground" : "text-muted-foreground"}`}>
+                {p === "all" ? "Todos os perfis" : travelProfiles[p].label}
+              </button>
+            ))}
+          </PopoverContent>
+        </Popover>
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="font-body text-xs gap-1.5 h-9">
