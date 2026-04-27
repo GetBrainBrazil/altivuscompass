@@ -648,17 +648,35 @@ export default function ServiceCenter() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return conversations.filter((c) => {
-      if (activeTab === "leads" && c.category !== "sales") return false;
-      if (activeTab === "support" && c.category !== "post-sale") return false;
-      if (activeTab === "human" && c.status !== "human") return false;
-      if (!q) return true;
-      return (
-        c.leadName.toLowerCase().includes(q) ||
-        c.phone.includes(q) ||
-        getLastMessage(c).content.toLowerCase().includes(q)
-      );
-    });
+    // Prioridade: Cliente em viagem > Cliente > Lead > Prospect.
+    // Dentro do mesmo nível, mais recente primeiro.
+    const priority = (c: Conversation) => {
+      if (c.level === "cliente" && c.isTraveling) return 0;
+      if (c.level === "cliente") return 1;
+      if (c.level === "lead") return 2;
+      return 3;
+    };
+    return conversations
+      .filter((c) => {
+        if (activeTab === "leads" && c.category !== "sales") return false;
+        if (activeTab === "support" && c.category !== "post-sale") return false;
+        if (activeTab === "human" && c.status !== "human") return false;
+        if (!q) return true;
+        return (
+          c.leadName.toLowerCase().includes(q) ||
+          c.phone.includes(q) ||
+          getLastMessage(c).content.toLowerCase().includes(q)
+        );
+      })
+      .sort((a, b) => {
+        const pa = priority(a);
+        const pb = priority(b);
+        if (pa !== pb) return pa - pb;
+        return (
+          new Date(getLastMessage(b).timestamp).getTime() -
+          new Date(getLastMessage(a).timestamp).getTime()
+        );
+      });
   }, [conversations, search, activeTab]);
 
   const selected = useMemo(
