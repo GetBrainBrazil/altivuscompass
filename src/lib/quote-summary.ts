@@ -95,6 +95,11 @@ function buildItemLine(item: AnyItem): string | null {
     if (fmt) {
       descriptor = titleOrDesc ? `${titleOrDesc} — ${fmt.fullLine}` : fmt.fullLine;
     }
+  } else if (item.item_type === "experience") {
+    const fmt = formatExperienceDetails(item.details);
+    if (fmt) {
+      descriptor = titleOrDesc ? `${titleOrDesc} — ${fmt.detailsLine}` : fmt.detailsLine;
+    }
   }
   if (!descriptor) return null;
   const safeText = truncate(descriptor);
