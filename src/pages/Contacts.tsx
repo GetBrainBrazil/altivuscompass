@@ -36,6 +36,8 @@ export default function Contacts() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | ContactLevel>("all");
   const [search, setSearch] = useState("");
+  const [promoteTarget, setPromoteTarget] = useState<ContactRow | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
