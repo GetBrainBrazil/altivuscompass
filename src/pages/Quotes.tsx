@@ -638,6 +638,7 @@ export default function Quotes() {
 
   // Keyboard shortcut: Ctrl/Cmd+S to save inside the quote editor
   const saveQuoteRef = useRef<((closeAfter: boolean) => Promise<string | null>) | null>(null);
+  const [saveBtnState, setSaveBtnState] = useState<"idle" | "saving" | "success">("idle");
   useEffect(() => {
     if (!dialogOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -788,6 +789,7 @@ export default function Quotes() {
   };
 
   const saveQuote = async (closeAfter: boolean): Promise<string | null> => {
+    setSaveBtnState("saving");
     try {
       const stage = form.stage || "new";
       const conclusion_type = stage === "confirmed" ? (form.conclusion_type || "won") : null;
