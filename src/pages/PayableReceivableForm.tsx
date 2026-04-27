@@ -58,7 +58,10 @@ const emptyForm = {
   admin_fee_amount: "",
   installment_total: "1",
   installment_interval_days: "30",
-  recurrence_type: "none",
+  recurrence_enabled: false,
+  recurrence_every: "1",
+  recurrence_period: "monthly",
+  recurrence_until: "",
   observations: "",
 };
 
