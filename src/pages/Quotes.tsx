@@ -860,6 +860,7 @@ export default function Quotes() {
         await logHistory(data.id, "created", "Cotação criada");
         if (stage === "confirmed" && conclusion_type === "won") {
           await createSaleFromQuote(data.id, payload);
+          openClientCompletionAfterConfirm(data.id);
         }
       }
 
