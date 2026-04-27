@@ -33,6 +33,7 @@ import CRM from "./pages/CRM";
 import LeadDetail from "./pages/LeadDetail";
 import AIAgents from "./pages/AIAgents";
 import AIAgentEdit from "./pages/AIAgentEdit";
+import WhatsAppConnection from "./pages/WhatsAppConnection";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -83,6 +84,7 @@ const App = () => (
             <Route path="/ai-agents" element={<ProtectedRoute><AppLayout><AIAgents /></AppLayout></ProtectedRoute>} />
             <Route path="/ai-agents/new" element={<ProtectedRoute><AppLayout><AIAgentEdit /></AppLayout></ProtectedRoute>} />
             <Route path="/ai-agents/:id" element={<ProtectedRoute><AppLayout><AIAgentEdit /></AppLayout></ProtectedRoute>} />
+            <Route path="/whatsapp-connection" element={<ProtectedRoute><AppLayout><WhatsAppConnection /></AppLayout></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
