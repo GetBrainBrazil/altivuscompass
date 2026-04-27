@@ -771,9 +771,13 @@ export default function PublicQuote() {
                         );
                       }
 
+                      const transportFmt = item.item_type === "transport" ? formatTransportDetails(item.details) : null;
                       return (
                         <div key={idx} className="border border-gray-200 rounded-lg p-3 space-y-1.5">
                           {title && <p className="pq-fs-sm sm:text-sm font-medium text-gray-900 font-body">{title}</p>}
+                          {transportFmt && (
+                            <p className="pq-fs-xs sm:text-xs text-gray-700 font-body">{transportFmt.fullLine}</p>
+                          )}
                           {description && <p className="pq-fs-xs sm:text-xs text-gray-500 font-body mt-0.5">{description}</p>}
                           {Array.isArray(item.public_attachments) && item.public_attachments.length > 0 && (
                             <div className="flex flex-wrap gap-1.5 pt-1">
