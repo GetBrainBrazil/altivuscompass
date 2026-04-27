@@ -63,16 +63,27 @@ export function LeadClientPicker({
     },
   });
 
+  // Apenas leads qualificados (com destino + período + nº viajantes) são selecionáveis.
+  // Prospects não recebem cotação.
+  const qualifiedLeads = useMemo(() => {
+    return leads.filter(
+      (l) =>
+        !!l.destination &&
+        (!!l.travel_date_start || !!l.travel_date_end || !!l.flexible_dates) &&
+        !!l.travelers_count,
+    );
+  }, [leads]);
+
   const filteredLeads = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return leads;
-    return leads.filter(
+    if (!q) return qualifiedLeads;
+    return qualifiedLeads.filter(
       (l) =>
         l.full_name.toLowerCase().includes(q) ||
         (l.phone ?? "").toLowerCase().includes(q) ||
         (l.destination ?? "").toLowerCase().includes(q),
     );
-  }, [leads, query]);
+  }, [qualifiedLeads, query]);
 
   const filteredClients = useMemo(() => {
     const q = query.trim().toLowerCase();
