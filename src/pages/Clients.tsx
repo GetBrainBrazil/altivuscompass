@@ -809,22 +809,49 @@ export default function Clients() {
           <Button variant="ghost" size="icon" onClick={goToList} className="shrink-0">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div className="flex-1">
+          <div className="flex-1 flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-display font-semibold text-foreground">
               {editingId ? "Editar Cliente" : "Novo Cliente"}
             </h1>
+            {contactLevel && (
+              <ContactLevelBadge level={contactLevel} size="md" />
+            )}
           </div>
-          {editingId && (
-            <Button
-              type="button"
-              variant="outline"
-              className="font-body shrink-0"
-              onClick={() => navigate("/quotes", { state: { newQuote: true, clientId: editingId } })}
-            >
-              <FileText className="h-4 w-4 mr-1" />
-              Nova cotação
-            </Button>
-          )}
+          {(() => {
+            const isProspect = contactLevel === "prospect";
+            const canCreateQuote = !!editingId && !isProspect;
+            const btn = (
+              <Button
+                type="button"
+                variant="outline"
+                className="font-body shrink-0"
+                disabled={!canCreateQuote}
+                onClick={() => {
+                  if (!canCreateQuote) return;
+                  navigate("/quotes", { state: { newQuote: true, clientId: editingId } });
+                }}
+              >
+                <FileText className="h-4 w-4 mr-1" />
+                Nova cotação
+              </Button>
+            );
+            if (!editingId) return null;
+            if (isProspect) {
+              return (
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span tabIndex={0}>{btn}</span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-xs font-body text-xs">
+                      É necessário promover este contato para Lead antes de criar uma cotação.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              );
+            }
+            return btn;
+          })()}
         </div>
 
         <form onSubmit={(e) => { e.preventDefault(); if (saveMutation.isPending) return; saveMutation.mutate(); }} className="space-y-4">
