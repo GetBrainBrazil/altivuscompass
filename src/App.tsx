@@ -9,6 +9,7 @@ import { AppLayout } from "@/components/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
 import Contacts from "./pages/Contacts";
+import PromoteContact from "./pages/PromoteContact";
 import Quotes from "./pages/Quotes";
 import Campaigns from "./pages/Campaigns";
 import Finance from "./pages/Finance";
