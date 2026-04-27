@@ -29,6 +29,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
 
 type FilterTab = "all" | "leads" | "support" | "human";
 
@@ -302,21 +303,23 @@ const ConversationCard = ({ conversation, active, onClick }: ConversationCardPro
             {last.content}
           </p>
           <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-            {/* Categoria CRM detectada pela IA */}
-            {conversation.category === "post-sale" ? (
+            {/* Nível do contato (Prospect / Lead / Cliente) */}
+            <ContactLevelBadge
+              level={
+                (conversation.contactType === "existing-client"
+                  ? "cliente"
+                  : conversation.category === "post-sale"
+                    ? "cliente"
+                    : conversation.crm
+                      ? "lead"
+                      : "prospect") as ContactLevel
+              }
+              size="xs"
+            />
+            {conversation.category === "post-sale" && (
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
                 <LifeBuoy className="w-2.5 h-2.5" />
                 Pós-venda
-              </span>
-            ) : conversation.contactType === "existing-client" ? (
-              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
-                <UserCheck className="w-2.5 h-2.5" />
-                Cliente
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200">
-                <UserPlus className="w-2.5 h-2.5" />
-                Lead novo
               </span>
             )}
             {/* Status humano/IA */}
