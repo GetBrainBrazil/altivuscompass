@@ -2020,6 +2020,25 @@ export default function Clients() {
                               );
                             })
                           )}
+                          {isVirtual && (client._level === "prospect" || client._level === "lead") && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPromoteTarget({
+                                  id: client._contactId,
+                                  lead_id: client._leadId ?? null,
+                                  full_name: client.full_name,
+                                  phone: client.primary_phone,
+                                  email: client.primary_email,
+                                });
+                              }}
+                              className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full font-body text-sky-700 hover:bg-sky-50 border border-sky-200 self-start"
+                            >
+                              <Sparkles className="h-3 w-3" />
+                              Promover
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
