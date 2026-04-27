@@ -150,6 +150,8 @@ const flightEs = {
   carryOn: "Mano",
   checkedBag: "Facturado",
   observation: "Observación",
+  connectionIn: "Conexión en",
+  layover: "de escala",
 };
 
 const flightFr = {
