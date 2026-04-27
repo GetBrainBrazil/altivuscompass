@@ -3217,14 +3217,32 @@ export default function Quotes() {
             <Button type="button" variant="outline" size="sm" onClick={closeDialog} className="font-body gap-1.5">
               <ArrowLeft className="w-3.5 h-3.5" /> Voltar
             </Button>
-            <Button type="button" variant="outline" size="sm" className="font-body" onClick={() => saveQuote(true)}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="font-body gap-1.5"
+              onClick={() => saveQuote(true)}
+              disabled={saveBtnState === "saving"}
+            >
+              {saveBtnState === "saving" && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               Salvar e Voltar
             </Button>
             <TooltipProvider delayDuration={300}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button type="button" size="sm" className="font-body" onClick={() => saveQuote(false)}>
-                    Salvar
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => saveQuote(false)}
+                    disabled={saveBtnState === "saving"}
+                    className={`font-body gap-1.5 transition-colors ${
+                      saveBtnState === "success" ? "bg-emerald-600 hover:bg-emerald-600 text-white" : ""
+                    }`}
+                  >
+                    {saveBtnState === "saving" && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    {saveBtnState === "success" && <Check className="w-3.5 h-3.5" />}
+                    {saveBtnState === "saving" ? "Salvando..." : saveBtnState === "success" ? "Salvo" : "Salvar"}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs">Salvar (Ctrl+S)</TooltipContent>
