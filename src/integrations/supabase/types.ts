@@ -763,6 +763,66 @@ export type Database = {
         }
         Relationships: []
       }
+      contacts: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          lead_id: string | null
+          level: Database["public"]["Enums"]["contact_level"]
+          phone: string | null
+          promoted_to_cliente_at: string | null
+          promoted_to_lead_at: string | null
+          source: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          lead_id?: string | null
+          level?: Database["public"]["Enums"]["contact_level"]
+          phone?: string | null
+          promoted_to_cliente_at?: string | null
+          promoted_to_lead_at?: string | null
+          source?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          lead_id?: string | null
+          level?: Database["public"]["Enums"]["contact_level"]
+          phone?: string | null
+          promoted_to_cliente_at?: string | null
+          promoted_to_lead_at?: string | null
+          source?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: true
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       continent_countries: {
         Row: {
           continent_id: string
@@ -2902,6 +2962,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "manager" | "sales_agent" | "operations"
+      contact_level: "prospect" | "lead" | "cliente"
       contract_type:
         | "clt"
         | "pj"
@@ -3055,6 +3116,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "manager", "sales_agent", "operations"],
+      contact_level: ["prospect", "lead", "cliente"],
       contract_type: [
         "clt",
         "pj",
