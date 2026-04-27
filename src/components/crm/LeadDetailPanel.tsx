@@ -167,7 +167,18 @@ export function LeadDetailPanel({ card, open, onOpenChange }: Props) {
             </ScrollArea>
 
             {/* Footer actions */}
-            <div className="border-t border-border px-6 py-3 flex items-center justify-end gap-2">
+            <div className="border-t border-border px-6 py-3 flex items-center justify-end gap-2 flex-wrap">
+              {leadId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mr-auto border-primary/40 text-primary hover:bg-primary/5"
+                  onClick={() => setConvertOpen(true)}
+                >
+                  <UserCheck className="h-4 w-4 mr-1.5" />
+                  Converter para Cliente
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
