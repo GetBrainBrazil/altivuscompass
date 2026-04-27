@@ -516,8 +516,36 @@ async function handleLeadCapture(
     return { status: 'lead_capture_attachment', lead_id: leadId }
   }
 
+  // Build contact context (level, last trip) so the AI can adapt its tone
+  let contactCtx: any = null
+  if (matchedContact) {
+    contactCtx = {
+      level: matchedContact.level,
+      full_name: matchedContact.full_name,
+      client_id: matchedContact.client_id,
+      last_trip: null as null | { destination: string; date: string },
+    }
+    if (matchedContact.client_id) {
+      const todayIso = new Date().toISOString().split('T')[0]
+      const { data: lastQuote } = await supabase
+        .from('quotes')
+        .select('destination, title, travel_date_start, travel_date_end')
+        .eq('client_id', matchedContact.client_id)
+        .lte('travel_date_start', todayIso)
+        .order('travel_date_start', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (lastQuote) {
+        contactCtx.last_trip = {
+          destination: lastQuote.destination || lastQuote.title || 'destino anterior',
+          date: lastQuote.travel_date_start,
+        }
+      }
+    }
+  }
+
   // Call AI to converse and extract structured data
-  const ai = await callLeadCaptureAI(lovableApiKey, sessionState, leadRow, senderName)
+  const ai = await callLeadCaptureAI(lovableApiKey, sessionState, leadRow, senderName, contactCtx)
 
   // Apply extracted updates to the lead row
   const updates = buildLeadUpdates(ai.extracted, leadRow)
