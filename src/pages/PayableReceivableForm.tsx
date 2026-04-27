@@ -192,7 +192,7 @@ export default function PayableReceivableForm() {
         amount: totalPerRow,
         date: form.competence_date || todayStr(),
         observations: form.observations || null,
-        recurrence_type: form.recurrence_type === "none" ? null : form.recurrence_type,
+        recurrence_type: form.recurrence_enabled ? form.recurrence_period : null,
         status: "pending",
         party_name:
           (form.type === "payable" ? suppliersMap[form.supplier_id] : clientsMap[form.client_id]) ?? null,
