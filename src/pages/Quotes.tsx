@@ -2553,10 +2553,12 @@ export default function Quotes() {
                               />
                             </div>
                             <div className="col-span-3 space-y-0.5">
-                              <Label className="text-[11px] font-body">Companhia</Label>
+                              <Label className="text-[11px] font-body font-semibold text-primary flex items-center gap-1">
+                                <Plane className="w-3 h-3" /> Companhia Aérea <span className="text-destructive">*</span>
+                              </Label>
                               <Popover>
                                 <PopoverTrigger asChild>
-                                  <Button variant="outline" role="combobox" className="w-full h-8 justify-between text-xs font-normal px-2.5">
+                                  <Button variant="outline" role="combobox" className={cn("w-full h-8 justify-between text-xs font-normal px-2.5 border-primary/40", d.airline && "bg-primary/5 font-semibold text-primary border-primary/60")}>
                                     <span className="truncate">{d.airline || "Selecione"}</span>
                                     <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
                                   </Button>
