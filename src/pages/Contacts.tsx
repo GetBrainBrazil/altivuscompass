@@ -228,17 +228,6 @@ export default function Contacts() {
           </ul>
         )}
       </Card>
-
-      <PromoteToLeadDialog
-        contactId={promoteTarget?.id ?? null}
-        leadId={promoteTarget?.lead_id ?? null}
-        contactName={promoteTarget?.full_name}
-        contactPhone={promoteTarget?.phone}
-        contactEmail={promoteTarget?.email}
-        open={!!promoteTarget}
-        onOpenChange={(o) => !o && setPromoteTarget(null)}
-        onPromoted={() => setReloadKey((k) => k + 1)}
-      />
     </div>
   );
 }
