@@ -228,22 +228,14 @@ export default function PayableReceivableForm() {
         return;
       }
 
-      const groupId = installments > 1 ? crypto.randomUUID() : null;
-      const rows: any[] = [];
-      const baseDue = new Date(form.due_date + "T00:00:00");
-      for (let i = 0; i < installments; i++) {
-        const d = new Date(baseDue);
-        d.setDate(d.getDate() + i * intervalDays);
-        rows.push({
-          ...rowBase,
-          due_date: d.toISOString().slice(0, 10),
-          installment_number: installments > 1 ? i + 1 : null,
-          installment_total: installments > 1 ? installments : null,
-          installment_group_id: groupId,
-          is_future_recurrence: i > 0,
-        });
-      }
-      const { error } = await (supabase.from("financial_transactions") as any).insert(rows);
+      const { error } = await (supabase.from("financial_transactions") as any).insert([{
+        ...rowBase,
+        due_date: form.due_date,
+        installment_number: null,
+        installment_total: null,
+        installment_group_id: null,
+        is_future_recurrence: false,
+      }]);
       if (error) throw error;
     },
     onSuccess: () => {
