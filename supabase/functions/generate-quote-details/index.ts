@@ -78,7 +78,10 @@ Responda APENAS com o texto da descrição, nada mais.`;
     }
 
     const data = await response.json();
-    const text = data.choices?.[0]?.message?.content ?? "";
+    let text = data.choices?.[0]?.message?.content ?? "";
+    // Hard caps: max 4 lines, max 280 chars
+    text = String(text).trim().split("\n").slice(0, 4).join("\n");
+    if (text.length > 280) text = text.slice(0, 277).trimEnd() + "...";
 
     return new Response(JSON.stringify({ text }), {
       status: 200,
