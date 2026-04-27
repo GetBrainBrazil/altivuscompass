@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import type { KanbanCardData } from "@/components/crm/KanbanCard";
+import { LeadConversionDialog } from "@/components/crm/LeadConversionDialog";
 
 const FUNNEL_STAGES = [
   { id: "new-leads", title: "Novos Leads (IA)" },
