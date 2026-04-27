@@ -176,7 +176,7 @@ export default function Contacts() {
                     handleRowClick(r);
                   }
                 }}
-                className="grid grid-cols-1 md:grid-cols-[1fr_140px_220px_220px_140px] gap-2 md:gap-3 px-4 py-3 hover:bg-muted/40 cursor-pointer transition-colors"
+                className="grid grid-cols-1 md:grid-cols-[1fr_140px_200px_200px_120px_140px] gap-2 md:gap-3 px-4 py-3 hover:bg-muted/40 cursor-pointer transition-colors"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="font-medium text-foreground font-body truncate">
@@ -212,11 +212,38 @@ export default function Contacts() {
                 <div className="text-xs text-muted-foreground font-body capitalize">
                   {r.source ?? "manual"}
                 </div>
+                <div className="flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
+                  {r.level === "prospect" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5 h-8 text-xs border-sky-300 text-sky-700 hover:bg-sky-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPromoteTarget(r);
+                      }}
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      Promover
+                    </Button>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
         )}
       </Card>
+
+      <PromoteToLeadDialog
+        contactId={promoteTarget?.id ?? null}
+        leadId={promoteTarget?.lead_id ?? null}
+        contactName={promoteTarget?.full_name}
+        contactPhone={promoteTarget?.phone}
+        contactEmail={promoteTarget?.email}
+        open={!!promoteTarget}
+        onOpenChange={(o) => !o && setPromoteTarget(null)}
+        onPromoted={() => setReloadKey((k) => k + 1)}
+      />
     </div>
   );
 }
