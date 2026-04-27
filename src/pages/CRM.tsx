@@ -553,21 +553,28 @@ export default function CRM() {
         .limit(100);
       if (error || cancelled || !data) return;
 
-      const leadCards: KanbanCardData[] = data.map((l: any) => ({
-        id: `lead-${l.id}`,
-        clientName: l.full_name,
-        destination: l.destination ?? undefined,
-        travelDate: l.travel_date_start
-          ? new Date(l.travel_date_start).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })
-          : (l.flexible_dates_description ?? undefined),
-        estimatedValue: l.budget_estimate ? Number(l.budget_estimate) : undefined,
-        isAILead: l.source === "whatsapp_ai",
-        aiSummary: l.ai_summary ?? undefined,
-        tags: [
-          l.travelers_count ? { label: `${l.travelers_count} viajante(s)`, tone: "blue" as const } : null,
-          l.source === "whatsapp_ai" ? { label: "WhatsApp", tone: "green" as const } : null,
-        ].filter(Boolean) as KanbanCardData["tags"],
-      }));
+      const leadCards: KanbanCardData[] = data.map((l: any) => {
+        const hasTravelData =
+          !!l.destination &&
+          (!!l.travel_date_start || !!l.travel_date_end || !!l.flexible_dates_description) &&
+          !!l.travelers_count;
+        return {
+          id: `lead-${l.id}`,
+          clientName: l.full_name,
+          destination: l.destination ?? undefined,
+          travelDate: l.travel_date_start
+            ? new Date(l.travel_date_start).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })
+            : (l.flexible_dates_description ?? undefined),
+          estimatedValue: l.budget_estimate ? Number(l.budget_estimate) : undefined,
+          isAILead: l.source === "whatsapp_ai",
+          aiSummary: l.ai_summary ?? undefined,
+          contactLevel: hasTravelData ? "lead" : "prospect",
+          tags: [
+            l.travelers_count ? { label: `${l.travelers_count} viajante(s)`, tone: "blue" as const } : null,
+            l.source === "whatsapp_ai" ? { label: "WhatsApp", tone: "green" as const } : null,
+          ].filter(Boolean) as KanbanCardData["tags"],
+        };
+      });
 
       setSalesColumns((prev) => {
         const newLeadsCol = prev.find((c) => c.id === "new-leads");
