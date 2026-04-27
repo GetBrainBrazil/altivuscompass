@@ -43,6 +43,8 @@ import { QuoteKanbanCard } from "@/components/quotes/QuoteKanbanCard";
 import QuoteAcceptanceInfo from "@/components/quotes/QuoteAcceptanceInfo";
 import ItineraryTimeline from "@/components/itineraries/ItineraryTimeline";
 import ItineraryMapView from "@/components/itineraries/ItineraryMapView";
+import { ClientDataCompletionDialog } from "@/components/contacts/ClientDataCompletionDialog";
+
 
 const stages = [
   { id: "new", label: "Nova Cotação", color: "bg-soft-blue" },
