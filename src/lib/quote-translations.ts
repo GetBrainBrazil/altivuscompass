@@ -123,6 +123,8 @@ const flightEn = {
   carryOn: "Carry-on",
   checkedBag: "Checked",
   observation: "Note",
+  connectionIn: "Connection in",
+  layover: "layover",
 };
 
 const flightEs = {
