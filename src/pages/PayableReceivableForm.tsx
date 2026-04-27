@@ -188,10 +188,7 @@ export default function PayableReceivableForm() {
   // ----- mutation -----
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const isInstallments = form.payment_mode === "installments";
-      const isRecurring = form.payment_mode === "recurring";
-      const installments = isInstallments ? Math.max(1, parseInt(form.installment_total || "1", 10)) : 1;
-      const intervalDays = Math.max(1, parseInt(form.installment_interval_days || "30", 10));
+      const isRecurring = form.recurrence_enabled;
       const baseAmount = parseFloat(form.base_amount || "0");
       const discount = parseFloat(form.discount_amount || "0");
       const interest = parseFloat(form.interest_amount || "0");
