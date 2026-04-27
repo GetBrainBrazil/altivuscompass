@@ -161,6 +161,24 @@ export default function PayableReceivableForm() {
     return b - d + i + f + a;
   }, [form]);
 
+  const installmentsCount = Math.max(1, parseInt(form.installment_total || "1", 10));
+  const installmentsPreview = useMemo(() => {
+    if (installmentsCount <= 1) return [];
+    const interval = Math.max(1, parseInt(form.installment_interval_days || "30", 10));
+    const per = totalPreview / installmentsCount;
+    if (!form.due_date) return [];
+    const base = new Date(form.due_date + "T00:00:00");
+    return Array.from({ length: installmentsCount }, (_, i) => {
+      const d = new Date(base);
+      d.setDate(d.getDate() + i * interval);
+      return {
+        n: i + 1,
+        amount: per,
+        date: d.toLocaleDateString("pt-BR"),
+      };
+    });
+  }, [installmentsCount, form.installment_interval_days, form.due_date, totalPreview]);
+
   // ----- mutation -----
   const saveMutation = useMutation({
     mutationFn: async () => {
