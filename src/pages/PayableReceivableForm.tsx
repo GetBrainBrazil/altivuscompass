@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowDown, ArrowUp, ArrowLeft, Plus, Repeat, Layers, Info } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowLeft, Plus, Repeat, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type TxType = "payable" | "receivable";
@@ -39,8 +39,11 @@ const brl = (v: number) =>
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
+type PaymentMode = "single" | "installments" | "recurring";
+
 const emptyForm = {
   type: "payable" as TxType,
+  payment_mode: "single" as PaymentMode,
   description: "",
   category: "",
   cost_center: "",
@@ -120,8 +123,11 @@ export default function PayableReceivableForm() {
 
   useEffect(() => {
     if (!existing) return;
+    const isRecurring = !!existing.recurrence_type && existing.recurrence_type !== "none";
+    const installmentTotal = parseInt(existing.installment_total ?? "1", 10) || 1;
     setForm({
       type: existing.type,
+      payment_mode: isRecurring ? "recurring" : installmentTotal > 1 ? "installments" : "single",
       description: existing.description ?? "",
       category: existing.category ?? "",
       cost_center: existing.cost_center ?? "",
@@ -182,7 +188,9 @@ export default function PayableReceivableForm() {
   // ----- mutation -----
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const installments = Math.max(1, parseInt(form.installment_total || "1", 10));
+      const isInstallments = form.payment_mode === "installments";
+      const isRecurring = form.payment_mode === "recurring";
+      const installments = isInstallments ? Math.max(1, parseInt(form.installment_total || "1", 10)) : 1;
       const intervalDays = Math.max(1, parseInt(form.installment_interval_days || "30", 10));
       const baseAmount = parseFloat(form.base_amount || "0");
       const discount = parseFloat(form.discount_amount || "0");
@@ -210,7 +218,7 @@ export default function PayableReceivableForm() {
         amount: totalPerRow,
         date: form.competence_date || todayStr(),
         observations: form.observations || null,
-        recurrence_type: form.recurrence_enabled ? form.recurrence_period : null,
+        recurrence_type: isRecurring ? form.recurrence_period : null,
         status: "pending",
         party_name:
           (form.type === "payable" ? suppliersMap[form.supplier_id] : clientsMap[form.client_id]) ?? null,
@@ -448,68 +456,77 @@ export default function PayableReceivableForm() {
         {!editingId && (
           <Section title="Parcelamento e Recorrência">
             <div className="space-y-4">
-              {/* Bloco 1 — Parcelamento */}
-              <div className={cn(
-                "rounded-lg border border-border p-4 space-y-3 transition-opacity",
-                form.recurrence_enabled && "opacity-50 pointer-events-none"
-              )}>
-                <div className="flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-primary" />
-                  <h4 className="font-semibold text-sm">Parcelamento</h4>
-                </div>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label>Quantidade de Parcelas</Label>
-                    <Input type="number" min={1} value={form.installment_total}
-                      onChange={(e) => setForm({ ...form, installment_total: e.target.value })} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Intervalo entre parcelas (dias)</Label>
-                    <Input type="number" min={1} value={form.installment_interval_days}
-                      onChange={(e) => setForm({ ...form, installment_interval_days: e.target.value })} />
-                  </div>
-                </div>
-
-                {installmentsPreview.length > 0 && (
-                  <div className="mt-2 rounded-md border border-border bg-muted/30 divide-y divide-border">
-                    <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                      Prévia das parcelas
-                    </div>
-                    {installmentsPreview.map((p) => (
-                      <div key={p.n} className="flex items-center justify-between px-3 py-2 text-sm">
-                        <span className="text-muted-foreground">
-                          Parcela {p.n}/{installmentsCount}
-                        </span>
-                        <span className="font-medium">{brl(p.amount)}</span>
-                        <span className="text-muted-foreground tabular-nums">{p.date}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              {/* Seletor de tipo de pagamento */}
+              <div className="inline-flex w-full sm:w-auto rounded-lg border border-border bg-muted/40 p-1">
+                {([
+                  { value: "single", label: "Pagamento Único" },
+                  { value: "installments", label: "Parcelado", icon: Layers },
+                  { value: "recurring", label: "Recorrente", icon: Repeat },
+                ] as { value: PaymentMode; label: string; icon?: any }[]).map((opt) => {
+                  const Icon = opt.icon;
+                  const active = form.payment_mode === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setForm({ ...form, payment_mode: opt.value })}
+                      className={cn(
+                        "flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2",
+                        active
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {Icon && <Icon className="h-3.5 w-3.5" />}
+                      {opt.label}
+                    </button>
+                  );
+                })}
               </div>
 
-              {/* Bloco 2 — Conta Recorrente */}
-              <div className={cn(
-                "rounded-lg border border-border p-4 space-y-3 transition-opacity",
-                installmentsCount > 1 && "opacity-50 pointer-events-none"
-              )}>
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <Repeat className="h-4 w-4 text-primary" />
-                    <h4 className="font-semibold text-sm">Conta Recorrente</h4>
+              {/* Parcelado */}
+              {form.payment_mode === "installments" && (
+                <div className="rounded-lg border border-border p-4 space-y-3">
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label>Quantidade de Parcelas</Label>
+                      <Input type="number" min={1} value={form.installment_total}
+                        onChange={(e) => setForm({ ...form, installment_total: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Intervalo entre parcelas (dias)</Label>
+                      <Input type="number" min={1} value={form.installment_interval_days}
+                        onChange={(e) => setForm({ ...form, installment_interval_days: e.target.value })} />
+                    </div>
                   </div>
-                  <Switch
-                    checked={form.recurrence_enabled}
-                    onCheckedChange={(v) => setForm({ ...form, recurrence_enabled: v })}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Cria automaticamente novas movimentações no intervalo definido.
-                  Ideal para despesas fixas como aluguel, assinaturas e salários.
-                </p>
 
-                {form.recurrence_enabled && (
-                  <div className="grid sm:grid-cols-3 gap-3 pt-2">
+                  {installmentsPreview.length > 0 && (
+                    <div className="mt-2 rounded-md border border-border bg-muted/30 divide-y divide-border">
+                      <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                        Prévia das parcelas
+                      </div>
+                      {installmentsPreview.map((p) => (
+                        <div key={p.n} className="flex items-center justify-between px-3 py-2 text-sm">
+                          <span className="text-muted-foreground">
+                            Parcela {p.n}/{installmentsCount}
+                          </span>
+                          <span className="font-medium">{brl(p.amount)}</span>
+                          <span className="text-muted-foreground tabular-nums">{p.date}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Recorrente */}
+              {form.payment_mode === "recurring" && (
+                <div className="rounded-lg border border-border p-4 space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Cria automaticamente novas movimentações no intervalo definido.
+                    Ideal para despesas fixas como aluguel, assinaturas e salários.
+                  </p>
+                  <div className="grid sm:grid-cols-3 gap-3">
                     <div className="space-y-2">
                       <Label>A cada</Label>
                       <Input type="number" min={1} value={form.recurrence_every}
@@ -533,18 +550,6 @@ export default function PayableReceivableForm() {
                         onChange={(e) => setForm({ ...form, recurrence_until: e.target.value })} />
                     </div>
                   </div>
-                )}
-              </div>
-
-              {(form.recurrence_enabled || installmentsCount > 1) && (
-                <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/40 border border-border rounded-md px-3 py-2">
-                  <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                  <span>
-                    Uma movimentação não pode ser parcelada e recorrente ao mesmo tempo.
-                    {form.recurrence_enabled
-                      ? " Desative a recorrência para configurar o parcelamento."
-                      : " Reduza para 1 parcela para ativar a recorrência."}
-                  </span>
                 </div>
               )}
             </div>
