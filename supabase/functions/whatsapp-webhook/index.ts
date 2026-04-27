@@ -97,9 +97,15 @@ Deno.serve(async (req) => {
       })
     }
 
-    // If no active session, ignore the message
+    // If no active session, route the message to the lead-capture flow (AI conversation)
     if (!existingSession) {
-      return new Response(JSON.stringify({ status: 'ignored', reason: 'no active session' }), {
+      const result = await handleLeadCapture(supabase, lovableApiKey, zapiInstanceId, zapiToken, zapiSecurityToken, {
+        phone,
+        senderName,
+        messageText: isTextMsg ? messageText : '',
+        isTextMsg,
+      })
+      return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
