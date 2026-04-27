@@ -133,7 +133,18 @@ export default function LeadDetail() {
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {leadId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-primary/40 text-primary hover:bg-primary/5"
+                  onClick={() => setConvertOpen(true)}
+                >
+                  <UserCheck className="h-4 w-4 mr-1.5" />
+                  Converter para Cliente
+                </Button>
+              )}
               <Button variant="outline" size="sm">
                 Cancelar
               </Button>
