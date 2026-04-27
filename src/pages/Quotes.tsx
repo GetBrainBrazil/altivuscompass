@@ -2723,6 +2723,40 @@ export default function Quotes() {
                                 <Input value={item.description} onChange={(e) => updateItem(globalIdx, { description: e.target.value })} placeholder="Informações adicionais" className="h-8 text-xs" />
                               </div>
                             </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="space-y-0.5">
+                                <Label className="text-[11px] font-body">Tipo de Acomodação</Label>
+                                <Select value={d.accommodation_type || ""} onValueChange={(v) => updateDetail("accommodation_type", v)}>
+                                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="hotel">Hotel</SelectItem>
+                                    <SelectItem value="resort">Resort</SelectItem>
+                                    <SelectItem value="pousada">Pousada</SelectItem>
+                                    <SelectItem value="hostel">Hostel</SelectItem>
+                                    <SelectItem value="apart_hotel">Apart-Hotel / Flat</SelectItem>
+                                    <SelectItem value="apartment">Apartamento (temporada)</SelectItem>
+                                    <SelectItem value="house">Casa / Vila</SelectItem>
+                                    <SelectItem value="chalet">Chalé / Cabana</SelectItem>
+                                    <SelectItem value="boat">Barco / Cruzeiro fluvial</SelectItem>
+                                    <SelectItem value="other">Outro</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-0.5">
+                                <Label className="text-[11px] font-body">Plano de Alimentação</Label>
+                                <Select value={d.meal_plan || ""} onValueChange={(v) => updateDetail("meal_plan", v)}>
+                                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="none">Sem refeições</SelectItem>
+                                    <SelectItem value="breakfast">Café da manhã</SelectItem>
+                                    <SelectItem value="half_board">Meia pensão (café + 1 refeição)</SelectItem>
+                                    <SelectItem value="full_board">Pensão completa (3 refeições)</SelectItem>
+                                    <SelectItem value="all_inclusive">All Inclusive</SelectItem>
+                                    <SelectItem value="all_inclusive_premium">All Inclusive Premium</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
                           </div>
                         </>
                       ) : (
