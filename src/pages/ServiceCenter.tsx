@@ -73,6 +73,11 @@ interface LeadSummary {
   notes: string[];
 }
 
+interface LastTrip {
+  destination: string;
+  date: string; // ISO
+}
+
 interface Conversation {
   id: string;
   leadName: string;
@@ -88,6 +93,12 @@ interface Conversation {
   contactType: ContactType;
   /** Vínculo com o CRM (cliente, cotação, viagem). */
   crm: CRMLink;
+  /** Nível na hierarquia de contatos (Prospect / Lead / Cliente). */
+  level: ContactLevel;
+  /** Última viagem realizada (para clientes). */
+  lastTrip?: LastTrip;
+  /** Cliente está em viagem agora (prioridade máxima na lista). */
+  isTraveling?: boolean;
 }
 
 // ============= Mock Data =============
@@ -119,6 +130,7 @@ const MOCK_CONVERSATIONS: Conversation[] = [
     category: "sales",
     contactType: "new-lead",
     crm: { stage: "Novos Leads (IA)" },
+    level: "lead",
   },
   {
     id: "c2",
@@ -153,6 +165,8 @@ const MOCK_CONVERSATIONS: Conversation[] = [
       quoteTitle: "Maldivas — 7 noites (Set/2025)",
       stage: "Cotação",
     },
+    level: "cliente",
+    lastTrip: { destination: "Bali, Indonésia", date: "2024-11-12" },
   },
   {
     id: "c3",
@@ -181,6 +195,7 @@ const MOCK_CONVERSATIONS: Conversation[] = [
     category: "sales",
     contactType: "new-lead",
     crm: { stage: "Novos Leads (IA)" },
+    level: "lead",
   },
   {
     id: "c4",
@@ -200,6 +215,7 @@ const MOCK_CONVERSATIONS: Conversation[] = [
     category: "sales",
     contactType: "new-lead",
     crm: { stage: "Triagem inicial" },
+    level: "prospect",
   },
   {
     id: "c5",
@@ -233,6 +249,9 @@ const MOCK_CONVERSATIONS: Conversation[] = [
       tripTitle: "Cancún — Resort All-Inclusive (Nov/2025)",
       stage: "Suporte Ativo",
     },
+    level: "cliente",
+    lastTrip: { destination: "Buenos Aires, Argentina", date: "2024-07-20" },
+    isTraveling: true,
   },
 ];
 
@@ -304,19 +323,14 @@ const ConversationCard = ({ conversation, active, onClick }: ConversationCardPro
           </p>
           <div className="mt-2 flex items-center gap-1.5 flex-wrap">
             {/* Nível do contato (Prospect / Lead / Cliente) */}
-            <ContactLevelBadge
-              level={
-                (conversation.contactType === "existing-client"
-                  ? "cliente"
-                  : conversation.category === "post-sale"
-                    ? "cliente"
-                    : conversation.crm
-                      ? "lead"
-                      : "prospect") as ContactLevel
-              }
-              size="xs"
-            />
-            {conversation.category === "post-sale" && (
+            <ContactLevelBadge level={conversation.level} size="xs" />
+            {conversation.isTraveling && (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-800 border border-amber-300">
+                <Plane className="w-2.5 h-2.5" />
+                Em viagem
+              </span>
+            )}
+            {conversation.category === "post-sale" && !conversation.isTraveling && (
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
                 <LifeBuoy className="w-2.5 h-2.5" />
                 Pós-venda
@@ -612,6 +626,72 @@ const CRMPanel = ({ conversation }: { conversation: Conversation }) => {
   );
 };
 
+// ============= Contact Banner (top of chat) =============
+const formatDateBR = (iso: string) => {
+  const d = new Date(iso);
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+};
+
+const ContactBanner = ({ conversation }: { conversation: Conversation }) => {
+  const { level, lastTrip, isTraveling, leadName } = conversation;
+
+  if (level === "cliente") {
+    return (
+      <div
+        className={cn(
+          "px-6 py-3 border-b flex items-center gap-3",
+          isTraveling
+            ? "bg-gradient-to-r from-amber-50 via-amber-50 to-amber-100/60 border-amber-200"
+            : "bg-gradient-to-r from-amber-50/80 to-amber-50/30 border-amber-200/70",
+        )}
+      >
+        <ContactLevelBadge level="cliente" size="md" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-amber-900 truncate">
+            {leadName}
+            {isTraveling && (
+              <span className="ml-2 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-amber-800">
+                <Plane className="h-3 w-3" /> Em viagem agora
+              </span>
+            )}
+          </p>
+          {lastTrip ? (
+            <p className="text-xs text-amber-800/80 mt-0.5">
+              Última viagem: <span className="font-medium">{lastTrip.destination}</span> · {formatDateBR(lastTrip.date)}
+            </p>
+          ) : (
+            <p className="text-xs text-amber-800/70 mt-0.5 italic">Sem viagens registradas ainda.</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (level === "prospect") {
+    const previousCount = Math.max(0, conversation.messages.length - 2);
+    return (
+      <div className="px-6 py-2.5 border-b bg-slate-50 flex items-center gap-3">
+        <ContactLevelBadge level="prospect" size="sm" />
+        <p className="text-xs text-slate-700">
+          {previousCount > 0
+            ? `Contato já conhecido — ${previousCount} mensagem(ns) em conversas anteriores.`
+            : "Novo contato — iniciando qualificação."}
+        </p>
+      </div>
+    );
+  }
+
+  // lead
+  return (
+    <div className="px-6 py-2.5 border-b bg-sky-50/60 flex items-center gap-3">
+      <ContactLevelBadge level="lead" size="sm" />
+      <p className="text-xs text-sky-900">
+        Lead qualificado — IA continuará a conversa de qualificação.
+      </p>
+    </div>
+  );
+};
+
 // ============= Main Page =============
 export default function ServiceCenter() {
   const [conversations] = useState<Conversation[]>(MOCK_CONVERSATIONS);
@@ -634,17 +714,35 @@ export default function ServiceCenter() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return conversations.filter((c) => {
-      if (activeTab === "leads" && c.category !== "sales") return false;
-      if (activeTab === "support" && c.category !== "post-sale") return false;
-      if (activeTab === "human" && c.status !== "human") return false;
-      if (!q) return true;
-      return (
-        c.leadName.toLowerCase().includes(q) ||
-        c.phone.includes(q) ||
-        getLastMessage(c).content.toLowerCase().includes(q)
-      );
-    });
+    // Prioridade: Cliente em viagem > Cliente > Lead > Prospect.
+    // Dentro do mesmo nível, mais recente primeiro.
+    const priority = (c: Conversation) => {
+      if (c.level === "cliente" && c.isTraveling) return 0;
+      if (c.level === "cliente") return 1;
+      if (c.level === "lead") return 2;
+      return 3;
+    };
+    return conversations
+      .filter((c) => {
+        if (activeTab === "leads" && c.category !== "sales") return false;
+        if (activeTab === "support" && c.category !== "post-sale") return false;
+        if (activeTab === "human" && c.status !== "human") return false;
+        if (!q) return true;
+        return (
+          c.leadName.toLowerCase().includes(q) ||
+          c.phone.includes(q) ||
+          getLastMessage(c).content.toLowerCase().includes(q)
+        );
+      })
+      .sort((a, b) => {
+        const pa = priority(a);
+        const pb = priority(b);
+        if (pa !== pb) return pa - pb;
+        return (
+          new Date(getLastMessage(b).timestamp).getTime() -
+          new Date(getLastMessage(a).timestamp).getTime()
+        );
+      });
   }, [conversations, search, activeTab]);
 
   const selected = useMemo(
@@ -765,6 +863,9 @@ export default function ServiceCenter() {
                 </Button>
               </div>
             </header>
+
+            {/* Contact level banner (Cliente/Lead/Prospect) */}
+            <ContactBanner conversation={selected} />
 
             {/* Messages */}
             <ScrollArea className="flex-1 px-6 py-5">

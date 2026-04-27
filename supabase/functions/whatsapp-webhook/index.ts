@@ -424,7 +424,21 @@ async function handleLeadCapture(
 ) {
   const { phone, senderName, messageText, isTextMsg } = ctx
 
-  // Find or create the lead-capture session for this phone (regardless of expiry)
+  // 1) Lookup contact by phone (matches by digits, ignoring formatting)
+  const phoneDigits = phone.replace(/\D/g, '')
+  let matchedContact: any = null
+  if (phoneDigits) {
+    const { data: candidates } = await supabase
+      .from('contacts')
+      .select('id, full_name, phone, level, client_id, lead_id')
+      .ilike('phone', `%${phoneDigits.slice(-9)}%`)
+      .limit(10)
+    matchedContact = (candidates || []).find((c: any) =>
+      (c.phone || '').replace(/\D/g, '').endsWith(phoneDigits.slice(-9)),
+    ) || null
+  }
+
+  // 2) Find or create the lead-capture session for this phone
   let { data: leadSession } = await supabase
     .from('whatsapp_sessions')
     .select('*')
@@ -434,7 +448,7 @@ async function handleLeadCapture(
     .limit(1)
     .single()
 
-  let leadId: string | null = leadSession?.lead_id ?? null
+  let leadId: string | null = leadSession?.lead_id ?? matchedContact?.lead_id ?? null
   let leadRow: any = null
 
   if (leadId) {
@@ -442,9 +456,12 @@ async function handleLeadCapture(
     leadRow = data
   }
 
-  // Create a new lead if none exists for this phone yet
+  // 3) If no lead exists yet, create one. Use known name from contact if available.
   if (!leadRow) {
-    const cleanName = (senderName || '').trim() || `Contato ${phone.slice(-4)}`
+    const cleanName =
+      (matchedContact?.full_name || '').trim() ||
+      (senderName || '').trim() ||
+      `Contato ${phone.slice(-4)}`
     const { data: newLead, error: leadErr } = await supabase
       .from('leads')
       .insert({
@@ -499,8 +516,36 @@ async function handleLeadCapture(
     return { status: 'lead_capture_attachment', lead_id: leadId }
   }
 
+  // Build contact context (level, last trip) so the AI can adapt its tone
+  let contactCtx: any = null
+  if (matchedContact) {
+    contactCtx = {
+      level: matchedContact.level,
+      full_name: matchedContact.full_name,
+      client_id: matchedContact.client_id,
+      last_trip: null as null | { destination: string; date: string },
+    }
+    if (matchedContact.client_id) {
+      const todayIso = new Date().toISOString().split('T')[0]
+      const { data: lastQuote } = await supabase
+        .from('quotes')
+        .select('destination, title, travel_date_start, travel_date_end')
+        .eq('client_id', matchedContact.client_id)
+        .lte('travel_date_start', todayIso)
+        .order('travel_date_start', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (lastQuote) {
+        contactCtx.last_trip = {
+          destination: lastQuote.destination || lastQuote.title || 'destino anterior',
+          date: lastQuote.travel_date_start,
+        }
+      }
+    }
+  }
+
   // Call AI to converse and extract structured data
-  const ai = await callLeadCaptureAI(lovableApiKey, sessionState, leadRow, senderName)
+  const ai = await callLeadCaptureAI(lovableApiKey, sessionState, leadRow, senderName, contactCtx)
 
   // Apply extracted updates to the lead row
   const updates = buildLeadUpdates(ai.extracted, leadRow)
@@ -573,6 +618,7 @@ async function callLeadCaptureAI(
   sessionState: any,
   currentLead: any,
   senderName: string,
+  contactCtx: any = null,
 ) {
   const today = new Date().toISOString().split('T')[0]
   const knownData = {
@@ -587,7 +633,33 @@ async function callLeadCaptureAI(
     preferences: currentLead?.preferences || null,
   }
 
-  const systemPrompt = `Você é um(a) consultor(a) de viagens da **Altivus Turismo** atendendo um novo contato pelo WhatsApp.
+  const isExistingClient = contactCtx?.level === 'cliente'
+  const clientFirstName = (contactCtx?.full_name || '').split(' ')[0] || ''
+  const lastTripBlock = contactCtx?.last_trip
+    ? `Última viagem realizada com a Altivus: ${contactCtx.last_trip.destination} em ${contactCtx.last_trip.date}.`
+    : 'Sem viagens anteriores registradas.'
+
+  const clientPrompt = `Você é um(a) consultor(a) de viagens da **Altivus Turismo** atendendo um(a) CLIENTE JÁ EXISTENTE pelo WhatsApp.
+
+Nome do cliente: ${contactCtx?.full_name || senderName}
+${lastTripBlock}
+
+Regras OBRIGATÓRIAS:
+1. Cumprimente o cliente PELO PRIMEIRO NOME ("${clientFirstName}") de forma calorosa e personalizada.
+2. NÃO faça perguntas de qualificação (não pergunte destino, datas, viajantes ou orçamento de forma genérica).
+3. Pergunte diretamente "Como posso te ajudar hoje?" — pode ser uma nova viagem, dúvida sobre uma viagem em andamento, ou outro suporte.
+4. Se houver última viagem registrada, pode mencionar de leve ("espero que tenha sido incrível!") sem ser invasivo.
+5. Use português brasileiro, tom premium e próximo. Emojis com moderação.
+6. Mantenha a resposta curta (máx 3 linhas).
+
+Hoje é ${today}.
+
+**FORMATO DE RESPOSTA OBRIGATÓRIO**:
+Responda primeiro a mensagem em texto natural. Depois, em uma linha separada no FINAL, retorne EXATAMENTE este bloco JSON (use null para campos não mencionados nesta mensagem):
+
+###JSON###{"full_name":null,"email":null,"destination":null,"travel_date_start":null,"travel_date_end":null,"flexible_dates":null,"flexible_dates_description":null,"travelers_count":null,"budget_estimate":null,"preferences":null,"ai_summary":null,"extras":{}}`
+
+  const leadPrompt = `Você é um(a) consultor(a) de viagens da **Altivus Turismo** atendendo um novo contato pelo WhatsApp.
 
 Seu papel:
 1. Conversar de forma calorosa, profissional e em **português brasileiro**
@@ -626,6 +698,8 @@ Regras do JSON:
 - "ai_summary" é um resumo geral atualizado da viagem (1-2 frases) — só preencha quando tiver mudanças significativas
 - "extras" pode conter qualquer dado extra estruturado relevante (ex: {"motivo":"lua de mel","com_criancas":true})
 - O JSON deve ser válido e na ÚLTIMA linha da resposta`
+
+  const systemPrompt = isExistingClient ? clientPrompt : leadPrompt
 
   const aiMessages: any[] = [{ role: 'system', content: systemPrompt }]
   for (const msg of (sessionState.messages || [])) {
