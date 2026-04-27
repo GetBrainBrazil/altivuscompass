@@ -23,25 +23,23 @@ serve(async (req) => {
     const titleText = title || "viagem";
     const passengersText = passengers ? `Passageiros: ${passengers}.` : "";
 
-    const systemPrompt = `Você é um redator especializado em turismo de luxo para uma agência de viagens brasileira chamada Altivus Turismo. 
-Seu papel é criar descrições atrativas e profissionais de viagens para orçamentos enviados a clientes.
+    const systemPrompt = `Você é um redator da agência de viagens Altivus Turismo. Crie descrições MUITO CURTAS e objetivas para o campo "Detalhes" de orçamentos.
 
-Regras:
-- Escreva em português brasileiro, tom sofisticado mas acolhedor
-- Seja conciso (máximo 4-5 parágrafos curtos)
-- Destaque os pontos atrativos do destino
-- Inclua sugestões de experiências e pontos turísticos
-- Não invente valores, preços ou datas específicas
-- Use emojis com moderação (máximo 2-3 no texto todo)
-- Não use markdown, escreva em texto puro`;
+REGRAS OBRIGATÓRIAS:
+- Máximo 280 caracteres (conte caracteres, não palavras)
+- Máximo 4 linhas curtas
+- Português brasileiro, tom profissional e direto
+- Descreva objetivamente o destino e o tipo de experiência
+- SEM linguagem poética, SEM adjetivos exagerados, SEM emojis
+- SEM markdown, texto puro
+- NÃO invente datas, preços ou itinerários
+- Não use parágrafos longos`;
 
-    const userPrompt = `Crie uma descrição atrativa para o seguinte orçamento de viagem:
-
+    const userPrompt = `Gere uma descrição curta (máx. 280 caracteres, 4 linhas) para:
 Título: ${titleText}
 Destino(s): ${destText}
 ${passengersText}
-
-Gere um texto descritivo que possa ser usado no campo "Detalhes" do orçamento.`;
+Responda APENAS com o texto da descrição, nada mais.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -80,7 +78,10 @@ Gere um texto descritivo que possa ser usado no campo "Detalhes" do orçamento.`
     }
 
     const data = await response.json();
-    const text = data.choices?.[0]?.message?.content ?? "";
+    let text = data.choices?.[0]?.message?.content ?? "";
+    // Hard caps: max 4 lines, max 280 chars
+    text = String(text).trim().split("\n").slice(0, 4).join("\n");
+    if (text.length > 280) text = text.slice(0, 277).trimEnd() + "...";
 
     return new Response(JSON.stringify({ text }), {
       status: 200,

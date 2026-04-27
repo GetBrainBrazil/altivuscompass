@@ -509,7 +509,10 @@ export default function PublicQuote() {
         {getContent("details") && (
           <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 sm:p-5 space-y-1">
             <h2 className="pq-fs-sm sm:text-sm font-semibold text-gray-900 font-body">{t.details}</h2>
-            <p className="pq-fs-sm sm:text-sm text-gray-500 font-body whitespace-pre-line leading-relaxed">{getContent("details")}</p>
+            <p
+              className="pq-fs-sm sm:text-sm text-gray-500 font-body whitespace-pre-line leading-relaxed overflow-hidden"
+              style={{ display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical" }}
+            >{getContent("details")}</p>
           </div>
         )}
 
