@@ -424,7 +424,21 @@ async function handleLeadCapture(
 ) {
   const { phone, senderName, messageText, isTextMsg } = ctx
 
-  // Find or create the lead-capture session for this phone (regardless of expiry)
+  // 1) Lookup contact by phone (matches by digits, ignoring formatting)
+  const phoneDigits = phone.replace(/\D/g, '')
+  let matchedContact: any = null
+  if (phoneDigits) {
+    const { data: candidates } = await supabase
+      .from('contacts')
+      .select('id, full_name, phone, level, client_id, lead_id')
+      .ilike('phone', `%${phoneDigits.slice(-9)}%`)
+      .limit(10)
+    matchedContact = (candidates || []).find((c: any) =>
+      (c.phone || '').replace(/\D/g, '').endsWith(phoneDigits.slice(-9)),
+    ) || null
+  }
+
+  // 2) Find or create the lead-capture session for this phone
   let { data: leadSession } = await supabase
     .from('whatsapp_sessions')
     .select('*')
@@ -434,7 +448,7 @@ async function handleLeadCapture(
     .limit(1)
     .single()
 
-  let leadId: string | null = leadSession?.lead_id ?? null
+  let leadId: string | null = leadSession?.lead_id ?? matchedContact?.lead_id ?? null
   let leadRow: any = null
 
   if (leadId) {
@@ -442,9 +456,12 @@ async function handleLeadCapture(
     leadRow = data
   }
 
-  // Create a new lead if none exists for this phone yet
+  // 3) If no lead exists yet, create one. Use known name from contact if available.
   if (!leadRow) {
-    const cleanName = (senderName || '').trim() || `Contato ${phone.slice(-4)}`
+    const cleanName =
+      (matchedContact?.full_name || '').trim() ||
+      (senderName || '').trim() ||
+      `Contato ${phone.slice(-4)}`
     const { data: newLead, error: leadErr } = await supabase
       .from('leads')
       .insert({
