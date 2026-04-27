@@ -47,11 +47,13 @@ Deno.serve(async (req) => {
     const isPagoCommand = isTextMsg && messageText.trim().toLowerCase() === '#pago'
     const isCancelarCommand = isTextMsg && ['#cancelar', '#cancela', '#sair'].includes(messageText.trim().toLowerCase())
 
-    // Find active session for this phone
+    // Find active financial-entry session for this phone (#pago flow only).
+    // Lead-capture conversations are handled by handleLeadCapture below.
     const { data: existingSession } = await supabase
       .from('whatsapp_sessions')
       .select('*')
       .eq('phone', phone)
+      .eq('session_type', 'financial_entry')
       .eq('status', 'active')
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
