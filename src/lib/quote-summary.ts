@@ -6,6 +6,7 @@
  */
 
 import { formatTransportDetails } from "./transport-format";
+import { formatExperienceDetails } from "./experience-format";
 
 type AnyQuote = Record<string, any>;
 type AnyItem = Record<string, any>;
