@@ -9,8 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowDown, ArrowUp, ArrowLeft, Plus } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowLeft, Plus, Repeat, Layers, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type TxType = "payable" | "receivable";
