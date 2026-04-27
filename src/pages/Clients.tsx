@@ -1823,7 +1823,7 @@ export default function Clients() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">Clientes</h1>
-          <p className="text-muted-foreground font-body mt-1 text-sm">{clients.length} clientes cadastrados</p>
+          <p className="text-muted-foreground font-body mt-1 text-sm">{allRows.length} contatos cadastrados</p>
         </div>
         <Button onClick={openCreate} className="font-body w-full sm:w-auto"><Plus className="h-4 w-4" />Novo Cliente</Button>
       </div>
