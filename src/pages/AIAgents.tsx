@@ -23,7 +23,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Agent } from "@/components/ai-agents/AgentEditDialog";
-import { WhatsAppConnectionDialog } from "@/components/ai-agents/WhatsAppConnectionDialog";
 
 const LIST_KEY = "ai-agents-list";
 const SAVE_KEY = "ai-agents-draft:save";
@@ -123,7 +122,7 @@ export default function AIAgents() {
             <Button
               variant="outline"
               className="h-10 px-4 border-border/70 text-foreground hover:bg-muted"
-              onClick={() => setWaOpen(true)}
+              onClick={() => navigate("/whatsapp-connection")}
             >
               <MessageCircle className="h-4 w-4 mr-2 text-[hsl(142_70%_40%)]" />
               Conexão WhatsApp
