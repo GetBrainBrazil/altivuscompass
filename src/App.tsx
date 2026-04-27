@@ -15,6 +15,7 @@ import Campaigns from "./pages/Campaigns";
 import Finance from "./pages/Finance";
 import FinancialRegistrations from "./pages/FinancialRegistrations";
 import FinancialReports from "./pages/FinancialReports";
+import PayablesReceivables from "./pages/PayablesReceivables";
 import Miles from "./pages/Miles";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
@@ -69,6 +70,7 @@ const App = () => (
             <Route path="/sales" element={<ProtectedRoute><AppLayout><Sales /></AppLayout></ProtectedRoute>} />
             <Route path="/campaigns" element={<ProtectedRoute><AppLayout><Campaigns /></AppLayout></ProtectedRoute>} />
             <Route path="/finance" element={<ProtectedRoute><AppLayout><Finance /></AppLayout></ProtectedRoute>} />
+            <Route path="/finance/payables-receivables" element={<ProtectedRoute><AppLayout><PayablesReceivables /></AppLayout></ProtectedRoute>} />
             <Route path="/finance/registrations" element={<ProtectedRoute><AppLayout><FinancialRegistrations /></AppLayout></ProtectedRoute>} />
             <Route path="/finance/reports" element={<ProtectedRoute><AppLayout><FinancialReports /></AppLayout></ProtectedRoute>} />
             <Route path="/miles" element={<ProtectedRoute><AppLayout><Miles /></AppLayout></ProtectedRoute>} />
