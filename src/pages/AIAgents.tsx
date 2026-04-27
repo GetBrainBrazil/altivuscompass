@@ -222,7 +222,6 @@ export default function AIAgents() {
         </div>
       </div>
 
-      <WhatsAppConnectionDialog open={waOpen} onOpenChange={setWaOpen} />
 
       <AlertDialog open={!!toDelete} onOpenChange={(open) => !open && setToDelete(null)}>
         <AlertDialogContent>
