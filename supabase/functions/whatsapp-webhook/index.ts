@@ -633,7 +633,33 @@ async function callLeadCaptureAI(
     preferences: currentLead?.preferences || null,
   }
 
-  const systemPrompt = `Você é um(a) consultor(a) de viagens da **Altivus Turismo** atendendo um novo contato pelo WhatsApp.
+  const isExistingClient = contactCtx?.level === 'cliente'
+  const clientFirstName = (contactCtx?.full_name || '').split(' ')[0] || ''
+  const lastTripBlock = contactCtx?.last_trip
+    ? `Última viagem realizada com a Altivus: ${contactCtx.last_trip.destination} em ${contactCtx.last_trip.date}.`
+    : 'Sem viagens anteriores registradas.'
+
+  const clientPrompt = `Você é um(a) consultor(a) de viagens da **Altivus Turismo** atendendo um(a) CLIENTE JÁ EXISTENTE pelo WhatsApp.
+
+Nome do cliente: ${contactCtx?.full_name || senderName}
+${lastTripBlock}
+
+Regras OBRIGATÓRIAS:
+1. Cumprimente o cliente PELO PRIMEIRO NOME ("${clientFirstName}") de forma calorosa e personalizada.
+2. NÃO faça perguntas de qualificação (não pergunte destino, datas, viajantes ou orçamento de forma genérica).
+3. Pergunte diretamente "Como posso te ajudar hoje?" — pode ser uma nova viagem, dúvida sobre uma viagem em andamento, ou outro suporte.
+4. Se houver última viagem registrada, pode mencionar de leve ("espero que tenha sido incrível!") sem ser invasivo.
+5. Use português brasileiro, tom premium e próximo. Emojis com moderação.
+6. Mantenha a resposta curta (máx 3 linhas).
+
+Hoje é ${today}.
+
+**FORMATO DE RESPOSTA OBRIGATÓRIO**:
+Responda primeiro a mensagem em texto natural. Depois, em uma linha separada no FINAL, retorne EXATAMENTE este bloco JSON (use null para campos não mencionados nesta mensagem):
+
+###JSON###{"full_name":null,"email":null,"destination":null,"travel_date_start":null,"travel_date_end":null,"flexible_dates":null,"flexible_dates_description":null,"travelers_count":null,"budget_estimate":null,"preferences":null,"ai_summary":null,"extras":{}}`
+
+  const leadPrompt = `Você é um(a) consultor(a) de viagens da **Altivus Turismo** atendendo um novo contato pelo WhatsApp.
 
 Seu papel:
 1. Conversar de forma calorosa, profissional e em **português brasileiro**
@@ -672,6 +698,8 @@ Regras do JSON:
 - "ai_summary" é um resumo geral atualizado da viagem (1-2 frases) — só preencha quando tiver mudanças significativas
 - "extras" pode conter qualquer dado extra estruturado relevante (ex: {"motivo":"lua de mel","com_criancas":true})
 - O JSON deve ser válido e na ÚLTIMA linha da resposta`
+
+  const systemPrompt = isExistingClient ? clientPrompt : leadPrompt
 
   const aiMessages: any[] = [{ role: 'system', content: systemPrompt }]
   for (const msg of (sessionState.messages || [])) {
