@@ -148,12 +148,13 @@ export default function Contacts() {
       </Card>
 
       <Card className="overflow-hidden">
-        <div className="hidden md:grid grid-cols-[1fr_140px_220px_220px_140px] gap-3 px-4 py-3 bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground font-body">
+        <div className="hidden md:grid grid-cols-[1fr_140px_200px_200px_120px_140px] gap-3 px-4 py-3 bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground font-body">
           <span>Nome</span>
           <span>Nível</span>
           <span>Telefone</span>
           <span>E-mail</span>
           <span>Origem</span>
+          <span className="text-right">Ações</span>
         </div>
         {loading ? (
           <div className="p-8 text-center text-sm text-muted-foreground">Carregando...</div>
