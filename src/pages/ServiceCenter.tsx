@@ -131,6 +131,7 @@ const MOCK_CONVERSATIONS: Conversation[] = [
     contactType: "new-lead",
     crm: { stage: "Novos Leads (IA)" },
     level: "lead",
+  },
   {
     id: "c2",
     leadName: "Rafael Almeida",
@@ -166,6 +167,7 @@ const MOCK_CONVERSATIONS: Conversation[] = [
     },
     level: "cliente",
     lastTrip: { destination: "Bali, Indonésia", date: "2024-11-12" },
+  },
   {
     id: "c3",
     leadName: "Juliana Pereira",
@@ -194,6 +196,9 @@ const MOCK_CONVERSATIONS: Conversation[] = [
     contactType: "new-lead",
     crm: { stage: "Novos Leads (IA)" },
     level: "lead",
+  },
+  {
+    id: "c4",
     leadName: "Carlos Mendes",
     phone: "+5511999998888",
     status: "ai",
@@ -211,6 +216,7 @@ const MOCK_CONVERSATIONS: Conversation[] = [
     contactType: "new-lead",
     crm: { stage: "Triagem inicial" },
     level: "prospect",
+  },
   {
     id: "c5",
     leadName: "Patrícia Nogueira",
@@ -246,6 +252,7 @@ const MOCK_CONVERSATIONS: Conversation[] = [
     level: "cliente",
     lastTrip: { destination: "Buenos Aires, Argentina", date: "2024-07-20" },
     isTraveling: true,
+  },
 ];
 
 // ============= Helpers =============
