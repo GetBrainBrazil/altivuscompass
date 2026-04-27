@@ -139,7 +139,10 @@ export default function PayableReceivableForm() {
       admin_fee_amount: String(existing.admin_fee_amount ?? ""),
       installment_total: String(existing.installment_total ?? "1"),
       installment_interval_days: "30",
-      recurrence_type: existing.recurrence_type ?? "none",
+      recurrence_enabled: !!existing.recurrence_type && existing.recurrence_type !== "none",
+      recurrence_every: "1",
+      recurrence_period: existing.recurrence_type && existing.recurrence_type !== "none" ? existing.recurrence_type : "monthly",
+      recurrence_until: "",
       observations: existing.observations ?? "",
     });
   }, [existing]);
