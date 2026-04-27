@@ -18,6 +18,7 @@ import QuoteItemSupplierFields from "@/components/quotes/QuoteItemSupplierFields
 import QuoteItemAttachments from "@/components/quotes/QuoteItemAttachments";
 
 import QuoteOptionsManager from "@/components/quotes/QuoteOptionsManager";
+import { LeadClientPicker, type LeadRecord } from "@/components/quotes/LeadClientPicker";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle, FileText, MoreVertical, ClipboardCopy, Search, Archive, ArchiveRestore, TrendingUp, DollarSign, Target, Pencil, BookmarkPlus, LayoutTemplate, Eye, EyeOff } from "lucide-react";
