@@ -661,7 +661,16 @@ export default function Quotes() {
         supabase.from("quote_items").select("*").eq("quote_id", editingQuote.id).order("sort_order"),
         supabase.from("quote_passengers").select("passenger_id").eq("quote_id", editingQuote.id),
       ]).then(([itemsResult, passengersResult]) => {
-        const loadedItems = (itemsResult.data ?? []).map((i: any) => ({ ...i, details: i.details ?? {} }));
+        const loadedItems = (itemsResult.data ?? []).map((i: any) => {
+          const details = i.details ?? {};
+          // Backfill defaults for legacy flight items missing baggage fields
+          if (i.item_type === "flight") {
+            if (details.pax_adults === undefined || details.pax_adults === null) details.pax_adults = 0;
+            if (details.pax_children === undefined || details.pax_children === null) details.pax_children = 0;
+            if (details.pax_infants === undefined || details.pax_infants === null) details.pax_infants = 0;
+          }
+          return { ...i, details };
+        });
         const loadedPassengers = (passengersResult.data ?? []).map((p: any) => p.passenger_id);
 
         setItems((current) => current.length > 0 ? current : loadedItems);
@@ -1412,11 +1421,13 @@ export default function Quotes() {
   };
 
   const addItem = (type: string, extra?: Partial<QuoteItem>) => {
+    const initialDetails: Record<string, any> =
+      type === "flight" ? { pax_adults: 1, pax_children: 0, pax_infants: 0 } : {};
     setItems([...items, {
       item_type: type,
       title: "",
       description: "",
-      details: {},
+      details: initialDetails,
       sort_order: items.length,
       _isNew: true,
       quantity: 1,
@@ -2650,7 +2661,7 @@ export default function Quotes() {
                                   <TooltipContent side="top" className="text-xs">Mochila</TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
-                              <Input type="number" min={0} value={d.pax_adults ?? 1} onChange={(e) => updateDetail("pax_adults", parseInt(e.target.value) || 0)} className="h-8 text-xs text-center" />
+                              <Input type="number" min={0} value={d.pax_adults ?? 0} onChange={(e) => updateDetail("pax_adults", parseInt(e.target.value) || 0)} className="h-8 text-xs text-center" />
                             </div>
                             <div className="col-span-1 space-y-0.5">
                               <TooltipProvider delayDuration={200}>
