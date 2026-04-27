@@ -1563,6 +1563,37 @@ export default function Quotes() {
     }
   };
 
+  const openClientCompletionAfterConfirm = async (quoteId: string) => {
+    try {
+      await new Promise((r) => setTimeout(r, 600));
+      const { data: q } = await supabase
+        .from("quotes")
+        .select("client_id, lead_id")
+        .eq("id", quoteId)
+        .single();
+      let clientId = q?.client_id ?? null;
+      let travelersCount: number | null = null;
+      let clientName: string | null = null;
+      if (q?.lead_id) {
+        const { data: lead } = await supabase
+          .from("leads")
+          .select("converted_client_id, travelers_count, full_name")
+          .eq("id", q.lead_id)
+          .single();
+        if (lead) {
+          clientId = clientId ?? lead.converted_client_id;
+          travelersCount = lead.travelers_count ?? null;
+          clientName = lead.full_name ?? null;
+        }
+      }
+      if (clientId) {
+        const { data: c } = await supabase.from("clients").select("full_name").eq("id", clientId).single();
+        clientName = c?.full_name ?? clientName;
+        setCompletionDialog({ open: true, clientId, clientName, travelersCount });
+      }
+    } catch { /* silencioso */ }
+  };
+
   const updateQuoteStage = async (quoteId: string, newStage: string) => {
     try {
       const q = quotes.find((q: Quote) => q.id === quoteId);
