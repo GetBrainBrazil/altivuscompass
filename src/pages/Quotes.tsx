@@ -2429,10 +2429,9 @@ export default function Quotes() {
                           });
                         };
                         const dirLabels: Record<string, string> = { outbound: "Ida", return: "Volta", domestic: "Interno" };
-                        const summary = [
+                        const summaryParts = [
                           d.flight_direction ? dirLabels[d.flight_direction] : "",
                           d.origin && d.destination ? `${d.origin} → ${d.destination}` : d.origin || d.destination || "",
-                          d.airline || "",
                           d.flight_number || "",
                         ].filter(Boolean).join(" · ") || `Voo ${idx + 1}`;
 
@@ -2441,7 +2440,12 @@ export default function Quotes() {
                             <div className="flex items-center gap-2 px-3 py-2 cursor-pointer select-none" onClick={toggleCollapse}>
                               {isCollapsed ? <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" /> : <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />}
                               <Plane className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                              <span className="text-xs font-medium text-foreground truncate">{summary}</span>
+                              {d.airline && (
+                                <span className="text-[11px] font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded shrink-0 max-w-[180px] truncate">
+                                  {d.airline}
+                                </span>
+                              )}
+                              <span className="text-xs font-medium text-foreground truncate">{summaryParts}</span>
                               {d.departure_date && <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{d.departure_date.split("-").reverse().join("/")}{d.departure_time ? ` ${d.departure_time}` : ""}</span>}
                               <button type="button" onClick={(e) => { e.stopPropagation(); removeItem(globalIdx); }} className="ml-2 text-destructive hover:text-destructive/80 transition-colors shrink-0">
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -2549,10 +2553,12 @@ export default function Quotes() {
                               />
                             </div>
                             <div className="col-span-3 space-y-0.5">
-                              <Label className="text-[11px] font-body">Companhia</Label>
+                              <Label className="text-[11px] font-body font-semibold text-primary flex items-center gap-1">
+                                <Plane className="w-3 h-3" /> Companhia Aérea <span className="text-destructive">*</span>
+                              </Label>
                               <Popover>
                                 <PopoverTrigger asChild>
-                                  <Button variant="outline" role="combobox" className="w-full h-8 justify-between text-xs font-normal px-2.5">
+                                  <Button variant="outline" role="combobox" className={cn("w-full h-8 justify-between text-xs font-normal px-2.5 border-primary/40", d.airline && "bg-primary/5 font-semibold text-primary border-primary/60")}>
                                     <span className="truncate">{d.airline || "Selecione"}</span>
                                     <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
                                   </Button>
@@ -2715,6 +2721,40 @@ export default function Quotes() {
                               <div className="space-y-0.5">
                                 <Label className="text-[11px] font-body">Descrição</Label>
                                 <Input value={item.description} onChange={(e) => updateItem(globalIdx, { description: e.target.value })} placeholder="Informações adicionais" className="h-8 text-xs" />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="space-y-0.5">
+                                <Label className="text-[11px] font-body">Tipo de Acomodação</Label>
+                                <Select value={d.accommodation_type || ""} onValueChange={(v) => updateDetail("accommodation_type", v)}>
+                                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="hotel">Hotel</SelectItem>
+                                    <SelectItem value="resort">Resort</SelectItem>
+                                    <SelectItem value="pousada">Pousada</SelectItem>
+                                    <SelectItem value="hostel">Hostel</SelectItem>
+                                    <SelectItem value="apart_hotel">Apart-Hotel / Flat</SelectItem>
+                                    <SelectItem value="apartment">Apartamento (temporada)</SelectItem>
+                                    <SelectItem value="house">Casa / Vila</SelectItem>
+                                    <SelectItem value="chalet">Chalé / Cabana</SelectItem>
+                                    <SelectItem value="boat">Barco / Cruzeiro fluvial</SelectItem>
+                                    <SelectItem value="other">Outro</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-0.5">
+                                <Label className="text-[11px] font-body">Plano de Alimentação</Label>
+                                <Select value={d.meal_plan || ""} onValueChange={(v) => updateDetail("meal_plan", v)}>
+                                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="none">Sem refeições</SelectItem>
+                                    <SelectItem value="breakfast">Café da manhã</SelectItem>
+                                    <SelectItem value="half_board">Meia pensão (café + 1 refeição)</SelectItem>
+                                    <SelectItem value="full_board">Pensão completa (3 refeições)</SelectItem>
+                                    <SelectItem value="all_inclusive">All Inclusive</SelectItem>
+                                    <SelectItem value="all_inclusive_premium">All Inclusive Premium</SelectItem>
+                                  </SelectContent>
+                                </Select>
                               </div>
                             </div>
                           </div>
