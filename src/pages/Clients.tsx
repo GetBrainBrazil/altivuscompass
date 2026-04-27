@@ -289,10 +289,52 @@ export default function Clients() {
         const levelOrder = { urgent: 0, critical: 1, warning: 2 };
         alerts.sort((a, b) => levelOrder[a.level] - levelOrder[b.level]);
 
-        return { ...c, primary_phone: primaryPhone?.phone ?? null, primary_email: primaryEmail?.email ?? null, alerts };
+        return { ...c, _level: "cliente" as ContactLevel, _contactId: null as string | null, primary_phone: primaryPhone?.phone ?? null, primary_email: primaryEmail?.email ?? null, alerts };
       });
     },
   });
+
+  // Fetch contacts (prospects + leads) to display alongside clients
+  const { data: contactsRows = [] } = useQuery({
+    queryKey: ["contacts-for-clients-list"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("contacts")
+        .select("id, level, full_name, phone, email, lead_id, client_id, created_at")
+        .in("level", ["prospect", "lead"]);
+      if (error) throw error;
+      return (data ?? []) as Array<{ id: string; level: ContactLevel; full_name: string; phone: string | null; email: string | null; lead_id: string | null; client_id: string | null; created_at: string }>;
+    },
+  });
+
+  // Merge: clients (cliente) + contacts (prospect/lead) as virtual rows
+  const allRows = useMemo(() => {
+    const virtuals = (contactsRows ?? []).map((c) => ({
+      id: `contact:${c.id}`,
+      _level: c.level,
+      _contactId: c.id,
+      _leadId: c.lead_id,
+      full_name: c.full_name,
+      primary_phone: c.phone,
+      primary_email: c.email,
+      city: null,
+      state: null,
+      travel_profile: null,
+      preferred_airports: [] as string[],
+      tags: [] as string[],
+      alerts: [] as any[],
+      is_active: true,
+      rating: 0,
+      created_at: c.created_at,
+    }));
+    return [...clients, ...virtuals];
+  }, [clients, contactsRows]);
+
+  const levelCounts = useMemo(() => {
+    const c = { all: allRows.length, cliente: 0, lead: 0, prospect: 0 } as Record<string, number>;
+    allRows.forEach((r: any) => { c[r._level] = (c[r._level] ?? 0) + 1; });
+    return c;
+  }, [allRows]);
 
   // Fetch passengers to enable searching clients by passenger name
   const { data: allPassengers = [] } = useQuery({
