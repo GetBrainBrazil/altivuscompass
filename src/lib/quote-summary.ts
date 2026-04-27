@@ -82,10 +82,19 @@ function isExpired(quote_validity?: string | null): boolean {
   return v.getTime() < today.getTime();
 }
 
+import { formatTransportDetails } from "./transport-format";
+
 function buildItemLine(item: AnyItem): string | null {
   const titleOrDesc = (item.title || item.description || "").trim();
-  if (!titleOrDesc) return null;
-  const safeText = truncate(titleOrDesc);
+  let descriptor = titleOrDesc;
+  if (item.item_type === "transport") {
+    const fmt = formatTransportDetails(item.details);
+    if (fmt) {
+      descriptor = titleOrDesc ? `${titleOrDesc} — ${fmt.fullLine}` : fmt.fullLine;
+    }
+  }
+  if (!descriptor) return null;
+  const safeText = truncate(descriptor);
   const price = fmtBRL(item.unit_price);
   const qty = Number(item.quantity ?? 0);
   const optionPrefix = item.option_label ? `${item.option_label}: ` : "";
