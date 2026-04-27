@@ -118,11 +118,8 @@ export default function PayableReceivableForm() {
 
   useEffect(() => {
     if (!existing) return;
-    const isRecurring = !!existing.recurrence_type && existing.recurrence_type !== "none";
-    const installmentTotal = parseInt(existing.installment_total ?? "1", 10) || 1;
     setForm({
       type: existing.type,
-      payment_mode: isRecurring ? "recurring" : installmentTotal > 1 ? "installments" : "single",
       description: existing.description ?? "",
       category: existing.category ?? "",
       cost_center: existing.cost_center ?? "",
@@ -138,8 +135,6 @@ export default function PayableReceivableForm() {
       interest_amount: String(existing.interest_amount ?? ""),
       fine_amount: String(existing.fine_amount ?? ""),
       admin_fee_amount: String(existing.admin_fee_amount ?? ""),
-      installment_total: String(existing.installment_total ?? "1"),
-      installment_interval_days: "30",
       recurrence_enabled: !!existing.recurrence_type && existing.recurrence_type !== "none",
       recurrence_every: "1",
       recurrence_period: existing.recurrence_type && existing.recurrence_type !== "none" ? existing.recurrence_type : "monthly",
@@ -161,24 +156,6 @@ export default function PayableReceivableForm() {
     const a = parseFloat(form.admin_fee_amount || "0");
     return b - d + i + f + a;
   }, [form]);
-
-  const installmentsCount = Math.max(1, parseInt(form.installment_total || "1", 10));
-  const installmentsPreview = useMemo(() => {
-    if (installmentsCount <= 1) return [];
-    const interval = Math.max(1, parseInt(form.installment_interval_days || "30", 10));
-    const per = totalPreview / installmentsCount;
-    if (!form.due_date) return [];
-    const base = new Date(form.due_date + "T00:00:00");
-    return Array.from({ length: installmentsCount }, (_, i) => {
-      const d = new Date(base);
-      d.setDate(d.getDate() + i * interval);
-      return {
-        n: i + 1,
-        amount: per,
-        date: d.toLocaleDateString("pt-BR"),
-      };
-    });
-  }, [installmentsCount, form.installment_interval_days, form.due_date, totalPreview]);
 
   // ----- mutation -----
   const saveMutation = useMutation({
