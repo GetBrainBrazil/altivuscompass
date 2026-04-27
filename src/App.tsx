@@ -15,6 +15,7 @@ import Campaigns from "./pages/Campaigns";
 import Finance from "./pages/Finance";
 import FinancialRegistrations from "./pages/FinancialRegistrations";
 import FinancialReports from "./pages/FinancialReports";
+import PayablesReceivables from "./pages/PayablesReceivables";
 import Miles from "./pages/Miles";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
