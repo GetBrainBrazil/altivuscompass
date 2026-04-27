@@ -199,6 +199,13 @@ export function KanbanCard({
           )}
         </div>
 
+        {/* Badge de nível do contato (Prospect / Lead / Cliente) */}
+        {card.contactLevel && (
+          <div className="mb-1.5">
+            <ContactLevelBadge level={card.contactLevel} size="xs" />
+          </div>
+        )}
+
         {/* Linha de contexto: destino · data */}
         <div className="min-h-[16px] mb-2">
           {(card.destination || card.travelDate) && (
@@ -207,6 +214,7 @@ export function KanbanCard({
             </p>
           )}
         </div>
+
 
         {/* AI summary (compacto) */}
         {card.isAILead && card.aiSummary && (
