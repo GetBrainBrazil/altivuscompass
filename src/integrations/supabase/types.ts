@@ -1426,6 +1426,75 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          ai_collected_data: Json | null
+          ai_summary: string | null
+          converted_at: string | null
+          converted_client_id: string | null
+          created_at: string
+          created_by: string | null
+          destination: string | null
+          email: string | null
+          flexible_dates: boolean
+          flexible_dates_description: string | null
+          full_name: string
+          id: string
+          phone: string | null
+          preferences: string | null
+          source: string | null
+          status: string
+          travel_date_end: string | null
+          travel_date_start: string | null
+          travelers_count: number | null
+          updated_at: string
+        }
+        Insert: {
+          ai_collected_data?: Json | null
+          ai_summary?: string | null
+          converted_at?: string | null
+          converted_client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination?: string | null
+          email?: string | null
+          flexible_dates?: boolean
+          flexible_dates_description?: string | null
+          full_name: string
+          id?: string
+          phone?: string | null
+          preferences?: string | null
+          source?: string | null
+          status?: string
+          travel_date_end?: string | null
+          travel_date_start?: string | null
+          travelers_count?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ai_collected_data?: Json | null
+          ai_summary?: string | null
+          converted_at?: string | null
+          converted_client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination?: string | null
+          email?: string | null
+          flexible_dates?: boolean
+          flexible_dates_description?: string | null
+          full_name?: string
+          id?: string
+          phone?: string | null
+          preferences?: string | null
+          source?: string | null
+          status?: string
+          travel_date_end?: string | null
+          travel_date_start?: string | null
+          travelers_count?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       miles_programs: {
         Row: {
           airline: string
