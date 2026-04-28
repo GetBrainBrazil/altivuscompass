@@ -595,8 +595,8 @@ export default function Clients() {
               const filePath = `${clientId}/${crypto.randomUUID()}.${ext}`;
               const { error: upErr } = await supabase.storage.from("passport-images").upload(filePath, file);
               if (!upErr) {
-                const { data: urlData } = supabase.storage.from("passport-images").getPublicUrl(filePath);
-                allImageUrls.push(urlData.publicUrl);
+                // Bucket is private — store the path; signed URLs are generated on display.
+                allImageUrls.push(filePath);
               }
             }
           }
@@ -615,8 +615,8 @@ export default function Clients() {
                 const filePath = `${clientId}/${crypto.randomUUID()}.${ext}`;
                 const { error: upErr } = await supabase.storage.from("visa-images").upload(filePath, v._imageFile);
                 if (!upErr) {
-                  const { data: urlData } = supabase.storage.from("visa-images").getPublicUrl(filePath);
-                  imageUrl = urlData.publicUrl;
+                  // Bucket is private — store the path; signed URLs are generated on display.
+                  imageUrl = filePath;
                 }
               }
               await supabase.from("client_visas").insert({ passport_id: ppData.id, visa_type: v.visa_type, validity_date: v.validity_date || null, country_region: v.country_region || null, visa_number: v.visa_number || null, issue_date: v.issue_date || null, entry_type: v.entry_type || "single", description: v.description || null, image_url: imageUrl });
