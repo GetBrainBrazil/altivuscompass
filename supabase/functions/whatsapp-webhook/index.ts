@@ -587,7 +587,28 @@ function buildLeadUpdates(extracted: any, current: any): Record<string, any> {
     if (current?.[field] && String(current[field]).trim()) return // don't overwrite
     updates[field] = value
   }
-  setIfNew('full_name', extracted.full_name)
+
+  // Nome: regras especiais. NUNCA permitir que o nome seja igual ao destino.
+  // Se o nome atual é apenas o placeholder (telefone formatado), aceitamos
+  // substituir por um nome humano extraído pela IA.
+  const extractedName = typeof extracted.full_name === 'string' ? extracted.full_name.trim() : ''
+  const extractedDest = typeof extracted.destination === 'string' ? extracted.destination.trim() : ''
+  const currentName = (current?.full_name || '').trim()
+  const looksLikeHumanName = (s: string) =>
+    !!s && !/\d/.test(s) && s.split(/\s+/).filter((w) => w.length > 1).length >= 2
+  const isPlaceholderName = (s: string) =>
+    !!s && (/^\+?\d/.test(s) || /^Contato\s+\d{2,}$/i.test(s))
+
+  if (
+    extractedName &&
+    looksLikeHumanName(extractedName) &&
+    extractedName.toLowerCase() !== extractedDest.toLowerCase() &&
+    extractedName.toLowerCase() !== (current?.destination || '').toLowerCase() &&
+    (!currentName || isPlaceholderName(currentName))
+  ) {
+    updates.full_name = extractedName
+  }
+
   setIfNew('email', extracted.email)
   setIfNew('destination', extracted.destination)
   setIfNew('travel_date_start', extracted.travel_date_start)
