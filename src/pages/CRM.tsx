@@ -1122,7 +1122,7 @@ export default function CRM() {
     );
   };
 
-  const handleConfirmAssign = () => {
+  const handleConfirmAssign = async () => {
     if (!assignCardId || !assignTargetColumn) return;
     const responsible = responsibleOptions.find((r) => r.user_id === selectedResponsibleId);
     if (!responsible) {
@@ -1141,12 +1141,34 @@ export default function CRM() {
       setAssignOpen(false);
       return;
     }
+    // Persiste no banco (assigned_user_id) — trigger registra evento na timeline
+    const leadId = extractLeadId(assignCardId);
+    if (leadId) {
+      const { error } = await supabase
+        .from("leads")
+        .update({ assigned_user_id: responsible.user_id } as any)
+        .eq("id", leadId);
+      if (error) {
+        console.error("[CRM] assign user error:", error);
+        toast.error("Não foi possível salvar o responsável.");
+        return;
+      }
+    }
     // Atribui agente no estado
     setColumns((prev) =>
       prev.map((col) => ({
         ...col,
         cards: col.cards.map((c) =>
-          c.id === assignCardId ? { ...c, agent: { name: responsible.full_name } } : c,
+          c.id === assignCardId
+            ? {
+                ...c,
+                agent: {
+                  id: responsible.user_id,
+                  name: responsible.full_name,
+                  avatarUrl: responsible.avatar_url ?? undefined,
+                },
+              }
+            : c,
         ),
       })),
     );
@@ -1156,7 +1178,7 @@ export default function CRM() {
       toColumnId: assignTargetColumn,
       fromTitle: sourceColumn.title,
       toTitle: targetColumn.title,
-      leadId: extractLeadId(assignCardId),
+      leadId,
     };
     // Move imediatamente (consultor já atribuído satisfaz a regra)
     setTimeout(() => performMove(move, false), 0);
