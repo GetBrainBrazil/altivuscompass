@@ -618,26 +618,6 @@ export default function LeadDetail() {
                 </Section>
               </TabsContent>
 
-              <TabsContent value="conversations" className="mt-0">
-                <Section title={`Conversas (${conversationsCount})`}>
-                  {conversationsCount === 0 ? (
-                    <EmptyState
-                      icon={MessageCircle}
-                      title="Nenhuma conversa registrada"
-                      description="As conversas da Central de Atendimento aparecerão aqui."
-                    />
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/service-center?phone=${form.phone}`)}
-                    >
-                      <ExternalLink className="h-4 w-4 mr-1.5" />
-                      Abrir na Central de Atendimento
-                    </Button>
-                  )}
-                </Section>
-              </TabsContent>
 
               <TabsContent value="documents" className="mt-0">
                 <Section title="Documentos">
