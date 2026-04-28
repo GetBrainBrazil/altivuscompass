@@ -28,6 +28,7 @@ import { ListSkeleton, TableSkeleton } from "@/components/ui/loading-skeletons";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccessFeature } from "@/lib/permissions";
 import { logAuditEvent } from "@/lib/audit";
+import PrivateImage from "@/components/PrivateImage";
 
 type SortDir = "asc" | "desc";
 type SortState = { key: string; dir: SortDir } | null;
@@ -1343,9 +1344,7 @@ export default function Clients() {
                         <Label className="font-body text-xs">Fotos:</Label>
                         {(pp.image_urls || []).map((url, imgIdx) => (
                           <div key={imgIdx} className="relative group">
-                            <a href={url} target="_blank" rel="noopener noreferrer">
-                              <img src={url} alt={`Passaporte ${pi + 1} foto ${imgIdx + 1}`} className="h-10 w-14 object-cover rounded border border-border" />
-                            </a>
+                            <PrivateImage bucket="passport-images" source={url} alt={`Passaporte ${pi + 1} foto ${imgIdx + 1}`} className="h-10 w-14 object-cover rounded border border-border" linkable />
                             <button type="button" className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => {
                               const n = [...passports]; n[pi].image_urls = n[pi].image_urls.filter((_, j) => j !== imgIdx); setPassports([...n]);
                             }}>×</button>
@@ -1468,11 +1467,13 @@ export default function Clients() {
                               <div className="space-y-1">
                                 <Label className="font-body text-xs">Imagem do Visto</Label>
                                 <div className="flex items-center gap-2">
-                                  {(v.image_url || v._imageFile) && (
-                                    <a href={v._imageFile ? URL.createObjectURL(v._imageFile) : v.image_url} target="_blank" rel="noopener noreferrer">
-                                      <img src={v._imageFile ? URL.createObjectURL(v._imageFile) : v.image_url} alt="Visto" className="h-10 w-14 object-cover rounded border border-border" />
+                                  {v._imageFile ? (
+                                    <a href={URL.createObjectURL(v._imageFile)} target="_blank" rel="noopener noreferrer">
+                                      <img src={URL.createObjectURL(v._imageFile)} alt="Visto" className="h-10 w-14 object-cover rounded border border-border" />
                                     </a>
-                                  )}
+                                  ) : v.image_url ? (
+                                    <PrivateImage bucket="visa-images" source={v.image_url} alt="Visto" className="h-10 w-14 object-cover rounded border border-border" linkable />
+                                  ) : null}
                                   <label className="cursor-pointer inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-input bg-background hover:bg-accent text-foreground">
                                     {v.image_url || v._imageFile ? "Trocar" : "Upload"}
                                     <input type="file" accept="image/*" className="hidden" onChange={(e) => {
