@@ -1088,14 +1088,26 @@ export default function ServiceCenter() {
 
             {/* Composer */}
             <footer className="border-t bg-white/80 backdrop-blur-sm p-4">
-              {selected.status === "ai" ? (
-                <div className="max-w-3xl mx-auto rounded-xl border border-dashed border-success/40 bg-success/5 px-5 py-4 text-center">
-                  <p className="text-xs text-success font-medium">
-                    🤖 IA está conduzindo esta conversa
-                  </p>
-                  <p className="text-[11px] text-muted-foreground mt-1">
-                    Clique em <span className="font-semibold">Assumir Conversa</span> para pausar a IA e responder manualmente.
-                  </p>
+              {selected.status === "ai" && !aiGloballyPaused ? (
+                <div className="max-w-3xl mx-auto space-y-3">
+                  <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    <span>Atendimento automático ativo</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      placeholder="Assuma a conversa para responder manualmente"
+                      disabled
+                      className="h-11 rounded-full px-5 bg-muted/40 border-0 placeholder:text-muted-foreground/70"
+                    />
+                    <Button
+                      size="icon"
+                      disabled
+                      className="h-11 w-11 rounded-full shrink-0"
+                    >
+                      <SendHorizontal className="h-5 w-5" />
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <>
