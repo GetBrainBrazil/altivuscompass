@@ -19,9 +19,8 @@ import {
   ExternalLink,
   CircleDot,
 } from "lucide-react";
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { KanbanCardData } from "@/components/crm/KanbanCard";
-import { LeadConversionDialog } from "@/components/crm/LeadConversionDialog";
 
 type Props = {
   card: KanbanCardData | null;
