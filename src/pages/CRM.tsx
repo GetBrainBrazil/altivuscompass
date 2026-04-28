@@ -336,6 +336,26 @@ export default function CRM() {
     }, { replace: true });
   };
 
+  // ?focus=lead-{id} — destaca e rola até o card no kanban de Vendas.
+  // Garante a aba "sales" e mantém o foco por alguns segundos.
+  const focusParam = searchParams.get("focus");
+  const [focusCardId, setFocusCardId] = useState<string | null>(focusParam || null);
+  useEffect(() => {
+    if (!focusParam) return;
+    setFocusCardId(focusParam);
+    if (tab !== "sales") setTabState("sales");
+    const t = window.setTimeout(() => {
+      setFocusCardId(null);
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("focus");
+        return next;
+      }, { replace: true });
+    }, 4000);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusParam]);
+
   const SALES_STORAGE_KEY = "crm:columns:sales:v3";
   const OPS_STORAGE_KEY = "crm:columns:ops:v4";
   const LEGACY_KEYS = [
