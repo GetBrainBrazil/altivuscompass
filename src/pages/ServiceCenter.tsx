@@ -1022,36 +1022,38 @@ export default function ServiceCenter() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  className={cn(
-                    "gap-2 shadow-sm",
-                    selected.status === "human"
-                      ? "bg-success text-white hover:bg-success/90"
-                      : "bg-[hsl(var(--navy))] text-[hsl(var(--cream))] hover:bg-[hsl(var(--navy))]/90",
-                  )}
-                  onClick={async () => {
-                    if (!selectedId) return;
-                    const newStatus = selected.status === "human" ? "ai" : "human";
-                    const { error } = await supabase
-                      .from("wa_conversations")
-                      .update({ status: newStatus })
-                      .eq("id", selectedId);
-                    if (error) {
-                      toast.error("Falha ao atualizar status: " + error.message);
-                      return;
-                    }
-                    toast.success(
-                      newStatus === "human"
-                        ? "Conversa assumida — IA pausada para este contato."
-                        : "IA reativada para este contato.",
-                    );
-                    qc.invalidateQueries({ queryKey: ["wa_conversations"] });
-                  }}
-                >
-                  <UserRound className="h-4 w-4" />
-                  {selected.status === "human" ? "Devolver para IA" : "Assumir Conversa"}
-                </Button>
+                {!aiGloballyPaused && (
+                  <Button
+                    size="sm"
+                    className={cn(
+                      "gap-2 shadow-sm",
+                      selected.status === "human"
+                        ? "bg-success text-white hover:bg-success/90"
+                        : "bg-[hsl(var(--navy))] text-[hsl(var(--cream))] hover:bg-[hsl(var(--navy))]/90",
+                    )}
+                    onClick={async () => {
+                      if (!selectedId) return;
+                      const newStatus = selected.status === "human" ? "ai" : "human";
+                      const { error } = await supabase
+                        .from("wa_conversations")
+                        .update({ status: newStatus })
+                        .eq("id", selectedId);
+                      if (error) {
+                        toast.error("Falha ao atualizar status: " + error.message);
+                        return;
+                      }
+                      toast.success(
+                        newStatus === "human"
+                          ? "Conversa assumida — IA pausada para este contato."
+                          : "IA reativada para este contato.",
+                      );
+                      qc.invalidateQueries({ queryKey: ["wa_conversations"] });
+                    }}
+                  >
+                    <UserRound className="h-4 w-4" />
+                    {selected.status === "human" ? "Devolver para IA" : "Assumir Conversa"}
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant="ghost"
