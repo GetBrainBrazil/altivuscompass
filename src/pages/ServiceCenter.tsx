@@ -707,9 +707,11 @@ export default function ServiceCenter() {
           clientName: c.contact_name ?? undefined,
         },
         level: ((c.client_id ? "cliente" : c.lead_id ? "lead" : "prospect") as ContactLevel),
-        // "Novo" = ainda não lido E ainda é prospect (primeiro contato sem qualificação)
-        isNew: (c.unread_count ?? 0) > 0 && !c.client_id && !c.lead_id ? true
-          : (c.unread_count ?? 0) > 0 && !c.client_id ? undefined : undefined,
+        // "Novo" = primeiro contato (criado < 24h) E ainda não foi promovido a Lead/Cliente
+        isNew:
+          !c.client_id &&
+          !!c.created_at &&
+          Date.now() - new Date(c.created_at).getTime() < 24 * 60 * 60 * 1000,
         leadId: c.lead_id ?? undefined,
         contactId: c.contact_id ?? undefined,
       };
