@@ -889,25 +889,24 @@ export default function ServiceCenter() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden bg-background">
-      {/* ===== Banner global de pausa da IA ===== */}
+      {/* ===== Banner global de status da IA ===== */}
       <div
         className={cn(
           "flex items-center justify-between gap-3 px-4 py-2 border-b text-xs",
           aiGloballyPaused
-            ? "bg-amber-50 border-amber-200 text-amber-900"
+            ? "bg-slate-800 border-slate-700 text-slate-100"
             : "bg-emerald-50 border-emerald-200 text-emerald-900",
         )}
       >
         <div className="flex items-center gap-2 min-w-0">
-          <span
-            className={cn(
-              "inline-block w-2 h-2 rounded-full shrink-0",
-              aiGloballyPaused ? "bg-amber-500" : "bg-emerald-500 animate-pulse",
-            )}
-          />
+          {aiGloballyPaused ? (
+            <Info className="h-3.5 w-3.5 shrink-0 text-slate-300" />
+          ) : (
+            <span className="inline-block w-2 h-2 rounded-full shrink-0 bg-emerald-500 animate-pulse" />
+          )}
           <span className="font-medium">
             {aiGloballyPaused
-              ? "IA globalmente PAUSADA — nenhum número receberá resposta automática (modo desenvolvimento)."
+              ? "Modo manual — respostas automáticas desativadas"
               : "IA ativa — respondendo automaticamente todos os números (exceto conversas assumidas)."}
           </span>
         </div>
