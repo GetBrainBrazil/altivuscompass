@@ -35,6 +35,7 @@ import PublicItinerary from "./pages/PublicItinerary";
 import ServiceCenter from "./pages/ServiceCenter";
 import CRM from "./pages/CRM";
 import LeadDetail from "./pages/LeadDetail";
+import LeadNew from "./pages/LeadNew";
 import AIAgents from "./pages/AIAgents";
 import AIAgentEdit from "./pages/AIAgentEdit";
 import WhatsAppConnection from "./pages/WhatsAppConnection";
