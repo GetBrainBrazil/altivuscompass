@@ -63,6 +63,25 @@ Deno.serve(async (req) => {
       })
     }
 
+    // Ignore group messages and messages sent by us — they should never create leads/prospects.
+    // Z-API marks groups with isGroup=true and/or phone like "120363...-group".
+    const looksLikeGroup =
+      body.isGroup === true ||
+      body.fromGroup === true ||
+      /-group$/i.test(phone) ||
+      /^120363\d+/.test(phone.replace(/\D/g, ''))
+    if (looksLikeGroup) {
+      console.log('Webhook: ignoring group message from', phone)
+      return new Response(JSON.stringify({ status: 'ignored', reason: 'group message' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    if (body.fromMe === true) {
+      return new Response(JSON.stringify({ status: 'ignored', reason: 'fromMe' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Check for #pago command
     const isPagoCommand = isTextMsg && messageText.trim().toLowerCase() === '#pago'
     const isCancelarCommand = isTextMsg && ['#cancelar', '#cancela', '#sair'].includes(messageText.trim().toLowerCase())
