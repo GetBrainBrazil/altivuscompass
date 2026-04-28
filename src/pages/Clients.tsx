@@ -147,16 +147,15 @@ export default function Clients() {
   // A listagem antiga foi descontinuada. /clients agora serve apenas como
   // ficha de edição quando chamada com ?id=, ?contact= ou ?new=.
   // Sem esses parâmetros, redirecionamos para a lista unificada em /contacts.
-  useEffect(() => {
-    const hasEditParam =
-      searchParams.get("id") ||
+  const hasEditParam =
+    !!(searchParams.get("id") ||
       searchParams.get("contact") ||
-      searchParams.get("new");
+      searchParams.get("new"));
+  useEffect(() => {
     if (!hasEditParam) {
       navigate("/contacts", { replace: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [hasEditParam, navigate]);
 
   // Multi-value entries
   const [phones, setPhones] = useState<PhoneEntry[]>([]);
@@ -1885,6 +1884,10 @@ export default function Clients() {
   }
 
   // ========== LIST VIEW ==========
+  // Listagem antiga descontinuada — sem param de edição, redireciona para /contacts.
+  if (!hasEditParam) {
+    return null;
+  }
   return (
     <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
