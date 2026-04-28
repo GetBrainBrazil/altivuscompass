@@ -67,6 +67,7 @@ export interface IntlPhoneInputProps {
   disabled?: boolean;
   id?: string;
   name?: string;
+  onBlur?: React.FocusEventHandler<HTMLInputElement>;
 }
 
 export const IntlPhoneInput = React.forwardRef<
