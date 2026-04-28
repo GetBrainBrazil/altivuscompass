@@ -147,16 +147,19 @@ export default function Clients() {
   // A listagem antiga foi descontinuada. /clients agora serve apenas como
   // ficha de edição quando chamada com ?id=, ?contact= ou ?new=.
   // Sem esses parâmetros, redirecionamos para a lista unificada em /contacts.
-  useEffect(() => {
-    const hasEditParam =
-      searchParams.get("id") ||
+  const hasEditParam =
+    !!(searchParams.get("id") ||
       searchParams.get("contact") ||
-      searchParams.get("new");
+      searchParams.get("new"));
+  useEffect(() => {
     if (!hasEditParam) {
       navigate("/contacts", { replace: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [hasEditParam, navigate]);
+
+  if (!hasEditParam) {
+    return null;
+  }
 
   // Multi-value entries
   const [phones, setPhones] = useState<PhoneEntry[]>([]);
