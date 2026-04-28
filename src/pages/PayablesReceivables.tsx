@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, LabelList,
 } from "recharts";
 
 // ----- types & constants -----
@@ -425,30 +425,56 @@ export default function PayablesReceivables() {
           </Button>
         </div>
         {showChart && (
-          <div className="p-3" style={{ height: 150 }}>
+          <div className="p-3" style={{ height: 200 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }} barGap={1} barCategoryGap="20%">
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+              <BarChart
+                data={chartData.map((d: any) => ({
+                  ...d,
+                  total: (Number(d.entradas) || 0) + (Number(d.saidas) || 0),
+                  _entradasBg: Number(d.entradas) > 0 ? 0 : 1,
+                  _saidasBg: Number(d.saidas) > 0 ? 0 : 1,
+                }))}
+                margin={{ top: 24, right: 12, left: 0, bottom: 4 }}
+                barGap={2}
+                barCategoryGap="22%"
+              >
+                <defs>
+                  <linearGradient id="grad-entradas" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#34d399" stopOpacity={0.95} />
+                    <stop offset="100%" stopColor="#34d399" stopOpacity={0.65} />
+                  </linearGradient>
+                  <linearGradient id="grad-saidas" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#fb7185" stopOpacity={0.95} />
+                    <stop offset="100%" stopColor="#fb7185" stopOpacity={0.65} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="2 4" vertical={false} stroke="#e5e7eb" />
                 <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false}
                   tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} width={40} />
                 <Tooltip
-                  cursor={{ fill: "hsl(var(--muted) / 0.3)" }}
+                  cursor={{ fill: "rgba(148, 163, 184, 0.12)" }}
                   formatter={(v: any, name: any) => [brl(Number(v)), name]}
-                  labelStyle={{ color: "#0f172a", fontWeight: 600, marginBottom: 4 }}
-                  itemStyle={{ color: "#334155", fontSize: 12 }}
+                  labelStyle={{ color: "#f8fafc", fontWeight: 600, marginBottom: 4 }}
+                  itemStyle={{ color: "#e2e8f0", fontSize: 12 }}
                   contentStyle={{
-                    background: "#ffffff",
-                    border: "1px solid #e2e8f0",
+                    background: "#0f172a",
+                    border: "1px solid #1e293b",
                     borderRadius: 10,
                     fontSize: 12,
-                    boxShadow: "0 8px 24px -8px rgba(15, 23, 42, 0.15), 0 2px 6px -2px rgba(15, 23, 42, 0.08)",
+                    boxShadow: "0 12px 28px -8px rgba(15, 23, 42, 0.4)",
                     padding: "8px 12px",
                   }}
                 />
-                <Legend wrapperStyle={{ fontSize: 11 }} iconSize={10} />
-                <Bar dataKey="entradas" fill="#10b981" name="Entradas" radius={[3, 3, 0, 0]} maxBarSize={14} />
-                <Bar dataKey="saidas" fill="#f43f5e" name="Saídas" radius={[3, 3, 0, 0]} maxBarSize={14} />
+                <Legend
+                  wrapperStyle={{ fontSize: 11, paddingTop: 4 }}
+                  iconType="circle"
+                  iconSize={8}
+                />
+                <Bar dataKey="entradas" fill="url(#grad-entradas)" name="Entradas" radius={[6, 6, 0, 0]} maxBarSize={32}>
+                  <LabelList dataKey="total" position="top" formatter={(v: any) => v ? brl(Number(v)) : ""} style={{ fontSize: 10, fill: "#94a3b8" }} />
+                </Bar>
+                <Bar dataKey="saidas" fill="url(#grad-saidas)" name="Saídas" radius={[6, 6, 0, 0]} maxBarSize={32} />
               </BarChart>
             </ResponsiveContainer>
           </div>
