@@ -849,13 +849,14 @@ export default function ServiceCenter() {
     () => Array.from(new Set(convoRows.map((c: any) => c.contact_id).filter(Boolean))),
     [convoRows],
   );
+  // Fonte da verdade: tabela contacts. Inclui nome, level, vínculos e datas.
   const { data: contactsMeta = [] } = useQuery({
     queryKey: ["wa_contacts_meta", contactIds.join(",")],
     enabled: contactIds.length > 0,
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("contacts")
-        .select("id, first_contact_at, last_contact_at, is_returning")
+        .select("id, full_name, phone, level, lead_id, client_id, first_contact_at, last_contact_at, is_returning")
         .in("id", contactIds);
       return data ?? [];
     },
@@ -882,7 +883,7 @@ export default function ServiceCenter() {
     },
   });
 
-  // ===== Realtime: novas mensagens / conversas atualizadas =====
+  // ===== Realtime: novas mensagens / conversas / contatos / leads atualizados =====
   useEffect(() => {
     const channel = supabase
       .channel("service-center-realtime")
@@ -898,6 +899,22 @@ export default function ServiceCenter() {
           qc.invalidateQueries({ queryKey: ["wa_conversations"] });
           const convId = payload?.new?.conversation_id ?? payload?.old?.conversation_id;
           if (convId) qc.invalidateQueries({ queryKey: ["wa_messages", convId] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "contacts" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["wa_contacts_meta"] });
+          qc.invalidateQueries({ queryKey: ["wa_conversations"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "leads" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["wa_contacts_meta"] });
+          qc.invalidateQueries({ queryKey: ["wa_conversations"] });
         },
       )
       .subscribe();
@@ -945,26 +962,34 @@ export default function ServiceCenter() {
         timestamp: c.last_message_at ?? c.updated_at ?? c.created_at,
       };
       const meta = c.contact_id ? contactMetaById.get(c.contact_id) : null;
+      // Fonte da verdade: tabela contacts. wa_conversations.contact_name é apenas espelho.
+      const canonicalName = (meta?.full_name && String(meta.full_name).trim()) || c.contact_name || c.phone || "Sem nome";
+      const canonicalLevel: ContactLevel =
+        (meta?.level as ContactLevel) ||
+        (c.client_id ? "cliente" : c.lead_id ? "lead" : "prospect");
+      const canonicalClientId = meta?.client_id ?? c.client_id ?? undefined;
+      const canonicalLeadId = meta?.lead_id ?? c.lead_id ?? undefined;
       return {
         id: c.id,
-        leadName: c.contact_name || c.phone || "Sem nome",
+        leadName: canonicalName,
         phone: c.phone,
         status: (c.status === "human" ? "human" : "ai") as ConversationStatus,
         messages: msgs.length > 0 ? msgs : [fallbackMsg],
         summary: { notes: [] },
         category: "sales" as ContactCategory,
-        contactType: (c.client_id ? "existing-client" : "new-lead") as ContactType,
+        contactType: (canonicalClientId ? "existing-client" : "new-lead") as ContactType,
         crm: {
-          clientId: c.client_id ?? undefined,
-          clientName: c.contact_name ?? undefined,
+          clientId: canonicalClientId,
+          clientName: canonicalName,
         },
-        level: ((c.client_id ? "cliente" : c.lead_id ? "lead" : "prospect") as ContactLevel),
+        level: canonicalLevel,
         // "Novo" = primeiro contato (criado < 24h) E ainda não foi promovido a Lead/Cliente
         isNew:
-          !c.client_id &&
+          !canonicalClientId &&
+          canonicalLevel === "prospect" &&
           !!c.created_at &&
           Date.now() - new Date(c.created_at).getTime() < 24 * 60 * 60 * 1000,
-        leadId: c.lead_id ?? undefined,
+        leadId: canonicalLeadId,
         contactId: c.contact_id ?? undefined,
         firstContactAt: meta?.first_contact_at ?? c.created_at ?? undefined,
         lastContactAt: meta?.last_contact_at ?? c.last_message_at ?? undefined,
