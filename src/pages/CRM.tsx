@@ -417,6 +417,7 @@ export default function CRM() {
           isManualLead: !isAI,
           aiSummary: l.ai_summary ?? undefined,
           contactLevel: hasTravelData ? "lead" : "prospect",
+          isReturning: !!l.is_returning,
           stageEnteredAt: existing?.stageEnteredAt ?? l.created_at ?? new Date().toISOString(),
           temperature: existing?.temperature ?? "cold",
           tags: [
