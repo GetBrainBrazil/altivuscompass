@@ -506,7 +506,30 @@ const formatDateBR = (iso: string) => {
 };
 
 const ContactBanner = ({ conversation }: { conversation: Conversation }) => {
-  const { level, lastTrip, isTraveling, leadName } = conversation;
+  const navigate = useNavigate();
+  const { level, lastTrip, isTraveling, leadName, leadId, contactId, isNew } = conversation;
+
+  const openInCRM = () => {
+    if (level === "cliente" && contactId) {
+      navigate(`/clients?contact=${contactId}`);
+    } else if (leadId) {
+      navigate(`/leads/${leadId}`);
+    } else {
+      navigate("/crm");
+    }
+  };
+
+  const CRMButton = (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={openInCRM}
+      className="h-7 px-2.5 text-[11px] gap-1 shrink-0"
+    >
+      <ExternalLink className="h-3 w-3" />
+      Abrir no CRM
+    </Button>
+  );
 
   if (level === "cliente") {
     return (
@@ -536,20 +559,24 @@ const ContactBanner = ({ conversation }: { conversation: Conversation }) => {
             <p className="text-xs text-amber-800/70 mt-0.5 italic">Sem viagens registradas ainda.</p>
           )}
         </div>
+        {CRMButton}
       </div>
     );
   }
 
   if (level === "prospect") {
-    const previousCount = Math.max(0, conversation.messages.length - 2);
     return (
       <div className="px-6 py-2.5 border-b bg-slate-50 flex items-center gap-3">
         <ContactLevelBadge level="prospect" size="sm" />
-        <p className="text-xs text-slate-700">
-          {previousCount > 0
-            ? `Contato já conhecido — ${previousCount} mensagem(ns) em conversas anteriores.`
-            : "Novo contato — iniciando qualificação."}
+        {isNew && (
+          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300 uppercase tracking-wide">
+            Novo
+          </span>
+        )}
+        <p className="text-xs text-slate-700 flex-1">
+          Novo contato — Prospect criado automaticamente. Aparece em <strong>Novos Leads</strong> no funil.
         </p>
+        {CRMButton}
       </div>
     );
   }
@@ -558,9 +585,10 @@ const ContactBanner = ({ conversation }: { conversation: Conversation }) => {
   return (
     <div className="px-6 py-2.5 border-b bg-sky-50/60 flex items-center gap-3">
       <ContactLevelBadge level="lead" size="sm" />
-      <p className="text-xs text-sky-900">
+      <p className="text-xs text-sky-900 flex-1">
         Lead qualificado — IA continuará a conversa de qualificação.
       </p>
+      {CRMButton}
     </div>
   );
 };
