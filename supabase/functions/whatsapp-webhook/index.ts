@@ -116,17 +116,36 @@ Deno.serve(async (req) => {
         messageType === 'sticker' ? '🌟 Figurinha' :
         messageType === 'location' ? '📍 Localização' : 'Mensagem'
 
-      const displayName = senderName || formatPhonePlaceholder(phone)
+      // ====== Garantir contato/lead/cliente ANTES da pausa global ======
+      // Mesmo com IA pausada, todo número novo precisa virar Prospect no CRM e
+      // todo número conhecido precisa estar vinculado à conversa.
+      let contactLink: { contact_id?: string; lead_id?: string; client_id?: string } = {}
+      let resolvedDisplayName = senderName || formatPhonePlaceholder(phone)
+      if (!isFromMe) {
+        try {
+          const link = await ensureContactForPhone(supabase, phone, senderName)
+          contactLink = {
+            contact_id: link.contact_id ?? undefined,
+            lead_id: link.lead_id ?? undefined,
+            client_id: link.client_id ?? undefined,
+          }
+          if (link.display_name) resolvedDisplayName = link.display_name
+        } catch (linkErr) {
+          console.error('ensureContactForPhone failed:', linkErr)
+        }
+      }
+
       const { data: convo, error: convoErr } = await supabase
         .from('wa_conversations')
         .upsert(
           {
             phone,
-            contact_name: displayName,
+            contact_name: resolvedDisplayName,
             last_message_text: preview,
             last_message_at: new Date().toISOString(),
             last_message_from: isFromMe ? 'agent' : 'lead',
             updated_at: new Date().toISOString(),
+            ...contactLink,
           },
           { onConflict: 'phone' }
         )
