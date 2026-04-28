@@ -418,13 +418,44 @@ export default function CRM() {
         };
       });
 
+      // IDs de leads existentes no banco (para limpar órfãos do localStorage)
+      const validLeadIds = new Set(data.map((l: any) => `lead-${l.id}`));
+
+      // Busca também os IDs de cotações existentes para limpar cards quote-* órfãos
+      const { data: quotesData } = await supabase
+        .from("quotes")
+        .select("id")
+        .limit(1000);
+      if (cancelled) return;
+      const validQuoteIds = new Set((quotesData ?? []).map((q: any) => `quote-${q.id}`));
+
+      const isCardStillValid = (cardId: string): boolean => {
+        if (cardId.startsWith("lead-")) return validLeadIds.has(cardId);
+        if (cardId.startsWith("quote-")) return validQuoteIds.has(cardId);
+        if (cardId.startsWith("manual-")) return true; // mantém cards manuais
+        return false;
+      };
+
       setSalesColumns((prev) => {
-        const newLeadsCol = prev.find((c) => c.id === "new-leads");
-        if (!newLeadsCol) return prev;
-        return prev.map((col) =>
-          col.id === "new-leads" ? { ...col, cards: leadCards } : col,
-        );
+        return prev.map((col) => {
+          if (col.id === "new-leads") {
+            return { ...col, cards: leadCards };
+          }
+          // Outras colunas: remove órfãos (leads/cotações excluídos)
+          return {
+            ...col,
+            cards: col.cards.filter((c) => isCardStillValid(c.id)),
+          };
+        });
       });
+
+      // Também sanitiza o kanban de Operações (ops)
+      setOpsColumns((prev) =>
+        prev.map((col) => ({
+          ...col,
+          cards: col.cards.filter((c) => isCardStillValid(c.id)),
+        })),
+      );
     };
     fetchLeads();
     const interval = setInterval(fetchLeads, 30_000);
