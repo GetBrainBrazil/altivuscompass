@@ -471,10 +471,12 @@ export default function PayablesReceivables() {
                   iconType="circle"
                   iconSize={8}
                 />
-                <Bar dataKey="entradas" fill="url(#grad-entradas)" name="Entradas" radius={[6, 6, 0, 0]} maxBarSize={32}>
+                <Bar dataKey="entradas" fill="url(#grad-entradas)" name="Entradas" radius={[6, 6, 0, 0]} maxBarSize={32}
+                  background={{ fill: "#f1f5f9", radius: 6 } as any}>
                   <LabelList dataKey="total" position="top" formatter={(v: any) => v ? brl(Number(v)) : ""} style={{ fontSize: 10, fill: "#94a3b8" }} />
                 </Bar>
-                <Bar dataKey="saidas" fill="url(#grad-saidas)" name="Saídas" radius={[6, 6, 0, 0]} maxBarSize={32} />
+                <Bar dataKey="saidas" fill="url(#grad-saidas)" name="Saídas" radius={[6, 6, 0, 0]} maxBarSize={32}
+                  background={{ fill: "#f1f5f9", radius: 6 } as any} />
               </BarChart>
             </ResponsiveContainer>
           </div>
