@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Sparkles, AlertTriangle, CheckCircle2, UserPlus } from "lucide-react";
+import { Sparkles, AlertTriangle, CheckCircle2, UserPlus, Flame, Plane } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
 
@@ -18,36 +18,37 @@ export type KanbanTag = {
 
 /**
  * Alerta visual exibido como badge no canto superior direito do card.
- * - tone "destructive": badge vermelho + força borda esquerda destrutiva.
- * - tone "warning":     badge âmbar.
- * - tone "success":     badge verde (ex.: lead convertido).
  */
 export type KanbanCardAlert = {
   label: string;
   tone: "destructive" | "warning" | "success";
 };
 
+/** Temperatura do lead — controla cor do ícone de chama. */
+export type LeadTemperature = "hot" | "warm" | "cold";
+
 export type KanbanCardData = {
   id: string;
   clientName: string;
   destination?: string;
   travelDate?: string;
+  /** ISO date (YYYY-MM-DD) da viagem — usado para calcular "Embarque próximo". */
+  travelDateISO?: string;
   tags?: KanbanTag[];
   estimatedValue?: number;
   agent?: {
     name: string;
     avatarUrl?: string;
   };
-  /** Marca o card como lead recém-triado pela IA (WhatsApp). */
   isAILead?: boolean;
-  /** Marca o card como lead criado manualmente pelo consultor. */
   isManualLead?: boolean;
-  /** Resumo curto da necessidade extraída pela IA. Exibido em itálico, máx. 2 linhas. */
   aiSummary?: string;
-  /** Alerta visual exibido como badge no topo direito (e cor da borda esquerda quando destrutivo). */
   alert?: KanbanCardAlert;
-  /** Nível do contato (Prospect/Lead/Cliente). Quando presente, exibe badge colorido no topo. */
   contactLevel?: ContactLevel;
+  /** Timestamp ISO de quando o card entrou na coluna atual. Usado para badge "Xd na etapa". */
+  stageEnteredAt?: string;
+  /** Temperatura do lead (default: "cold"). */
+  temperature?: LeadTemperature;
 };
 
 const TAG_TONE_CLASSES: Record<KanbanTagTone, string> = {
@@ -63,6 +64,24 @@ const ALERT_BADGE_CLASSES: Record<KanbanCardAlert["tone"], string> = {
   destructive: "bg-destructive/15 text-destructive",
   warning: "bg-warning/15 text-warning",
   success: "bg-success/15 text-success",
+};
+
+const TEMP_NEXT: Record<LeadTemperature, LeadTemperature> = {
+  cold: "warm",
+  warm: "hot",
+  hot: "cold",
+};
+
+const TEMP_LABEL: Record<LeadTemperature, string> = {
+  hot: "Quente — quer fechar em breve",
+  warm: "Morno — interesse sem urgência",
+  cold: "Frio — contato inicial",
+};
+
+const TEMP_CLASSES: Record<LeadTemperature, string> = {
+  hot: "text-red-500 fill-red-500/30",
+  warm: "text-orange-400 fill-orange-400/25",
+  cold: "text-slate-400",
 };
 
 function formatBRL(value?: number) {
@@ -83,15 +102,41 @@ function getInitials(name: string) {
     .join("");
 }
 
+function daysSince(iso?: string): number | null {
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return null;
+  const diff = Date.now() - t;
+  return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
+}
+
+function daysUntil(iso?: string): number | null {
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return null;
+  return Math.floor((t - Date.now()) / (1000 * 60 * 60 * 24));
+}
+
+function stageDaysBadgeClasses(d: number): string {
+  if (d >= 14) return "bg-destructive/15 text-destructive";
+  if (d >= 7) return "bg-amber-100 text-amber-700";
+  return "bg-slate-100 text-slate-600";
+}
+
+function stageDaysLabel(d: number): string {
+  if (d >= 14) return "14d+";
+  return `${d}d`;
+}
+
 export function KanbanCard({
   card,
   onClick,
-  /** Classe Tailwind de cor da borda esquerda (ex: "border-l-soft-blue"). Sobreposta por alerta destrutivo. */
   stageBorderClass = "border-l-muted-foreground/40",
   draggable = false,
   isDragging = false,
   onDragStart,
   onDragEnd,
+  onTemperatureChange,
 }: {
   card: KanbanCardData;
   onClick?: (card: KanbanCardData) => void;
@@ -100,11 +145,16 @@ export function KanbanCard({
   isDragging?: boolean;
   onDragStart?: (card: KanbanCardData, e: React.DragEvent<HTMLDivElement>) => void;
   onDragEnd?: (card: KanbanCardData, e: React.DragEvent<HTMLDivElement>) => void;
+  /** Callback ao clicar no ícone de chama para alternar a temperatura. */
+  onTemperatureChange?: (card: KanbanCardData, next: LeadTemperature) => void;
 }) {
   const value = formatBRL(card.estimatedValue);
   const alert = card.alert;
+  const temperature: LeadTemperature = card.temperature ?? "cold";
+  const stageDays = daysSince(card.stageEnteredAt);
+  const daysToTravel = daysUntil(card.travelDateISO);
+  const isBoardingSoon = daysToTravel !== null && daysToTravel >= 0 && daysToTravel <= 30;
 
-  // Badge mostrado no canto superior direito (alerta tem prioridade sobre IA)
   let cornerBadge: ReactNode = null;
   if (alert) {
     const Icon = alert.tone === "success" ? CheckCircle2 : AlertTriangle;
@@ -142,6 +192,7 @@ export function KanbanCard({
   }
 
   const leftBorder = alert?.tone === "destructive" ? "border-l-destructive" : stageBorderClass;
+  const noAgent = !card.agent;
 
   return (
     <div
@@ -153,8 +204,6 @@ export function KanbanCard({
         try {
           e.dataTransfer.effectAllowed = "move";
           e.dataTransfer.setData("text/plain", card.id);
-
-          // Custom drag image: clone do card com sombra forte e leve inclinação
           const node = e.currentTarget as HTMLDivElement;
           const rect = node.getBoundingClientRect();
           const ghost = node.cloneNode(true) as HTMLDivElement;
@@ -171,7 +220,6 @@ export function KanbanCard({
           ghost.setAttribute("data-drag-ghost", "true");
           document.body.appendChild(ghost);
           e.dataTransfer.setDragImage(ghost, e.clientX - rect.left, e.clientY - rect.top);
-          // Remove o clone após o início do drag
           window.setTimeout(() => {
             ghost.remove();
           }, 0);
@@ -211,7 +259,7 @@ export function KanbanCard({
           )}
         </div>
 
-        {/* Badge de nível do contato (Prospect / Lead / Cliente) */}
+        {/* Badge de nível do contato */}
         {card.contactLevel && (
           <div className="mb-1.5">
             <ContactLevelBadge level={card.contactLevel} size="xs" />
@@ -219,16 +267,24 @@ export function KanbanCard({
         )}
 
         {/* Linha de contexto: destino · data */}
-        <div className="min-h-[16px] mb-2">
+        <div className="min-h-[16px] mb-2 flex items-center gap-1.5 flex-wrap">
           {(card.destination || card.travelDate) && (
             <p className="text-xs text-muted-foreground font-body truncate">
               {[card.destination, card.travelDate].filter(Boolean).join(" · ")}
             </p>
           )}
+          {isBoardingSoon && (
+            <span
+              title={`Embarque em ${daysToTravel} dia(s)`}
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-destructive/15 text-destructive"
+            >
+              <Plane className="w-3 h-3" />
+              Embarque próximo
+            </span>
+          )}
         </div>
 
-
-        {/* AI summary (compacto) */}
+        {/* AI summary */}
         {card.isAILead && card.aiSummary && (
           <p className="text-[11px] italic text-muted-foreground/80 font-body leading-snug line-clamp-2 mb-2">
             "{card.aiSummary}"
@@ -260,13 +316,18 @@ export function KanbanCard({
           <div
             className={cn(
               "shrink-0 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-semibold",
-              card.agent ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
+              card.agent ? "bg-primary/10 text-primary" : "bg-destructive/15 text-destructive",
             )}
             aria-hidden
           >
             {card.agent ? getInitials(card.agent.name) : "?"}
           </div>
-          <span className="text-xs text-muted-foreground font-body truncate flex-1 min-w-0">
+          <span
+            className={cn(
+              "text-xs font-body truncate flex-1 min-w-0",
+              noAgent ? "text-destructive font-medium" : "text-muted-foreground",
+            )}
+          >
             {card.agent?.name || "Sem responsável"}
           </span>
           {value ? (
@@ -278,6 +339,36 @@ export function KanbanCard({
               Sem valor
             </span>
           )}
+        </div>
+
+        {/* Linha inferior: dias na etapa (esquerda) + temperatura (direita) */}
+        <div className="flex items-center justify-between mt-2">
+          {stageDays !== null ? (
+            <span
+              title={`${stageDays} dia(s) nesta etapa`}
+              className={cn(
+                "inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium tabular-nums",
+                stageDaysBadgeClasses(stageDays),
+              )}
+            >
+              {stageDaysLabel(stageDays)}
+            </span>
+          ) : (
+            <span />
+          )}
+
+          <button
+            type="button"
+            title={`${TEMP_LABEL[temperature]} (clique para alterar)`}
+            aria-label={`Temperatura: ${TEMP_LABEL[temperature]}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onTemperatureChange?.(card, TEMP_NEXT[temperature]);
+            }}
+            className="inline-flex items-center justify-center w-5 h-5 rounded hover:bg-muted/60 transition-colors"
+          >
+            <Flame className={cn("w-3.5 h-3.5 transition-colors", TEMP_CLASSES[temperature])} />
+          </button>
         </div>
       </div>
     </div>
