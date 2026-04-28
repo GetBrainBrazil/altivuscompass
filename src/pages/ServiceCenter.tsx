@@ -752,6 +752,7 @@ export default function ServiceCenter() {
         content: c.last_message_text ?? "",
         timestamp: c.last_message_at ?? c.updated_at ?? c.created_at,
       };
+      const meta = c.contact_id ? contactMetaById.get(c.contact_id) : null;
       return {
         id: c.id,
         leadName: c.contact_name || c.phone || "Sem nome",
@@ -773,9 +774,12 @@ export default function ServiceCenter() {
           Date.now() - new Date(c.created_at).getTime() < 24 * 60 * 60 * 1000,
         leadId: c.lead_id ?? undefined,
         contactId: c.contact_id ?? undefined,
+        firstContactAt: meta?.first_contact_at ?? c.created_at ?? undefined,
+        lastContactAt: meta?.last_contact_at ?? c.last_message_at ?? undefined,
+        isReturning: !!meta?.is_returning,
       };
     });
-  }, [convoRows, msgRows, selectedId]);
+  }, [convoRows, msgRows, selectedId, contactMetaById]);
 
   const handleSend = async () => {
     if (!selectedId || !draft.trim() || sending) return;
