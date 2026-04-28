@@ -1,0 +1,1 @@
+ALTER TABLE public.agency_settings ADD COLUMN IF NOT EXISTS ai_globally_paused BOOLEAN NOT NULL DEFAULT TRUE;
