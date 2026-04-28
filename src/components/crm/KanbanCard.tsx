@@ -267,6 +267,8 @@ export function KanbanCard({
         alert?.tone === "destructive" && "bg-destructive/5",
         card.isRepurchase &&
           "border-amber-300/70 ring-1 ring-amber-200/60 bg-gradient-to-br from-amber-50/40 to-transparent",
+        card.isReturning && !card.isRepurchase &&
+          "border-sky-300/70 ring-1 ring-sky-200/60 bg-gradient-to-br from-sky-50/40 to-transparent",
       )}
     >
       <div className="px-3.5 py-3">
