@@ -482,12 +482,18 @@ export default function CRM() {
       };
 
       setSalesColumns((prev) => {
-        // IDs de leads que já estão em OUTRAS colunas (não devem voltar para "Novos Leads")
+        // IDs de leads que já estão em OUTRAS colunas (não devem voltar para "Novos Contatos")
+        // EXCETO os marcados como is_returning (devem voltar para a primeira coluna)
+        const returningLeadIds = new Set(
+          leadCards.filter((c) => c.isReturning).map((c) => c.id),
+        );
         const idsInOtherColumns = new Set<string>();
         prev.forEach((col) => {
           if (col.id !== "new-leads") {
             col.cards.forEach((c) => {
-              if (c.id.startsWith("lead-")) idsInOtherColumns.add(c.id);
+              if (c.id.startsWith("lead-") && !returningLeadIds.has(c.id)) {
+                idsInOtherColumns.add(c.id);
+              }
             });
           }
         });
@@ -499,10 +505,12 @@ export default function CRM() {
           if (col.id === "new-leads") {
             return { ...col, cards: filteredLeadCards };
           }
-          // Outras colunas: remove órfãos (leads/cotações excluídos) + enriquece
+          // Outras colunas: remove órfãos (leads/cotações excluídos) + cards retornados (foram para new-leads) + enriquece
           return {
             ...col,
-            cards: col.cards.filter((c) => isCardStillValid(c.id)).map(enrichCard),
+            cards: col.cards
+              .filter((c) => isCardStillValid(c.id) && !returningLeadIds.has(c.id))
+              .map(enrichCard),
           };
         });
       });
