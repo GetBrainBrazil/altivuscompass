@@ -420,11 +420,35 @@ export default function CRM() {
     const fetchLeads = async () => {
       const { data, error } = await supabase
         .from("leads")
-        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, is_returning, returned_at")
+        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, is_returning, returned_at, assigned_user_id")
         .is("converted_client_id", null)
         .order("created_at", { ascending: false })
         .limit(100);
       if (error || cancelled || !data) return;
+
+      // Mapa user_id → { name, avatarUrl } para popular agent
+      const assignedIds = Array.from(
+        new Set(
+          (data as any[])
+            .map((l) => l.assigned_user_id)
+            .filter((v): v is string => !!v),
+        ),
+      );
+      const userById = new Map<string, { name: string; avatarUrl?: string | null }>();
+      if (assignedIds.length > 0) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("user_id, full_name, email, avatar_url")
+          .in("user_id", assignedIds);
+        (profs ?? []).forEach((p: any) => {
+          if (p.user_id) {
+            userById.set(p.user_id, {
+              name: p.full_name || p.email || "Usuário",
+              avatarUrl: p.avatar_url ?? null,
+            });
+          }
+        });
+      }
 
       // Mantém temperatura/stageEnteredAt já existentes para cards de leads
       const existingByLeadId = new Map<string, KanbanCardData>();
