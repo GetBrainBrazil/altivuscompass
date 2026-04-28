@@ -97,6 +97,7 @@ function KanbanBoard({
   onDropOnColumn,
   onTemperatureChange,
   onCardDelete,
+  focusCardId,
 }: {
   columns: KanbanColumn[];
   onCardClick: (card: KanbanCardData) => void;
@@ -111,6 +112,7 @@ function KanbanBoard({
   onDropOnColumn: (columnId: string) => void;
   onTemperatureChange: (card: KanbanCardData, next: LeadTemperature) => void;
   onCardDelete?: (card: KanbanCardData) => void;
+  focusCardId?: string | null;
 }) {
   return (
     <div className="flex-1 min-h-0 mt-4 pb-5 overflow-x-auto overflow-y-hidden scrollbar-elegant [transform:scaleY(-1)]">
@@ -131,6 +133,7 @@ function KanbanBoard({
             onDropOnColumn={onDropOnColumn}
             onTemperatureChange={onTemperatureChange}
             onCardDelete={onCardDelete}
+            focusCardId={focusCardId}
           />
         ))}
         <AddColumnButton onClick={onAddColumn} />
@@ -153,6 +156,7 @@ function KanbanColumnCard({
   onDropOnColumn,
   onTemperatureChange,
   onCardDelete,
+  focusCardId,
 }: {
   column: KanbanColumn;
   dotColor: string;
@@ -167,6 +171,7 @@ function KanbanColumnCard({
   onDropOnColumn: (columnId: string) => void;
   onTemperatureChange: (card: KanbanCardData, next: LeadTemperature) => void;
   onCardDelete?: (card: KanbanCardData) => void;
+  focusCardId?: string | null;
 }) {
   const [isOver, setIsOver] = useState(false);
 
@@ -244,20 +249,36 @@ function KanbanColumnCard({
           {column.cards.length === 0 ? (
             <EmptyColumnHint />
           ) : (
-            column.cards.map((card) => (
-              <KanbanCard
-                key={card.id}
-                card={card}
-                onClick={onCardClick}
-                stageBorderClass={dotColor.replace("bg-", "border-l-")}
-                draggable
-                isDragging={draggedCardId === card.id}
-                onDragStart={(c) => onCardDragStart(c)}
-                onDragEnd={() => onCardDragEnd()}
-                onTemperatureChange={onTemperatureChange}
-                onDelete={onCardDelete}
-              />
-            ))
+            column.cards.map((card) => {
+              const isFocused = focusCardId && focusCardId === card.id;
+              return (
+                <div
+                  key={card.id}
+                  data-card-id={card.id}
+                  ref={(el) => {
+                    if (el && isFocused) {
+                      try { el.scrollIntoView({ behavior: "smooth", block: "center" }); } catch { /* noop */ }
+                    }
+                  }}
+                  className={cn(
+                    "transition-all rounded-lg",
+                    isFocused && "ring-2 ring-primary/70 ring-offset-2 ring-offset-background animate-pulse",
+                  )}
+                >
+                  <KanbanCard
+                    card={card}
+                    onClick={onCardClick}
+                    stageBorderClass={dotColor.replace("bg-", "border-l-")}
+                    draggable
+                    isDragging={draggedCardId === card.id}
+                    onDragStart={(c) => onCardDragStart(c)}
+                    onDragEnd={() => onCardDragEnd()}
+                    onTemperatureChange={onTemperatureChange}
+                    onDelete={onCardDelete}
+                  />
+                </div>
+              );
+            })
           )}
         </div>
       </div>
@@ -314,6 +335,26 @@ export default function CRM() {
       return next;
     }, { replace: true });
   };
+
+  // ?focus=lead-{id} — destaca e rola até o card no kanban de Vendas.
+  // Garante a aba "sales" e mantém o foco por alguns segundos.
+  const focusParam = searchParams.get("focus");
+  const [focusCardId, setFocusCardId] = useState<string | null>(focusParam || null);
+  useEffect(() => {
+    if (!focusParam) return;
+    setFocusCardId(focusParam);
+    if (tab !== "sales") setTabState("sales");
+    const t = window.setTimeout(() => {
+      setFocusCardId(null);
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("focus");
+        return next;
+      }, { replace: true });
+    }, 4000);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusParam]);
 
   const SALES_STORAGE_KEY = "crm:columns:sales:v3";
   const OPS_STORAGE_KEY = "crm:columns:ops:v4";
@@ -402,7 +443,8 @@ export default function CRM() {
           !!l.destination &&
           (!!l.travel_date_start || !!l.travel_date_end || !!l.flexible_dates_description) &&
           !!l.travelers_count;
-        const isAI = l.source === "whatsapp_ai";
+        const isFromWhatsApp = l.source === "whatsapp_ai" || l.source === "whatsapp";
+        const isAI = isFromWhatsApp; // origem WhatsApp (com ou sem IA ativa) ganha o badge "IA"
         return {
           id,
           clientName: l.full_name,
@@ -422,7 +464,7 @@ export default function CRM() {
           temperature: existing?.temperature ?? "cold",
           tags: [
             l.travelers_count ? { label: `${l.travelers_count} viajante(s)`, tone: "blue" as const } : null,
-            isAI ? { label: "WhatsApp", tone: "green" as const } : null,
+            isFromWhatsApp ? { label: "WhatsApp", tone: "green" as const } : null,
           ].filter(Boolean) as KanbanCardData["tags"],
         };
       });
@@ -1316,6 +1358,7 @@ export default function CRM() {
           onDropOnColumn={handleDropOnColumn}
           onTemperatureChange={handleTemperatureChange}
           onCardDelete={handleCardDelete}
+          focusCardId={focusCardId}
         />
       </main>
 
