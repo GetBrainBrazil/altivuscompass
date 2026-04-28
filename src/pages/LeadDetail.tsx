@@ -518,13 +518,17 @@ export default function LeadDetail() {
 
                 <Section title="Atribuição">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <SelectField
-                      label="Responsável"
-                      value={form.assigned_user_id}
-                      onChange={(v) => updateField("assigned_user_id", v)}
-                      options={users.map((u) => ({ value: u.id, label: u.name }))}
-                      placeholder="Selecione um responsável"
-                    />
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-muted-foreground">
+                        Responsável
+                      </Label>
+                      <UserPicker
+                        users={users}
+                        value={form.assigned_user_id || null}
+                        onChange={(v) => updateField("assigned_user_id", v ?? "")}
+                        placeholder="Selecione um responsável"
+                      />
+                    </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs font-medium text-muted-foreground">
                         Temperatura do lead
