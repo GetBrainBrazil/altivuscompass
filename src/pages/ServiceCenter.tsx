@@ -212,20 +212,30 @@ interface ChatBubbleProps {
 
 const ChatBubble = ({ message }: ChatBubbleProps) => {
   const isLead = message.sender === "lead";
+  const isAgent = message.sender === "agent";
+  const isAi = message.sender === "ai";
   return (
     <div className={cn("flex w-full flex-col gap-1", isLead ? "items-start" : "items-end")}>
       <div
         className={cn(
-          "max-w-[75%] rounded-3xl px-5 py-3 text-sm leading-relaxed",
-          isLead
-            ? "bg-white text-foreground shadow-sm rounded-bl-md border border-border/40"
-            : "bg-[hsl(var(--navy))] text-[hsl(var(--cream))] rounded-br-md",
+          "max-w-[75%] rounded-3xl px-5 py-3 text-sm leading-relaxed shadow-sm",
+          isLead && "bg-white text-foreground rounded-bl-md border border-border/40",
+          isAi && "bg-[hsl(var(--navy))] text-[hsl(var(--cream))] rounded-br-md",
+          isAgent && "bg-emerald-600 text-white rounded-br-md",
         )}
       >
+        {!isLead && (
+          <p className={cn(
+            "text-[10px] font-semibold uppercase tracking-wider mb-1 opacity-80",
+            isAi ? "text-[hsl(var(--cream))]" : "text-emerald-50",
+          )}>
+            {isAi ? "🤖 IA" : "👤 Agente"}
+          </p>
+        )}
         <p className="whitespace-pre-wrap break-words">{message.content}</p>
       </div>
       <span className="text-[10px] text-muted-foreground px-2">
-        {message.sender === "ai" ? "IA · " : message.sender === "agent" ? "Agente · " : ""}
+        {isAi ? "IA · " : isAgent ? "Agente · " : ""}
         {formatTime(message.timestamp)}
       </span>
     </div>
