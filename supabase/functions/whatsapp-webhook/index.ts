@@ -181,6 +181,23 @@ Deno.serve(async (req) => {
       })
     }
 
+    // ===== Pausa global da IA (modo desenvolvimento) =====
+    try {
+      const { data: agency } = await supabase
+        .from('agency_settings')
+        .select('ai_globally_paused')
+        .limit(1)
+        .maybeSingle()
+      if (agency?.ai_globally_paused === true) {
+        console.log(`[whatsapp-webhook] IA globalmente pausada — ignorando ${phone}.`)
+        return new Response(JSON.stringify({ status: 'ai_globally_paused' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+    } catch (e) {
+      console.error('Erro checando pausa global:', e)
+    }
+
     // ===== Se a conversa foi assumida por um humano, NÃO acionar a IA =====
     try {
       const { data: convoStatus } = await supabase
