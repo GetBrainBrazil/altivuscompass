@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { MetricCard } from "@/components/MetricCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +9,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,10 +17,14 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Clock, TrendingUp, AlertTriangle, ArrowDown, ArrowUp,
-  Search, MoreHorizontal, Pencil, Trash2, CheckCircle2,
+  Clock, TrendingUp, AlertTriangle, ArrowDown, ArrowUp, Wallet,
+  Search, MoreHorizontal, Pencil, Trash2, CheckCircle2, Copy,
+  SlidersHorizontal, ChevronDown, ChevronUp, Inbox, BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
+} from "recharts";
 
 // ----- types & constants -----
 type TxType = "payable" | "receivable";
@@ -119,6 +122,8 @@ export default function PayablesReceivables() {
   const [bankFilter, setBankFilter] = useState<string>("all");
   const [methodFilter, setMethodFilter] = useState<string>("all");
   const [recurrenceFilter, setRecurrenceFilter] = useState<string>("all");
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [showChart, setShowChart] = useState(true);
 
   // ----- data fetching -----
   const { data: transactions = [] } = useQuery({
@@ -206,20 +211,93 @@ export default function PayablesReceivables() {
   }, [transactions, activeTab, hideFutureRecurrence, statusFilter, partyFilter, categoryFilter,
       bankFilter, methodFilter, recurrenceFilter, datePreset, search, clientsMap, suppliersMap]);
 
-  // ----- summary cards -----
+  // ----- summary cards (current + previous period for trends) -----
   const todayStr = new Date().toISOString().slice(0, 10);
-  const summary = useMemo(() => {
-    let pending = 0, paid = 0, overdue = 0;
-    for (const t of filtered) {
-      const total = computeTotal(t);
-      const status: TxStatus = (t.status as TxStatus) || "pending";
-      if (status === "paid") paid += total;
-      else if (status === "cancelled") continue;
-      else if (t.due_date && t.due_date < todayStr) overdue += total;
-      else pending += total;
+
+  const periodTotals = useMemo(() => {
+    // Compute over ALL transactions (not filtered by tab) for the selected period
+    const range = getPresetRange(datePreset);
+    const inRange = (d?: string | null) => {
+      if (!d) return false;
+      if (range.from && d < range.from) return false;
+      if (range.to && d > range.to) return false;
+      return true;
+    };
+
+    // Previous period of same length
+    let prevFrom: string | undefined, prevTo: string | undefined;
+    if (range.from && range.to) {
+      const a = new Date(range.from + "T00:00:00").getTime();
+      const b = new Date(range.to + "T00:00:00").getTime();
+      const span = b - a;
+      const pa = new Date(a - span - 86400000);
+      const pb = new Date(a - 86400000);
+      prevFrom = pa.toISOString().slice(0, 10);
+      prevTo = pb.toISOString().slice(0, 10);
     }
-    return { pending, paid, overdue };
-  }, [filtered, todayStr]);
+
+    const acc = (from?: string, to?: string) => {
+      let payable = 0, receivable = 0, pending = 0, paid = 0, overdue = 0;
+      for (const t of transactions) {
+        const d = t.due_date as string | null;
+        if (!d) continue;
+        if (from && d < from) continue;
+        if (to && d > to) continue;
+        const total = computeTotal(t);
+        const status: TxStatus = (t.status as TxStatus) || "pending";
+        if (status === "cancelled") continue;
+        if (t.type === "payable") payable += total; else receivable += total;
+        if (status === "paid") paid += total;
+        else if (d < todayStr) overdue += total;
+        else pending += total;
+      }
+      return { payable, receivable, pending, paid, overdue, net: receivable - payable };
+    };
+
+    const current = acc(range.from, range.to);
+    const previous = acc(prevFrom, prevTo);
+
+    const pct = (curr: number, prev: number): number | null => {
+      if (!prev) return null;
+      return ((curr - prev) / Math.abs(prev)) * 100;
+    };
+
+    return {
+      current,
+      previous,
+      trends: {
+        pending: pct(current.pending, previous.pending),
+        paid: pct(current.paid, previous.paid),
+        overdue: pct(current.overdue, previous.overdue),
+        net: pct(current.net, previous.net),
+      },
+    };
+  }, [transactions, datePreset, todayStr]);
+
+  // ----- monthly chart (last 6 months) -----
+  const chartData = useMemo(() => {
+    const today = new Date();
+    const months: { key: string; label: string; entradas: number; saidas: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const label = d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
+      months.push({ key, label, entradas: 0, saidas: 0 });
+    }
+    const idxByKey = Object.fromEntries(months.map((m, i) => [m.key, i]));
+    for (const t of transactions) {
+      if (!t.due_date) continue;
+      const status: TxStatus = (t.status as TxStatus) || "pending";
+      if (status === "cancelled") continue;
+      const k = t.due_date.slice(0, 7);
+      const idx = idxByKey[k];
+      if (idx === undefined) continue;
+      const total = computeTotal(t);
+      if (t.type === "receivable") months[idx].entradas += total;
+      else months[idx].saidas += total;
+    }
+    return months;
+  }, [transactions]);
 
   // ----- row mutations -----
   const markPaidMutation = useMutation({
@@ -245,10 +323,34 @@ export default function PayablesReceivables() {
     },
   });
 
+  const duplicateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const orig = transactions.find((t: any) => t.id === id);
+      if (!orig) throw new Error("Movimentação não encontrada");
+      const { id: _id, created_at, updated_at, ...rest } = orig;
+      const copy = {
+        ...rest,
+        status: "pending",
+        payment_date: null,
+        description: `${orig.description ?? ""} (cópia)`.trim(),
+      };
+      const { error } = await (supabase.from("financial_transactions") as any).insert([copy]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Movimentação duplicada" });
+      qc.invalidateQueries({ queryKey: ["finance-transactions"] });
+    },
+    onError: (e: any) => toast({ title: "Erro ao duplicar", description: e.message, variant: "destructive" }),
+  });
+
   const openNew = (type: TxType) =>
     navigate(`/finance/payables-receivables/new?type=${type}`);
   const openEdit = (id: string) =>
     navigate(`/finance/payables-receivables/${id}/edit`);
+
+  const activeAdvancedFilters = [partyFilter, categoryFilter, bankFilter, methodFilter, recurrenceFilter]
+    .filter((v) => v !== "all").length;
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
@@ -271,30 +373,76 @@ export default function PayablesReceivables() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <MetricCard
-          title="Total Pendente"
-          value={brl(summary.pending)}
-          icon={<Clock className="h-5 w-5 text-foreground" />}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <SummaryCard
+          title="Total a Receber"
+          value={brl(periodTotals.current.receivable)}
+          icon={<ArrowUp className="h-5 w-5 text-success" />}
+          gradientFrom="from-success/20"
+          gradientTo="to-success/5"
+          valueClass="text-success"
+          trend={periodTotals.trends.paid /* approx receita trend */}
         />
-        <div className="glass-card rounded-xl p-3 sm:p-5 animate-fade-in">
-          <div className="flex items-start justify-between mb-2 sm:mb-4">
-            <div className="p-2 sm:p-2.5 rounded-lg bg-success/10">
-              <TrendingUp className="h-5 w-5 text-success" />
-            </div>
+        <SummaryCard
+          title="Total a Pagar"
+          value={brl(periodTotals.current.payable)}
+          icon={<ArrowDown className="h-5 w-5 text-destructive" />}
+          gradientFrom="from-destructive/20"
+          gradientTo="to-destructive/5"
+          valueClass="text-destructive"
+          trend={periodTotals.trends.pending}
+        />
+        <SummaryCard
+          title="Total em Atraso"
+          value={brl(periodTotals.current.overdue)}
+          icon={<AlertTriangle className="h-5 w-5 text-destructive" />}
+          gradientFrom="from-destructive/15"
+          gradientTo="to-transparent"
+          valueClass="text-destructive"
+          trend={periodTotals.trends.overdue}
+          invertTrend
+        />
+        <SummaryCard
+          title="Saldo Líquido"
+          value={brl(periodTotals.current.net)}
+          icon={<Wallet className={cn("h-5 w-5", periodTotals.current.net >= 0 ? "text-success" : "text-destructive")} />}
+          gradientFrom={periodTotals.current.net >= 0 ? "from-success/20" : "from-destructive/20"}
+          gradientTo={periodTotals.current.net >= 0 ? "to-success/5" : "to-destructive/5"}
+          valueClass={periodTotals.current.net >= 0 ? "text-success" : "text-destructive"}
+          trend={periodTotals.trends.net}
+        />
+      </div>
+
+      {/* Monthly chart */}
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Visão mensal — últimos 6 meses</span>
           </div>
-          <p className="text-lg sm:text-2xl font-semibold font-display text-success">{brl(summary.paid)}</p>
-          <p className="text-xs sm:text-sm text-muted-foreground font-body mt-1">Total Pago/Recebido</p>
+          <Button variant="ghost" size="sm" onClick={() => setShowChart((v) => !v)} className="h-7 gap-1 text-xs">
+            {showChart ? <><ChevronUp className="h-3.5 w-3.5" /> Esconder</> : <><ChevronDown className="h-3.5 w-3.5" /> Mostrar</>}
+          </Button>
         </div>
-        <div className="glass-card rounded-xl p-3 sm:p-5 animate-fade-in">
-          <div className="flex items-start justify-between mb-2 sm:mb-4">
-            <div className="p-2 sm:p-2.5 rounded-lg bg-destructive/10">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-            </div>
+        {showChart && (
+          <div className="p-3" style={{ height: 150 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false}
+                  tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} width={40} />
+                <Tooltip
+                  formatter={(v: any) => brl(Number(v))}
+                  contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                />
+                <Legend wrapperStyle={{ fontSize: 11 }} iconSize={10} />
+                <Bar dataKey="entradas" stackId="a" fill="hsl(var(--success))" name="Entradas" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="saidas" stackId="a" fill="hsl(var(--destructive))" name="Saídas" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-          <p className="text-lg sm:text-2xl font-semibold font-display text-destructive">{brl(summary.overdue)}</p>
-          <p className="text-xs sm:text-sm text-muted-foreground font-body mt-1">Total em Atraso</p>
-        </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -305,7 +453,7 @@ export default function PayablesReceivables() {
         </TabsList>
       </Tabs>
 
-      {/* Search / period / toggle */}
+      {/* Search / period / status / more filters */}
       <div className="flex flex-col lg:flex-row gap-3 lg:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -324,6 +472,26 @@ export default function PayablesReceivables() {
             ))}
           </SelectContent>
         </Select>
+        <PillSelect label="Status" value={statusFilter} onChange={setStatusFilter} options={[
+          { value: "all", label: "Todos" },
+          { value: "pending", label: "Pendente" },
+          { value: "paid", label: "Pago" },
+          { value: "overdue", label: "Atrasado" },
+          { value: "cancelled", label: "Cancelado" },
+        ]} />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowMoreFilters((v) => !v)}
+          className="gap-2 h-9"
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+          Mais Filtros
+          {activeAdvancedFilters > 0 && (
+            <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">{activeAdvancedFilters}</Badge>
+          )}
+          {showMoreFilters ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+        </Button>
         <div className="flex items-center gap-2 px-3 py-2 rounded-md border border-border">
           <Switch
             id="hide-future"
@@ -336,36 +504,31 @@ export default function PayablesReceivables() {
         </div>
       </div>
 
-      {/* Pill filters */}
-      <div className="flex flex-wrap gap-2">
-        <PillSelect label="Status" value={statusFilter} onChange={setStatusFilter} options={[
-          { value: "all", label: "Todos" },
-          { value: "pending", label: "Pendente" },
-          { value: "paid", label: "Pago" },
-          { value: "overdue", label: "Atrasado" },
-          { value: "cancelled", label: "Cancelado" },
-        ]} />
-        <PillSelect label="Vinculado a" value={partyFilter} onChange={setPartyFilter} options={[
-          { value: "all", label: "Todos" },
-          ...partyOptions.map((p) => ({ value: p.id, label: p.name })),
-        ]} />
-        <PillSelect label="Categoria" value={categoryFilter} onChange={setCategoryFilter} options={[
-          { value: "all", label: "Todas" },
-          ...tourismCategories.map((c) => ({ value: c, label: c })),
-        ]} />
-        <PillSelect label="Conta Bancária" value={bankFilter} onChange={setBankFilter} options={[
-          { value: "all", label: "Todas" },
-          ...bankAccounts.map((b: any) => ({ value: b.id, label: b.bank_name })),
-        ]} />
-        <PillSelect label="Meio de Pagamento" value={methodFilter} onChange={setMethodFilter} options={[
-          { value: "all", label: "Todos" },
-          ...paymentMethods.map((m) => ({ value: m, label: m })),
-        ]} />
-        <PillSelect label="Recorrência" value={recurrenceFilter} onChange={setRecurrenceFilter} options={[
-          { value: "all", label: "Todas" },
-          ...recurrenceOptions.map((r) => ({ value: r.value, label: r.label })),
-        ]} />
-      </div>
+      {/* Advanced (collapsible) filters */}
+      {showMoreFilters && (
+        <div className="flex flex-wrap gap-2 animate-fade-in">
+          <PillSelect label="Vinculado a" value={partyFilter} onChange={setPartyFilter} options={[
+            { value: "all", label: "Todos" },
+            ...partyOptions.map((p) => ({ value: p.id, label: p.name })),
+          ]} />
+          <PillSelect label="Categoria" value={categoryFilter} onChange={setCategoryFilter} options={[
+            { value: "all", label: "Todas" },
+            ...tourismCategories.map((c) => ({ value: c, label: c })),
+          ]} />
+          <PillSelect label="Conta Bancária" value={bankFilter} onChange={setBankFilter} options={[
+            { value: "all", label: "Todas" },
+            ...bankAccounts.map((b: any) => ({ value: b.id, label: b.bank_name })),
+          ]} />
+          <PillSelect label="Meio de Pagamento" value={methodFilter} onChange={setMethodFilter} options={[
+            { value: "all", label: "Todos" },
+            ...paymentMethods.map((m) => ({ value: m, label: m })),
+          ]} />
+          <PillSelect label="Recorrência" value={recurrenceFilter} onChange={setRecurrenceFilter} options={[
+            { value: "all", label: "Todas" },
+            ...recurrenceOptions.map((r) => ({ value: r.value, label: r.label })),
+          ]} />
+        </div>
+      )}
 
       {/* Table */}
       <div className="rounded-xl border border-border overflow-hidden">
@@ -385,9 +548,24 @@ export default function PayablesReceivables() {
             </thead>
             <tbody>
               {filtered.length === 0 && (
-                <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
-                  Nenhuma movimentação encontrada para os filtros aplicados.
-                </td></tr>
+                <tr>
+                  <td colSpan={8} className="px-4 py-12">
+                    <div className="flex flex-col items-center justify-center gap-3 text-center">
+                      <div className="p-4 rounded-full bg-muted/50">
+                        <Inbox className="h-10 w-10 text-muted-foreground/60" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">Nenhuma movimentação neste período</p>
+                      <div className="flex flex-wrap gap-2 justify-center mt-1">
+                        <Button size="sm" variant="outline" onClick={() => openNew("payable")} className="gap-2">
+                          <ArrowDown className="h-4 w-4" /> Registrar conta a pagar
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => openNew("receivable")} className="gap-2">
+                          <ArrowUp className="h-4 w-4" /> Registrar conta a receber
+                        </Button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
               )}
               {filtered.map((t: any) => {
                 const partyName =
@@ -424,7 +602,7 @@ export default function PayablesReceivables() {
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{t.category || "—"}</td>
                     <td className={cn(
-                      "px-4 py-3 text-right font-medium",
+                      "px-4 py-3 text-right font-medium tabular-nums",
                       isPayable ? "text-destructive" : "text-success",
                     )}>
                       {isPayable ? "− " : "+ "}{brl(total)}
@@ -442,19 +620,23 @@ export default function PayablesReceivables() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openEdit(t.id)}>
-                            <Pencil className="h-4 w-4 mr-2" /> Editar
-                          </DropdownMenuItem>
                           {status !== "paid" && (
                             <DropdownMenuItem onClick={() => markPaidMutation.mutate(t.id)}>
                               <CheckCircle2 className="h-4 w-4 mr-2" /> Marcar como pago
                             </DropdownMenuItem>
                           )}
+                          <DropdownMenuItem onClick={() => openEdit(t.id)}>
+                            <Pencil className="h-4 w-4 mr-2" /> Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => duplicateMutation.mutate(t.id)}>
+                            <Copy className="h-4 w-4 mr-2" /> Duplicar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-destructive"
                             onClick={() => deleteMutation.mutate(t.id)}
                           >
-                            <Trash2 className="h-4 w-4 mr-2" /> Remover
+                            <Trash2 className="h-4 w-4 mr-2" /> Excluir
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -471,6 +653,48 @@ export default function PayablesReceivables() {
 }
 
 // ----- subcomponents -----
+function SummaryCard({
+  title, value, icon, gradientFrom, gradientTo, valueClass, trend, invertTrend,
+}: {
+  title: string;
+  value: string;
+  icon: React.ReactNode;
+  gradientFrom: string;
+  gradientTo: string;
+  valueClass?: string;
+  trend?: number | null;
+  invertTrend?: boolean;
+}) {
+  const hasTrend = trend !== null && trend !== undefined && isFinite(trend);
+  const positive = hasTrend ? (trend! >= 0) : false;
+  // For things like overdue, "up" is bad
+  const goodDirection = invertTrend ? !positive : positive;
+
+  return (
+    <div className="relative rounded-xl border border-border bg-card p-3 sm:p-5 shadow-sm hover:shadow-md transition-shadow animate-fade-in overflow-hidden">
+      <div className="flex items-start justify-between mb-2 sm:mb-4">
+        <div className={cn("p-2 sm:p-2.5 rounded-lg bg-gradient-to-br", gradientFrom, gradientTo)}>
+          {icon}
+        </div>
+      </div>
+      <p className={cn("text-lg sm:text-2xl font-semibold font-display", valueClass ?? "text-foreground")}>{value}</p>
+      <p className="text-xs sm:text-sm text-muted-foreground font-body mt-1">{title}</p>
+      {hasTrend && (
+        <p className={cn(
+          "text-[11px] font-body mt-1.5 flex items-center gap-1",
+          goodDirection ? "text-success" : "text-destructive",
+        )}>
+          {positive ? <TrendingUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+          {positive ? "+" : ""}{trend!.toFixed(0)}% vs mês anterior
+        </p>
+      )}
+      {!hasTrend && (
+        <p className="text-[11px] font-body mt-1.5 text-muted-foreground/70">Sem dado anterior</p>
+      )}
+    </div>
+  );
+}
+
 function PillSelect({
   label, value, onChange, options,
 }: {
@@ -482,7 +706,7 @@ function PillSelect({
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger className={cn(
-        "h-8 w-auto rounded-full border px-3 text-xs gap-1",
+        "h-9 w-auto rounded-md border px-3 text-xs gap-1",
         isActive ? "border-primary bg-primary/10 text-primary" : "border-border bg-background",
       )}>
         <span className="text-muted-foreground">{label}:</span>
