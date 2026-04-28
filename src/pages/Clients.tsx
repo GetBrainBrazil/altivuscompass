@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
+import { DeleteContactDialog, type DeleteContactTarget } from "@/components/contacts/DeleteContactDialog";
 
 import { FileText, Sparkles } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -136,6 +137,7 @@ export default function Clients() {
   const [view, setView] = useState<"list" | "form">("list");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [linkContactId, setLinkContactId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contactLevel, setContactLevel] = useState<ContactLevel | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [activeTab, setActiveTab] = useState("contact");
@@ -1729,28 +1731,16 @@ export default function Clients() {
 
           {/* Actions */}
           <div className="flex gap-2 justify-between">
-            {editingId ? (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button type="button" variant="ghost" className="text-destructive font-body">
-                    <Trash2 className="h-4 w-4 mr-1" />Excluir Cliente
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="font-display">Excluir cliente</AlertDialogTitle>
-                    <AlertDialogDescription className="font-body">
-                      Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel className="font-body">Cancelar</AlertDialogCancel>
-                    <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-body" onClick={() => deleteMutation.mutate(editingId)}>
-                      Excluir
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+            {editingId || linkContactId ? (
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-destructive font-body"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Excluir contato
+              </Button>
             ) : <div />}
             <div className="flex gap-2">
               {editingId && (
@@ -1813,6 +1803,29 @@ export default function Clients() {
           imageSrc={editorSrc}
           onClose={() => { setEditorOpen(false); setEditorSrc(""); setEditorCallback(null); }}
           onSave={(file) => { editorCallback?.(file); setEditorOpen(false); setEditorSrc(""); setEditorCallback(null); }}
+        />
+
+        <DeleteContactDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          target={
+            (linkContactId || editingId)
+              ? {
+                  contactId: linkContactId ?? "",
+                  clientId: editingId,
+                  leadId: null,
+                  fullName: form.full_name || "este contato",
+                  level: contactLevel ?? (editingId ? "cliente" : "prospect"),
+                }
+              : null
+          }
+          onDeleted={() => {
+            setDeleteDialogOpen(false);
+            shouldGoBackRef.current = false;
+            initialClientSnapshotRef.current = buildClientSnapshot();
+            performGoToList();
+            qc.invalidateQueries({ queryKey: ["clients"] });
+          }}
         />
       </div>
     );

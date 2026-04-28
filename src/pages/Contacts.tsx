@@ -4,8 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search, Phone, Mail, Plus, Sparkles } from "lucide-react";
+import { Search, Phone, Mail, Plus, Sparkles, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
+import { DeleteContactDialog, type DeleteContactTarget } from "@/components/contacts/DeleteContactDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import { cn } from "@/lib/utils";
 
@@ -36,7 +44,8 @@ export default function Contacts() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | ContactLevel>("all");
   const [search, setSearch] = useState("");
-  const [reloadKey] = useState(0);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteContactTarget | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -207,7 +216,7 @@ export default function Contacts() {
                 <div className="text-xs text-muted-foreground font-body capitalize">
                   {r.source ?? "manual"}
                 </div>
-                <div className="flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
                   {r.level === "prospect" && (
                     <Button
                       size="sm"
@@ -222,12 +231,57 @@ export default function Contacts() {
                       Promover
                     </Button>
                   )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label="Mais ações"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-40">
+                      <DropdownMenuItem onClick={() => handleRowClick(r)}>
+                        <Pencil className="w-4 h-4 mr-2" />
+                        Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() =>
+                          setDeleteTarget({
+                            contactId: r.id,
+                            clientId: r.client_id,
+                            leadId: r.lead_id,
+                            fullName: r.full_name,
+                            level: r.level,
+                          })
+                        }
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Excluir
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </li>
             ))}
           </ul>
         )}
       </Card>
+
+      <DeleteContactDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        target={deleteTarget}
+        onDeleted={() => {
+          setDeleteTarget(null);
+          setReloadKey((k) => k + 1);
+        }}
+      />
     </div>
   );
 }
