@@ -780,7 +780,43 @@ export default function ServiceCenter() {
   );
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-background">
+    <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden bg-background">
+      {/* ===== Banner global de pausa da IA ===== */}
+      <div
+        className={cn(
+          "flex items-center justify-between gap-3 px-4 py-2 border-b text-xs",
+          aiGloballyPaused
+            ? "bg-amber-50 border-amber-200 text-amber-900"
+            : "bg-emerald-50 border-emerald-200 text-emerald-900",
+        )}
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <span
+            className={cn(
+              "inline-block w-2 h-2 rounded-full shrink-0",
+              aiGloballyPaused ? "bg-amber-500" : "bg-emerald-500 animate-pulse",
+            )}
+          />
+          <span className="font-medium">
+            {aiGloballyPaused
+              ? "IA globalmente PAUSADA — nenhum número receberá resposta automática (modo desenvolvimento)."
+              : "IA ativa — respondendo automaticamente todos os números (exceto conversas assumidas)."}
+          </span>
+        </div>
+        <Button
+          size="sm"
+          variant={aiGloballyPaused ? "default" : "outline"}
+          onClick={toggleGlobalAi}
+          className={cn(
+            "h-7 text-[11px] shrink-0",
+            aiGloballyPaused && "bg-emerald-600 text-white hover:bg-emerald-700",
+          )}
+        >
+          {aiGloballyPaused ? "Ativar IA" : "Pausar IA"}
+        </Button>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
       {/* ===== Left column: conversation list ===== */}
       <aside className="w-[340px] shrink-0 border-r flex flex-col">
         <div className="p-4 border-b space-y-3">
