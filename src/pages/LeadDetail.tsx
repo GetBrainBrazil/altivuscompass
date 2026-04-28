@@ -337,39 +337,47 @@ export default function LeadDetail() {
               <TabsContent value="main" className="mt-0 space-y-8">
                 <Section title="Resumo">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <Field label="Nome do cliente" defaultValue={card?.clientName ?? ""} />
+                    <Field
+                      label="Nome do cliente"
+                      value={form.full_name}
+                      onChange={(e) => updateField("full_name", e.target.value)}
+                    />
                     <div className="space-y-1.5">
                       <Label className="text-xs font-medium text-muted-foreground">
                         Telefone
                       </Label>
                       <IntlPhoneInput
-                        value={card?.phone ?? ""}
-                        onChange={(v) => {
-                          setCard((prev) =>
-                            prev ? { ...prev, phone: v } : prev
-                          );
-                        }}
-                        onBlur={async () => {
-                          if (!leadId) return;
-                          await supabase
-                            .from("leads")
-                            .update({ phone: card?.phone ?? null })
-                            .eq("id", leadId);
-                        }}
+                        value={form.phone}
+                        onChange={(v) => updateField("phone", v)}
                         placeholder="Ainda não informado"
                       />
                     </div>
-                    <Field label="Destino" defaultValue={card?.destination ?? ""} />
-                    <Field label="Data da viagem" defaultValue={card?.travelDate ?? ""} />
+                    <Field
+                      label="Destino"
+                      value={form.destination}
+                      onChange={(e) => updateField("destination", e.target.value)}
+                    />
+                    <Field
+                      label="Data da viagem"
+                      value={form.travel_date_label}
+                      onChange={(e) => updateField("travel_date_label", e.target.value)}
+                    />
                     <Field
                       label="Orçamento estimado (R$)"
                       type="number"
-                      defaultValue={card?.estimatedValue?.toString() ?? ""}
+                      value={form.budget_estimate}
+                      onChange={(e) => updateField("budget_estimate", e.target.value)}
                     />
-                    <Field label="Nº de pessoas" placeholder="Ex.: 2 adultos" />
+                    <Field
+                      label="Nº de pessoas"
+                      placeholder="Ex.: 2"
+                      value={form.travelers_count}
+                      onChange={(e) => updateField("travelers_count", e.target.value)}
+                    />
                     <Field
                       label="Atendente responsável"
-                      defaultValue={card?.agent?.name ?? ""}
+                      value={form.agent_name}
+                      onChange={(e) => updateField("agent_name", e.target.value)}
                     />
                   </div>
                 </Section>
@@ -378,6 +386,8 @@ export default function LeadDetail() {
                   <Textarea
                     rows={5}
                     placeholder="Preferências, restrições, pedidos especiais..."
+                    value={form.preferences}
+                    onChange={(e) => updateField("preferences", e.target.value)}
                   />
                 </Section>
               </TabsContent>
