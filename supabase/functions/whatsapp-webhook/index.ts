@@ -7,6 +7,26 @@ const corsHeaders = {
 
 const ZAPI_BASE_URL = 'https://api.z-api.io'
 
+/**
+ * Formata um número de WhatsApp (E.164 sem '+', ex.: "5511999990000") como
+ * placeholder humano para o campo "Nome do cliente" enquanto a IA ainda não
+ * descobriu o nome real (ex.: "+55 11 99999-0000").
+ */
+function formatPhonePlaceholder(phone: string): string {
+  const digits = (phone || '').replace(/\D/g, '')
+  if (!digits) return 'Contato sem identificação'
+  // BR: 55 + DDD(2) + 9XXXXXXXX (mobile) | 8XXXXXXX (fixed)
+  if (digits.startsWith('55') && (digits.length === 12 || digits.length === 13)) {
+    const cc = digits.slice(0, 2)
+    const ddd = digits.slice(2, 4)
+    const rest = digits.slice(4)
+    if (rest.length === 9) return `+${cc} ${ddd} ${rest.slice(0, 5)}-${rest.slice(5)}`
+    if (rest.length === 8) return `+${cc} ${ddd} ${rest.slice(0, 4)}-${rest.slice(4)}`
+  }
+  return `+${digits}`
+}
+
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
