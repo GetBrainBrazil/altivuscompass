@@ -34,7 +34,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
 import { NewMessageDialog } from "@/components/service-center/NewMessageDialog";
-import { Plus } from "lucide-react";
+import { Plus, Info } from "lucide-react";
 
 type FilterTab = "all" | "leads" | "support" | "human";
 
