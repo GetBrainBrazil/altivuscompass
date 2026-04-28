@@ -751,8 +751,11 @@ export default function CRM() {
         return { ...col, cards: col.cards.filter((c) => c.id !== move.cardId) };
       });
       if (!moving) return prev;
+      const wasReturning = (moving as KanbanCardData).isReturning;
       const movedCard: KanbanCardData = {
         ...(moving as KanbanCardData),
+        // Saindo de "Novos Contatos": consultor já viu, limpa o badge "Retornou"
+        isReturning: move.toColumnId === "new-leads" ? (moving as KanbanCardData).isReturning : false,
         stageEnteredAt: new Date().toISOString(),
       };
       const next = stripped.map((col) =>
@@ -766,6 +769,15 @@ export default function CRM() {
       toast.success(`Lead movido para "${move.toTitle}".`);
     }
     void logLeadHistory(move.leadId, move.fromTitle, move.toTitle, forced);
+    // Persiste limpeza do retorno no banco se saiu de Novos Contatos
+    if (move.toColumnId !== "new-leads" && move.leadId) {
+      void supabase.from("leads").update({ is_returning: false }).eq("id", move.leadId);
+      // Também limpa no contact (via lead_id)
+      void (supabase as any)
+        .from("contacts")
+        .update({ is_returning: false })
+        .eq("lead_id", move.leadId);
+    }
   };
 
   // Avalia restrições por coluna de destino. Devolve a lista de issues; vazia = pode mover.
