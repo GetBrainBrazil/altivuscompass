@@ -644,6 +644,29 @@ export default function Clients() {
             } as any);
           }
         }
+
+        // Se o contato estava marcado como "cadastro incompleto", verifica se
+        // os dados obrigatórios estão preenchidos e libera o flag.
+        if (needsComplementaryData && contactLevel === "cliente") {
+          const { data: pps } = await supabase
+            .from("client_passports")
+            .select("id, passport_number, expiry_date, nationality")
+            .eq("client_id", clientId);
+          const hasPassport = (pps ?? []).some(
+            (p: any) => p.passport_number && p.expiry_date && p.nationality,
+          );
+          const hasAddress = !!(form.address_street && form.city);
+          const hasEmail = emails.some((e) => e.email) || false;
+          const hasCpf = !!form.cpf_cnpj;
+          const hasBirth = !!form.birth_date;
+          if (hasPassport && hasAddress && hasEmail && hasCpf && hasBirth) {
+            await (supabase as any)
+              .from("contacts")
+              .update({ needs_complementary_data: false })
+              .eq("client_id", clientId);
+            setNeedsComplementaryData(false);
+          }
+        }
       }
     },
     onSuccess: () => {
