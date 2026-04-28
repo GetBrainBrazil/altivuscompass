@@ -104,9 +104,7 @@ interface Conversation {
   isTraveling?: boolean;
 }
 
-// ============= Mock Data =============
-// Sem dados mocados — conversas reais virão do webhook do WhatsApp / banco.
-const MOCK_CONVERSATIONS: Conversation[] = [];
+// Conversas reais vêm do banco (wa_conversations / wa_messages) via Realtime.
 
 // ============= Helpers =============
 const getInitials = (name: string) =>
