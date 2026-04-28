@@ -746,7 +746,7 @@ export default function CRM() {
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignCardId, setAssignCardId] = useState<string | null>(null);
   const [assignTargetColumn, setAssignTargetColumn] = useState<string | null>(null);
-  const [responsibleOptions, setResponsibleOptions] = useState<{ user_id: string; full_name: string }[]>([]);
+  const [responsibleOptions, setResponsibleOptions] = useState<{ user_id: string; full_name: string; avatar_url?: string | null }[]>([]);
   const [selectedResponsibleId, setSelectedResponsibleId] = useState<string>("");
 
   useEffect(() => {
@@ -755,10 +755,16 @@ export default function CRM() {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, full_name")
+        .select("user_id, full_name, email, avatar_url")
         .order("full_name");
       if (!cancelled && data) {
-        setResponsibleOptions(data as { user_id: string; full_name: string }[]);
+        setResponsibleOptions(
+          (data as any[]).map((u) => ({
+            user_id: u.user_id,
+            full_name: u.full_name || u.email || "Usuário",
+            avatar_url: u.avatar_url ?? null,
+          })),
+        );
       }
     })();
     return () => { cancelled = true; };
