@@ -1730,28 +1730,16 @@ export default function Clients() {
 
           {/* Actions */}
           <div className="flex gap-2 justify-between">
-            {editingId ? (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button type="button" variant="ghost" className="text-destructive font-body">
-                    <Trash2 className="h-4 w-4 mr-1" />Excluir Cliente
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="font-display">Excluir cliente</AlertDialogTitle>
-                    <AlertDialogDescription className="font-body">
-                      Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel className="font-body">Cancelar</AlertDialogCancel>
-                    <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-body" onClick={() => deleteMutation.mutate(editingId)}>
-                      Excluir
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+            {editingId || linkContactId ? (
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-destructive font-body"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Excluir contato
+              </Button>
             ) : <div />}
             <div className="flex gap-2">
               {editingId && (
