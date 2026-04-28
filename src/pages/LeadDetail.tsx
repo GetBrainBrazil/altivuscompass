@@ -32,6 +32,7 @@ import type { KanbanCardData } from "@/components/crm/KanbanCard";
 import { IntlPhoneInput } from "@/components/ui/intl-phone-input";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadTimeline } from "@/components/crm/LeadTimeline";
+import { LeadWhatsAppPanel } from "@/components/crm/LeadWhatsAppPanel";
 import { UserPicker } from "@/components/ui/user-picker";
 
 const FUNNEL_STAGES = [
@@ -119,7 +120,7 @@ export default function LeadDetail() {
   const [contactId, setContactId] = useState<string | null>(null);
   const [users, setUsers] = useState<Array<{ id: string; name: string; avatarUrl?: string | null }>>([]);
   const [quotesCount, setQuotesCount] = useState(0);
-  const [conversationsCount, setConversationsCount] = useState(0);
+  const [waPanelOpen, setWaPanelOpen] = useState(false);
 
   useEffect(() => {
     if (!card && id) setCard(readCard(id));
@@ -203,13 +204,6 @@ export default function LeadDetail() {
       if (contact) {
         setContactLevel((contact.level as ContactLevel) ?? "lead");
         setContactId(contact.id);
-        if (contact.phone) {
-          const { count: cc } = await supabase
-            .from("wa_conversations")
-            .select("id", { count: "exact", head: true })
-            .eq("phone", contact.phone);
-          if (!cancelled) setConversationsCount(cc ?? 0);
-        }
       } else {
         setContactLevel("lead");
       }
