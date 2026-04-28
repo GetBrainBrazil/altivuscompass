@@ -157,10 +157,6 @@ export default function Clients() {
     }
   }, [hasEditParam, navigate]);
 
-  if (!hasEditParam) {
-    return null;
-  }
-
   // Multi-value entries
   const [phones, setPhones] = useState<PhoneEntry[]>([]);
   const [emails, setEmails] = useState<EmailEntry[]>([]);
