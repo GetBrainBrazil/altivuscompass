@@ -684,7 +684,7 @@ export default function CRM() {
             <Button
               size="sm"
               className="h-9 gap-1.5 sm:ml-auto"
-              onClick={() => setNewLeadOpen(true)}
+              onClick={() => navigate("/crm/lead/new")}
             >
               <Plus className="w-4 h-4" /> Novo Lead
             </Button>
