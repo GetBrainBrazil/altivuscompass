@@ -774,6 +774,15 @@ export default function CRM() {
               <X className="w-3.5 h-3.5" /> Limpar
             </Button>
           )}
+          {tab === "sales" && (
+            <Button
+              size="sm"
+              className="h-9 gap-1.5 sm:ml-auto"
+              onClick={() => setNewLeadOpen(true)}
+            >
+              <Plus className="w-4 h-4" /> Novo Lead
+            </Button>
+          )}
         </div>
       </section>
 
