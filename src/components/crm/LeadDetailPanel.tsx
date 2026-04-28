@@ -76,7 +76,7 @@ function buildTimeline(card: KanbanCardData | null): TimelineEvent[] {
 
 export function LeadDetailPanel({ card, open, onOpenChange }: Props) {
   const timeline = buildTimeline(card);
-  const [convertOpen, setConvertOpen] = useState(false);
+  const navigate = useNavigate();
   const leadId = getLeadIdFromCard(card);
 
   return (
