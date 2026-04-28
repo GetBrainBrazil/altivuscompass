@@ -1,7 +1,13 @@
 import { ReactNode } from "react";
-import { Sparkles, AlertTriangle, CheckCircle2, UserPlus, Flame, Plane } from "lucide-react";
+import { Sparkles, AlertTriangle, CheckCircle2, UserPlus, Flame, Plane, MoreVertical, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export type KanbanTagTone =
   | "blue"
@@ -139,6 +145,7 @@ export function KanbanCard({
   onDragStart,
   onDragEnd,
   onTemperatureChange,
+  onDelete,
 }: {
   card: KanbanCardData;
   onClick?: (card: KanbanCardData) => void;
@@ -149,6 +156,8 @@ export function KanbanCard({
   onDragEnd?: (card: KanbanCardData, e: React.DragEvent<HTMLDivElement>) => void;
   /** Callback ao clicar no ícone de chama para alternar a temperatura. */
   onTemperatureChange?: (card: KanbanCardData, next: LeadTemperature) => void;
+  /** Callback ao clicar em "Excluir" no menu de 3 pontos. */
+  onDelete?: (card: KanbanCardData) => void;
 }) {
   const value = formatBRL(card.estimatedValue);
   const alert = card.alert;
@@ -249,16 +258,40 @@ export function KanbanCard({
       )}
     >
       <div className="px-3.5 py-3">
-        {/* Topo: nome + badge no canto superior direito */}
+        {/* Topo: nome + badge + menu no canto superior direito */}
         <div className="flex items-start justify-between gap-2 mb-1">
           <p className="text-sm font-medium font-body text-foreground flex-1 min-w-0 truncate leading-snug">
             {card.clientName}
           </p>
-          {cornerBadge && (
-            <div className="shrink-0 flex items-center" onClick={(e) => e.stopPropagation()}>
-              {cornerBadge}
-            </div>
-          )}
+          <div className="shrink-0 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            {cornerBadge}
+            {onDelete && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Mais ações"
+                    className="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MoreVertical className="w-3.5 h-3.5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      onDelete(card);
+                    }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-2" />
+                    Excluir
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
 
         {/* Badge de nível do contato */}

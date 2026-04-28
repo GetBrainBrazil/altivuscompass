@@ -48,6 +48,7 @@ import {
 import { cn } from "@/lib/utils";
 import { KanbanCard, type KanbanCardData, type LeadTemperature } from "@/components/crm/KanbanCard";
 import { ClientPromotionDialog } from "@/components/crm/ClientPromotionDialog";
+import { DeleteContactDialog, type DeleteContactTarget } from "@/components/contacts/DeleteContactDialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -95,6 +96,7 @@ function KanbanBoard({
   onCardDragEnd,
   onDropOnColumn,
   onTemperatureChange,
+  onCardDelete,
 }: {
   columns: KanbanColumn[];
   onCardClick: (card: KanbanCardData) => void;
@@ -108,6 +110,7 @@ function KanbanBoard({
   onCardDragEnd: () => void;
   onDropOnColumn: (columnId: string) => void;
   onTemperatureChange: (card: KanbanCardData, next: LeadTemperature) => void;
+  onCardDelete?: (card: KanbanCardData) => void;
 }) {
   return (
     <div className="flex-1 min-h-0 mt-4 pb-5 overflow-x-auto overflow-y-hidden scrollbar-elegant [transform:scaleY(-1)]">
@@ -127,6 +130,7 @@ function KanbanBoard({
             onCardDragEnd={onCardDragEnd}
             onDropOnColumn={onDropOnColumn}
             onTemperatureChange={onTemperatureChange}
+            onCardDelete={onCardDelete}
           />
         ))}
         <AddColumnButton onClick={onAddColumn} />
@@ -148,6 +152,7 @@ function KanbanColumnCard({
   onCardDragEnd,
   onDropOnColumn,
   onTemperatureChange,
+  onCardDelete,
 }: {
   column: KanbanColumn;
   dotColor: string;
@@ -161,6 +166,7 @@ function KanbanColumnCard({
   onCardDragEnd: () => void;
   onDropOnColumn: (columnId: string) => void;
   onTemperatureChange: (card: KanbanCardData, next: LeadTemperature) => void;
+  onCardDelete?: (card: KanbanCardData) => void;
 }) {
   const [isOver, setIsOver] = useState(false);
 
@@ -249,6 +255,7 @@ function KanbanColumnCard({
                 onDragStart={(c) => onCardDragStart(c)}
                 onDragEnd={() => onCardDragEnd()}
                 onTemperatureChange={onTemperatureChange}
+                onDelete={onCardDelete}
               />
             ))
           )}
@@ -600,6 +607,45 @@ export default function CRM() {
   const [promotionLeadId, setPromotionLeadId] = useState<string | null>(null);
   const [promotionPendingMove, setPromotionPendingMove] = useState<PendingMove | null>(null);
   const [promotionOpen, setPromotionOpen] = useState(false);
+
+  // ─── Excluir card direto do CRM ─────────────────────────────
+  const [deleteTarget, setDeleteTarget] = useState<DeleteContactTarget | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const handleCardDelete = async (card: KanbanCardData) => {
+    const leadId = card.id.startsWith("lead-") ? card.id.slice("lead-".length) : null;
+    if (!leadId) {
+      toast.error("Este card não está vinculado a um lead no banco e não pode ser excluído por aqui.");
+      return;
+    }
+    // Busca o contact correspondente para construir o target
+    const { data: contact } = await (supabase as any)
+      .from("contacts")
+      .select("id, level, client_id, full_name")
+      .eq("lead_id", leadId)
+      .maybeSingle();
+    const level = (contact?.level as DeleteContactTarget["level"]) ?? "lead";
+    setDeleteTarget({
+      contactId: contact?.id ?? null,
+      clientId: contact?.client_id ?? null,
+      leadId,
+      fullName: contact?.full_name ?? card.clientName,
+      level,
+    });
+    setDeleteOpen(true);
+  };
+
+  const handleAfterDelete = () => {
+    if (!deleteTarget?.leadId) return;
+    const cardId = `lead-${deleteTarget.leadId}`;
+    setSalesColumns((prev) =>
+      prev.map((col) => ({ ...col, cards: col.cards.filter((c) => c.id !== cardId) })),
+    );
+    setOpsColumns((prev) =>
+      prev.map((col) => ({ ...col, cards: col.cards.filter((c) => c.id !== cardId) })),
+    );
+    setDeleteTarget(null);
+  };
 
   const setColumns = tab === "sales" ? setSalesColumns : setOpsColumns;
   const columns = tab === "sales" ? salesColumns : opsColumns;
@@ -1248,6 +1294,7 @@ export default function CRM() {
           onCardDragEnd={handleCardDragEnd}
           onDropOnColumn={handleDropOnColumn}
           onTemperatureChange={handleTemperatureChange}
+          onCardDelete={handleCardDelete}
         />
       </main>
 
@@ -1501,6 +1548,16 @@ export default function CRM() {
         }}
         leadId={promotionLeadId}
         onPromoted={handlePromotionDone}
+      />
+
+      <DeleteContactDialog
+        open={deleteOpen}
+        onOpenChange={(v) => {
+          setDeleteOpen(v);
+          if (!v) setDeleteTarget(null);
+        }}
+        target={deleteTarget}
+        onDeleted={handleAfterDelete}
       />
 
     </div>
