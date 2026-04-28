@@ -4,8 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search, Phone, Mail, Plus, Sparkles } from "lucide-react";
+import { Search, Phone, Mail, Plus, Sparkles, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
+import { DeleteContactDialog, type DeleteContactTarget } from "@/components/contacts/DeleteContactDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import { cn } from "@/lib/utils";
 
