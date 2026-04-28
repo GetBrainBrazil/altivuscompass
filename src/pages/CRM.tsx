@@ -394,12 +394,8 @@ export default function CRM() {
       setSalesColumns((prev) => {
         const newLeadsCol = prev.find((c) => c.id === "new-leads");
         if (!newLeadsCol) return prev;
-        // Preserve any non-lead cards (mock/manual) in the column, then prepend DB leads.
-        // Avoid duplicates by id.
-        const existingIds = new Set(leadCards.map((c) => c.id));
-        const kept = newLeadsCol.cards.filter((c) => !c.id.startsWith("lead-") || !existingIds.has(c.id));
         return prev.map((col) =>
-          col.id === "new-leads" ? { ...col, cards: [...leadCards, ...kept.filter((c) => !c.id.startsWith("lead-"))] } : col,
+          col.id === "new-leads" ? { ...col, cards: leadCards } : col,
         );
       });
     };
