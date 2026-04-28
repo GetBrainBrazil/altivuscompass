@@ -73,7 +73,7 @@ export interface IntlPhoneInputProps {
 export const IntlPhoneInput = React.forwardRef<
   HTMLInputElement,
   IntlPhoneInputProps
->(({ value, onChange, placeholder, className, disabled, id, name }, ref) => {
+>(({ value, onChange, placeholder, className, disabled, id, name, onBlur }, ref) => {
   const parsed = React.useMemo(() => parseStored(value), [value]);
   const [country, setCountry] = React.useState<CountryCode>(parsed.country);
   const [national, setNational] = React.useState<string>(parsed.national);
