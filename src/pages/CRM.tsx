@@ -467,6 +467,71 @@ export default function CRM() {
           cards: col.cards.filter((c) => isCardStillValid(c.id)),
         })),
       );
+
+      // Processa sinais de auto-move (ex.: criada cotação a partir do CTA do modal de validação)
+      try {
+        const raw = localStorage.getItem("crm:autoMove");
+        if (raw) {
+          const signals: Array<{ leadId: string; toColumnId: string }> = JSON.parse(raw);
+          if (Array.isArray(signals) && signals.length > 0) {
+            // Só consome sinais cujo lead realmente possui cotação vinculada agora
+            const leadIdsToCheck = signals.map((s) => s.leadId).filter(Boolean);
+            const { data: linkedQuotes } = await supabase
+              .from("quotes")
+              .select("lead_id")
+              .in("lead_id", leadIdsToCheck);
+            const leadsWithQuote = new Set(
+              (linkedQuotes ?? []).map((q: any) => q.lead_id).filter(Boolean),
+            );
+            const consumed: typeof signals = [];
+            const remaining: typeof signals = [];
+            signals.forEach((s) => {
+              if (leadsWithQuote.has(s.leadId)) consumed.push(s);
+              else remaining.push(s);
+            });
+            if (consumed.length > 0) {
+              setSalesColumns((prev) => {
+                let next = prev;
+                consumed.forEach(({ leadId, toColumnId }) => {
+                  const cardId = `lead-${leadId}`;
+                  let moving: KanbanCardData | null = null;
+                  let fromTitle = "";
+                  const stripped = next.map((col) => {
+                    const idx = col.cards.findIndex((c) => c.id === cardId);
+                    if (idx === -1) return col;
+                    if (col.id === toColumnId) {
+                      moving = col.cards[idx];
+                      return col;
+                    }
+                    moving = col.cards[idx];
+                    fromTitle = col.title;
+                    return { ...col, cards: col.cards.filter((c) => c.id !== cardId) };
+                  });
+                  if (!moving) return;
+                  const moved: KanbanCardData = {
+                    ...(moving as KanbanCardData),
+                    stageEnteredAt: new Date().toISOString(),
+                  };
+                  next = stripped.map((col) => {
+                    if (col.id !== toColumnId) return col;
+                    if (col.cards.some((c) => c.id === cardId)) return col;
+                    return { ...col, cards: [moved, ...col.cards] };
+                  });
+                  const targetCol = next.find((c) => c.id === toColumnId);
+                  if (targetCol && fromTitle) {
+                    void logLeadHistory(leadId, fromTitle, targetCol.title, false);
+                  }
+                });
+                return next;
+              });
+              toast.success("Card movido para \"Cotação\" automaticamente.");
+            }
+            localStorage.setItem("crm:autoMove", JSON.stringify(remaining));
+          }
+        }
+      } catch (err) {
+        console.error("[crm:autoMove] error:", err);
+      }
     };
     fetchLeads();
     const interval = setInterval(fetchLeads, 30_000);
