@@ -654,8 +654,16 @@ export default function LeadDetail() {
               </TabsContent>
             </div>
           </div>
-        </Tabs>
+      </Tabs>
       </main>
+
+      <LeadWhatsAppPanel
+        open={waPanelOpen}
+        onOpenChange={setWaPanelOpen}
+        contactName={form.full_name || card?.clientName || "Contato"}
+        phone={form.phone || card?.phone || null}
+        contactId={contactId}
+      />
     </div>
   );
 }
