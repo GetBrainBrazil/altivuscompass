@@ -57,6 +57,8 @@ export type KanbanCardData = {
   stageEnteredAt?: string;
   /** Temperatura do lead (default: "cold"). */
   temperature?: LeadTemperature;
+  /** Cliente já existente iniciando uma nova jornada de compra. */
+  isRepurchase?: boolean;
 };
 
 const TAG_TONE_CLASSES: Record<KanbanTagTone, string> = {
