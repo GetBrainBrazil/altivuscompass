@@ -670,31 +670,32 @@ const formatDateBR = (iso: string) => {
 const ContactBanner = ({ conversation }: { conversation: Conversation }) => {
   const navigate = useNavigate();
   const {
-    level, lastTrip, isTraveling, leadName, leadId, contactId, isNew,
+    level, lastTrip, isTraveling, leadName, leadId, contactId, isNew, phone,
     firstContactAt, lastContactAt, isReturning,
   } = conversation;
+  const { openLead, dialog: missingLeadDialog } = useOpenLeadInCRM();
 
   const openInCRM = () => {
     if (level === "cliente" && contactId) {
       navigate(`/clients?contact=${contactId}`);
-    } else if (leadId) {
-      // Vai direto para o card no Kanban do Funil de Vendas
-      navigate(`/crm?tab=sales&focus=lead-${leadId}`);
-    } else {
-      navigate("/crm");
+      return;
     }
+    openLead({ leadId, contactId, name: leadName, phone });
   };
 
   const CRMButton = (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={openInCRM}
-      className="h-7 px-2.5 text-[11px] gap-1 shrink-0"
-    >
-      <ExternalLink className="h-3 w-3" />
-      Abrir no CRM
-    </Button>
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={openInCRM}
+        className="h-7 px-2.5 text-[11px] gap-1 shrink-0"
+      >
+        <ExternalLink className="h-3 w-3" />
+        Abrir no CRM
+      </Button>
+      {missingLeadDialog}
+    </>
   );
 
   const ContactDates = (firstContactAt || lastContactAt) ? (
