@@ -45,6 +45,7 @@ export type KanbanCardData = {
   tags?: KanbanTag[];
   estimatedValue?: number;
   agent?: {
+    id?: string;
     name: string;
     avatarUrl?: string;
   };
