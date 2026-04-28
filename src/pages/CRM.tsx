@@ -1570,22 +1570,17 @@ export default function CRM() {
           </DialogHeader>
           <div className="space-y-2 py-2">
             <Label htmlFor="assign-responsible">Responsável</Label>
-            <Select value={selectedResponsibleId} onValueChange={setSelectedResponsibleId}>
-              <SelectTrigger id="assign-responsible" className="h-10">
-                <SelectValue placeholder="Selecione um consultor" />
-              </SelectTrigger>
-              <SelectContent>
-                {responsibleOptions.length === 0 ? (
-                  <SelectItem value="__none__" disabled>Nenhum usuário disponível</SelectItem>
-                ) : (
-                  responsibleOptions.map((r) => (
-                    <SelectItem key={r.user_id} value={r.user_id}>
-                      {r.full_name}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
+            <UserPicker
+              users={responsibleOptions.map((r) => ({
+                id: r.user_id,
+                name: r.full_name,
+                avatarUrl: r.avatar_url ?? null,
+              }))}
+              value={selectedResponsibleId || null}
+              onChange={(v) => setSelectedResponsibleId(v ?? "")}
+              placeholder="Selecione um consultor"
+              allowClear={false}
+            />
           </div>
           <DialogFooter>
             <Button
