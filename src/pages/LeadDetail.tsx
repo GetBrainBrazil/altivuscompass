@@ -350,12 +350,8 @@ export default function LeadDetail() {
         </Tabs>
       </main>
 
-      <LeadConversionDialog
-        leadId={leadId}
-        open={convertOpen}
-        onOpenChange={setConvertOpen}
-        onConverted={() => navigate("/crm")}
-      />
+
+
     </div>
   );
 }
