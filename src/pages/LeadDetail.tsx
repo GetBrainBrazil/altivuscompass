@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import type { KanbanCardData } from "@/components/crm/KanbanCard";
 import { IntlPhoneInput } from "@/components/ui/intl-phone-input";
 import { supabase } from "@/integrations/supabase/client";
+import { LeadTimeline } from "@/components/crm/LeadTimeline";
 
 const FUNNEL_STAGES = [
   { id: "new-leads", title: "Novos Leads" },
@@ -306,35 +307,7 @@ export default function LeadDetail() {
     [stageId]
   );
 
-  const timeline = useMemo(() => {
-    if (!card) return [];
-    return [
-      {
-        id: "in",
-        icon: Bot,
-        iconClass: "bg-emerald-50 text-emerald-600 ring-emerald-100",
-        title: "Lead recebido pela IA (WhatsApp)",
-        description: card.aiSummary,
-        timestamp: "Hoje, 09:14",
-      },
-      {
-        id: "ai-qualified",
-        icon: FileText,
-        iconClass: "bg-blue-50 text-blue-600 ring-blue-100",
-        title: "IA qualificou a necessidade",
-        description: "Destino, datas e perfil identificados automaticamente.",
-        timestamp: "Hoje, 09:16",
-      },
-      {
-        id: "handoff",
-        icon: UserCheck,
-        iconClass: "bg-purple-50 text-purple-600 ring-purple-100",
-        title: "Transferido para atendimento humano",
-        description: card.agent ? `Atribuído a ${card.agent.name}` : undefined,
-        timestamp: "Hoje, 09:22",
-      },
-    ];
-  }, [card]);
+
 
   const isClient = contactLevel === "cliente";
 
@@ -600,38 +573,11 @@ export default function LeadDetail() {
               </TabsContent>
 
               <TabsContent value="timeline" className="mt-0">
-                <div className="relative">
-                  <div className="absolute left-[15px] top-2 bottom-2 w-px bg-border" />
-                  <ul className="space-y-5">
-                    {timeline.map((ev) => {
-                      const Icon = ev.icon;
-                      return (
-                        <li key={ev.id} className="relative pl-10">
-                          <span
-                            className={cn(
-                              "absolute left-0 top-0 flex h-8 w-8 items-center justify-center rounded-full ring-1 ring-inset",
-                              ev.iconClass
-                            )}
-                          >
-                            <Icon className="h-4 w-4" />
-                          </span>
-                          <div className="pt-0.5">
-                            <p className="text-sm font-medium text-foreground">{ev.title}</p>
-                            {ev.description && (
-                              <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
-                                {ev.description}
-                              </p>
-                            )}
-                            <p className="mt-1 text-[11px] text-muted-foreground/80 flex items-center gap-1">
-                              <CircleDot className="h-2.5 w-2.5" />
-                              {ev.timestamp}
-                            </p>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
+                {leadId ? (
+                  <LeadTimeline leadId={leadId} />
+                ) : (
+                  <p className="text-sm text-muted-foreground">Lead não identificado.</p>
+                )}
               </TabsContent>
 
               <TabsContent value="quotes" className="mt-0">

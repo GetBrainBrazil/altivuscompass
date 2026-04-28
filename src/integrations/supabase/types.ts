@@ -766,6 +766,56 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_events: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_type: string
+          id: string
+          is_manual: boolean
+          lead_id: string
+          link: string | null
+          metadata: Json
+          title: string
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_type: string
+          id?: string
+          is_manual?: boolean
+          lead_id: string
+          link?: string | null
+          metadata?: Json
+          title: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_type?: string
+          id?: string
+          is_manual?: boolean
+          lead_id?: string
+          link?: string | null
+          metadata?: Json
+          title?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
           client_id: string | null
@@ -3362,6 +3412,7 @@ export type Database = {
       }
     }
     Functions: {
+      current_user_display_name: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
