@@ -281,10 +281,17 @@ export default function LeadDetail() {
                   Converter para Cliente
                 </Button>
               )}
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/crm")}
+                disabled={saving}
+              >
                 Cancelar
               </Button>
-              <Button size="sm">Salvar alterações</Button>
+              <Button size="sm" onClick={handleSave} disabled={saving}>
+                {saving ? "Salvando..." : "Salvar alterações"}
+              </Button>
             </div>
           </div>
         </div>
