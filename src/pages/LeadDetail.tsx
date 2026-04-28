@@ -388,13 +388,22 @@ export default function LeadDetail() {
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <Button
-                variant="outline"
-                size="sm"
-                className="border-emerald-500/40 text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
-                onClick={() => setWaPanelOpen(true)}
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "relative h-9 w-9 rounded-full text-muted-foreground hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20",
+                  waPanelOpen && "text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20",
+                )}
+                onClick={() => setWaPanelOpen((v) => !v)}
+                aria-label="Conversa do WhatsApp"
+                title="Conversa do WhatsApp"
               >
-                <MessageCircle className="h-4 w-4 mr-1.5" />
-                WhatsApp
+                <MessageCircle className="h-[18px] w-[18px]" />
+                {waUnread > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-full bg-emerald-600 text-white text-[9px] font-semibold flex items-center justify-center ring-2 ring-background">
+                    {waUnread > 99 ? "99+" : waUnread}
+                  </span>
+                )}
               </Button>
               {!isClient && leadId && (
                 <Button
