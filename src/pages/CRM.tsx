@@ -1294,6 +1294,7 @@ export default function CRM() {
           onCardDragEnd={handleCardDragEnd}
           onDropOnColumn={handleDropOnColumn}
           onTemperatureChange={handleTemperatureChange}
+          onCardDelete={handleCardDelete}
         />
       </main>
 
