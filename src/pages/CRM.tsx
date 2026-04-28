@@ -602,7 +602,7 @@ export default function CRM() {
     }
 
     if (toColumnId === "proposal-sent") {
-      const sentStages = ["sent", "negotiation", "confirmed", "issued", "completed", "post_sale"];
+      const sentStages = ["sent", "negotiation", "confirmed", "issued", "completed", "post_sale"] as const;
       const { data, error } = await supabase
         .from("quotes")
         .select("id, stage")
