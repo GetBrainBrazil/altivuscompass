@@ -427,7 +427,7 @@ export default function PayablesReceivables() {
         {showChart && (
           <div className="p-3" style={{ height: 150 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+              <BarChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }} barGap={2} barCategoryGap="30%">
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                 <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false}
@@ -437,8 +437,8 @@ export default function PayablesReceivables() {
                   contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
                 />
                 <Legend wrapperStyle={{ fontSize: 11 }} iconSize={10} />
-                <Bar dataKey="entradas" stackId="a" fill="hsl(var(--success))" name="Entradas" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="saidas" stackId="a" fill="hsl(var(--destructive))" name="Saídas" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="entradas" fill="hsl(var(--success))" name="Entradas" radius={[3, 3, 0, 0]} maxBarSize={14} />
+                <Bar dataKey="saidas" fill="hsl(var(--destructive))" name="Saídas" radius={[3, 3, 0, 0]} maxBarSize={14} />
               </BarChart>
             </ResponsiveContainer>
           </div>
