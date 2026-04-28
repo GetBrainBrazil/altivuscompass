@@ -437,9 +437,20 @@ export default function CRM() {
       };
 
       setSalesColumns((prev) => {
+        // IDs de leads que já estão em OUTRAS colunas (não devem voltar para "Novos Leads")
+        const idsInOtherColumns = new Set<string>();
+        prev.forEach((col) => {
+          if (col.id !== "new-leads") {
+            col.cards.forEach((c) => {
+              if (c.id.startsWith("lead-")) idsInOtherColumns.add(c.id);
+            });
+          }
+        });
+        const filteredLeadCards = leadCards.filter((c) => !idsInOtherColumns.has(c.id));
+
         return prev.map((col) => {
           if (col.id === "new-leads") {
-            return { ...col, cards: leadCards };
+            return { ...col, cards: filteredLeadCards };
           }
           // Outras colunas: remove órfãos (leads/cotações excluídos)
           return {
