@@ -69,6 +69,30 @@ export default function LeadDetail() {
     if (!card && id) setCard(readCard(id));
   }, [id, card]);
 
+  // Garante que o telefone esteja disponível mesmo quando o card vem do
+  // sessionStorage sem esse campo (ex.: acesso direto pela URL).
+  useEffect(() => {
+    let cancelled = false;
+    if (!leadId) return;
+    if (card?.phone) return;
+    (async () => {
+      const { data } = await supabase
+        .from("leads")
+        .select("phone, full_name, destination")
+        .eq("id", leadId)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      setCard((prev) => ({
+        id: id!,
+        clientName: prev?.clientName || data.full_name || "",
+        destination: prev?.destination ?? data.destination ?? undefined,
+        ...prev,
+        phone: data.phone ?? undefined,
+      }));
+    })();
+    return () => { cancelled = true; };
+  }, [leadId, id, card?.phone]);
+
   const stageIndex = useMemo(
     () => Math.max(0, FUNNEL_STAGES.findIndex((s) => s.id === stageId)),
     [stageId]
