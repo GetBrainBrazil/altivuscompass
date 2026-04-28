@@ -872,6 +872,17 @@ export default function Clients() {
   if (view === "form") {
     return (
       <div className="max-w-5xl mx-auto space-y-4">
+        {needsComplementaryData && contactLevel === "cliente" && (
+          <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 font-body">
+            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+            <div>
+              <span className="font-medium">Cadastro incompleto — dados pendentes para operação.</span>{" "}
+              <span className="text-amber-800/90">
+                Complete CPF, data de nascimento, passaporte, e-mail e endereço dos viajantes para liberar a operação.
+              </span>
+            </div>
+          </div>
+        )}
         {/* Header */}
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={goToList} className="shrink-0">
