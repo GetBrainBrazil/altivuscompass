@@ -1804,6 +1804,29 @@ export default function Clients() {
           onClose={() => { setEditorOpen(false); setEditorSrc(""); setEditorCallback(null); }}
           onSave={(file) => { editorCallback?.(file); setEditorOpen(false); setEditorSrc(""); setEditorCallback(null); }}
         />
+
+        <DeleteContactDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          target={
+            (linkContactId || editingId)
+              ? {
+                  contactId: linkContactId ?? "",
+                  clientId: editingId,
+                  leadId: null,
+                  fullName: form.full_name || "este contato",
+                  level: contactLevel ?? (editingId ? "cliente" : "prospect"),
+                }
+              : null
+          }
+          onDeleted={() => {
+            setDeleteDialogOpen(false);
+            shouldGoBackRef.current = false;
+            initialClientSnapshotRef.current = buildClientSnapshot();
+            performGoToList();
+            qc.invalidateQueries({ queryKey: ["clients"] });
+          }}
+        />
       </div>
     );
   }
