@@ -1490,6 +1490,19 @@ export default function CRM() {
         </DialogContent>
       </Dialog>
 
+      <ClientPromotionDialog
+        open={promotionOpen}
+        onOpenChange={(v) => {
+          setPromotionOpen(v);
+          if (!v) {
+            setPromotionPendingMove(null);
+            setPromotionLeadId(null);
+          }
+        }}
+        leadId={promotionLeadId}
+        onPromoted={handlePromotionDone}
+      />
+
     </div>
   );
 }
