@@ -402,7 +402,8 @@ export default function CRM() {
           !!l.destination &&
           (!!l.travel_date_start || !!l.travel_date_end || !!l.flexible_dates_description) &&
           !!l.travelers_count;
-        const isAI = l.source === "whatsapp_ai";
+        const isFromWhatsApp = l.source === "whatsapp_ai" || l.source === "whatsapp";
+        const isAI = isFromWhatsApp; // origem WhatsApp (com ou sem IA ativa) ganha o badge "IA"
         return {
           id,
           clientName: l.full_name,
@@ -422,7 +423,7 @@ export default function CRM() {
           temperature: existing?.temperature ?? "cold",
           tags: [
             l.travelers_count ? { label: `${l.travelers_count} viajante(s)`, tone: "blue" as const } : null,
-            isAI ? { label: "WhatsApp", tone: "green" as const } : null,
+            isFromWhatsApp ? { label: "WhatsApp", tone: "green" as const } : null,
           ].filter(Boolean) as KanbanCardData["tags"],
         };
       });
