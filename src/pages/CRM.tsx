@@ -12,6 +12,7 @@ import {
   DollarSign,
   Sparkles,
   X,
+  AlertTriangle,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -454,33 +455,245 @@ export default function CRM() {
   const handleCardDragStart = (card: KanbanCardData) => setDraggedCardId(card.id);
   const handleCardDragEnd = () => setDraggedCardId(null);
 
-  const handleDropOnColumn = (targetColumnId: string) => {
-    if (!draggedCardId) return;
+  // ─── Validation modal state ───────────────────────────────
+  type PendingMove = {
+    cardId: string;
+    fromColumnId: string;
+    toColumnId: string;
+    fromTitle: string;
+    toTitle: string;
+    leadId: string | null;
+  };
+  type Issue = { title: string; detail: string; cta?: { label: string; onClick: () => void } };
+  const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
+  const [pendingIssues, setPendingIssues] = useState<Issue[]>([]);
+  const [validating, setValidating] = useState(false);
+
+  // Modal: atribuir responsável (bloqueia entrada em "Em Qualificação" sem agente)
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [assignCardId, setAssignCardId] = useState<string | null>(null);
+  const [assignTargetColumn, setAssignTargetColumn] = useState<string | null>(null);
+  const [responsibleOptions, setResponsibleOptions] = useState<{ user_id: string; full_name: string }[]>([]);
+  const [selectedResponsibleId, setSelectedResponsibleId] = useState<string>("");
+
+  useEffect(() => {
+    // carrega lista de responsáveis (usuários) do sistema
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_id, full_name")
+        .order("full_name");
+      if (!cancelled && data) {
+        setResponsibleOptions(data as { user_id: string; full_name: string }[]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const extractLeadId = (cardId: string): string | null =>
+    cardId.startsWith("lead-") ? cardId.slice("lead-".length) : null;
+
+  const logLeadHistory = async (
+    leadId: string | null,
+    fromTitle: string,
+    toTitle: string,
+    forced: boolean,
+  ) => {
+    if (!leadId) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      let userName = user?.email ?? null;
+      if (user?.id) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (prof?.full_name) userName = prof.full_name;
+      }
+      await supabase.from("lead_history").insert({
+        lead_id: leadId,
+        user_id: user?.id ?? null,
+        user_name: userName,
+        action: "stage_moved",
+        description: forced
+          ? `Movido de "${fromTitle}" para "${toTitle}" (movimentação forçada)`
+          : `Movido de "${fromTitle}" para "${toTitle}"`,
+        from_stage: fromTitle,
+        to_stage: toTitle,
+        forced,
+      });
+    } catch (err) {
+      console.error("[lead_history] insert error:", err);
+    }
+  };
+
+  // Move o card de fato no estado e registra no histórico
+  const performMove = (move: PendingMove, forced: boolean) => {
     setColumns((prev) => {
       let moving: KanbanCardData | null = null;
       const stripped = prev.map((col) => {
-        const idx = col.cards.findIndex((c) => c.id === draggedCardId);
+        const idx = col.cards.findIndex((c) => c.id === move.cardId);
         if (idx === -1) return col;
         moving = col.cards[idx];
-        if (col.id === targetColumnId) return col;
-        return { ...col, cards: col.cards.filter((c) => c.id !== draggedCardId) };
+        if (col.id === move.toColumnId) return col;
+        return { ...col, cards: col.cards.filter((c) => c.id !== move.cardId) };
       });
       if (!moving) return prev;
-      const sourceColumn = prev.find((c) => c.cards.some((k) => k.id === draggedCardId));
-      if (sourceColumn?.id === targetColumnId) return prev;
-      // Atualiza stageEnteredAt ao mover para nova coluna
       const movedCard: KanbanCardData = {
         ...(moving as KanbanCardData),
         stageEnteredAt: new Date().toISOString(),
       };
       const next = stripped.map((col) =>
-        col.id === targetColumnId ? { ...col, cards: [movedCard, ...col.cards] } : col,
+        col.id === move.toColumnId ? { ...col, cards: [movedCard, ...col.cards] } : col,
       );
-      const target = next.find((c) => c.id === targetColumnId);
-      if (target) toast.success(`Lead movido para "${target.title}".`);
       return next;
     });
+    if (forced) {
+      toast.warning(`Lead movido para "${move.toTitle}" (movimentação forçada).`);
+    } else {
+      toast.success(`Lead movido para "${move.toTitle}".`);
+    }
+    void logLeadHistory(move.leadId, move.fromTitle, move.toTitle, forced);
+  };
+
+  // Avalia restrições por coluna de destino. Devolve a lista de issues; vazia = pode mover.
+  const validateMove = async (
+    card: KanbanCardData,
+    toColumnId: string,
+    leadId: string | null,
+  ): Promise<Issue[]> => {
+    const issues: Issue[] = [];
+
+    if (toColumnId === "qualifying") {
+      if (!card.agent) {
+        // tratado por modal próprio (assign), não pelo modal de issues
+        return [{ title: "Sem responsável atribuído", detail: "Esta etapa exige um consultor responsável." }];
+      }
+    }
+
+    if (!leadId) {
+      // cards sem lead_id (ex.: legado/manual sem prefix) não podem validar quotes
+      if (toColumnId === "quote" || toColumnId === "proposal-sent" || toColumnId === "closed") {
+        issues.push({
+          title: "Lead não vinculado",
+          detail: "Este card não está vinculado a um lead no banco — não foi possível validar cotações ou pagamentos.",
+        });
+      }
+      return issues;
+    }
+
+    if (toColumnId === "quote") {
+      const { data, error } = await supabase
+        .from("quotes")
+        .select("id")
+        .eq("lead_id", leadId)
+        .limit(1);
+      if (!error && (!data || data.length === 0)) {
+        issues.push({
+          title: "Nenhuma cotação vinculada",
+          detail: "Para mover para Cotação, é necessário ter ao menos uma cotação criada para este lead.",
+          cta: {
+            label: "Criar cotação para este lead",
+            onClick: () => navigate(`/sales?leadId=${leadId}&new=1`),
+          },
+        });
+      }
+    }
+
+    if (toColumnId === "proposal-sent") {
+      const sentStages = ["sent", "negotiation", "confirmed", "issued", "completed", "post_sale"] as const;
+      const { data, error } = await supabase
+        .from("quotes")
+        .select("id, stage")
+        .eq("lead_id", leadId)
+        .in("stage", sentStages)
+        .limit(1);
+      if (!error && (!data || data.length === 0)) {
+        issues.push({
+          title: "Nenhuma proposta enviada",
+          detail: "Nenhuma cotação deste lead foi marcada como enviada (Enviada/Negociação/Confirmada).",
+        });
+      }
+    }
+
+    if (toColumnId === "closed") {
+      const { data: quotesData } = await supabase
+        .from("quotes")
+        .select("id")
+        .eq("lead_id", leadId);
+      const quoteIds = (quotesData ?? []).map((q: any) => q.id);
+      let hasPaid = false;
+      if (quoteIds.length > 0) {
+        const { data: paid } = await supabase
+          .from("financial_transactions")
+          .select("id")
+          .eq("type", "income")
+          .eq("status", "paid")
+          .in("quote_id", quoteIds)
+          .limit(1);
+        hasPaid = !!(paid && paid.length > 0);
+      }
+      if (!hasPaid) {
+        issues.push({
+          title: "Sem pagamento confirmado",
+          detail: "Para mover para Fechado, é necessário ao menos uma receita paga vinculada a uma cotação deste lead.",
+        });
+      }
+    }
+
+    return issues;
+  };
+
+  const handleDropOnColumn = async (targetColumnId: string) => {
+    if (!draggedCardId) return;
+    const draggedId = draggedCardId;
     setDraggedCardId(null);
+
+    const sourceColumn = columns.find((c) => c.cards.some((k) => k.id === draggedId));
+    if (!sourceColumn || sourceColumn.id === targetColumnId) return;
+    const card = sourceColumn.cards.find((c) => c.id === draggedId);
+    const targetColumn = columns.find((c) => c.id === targetColumnId);
+    if (!card || !targetColumn) return;
+
+    const leadId = extractLeadId(card.id);
+    const move: PendingMove = {
+      cardId: card.id,
+      fromColumnId: sourceColumn.id,
+      toColumnId: targetColumnId,
+      fromTitle: sourceColumn.title,
+      toTitle: targetColumn.title,
+      leadId,
+    };
+
+    // Caso especial: "Em Qualificação" sem responsável → modal próprio
+    if (tab === "sales" && targetColumnId === "qualifying" && !card.agent) {
+      setAssignCardId(card.id);
+      setAssignTargetColumn(targetColumnId);
+      setSelectedResponsibleId("");
+      setAssignOpen(true);
+      return;
+    }
+
+    // Validações específicas só para o funil de vendas
+    if (tab !== "sales") {
+      performMove(move, false);
+      return;
+    }
+
+    setValidating(true);
+    try {
+      const issues = await validateMove(card, targetColumnId, leadId);
+      if (issues.length === 0) {
+        performMove(move, false);
+      } else {
+        setPendingMove(move);
+        setPendingIssues(issues);
+      }
+    } finally {
+      setValidating(false);
+    }
   };
 
   const handleTemperatureChange = (card: KanbanCardData, next: LeadTemperature) => {
@@ -491,6 +704,50 @@ export default function CRM() {
       })),
     );
   };
+
+  const handleConfirmAssign = () => {
+    if (!assignCardId || !assignTargetColumn) return;
+    const responsible = responsibleOptions.find((r) => r.user_id === selectedResponsibleId);
+    if (!responsible) {
+      toast.error("Selecione um responsável.");
+      return;
+    }
+    // Atualiza o card (atribui agente) + move
+    const sourceColumn = columns.find((c) => c.cards.some((k) => k.id === assignCardId));
+    const targetColumn = columns.find((c) => c.id === assignTargetColumn);
+    if (!sourceColumn || !targetColumn) {
+      setAssignOpen(false);
+      return;
+    }
+    const card = sourceColumn.cards.find((c) => c.id === assignCardId);
+    if (!card) {
+      setAssignOpen(false);
+      return;
+    }
+    // Atribui agente no estado
+    setColumns((prev) =>
+      prev.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) =>
+          c.id === assignCardId ? { ...c, agent: { name: responsible.full_name } } : c,
+        ),
+      })),
+    );
+    const move: PendingMove = {
+      cardId: assignCardId,
+      fromColumnId: sourceColumn.id,
+      toColumnId: assignTargetColumn,
+      fromTitle: sourceColumn.title,
+      toTitle: targetColumn.title,
+      leadId: extractLeadId(assignCardId),
+    };
+    // Move imediatamente (consultor já atribuído satisfaz a regra)
+    setTimeout(() => performMove(move, false), 0);
+    setAssignOpen(false);
+    setAssignCardId(null);
+    setAssignTargetColumn(null);
+  };
+
 
   // ─── Toolbar state (search + filters) ─────────────────────
   const [searchTerm, setSearchTerm] = useState("");
@@ -851,6 +1108,130 @@ export default function CRM() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Atribuir responsável (bloqueia entrada em "Em Qualificação") */}
+      <Dialog
+        open={assignOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setAssignOpen(false);
+            setAssignCardId(null);
+            setAssignTargetColumn(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[460px]">
+          <DialogHeader>
+            <DialogTitle>Atribuir consultor responsável</DialogTitle>
+            <DialogDescription>
+              Para mover este lead para "Em Qualificação", selecione o consultor responsável.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="assign-responsible">Responsável</Label>
+            <Select value={selectedResponsibleId} onValueChange={setSelectedResponsibleId}>
+              <SelectTrigger id="assign-responsible" className="h-10">
+                <SelectValue placeholder="Selecione um consultor" />
+              </SelectTrigger>
+              <SelectContent>
+                {responsibleOptions.length === 0 ? (
+                  <SelectItem value="__none__" disabled>Nenhum usuário disponível</SelectItem>
+                ) : (
+                  responsibleOptions.map((r) => (
+                    <SelectItem key={r.user_id} value={r.user_id}>
+                      {r.full_name}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setAssignOpen(false);
+                setAssignCardId(null);
+                setAssignTargetColumn(null);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmAssign} disabled={!selectedResponsibleId}>
+              Atribuir e mover
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Validações: avisa o que falta e oferece "Mover mesmo assim" */}
+      <Dialog
+        open={!!pendingMove && pendingIssues.length > 0}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingMove(null);
+            setPendingIssues([]);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-warning" />
+              Mover para "{pendingMove?.toTitle}"?
+            </DialogTitle>
+            <DialogDescription>
+              Identificamos pendências para esta etapa. Resolva as pendências ou avance manualmente em situações excepcionais.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            {pendingIssues.map((iss, i) => (
+              <div
+                key={i}
+                className="rounded-md border border-warning/30 bg-warning/5 p-3 space-y-1.5"
+              >
+                <p className="text-sm font-medium text-foreground">{iss.title}</p>
+                <p className="text-xs text-muted-foreground">{iss.detail}</p>
+                {iss.cta && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 mt-1"
+                    onClick={() => {
+                      iss.cta!.onClick();
+                      setPendingMove(null);
+                      setPendingIssues([]);
+                    }}
+                  >
+                    {iss.cta.label}
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPendingMove(null);
+                setPendingIssues([]);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (pendingMove) performMove(pendingMove, true);
+                setPendingMove(null);
+                setPendingIssues([]);
+              }}
+            >
+              Mover mesmo assim
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

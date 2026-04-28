@@ -1571,6 +1571,56 @@ export type Database = {
           },
         ]
       }
+      lead_history: {
+        Row: {
+          action: string
+          created_at: string
+          description: string | null
+          details: Json | null
+          forced: boolean
+          from_stage: string | null
+          id: string
+          lead_id: string
+          to_stage: string | null
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          description?: string | null
+          details?: Json | null
+          forced?: boolean
+          from_stage?: string | null
+          id?: string
+          lead_id: string
+          to_stage?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          description?: string | null
+          details?: Json | null
+          forced?: boolean
+          from_stage?: string | null
+          id?: string
+          lead_id?: string
+          to_stage?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_history_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           ai_collected_data: Json | null
