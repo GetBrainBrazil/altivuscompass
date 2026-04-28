@@ -1,7 +1,13 @@
 import { ReactNode } from "react";
-import { Sparkles, AlertTriangle, CheckCircle2, UserPlus, Flame, Plane } from "lucide-react";
+import { Sparkles, AlertTriangle, CheckCircle2, UserPlus, Flame, Plane, MoreVertical, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export type KanbanTagTone =
   | "blue"
