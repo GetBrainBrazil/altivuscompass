@@ -182,6 +182,11 @@ const ConversationCard = ({ conversation, active, onClick }: ConversationCardPro
           <div className="mt-2 flex items-center gap-1.5 flex-wrap">
             {/* Nível do contato (Prospect / Lead / Cliente) */}
             <ContactLevelBadge level={conversation.level} size="xs" />
+            {conversation.isNew && (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300 uppercase tracking-wide">
+                Novo
+              </span>
+            )}
             {conversation.isTraveling && (
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-800 border border-amber-300">
                 <Plane className="w-2.5 h-2.5" />
