@@ -771,14 +771,18 @@ export type Database = {
           client_id: string | null
           created_at: string
           email: string | null
+          first_contact_at: string | null
           full_name: string
           id: string
+          is_returning: boolean
+          last_contact_at: string | null
           lead_id: string | null
           level: Database["public"]["Enums"]["contact_level"]
           needs_complementary_data: boolean
           phone: string | null
           promoted_to_cliente_at: string | null
           promoted_to_lead_at: string | null
+          returned_at: string | null
           source: string | null
           updated_at: string
         }
@@ -786,14 +790,18 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           email?: string | null
+          first_contact_at?: string | null
           full_name: string
           id?: string
+          is_returning?: boolean
+          last_contact_at?: string | null
           lead_id?: string | null
           level?: Database["public"]["Enums"]["contact_level"]
           needs_complementary_data?: boolean
           phone?: string | null
           promoted_to_cliente_at?: string | null
           promoted_to_lead_at?: string | null
+          returned_at?: string | null
           source?: string | null
           updated_at?: string
         }
@@ -801,14 +809,18 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           email?: string | null
+          first_contact_at?: string | null
           full_name?: string
           id?: string
+          is_returning?: boolean
+          last_contact_at?: string | null
           lead_id?: string | null
           level?: Database["public"]["Enums"]["contact_level"]
           needs_complementary_data?: boolean
           phone?: string | null
           promoted_to_cliente_at?: string | null
           promoted_to_lead_at?: string | null
+          returned_at?: string | null
           source?: string | null
           updated_at?: string
         }
@@ -1642,8 +1654,11 @@ export type Database = {
           flexible_dates_description: string | null
           full_name: string
           id: string
+          is_returning: boolean
+          last_contact_at: string | null
           phone: string | null
           preferences: string | null
+          returned_at: string | null
           source: string | null
           status: string
           travel_date_end: string | null
@@ -1665,8 +1680,11 @@ export type Database = {
           flexible_dates_description?: string | null
           full_name: string
           id?: string
+          is_returning?: boolean
+          last_contact_at?: string | null
           phone?: string | null
           preferences?: string | null
+          returned_at?: string | null
           source?: string | null
           status?: string
           travel_date_end?: string | null
@@ -1688,8 +1706,11 @@ export type Database = {
           flexible_dates_description?: string | null
           full_name?: string
           id?: string
+          is_returning?: boolean
+          last_contact_at?: string | null
           phone?: string | null
           preferences?: string | null
+          returned_at?: string | null
           source?: string | null
           status?: string
           travel_date_end?: string | null
