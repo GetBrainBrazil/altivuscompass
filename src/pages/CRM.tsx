@@ -462,20 +462,34 @@ export default function CRM() {
         const idx = col.cards.findIndex((c) => c.id === draggedCardId);
         if (idx === -1) return col;
         moving = col.cards[idx];
-        if (col.id === targetColumnId) return col; // mesmo destino, não mexe
+        if (col.id === targetColumnId) return col;
         return { ...col, cards: col.cards.filter((c) => c.id !== draggedCardId) };
       });
       if (!moving) return prev;
       const sourceColumn = prev.find((c) => c.cards.some((k) => k.id === draggedCardId));
       if (sourceColumn?.id === targetColumnId) return prev;
+      // Atualiza stageEnteredAt ao mover para nova coluna
+      const movedCard: KanbanCardData = {
+        ...(moving as KanbanCardData),
+        stageEnteredAt: new Date().toISOString(),
+      };
       const next = stripped.map((col) =>
-        col.id === targetColumnId ? { ...col, cards: [moving as KanbanCardData, ...col.cards] } : col,
+        col.id === targetColumnId ? { ...col, cards: [movedCard, ...col.cards] } : col,
       );
       const target = next.find((c) => c.id === targetColumnId);
       if (target) toast.success(`Lead movido para "${target.title}".`);
       return next;
     });
     setDraggedCardId(null);
+  };
+
+  const handleTemperatureChange = (card: KanbanCardData, next: LeadTemperature) => {
+    setColumns((prev) =>
+      prev.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) => (c.id === card.id ? { ...c, temperature: next } : c)),
+      })),
+    );
   };
 
   // ─── Toolbar state (search + filters) ─────────────────────
