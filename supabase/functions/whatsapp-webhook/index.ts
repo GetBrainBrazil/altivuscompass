@@ -24,79 +24,8 @@ function formatPhonePlaceholder(phone: string): string {
     if (rest.length === 8) return `+${cc} ${ddd} ${rest.slice(0, 4)}-${rest.slice(4)}`
   }
   return `+${digits}`
-    }
+}
 
-    // ===== Espelha mensagem recebida na Central de Atendimento =====
-    // Roda em paralelo, sem afetar o fluxo de IA/financeiro abaixo.
-    try {
-      let messageType: string = 'other'
-      let content: string | null = null
-      let mediaUrl: string | null = null
-      let mediaMime: string | null = null
-      let mediaCaption: string | null = null
-
-      if (isTextMsg) { messageType = 'text'; content = messageText }
-      else if (isImageMsg) { messageType = 'image'; mediaUrl = imageUrl; mediaCaption = imageCaption }
-      else if (isAudioMsg) { messageType = 'audio'; mediaUrl = audioUrl; mediaMime = audioMime }
-      else if (isVideoMsg) { messageType = 'video'; mediaUrl = videoUrl; mediaMime = videoMime; mediaCaption = videoCaption }
-      else if (isDocumentMsg) { messageType = 'document'; mediaUrl = documentUrl; mediaMime = documentMimeType; mediaCaption = documentCaption }
-      else if (isStickerMsg) { messageType = 'sticker'; mediaUrl = stickerUrl }
-      else if (isLocationMsg) { messageType = 'location'; content = JSON.stringify(body.location) }
-
-      const preview =
-        messageType === 'text' ? (content ?? '').slice(0, 200) :
-        messageType === 'image' ? '📷 Imagem' :
-        messageType === 'audio' ? '🎤 Áudio' :
-        messageType === 'video' ? '🎥 Vídeo' :
-        messageType === 'document' ? '📄 Documento' :
-        messageType === 'sticker' ? '🌟 Figurinha' :
-        messageType === 'location' ? '📍 Localização' : 'Mensagem'
-
-      // Upsert conversation por telefone
-      const displayName = senderName || formatPhonePlaceholder(phone)
-      const { data: convo, error: convoErr } = await supabase
-        .from('wa_conversations')
-        .upsert(
-          {
-            phone,
-            contact_name: displayName,
-            last_message_text: preview,
-            last_message_at: new Date().toISOString(),
-            last_message_from: 'lead',
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'phone' }
-        )
-        .select('id, unread_count')
-        .single()
-
-      if (convoErr) {
-        console.error('wa_conversations upsert error:', convoErr.message)
-      } else if (convo) {
-        // Incrementa não-lidas
-        await supabase
-          .from('wa_conversations')
-          .update({ unread_count: (convo.unread_count ?? 0) + 1 })
-          .eq('id', convo.id)
-
-        // Insere mensagem
-        const { error: msgErr } = await supabase.from('wa_messages').insert({
-          conversation_id: convo.id,
-          direction: 'in',
-          sender: 'lead',
-          message_type: messageType,
-          content,
-          media_url: mediaUrl,
-          media_mime: mediaMime,
-          media_caption: mediaCaption,
-          zapi_message_id: body.messageId || body.id || null,
-          raw: body,
-        })
-        if (msgErr) console.error('wa_messages insert error:', msgErr.message)
-      }
-    } catch (mirrorErr) {
-      console.error('Service Center mirror failed:', mirrorErr)
-    }
 
 
 Deno.serve(async (req) => {
