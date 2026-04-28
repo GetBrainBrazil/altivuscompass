@@ -116,7 +116,7 @@ export default function LeadDetail() {
   const [saving, setSaving] = useState(false);
   const [contactLevel, setContactLevel] = useState<ContactLevel>("lead");
   const [contactId, setContactId] = useState<string | null>(null);
-  const [users, setUsers] = useState<Array<{ id: string; name: string }>>([]);
+  const [users, setUsers] = useState<Array<{ id: string; name: string; avatarUrl?: string | null }>>([]);
   const [quotesCount, setQuotesCount] = useState(0);
   const [conversationsCount, setConversationsCount] = useState(0);
 
