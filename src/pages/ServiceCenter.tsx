@@ -109,6 +109,10 @@ interface Conversation {
   /** IDs para deep-link no CRM. */
   leadId?: string;
   contactId?: string;
+  /** Datas e flag de reativação vindas do contato no CRM. */
+  firstContactAt?: string;
+  lastContactAt?: string;
+  isReturning?: boolean;
 }
 
 // Conversas reais vêm do banco (wa_conversations / wa_messages) via Realtime.
