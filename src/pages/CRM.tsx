@@ -419,8 +419,11 @@ export default function CRM() {
         };
       });
 
-      // IDs de leads existentes no banco (para limpar órfãos do localStorage)
-      const validLeadIds = new Set(data.map((l: any) => `lead-${l.id}`));
+      // IDs de leads existentes no banco (TODOS — incl. já convertidos) para
+      // limpar órfãos do localStorage sem remover cards já promovidos a Cliente.
+      const { data: allLeadIds } = await supabase.from("leads").select("id").limit(1000);
+      if (cancelled) return;
+      const validLeadIds = new Set((allLeadIds ?? []).map((l: any) => `lead-${l.id}`));
 
       // Busca também os IDs de cotações existentes para limpar cards quote-* órfãos
       const { data: quotesData } = await supabase
@@ -430,11 +433,44 @@ export default function CRM() {
       if (cancelled) return;
       const validQuoteIds = new Set((quotesData ?? []).map((q: any) => `quote-${q.id}`));
 
+      // Busca contacts para identificar quais leads já viraram Cliente e se
+      // têm dados pendentes (needs_complementary_data).
+      const { data: contactsData } = await (supabase as any)
+        .from("contacts")
+        .select("lead_id, level, needs_complementary_data")
+        .not("lead_id", "is", null)
+        .limit(2000);
+      if (cancelled) return;
+      const contactByLeadId = new Map<string, { level: string; needsData: boolean }>();
+      (contactsData ?? []).forEach((c: any) => {
+        if (c.lead_id) {
+          contactByLeadId.set(c.lead_id, {
+            level: c.level,
+            needsData: !!c.needs_complementary_data,
+          });
+        }
+      });
+
       const isCardStillValid = (cardId: string): boolean => {
         if (cardId.startsWith("lead-")) return validLeadIds.has(cardId);
         if (cardId.startsWith("quote-")) return validQuoteIds.has(cardId);
         if (cardId.startsWith("manual-")) return true; // mantém cards manuais
         return false;
+      };
+
+      // Aplica nível de contato + alerta de cadastro incompleto a um card
+      const enrichCard = (c: KanbanCardData): KanbanCardData => {
+        if (!c.id.startsWith("lead-")) return c;
+        const leadId = c.id.slice("lead-".length);
+        const info = contactByLeadId.get(leadId);
+        if (!info) return c;
+        const level = info.level === "cliente" ? "cliente" : info.level === "lead" ? "lead" : "prospect";
+        const alert = info.level === "cliente" && info.needsData
+          ? { label: "Cadastro incompleto", tone: "warning" as const }
+          : c.alert?.label === "Cadastro incompleto"
+            ? undefined
+            : c.alert;
+        return { ...c, contactLevel: level as KanbanCardData["contactLevel"], alert };
       };
 
       setSalesColumns((prev) => {
@@ -447,16 +483,18 @@ export default function CRM() {
             });
           }
         });
-        const filteredLeadCards = leadCards.filter((c) => !idsInOtherColumns.has(c.id));
+        const filteredLeadCards = leadCards
+          .filter((c) => !idsInOtherColumns.has(c.id))
+          .map(enrichCard);
 
         return prev.map((col) => {
           if (col.id === "new-leads") {
             return { ...col, cards: filteredLeadCards };
           }
-          // Outras colunas: remove órfãos (leads/cotações excluídos)
+          // Outras colunas: remove órfãos (leads/cotações excluídos) + enriquece
           return {
             ...col,
-            cards: col.cards.filter((c) => isCardStillValid(c.id)),
+            cards: col.cards.filter((c) => isCardStillValid(c.id)).map(enrichCard),
           };
         });
       });
@@ -465,7 +503,7 @@ export default function CRM() {
       setOpsColumns((prev) =>
         prev.map((col) => ({
           ...col,
-          cards: col.cards.filter((c) => isCardStillValid(c.id)),
+          cards: col.cards.filter((c) => isCardStillValid(c.id)).map(enrichCard),
         })),
       );
 
