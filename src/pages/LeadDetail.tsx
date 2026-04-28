@@ -707,14 +707,18 @@ export default function LeadDetail() {
           </div>
       </Tabs>
       </main>
+      </div>
 
-      <LeadWhatsAppPanel
-        open={waPanelOpen}
-        onOpenChange={setWaPanelOpen}
-        contactName={form.full_name || card?.clientName || "Contato"}
-        phone={form.phone || card?.phone || null}
-        contactId={contactId}
-      />
+      {waPanelOpen && (
+        <div className="w-[45%] min-w-0 sticky top-0 h-screen">
+          <LeadWhatsAppColumn
+            onClose={() => setWaPanelOpen(false)}
+            contactName={form.full_name || card?.clientName || "Contato"}
+            phone={form.phone || card?.phone || null}
+            contactId={contactId}
+          />
+        </div>
+      )}
     </div>
   );
 }
