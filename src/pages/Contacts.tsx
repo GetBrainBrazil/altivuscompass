@@ -44,7 +44,8 @@ export default function Contacts() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | ContactLevel>("all");
   const [search, setSearch] = useState("");
-  const [reloadKey] = useState(0);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteContactTarget | null>(null);
 
   useEffect(() => {
     let active = true;
