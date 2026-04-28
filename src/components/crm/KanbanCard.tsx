@@ -59,6 +59,8 @@ export type KanbanCardData = {
   temperature?: LeadTemperature;
   /** Cliente já existente iniciando uma nova jornada de compra. */
   isRepurchase?: boolean;
+  /** Contato antigo que voltou após >30 dias sem interação. */
+  isReturning?: boolean;
 };
 
 const TAG_TONE_CLASSES: Record<KanbanTagTone, string> = {
