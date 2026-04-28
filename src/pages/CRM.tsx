@@ -1550,6 +1550,16 @@ export default function CRM() {
         onPromoted={handlePromotionDone}
       />
 
+      <DeleteContactDialog
+        open={deleteOpen}
+        onOpenChange={(v) => {
+          setDeleteOpen(v);
+          if (!v) setDeleteTarget(null);
+        }}
+        target={deleteTarget}
+        onDeleted={handleAfterDelete}
+      />
+
     </div>
   );
 }
