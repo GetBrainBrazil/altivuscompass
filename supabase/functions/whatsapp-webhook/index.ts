@@ -89,13 +89,9 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
-    if (body.fromMe === true) {
-      return new Response(JSON.stringify({ status: 'ignored', reason: 'fromMe' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
+    const isFromMe = body.fromMe === true
 
-    // ===== Espelha mensagem recebida na Central de Atendimento =====
+    // ===== Espelha mensagem (recebida OU enviada) na Central de Atendimento =====
     try {
       let messageType: string = 'other'
       let content: string | null = null
@@ -129,7 +125,7 @@ Deno.serve(async (req) => {
             contact_name: displayName,
             last_message_text: preview,
             last_message_at: new Date().toISOString(),
-            last_message_from: 'lead',
+            last_message_from: isFromMe ? 'agent' : 'lead',
             updated_at: new Date().toISOString(),
           },
           { onConflict: 'phone' }
@@ -140,27 +136,49 @@ Deno.serve(async (req) => {
       if (convoErr) {
         console.error('wa_conversations upsert error:', convoErr.message)
       } else if (convo) {
-        await supabase
-          .from('wa_conversations')
-          .update({ unread_count: (convo.unread_count ?? 0) + 1 })
-          .eq('id', convo.id)
+        if (!isFromMe) {
+          await supabase
+            .from('wa_conversations')
+            .update({ unread_count: (convo.unread_count ?? 0) + 1 })
+            .eq('id', convo.id)
+        }
 
-        const { error: msgErr } = await supabase.from('wa_messages').insert({
-          conversation_id: convo.id,
-          direction: 'in',
-          sender: 'lead',
-          message_type: messageType,
-          content,
-          media_url: mediaUrl,
-          media_mime: mediaMime,
-          media_caption: mediaCaption,
-          zapi_message_id: body.messageId || body.id || null,
-          raw: body,
-        })
-        if (msgErr) console.error('wa_messages insert error:', msgErr.message)
+        // Evita duplicar mensagens enviadas pela Central (já gravadas pela send-whatsapp)
+        const zapiMsgId = body.messageId || body.id || null
+        let alreadyExists = false
+        if (isFromMe && zapiMsgId) {
+          const { data: existing } = await supabase
+            .from('wa_messages')
+            .select('id')
+            .eq('zapi_message_id', zapiMsgId)
+            .maybeSingle()
+          alreadyExists = !!existing
+        }
+
+        if (!alreadyExists) {
+          const { error: msgErr } = await supabase.from('wa_messages').insert({
+            conversation_id: convo.id,
+            direction: isFromMe ? 'out' : 'in',
+            sender: isFromMe ? 'agent' : 'lead',
+            message_type: messageType,
+            content,
+            media_url: mediaUrl,
+            media_mime: mediaMime,
+            media_caption: mediaCaption,
+            zapi_message_id: zapiMsgId,
+            raw: body,
+          })
+          if (msgErr) console.error('wa_messages insert error:', msgErr.message)
+        }
       }
     } catch (mirrorErr) {
       console.error('Service Center mirror failed:', mirrorErr)
+    }
+
+    if (isFromMe) {
+      return new Response(JSON.stringify({ status: 'mirrored', reason: 'fromMe' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
     // Check for #pago command
