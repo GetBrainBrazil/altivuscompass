@@ -133,6 +133,7 @@ function KanbanBoard({
             onDropOnColumn={onDropOnColumn}
             onTemperatureChange={onTemperatureChange}
             onCardDelete={onCardDelete}
+            focusCardId={focusCardId}
           />
         ))}
         <AddColumnButton onClick={onAddColumn} />
