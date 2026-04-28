@@ -635,9 +635,29 @@ export default function CRM() {
     };
     fetchLeads();
     const interval = setInterval(fetchLeads, 30_000);
+
+    // Realtime: novo lead chegou pelo webhook → atualiza Kanban imediatamente.
+    const channel = supabase
+      .channel("crm-leads-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "leads" },
+        (payload) => {
+          console.log("[CRM] novo lead detectado via realtime:", payload.new);
+          fetchLeads();
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "leads" },
+        () => fetchLeads(),
+      )
+      .subscribe();
+
     return () => {
       cancelled = true;
       clearInterval(interval);
+      supabase.removeChannel(channel);
     };
   }, [leadsRefreshTick]);
 
