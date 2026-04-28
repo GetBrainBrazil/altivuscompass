@@ -20,9 +20,9 @@ export default function PublicItinerary() {
   const { data: itinerary, isLoading, error } = useQuery({
     queryKey: ["public-itinerary", token],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("itineraries")
-        .select("*, clients(full_name), arrival_airport:airports!itineraries_arrival_airport_id_fkey(iata_code, name, city), departure_airport:airports!itineraries_departure_airport_id_fkey(iata_code, name, city)")
+      const { data, error } = await (supabase as any)
+        .from("public_itineraries")
+        .select("*, arrival_airport:airports!itineraries_arrival_airport_id_fkey(iata_code, name, city), departure_airport:airports!itineraries_departure_airport_id_fkey(iata_code, name, city)")
         .eq("public_token", token)
         .single();
       if (error) throw error;
