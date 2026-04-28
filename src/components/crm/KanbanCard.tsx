@@ -145,6 +145,7 @@ export function KanbanCard({
   onDragStart,
   onDragEnd,
   onTemperatureChange,
+  onDelete,
 }: {
   card: KanbanCardData;
   onClick?: (card: KanbanCardData) => void;
@@ -155,6 +156,8 @@ export function KanbanCard({
   onDragEnd?: (card: KanbanCardData, e: React.DragEvent<HTMLDivElement>) => void;
   /** Callback ao clicar no ícone de chama para alternar a temperatura. */
   onTemperatureChange?: (card: KanbanCardData, next: LeadTemperature) => void;
+  /** Callback ao clicar em "Excluir" no menu de 3 pontos. */
+  onDelete?: (card: KanbanCardData) => void;
 }) {
   const value = formatBRL(card.estimatedValue);
   const alert = card.alert;
