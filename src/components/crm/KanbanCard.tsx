@@ -40,6 +40,8 @@ export type KanbanCardData = {
   };
   /** Marca o card como lead recém-triado pela IA (WhatsApp). */
   isAILead?: boolean;
+  /** Marca o card como lead criado manualmente pelo consultor. */
+  isManualLead?: boolean;
   /** Resumo curto da necessidade extraída pela IA. Exibido em itálico, máx. 2 linhas. */
   aiSummary?: string;
   /** Alerta visual exibido como badge no topo direito (e cor da borda esquerda quando destrutivo). */
