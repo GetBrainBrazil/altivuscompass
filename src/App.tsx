@@ -35,6 +35,7 @@ import PublicItinerary from "./pages/PublicItinerary";
 import ServiceCenter from "./pages/ServiceCenter";
 import CRM from "./pages/CRM";
 import LeadDetail from "./pages/LeadDetail";
+import LeadNew from "./pages/LeadNew";
 import AIAgents from "./pages/AIAgents";
 import AIAgentEdit from "./pages/AIAgentEdit";
 import WhatsAppConnection from "./pages/WhatsAppConnection";
@@ -89,6 +90,7 @@ const App = () => (
             <Route path="/atendimento" element={<ProtectedRoute><AppLayout><ServiceCenter /></AppLayout></ProtectedRoute>} />
             <Route path="/inbox" element={<ProtectedRoute><AppLayout><ServiceCenter /></AppLayout></ProtectedRoute>} />
             <Route path="/crm" element={<ProtectedRoute><AppLayout><CRM /></AppLayout></ProtectedRoute>} />
+            <Route path="/crm/lead/new" element={<ProtectedRoute><AppLayout><LeadNew /></AppLayout></ProtectedRoute>} />
             <Route path="/crm/lead/:id" element={<ProtectedRoute><AppLayout><LeadDetail /></AppLayout></ProtectedRoute>} />
             <Route path="/ai-agents" element={<ProtectedRoute><AppLayout><AIAgents /></AppLayout></ProtectedRoute>} />
             <Route path="/ai-agents/new" element={<ProtectedRoute><AppLayout><AIAgentEdit /></AppLayout></ProtectedRoute>} />
