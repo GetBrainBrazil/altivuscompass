@@ -233,6 +233,11 @@ export default function LeadDetail() {
                 <Section title="Resumo">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <Field label="Nome do cliente" defaultValue={card?.clientName ?? ""} />
+                    <Field
+                      label="Telefone"
+                      defaultValue={formatPhoneBR(card?.phone)}
+                      placeholder="Ainda não informado"
+                    />
                     <Field label="Destino" defaultValue={card?.destination ?? ""} />
                     <Field label="Data da viagem" defaultValue={card?.travelDate ?? ""} />
                     <Field
