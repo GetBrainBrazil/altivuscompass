@@ -62,7 +62,7 @@ export default function LeadDetail() {
   const [card, setCard] = useState<KanbanCardData | null>(() =>
     id ? readCard(id) : null
   );
-  const [convertOpen, setConvertOpen] = useState(false);
+  
   const leadId = id?.startsWith("lead-") ? id.slice("lead-".length) : null;
 
   useEffect(() => {
