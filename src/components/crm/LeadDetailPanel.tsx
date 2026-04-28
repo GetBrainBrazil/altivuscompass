@@ -172,7 +172,7 @@ export function LeadDetailPanel({ card, open, onOpenChange }: Props) {
                   variant="outline"
                   size="sm"
                   className="mr-auto border-primary/40 text-primary hover:bg-primary/5"
-                  onClick={() => { onOpenChange(false); navigate(`/crm/lead/lead-${leadId}/convert`); }}
+                  onClick={() => { onOpenChange(false); navigate(`/crm/lead/${leadId}/convert`); }}
                 >
                   <UserCheck className="h-4 w-4 mr-1.5" />
                   Converter para Cliente
