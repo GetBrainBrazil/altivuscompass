@@ -567,6 +567,35 @@ export default function ServiceCenter() {
   const [sidePanelTab, setSidePanelTab] = useState<"summary" | "crm">("summary");
   const [newMsgOpen, setNewMsgOpen] = useState(false);
 
+  // ===== Pausa global da IA (modo dev) =====
+  const { data: agencySettings } = useQuery({
+    queryKey: ["agency-settings-ai-pause"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("agency_settings")
+        .select("id, ai_globally_paused")
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+  const aiGloballyPaused = agencySettings?.ai_globally_paused === true;
+
+  const toggleGlobalAi = async () => {
+    if (!agencySettings?.id) return;
+    const next = !aiGloballyPaused;
+    const { error } = await supabase
+      .from("agency_settings")
+      .update({ ai_globally_paused: next })
+      .eq("id", agencySettings.id);
+    if (error) {
+      toast.error("Falha ao atualizar: " + error.message);
+      return;
+    }
+    toast.success(next ? "IA pausada para todos os números." : "IA reativada globalmente.");
+    qc.invalidateQueries({ queryKey: ["agency-settings-ai-pause"] });
+  };
+
   // ===== Carrega conversas reais do WhatsApp (Z-API) =====
   const { data: convoRows = [] } = useQuery({
     queryKey: ["wa_conversations"],
@@ -751,7 +780,43 @@ export default function ServiceCenter() {
   );
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-background">
+    <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden bg-background">
+      {/* ===== Banner global de pausa da IA ===== */}
+      <div
+        className={cn(
+          "flex items-center justify-between gap-3 px-4 py-2 border-b text-xs",
+          aiGloballyPaused
+            ? "bg-amber-50 border-amber-200 text-amber-900"
+            : "bg-emerald-50 border-emerald-200 text-emerald-900",
+        )}
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <span
+            className={cn(
+              "inline-block w-2 h-2 rounded-full shrink-0",
+              aiGloballyPaused ? "bg-amber-500" : "bg-emerald-500 animate-pulse",
+            )}
+          />
+          <span className="font-medium">
+            {aiGloballyPaused
+              ? "IA globalmente PAUSADA — nenhum número receberá resposta automática (modo desenvolvimento)."
+              : "IA ativa — respondendo automaticamente todos os números (exceto conversas assumidas)."}
+          </span>
+        </div>
+        <Button
+          size="sm"
+          variant={aiGloballyPaused ? "default" : "outline"}
+          onClick={toggleGlobalAi}
+          className={cn(
+            "h-7 text-[11px] shrink-0",
+            aiGloballyPaused && "bg-emerald-600 text-white hover:bg-emerald-700",
+          )}
+        >
+          {aiGloballyPaused ? "Ativar IA" : "Pausar IA"}
+        </Button>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
       {/* ===== Left column: conversation list ===== */}
       <aside className="w-[340px] shrink-0 border-r flex flex-col">
         <div className="p-4 border-b space-y-3">
@@ -991,6 +1056,8 @@ export default function ServiceCenter() {
           </Tabs>
         </aside>
       )}
+
+      </div>
 
       <NewMessageDialog
         open={newMsgOpen}
