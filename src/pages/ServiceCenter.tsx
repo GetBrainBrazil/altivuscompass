@@ -104,6 +104,11 @@ interface Conversation {
   lastTrip?: LastTrip;
   /** Cliente está em viagem agora (prioridade máxima na lista). */
   isTraveling?: boolean;
+  /** Conversa nova (primeiro contato, ainda não lida). */
+  isNew?: boolean;
+  /** IDs para deep-link no CRM. */
+  leadId?: string;
+  contactId?: string;
 }
 
 // Conversas reais vêm do banco (wa_conversations / wa_messages) via Realtime.
