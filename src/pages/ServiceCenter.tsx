@@ -511,7 +511,10 @@ const formatDateBR = (iso: string) => {
 
 const ContactBanner = ({ conversation }: { conversation: Conversation }) => {
   const navigate = useNavigate();
-  const { level, lastTrip, isTraveling, leadName, leadId, contactId, isNew } = conversation;
+  const {
+    level, lastTrip, isTraveling, leadName, leadId, contactId, isNew,
+    firstContactAt, lastContactAt, isReturning,
+  } = conversation;
 
   const openInCRM = () => {
     if (level === "cliente" && contactId) {
@@ -534,6 +537,20 @@ const ContactBanner = ({ conversation }: { conversation: Conversation }) => {
       Abrir no CRM
     </Button>
   );
+
+  const ContactDates = (firstContactAt || lastContactAt) ? (
+    <p className="text-[11px] text-muted-foreground/90 mt-0.5">
+      {firstContactAt && <>1º contato: <span className="font-medium">{formatDateBR(firstContactAt)}</span></>}
+      {firstContactAt && lastContactAt && " · "}
+      {lastContactAt && <>Último: <span className="font-medium">{formatDateBR(lastContactAt)}</span></>}
+    </p>
+  ) : null;
+
+  const ReturningBadge = isReturning && level !== "cliente" ? (
+    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-sky-100 text-sky-800 border border-sky-300 uppercase tracking-wide">
+      Retornou
+    </span>
+  ) : null;
 
   if (level === "cliente") {
     return (
@@ -562,6 +579,7 @@ const ContactBanner = ({ conversation }: { conversation: Conversation }) => {
           ) : (
             <p className="text-xs text-amber-800/70 mt-0.5 italic">Sem viagens registradas ainda.</p>
           )}
+          {ContactDates}
         </div>
         {CRMButton}
       </div>
@@ -570,16 +588,24 @@ const ContactBanner = ({ conversation }: { conversation: Conversation }) => {
 
   if (level === "prospect") {
     return (
-      <div className="px-6 py-2.5 border-b bg-slate-50 flex items-center gap-3">
+      <div className="px-6 py-2.5 border-b bg-slate-50 flex items-start gap-3">
         <ContactLevelBadge level="prospect" size="sm" />
-        {isNew && (
-          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300 uppercase tracking-wide">
-            Novo
-          </span>
-        )}
-        <p className="text-xs text-slate-700 flex-1">
-          Novo contato — Prospect criado automaticamente. Aparece em <strong>Novos Leads</strong> no funil.
-        </p>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            {isNew && (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300 uppercase tracking-wide">
+                Novo
+              </span>
+            )}
+            {ReturningBadge}
+            <p className="text-xs text-slate-700">
+              {isReturning
+                ? "Contato antigo voltou — card movido para Novos Contatos."
+                : "Novo contato — Prospect criado automaticamente."}
+            </p>
+          </div>
+          {ContactDates}
+        </div>
         {CRMButton}
       </div>
     );
@@ -587,11 +613,17 @@ const ContactBanner = ({ conversation }: { conversation: Conversation }) => {
 
   // lead
   return (
-    <div className="px-6 py-2.5 border-b bg-sky-50/60 flex items-center gap-3">
+    <div className="px-6 py-2.5 border-b bg-sky-50/60 flex items-start gap-3">
       <ContactLevelBadge level="lead" size="sm" />
-      <p className="text-xs text-sky-900 flex-1">
-        Lead qualificado — IA continuará a conversa de qualificação.
-      </p>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 flex-wrap">
+          {ReturningBadge}
+          <p className="text-xs text-sky-900">
+            {isReturning ? "Lead retornou após mais de 30 dias." : "Lead qualificado — IA continuará a conversa de qualificação."}
+          </p>
+        </div>
+        {ContactDates}
+      </div>
       {CRMButton}
     </div>
   );
