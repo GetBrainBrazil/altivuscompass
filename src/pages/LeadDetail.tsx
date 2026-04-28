@@ -21,8 +21,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import type { KanbanCardData } from "@/components/crm/KanbanCard";
 import { IntlPhoneInput } from "@/components/ui/intl-phone-input";
-import { Label } from "@/components/ui/label";
-
 import { supabase } from "@/integrations/supabase/client";
 
 const FUNNEL_STAGES = [
