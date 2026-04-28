@@ -19,6 +19,7 @@ import {
   Loader2,
   BatteryMedium,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type StatusResponse = {
   connected: boolean;
