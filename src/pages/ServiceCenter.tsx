@@ -1057,6 +1057,8 @@ export default function ServiceCenter() {
         </aside>
       )}
 
+      </div>
+
       <NewMessageDialog
         open={newMsgOpen}
         onOpenChange={setNewMsgOpen}
