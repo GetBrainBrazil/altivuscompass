@@ -246,6 +246,7 @@ function KanbanColumnCard({
                 isDragging={draggedCardId === card.id}
                 onDragStart={(c) => onCardDragStart(c)}
                 onDragEnd={() => onCardDragEnd()}
+                onTemperatureChange={onTemperatureChange}
               />
             ))
           )}
