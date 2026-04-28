@@ -991,6 +991,14 @@ export default function ServiceCenter() {
           </Tabs>
         </aside>
       )}
+
+      <NewMessageDialog
+        open={newMsgOpen}
+        onOpenChange={setNewMsgOpen}
+        onSent={() => {
+          qc.invalidateQueries({ queryKey: ["wa_conversations"] });
+        }}
+      />
     </div>
   );
 }
