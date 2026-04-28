@@ -390,9 +390,52 @@ async function sendZapiText(instanceId: string, token: string, securityToken: st
     headers: { 'Content-Type': 'application/json', 'Client-Token': securityToken },
     body: JSON.stringify({ phone: cleanPhone, message }),
   })
+  let zapiMessageId: string | null = null
   if (!res.ok) {
     console.error('Z-API send error:', res.status, await res.text())
+  } else {
+    try {
+      const data = await res.clone().json()
+      zapiMessageId = data?.messageId || data?.id || null
+    } catch {}
   }
+
+  // ===== Espelha resposta da IA na Central de Atendimento =====
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabase = createClient(supabaseUrl, serviceRoleKey)
+
+    const preview = (message ?? '').slice(0, 200)
+    const { data: convo } = await supabase
+      .from('wa_conversations')
+      .upsert(
+        {
+          phone: cleanPhone,
+          last_message_text: preview,
+          last_message_at: new Date().toISOString(),
+          last_message_from: 'ai',
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'phone' }
+      )
+      .select('id')
+      .single()
+
+    if (convo) {
+      await supabase.from('wa_messages').insert({
+        conversation_id: convo.id,
+        direction: 'out',
+        sender: 'ai',
+        message_type: 'text',
+        content: message,
+        zapi_message_id: zapiMessageId,
+      })
+    }
+  } catch (mirrorErr) {
+    console.error('sendZapiText mirror failed:', mirrorErr)
+  }
+
   return res
 }
 
