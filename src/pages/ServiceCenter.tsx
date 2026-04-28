@@ -104,6 +104,11 @@ interface Conversation {
   lastTrip?: LastTrip;
   /** Cliente está em viagem agora (prioridade máxima na lista). */
   isTraveling?: boolean;
+  /** Conversa nova (primeiro contato, ainda não lida). */
+  isNew?: boolean;
+  /** IDs para deep-link no CRM. */
+  leadId?: string;
+  contactId?: string;
 }
 
 // Conversas reais vêm do banco (wa_conversations / wa_messages) via Realtime.
@@ -177,6 +182,11 @@ const ConversationCard = ({ conversation, active, onClick }: ConversationCardPro
           <div className="mt-2 flex items-center gap-1.5 flex-wrap">
             {/* Nível do contato (Prospect / Lead / Cliente) */}
             <ContactLevelBadge level={conversation.level} size="xs" />
+            {conversation.isNew && (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300 uppercase tracking-wide">
+                Novo
+              </span>
+            )}
             {conversation.isTraveling && (
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-800 border border-amber-300">
                 <Plane className="w-2.5 h-2.5" />
@@ -496,7 +506,30 @@ const formatDateBR = (iso: string) => {
 };
 
 const ContactBanner = ({ conversation }: { conversation: Conversation }) => {
-  const { level, lastTrip, isTraveling, leadName } = conversation;
+  const navigate = useNavigate();
+  const { level, lastTrip, isTraveling, leadName, leadId, contactId, isNew } = conversation;
+
+  const openInCRM = () => {
+    if (level === "cliente" && contactId) {
+      navigate(`/clients?contact=${contactId}`);
+    } else if (leadId) {
+      navigate(`/leads/${leadId}`);
+    } else {
+      navigate("/crm");
+    }
+  };
+
+  const CRMButton = (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={openInCRM}
+      className="h-7 px-2.5 text-[11px] gap-1 shrink-0"
+    >
+      <ExternalLink className="h-3 w-3" />
+      Abrir no CRM
+    </Button>
+  );
 
   if (level === "cliente") {
     return (
@@ -526,20 +559,24 @@ const ContactBanner = ({ conversation }: { conversation: Conversation }) => {
             <p className="text-xs text-amber-800/70 mt-0.5 italic">Sem viagens registradas ainda.</p>
           )}
         </div>
+        {CRMButton}
       </div>
     );
   }
 
   if (level === "prospect") {
-    const previousCount = Math.max(0, conversation.messages.length - 2);
     return (
       <div className="px-6 py-2.5 border-b bg-slate-50 flex items-center gap-3">
         <ContactLevelBadge level="prospect" size="sm" />
-        <p className="text-xs text-slate-700">
-          {previousCount > 0
-            ? `Contato já conhecido — ${previousCount} mensagem(ns) em conversas anteriores.`
-            : "Novo contato — iniciando qualificação."}
+        {isNew && (
+          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300 uppercase tracking-wide">
+            Novo
+          </span>
+        )}
+        <p className="text-xs text-slate-700 flex-1">
+          Novo contato — Prospect criado automaticamente. Aparece em <strong>Novos Leads</strong> no funil.
         </p>
+        {CRMButton}
       </div>
     );
   }
@@ -548,9 +585,10 @@ const ContactBanner = ({ conversation }: { conversation: Conversation }) => {
   return (
     <div className="px-6 py-2.5 border-b bg-sky-50/60 flex items-center gap-3">
       <ContactLevelBadge level="lead" size="sm" />
-      <p className="text-xs text-sky-900">
+      <p className="text-xs text-sky-900 flex-1">
         Lead qualificado — IA continuará a conversa de qualificação.
       </p>
+      {CRMButton}
     </div>
   );
 };
@@ -702,6 +740,13 @@ export default function ServiceCenter() {
           clientName: c.contact_name ?? undefined,
         },
         level: ((c.client_id ? "cliente" : c.lead_id ? "lead" : "prospect") as ContactLevel),
+        // "Novo" = primeiro contato (criado < 24h) E ainda não foi promovido a Lead/Cliente
+        isNew:
+          !c.client_id &&
+          !!c.created_at &&
+          Date.now() - new Date(c.created_at).getTime() < 24 * 60 * 60 * 1000,
+        leadId: c.lead_id ?? undefined,
+        contactId: c.contact_id ?? undefined,
       };
     });
   }, [convoRows, msgRows, selectedId]);
