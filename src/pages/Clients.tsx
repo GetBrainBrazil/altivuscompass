@@ -139,6 +139,7 @@ export default function Clients() {
   const [linkContactId, setLinkContactId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contactLevel, setContactLevel] = useState<ContactLevel | null>(null);
+  const [needsComplementaryData, setNeedsComplementaryData] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [activeTab, setActiveTab] = useState("contact");
   const [searchParams, setSearchParams] = useSearchParams();
