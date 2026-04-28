@@ -305,7 +305,7 @@ export function KanbanCard({
         </div>
 
         {/* Badge de nível do contato */}
-        {(card.contactLevel || card.isRepurchase) && (
+        {(card.contactLevel || card.isRepurchase || card.isReturning) && (
           <div className="mb-1.5 flex items-center gap-1.5 flex-wrap">
             {card.contactLevel && <ContactLevelBadge level={card.contactLevel} size="xs" />}
             {card.isRepurchase && (
@@ -315,6 +315,15 @@ export function KanbanCard({
               >
                 <Sparkles className="w-2.5 h-2.5" />
                 Recompra
+              </span>
+            )}
+            {card.isReturning && !card.isRepurchase && (
+              <span
+                title="Contato antigo que voltou a falar após mais de 30 dias"
+                className="inline-flex items-center gap-1 rounded-full border border-sky-300 bg-gradient-to-r from-sky-100 to-sky-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-800"
+              >
+                <Sparkles className="w-2.5 h-2.5" />
+                Retornou
               </span>
             )}
           </div>
