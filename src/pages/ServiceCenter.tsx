@@ -565,6 +565,7 @@ export default function ServiceCenter() {
   const [sending, setSending] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [sidePanelTab, setSidePanelTab] = useState<"summary" | "crm">("summary");
+  const [newMsgOpen, setNewMsgOpen] = useState(false);
 
   // ===== Carrega conversas reais do WhatsApp (Z-API) =====
   const { data: convoRows = [] } = useQuery({
