@@ -59,7 +59,7 @@ type KanbanColumn = {
 };
 
 const INITIAL_SALES_COLUMNS: KanbanColumn[] = [
-  { id: "new-leads", title: "Novos Leads (IA)", cards: [] },
+  { id: "new-leads", title: "Novos Contatos", cards: [] },
   { id: "qualifying", title: "Em Qualificação", cards: [] },
   { id: "quote", title: "Cotação", cards: [] },
   { id: "proposal-sent", title: "Proposta Enviada", cards: [] },
