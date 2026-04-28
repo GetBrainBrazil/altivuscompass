@@ -166,6 +166,7 @@ export const IntlPhoneInput = React.forwardRef<
         disabled={disabled}
         value={display}
         onChange={handleNationalChange}
+        onBlur={onBlur}
         placeholder={placeholder ?? country.mask.replace(/#/g, "9")}
         className="h-full border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
       />
