@@ -1241,13 +1241,63 @@ export default function Quotes() {
     setDialogOpen(true);
   };
 
-  // Open editor pre-filled when navigated from elsewhere (e.g. Clients page)
+  // Open editor pre-filled when navigated from elsewhere (e.g. Clients page, CRM)
   useEffect(() => {
-    const state = (location.state ?? {}) as { newQuote?: boolean; clientId?: string };
-    if (state.newQuote) {
-      openCreate({ client_id: state.clientId });
-      navigate(location.pathname, { replace: true, state: {} });
+    const state = (location.state ?? {}) as { newQuote?: boolean; clientId?: string; leadId?: string };
+    if (!state.newQuote) return;
+
+    if (state.leadId) {
+      // Prefill a partir do lead vindo do CRM
+      (async () => {
+        const { data: lead, error } = await supabase
+          .from("leads")
+          .select("id, full_name, phone, destination, travel_date_start, travel_date_end, flexible_dates, flexible_dates_description, travelers_count, preferences, ai_summary, source")
+          .eq("id", state.leadId)
+          .maybeSingle();
+        if (error || !lead) {
+          toast({ title: "Não foi possível carregar o lead", description: error?.message ?? "Lead não encontrado.", variant: "destructive" });
+          openCreate();
+          navigate(location.pathname, { replace: true, state: {} });
+          return;
+        }
+        // Abre o dialog em estado vazio e em seguida preenche com os dados do lead
+        openCreate();
+        const destinations = lead.destination
+          ? lead.destination.split(",").map((s: string) => s.trim()).filter(Boolean)
+          : [];
+        const prefParts = [
+          lead.preferences,
+          lead.travelers_count ? `Número de viajantes: ${lead.travelers_count}` : "",
+          lead.ai_summary ? `Resumo da IA: ${lead.ai_summary}` : "",
+        ].filter(Boolean);
+        // Título sugerido: "Destino — Nome do Lead"
+        const suggestedTitle = lead.destination && lead.full_name
+          ? `${lead.destination} — ${lead.full_name}`
+          : (lead.full_name ? `Cotação - ${lead.full_name}` : "");
+        setForm((prev: any) => ({
+          ...prev,
+          client_id: "",
+          lead_id: lead.id,
+          title: suggestedTitle || prev.title,
+          destination: lead.destination ?? prev.destination,
+          travel_date_start: lead.travel_date_start ?? prev.travel_date_start,
+          travel_date_end: lead.travel_date_end ?? prev.travel_date_end,
+          flexible_dates: lead.flexible_dates ?? prev.flexible_dates,
+          flexible_dates_description: lead.flexible_dates_description ?? prev.flexible_dates_description,
+          internal_notes: prefParts.length > 0
+            ? `${prev.internal_notes ? prev.internal_notes + "\n\n" : ""}${prefParts.join("\n")}`
+            : prev.internal_notes,
+          lead_source: prev.lead_source || (lead.source === "whatsapp_ai" ? "whatsapp" : prev.lead_source),
+        }));
+        if (destinations.length > 0) setSelectedDestinations(destinations);
+        toast({ title: "Lead carregado", description: "Os dados do lead foram preenchidos automaticamente." });
+        navigate(location.pathname, { replace: true, state: {} });
+      })();
+      return;
     }
+
+    openCreate({ client_id: state.clientId });
+    navigate(location.pathname, { replace: true, state: {} });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state]);
 
