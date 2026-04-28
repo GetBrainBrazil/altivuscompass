@@ -30,6 +30,8 @@ export type LeadTemperature = "hot" | "warm" | "cold";
 export type KanbanCardData = {
   id: string;
   clientName: string;
+  /** Telefone do lead (E.164 sem '+', como vem do WhatsApp). */
+  phone?: string;
   destination?: string;
   travelDate?: string;
   /** ISO date (YYYY-MM-DD) da viagem — usado para calcular "Embarque próximo". */
