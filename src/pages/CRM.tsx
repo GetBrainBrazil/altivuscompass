@@ -1471,7 +1471,15 @@ export default function CRM() {
             <Button
               variant="destructive"
               onClick={() => {
-                if (pendingMove) performMove(pendingMove, true);
+                if (pendingMove) {
+                  if (pendingMove.toColumnId === "closed" && pendingMove.leadId) {
+                    setPromotionLeadId(pendingMove.leadId);
+                    setPromotionPendingMove(pendingMove);
+                    setPromotionOpen(true);
+                  } else {
+                    performMove(pendingMove, true);
+                  }
+                }
                 setPendingMove(null);
                 setPendingIssues([]);
               }}
