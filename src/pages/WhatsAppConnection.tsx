@@ -19,6 +19,7 @@ import {
   Loader2,
   BatteryMedium,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type StatusResponse = {
   connected: boolean;
@@ -190,9 +191,11 @@ export default function WhatsAppConnection() {
 
         {/* Main card */}
         <div className="bg-white rounded-2xl border border-border/60 shadow-sm overflow-hidden">
-          {isConnected ? (
+          {isLoading || !status ? (
+            <LoadingView />
+          ) : isConnected ? (
             <ConnectedView
-              status={status!}
+              status={status}
               onDisconnect={handleDisconnect}
               onRestart={handleRestart}
               loading={actionLoading}
@@ -206,6 +209,44 @@ export default function WhatsAppConnection() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function LoadingView() {
+  return (
+    <div
+      className="p-10 flex flex-col items-center text-center animate-in fade-in duration-500"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <div className="relative h-16 w-16 mb-5">
+        <div className="absolute inset-0 rounded-full bg-[hsl(142_70%_95%)]" />
+        <div className="absolute inset-0 rounded-full border-2 border-[hsl(142_70%_40%)]/30 border-t-[hsl(142_70%_40%)] animate-spin" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Wifi className="h-7 w-7 text-[hsl(142_70%_40%)]" />
+        </div>
+      </div>
+
+      <h2 className="text-xl font-semibold text-foreground">
+        Verificando conexão
+      </h2>
+      <p className="text-sm text-muted-foreground mt-1.5 max-w-sm">
+        Aguarde um instante enquanto consultamos o status do seu WhatsApp.
+      </p>
+
+      <div className="mt-8 w-full max-w-md space-y-3">
+        <Skeleton className="h-10 w-2/3 mx-auto rounded-full" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4">
+          <Skeleton className="h-16 rounded-lg" />
+          <Skeleton className="h-16 rounded-lg" />
+          <Skeleton className="h-16 rounded-lg" />
+          <Skeleton className="h-16 rounded-lg" />
+        </div>
+      </div>
+
+      <span className="sr-only">Carregando status da conexão WhatsApp</span>
     </div>
   );
 }
