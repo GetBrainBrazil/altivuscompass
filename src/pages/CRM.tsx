@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { KanbanCard, type KanbanCardData, type LeadTemperature } from "@/components/crm/KanbanCard";
+import { ClientPromotionDialog } from "@/components/crm/ClientPromotionDialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -418,8 +419,11 @@ export default function CRM() {
         };
       });
 
-      // IDs de leads existentes no banco (para limpar órfãos do localStorage)
-      const validLeadIds = new Set(data.map((l: any) => `lead-${l.id}`));
+      // IDs de leads existentes no banco (TODOS — incl. já convertidos) para
+      // limpar órfãos do localStorage sem remover cards já promovidos a Cliente.
+      const { data: allLeadIds } = await supabase.from("leads").select("id").limit(1000);
+      if (cancelled) return;
+      const validLeadIds = new Set((allLeadIds ?? []).map((l: any) => `lead-${l.id}`));
 
       // Busca também os IDs de cotações existentes para limpar cards quote-* órfãos
       const { data: quotesData } = await supabase
@@ -429,11 +433,44 @@ export default function CRM() {
       if (cancelled) return;
       const validQuoteIds = new Set((quotesData ?? []).map((q: any) => `quote-${q.id}`));
 
+      // Busca contacts para identificar quais leads já viraram Cliente e se
+      // têm dados pendentes (needs_complementary_data).
+      const { data: contactsData } = await (supabase as any)
+        .from("contacts")
+        .select("lead_id, level, needs_complementary_data")
+        .not("lead_id", "is", null)
+        .limit(2000);
+      if (cancelled) return;
+      const contactByLeadId = new Map<string, { level: string; needsData: boolean }>();
+      (contactsData ?? []).forEach((c: any) => {
+        if (c.lead_id) {
+          contactByLeadId.set(c.lead_id, {
+            level: c.level,
+            needsData: !!c.needs_complementary_data,
+          });
+        }
+      });
+
       const isCardStillValid = (cardId: string): boolean => {
         if (cardId.startsWith("lead-")) return validLeadIds.has(cardId);
         if (cardId.startsWith("quote-")) return validQuoteIds.has(cardId);
         if (cardId.startsWith("manual-")) return true; // mantém cards manuais
         return false;
+      };
+
+      // Aplica nível de contato + alerta de cadastro incompleto a um card
+      const enrichCard = (c: KanbanCardData): KanbanCardData => {
+        if (!c.id.startsWith("lead-")) return c;
+        const leadId = c.id.slice("lead-".length);
+        const info = contactByLeadId.get(leadId);
+        if (!info) return c;
+        const level = info.level === "cliente" ? "cliente" : info.level === "lead" ? "lead" : "prospect";
+        const alert = info.level === "cliente" && info.needsData
+          ? { label: "Cadastro incompleto", tone: "warning" as const }
+          : c.alert?.label === "Cadastro incompleto"
+            ? undefined
+            : c.alert;
+        return { ...c, contactLevel: level as KanbanCardData["contactLevel"], alert };
       };
 
       setSalesColumns((prev) => {
@@ -446,16 +483,18 @@ export default function CRM() {
             });
           }
         });
-        const filteredLeadCards = leadCards.filter((c) => !idsInOtherColumns.has(c.id));
+        const filteredLeadCards = leadCards
+          .filter((c) => !idsInOtherColumns.has(c.id))
+          .map(enrichCard);
 
         return prev.map((col) => {
           if (col.id === "new-leads") {
             return { ...col, cards: filteredLeadCards };
           }
-          // Outras colunas: remove órfãos (leads/cotações excluídos)
+          // Outras colunas: remove órfãos (leads/cotações excluídos) + enriquece
           return {
             ...col,
-            cards: col.cards.filter((c) => isCardStillValid(c.id)),
+            cards: col.cards.filter((c) => isCardStillValid(c.id)).map(enrichCard),
           };
         });
       });
@@ -464,7 +503,7 @@ export default function CRM() {
       setOpsColumns((prev) =>
         prev.map((col) => ({
           ...col,
-          cards: col.cards.filter((c) => isCardStillValid(c.id)),
+          cards: col.cards.filter((c) => isCardStillValid(c.id)).map(enrichCard),
         })),
       );
 
@@ -556,6 +595,11 @@ export default function CRM() {
 
   // Delete confirmation
   const [columnToDelete, setColumnToDelete] = useState<KanbanColumn | null>(null);
+
+  // ─── Promoção a Cliente (ao mover para "Fechado") ──────────
+  const [promotionLeadId, setPromotionLeadId] = useState<string | null>(null);
+  const [promotionPendingMove, setPromotionPendingMove] = useState<PendingMove | null>(null);
+  const [promotionOpen, setPromotionOpen] = useState(false);
 
   const setColumns = tab === "sales" ? setSalesColumns : setOpsColumns;
   const columns = tab === "sales" ? salesColumns : opsColumns;
@@ -810,7 +854,14 @@ export default function CRM() {
     try {
       const issues = await validateMove(card, targetColumnId, leadId);
       if (issues.length === 0) {
-        performMove(move, false);
+        // Caso especial: mover para "Fechado" → promove Lead em Cliente
+        if (targetColumnId === "closed" && leadId) {
+          setPromotionLeadId(leadId);
+          setPromotionPendingMove(move);
+          setPromotionOpen(true);
+        } else {
+          performMove(move, false);
+        }
       } else {
         setPendingMove(move);
         setPendingIssues(issues);
@@ -818,6 +869,80 @@ export default function CRM() {
     } finally {
       setValidating(false);
     }
+  };
+
+  // Após promoção bem-sucedida no modal: move o card para "Fechado",
+  // adiciona ao Kanban de Operações em "Pré-Viagem" e atualiza badge/alertas.
+  const handlePromotionDone = (result: {
+    clientId: string;
+    contactId: string | null;
+    needsComplementaryData: boolean;
+  }) => {
+    const move = promotionPendingMove;
+    setPromotionPendingMove(null);
+    setPromotionLeadId(null);
+    if (!move) return;
+
+    const incompleteAlert = result.needsComplementaryData
+      ? { label: "Cadastro incompleto", tone: "warning" as const }
+      : undefined;
+
+    // 1. Mover o card para "Fechado" no funil de vendas e marcar como Cliente
+    setSalesColumns((prev) => {
+      let moving: KanbanCardData | null = null;
+      const stripped = prev.map((col) => {
+        const idx = col.cards.findIndex((c) => c.id === move.cardId);
+        if (idx === -1) return col;
+        moving = col.cards[idx];
+        if (col.id === move.toColumnId) return col;
+        return { ...col, cards: col.cards.filter((c) => c.id !== move.cardId) };
+      });
+      if (!moving) return prev;
+      const movedCard: KanbanCardData = {
+        ...(moving as KanbanCardData),
+        contactLevel: "cliente",
+        alert: incompleteAlert,
+        stageEnteredAt: new Date().toISOString(),
+      };
+      return stripped.map((col) =>
+        col.id === move.toColumnId
+          ? {
+              ...col,
+              cards: col.cards.some((c) => c.id === move.cardId)
+                ? col.cards.map((c) => (c.id === move.cardId ? movedCard : c))
+                : [movedCard, ...col.cards],
+            }
+          : col,
+      );
+    });
+
+    // 2. Espelhar o card no Kanban de Operações em "Pré-Viagem"
+    setOpsColumns((prev) => {
+      const sourceCard =
+        salesColumns.flatMap((c) => c.cards).find((c) => c.id === move.cardId) ?? null;
+      if (!sourceCard) return prev;
+      const opsCard: KanbanCardData = {
+        ...sourceCard,
+        contactLevel: "cliente",
+        alert: incompleteAlert,
+        stageEnteredAt: new Date().toISOString(),
+      };
+      return prev.map((col) => {
+        if (col.id !== "pre-trip") {
+          return { ...col, cards: col.cards.filter((c) => c.id !== move.cardId) };
+        }
+        if (col.cards.some((c) => c.id === move.cardId)) {
+          return {
+            ...col,
+            cards: col.cards.map((c) => (c.id === move.cardId ? opsCard : c)),
+          };
+        }
+        return { ...col, cards: [opsCard, ...col.cards] };
+      });
+    });
+
+    toast.success(`Lead promovido a Cliente e movido para "${move.toTitle}".`);
+    void logLeadHistory(move.leadId, move.fromTitle, move.toTitle, false);
   };
 
   const handleTemperatureChange = (card: KanbanCardData, next: LeadTemperature) => {
@@ -1346,7 +1471,15 @@ export default function CRM() {
             <Button
               variant="destructive"
               onClick={() => {
-                if (pendingMove) performMove(pendingMove, true);
+                if (pendingMove) {
+                  if (pendingMove.toColumnId === "closed" && pendingMove.leadId) {
+                    setPromotionLeadId(pendingMove.leadId);
+                    setPromotionPendingMove(pendingMove);
+                    setPromotionOpen(true);
+                  } else {
+                    performMove(pendingMove, true);
+                  }
+                }
                 setPendingMove(null);
                 setPendingIssues([]);
               }}
@@ -1356,6 +1489,19 @@ export default function CRM() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ClientPromotionDialog
+        open={promotionOpen}
+        onOpenChange={(v) => {
+          setPromotionOpen(v);
+          if (!v) {
+            setPromotionPendingMove(null);
+            setPromotionLeadId(null);
+          }
+        }}
+        leadId={promotionLeadId}
+        onPromoted={handlePromotionDone}
+      />
 
     </div>
   );

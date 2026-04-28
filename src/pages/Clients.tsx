@@ -139,6 +139,7 @@ export default function Clients() {
   const [linkContactId, setLinkContactId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contactLevel, setContactLevel] = useState<ContactLevel | null>(null);
+  const [needsComplementaryData, setNeedsComplementaryData] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [activeTab, setActiveTab] = useState("contact");
   const [searchParams, setSearchParams] = useSearchParams();
@@ -643,6 +644,29 @@ export default function Clients() {
             } as any);
           }
         }
+
+        // Se o contato estava marcado como "cadastro incompleto", verifica se
+        // os dados obrigatórios estão preenchidos e libera o flag.
+        if (needsComplementaryData && contactLevel === "cliente") {
+          const { data: pps } = await supabase
+            .from("client_passports")
+            .select("id, passport_number, expiry_date, nationality")
+            .eq("client_id", clientId);
+          const hasPassport = (pps ?? []).some(
+            (p: any) => p.passport_number && p.expiry_date && p.nationality,
+          );
+          const hasAddress = !!(form.address_street && form.city);
+          const hasEmail = emails.some((e) => e.email) || false;
+          const hasCpf = !!form.cpf_cnpj;
+          const hasBirth = !!form.birth_date;
+          if (hasPassport && hasAddress && hasEmail && hasCpf && hasBirth) {
+            await (supabase as any)
+              .from("contacts")
+              .update({ needs_complementary_data: false })
+              .eq("client_id", clientId);
+            setNeedsComplementaryData(false);
+          }
+        }
       }
     },
     onSuccess: () => {
@@ -748,12 +772,14 @@ export default function Clients() {
         if (error || !contact) return;
         setLinkContactId(contact.id);
         setContactLevel(contact.level as ContactLevel);
+        setNeedsComplementaryData(!!contact.needs_complementary_data);
 
         if (contact.client_id) {
           const { data: c } = await supabase.from("clients").select("*").eq("id", contact.client_id).maybeSingle();
           if (c) {
             openEdit(c);
             setContactLevel(contact.level as ContactLevel);
+            setNeedsComplementaryData(!!contact.needs_complementary_data);
             return;
           }
         }
@@ -783,14 +809,16 @@ export default function Clients() {
           // Try to find originating contact for level badge
           const { data: contact } = await (supabase as any)
             .from("contacts")
-            .select("id, level")
+            .select("id, level, needs_complementary_data")
             .eq("client_id", idParam)
             .maybeSingle();
           if (contact) {
             setLinkContactId(contact.id);
             setContactLevel(contact.level as ContactLevel);
+            setNeedsComplementaryData(!!contact.needs_complementary_data);
           } else {
             setContactLevel("cliente");
+            setNeedsComplementaryData(false);
           }
         }
       })();
@@ -867,6 +895,17 @@ export default function Clients() {
   if (view === "form") {
     return (
       <div className="max-w-5xl mx-auto space-y-4">
+        {needsComplementaryData && contactLevel === "cliente" && (
+          <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 font-body">
+            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+            <div>
+              <span className="font-medium">Cadastro incompleto — dados pendentes para operação.</span>{" "}
+              <span className="text-amber-800/90">
+                Complete CPF, data de nascimento, passaporte, e-mail e endereço dos viajantes para liberar a operação.
+              </span>
+            </div>
+          </div>
+        )}
         {/* Header */}
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={goToList} className="shrink-0">

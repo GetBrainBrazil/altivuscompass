@@ -772,6 +772,7 @@ export type Database = {
           id: string
           lead_id: string | null
           level: Database["public"]["Enums"]["contact_level"]
+          needs_complementary_data: boolean
           phone: string | null
           promoted_to_cliente_at: string | null
           promoted_to_lead_at: string | null
@@ -786,6 +787,7 @@ export type Database = {
           id?: string
           lead_id?: string | null
           level?: Database["public"]["Enums"]["contact_level"]
+          needs_complementary_data?: boolean
           phone?: string | null
           promoted_to_cliente_at?: string | null
           promoted_to_lead_at?: string | null
@@ -800,6 +802,7 @@ export type Database = {
           id?: string
           lead_id?: string | null
           level?: Database["public"]["Enums"]["contact_level"]
+          needs_complementary_data?: boolean
           phone?: string | null
           promoted_to_cliente_at?: string | null
           promoted_to_lead_at?: string | null
