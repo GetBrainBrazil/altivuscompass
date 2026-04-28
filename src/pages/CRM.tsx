@@ -145,6 +145,7 @@ function KanbanColumnCard({
   onCardDragStart,
   onCardDragEnd,
   onDropOnColumn,
+  onTemperatureChange,
 }: {
   column: KanbanColumn;
   dotColor: string;
@@ -157,6 +158,7 @@ function KanbanColumnCard({
   onCardDragStart: (card: KanbanCardData) => void;
   onCardDragEnd: () => void;
   onDropOnColumn: (columnId: string) => void;
+  onTemperatureChange: (card: KanbanCardData, next: LeadTemperature) => void;
 }) {
   const [isOver, setIsOver] = useState(false);
 
