@@ -57,6 +57,8 @@ export type KanbanCardData = {
   stageEnteredAt?: string;
   /** Temperatura do lead (default: "cold"). */
   temperature?: LeadTemperature;
+  /** Cliente já existente iniciando uma nova jornada de compra. */
+  isRepurchase?: boolean;
 };
 
 const TAG_TONE_CLASSES: Record<KanbanTagTone, string> = {
@@ -202,7 +204,11 @@ export function KanbanCard({
     );
   }
 
-  const leftBorder = alert?.tone === "destructive" ? "border-l-destructive" : stageBorderClass;
+  const leftBorder = alert?.tone === "destructive"
+    ? "border-l-destructive"
+    : card.isRepurchase
+      ? "border-l-amber-400"
+      : stageBorderClass;
   const noAgent = !card.agent;
 
   return (
@@ -255,6 +261,8 @@ export function KanbanCard({
         isDragging && "opacity-30",
         leftBorder,
         alert?.tone === "destructive" && "bg-destructive/5",
+        card.isRepurchase &&
+          "border-amber-300/70 ring-1 ring-amber-200/60 bg-gradient-to-br from-amber-50/40 to-transparent",
       )}
     >
       <div className="px-3.5 py-3">
@@ -295,9 +303,18 @@ export function KanbanCard({
         </div>
 
         {/* Badge de nível do contato */}
-        {card.contactLevel && (
-          <div className="mb-1.5">
-            <ContactLevelBadge level={card.contactLevel} size="xs" />
+        {(card.contactLevel || card.isRepurchase) && (
+          <div className="mb-1.5 flex items-center gap-1.5 flex-wrap">
+            {card.contactLevel && <ContactLevelBadge level={card.contactLevel} size="xs" />}
+            {card.isRepurchase && (
+              <span
+                title="Cliente iniciando uma nova jornada de compra"
+                className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-gradient-to-r from-amber-100 to-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800"
+              >
+                <Sparkles className="w-2.5 h-2.5" />
+                Recompra
+              </span>
+            )}
           </div>
         )}
 
