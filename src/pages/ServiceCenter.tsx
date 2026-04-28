@@ -1,5 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -101,9 +104,7 @@ interface Conversation {
   isTraveling?: boolean;
 }
 
-// ============= Mock Data =============
-// Sem dados mocados — conversas reais virão do webhook do WhatsApp / banco.
-const MOCK_CONVERSATIONS: Conversation[] = [];
+// Conversas reais vêm do banco (wa_conversations / wa_messages) via Realtime.
 
 // ============= Helpers =============
 const getInitials = (name: string) =>
@@ -544,13 +545,149 @@ const ContactBanner = ({ conversation }: { conversation: Conversation }) => {
 
 // ============= Main Page =============
 export default function ServiceCenter() {
-  const [conversations] = useState<Conversation[]>(MOCK_CONVERSATIONS);
+  const qc = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [draft, setDraft] = useState("");
+  const [sending, setSending] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [sidePanelTab, setSidePanelTab] = useState<"summary" | "crm">("summary");
+
+  // ===== Carrega conversas reais do WhatsApp (Z-API) =====
+  const { data: convoRows = [] } = useQuery({
+    queryKey: ["wa_conversations"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("wa_conversations")
+        .select("*")
+        .order("last_message_at", { ascending: false, nullsFirst: false })
+        .limit(200);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // ===== Carrega mensagens da conversa selecionada =====
+  const { data: msgRows = [] } = useQuery({
+    queryKey: ["wa_messages", selectedId],
+    enabled: !!selectedId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("wa_messages")
+        .select("*")
+        .eq("conversation_id", selectedId!)
+        .order("created_at", { ascending: true })
+        .limit(500);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // ===== Realtime: novas mensagens / conversas atualizadas =====
+  useEffect(() => {
+    const channel = supabase
+      .channel("service-center-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "wa_conversations" },
+        () => qc.invalidateQueries({ queryKey: ["wa_conversations"] }),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "wa_messages" },
+        (payload: any) => {
+          qc.invalidateQueries({ queryKey: ["wa_conversations"] });
+          const convId = payload?.new?.conversation_id ?? payload?.old?.conversation_id;
+          if (convId) qc.invalidateQueries({ queryKey: ["wa_messages", convId] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc]);
+
+  // Marca conversa como lida ao abrir
+  useEffect(() => {
+    if (!selectedId) return;
+    (async () => {
+      await supabase
+        .from("wa_conversations")
+        .update({ unread_count: 0 })
+        .eq("id", selectedId);
+    })();
+  }, [selectedId]);
+
+  // ===== Mapeia para a estrutura visual existente =====
+  const conversations: Conversation[] = useMemo(() => {
+    return convoRows.map((c: any) => {
+      const msgs: Message[] = (selectedId === c.id ? msgRows : []).map((m: any) => ({
+        id: m.id,
+        sender: (m.sender ?? "lead") as MessageSender,
+        content:
+          m.message_type === "text"
+            ? (m.content ?? "")
+            : m.message_type === "image"
+              ? `📷 ${m.media_caption ?? "Imagem"}${m.media_url ? `\n${m.media_url}` : ""}`
+              : m.message_type === "audio"
+                ? `🎤 Áudio${m.media_url ? `\n${m.media_url}` : ""}`
+                : m.message_type === "video"
+                  ? `🎥 ${m.media_caption ?? "Vídeo"}${m.media_url ? `\n${m.media_url}` : ""}`
+                  : m.message_type === "document"
+                    ? `📄 ${m.media_caption ?? "Documento"}${m.media_url ? `\n${m.media_url}` : ""}`
+                    : (m.content ?? m.media_url ?? "Mensagem"),
+        timestamp: m.created_at,
+      }));
+      // Se não há nenhuma mensagem carregada, cria uma "fake" só para preview
+      const fallbackMsg: Message = {
+        id: `${c.id}-last`,
+        sender: (c.last_message_from ?? "lead") as MessageSender,
+        content: c.last_message_text ?? "",
+        timestamp: c.last_message_at ?? c.updated_at ?? c.created_at,
+      };
+      return {
+        id: c.id,
+        leadName: c.contact_name || c.phone || "Sem nome",
+        phone: c.phone,
+        status: (c.status === "human" ? "human" : "ai") as ConversationStatus,
+        messages: msgs.length > 0 ? msgs : [fallbackMsg],
+        summary: { notes: [] },
+        category: "sales" as ContactCategory,
+        contactType: (c.client_id ? "existing-client" : "new-lead") as ContactType,
+        crm: {
+          clientId: c.client_id ?? undefined,
+          clientName: c.contact_name ?? undefined,
+        },
+        level: ((c.client_id ? "cliente" : c.lead_id ? "lead" : "prospect") as ContactLevel),
+      };
+    });
+  }, [convoRows, msgRows, selectedId]);
+
+  const handleSend = async () => {
+    if (!selectedId || !draft.trim() || sending) return;
+    const convo = convoRows.find((c: any) => c.id === selectedId);
+    if (!convo?.phone) {
+      toast.error("Telefone da conversa não encontrado.");
+      return;
+    }
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-whatsapp", {
+        body: { action: "send-text", phone: convo.phone, message: draft.trim() },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setDraft("");
+      qc.invalidateQueries({ queryKey: ["wa_messages", selectedId] });
+      qc.invalidateQueries({ queryKey: ["wa_conversations"] });
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao enviar mensagem");
+    } finally {
+      setSending(false);
+    }
+  };
+
 
   const counts = useMemo(
     () => ({
@@ -731,35 +868,32 @@ export default function ServiceCenter() {
 
             {/* Composer */}
             <footer className="border-t bg-white/80 backdrop-blur-sm p-4">
-              {selected.status === "ai" ? (
-                <div className="max-w-3xl mx-auto flex items-center justify-center gap-2 rounded-full border border-dashed border-muted-foreground/30 bg-muted/40 px-5 py-3 text-sm text-muted-foreground">
-                  <UserRound className="h-4 w-4 shrink-0" />
-                  <span>
-                    Assuma esta conversa para poder enviar mensagens.
-                  </span>
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-center gap-3 max-w-3xl mx-auto">
-                    <Input
-                      placeholder="Digite uma mensagem..."
-                      value={draft}
-                      onChange={(e) => setDraft(e.target.value)}
-                      className="h-11 rounded-full px-5 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-ring"
-                    />
-                    <Button
-                      size="icon"
-                      disabled={!draft.trim()}
-                      className="h-11 w-11 rounded-full shrink-0"
-                    >
-                      <SendHorizontal className="h-5 w-5" />
-                    </Button>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground text-center mt-3">
-                    Visualização preliminar — envio de mensagens será habilitado em breve.
-                  </p>
-                </>
-              )}
+              <div className="flex items-center gap-3 max-w-3xl mx-auto">
+                <Input
+                  placeholder="Digite uma mensagem..."
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  disabled={sending}
+                  className="h-11 rounded-full px-5 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-ring"
+                />
+                <Button
+                  size="icon"
+                  disabled={!draft.trim() || sending}
+                  onClick={handleSend}
+                  className="h-11 w-11 rounded-full shrink-0"
+                >
+                  <SendHorizontal className="h-5 w-5" />
+                </Button>
+              </div>
+              <p className="text-[10px] text-muted-foreground text-center mt-3">
+                Mensagens enviadas vão direto para o WhatsApp do contato via Z-API.
+              </p>
             </footer>
           </>
         )}
