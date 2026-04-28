@@ -357,6 +357,7 @@ export default function CRM() {
   // ─── Sync inbound leads (from WhatsApp AI / manual quick-create) into the
   // "Novos Leads (IA)" column. We poll every 30s so newly captured leads show
   // up automatically without a page refresh.
+  const [leadsRefreshTick, setLeadsRefreshTick] = useState(0);
   useEffect(() => {
     let cancelled = false;
     const fetchLeads = async () => {
@@ -407,7 +408,7 @@ export default function CRM() {
       cancelled = true;
       clearInterval(interval);
     };
-  }, []);
+  }, [leadsRefreshTick]);
 
   // Add column dialog
   const [addOpen, setAddOpen] = useState(false);
