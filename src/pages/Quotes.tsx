@@ -294,7 +294,7 @@ export default function Quotes() {
   const { data: sellers = [] } = useQuery({
     queryKey: ["profiles-sellers"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("user_id, full_name").order("full_name");
+      const { data, error } = await supabase.from("profiles_basic" as any).select("user_id, full_name").order("full_name");
       if (error) throw error;
       return data ?? [];
     },
