@@ -351,6 +351,15 @@ export default function LeadDetail() {
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-emerald-500/40 text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                onClick={() => setWaPanelOpen(true)}
+              >
+                <MessageCircle className="h-4 w-4 mr-1.5" />
+                WhatsApp
+              </Button>
               {!isClient && leadId && (
                 <Button
                   variant="outline"
@@ -436,7 +445,6 @@ export default function LeadDetail() {
                 <TabTriggerItem value="main" icon={FileText} label="Principal" />
                 <TabTriggerItem value="timeline" icon={Clock} label="Timeline" />
                 <TabTriggerItem value="quotes" icon={FileText} label="Cotações" count={quotesCount} />
-                <TabTriggerItem value="conversations" icon={MessageCircle} label="Conversas" count={conversationsCount} />
                 <TabTriggerItem value="documents" icon={FileBox} label="Documentos" />
                 <TabTriggerItem value="notes" icon={StickyNote} label="Observações" />
               </TabsList>
