@@ -300,8 +300,8 @@ export default function CRM() {
     }, { replace: true });
   };
 
-  const SALES_STORAGE_KEY = "crm:columns:sales:v1";
-  const OPS_STORAGE_KEY = "crm:columns:ops:v2";
+  const SALES_STORAGE_KEY = "crm:columns:sales:v2";
+  const OPS_STORAGE_KEY = "crm:columns:ops:v3";
 
   const loadColumns = (key: string, fallback: KanbanColumn[]): KanbanColumn[] => {
     if (typeof window === "undefined") return fallback;
