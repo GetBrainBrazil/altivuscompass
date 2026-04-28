@@ -485,9 +485,10 @@ const LeadSummaryPanel = ({ summary }: LeadSummaryPanelProps) => (
 // ============= CRM Panel =============
 const CRMPanel = ({ conversation }: { conversation: Conversation }) => {
   const navigate = useNavigate();
-  const { category, contactType, crm } = conversation;
+  const { category, contactType, crm, leadId, contactId, leadName, phone, level } = conversation;
   const isPostSale = category === "post-sale";
   const isExisting = contactType === "existing-client";
+  const { openLead, dialog: missingLeadDialog } = useOpenLeadInCRM();
 
   return (
     <div className="h-full flex flex-col bg-white">
