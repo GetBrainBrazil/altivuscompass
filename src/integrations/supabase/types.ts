@@ -3095,6 +3095,110 @@ export type Database = {
         }
         Relationships: []
       }
+      wa_conversations: {
+        Row: {
+          client_id: string | null
+          contact_id: string | null
+          contact_name: string | null
+          created_at: string
+          id: string
+          is_group: boolean
+          last_message_at: string | null
+          last_message_from: string | null
+          last_message_text: string | null
+          lead_id: string | null
+          phone: string
+          status: string
+          unread_count: number
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          contact_id?: string | null
+          contact_name?: string | null
+          created_at?: string
+          id?: string
+          is_group?: boolean
+          last_message_at?: string | null
+          last_message_from?: string | null
+          last_message_text?: string | null
+          lead_id?: string | null
+          phone: string
+          status?: string
+          unread_count?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          contact_id?: string | null
+          contact_name?: string | null
+          created_at?: string
+          id?: string
+          is_group?: boolean
+          last_message_at?: string | null
+          last_message_from?: string | null
+          last_message_text?: string | null
+          lead_id?: string | null
+          phone?: string
+          status?: string
+          unread_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      wa_messages: {
+        Row: {
+          content: string | null
+          conversation_id: string
+          created_at: string
+          direction: string
+          id: string
+          media_caption: string | null
+          media_mime: string | null
+          media_url: string | null
+          message_type: string
+          raw: Json | null
+          sender: string
+          zapi_message_id: string | null
+        }
+        Insert: {
+          content?: string | null
+          conversation_id: string
+          created_at?: string
+          direction: string
+          id?: string
+          media_caption?: string | null
+          media_mime?: string | null
+          media_url?: string | null
+          message_type?: string
+          raw?: Json | null
+          sender: string
+          zapi_message_id?: string | null
+        }
+        Update: {
+          content?: string | null
+          conversation_id?: string
+          created_at?: string
+          direction?: string
+          id?: string
+          media_caption?: string | null
+          media_mime?: string | null
+          media_url?: string | null
+          message_type?: string
+          raw?: Json | null
+          sender?: string
+          zapi_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wa_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "wa_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_sessions: {
         Row: {
           created_at: string
