@@ -254,6 +254,7 @@ function KanbanColumnCard({
                 onDragStart={(c) => onCardDragStart(c)}
                 onDragEnd={() => onCardDragEnd()}
                 onTemperatureChange={onTemperatureChange}
+                onDelete={onCardDelete}
               />
             ))
           )}
