@@ -470,6 +470,7 @@ export default function CRM() {
           !!l.travelers_count;
         const isFromWhatsApp = l.source === "whatsapp_ai" || l.source === "whatsapp";
         const isAI = isFromWhatsApp; // origem WhatsApp (com ou sem IA ativa) ganha o badge "IA"
+        const assignedUser = l.assigned_user_id ? userById.get(l.assigned_user_id) : null;
         return {
           id,
           clientName: l.full_name,
@@ -487,6 +488,13 @@ export default function CRM() {
           isReturning: !!l.is_returning,
           stageEnteredAt: existing?.stageEnteredAt ?? l.created_at ?? new Date().toISOString(),
           temperature: existing?.temperature ?? "cold",
+          agent: assignedUser
+            ? {
+                id: l.assigned_user_id,
+                name: assignedUser.name,
+                avatarUrl: assignedUser.avatarUrl ?? undefined,
+              }
+            : undefined,
           tags: [
             l.travelers_count ? { label: `${l.travelers_count} viajante(s)`, tone: "blue" as const } : null,
             isFromWhatsApp ? { label: "WhatsApp", tone: "green" as const } : null,
