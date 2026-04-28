@@ -17,6 +17,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MetricCard } from "@/components/MetricCard";
 import {
@@ -357,6 +358,7 @@ export default function CRM() {
   // ─── Sync inbound leads (from WhatsApp AI / manual quick-create) into the
   // "Novos Leads (IA)" column. We poll every 30s so newly captured leads show
   // up automatically without a page refresh.
+  const [leadsRefreshTick, setLeadsRefreshTick] = useState(0);
   useEffect(() => {
     let cancelled = false;
     const fetchLeads = async () => {
@@ -373,6 +375,7 @@ export default function CRM() {
           !!l.destination &&
           (!!l.travel_date_start || !!l.travel_date_end || !!l.flexible_dates_description) &&
           !!l.travelers_count;
+        const isAI = l.source === "whatsapp_ai";
         return {
           id: `lead-${l.id}`,
           clientName: l.full_name,
@@ -381,12 +384,13 @@ export default function CRM() {
             ? new Date(l.travel_date_start).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })
             : (l.flexible_dates_description ?? undefined),
           estimatedValue: l.budget_estimate ? Number(l.budget_estimate) : undefined,
-          isAILead: l.source === "whatsapp_ai",
+          isAILead: isAI,
+          isManualLead: !isAI,
           aiSummary: l.ai_summary ?? undefined,
           contactLevel: hasTravelData ? "lead" : "prospect",
           tags: [
             l.travelers_count ? { label: `${l.travelers_count} viajante(s)`, tone: "blue" as const } : null,
-            l.source === "whatsapp_ai" ? { label: "WhatsApp", tone: "green" as const } : null,
+            isAI ? { label: "WhatsApp", tone: "green" as const } : null,
           ].filter(Boolean) as KanbanCardData["tags"],
         };
       });
@@ -405,12 +409,108 @@ export default function CRM() {
       cancelled = true;
       clearInterval(interval);
     };
-  }, []);
+  }, [leadsRefreshTick]);
 
   // Add column dialog
   const [addOpen, setAddOpen] = useState(false);
   const [newColumnTitle, setNewColumnTitle] = useState("");
   const [insertIndex, setInsertIndex] = useState<number | null>(null);
+
+  // New lead dialog (manual)
+  const [newLeadOpen, setNewLeadOpen] = useState(false);
+  const [savingLead, setSavingLead] = useState(false);
+  const [leadForm, setLeadForm] = useState({
+    full_name: "",
+    phone: "",
+    email: "",
+    source: "whatsapp",
+    destination: "",
+    travel_period: "",
+    travelers_count: "",
+    notes: "",
+  });
+  const resetLeadForm = () =>
+    setLeadForm({
+      full_name: "",
+      phone: "",
+      email: "",
+      source: "whatsapp",
+      destination: "",
+      travel_period: "",
+      travelers_count: "",
+      notes: "",
+    });
+
+  const handleCreateLead = async () => {
+    const name = leadForm.full_name.trim();
+    const phone = leadForm.phone.trim();
+    if (!name) {
+      toast.error("Informe o nome completo.");
+      return;
+    }
+    if (!phone) {
+      toast.error("Telefone é obrigatório.");
+      return;
+    }
+    setSavingLead(true);
+    try {
+      // Heurística para período: detecta YYYY-MM ou DD/MM/YYYY no início, senão usa flexible_dates_description
+      let travel_date_start: string | null = null;
+      let flexible_dates = false;
+      let flexible_dates_description: string | null = null;
+      const period = leadForm.travel_period.trim();
+      if (period) {
+        const isoMatch = period.match(/^(\d{4})-(\d{2})(?:-(\d{2}))?$/);
+        const brMatch = period.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (isoMatch) {
+          travel_date_start = `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3] ?? "01"}`;
+        } else if (brMatch) {
+          travel_date_start = `${brMatch[3]}-${brMatch[2]}-${brMatch[1]}`;
+        } else {
+          flexible_dates = true;
+          flexible_dates_description = period;
+        }
+      }
+      const travelersNum = leadForm.travelers_count
+        ? parseInt(leadForm.travelers_count, 10)
+        : null;
+
+      const payload: any = {
+        full_name: name,
+        phone,
+        email: leadForm.email.trim() || null,
+        source: leadForm.source,
+        status: "new",
+        destination: leadForm.destination.trim() || null,
+        travel_date_start,
+        flexible_dates,
+        flexible_dates_description,
+        travelers_count: travelersNum && !Number.isNaN(travelersNum) ? travelersNum : null,
+        preferences: leadForm.notes.trim() || null,
+      };
+
+      const { error } = await supabase.from("leads").insert(payload);
+      if (error) throw error;
+
+      const willBeLead =
+        !!payload.destination &&
+        (!!payload.travel_date_start || !!payload.flexible_dates_description) &&
+        !!payload.travelers_count;
+
+      toast.success(
+        willBeLead
+          ? "Lead criado e adicionado ao funil."
+          : "Prospect criado em Novos Leads.",
+      );
+      resetLeadForm();
+      setNewLeadOpen(false);
+      setLeadsRefreshTick((t) => t + 1);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Erro ao criar lead.");
+    } finally {
+      setSavingLead(false);
+    }
+  };
 
   // Rename column dialog
   const [columnToRename, setColumnToRename] = useState<KanbanColumn | null>(null);
@@ -675,6 +775,15 @@ export default function CRM() {
               <X className="w-3.5 h-3.5" /> Limpar
             </Button>
           )}
+          {tab === "sales" && (
+            <Button
+              size="sm"
+              className="h-9 gap-1.5 sm:ml-auto"
+              onClick={() => setNewLeadOpen(true)}
+            >
+              <Plus className="w-4 h-4" /> Novo Lead
+            </Button>
+          )}
         </div>
       </section>
 
@@ -801,6 +910,137 @@ export default function CRM() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* New Lead dialog (manual) */}
+      <Dialog
+        open={newLeadOpen}
+        onOpenChange={(open) => {
+          setNewLeadOpen(open);
+          if (!open) resetLeadForm();
+        }}
+      >
+        <DialogContent className="md:max-w-[560px]">
+          <DialogHeader>
+            <DialogTitle>Novo lead</DialogTitle>
+            <DialogDescription>
+              Preencha os dados básicos. Se incluir destino, período e número de viajantes, o contato é criado já como Lead. Caso contrário, fica como Prospect em "Novos Leads".
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto pr-1">
+            <div className="grid gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="lead-name">Nome completo *</Label>
+                <Input
+                  id="lead-name"
+                  value={leadForm.full_name}
+                  onChange={(e) => setLeadForm((f) => ({ ...f, full_name: e.target.value }))}
+                  placeholder="Ex: Ana Souza"
+                  autoFocus
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="lead-phone">Telefone *</Label>
+                  <Input
+                    id="lead-phone"
+                    value={leadForm.phone}
+                    onChange={(e) => setLeadForm((f) => ({ ...f, phone: e.target.value }))}
+                    placeholder="(11) 99999-0000"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="lead-email">E-mail</Label>
+                  <Input
+                    id="lead-email"
+                    type="email"
+                    value={leadForm.email}
+                    onChange={(e) => setLeadForm((f) => ({ ...f, email: e.target.value }))}
+                    placeholder="opcional"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="lead-source">Origem do lead</Label>
+                <Select
+                  value={leadForm.source}
+                  onValueChange={(v) => setLeadForm((f) => ({ ...f, source: v }))}
+                >
+                  <SelectTrigger id="lead-source"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                    <SelectItem value="phone">Telefone</SelectItem>
+                    <SelectItem value="email">E-mail</SelectItem>
+                    <SelectItem value="referral">Indicação</SelectItem>
+                    <SelectItem value="event">Evento</SelectItem>
+                    <SelectItem value="social">Redes Sociais</SelectItem>
+                    <SelectItem value="in_person">Presencial</SelectItem>
+                    <SelectItem value="other">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t">
+              <p className="text-xs font-medium text-muted-foreground mb-3">
+                Interesse (opcional) — preencha para promover automaticamente a Lead
+              </p>
+              <div className="grid gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="lead-destination">Destino</Label>
+                    <Input
+                      id="lead-destination"
+                      value={leadForm.destination}
+                      onChange={(e) => setLeadForm((f) => ({ ...f, destination: e.target.value }))}
+                      placeholder="Ex: Paris"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="lead-period">Período pretendido</Label>
+                    <Input
+                      id="lead-period"
+                      value={leadForm.travel_period}
+                      onChange={(e) => setLeadForm((f) => ({ ...f, travel_period: e.target.value }))}
+                      placeholder="Ex: 2025-07 ou Jul/2025 (flexível)"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="lead-travelers">Número de viajantes</Label>
+                  <Input
+                    id="lead-travelers"
+                    type="number"
+                    min={1}
+                    value={leadForm.travelers_count}
+                    onChange={(e) => setLeadForm((f) => ({ ...f, travelers_count: e.target.value }))}
+                    placeholder="Ex: 2"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="lead-notes">Observações</Label>
+                  <Textarea
+                    id="lead-notes"
+                    rows={3}
+                    value={leadForm.notes}
+                    onChange={(e) => setLeadForm((f) => ({ ...f, notes: e.target.value }))}
+                    placeholder="Preferências, restrições, contexto..."
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewLeadOpen(false)} disabled={savingLead}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateLead} disabled={savingLead}>
+              {savingLead ? "Criando..." : "Criar lead"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Sparkles, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Sparkles, AlertTriangle, CheckCircle2, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
 
@@ -40,6 +40,8 @@ export type KanbanCardData = {
   };
   /** Marca o card como lead recém-triado pela IA (WhatsApp). */
   isAILead?: boolean;
+  /** Marca o card como lead criado manualmente pelo consultor. */
+  isManualLead?: boolean;
   /** Resumo curto da necessidade extraída pela IA. Exibido em itálico, máx. 2 linhas. */
   aiSummary?: string;
   /** Alerta visual exibido como badge no topo direito (e cor da borda esquerda quando destrutivo). */
@@ -125,6 +127,16 @@ export function KanbanCard({
       >
         <Sparkles className="w-3 h-3" />
         IA
+      </span>
+    );
+  } else if (card.isManualLead) {
+    cornerBadge = (
+      <span
+        title="Lead criado manualmente pelo consultor"
+        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-soft-blue/15 text-soft-blue"
+      >
+        <UserPlus className="w-3 h-3" />
+        Manual
       </span>
     );
   }
