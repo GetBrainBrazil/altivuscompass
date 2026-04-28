@@ -121,17 +121,18 @@ async function performDelete(target: DeleteContactTarget) {
     });
   }
 
-  const { error: cErr } = await (supabase as any)
-    .from("contacts")
-    .delete()
-    .eq("id", target.contactId);
+  const { error: cErr } = target.contactId
+    ? await (supabase as any).from("contacts").delete().eq("id", target.contactId)
+    : { error: null };
   if (cErr) throw cErr;
-  logAuditEvent({
-    action: "delete",
-    tableName: "contacts",
-    recordId: target.contactId,
-    recordLabel: target.fullName,
-  });
+  if (target.contactId) {
+    logAuditEvent({
+      action: "delete",
+      tableName: "contacts",
+      recordId: target.contactId,
+      recordLabel: target.fullName,
+    });
+  }
 }
 
 export function DeleteContactDialog({ open, onOpenChange, target, onDeleted }: Props) {
