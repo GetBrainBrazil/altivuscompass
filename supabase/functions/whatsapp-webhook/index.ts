@@ -495,15 +495,32 @@ async function handleLeadCapture(
     leadRow = data
   }
 
-  // 3) If no lead exists yet, create one. Use known name from contact when available;
+  // 3) If no lead exists yet, look one up by phone before creating a new row —
+  //    isso evita duplicar leads quando várias mensagens chegam quase juntas
+  //    (race condition que estava criando 2-4 prospects iguais).
+  if (!leadRow && phoneDigits) {
+    const tail = phoneDigits.slice(-9)
+    const { data: existingLeads } = await supabase
+      .from('leads')
+      .select('*')
+      .ilike('phone', `%${tail}%`)
+      .order('created_at', { ascending: false })
+      .limit(5)
+    const found = (existingLeads || []).find((l: any) =>
+      (l.phone || '').replace(/\D/g, '').endsWith(tail),
+    )
+    if (found) {
+      leadRow = found
+      leadId = found.id
+    }
+  }
+
+  // 4) Still nothing? Then create a fresh lead. Use known name from contact when available;
   //    se a IA / WhatsApp não trouxerem um nome real, o placeholder é o número de
   //    telefone formatado — NUNCA o destino, assunto ou outro campo.
   if (!leadRow) {
     const contactName = (matchedContact?.full_name || '').trim()
     const waSenderName = (senderName || '').trim()
-    // Aceita nome do WhatsApp apenas se parecer um nome humano (mais de uma palavra
-    // alfabética e sem dígitos), para evitar pegar coisas como "Cliente WhatsApp"
-    // ou nicknames com números.
     const looksLikeHumanName = (s: string) =>
       !!s && !/\d/.test(s) && s.split(/\s+/).filter((w) => w.length > 1).length >= 2
     const cleanName =
