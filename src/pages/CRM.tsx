@@ -375,24 +375,40 @@ export default function CRM() {
         .limit(100);
       if (error || cancelled || !data) return;
 
+      // Mantém temperatura/stageEnteredAt já existentes para cards de leads
+      const existingByLeadId = new Map<string, KanbanCardData>();
+      setSalesColumns((prevSnap) => {
+        prevSnap.forEach((col) =>
+          col.cards.forEach((c) => {
+            if (c.id.startsWith("lead-")) existingByLeadId.set(c.id, c);
+          }),
+        );
+        return prevSnap;
+      });
+
       const leadCards: KanbanCardData[] = data.map((l: any) => {
+        const id = `lead-${l.id}`;
+        const existing = existingByLeadId.get(id);
         const hasTravelData =
           !!l.destination &&
           (!!l.travel_date_start || !!l.travel_date_end || !!l.flexible_dates_description) &&
           !!l.travelers_count;
         const isAI = l.source === "whatsapp_ai";
         return {
-          id: `lead-${l.id}`,
+          id,
           clientName: l.full_name,
           destination: l.destination ?? undefined,
           travelDate: l.travel_date_start
             ? new Date(l.travel_date_start).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })
             : (l.flexible_dates_description ?? undefined),
+          travelDateISO: l.travel_date_start ?? undefined,
           estimatedValue: l.budget_estimate ? Number(l.budget_estimate) : undefined,
           isAILead: isAI,
           isManualLead: !isAI,
           aiSummary: l.ai_summary ?? undefined,
           contactLevel: hasTravelData ? "lead" : "prospect",
+          stageEnteredAt: existing?.stageEnteredAt ?? l.created_at ?? new Date().toISOString(),
+          temperature: existing?.temperature ?? "cold",
           tags: [
             l.travelers_count ? { label: `${l.travelers_count} viajante(s)`, tone: "blue" as const } : null,
             isAI ? { label: "WhatsApp", tone: "green" as const } : null,
