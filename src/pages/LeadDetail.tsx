@@ -123,6 +123,41 @@ export default function LeadDetail() {
   const [quotesCount, setQuotesCount] = useState(0);
   const [waPanelOpen, setWaPanelOpen] = useState(false);
 
+  // Quantidade de mensagens não lidas no WhatsApp
+  const onlyDigits = (s: string) => (s || "").replace(/\D/g, "");
+  const { data: waUnread = 0 } = useQuery({
+    queryKey: ["lead-wa-unread", contactId, form.phone],
+    enabled: !!contactId || !!form.phone,
+    queryFn: async () => {
+      let conv: any = null;
+      if (contactId) {
+        const { data } = await supabase
+          .from("wa_conversations")
+          .select("unread_count")
+          .eq("contact_id", contactId)
+          .order("last_message_at", { ascending: false, nullsFirst: false })
+          .limit(1)
+          .maybeSingle();
+        if (data) conv = data;
+      }
+      if (!conv) {
+        const tail = onlyDigits(form.phone || "").slice(-9);
+        if (!tail) return 0;
+        const { data } = await supabase
+          .from("wa_conversations")
+          .select("phone, unread_count")
+          .ilike("phone", `%${tail}%`)
+          .order("last_message_at", { ascending: false, nullsFirst: false })
+          .limit(5);
+        const found = (data || []).find((c: any) =>
+          onlyDigits(c.phone || "").endsWith(tail),
+        );
+        conv = found ?? null;
+      }
+      return Number(conv?.unread_count ?? 0);
+    },
+  });
+
   useEffect(() => {
     if (!card && id) setCard(readCard(id));
   }, [id, card]);
