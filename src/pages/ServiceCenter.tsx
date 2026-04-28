@@ -652,6 +652,28 @@ export default function ServiceCenter() {
     },
   });
 
+  // ===== Carrega contatos linkados (datas e flag retornou) =====
+  const contactIds = useMemo(
+    () => Array.from(new Set(convoRows.map((c: any) => c.contact_id).filter(Boolean))),
+    [convoRows],
+  );
+  const { data: contactsMeta = [] } = useQuery({
+    queryKey: ["wa_contacts_meta", contactIds.join(",")],
+    enabled: contactIds.length > 0,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("contacts")
+        .select("id, first_contact_at, last_contact_at, is_returning")
+        .in("id", contactIds);
+      return data ?? [];
+    },
+  });
+  const contactMetaById = useMemo(() => {
+    const m = new Map<string, any>();
+    (contactsMeta as any[]).forEach((c) => m.set(c.id, c));
+    return m;
+  }, [contactsMeta]);
+
   // ===== Carrega mensagens da conversa selecionada =====
   const { data: msgRows = [] } = useQuery({
     queryKey: ["wa_messages", selectedId],
