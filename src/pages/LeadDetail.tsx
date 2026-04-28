@@ -177,7 +177,7 @@ export default function LeadDetail() {
                   variant="outline"
                   size="sm"
                   className="border-primary/40 text-primary hover:bg-primary/5"
-                  onClick={() => setConvertOpen(true)}
+                  onClick={() => navigate(`/crm/lead/${id}/convert`)}
                 >
                   <UserCheck className="h-4 w-4 mr-1.5" />
                   Converter para Cliente
