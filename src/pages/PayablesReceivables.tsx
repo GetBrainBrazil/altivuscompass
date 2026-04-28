@@ -433,12 +433,22 @@ export default function PayablesReceivables() {
                 <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false}
                   tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} width={40} />
                 <Tooltip
-                  formatter={(v: any) => brl(Number(v))}
-                  contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                  cursor={{ fill: "hsl(var(--muted) / 0.3)" }}
+                  formatter={(v: any, name: any) => [brl(Number(v)), name]}
+                  labelStyle={{ color: "#0f172a", fontWeight: 600, marginBottom: 4 }}
+                  itemStyle={{ color: "#334155", fontSize: 12 }}
+                  contentStyle={{
+                    background: "#ffffff",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: 10,
+                    fontSize: 12,
+                    boxShadow: "0 8px 24px -8px rgba(15, 23, 42, 0.15), 0 2px 6px -2px rgba(15, 23, 42, 0.08)",
+                    padding: "8px 12px",
+                  }}
                 />
                 <Legend wrapperStyle={{ fontSize: 11 }} iconSize={10} />
-                <Bar dataKey="entradas" fill="hsl(var(--success))" name="Entradas" radius={[3, 3, 0, 0]} maxBarSize={14} />
-                <Bar dataKey="saidas" fill="hsl(var(--destructive))" name="Saídas" radius={[3, 3, 0, 0]} maxBarSize={14} />
+                <Bar dataKey="entradas" fill="#10b981" name="Entradas" radius={[3, 3, 0, 0]} maxBarSize={14} />
+                <Bar dataKey="saidas" fill="#f43f5e" name="Saídas" radius={[3, 3, 0, 0]} maxBarSize={14} />
               </BarChart>
             </ResponsiveContainer>
           </div>
