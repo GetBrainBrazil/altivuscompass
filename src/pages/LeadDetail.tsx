@@ -32,6 +32,7 @@ import type { KanbanCardData } from "@/components/crm/KanbanCard";
 import { IntlPhoneInput } from "@/components/ui/intl-phone-input";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadTimeline } from "@/components/crm/LeadTimeline";
+import { UserPicker } from "@/components/ui/user-picker";
 
 const FUNNEL_STAGES = [
   { id: "new-leads", title: "Novos Leads" },
