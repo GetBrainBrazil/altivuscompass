@@ -520,7 +520,8 @@ const ContactBanner = ({ conversation }: { conversation: Conversation }) => {
     if (level === "cliente" && contactId) {
       navigate(`/clients?contact=${contactId}`);
     } else if (leadId) {
-      navigate(`/leads/${leadId}`);
+      // Vai direto para o card no Kanban do Funil de Vendas
+      navigate(`/crm?tab=sales&focus=lead-${leadId}`);
     } else {
       navigate("/crm");
     }
