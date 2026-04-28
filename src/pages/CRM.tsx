@@ -639,7 +639,20 @@ export default function CRM() {
           detail: "Para mover para Cotação, é necessário ter ao menos uma cotação criada para este lead.",
           cta: {
             label: "Criar cotação para este lead",
-            onClick: () => navigate(`/sales?leadId=${leadId}&new=1`),
+            onClick: () => {
+              // Sinaliza ao CRM para mover este card para "Cotação" assim que a
+              // cotação for salva e vinculada ao lead.
+              try {
+                const raw = localStorage.getItem("crm:autoMove");
+                const list: Array<{ leadId: string; toColumnId: string }> = raw ? JSON.parse(raw) : [];
+                const filtered = list.filter((x) => x.leadId !== leadId);
+                filtered.push({ leadId, toColumnId: "quote" });
+                localStorage.setItem("crm:autoMove", JSON.stringify(filtered));
+              } catch {
+                /* ignore */
+              }
+              navigate("/quotes", { state: { newQuote: true, leadId } });
+            },
           },
         });
       }
