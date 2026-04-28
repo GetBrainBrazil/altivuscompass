@@ -638,7 +638,17 @@ const CRMPanel = ({ conversation }: { conversation: Conversation }) => {
               variant="default"
               size="sm"
               className="w-full gap-2 bg-[hsl(var(--navy))] text-[hsl(var(--cream))] hover:bg-[hsl(var(--navy))]/90"
-              onClick={() => navigate(isPostSale ? "/crm?tab=ops" : "/crm?tab=sales")}
+              onClick={() => {
+                if (isPostSale) {
+                  navigate(`/crm?tab=ops`);
+                  return;
+                }
+                if (level === "cliente" && contactId) {
+                  navigate(`/clients?contact=${contactId}`);
+                  return;
+                }
+                openLead({ leadId, contactId, name: leadName, phone });
+              }}
             >
               {isPostSale ? <LifeBuoy className="h-3.5 w-3.5" /> : <TrendingUp className="h-3.5 w-3.5" />}
               Abrir no CRM ({isPostSale ? "Operações" : "Vendas"})
@@ -646,6 +656,7 @@ const CRMPanel = ({ conversation }: { conversation: Conversation }) => {
           </div>
         </div>
       </ScrollArea>
+      {missingLeadDialog}
     </div>
   );
 };
