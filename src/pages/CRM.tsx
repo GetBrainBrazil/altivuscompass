@@ -300,17 +300,32 @@ export default function CRM() {
     }, { replace: true });
   };
 
-  const SALES_STORAGE_KEY = "crm:columns:sales:v2";
-  const OPS_STORAGE_KEY = "crm:columns:ops:v3";
+  const SALES_STORAGE_KEY = "crm:columns:sales:v3";
+  const OPS_STORAGE_KEY = "crm:columns:ops:v4";
+  const LEGACY_KEYS = [
+    "crm:columns:sales:v1",
+    "crm:columns:sales:v2",
+    "crm:columns:ops:v1",
+    "crm:columns:ops:v2",
+    "crm:columns:ops:v3",
+  ];
 
   const loadColumns = (key: string, fallback: KanbanColumn[]): KanbanColumn[] => {
     if (typeof window === "undefined") return fallback;
     try {
+      // Limpa quaisquer chaves antigas com mocks persistidos
+      LEGACY_KEYS.forEach((k) => localStorage.removeItem(k));
       const raw = localStorage.getItem(key);
       if (!raw) return fallback;
       const parsed = JSON.parse(raw) as KanbanColumn[];
       if (!Array.isArray(parsed) || parsed.length === 0) return fallback;
-      return parsed;
+      // Sanitiza: remove cards que não vieram do banco (sem prefixo lead-/quote-/manual-)
+      return parsed.map((col) => ({
+        ...col,
+        cards: col.cards.filter(
+          (c) => c.id.startsWith("lead-") || c.id.startsWith("quote-") || c.id.startsWith("manual-"),
+        ),
+      }));
     } catch {
       return fallback;
     }
