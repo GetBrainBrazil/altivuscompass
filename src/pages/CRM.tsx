@@ -378,7 +378,7 @@ export default function CRM() {
     const fetchLeads = async () => {
       const { data, error } = await supabase
         .from("leads")
-        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at")
+        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, is_returning, returned_at")
         .is("converted_client_id", null)
         .order("created_at", { ascending: false })
         .limit(100);
@@ -417,6 +417,7 @@ export default function CRM() {
           isManualLead: !isAI,
           aiSummary: l.ai_summary ?? undefined,
           contactLevel: hasTravelData ? "lead" : "prospect",
+          isReturning: !!l.is_returning,
           stageEnteredAt: existing?.stageEnteredAt ?? l.created_at ?? new Date().toISOString(),
           temperature: existing?.temperature ?? "cold",
           tags: [
@@ -481,12 +482,18 @@ export default function CRM() {
       };
 
       setSalesColumns((prev) => {
-        // IDs de leads que já estão em OUTRAS colunas (não devem voltar para "Novos Leads")
+        // IDs de leads que já estão em OUTRAS colunas (não devem voltar para "Novos Contatos")
+        // EXCETO os marcados como is_returning (devem voltar para a primeira coluna)
+        const returningLeadIds = new Set(
+          leadCards.filter((c) => c.isReturning).map((c) => c.id),
+        );
         const idsInOtherColumns = new Set<string>();
         prev.forEach((col) => {
           if (col.id !== "new-leads") {
             col.cards.forEach((c) => {
-              if (c.id.startsWith("lead-")) idsInOtherColumns.add(c.id);
+              if (c.id.startsWith("lead-") && !returningLeadIds.has(c.id)) {
+                idsInOtherColumns.add(c.id);
+              }
             });
           }
         });
@@ -498,10 +505,12 @@ export default function CRM() {
           if (col.id === "new-leads") {
             return { ...col, cards: filteredLeadCards };
           }
-          // Outras colunas: remove órfãos (leads/cotações excluídos) + enriquece
+          // Outras colunas: remove órfãos (leads/cotações excluídos) + cards retornados (foram para new-leads) + enriquece
           return {
             ...col,
-            cards: col.cards.filter((c) => isCardStillValid(c.id)).map(enrichCard),
+            cards: col.cards
+              .filter((c) => isCardStillValid(c.id) && !returningLeadIds.has(c.id))
+              .map(enrichCard),
           };
         });
       });
@@ -742,8 +751,11 @@ export default function CRM() {
         return { ...col, cards: col.cards.filter((c) => c.id !== move.cardId) };
       });
       if (!moving) return prev;
+      const wasReturning = (moving as KanbanCardData).isReturning;
       const movedCard: KanbanCardData = {
         ...(moving as KanbanCardData),
+        // Saindo de "Novos Contatos": consultor já viu, limpa o badge "Retornou"
+        isReturning: move.toColumnId === "new-leads" ? (moving as KanbanCardData).isReturning : false,
         stageEnteredAt: new Date().toISOString(),
       };
       const next = stripped.map((col) =>
@@ -757,6 +769,15 @@ export default function CRM() {
       toast.success(`Lead movido para "${move.toTitle}".`);
     }
     void logLeadHistory(move.leadId, move.fromTitle, move.toTitle, forced);
+    // Persiste limpeza do retorno no banco se saiu de Novos Contatos
+    if (move.toColumnId !== "new-leads" && move.leadId) {
+      void supabase.from("leads").update({ is_returning: false }).eq("id", move.leadId);
+      // Também limpa no contact (via lead_id)
+      void (supabase as any)
+        .from("contacts")
+        .update({ is_returning: false })
+        .eq("lead_id", move.leadId);
+    }
   };
 
   // Avalia restrições por coluna de destino. Devolve a lista de issues; vazia = pode mover.

@@ -1068,7 +1068,41 @@ async function ensureContactForPhone(
   )
 
   if (matched) {
-    console.log(`[ensureContactForPhone] Contact existente (level=${matched.level}) para ${phone}`)
+    // Atualiza last_contact_at e detecta retorno (>30 dias sem contato)
+    const nowIso = new Date().toISOString()
+    const { data: full } = await supabase
+      .from('contacts')
+      .select('first_contact_at, last_contact_at, level')
+      .eq('id', matched.id)
+      .maybeSingle()
+
+    const lastAt = full?.last_contact_at ? new Date(full.last_contact_at).getTime() : null
+    const daysSince = lastAt ? (Date.now() - lastAt) / (1000 * 60 * 60 * 24) : null
+    const isReactivating = daysSince !== null && daysSince > 30 && full?.level !== 'cliente'
+
+    const updates: Record<string, unknown> = {
+      last_contact_at: nowIso,
+      first_contact_at: full?.first_contact_at ?? nowIso,
+    }
+    if (isReactivating) {
+      updates.is_returning = true
+      updates.returned_at = nowIso
+    }
+    await supabase.from('contacts').update(updates).eq('id', matched.id)
+
+    if (matched.lead_id && isReactivating) {
+      await supabase
+        .from('leads')
+        .update({ is_returning: true, returned_at: nowIso, last_contact_at: nowIso })
+        .eq('id', matched.lead_id)
+    } else if (matched.lead_id) {
+      await supabase
+        .from('leads')
+        .update({ last_contact_at: nowIso })
+        .eq('id', matched.lead_id)
+    }
+
+    console.log(`[ensureContactForPhone] Contact existente (level=${matched.level}) para ${phone}${isReactivating ? ' [REATIVADO]' : ''}`)
     return {
       contact_id: matched.id,
       lead_id: matched.lead_id ?? null,
@@ -1129,6 +1163,18 @@ async function ensureContactForPhone(
     .select('id, full_name, level, client_id')
     .eq('lead_id', leadId)
     .maybeSingle()
+
+  // Marca first_contact_at/last_contact_at no contato recém-criado
+  if (contactRow?.id) {
+    const nowIso = new Date().toISOString()
+    await supabase
+      .from('contacts')
+      .update({ first_contact_at: nowIso, last_contact_at: nowIso })
+      .eq('id', contactRow.id)
+    if (leadId) {
+      await supabase.from('leads').update({ last_contact_at: nowIso }).eq('id', leadId)
+    }
+  }
 
   return {
     contact_id: contactRow?.id ?? null,

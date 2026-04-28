@@ -59,6 +59,8 @@ export type KanbanCardData = {
   temperature?: LeadTemperature;
   /** Cliente já existente iniciando uma nova jornada de compra. */
   isRepurchase?: boolean;
+  /** Contato antigo que voltou após >30 dias sem interação. */
+  isReturning?: boolean;
 };
 
 const TAG_TONE_CLASSES: Record<KanbanTagTone, string> = {
@@ -208,7 +210,9 @@ export function KanbanCard({
     ? "border-l-destructive"
     : card.isRepurchase
       ? "border-l-amber-400"
-      : stageBorderClass;
+      : card.isReturning
+        ? "border-l-sky-400"
+        : stageBorderClass;
   const noAgent = !card.agent;
 
   return (
@@ -263,6 +267,8 @@ export function KanbanCard({
         alert?.tone === "destructive" && "bg-destructive/5",
         card.isRepurchase &&
           "border-amber-300/70 ring-1 ring-amber-200/60 bg-gradient-to-br from-amber-50/40 to-transparent",
+        card.isReturning && !card.isRepurchase &&
+          "border-sky-300/70 ring-1 ring-sky-200/60 bg-gradient-to-br from-sky-50/40 to-transparent",
       )}
     >
       <div className="px-3.5 py-3">
@@ -303,7 +309,7 @@ export function KanbanCard({
         </div>
 
         {/* Badge de nível do contato */}
-        {(card.contactLevel || card.isRepurchase) && (
+        {(card.contactLevel || card.isRepurchase || card.isReturning) && (
           <div className="mb-1.5 flex items-center gap-1.5 flex-wrap">
             {card.contactLevel && <ContactLevelBadge level={card.contactLevel} size="xs" />}
             {card.isRepurchase && (
@@ -313,6 +319,15 @@ export function KanbanCard({
               >
                 <Sparkles className="w-2.5 h-2.5" />
                 Recompra
+              </span>
+            )}
+            {card.isReturning && !card.isRepurchase && (
+              <span
+                title="Contato antigo que voltou a falar após mais de 30 dias"
+                className="inline-flex items-center gap-1 rounded-full border border-sky-300 bg-gradient-to-r from-sky-100 to-sky-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-800"
+              >
+                <Sparkles className="w-2.5 h-2.5" />
+                Retornou
               </span>
             )}
           </div>
