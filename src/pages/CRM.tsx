@@ -854,7 +854,14 @@ export default function CRM() {
     try {
       const issues = await validateMove(card, targetColumnId, leadId);
       if (issues.length === 0) {
-        performMove(move, false);
+        // Caso especial: mover para "Fechado" → promove Lead em Cliente
+        if (targetColumnId === "closed" && leadId) {
+          setPromotionLeadId(leadId);
+          setPromotionPendingMove(move);
+          setPromotionOpen(true);
+        } else {
+          performMove(move, false);
+        }
       } else {
         setPendingMove(move);
         setPendingIssues(issues);
@@ -862,6 +869,80 @@ export default function CRM() {
     } finally {
       setValidating(false);
     }
+  };
+
+  // Após promoção bem-sucedida no modal: move o card para "Fechado",
+  // adiciona ao Kanban de Operações em "Pré-Viagem" e atualiza badge/alertas.
+  const handlePromotionDone = (result: {
+    clientId: string;
+    contactId: string | null;
+    needsComplementaryData: boolean;
+  }) => {
+    const move = promotionPendingMove;
+    setPromotionPendingMove(null);
+    setPromotionLeadId(null);
+    if (!move) return;
+
+    const incompleteAlert = result.needsComplementaryData
+      ? { label: "Cadastro incompleto", tone: "warning" as const }
+      : undefined;
+
+    // 1. Mover o card para "Fechado" no funil de vendas e marcar como Cliente
+    setSalesColumns((prev) => {
+      let moving: KanbanCardData | null = null;
+      const stripped = prev.map((col) => {
+        const idx = col.cards.findIndex((c) => c.id === move.cardId);
+        if (idx === -1) return col;
+        moving = col.cards[idx];
+        if (col.id === move.toColumnId) return col;
+        return { ...col, cards: col.cards.filter((c) => c.id !== move.cardId) };
+      });
+      if (!moving) return prev;
+      const movedCard: KanbanCardData = {
+        ...(moving as KanbanCardData),
+        contactLevel: "cliente",
+        alert: incompleteAlert,
+        stageEnteredAt: new Date().toISOString(),
+      };
+      return stripped.map((col) =>
+        col.id === move.toColumnId
+          ? {
+              ...col,
+              cards: col.cards.some((c) => c.id === move.cardId)
+                ? col.cards.map((c) => (c.id === move.cardId ? movedCard : c))
+                : [movedCard, ...col.cards],
+            }
+          : col,
+      );
+    });
+
+    // 2. Espelhar o card no Kanban de Operações em "Pré-Viagem"
+    setOpsColumns((prev) => {
+      const sourceCard =
+        salesColumns.flatMap((c) => c.cards).find((c) => c.id === move.cardId) ?? null;
+      if (!sourceCard) return prev;
+      const opsCard: KanbanCardData = {
+        ...sourceCard,
+        contactLevel: "cliente",
+        alert: incompleteAlert,
+        stageEnteredAt: new Date().toISOString(),
+      };
+      return prev.map((col) => {
+        if (col.id !== "pre-trip") {
+          return { ...col, cards: col.cards.filter((c) => c.id !== move.cardId) };
+        }
+        if (col.cards.some((c) => c.id === move.cardId)) {
+          return {
+            ...col,
+            cards: col.cards.map((c) => (c.id === move.cardId ? opsCard : c)),
+          };
+        }
+        return { ...col, cards: [opsCard, ...col.cards] };
+      });
+    });
+
+    toast.success(`Lead promovido a Cliente e movido para "${move.toTitle}".`);
+    void logLeadHistory(move.leadId, move.fromTitle, move.toTitle, false);
   };
 
   const handleTemperatureChange = (card: KanbanCardData, next: LeadTemperature) => {
