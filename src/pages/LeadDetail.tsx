@@ -53,33 +53,143 @@ export default function LeadDetail() {
   
   const leadId = id?.startsWith("lead-") ? id.slice("lead-".length) : null;
 
+  type FormState = {
+    full_name: string;
+    phone: string;
+    destination: string;
+    travel_date_label: string;
+    budget_estimate: string;
+    travelers_count: string;
+    agent_name: string;
+    preferences: string;
+  };
+  const [form, setForm] = useState<FormState>({
+    full_name: "",
+    phone: "",
+    destination: "",
+    travel_date_label: "",
+    budget_estimate: "",
+    travelers_count: "",
+    agent_name: "",
+    preferences: "",
+  });
+  const [saving, setSaving] = useState(false);
+
   useEffect(() => {
     if (!card && id) setCard(readCard(id));
   }, [id, card]);
 
-  // Garante que o telefone esteja disponível mesmo quando o card vem do
-  // sessionStorage sem esse campo (ex.: acesso direto pela URL).
+  // Carrega dados do lead do banco e popula form
   useEffect(() => {
     let cancelled = false;
     if (!leadId) return;
-    if (card?.phone) return;
     (async () => {
       const { data } = await supabase
         .from("leads")
-        .select("phone, full_name, destination")
+        .select("phone, full_name, destination, travel_date_start, travel_date_end, budget_estimate, travelers_count, preferences")
         .eq("id", leadId)
         .maybeSingle();
       if (cancelled || !data) return;
+      const dateLabel = data.travel_date_start
+        ? data.travel_date_end && data.travel_date_end !== data.travel_date_start
+          ? `${data.travel_date_start} a ${data.travel_date_end}`
+          : data.travel_date_start
+        : "";
+      setForm((prev) => ({
+        ...prev,
+        full_name: data.full_name ?? prev.full_name,
+        phone: data.phone ?? prev.phone,
+        destination: data.destination ?? prev.destination,
+        travel_date_label: dateLabel || prev.travel_date_label,
+        budget_estimate: data.budget_estimate?.toString() ?? prev.budget_estimate,
+        travelers_count: data.travelers_count?.toString() ?? prev.travelers_count,
+        preferences: data.preferences ?? prev.preferences,
+      }));
       setCard((prev) => ({
         id: id!,
-        clientName: prev?.clientName || data.full_name || "",
-        destination: prev?.destination ?? data.destination ?? undefined,
+        clientName: data.full_name || prev?.clientName || "",
+        destination: data.destination ?? prev?.destination,
         ...prev,
-        phone: data.phone ?? undefined,
+        phone: data.phone ?? prev?.phone,
       }));
     })();
     return () => { cancelled = true; };
-  }, [leadId, id, card?.phone]);
+  }, [leadId, id]);
+
+  // Inicializa form a partir do card (sessionStorage) quando ainda não veio do banco
+  useEffect(() => {
+    if (!card) return;
+    setForm((prev) => ({
+      ...prev,
+      full_name: prev.full_name || card.clientName || "",
+      phone: prev.phone || card.phone || "",
+      destination: prev.destination || card.destination || "",
+      travel_date_label: prev.travel_date_label || card.travelDate || "",
+      budget_estimate: prev.budget_estimate || card.estimatedValue?.toString() || "",
+      agent_name: prev.agent_name || card.agent?.name || "",
+    }));
+  }, [card]);
+
+  const updateField = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
+
+  const handleSave = async () => {
+    if (!leadId) {
+      toast.error("Lead não identificado.");
+      return;
+    }
+    if (!form.full_name.trim()) {
+      toast.error("Informe o nome do cliente.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const budget = form.budget_estimate ? Number(form.budget_estimate) : null;
+      const travelers = form.travelers_count ? parseInt(form.travelers_count, 10) : null;
+      const { error } = await supabase
+        .from("leads")
+        .update({
+          full_name: form.full_name.trim(),
+          phone: form.phone || null,
+          destination: form.destination || null,
+          budget_estimate: Number.isFinite(budget as number) ? budget : null,
+          travelers_count: Number.isFinite(travelers as number) ? travelers : null,
+          preferences: form.preferences || null,
+        })
+        .eq("id", leadId);
+      if (error) throw error;
+      // Atualiza cache local do card
+      setCard((prev) =>
+        prev
+          ? {
+              ...prev,
+              clientName: form.full_name.trim(),
+              phone: form.phone || undefined,
+              destination: form.destination || undefined,
+              estimatedValue: budget ?? undefined,
+            }
+          : prev
+      );
+      try {
+        sessionStorage.setItem(
+          `crm:lead:${id}`,
+          JSON.stringify({
+            ...(card ?? { id: id! }),
+            clientName: form.full_name.trim(),
+            phone: form.phone || undefined,
+            destination: form.destination || undefined,
+            estimatedValue: budget ?? undefined,
+          })
+        );
+      } catch { /* ignore */ }
+      toast.success("Alterações salvas com sucesso.");
+    } catch (err) {
+      console.error("[LeadDetail] save error:", err);
+      toast.error("Não foi possível salvar. Tente novamente.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const stageIndex = useMemo(
     () => Math.max(0, FUNNEL_STAGES.findIndex((s) => s.id === stageId)),
