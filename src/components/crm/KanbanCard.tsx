@@ -210,7 +210,9 @@ export function KanbanCard({
     ? "border-l-destructive"
     : card.isRepurchase
       ? "border-l-amber-400"
-      : stageBorderClass;
+      : card.isReturning
+        ? "border-l-sky-400"
+        : stageBorderClass;
   const noAgent = !card.agent;
 
   return (
