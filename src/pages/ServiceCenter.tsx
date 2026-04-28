@@ -147,6 +147,142 @@ const formatPhone = (phone: string) => {
 
 const getLastMessage = (c: Conversation) => c.messages[c.messages.length - 1];
 
+/**
+ * Hook compartilhado: abre a ficha do lead no CRM (mesma rota usada quando o
+ * consultor clica no card no Kanban). Verifica se o lead ainda existe no banco
+ * antes de navegar; caso contrário, expõe um diálogo para criar o card.
+ */
+function useOpenLeadInCRM() {
+  const navigate = useNavigate();
+  const [missingDialog, setMissingDialog] = useState<null | {
+    phone: string;
+    name: string;
+    contactId?: string;
+  }>(null);
+  const [creating, setCreating] = useState(false);
+
+  const goToLead = (leadId: string, displayName?: string, phone?: string) => {
+    try {
+      sessionStorage.setItem(
+        `crm:lead:lead-${leadId}`,
+        JSON.stringify({
+          id: `lead-${leadId}`,
+          clientName: displayName || phone || "Lead",
+          phone,
+          isAILead: true,
+        }),
+      );
+    } catch { /* ignore */ }
+    navigate(`/crm/lead/lead-${leadId}?stage=new-leads`);
+  };
+
+  /**
+   * Tenta abrir a ficha do lead. Se o vínculo não existir (ou tiver sido
+   * removido no banco), abre o dialog para criar o card retroativamente.
+   */
+  const openLead = async (params: {
+    leadId?: string;
+    contactId?: string;
+    name: string;
+    phone: string;
+  }) => {
+    const { leadId, contactId, name, phone } = params;
+
+    // Caminho normal: temos leadId — confirma no banco antes de navegar
+    if (leadId) {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("id, full_name, phone")
+        .eq("id", leadId)
+        .maybeSingle();
+      if (!error && data) {
+        goToLead(data.id, data.full_name || name, data.phone || phone);
+        return;
+      }
+    }
+
+    // Sem leadId ou registro inexistente: pede confirmação para criar
+    setMissingDialog({ phone, name, contactId });
+  };
+
+  const createCardAndOpen = async () => {
+    if (!missingDialog) return;
+    setCreating(true);
+    try {
+      // Verifica novamente por sufixo do telefone (race com webhook)
+      const tail = (missingDialog.phone || "").replace(/\D/g, "").slice(-9);
+      if (tail) {
+        const { data: existing } = await supabase
+          .from("leads")
+          .select("id, full_name, phone")
+          .ilike("phone", `%${tail}%`)
+          .order("created_at", { ascending: false })
+          .limit(5);
+        const found = (existing || []).find((l) =>
+          (l.phone || "").replace(/\D/g, "").endsWith(tail),
+        );
+        if (found) {
+          goToLead(found.id, found.full_name || missingDialog.name, found.phone || missingDialog.phone);
+          setMissingDialog(null);
+          return;
+        }
+      }
+
+      const { data: created, error } = await supabase
+        .from("leads")
+        .insert({
+          full_name: missingDialog.name || missingDialog.phone,
+          phone: missingDialog.phone || null,
+          source: "whatsapp",
+          status: "new",
+        })
+        .select("id, full_name, phone")
+        .single();
+      if (error) throw error;
+      // Vincula ao contact se houver
+      if (missingDialog.contactId) {
+        await supabase
+          .from("contacts")
+          .update({ lead_id: created.id })
+          .eq("id", missingDialog.contactId);
+      }
+      toast.success("Card criado no Funil de Vendas.");
+      goToLead(created.id, created.full_name || missingDialog.name, created.phone || missingDialog.phone);
+      setMissingDialog(null);
+    } catch (err) {
+      console.error("[useOpenLeadInCRM] create error:", err);
+      toast.error("Não foi possível criar o card. Tente novamente.");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const dialog = (
+    <AlertDialog
+      open={!!missingDialog}
+      onOpenChange={(o) => { if (!o && !creating) setMissingDialog(null); }}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Card não encontrado no Funil</AlertDialogTitle>
+          <AlertDialogDescription>
+            Não localizamos o card deste contato no Kanban do Funil de Vendas.
+            Deseja criar o card agora e abrir a ficha do lead?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={creating}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={createCardAndOpen} disabled={creating}>
+            {creating ? "Criando..." : "Criar card e abrir"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
+  return { openLead, dialog };
+}
+
 // ============= Subcomponents =============
 interface ConversationCardProps {
   conversation: Conversation;
