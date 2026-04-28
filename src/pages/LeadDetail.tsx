@@ -20,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import type { KanbanCardData } from "@/components/crm/KanbanCard";
-import { LeadConversionDialog } from "@/components/crm/LeadConversionDialog";
+
 import { supabase } from "@/integrations/supabase/client";
 
 function formatPhoneBR(phone?: string | null): string {
@@ -62,7 +62,7 @@ export default function LeadDetail() {
   const [card, setCard] = useState<KanbanCardData | null>(() =>
     id ? readCard(id) : null
   );
-  const [convertOpen, setConvertOpen] = useState(false);
+  
   const leadId = id?.startsWith("lead-") ? id.slice("lead-".length) : null;
 
   useEffect(() => {
@@ -177,7 +177,7 @@ export default function LeadDetail() {
                   variant="outline"
                   size="sm"
                   className="border-primary/40 text-primary hover:bg-primary/5"
-                  onClick={() => setConvertOpen(true)}
+                  onClick={() => navigate(`/crm/lead/${id}/convert`)}
                 >
                   <UserCheck className="h-4 w-4 mr-1.5" />
                   Converter para Cliente
@@ -350,12 +350,8 @@ export default function LeadDetail() {
         </Tabs>
       </main>
 
-      <LeadConversionDialog
-        leadId={leadId}
-        open={convertOpen}
-        onOpenChange={setConvertOpen}
-        onConverted={() => navigate("/crm")}
-      />
+
+
     </div>
   );
 }

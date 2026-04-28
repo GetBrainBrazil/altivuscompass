@@ -19,9 +19,8 @@ import {
   ExternalLink,
   CircleDot,
 } from "lucide-react";
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { KanbanCardData } from "@/components/crm/KanbanCard";
-import { LeadConversionDialog } from "@/components/crm/LeadConversionDialog";
 
 type Props = {
   card: KanbanCardData | null;
@@ -77,7 +76,7 @@ function buildTimeline(card: KanbanCardData | null): TimelineEvent[] {
 
 export function LeadDetailPanel({ card, open, onOpenChange }: Props) {
   const timeline = buildTimeline(card);
-  const [convertOpen, setConvertOpen] = useState(false);
+  const navigate = useNavigate();
   const leadId = getLeadIdFromCard(card);
 
   return (
@@ -173,7 +172,7 @@ export function LeadDetailPanel({ card, open, onOpenChange }: Props) {
                   variant="outline"
                   size="sm"
                   className="mr-auto border-primary/40 text-primary hover:bg-primary/5"
-                  onClick={() => setConvertOpen(true)}
+                  onClick={() => { onOpenChange(false); navigate(`/crm/lead/lead-${leadId}/convert`); }}
                 >
                   <UserCheck className="h-4 w-4 mr-1.5" />
                   Converter para Cliente
@@ -239,12 +238,6 @@ export function LeadDetailPanel({ card, open, onOpenChange }: Props) {
           </TabsContent>
         </Tabs>
       </SheetContent>
-      <LeadConversionDialog
-        leadId={leadId}
-        open={convertOpen}
-        onOpenChange={setConvertOpen}
-        onConverted={() => onOpenChange(false)}
-      />
     </Sheet>
   );
 }
