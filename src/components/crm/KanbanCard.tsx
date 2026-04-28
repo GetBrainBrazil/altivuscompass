@@ -204,7 +204,11 @@ export function KanbanCard({
     );
   }
 
-  const leftBorder = alert?.tone === "destructive" ? "border-l-destructive" : stageBorderClass;
+  const leftBorder = alert?.tone === "destructive"
+    ? "border-l-destructive"
+    : card.isRepurchase
+      ? "border-l-amber-400"
+      : stageBorderClass;
   const noAgent = !card.agent;
 
   return (
