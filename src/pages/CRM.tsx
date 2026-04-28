@@ -608,6 +608,45 @@ export default function CRM() {
   const [promotionPendingMove, setPromotionPendingMove] = useState<PendingMove | null>(null);
   const [promotionOpen, setPromotionOpen] = useState(false);
 
+  // ─── Excluir card direto do CRM ─────────────────────────────
+  const [deleteTarget, setDeleteTarget] = useState<DeleteContactTarget | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const handleCardDelete = async (card: KanbanCardData) => {
+    const leadId = card.id.startsWith("lead-") ? card.id.slice("lead-".length) : null;
+    if (!leadId) {
+      toast.error("Este card não está vinculado a um lead no banco e não pode ser excluído por aqui.");
+      return;
+    }
+    // Busca o contact correspondente para construir o target
+    const { data: contact } = await (supabase as any)
+      .from("contacts")
+      .select("id, level, client_id, full_name")
+      .eq("lead_id", leadId)
+      .maybeSingle();
+    const level = (contact?.level as DeleteContactTarget["level"]) ?? "lead";
+    setDeleteTarget({
+      contactId: contact?.id ?? null,
+      clientId: contact?.client_id ?? null,
+      leadId,
+      fullName: contact?.full_name ?? card.clientName,
+      level,
+    });
+    setDeleteOpen(true);
+  };
+
+  const handleAfterDelete = () => {
+    if (!deleteTarget?.leadId) return;
+    const cardId = `lead-${deleteTarget.leadId}`;
+    setSalesColumns((prev) =>
+      prev.map((col) => ({ ...col, cards: col.cards.filter((c) => c.id !== cardId) })),
+    );
+    setOpsColumns((prev) =>
+      prev.map((col) => ({ ...col, cards: col.cards.filter((c) => c.id !== cardId) })),
+    );
+    setDeleteTarget(null);
+  };
+
   const setColumns = tab === "sales" ? setSalesColumns : setOpsColumns;
   const columns = tab === "sales" ? salesColumns : opsColumns;
 
