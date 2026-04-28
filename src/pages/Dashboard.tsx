@@ -108,7 +108,7 @@ export default function Dashboard() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
             Nova Cotação
           </Link>
-          <Link to="/clients" className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg border border-border text-xs sm:text-sm font-medium font-body text-foreground hover:bg-muted transition-colors">
+          <Link to="/contacts" className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg border border-border text-xs sm:text-sm font-medium font-body text-foreground hover:bg-muted transition-colors">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M5 20c0-4 3.5-7 7-7s7 3 7 7" /></svg>
             Novo Cliente
           </Link>
