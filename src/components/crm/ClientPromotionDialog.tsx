@@ -183,9 +183,9 @@ export function ClientPromotionDialog({
       };
 
       if (clientId) {
-        await supabase.from("clients").update(clientPayload).eq("id", clientId);
+        await (supabase as any).from("clients").update(clientPayload).eq("id", clientId);
       } else {
-        const { data: newClient, error } = await supabase
+        const { data: newClient, error } = await (supabase as any)
           .from("clients")
           .insert(clientPayload)
           .select("id")
