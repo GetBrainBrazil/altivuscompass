@@ -193,6 +193,65 @@ Deno.serve(async (req) => {
       })
     }
 
+    // ===== Espelha mensagem enviada na Central de Atendimento =====
+    try {
+      const sendableActions = ['send-text', 'send-image', 'send-document', 'send-link']
+      if (sendableActions.includes(action)) {
+        const serviceClient = createClient(
+          supabaseUrl,
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+        )
+
+        let messageType = 'text'
+        let content: string | null = message ?? null
+        let mediaUrl: string | null = null
+        let mediaCaption: string | null = null
+        if (action === 'send-image') {
+          messageType = 'image'; mediaUrl = image_url ?? null; mediaCaption = message ?? null; content = null
+        } else if (action === 'send-document') {
+          messageType = 'document'; mediaUrl = document_url ?? null; mediaCaption = message ?? null; content = null
+        } else if (action === 'send-link') {
+          messageType = 'text'; content = `${message ?? ''}\n${body.link_url ?? ''}`.trim()
+        }
+
+        const preview =
+          messageType === 'text' ? (content ?? '').slice(0, 200) :
+          messageType === 'image' ? '📷 Imagem' :
+          messageType === 'document' ? '📄 Documento' : 'Mensagem'
+
+        const { data: convo } = await serviceClient
+          .from('wa_conversations')
+          .upsert(
+            {
+              phone: cleanPhone,
+              last_message_text: preview,
+              last_message_at: new Date().toISOString(),
+              last_message_from: 'agent',
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'phone' }
+          )
+          .select('id')
+          .single()
+
+        if (convo) {
+          await serviceClient.from('wa_messages').insert({
+            conversation_id: convo.id,
+            direction: 'out',
+            sender: 'agent',
+            message_type: messageType,
+            content,
+            media_url: mediaUrl,
+            media_caption: mediaCaption,
+            zapi_message_id: result?.messageId || result?.id || null,
+            raw: { action, payload: body, response: result },
+          })
+        }
+      }
+    } catch (mirrorErr) {
+      console.error('Service Center mirror (out) failed:', mirrorErr)
+    }
+
     return new Response(JSON.stringify({ success: true, data: result }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
