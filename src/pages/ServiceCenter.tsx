@@ -35,6 +35,16 @@ import { cn } from "@/lib/utils";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
 import { NewMessageDialog } from "@/components/service-center/NewMessageDialog";
 import { Plus, Info } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type FilterTab = "all" | "leads" | "support" | "human";
 
@@ -136,6 +146,142 @@ const formatPhone = (phone: string) => {
 };
 
 const getLastMessage = (c: Conversation) => c.messages[c.messages.length - 1];
+
+/**
+ * Hook compartilhado: abre a ficha do lead no CRM (mesma rota usada quando o
+ * consultor clica no card no Kanban). Verifica se o lead ainda existe no banco
+ * antes de navegar; caso contrário, expõe um diálogo para criar o card.
+ */
+function useOpenLeadInCRM() {
+  const navigate = useNavigate();
+  const [missingDialog, setMissingDialog] = useState<null | {
+    phone: string;
+    name: string;
+    contactId?: string;
+  }>(null);
+  const [creating, setCreating] = useState(false);
+
+  const goToLead = (leadId: string, displayName?: string, phone?: string) => {
+    try {
+      sessionStorage.setItem(
+        `crm:lead:lead-${leadId}`,
+        JSON.stringify({
+          id: `lead-${leadId}`,
+          clientName: displayName || phone || "Lead",
+          phone,
+          isAILead: true,
+        }),
+      );
+    } catch { /* ignore */ }
+    navigate(`/crm/lead/lead-${leadId}?stage=new-leads`);
+  };
+
+  /**
+   * Tenta abrir a ficha do lead. Se o vínculo não existir (ou tiver sido
+   * removido no banco), abre o dialog para criar o card retroativamente.
+   */
+  const openLead = async (params: {
+    leadId?: string;
+    contactId?: string;
+    name: string;
+    phone: string;
+  }) => {
+    const { leadId, contactId, name, phone } = params;
+
+    // Caminho normal: temos leadId — confirma no banco antes de navegar
+    if (leadId) {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("id, full_name, phone")
+        .eq("id", leadId)
+        .maybeSingle();
+      if (!error && data) {
+        goToLead(data.id, data.full_name || name, data.phone || phone);
+        return;
+      }
+    }
+
+    // Sem leadId ou registro inexistente: pede confirmação para criar
+    setMissingDialog({ phone, name, contactId });
+  };
+
+  const createCardAndOpen = async () => {
+    if (!missingDialog) return;
+    setCreating(true);
+    try {
+      // Verifica novamente por sufixo do telefone (race com webhook)
+      const tail = (missingDialog.phone || "").replace(/\D/g, "").slice(-9);
+      if (tail) {
+        const { data: existing } = await supabase
+          .from("leads")
+          .select("id, full_name, phone")
+          .ilike("phone", `%${tail}%`)
+          .order("created_at", { ascending: false })
+          .limit(5);
+        const found = (existing || []).find((l) =>
+          (l.phone || "").replace(/\D/g, "").endsWith(tail),
+        );
+        if (found) {
+          goToLead(found.id, found.full_name || missingDialog.name, found.phone || missingDialog.phone);
+          setMissingDialog(null);
+          return;
+        }
+      }
+
+      const { data: created, error } = await supabase
+        .from("leads")
+        .insert({
+          full_name: missingDialog.name || missingDialog.phone,
+          phone: missingDialog.phone || null,
+          source: "whatsapp",
+          status: "new",
+        })
+        .select("id, full_name, phone")
+        .single();
+      if (error) throw error;
+      // Vincula ao contact se houver
+      if (missingDialog.contactId) {
+        await supabase
+          .from("contacts")
+          .update({ lead_id: created.id })
+          .eq("id", missingDialog.contactId);
+      }
+      toast.success("Card criado no Funil de Vendas.");
+      goToLead(created.id, created.full_name || missingDialog.name, created.phone || missingDialog.phone);
+      setMissingDialog(null);
+    } catch (err) {
+      console.error("[useOpenLeadInCRM] create error:", err);
+      toast.error("Não foi possível criar o card. Tente novamente.");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const dialog = (
+    <AlertDialog
+      open={!!missingDialog}
+      onOpenChange={(o) => { if (!o && !creating) setMissingDialog(null); }}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Card não encontrado no Funil</AlertDialogTitle>
+          <AlertDialogDescription>
+            Não localizamos o card deste contato no Kanban do Funil de Vendas.
+            Deseja criar o card agora e abrir a ficha do lead?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={creating}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={createCardAndOpen} disabled={creating}>
+            {creating ? "Criando..." : "Criar card e abrir"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
+  return { openLead, dialog };
+}
 
 // ============= Subcomponents =============
 interface ConversationCardProps {
@@ -339,9 +485,10 @@ const LeadSummaryPanel = ({ summary }: LeadSummaryPanelProps) => (
 // ============= CRM Panel =============
 const CRMPanel = ({ conversation }: { conversation: Conversation }) => {
   const navigate = useNavigate();
-  const { category, contactType, crm } = conversation;
+  const { category, contactType, crm, leadId, contactId, leadName, phone, level } = conversation;
   const isPostSale = category === "post-sale";
   const isExisting = contactType === "existing-client";
+  const { openLead, dialog: missingLeadDialog } = useOpenLeadInCRM();
 
   return (
     <div className="h-full flex flex-col bg-white">
@@ -491,7 +638,17 @@ const CRMPanel = ({ conversation }: { conversation: Conversation }) => {
               variant="default"
               size="sm"
               className="w-full gap-2 bg-[hsl(var(--navy))] text-[hsl(var(--cream))] hover:bg-[hsl(var(--navy))]/90"
-              onClick={() => navigate(isPostSale ? "/crm?tab=ops" : "/crm?tab=sales")}
+              onClick={() => {
+                if (isPostSale) {
+                  navigate(`/crm?tab=ops`);
+                  return;
+                }
+                if (level === "cliente" && contactId) {
+                  navigate(`/clients?contact=${contactId}`);
+                  return;
+                }
+                openLead({ leadId, contactId, name: leadName, phone });
+              }}
             >
               {isPostSale ? <LifeBuoy className="h-3.5 w-3.5" /> : <TrendingUp className="h-3.5 w-3.5" />}
               Abrir no CRM ({isPostSale ? "Operações" : "Vendas"})
@@ -499,6 +656,7 @@ const CRMPanel = ({ conversation }: { conversation: Conversation }) => {
           </div>
         </div>
       </ScrollArea>
+      {missingLeadDialog}
     </div>
   );
 };
@@ -512,31 +670,32 @@ const formatDateBR = (iso: string) => {
 const ContactBanner = ({ conversation }: { conversation: Conversation }) => {
   const navigate = useNavigate();
   const {
-    level, lastTrip, isTraveling, leadName, leadId, contactId, isNew,
+    level, lastTrip, isTraveling, leadName, leadId, contactId, isNew, phone,
     firstContactAt, lastContactAt, isReturning,
   } = conversation;
+  const { openLead, dialog: missingLeadDialog } = useOpenLeadInCRM();
 
   const openInCRM = () => {
     if (level === "cliente" && contactId) {
       navigate(`/clients?contact=${contactId}`);
-    } else if (leadId) {
-      // Vai direto para o card no Kanban do Funil de Vendas
-      navigate(`/crm?tab=sales&focus=lead-${leadId}`);
-    } else {
-      navigate("/crm");
+      return;
     }
+    openLead({ leadId, contactId, name: leadName, phone });
   };
 
   const CRMButton = (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={openInCRM}
-      className="h-7 px-2.5 text-[11px] gap-1 shrink-0"
-    >
-      <ExternalLink className="h-3 w-3" />
-      Abrir no CRM
-    </Button>
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={openInCRM}
+        className="h-7 px-2.5 text-[11px] gap-1 shrink-0"
+      >
+        <ExternalLink className="h-3 w-3" />
+        Abrir no CRM
+      </Button>
+      {missingLeadDialog}
+    </>
   );
 
   const ContactDates = (firstContactAt || lastContactAt) ? (
