@@ -200,10 +200,11 @@ Deno.serve(async (req) => {
       }));
     }
 
-    // Fetch agency settings
+    // Fetch agency settings — explicitly whitelist public-safe columns only.
+    // Never expose internal fields like ai_prompt to unauthenticated callers.
     const { data: agency } = await supabase
       .from("agency_settings")
-      .select("*")
+      .select("name, cnpj, phone, email, instagram, website, logo_url, address")
       .limit(1)
       .single();
 
