@@ -1164,6 +1164,18 @@ async function ensureContactForPhone(
     .eq('lead_id', leadId)
     .maybeSingle()
 
+  // Marca first_contact_at/last_contact_at no contato recém-criado
+  if (contactRow?.id) {
+    const nowIso = new Date().toISOString()
+    await supabase
+      .from('contacts')
+      .update({ first_contact_at: nowIso, last_contact_at: nowIso })
+      .eq('id', contactRow.id)
+    if (leadId) {
+      await supabase.from('leads').update({ last_contact_at: nowIso }).eq('id', leadId)
+    }
+  }
+
   return {
     contact_id: contactRow?.id ?? null,
     lead_id: leadId,
