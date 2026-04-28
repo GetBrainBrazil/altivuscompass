@@ -32,6 +32,7 @@ import type { KanbanCardData } from "@/components/crm/KanbanCard";
 import { IntlPhoneInput } from "@/components/ui/intl-phone-input";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadTimeline } from "@/components/crm/LeadTimeline";
+import { UserPicker } from "@/components/ui/user-picker";
 
 const FUNNEL_STAGES = [
   { id: "new-leads", title: "Novos Leads" },
@@ -116,7 +117,7 @@ export default function LeadDetail() {
   const [saving, setSaving] = useState(false);
   const [contactLevel, setContactLevel] = useState<ContactLevel>("lead");
   const [contactId, setContactId] = useState<string | null>(null);
-  const [users, setUsers] = useState<Array<{ id: string; name: string }>>([]);
+  const [users, setUsers] = useState<Array<{ id: string; name: string; avatarUrl?: string | null }>>([]);
   const [quotesCount, setQuotesCount] = useState(0);
   const [conversationsCount, setConversationsCount] = useState(0);
 
@@ -130,7 +131,7 @@ export default function LeadDetail() {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, full_name, email")
+        .select("user_id, full_name, email, avatar_url")
         .order("full_name", { ascending: true });
       if (cancelled || !data) return;
       setUsers(
@@ -139,6 +140,7 @@ export default function LeadDetail() {
           .map((u) => ({
             id: u.user_id as string,
             name: u.full_name || u.email || "Usuário",
+            avatarUrl: u.avatar_url ?? null,
           }))
       );
     })();
@@ -517,13 +519,17 @@ export default function LeadDetail() {
 
                 <Section title="Atribuição">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <SelectField
-                      label="Responsável"
-                      value={form.assigned_user_id}
-                      onChange={(v) => updateField("assigned_user_id", v)}
-                      options={users.map((u) => ({ value: u.id, label: u.name }))}
-                      placeholder="Selecione um responsável"
-                    />
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-muted-foreground">
+                        Responsável
+                      </Label>
+                      <UserPicker
+                        users={users}
+                        value={form.assigned_user_id || null}
+                        onChange={(v) => updateField("assigned_user_id", v ?? "")}
+                        placeholder="Selecione um responsável"
+                      />
+                    </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs font-medium text-muted-foreground">
                         Temperatura do lead

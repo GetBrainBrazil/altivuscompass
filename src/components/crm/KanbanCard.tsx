@@ -45,6 +45,7 @@ export type KanbanCardData = {
   tags?: KanbanTag[];
   estimatedValue?: number;
   agent?: {
+    id?: string;
     name: string;
     avatarUrl?: string;
   };
@@ -380,15 +381,23 @@ export function KanbanCard({
 
         {/* Rodapé: avatar + responsável + valor */}
         <div className="flex items-center gap-2 pt-2.5">
-          <div
-            className={cn(
-              "shrink-0 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-semibold",
-              card.agent ? "bg-primary/10 text-primary" : "bg-destructive/15 text-destructive",
-            )}
-            aria-hidden
-          >
-            {card.agent ? getInitials(card.agent.name) : "?"}
-          </div>
+          {card.agent?.avatarUrl ? (
+            <img
+              src={card.agent.avatarUrl}
+              alt={card.agent.name}
+              className="shrink-0 w-[18px] h-[18px] rounded-full object-cover"
+            />
+          ) : (
+            <div
+              className={cn(
+                "shrink-0 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-semibold",
+                card.agent ? "bg-primary/10 text-primary" : "bg-destructive/15 text-destructive",
+              )}
+              aria-hidden
+            >
+              {card.agent ? getInitials(card.agent.name) : "?"}
+            </div>
+          )}
           <span
             className={cn(
               "text-xs font-body truncate flex-1 min-w-0",

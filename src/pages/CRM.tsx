@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UserPicker } from "@/components/ui/user-picker";
 import { MetricCard } from "@/components/MetricCard";
 import {
   DropdownMenu,
@@ -419,11 +420,35 @@ export default function CRM() {
     const fetchLeads = async () => {
       const { data, error } = await supabase
         .from("leads")
-        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, is_returning, returned_at")
+        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, is_returning, returned_at, assigned_user_id")
         .is("converted_client_id", null)
         .order("created_at", { ascending: false })
         .limit(100);
       if (error || cancelled || !data) return;
+
+      // Mapa user_id → { name, avatarUrl } para popular agent
+      const assignedIds = Array.from(
+        new Set(
+          (data as any[])
+            .map((l) => l.assigned_user_id)
+            .filter((v): v is string => !!v),
+        ),
+      );
+      const userById = new Map<string, { name: string; avatarUrl?: string | null }>();
+      if (assignedIds.length > 0) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("user_id, full_name, email, avatar_url")
+          .in("user_id", assignedIds);
+        (profs ?? []).forEach((p: any) => {
+          if (p.user_id) {
+            userById.set(p.user_id, {
+              name: p.full_name || p.email || "Usuário",
+              avatarUrl: p.avatar_url ?? null,
+            });
+          }
+        });
+      }
 
       // Mantém temperatura/stageEnteredAt já existentes para cards de leads
       const existingByLeadId = new Map<string, KanbanCardData>();
@@ -445,6 +470,7 @@ export default function CRM() {
           !!l.travelers_count;
         const isFromWhatsApp = l.source === "whatsapp_ai" || l.source === "whatsapp";
         const isAI = isFromWhatsApp; // origem WhatsApp (com ou sem IA ativa) ganha o badge "IA"
+        const assignedUser = l.assigned_user_id ? userById.get(l.assigned_user_id) : null;
         return {
           id,
           clientName: l.full_name,
@@ -462,6 +488,13 @@ export default function CRM() {
           isReturning: !!l.is_returning,
           stageEnteredAt: existing?.stageEnteredAt ?? l.created_at ?? new Date().toISOString(),
           temperature: existing?.temperature ?? "cold",
+          agent: assignedUser
+            ? {
+                id: l.assigned_user_id,
+                name: assignedUser.name,
+                avatarUrl: assignedUser.avatarUrl ?? undefined,
+              }
+            : undefined,
           tags: [
             l.travelers_count ? { label: `${l.travelers_count} viajante(s)`, tone: "blue" as const } : null,
             isFromWhatsApp ? { label: "WhatsApp", tone: "green" as const } : null,
@@ -745,7 +778,7 @@ export default function CRM() {
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignCardId, setAssignCardId] = useState<string | null>(null);
   const [assignTargetColumn, setAssignTargetColumn] = useState<string | null>(null);
-  const [responsibleOptions, setResponsibleOptions] = useState<{ user_id: string; full_name: string }[]>([]);
+  const [responsibleOptions, setResponsibleOptions] = useState<{ user_id: string; full_name: string; avatar_url?: string | null }[]>([]);
   const [selectedResponsibleId, setSelectedResponsibleId] = useState<string>("");
 
   useEffect(() => {
@@ -754,10 +787,16 @@ export default function CRM() {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, full_name")
+        .select("user_id, full_name, email, avatar_url")
         .order("full_name");
       if (!cancelled && data) {
-        setResponsibleOptions(data as { user_id: string; full_name: string }[]);
+        setResponsibleOptions(
+          (data as any[]).map((u) => ({
+            user_id: u.user_id,
+            full_name: u.full_name || u.email || "Usuário",
+            avatar_url: u.avatar_url ?? null,
+          })),
+        );
       }
     })();
     return () => { cancelled = true; };
@@ -1083,7 +1122,7 @@ export default function CRM() {
     );
   };
 
-  const handleConfirmAssign = () => {
+  const handleConfirmAssign = async () => {
     if (!assignCardId || !assignTargetColumn) return;
     const responsible = responsibleOptions.find((r) => r.user_id === selectedResponsibleId);
     if (!responsible) {
@@ -1102,12 +1141,34 @@ export default function CRM() {
       setAssignOpen(false);
       return;
     }
+    // Persiste no banco (assigned_user_id) — trigger registra evento na timeline
+    const leadId = extractLeadId(assignCardId);
+    if (leadId) {
+      const { error } = await supabase
+        .from("leads")
+        .update({ assigned_user_id: responsible.user_id } as any)
+        .eq("id", leadId);
+      if (error) {
+        console.error("[CRM] assign user error:", error);
+        toast.error("Não foi possível salvar o responsável.");
+        return;
+      }
+    }
     // Atribui agente no estado
     setColumns((prev) =>
       prev.map((col) => ({
         ...col,
         cards: col.cards.map((c) =>
-          c.id === assignCardId ? { ...c, agent: { name: responsible.full_name } } : c,
+          c.id === assignCardId
+            ? {
+                ...c,
+                agent: {
+                  id: responsible.user_id,
+                  name: responsible.full_name,
+                  avatarUrl: responsible.avatar_url ?? undefined,
+                },
+              }
+            : c,
         ),
       })),
     );
@@ -1117,7 +1178,7 @@ export default function CRM() {
       toColumnId: assignTargetColumn,
       fromTitle: sourceColumn.title,
       toTitle: targetColumn.title,
-      leadId: extractLeadId(assignCardId),
+      leadId,
     };
     // Move imediatamente (consultor já atribuído satisfaz a regra)
     setTimeout(() => performMove(move, false), 0);
@@ -1509,22 +1570,17 @@ export default function CRM() {
           </DialogHeader>
           <div className="space-y-2 py-2">
             <Label htmlFor="assign-responsible">Responsável</Label>
-            <Select value={selectedResponsibleId} onValueChange={setSelectedResponsibleId}>
-              <SelectTrigger id="assign-responsible" className="h-10">
-                <SelectValue placeholder="Selecione um consultor" />
-              </SelectTrigger>
-              <SelectContent>
-                {responsibleOptions.length === 0 ? (
-                  <SelectItem value="__none__" disabled>Nenhum usuário disponível</SelectItem>
-                ) : (
-                  responsibleOptions.map((r) => (
-                    <SelectItem key={r.user_id} value={r.user_id}>
-                      {r.full_name}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
+            <UserPicker
+              users={responsibleOptions.map((r) => ({
+                id: r.user_id,
+                name: r.full_name,
+                avatarUrl: r.avatar_url ?? null,
+              }))}
+              value={selectedResponsibleId || null}
+              onChange={(v) => setSelectedResponsibleId(v ?? "")}
+              placeholder="Selecione um consultor"
+              allowClear={false}
+            />
           </div>
           <DialogFooter>
             <Button
