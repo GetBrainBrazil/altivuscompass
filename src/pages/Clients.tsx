@@ -749,12 +749,14 @@ export default function Clients() {
         if (error || !contact) return;
         setLinkContactId(contact.id);
         setContactLevel(contact.level as ContactLevel);
+        setNeedsComplementaryData(!!contact.needs_complementary_data);
 
         if (contact.client_id) {
           const { data: c } = await supabase.from("clients").select("*").eq("id", contact.client_id).maybeSingle();
           if (c) {
             openEdit(c);
             setContactLevel(contact.level as ContactLevel);
+            setNeedsComplementaryData(!!contact.needs_complementary_data);
             return;
           }
         }
@@ -784,14 +786,16 @@ export default function Clients() {
           // Try to find originating contact for level badge
           const { data: contact } = await (supabase as any)
             .from("contacts")
-            .select("id, level")
+            .select("id, level, needs_complementary_data")
             .eq("client_id", idParam)
             .maybeSingle();
           if (contact) {
             setLinkContactId(contact.id);
             setContactLevel(contact.level as ContactLevel);
+            setNeedsComplementaryData(!!contact.needs_complementary_data);
           } else {
             setContactLevel("cliente");
+            setNeedsComplementaryData(false);
           }
         }
       })();
