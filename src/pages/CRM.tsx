@@ -153,6 +153,7 @@ function KanbanColumnCard({
   onDropOnColumn,
   onTemperatureChange,
   onCardDelete,
+  focusCardId,
 }: {
   column: KanbanColumn;
   dotColor: string;
