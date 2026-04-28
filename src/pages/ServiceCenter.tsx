@@ -169,7 +169,7 @@ const ConversationCard = ({ conversation, active, onClick }: ConversationCardPro
             </span>
           </div>
           <p className="text-xs text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
-            {last.sender === "lead" ? "" : "IA: "}
+            {last.sender === "ai" ? "IA: " : last.sender === "agent" ? "Você: " : ""}
             {last.content}
           </p>
           <div className="mt-2 flex items-center gap-1.5 flex-wrap">
