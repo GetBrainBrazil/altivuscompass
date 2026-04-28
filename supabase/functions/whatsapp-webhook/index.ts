@@ -1026,3 +1026,114 @@ Regras do JSON:
     return { reply: 'Tive um probleminha técnico aqui. Pode repetir? 😊', extracted: null }
   }
 }
+
+/**
+ * Garante que existe um Contact (e Lead, quando aplicável) para o número do WhatsApp.
+ *
+ * Comportamento:
+ *  - Se já existe contact (prospect/lead/cliente) → reutiliza, retorna ids para vincular à conversa.
+ *  - Se não existe → cria um Lead com source='whatsapp' (status='new'), o que via trigger
+ *    `sync_contact_from_lead` cria automaticamente o Contact com level='prospect'.
+ *  - Funciona mesmo quando a IA está globalmente pausada (modo dev).
+ *
+ * Roda ANTES das checagens de pausa/humano para garantir que cada número que chega
+ * vire registro no CRM e apareça nos kanbans corretos.
+ */
+async function ensureContactForPhone(
+  supabase: any,
+  phone: string,
+  senderName: string,
+): Promise<{
+  contact_id: string | null
+  lead_id: string | null
+  client_id: string | null
+  display_name: string | null
+}> {
+  const phoneDigits = (phone || '').replace(/\D/g, '')
+  if (!phoneDigits) {
+    return { contact_id: null, lead_id: null, client_id: null, display_name: null }
+  }
+
+  const tail = phoneDigits.slice(-9)
+
+  // 1) Procura contact existente pelo final do telefone (ignora formatação)
+  const { data: candidates } = await supabase
+    .from('contacts')
+    .select('id, full_name, phone, level, client_id, lead_id')
+    .ilike('phone', `%${tail}%`)
+    .limit(10)
+
+  const matched = (candidates || []).find((c: any) =>
+    (c.phone || '').replace(/\D/g, '').endsWith(tail),
+  )
+
+  if (matched) {
+    console.log(`[ensureContactForPhone] Contact existente (level=${matched.level}) para ${phone}`)
+    return {
+      contact_id: matched.id,
+      lead_id: matched.lead_id ?? null,
+      client_id: matched.client_id ?? null,
+      display_name: matched.full_name || null,
+    }
+  }
+
+  // 2) Sem contact: confere se já existe um lead pelo telefone (evita race em rajadas de mensagens)
+  const { data: existingLeads } = await supabase
+    .from('leads')
+    .select('id, full_name, phone')
+    .ilike('phone', `%${tail}%`)
+    .order('created_at', { ascending: false })
+    .limit(5)
+
+  let leadId: string | null =
+    (existingLeads || []).find((l: any) =>
+      (l.phone || '').replace(/\D/g, '').endsWith(tail),
+    )?.id ?? null
+
+  let createdName: string | null = null
+
+  // 3) Sem lead: cria um novo. O trigger sync_contact_from_lead cria o contact como prospect.
+  if (!leadId) {
+    const waSenderName = (senderName || '').trim()
+    const looksLikeHumanName = (s: string) =>
+      !!s && !/\d/.test(s) && s.split(/\s+/).filter((w) => w.length > 1).length >= 2
+    const cleanName = looksLikeHumanName(waSenderName)
+      ? waSenderName
+      : formatPhonePlaceholder(phone)
+    createdName = cleanName
+
+    const { data: newLead, error: leadErr } = await supabase
+      .from('leads')
+      .insert({
+        full_name: cleanName,
+        phone,
+        source: 'whatsapp',
+        status: 'new',
+        ai_collected_data: { whatsapp_sender_name: senderName || null },
+      })
+      .select('id, full_name')
+      .single()
+
+    if (leadErr) {
+      console.error('[ensureContactForPhone] Lead insert error:', leadErr.message)
+      return { contact_id: null, lead_id: null, client_id: null, display_name: createdName }
+    }
+    leadId = newLead.id
+    createdName = newLead.full_name
+    console.log(`[ensureContactForPhone] Novo Prospect criado para ${phone} (lead_id=${leadId})`)
+  }
+
+  // 4) Busca contact_id (criado pelo trigger) para vincular na conversa
+  const { data: contactRow } = await supabase
+    .from('contacts')
+    .select('id, full_name, level, client_id')
+    .eq('lead_id', leadId)
+    .maybeSingle()
+
+  return {
+    contact_id: contactRow?.id ?? null,
+    lead_id: leadId,
+    client_id: contactRow?.client_id ?? null,
+    display_name: contactRow?.full_name || createdName,
+  }
+}
