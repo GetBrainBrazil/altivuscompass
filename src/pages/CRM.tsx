@@ -167,6 +167,7 @@ function KanbanColumnCard({
   onDropOnColumn: (columnId: string) => void;
   onTemperatureChange: (card: KanbanCardData, next: LeadTemperature) => void;
   onCardDelete?: (card: KanbanCardData) => void;
+  focusCardId?: string | null;
 }) {
   const [isOver, setIsOver] = useState(false);
 
