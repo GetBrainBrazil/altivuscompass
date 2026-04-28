@@ -45,7 +45,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import { KanbanCard, type KanbanCardData } from "@/components/crm/KanbanCard";
+import { KanbanCard, type KanbanCardData, type LeadTemperature } from "@/components/crm/KanbanCard";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -92,6 +92,7 @@ function KanbanBoard({
   onCardDragStart,
   onCardDragEnd,
   onDropOnColumn,
+  onTemperatureChange,
 }: {
   columns: KanbanColumn[];
   onCardClick: (card: KanbanCardData) => void;
@@ -104,6 +105,7 @@ function KanbanBoard({
   onCardDragStart: (card: KanbanCardData) => void;
   onCardDragEnd: () => void;
   onDropOnColumn: (columnId: string) => void;
+  onTemperatureChange: (card: KanbanCardData, next: LeadTemperature) => void;
 }) {
   return (
     <div className="flex-1 min-h-0 mt-4 pb-5 overflow-x-auto overflow-y-hidden scrollbar-elegant [transform:scaleY(-1)]">
@@ -122,6 +124,7 @@ function KanbanBoard({
             onCardDragStart={onCardDragStart}
             onCardDragEnd={onCardDragEnd}
             onDropOnColumn={onDropOnColumn}
+            onTemperatureChange={onTemperatureChange}
           />
         ))}
         <AddColumnButton onClick={onAddColumn} />
@@ -142,6 +145,7 @@ function KanbanColumnCard({
   onCardDragStart,
   onCardDragEnd,
   onDropOnColumn,
+  onTemperatureChange,
 }: {
   column: KanbanColumn;
   dotColor: string;
@@ -154,6 +158,7 @@ function KanbanColumnCard({
   onCardDragStart: (card: KanbanCardData) => void;
   onCardDragEnd: () => void;
   onDropOnColumn: (columnId: string) => void;
+  onTemperatureChange: (card: KanbanCardData, next: LeadTemperature) => void;
 }) {
   const [isOver, setIsOver] = useState(false);
 
@@ -241,6 +246,7 @@ function KanbanColumnCard({
                 isDragging={draggedCardId === card.id}
                 onDragStart={(c) => onCardDragStart(c)}
                 onDragEnd={() => onCardDragEnd()}
+                onTemperatureChange={onTemperatureChange}
               />
             ))
           )}
@@ -369,24 +375,40 @@ export default function CRM() {
         .limit(100);
       if (error || cancelled || !data) return;
 
+      // Mantém temperatura/stageEnteredAt já existentes para cards de leads
+      const existingByLeadId = new Map<string, KanbanCardData>();
+      setSalesColumns((prevSnap) => {
+        prevSnap.forEach((col) =>
+          col.cards.forEach((c) => {
+            if (c.id.startsWith("lead-")) existingByLeadId.set(c.id, c);
+          }),
+        );
+        return prevSnap;
+      });
+
       const leadCards: KanbanCardData[] = data.map((l: any) => {
+        const id = `lead-${l.id}`;
+        const existing = existingByLeadId.get(id);
         const hasTravelData =
           !!l.destination &&
           (!!l.travel_date_start || !!l.travel_date_end || !!l.flexible_dates_description) &&
           !!l.travelers_count;
         const isAI = l.source === "whatsapp_ai";
         return {
-          id: `lead-${l.id}`,
+          id,
           clientName: l.full_name,
           destination: l.destination ?? undefined,
           travelDate: l.travel_date_start
             ? new Date(l.travel_date_start).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })
             : (l.flexible_dates_description ?? undefined),
+          travelDateISO: l.travel_date_start ?? undefined,
           estimatedValue: l.budget_estimate ? Number(l.budget_estimate) : undefined,
           isAILead: isAI,
           isManualLead: !isAI,
           aiSummary: l.ai_summary ?? undefined,
           contactLevel: hasTravelData ? "lead" : "prospect",
+          stageEnteredAt: existing?.stageEnteredAt ?? l.created_at ?? new Date().toISOString(),
+          temperature: existing?.temperature ?? "cold",
           tags: [
             l.travelers_count ? { label: `${l.travelers_count} viajante(s)`, tone: "blue" as const } : null,
             isAI ? { label: "WhatsApp", tone: "green" as const } : null,
@@ -440,20 +462,34 @@ export default function CRM() {
         const idx = col.cards.findIndex((c) => c.id === draggedCardId);
         if (idx === -1) return col;
         moving = col.cards[idx];
-        if (col.id === targetColumnId) return col; // mesmo destino, não mexe
+        if (col.id === targetColumnId) return col;
         return { ...col, cards: col.cards.filter((c) => c.id !== draggedCardId) };
       });
       if (!moving) return prev;
       const sourceColumn = prev.find((c) => c.cards.some((k) => k.id === draggedCardId));
       if (sourceColumn?.id === targetColumnId) return prev;
+      // Atualiza stageEnteredAt ao mover para nova coluna
+      const movedCard: KanbanCardData = {
+        ...(moving as KanbanCardData),
+        stageEnteredAt: new Date().toISOString(),
+      };
       const next = stripped.map((col) =>
-        col.id === targetColumnId ? { ...col, cards: [moving as KanbanCardData, ...col.cards] } : col,
+        col.id === targetColumnId ? { ...col, cards: [movedCard, ...col.cards] } : col,
       );
       const target = next.find((c) => c.id === targetColumnId);
       if (target) toast.success(`Lead movido para "${target.title}".`);
       return next;
     });
     setDraggedCardId(null);
+  };
+
+  const handleTemperatureChange = (card: KanbanCardData, next: LeadTemperature) => {
+    setColumns((prev) =>
+      prev.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) => (c.id === card.id ? { ...c, temperature: next } : c)),
+      })),
+    );
   };
 
   // ─── Toolbar state (search + filters) ─────────────────────
@@ -705,6 +741,7 @@ export default function CRM() {
           onCardDragStart={handleCardDragStart}
           onCardDragEnd={handleCardDragEnd}
           onDropOnColumn={handleDropOnColumn}
+          onTemperatureChange={handleTemperatureChange}
         />
       </main>
 
