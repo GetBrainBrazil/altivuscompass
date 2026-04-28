@@ -883,7 +883,7 @@ export default function ServiceCenter() {
     },
   });
 
-  // ===== Realtime: novas mensagens / conversas atualizadas =====
+  // ===== Realtime: novas mensagens / conversas / contatos / leads atualizados =====
   useEffect(() => {
     const channel = supabase
       .channel("service-center-realtime")
@@ -899,6 +899,22 @@ export default function ServiceCenter() {
           qc.invalidateQueries({ queryKey: ["wa_conversations"] });
           const convId = payload?.new?.conversation_id ?? payload?.old?.conversation_id;
           if (convId) qc.invalidateQueries({ queryKey: ["wa_messages", convId] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "contacts" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["wa_contacts_meta"] });
+          qc.invalidateQueries({ queryKey: ["wa_conversations"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "leads" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["wa_contacts_meta"] });
+          qc.invalidateQueries({ queryKey: ["wa_conversations"] });
         },
       )
       .subscribe();
