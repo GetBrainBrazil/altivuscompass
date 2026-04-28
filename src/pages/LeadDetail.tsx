@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -32,7 +33,7 @@ import type { KanbanCardData } from "@/components/crm/KanbanCard";
 import { IntlPhoneInput } from "@/components/ui/intl-phone-input";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadTimeline } from "@/components/crm/LeadTimeline";
-import { LeadWhatsAppPanel } from "@/components/crm/LeadWhatsAppPanel";
+import { LeadWhatsAppColumn } from "@/components/crm/LeadWhatsAppColumn";
 import { UserPicker } from "@/components/ui/user-picker";
 
 const FUNNEL_STAGES = [
@@ -121,6 +122,41 @@ export default function LeadDetail() {
   const [users, setUsers] = useState<Array<{ id: string; name: string; avatarUrl?: string | null }>>([]);
   const [quotesCount, setQuotesCount] = useState(0);
   const [waPanelOpen, setWaPanelOpen] = useState(false);
+
+  // Quantidade de mensagens não lidas no WhatsApp
+  const onlyDigits = (s: string) => (s || "").replace(/\D/g, "");
+  const { data: waUnread = 0 } = useQuery({
+    queryKey: ["lead-wa-unread", contactId, form.phone],
+    enabled: !!contactId || !!form.phone,
+    queryFn: async () => {
+      let conv: any = null;
+      if (contactId) {
+        const { data } = await supabase
+          .from("wa_conversations")
+          .select("unread_count")
+          .eq("contact_id", contactId)
+          .order("last_message_at", { ascending: false, nullsFirst: false })
+          .limit(1)
+          .maybeSingle();
+        if (data) conv = data;
+      }
+      if (!conv) {
+        const tail = onlyDigits(form.phone || "").slice(-9);
+        if (!tail) return 0;
+        const { data } = await supabase
+          .from("wa_conversations")
+          .select("phone, unread_count")
+          .ilike("phone", `%${tail}%`)
+          .order("last_message_at", { ascending: false, nullsFirst: false })
+          .limit(5);
+        const found = (data || []).find((c: any) =>
+          onlyDigits(c.phone || "").endsWith(tail),
+        );
+        conv = found ?? null;
+      }
+      return Number(conv?.unread_count ?? 0);
+    },
+  });
 
   useEffect(() => {
     if (!card && id) setCard(readCard(id));
@@ -308,7 +344,13 @@ export default function LeadDetail() {
   const isClient = contactLevel === "cliente";
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-0px)] bg-slate-50 dark:bg-slate-950">
+    <div className="flex min-h-[calc(100vh-0px)] bg-slate-50 dark:bg-slate-950">
+      <div
+        className={cn(
+          "flex flex-col min-w-0 transition-[width] duration-300 ease-out",
+          waPanelOpen ? "w-[55%]" : "w-full",
+        )}
+      >
       {/* Header */}
       <header className="border-b border-border bg-background">
         <div className="px-6 lg:px-10 pt-6 pb-5">
@@ -352,13 +394,22 @@ export default function LeadDetail() {
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <Button
-                variant="outline"
-                size="sm"
-                className="border-emerald-500/40 text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
-                onClick={() => setWaPanelOpen(true)}
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "relative h-9 w-9 rounded-full text-muted-foreground hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20",
+                  waPanelOpen && "text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20",
+                )}
+                onClick={() => setWaPanelOpen((v) => !v)}
+                aria-label="Conversa do WhatsApp"
+                title="Conversa do WhatsApp"
               >
-                <MessageCircle className="h-4 w-4 mr-1.5" />
-                WhatsApp
+                <MessageCircle className="h-[18px] w-[18px]" />
+                {waUnread > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-full bg-emerald-600 text-white text-[9px] font-semibold flex items-center justify-center ring-2 ring-background">
+                    {waUnread > 99 ? "99+" : waUnread}
+                  </span>
+                )}
               </Button>
               {!isClient && leadId && (
                 <Button
@@ -656,14 +707,18 @@ export default function LeadDetail() {
           </div>
       </Tabs>
       </main>
+      </div>
 
-      <LeadWhatsAppPanel
-        open={waPanelOpen}
-        onOpenChange={setWaPanelOpen}
-        contactName={form.full_name || card?.clientName || "Contato"}
-        phone={form.phone || card?.phone || null}
-        contactId={contactId}
-      />
+      {waPanelOpen && (
+        <div className="w-[45%] min-w-0 sticky top-0 h-screen">
+          <LeadWhatsAppColumn
+            onClose={() => setWaPanelOpen(false)}
+            contactName={form.full_name || card?.clientName || "Contato"}
+            phone={form.phone || card?.phone || null}
+            contactId={contactId}
+          />
+        </div>
+      )}
     </div>
   );
 }
