@@ -901,32 +901,45 @@ export default function ServiceCenter() {
 
             {/* Composer */}
             <footer className="border-t bg-white/80 backdrop-blur-sm p-4">
-              <div className="flex items-center gap-3 max-w-3xl mx-auto">
-                <Input
-                  placeholder="Digite uma mensagem..."
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSend();
-                    }
-                  }}
-                  disabled={sending}
-                  className="h-11 rounded-full px-5 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-ring"
-                />
-                <Button
-                  size="icon"
-                  disabled={!draft.trim() || sending}
-                  onClick={handleSend}
-                  className="h-11 w-11 rounded-full shrink-0"
-                >
-                  <SendHorizontal className="h-5 w-5" />
-                </Button>
-              </div>
-              <p className="text-[10px] text-muted-foreground text-center mt-3">
-                Mensagens enviadas vão direto para o WhatsApp do contato via Z-API.
-              </p>
+              {selected.status === "ai" ? (
+                <div className="max-w-3xl mx-auto rounded-xl border border-dashed border-success/40 bg-success/5 px-5 py-4 text-center">
+                  <p className="text-xs text-success font-medium">
+                    🤖 IA está conduzindo esta conversa
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Clique em <span className="font-semibold">Assumir Conversa</span> para pausar a IA e responder manualmente.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3 max-w-3xl mx-auto">
+                    <Input
+                      placeholder="Digite uma mensagem..."
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSend();
+                        }
+                      }}
+                      disabled={sending}
+                      className="h-11 rounded-full px-5 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-ring"
+                    />
+                    <Button
+                      size="icon"
+                      disabled={!draft.trim() || sending}
+                      onClick={handleSend}
+                      className="h-11 w-11 rounded-full shrink-0"
+                    >
+                      <SendHorizontal className="h-5 w-5" />
+                    </Button>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground text-center mt-3">
+                    Mensagens enviadas vão direto para o WhatsApp do contato via Z-API.
+                  </p>
+                </>
+              )}
             </footer>
           </>
         )}
