@@ -596,6 +596,11 @@ export default function CRM() {
   // Delete confirmation
   const [columnToDelete, setColumnToDelete] = useState<KanbanColumn | null>(null);
 
+  // ─── Promoção a Cliente (ao mover para "Fechado") ──────────
+  const [promotionLeadId, setPromotionLeadId] = useState<string | null>(null);
+  const [promotionPendingMove, setPromotionPendingMove] = useState<PendingMove | null>(null);
+  const [promotionOpen, setPromotionOpen] = useState(false);
+
   const setColumns = tab === "sales" ? setSalesColumns : setOpsColumns;
   const columns = tab === "sales" ? salesColumns : opsColumns;
 
