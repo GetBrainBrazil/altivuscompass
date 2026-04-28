@@ -34,7 +34,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
 import { NewMessageDialog } from "@/components/service-center/NewMessageDialog";
-import { Plus } from "lucide-react";
+import { Plus, Info } from "lucide-react";
 
 type FilterTab = "all" | "leads" | "support" | "human";
 
@@ -889,25 +889,24 @@ export default function ServiceCenter() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden bg-background">
-      {/* ===== Banner global de pausa da IA ===== */}
+      {/* ===== Banner global de status da IA ===== */}
       <div
         className={cn(
           "flex items-center justify-between gap-3 px-4 py-2 border-b text-xs",
           aiGloballyPaused
-            ? "bg-amber-50 border-amber-200 text-amber-900"
+            ? "bg-slate-800 border-slate-700 text-slate-100"
             : "bg-emerald-50 border-emerald-200 text-emerald-900",
         )}
       >
         <div className="flex items-center gap-2 min-w-0">
-          <span
-            className={cn(
-              "inline-block w-2 h-2 rounded-full shrink-0",
-              aiGloballyPaused ? "bg-amber-500" : "bg-emerald-500 animate-pulse",
-            )}
-          />
+          {aiGloballyPaused ? (
+            <Info className="h-3.5 w-3.5 shrink-0 text-slate-300" />
+          ) : (
+            <span className="inline-block w-2 h-2 rounded-full shrink-0 bg-emerald-500 animate-pulse" />
+          )}
           <span className="font-medium">
             {aiGloballyPaused
-              ? "IA globalmente PAUSADA — nenhum número receberá resposta automática (modo desenvolvimento)."
+              ? "Modo manual — respostas automáticas desativadas"
               : "IA ativa — respondendo automaticamente todos os números (exceto conversas assumidas)."}
           </span>
         </div>
@@ -1023,36 +1022,38 @@ export default function ServiceCenter() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  className={cn(
-                    "gap-2 shadow-sm",
-                    selected.status === "human"
-                      ? "bg-success text-white hover:bg-success/90"
-                      : "bg-[hsl(var(--navy))] text-[hsl(var(--cream))] hover:bg-[hsl(var(--navy))]/90",
-                  )}
-                  onClick={async () => {
-                    if (!selectedId) return;
-                    const newStatus = selected.status === "human" ? "ai" : "human";
-                    const { error } = await supabase
-                      .from("wa_conversations")
-                      .update({ status: newStatus })
-                      .eq("id", selectedId);
-                    if (error) {
-                      toast.error("Falha ao atualizar status: " + error.message);
-                      return;
-                    }
-                    toast.success(
-                      newStatus === "human"
-                        ? "Conversa assumida — IA pausada para este contato."
-                        : "IA reativada para este contato.",
-                    );
-                    qc.invalidateQueries({ queryKey: ["wa_conversations"] });
-                  }}
-                >
-                  <UserRound className="h-4 w-4" />
-                  {selected.status === "human" ? "Devolver para IA" : "Assumir Conversa"}
-                </Button>
+                {!aiGloballyPaused && (
+                  <Button
+                    size="sm"
+                    className={cn(
+                      "gap-2 shadow-sm",
+                      selected.status === "human"
+                        ? "bg-success text-white hover:bg-success/90"
+                        : "bg-[hsl(var(--navy))] text-[hsl(var(--cream))] hover:bg-[hsl(var(--navy))]/90",
+                    )}
+                    onClick={async () => {
+                      if (!selectedId) return;
+                      const newStatus = selected.status === "human" ? "ai" : "human";
+                      const { error } = await supabase
+                        .from("wa_conversations")
+                        .update({ status: newStatus })
+                        .eq("id", selectedId);
+                      if (error) {
+                        toast.error("Falha ao atualizar status: " + error.message);
+                        return;
+                      }
+                      toast.success(
+                        newStatus === "human"
+                          ? "Conversa assumida — IA pausada para este contato."
+                          : "IA reativada para este contato.",
+                      );
+                      qc.invalidateQueries({ queryKey: ["wa_conversations"] });
+                    }}
+                  >
+                    <UserRound className="h-4 w-4" />
+                    {selected.status === "human" ? "Devolver para IA" : "Assumir Conversa"}
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant="ghost"
@@ -1087,14 +1088,26 @@ export default function ServiceCenter() {
 
             {/* Composer */}
             <footer className="border-t bg-white/80 backdrop-blur-sm p-4">
-              {selected.status === "ai" ? (
-                <div className="max-w-3xl mx-auto rounded-xl border border-dashed border-success/40 bg-success/5 px-5 py-4 text-center">
-                  <p className="text-xs text-success font-medium">
-                    🤖 IA está conduzindo esta conversa
-                  </p>
-                  <p className="text-[11px] text-muted-foreground mt-1">
-                    Clique em <span className="font-semibold">Assumir Conversa</span> para pausar a IA e responder manualmente.
-                  </p>
+              {selected.status === "ai" && !aiGloballyPaused ? (
+                <div className="max-w-3xl mx-auto space-y-3">
+                  <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    <span>Atendimento automático ativo</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      placeholder="Assuma a conversa para responder manualmente"
+                      disabled
+                      className="h-11 rounded-full px-5 bg-muted/40 border-0 placeholder:text-muted-foreground/70"
+                    />
+                    <Button
+                      size="icon"
+                      disabled
+                      className="h-11 w-11 rounded-full shrink-0"
+                    >
+                      <SendHorizontal className="h-5 w-5" />
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <>
