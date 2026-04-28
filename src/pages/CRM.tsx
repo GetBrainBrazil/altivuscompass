@@ -1108,6 +1108,130 @@ export default function CRM() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Atribuir responsável (bloqueia entrada em "Em Qualificação") */}
+      <Dialog
+        open={assignOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setAssignOpen(false);
+            setAssignCardId(null);
+            setAssignTargetColumn(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[460px]">
+          <DialogHeader>
+            <DialogTitle>Atribuir consultor responsável</DialogTitle>
+            <DialogDescription>
+              Para mover este lead para "Em Qualificação", selecione o consultor responsável.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="assign-responsible">Responsável</Label>
+            <Select value={selectedResponsibleId} onValueChange={setSelectedResponsibleId}>
+              <SelectTrigger id="assign-responsible" className="h-10">
+                <SelectValue placeholder="Selecione um consultor" />
+              </SelectTrigger>
+              <SelectContent>
+                {responsibleOptions.length === 0 ? (
+                  <SelectItem value="__none__" disabled>Nenhum usuário disponível</SelectItem>
+                ) : (
+                  responsibleOptions.map((r) => (
+                    <SelectItem key={r.user_id} value={r.user_id}>
+                      {r.full_name}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setAssignOpen(false);
+                setAssignCardId(null);
+                setAssignTargetColumn(null);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmAssign} disabled={!selectedResponsibleId}>
+              Atribuir e mover
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Validações: avisa o que falta e oferece "Mover mesmo assim" */}
+      <Dialog
+        open={!!pendingMove && pendingIssues.length > 0}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingMove(null);
+            setPendingIssues([]);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-warning" />
+              Mover para "{pendingMove?.toTitle}"?
+            </DialogTitle>
+            <DialogDescription>
+              Identificamos pendências para esta etapa. Resolva as pendências ou avance manualmente em situações excepcionais.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            {pendingIssues.map((iss, i) => (
+              <div
+                key={i}
+                className="rounded-md border border-warning/30 bg-warning/5 p-3 space-y-1.5"
+              >
+                <p className="text-sm font-medium text-foreground">{iss.title}</p>
+                <p className="text-xs text-muted-foreground">{iss.detail}</p>
+                {iss.cta && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 mt-1"
+                    onClick={() => {
+                      iss.cta!.onClick();
+                      setPendingMove(null);
+                      setPendingIssues([]);
+                    }}
+                  >
+                    {iss.cta.label}
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPendingMove(null);
+                setPendingIssues([]);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (pendingMove) performMove(pendingMove, true);
+                setPendingMove(null);
+                setPendingIssues([]);
+              }}
+            >
+              Mover mesmo assim
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
