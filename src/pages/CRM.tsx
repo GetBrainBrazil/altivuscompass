@@ -476,13 +476,16 @@ export default function CRM() {
           if (Array.isArray(signals) && signals.length > 0) {
             // Só consome sinais cujo lead realmente possui cotação vinculada agora
             const leadIdsToCheck = signals.map((s) => s.leadId).filter(Boolean);
-            const { data: linkedQuotes } = await supabase
-              .from("quotes")
-              .select("lead_id")
-              .in("lead_id", leadIdsToCheck);
-            const leadsWithQuote = new Set(
-              (linkedQuotes ?? []).map((q: any) => q.lead_id).filter(Boolean),
-            );
+            const leadsWithQuote = new Set<string>();
+            if (leadIdsToCheck.length > 0) {
+              const { data: linkedQuotes } = await supabase
+                .from("quotes")
+                .select("lead_id")
+                .in("lead_id", leadIdsToCheck);
+              (linkedQuotes ?? []).forEach((q: any) => {
+                if (q.lead_id) leadsWithQuote.add(q.lead_id);
+              });
+            }
             const consumed: typeof signals = [];
             const remaining: typeof signals = [];
             signals.forEach((s) => {
