@@ -307,35 +307,7 @@ export default function LeadDetail() {
     [stageId]
   );
 
-  const timeline = useMemo(() => {
-    if (!card) return [];
-    return [
-      {
-        id: "in",
-        icon: Bot,
-        iconClass: "bg-emerald-50 text-emerald-600 ring-emerald-100",
-        title: "Lead recebido pela IA (WhatsApp)",
-        description: card.aiSummary,
-        timestamp: "Hoje, 09:14",
-      },
-      {
-        id: "ai-qualified",
-        icon: FileText,
-        iconClass: "bg-blue-50 text-blue-600 ring-blue-100",
-        title: "IA qualificou a necessidade",
-        description: "Destino, datas e perfil identificados automaticamente.",
-        timestamp: "Hoje, 09:16",
-      },
-      {
-        id: "handoff",
-        icon: UserCheck,
-        iconClass: "bg-purple-50 text-purple-600 ring-purple-100",
-        title: "Transferido para atendimento humano",
-        description: card.agent ? `Atribuído a ${card.agent.name}` : undefined,
-        timestamp: "Hoje, 09:22",
-      },
-    ];
-  }, [card]);
+
 
   const isClient = contactLevel === "cliente";
 
