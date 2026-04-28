@@ -20,21 +20,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import type { KanbanCardData } from "@/components/crm/KanbanCard";
+import { IntlPhoneInput } from "@/components/ui/intl-phone-input";
+import { Label } from "@/components/ui/label";
 
 import { supabase } from "@/integrations/supabase/client";
-
-function formatPhoneBR(phone?: string | null): string {
-  if (!phone) return "";
-  const digits = phone.replace(/\D/g, "");
-  if (!digits) return "";
-  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) {
-    const ddd = digits.slice(2, 4);
-    const rest = digits.slice(4);
-    if (rest.length === 9) return `+55 ${ddd} ${rest.slice(0, 5)}-${rest.slice(5)}`;
-    if (rest.length === 8) return `+55 ${ddd} ${rest.slice(0, 4)}-${rest.slice(4)}`;
-  }
-  return `+${digits}`;
-}
 
 const FUNNEL_STAGES = [
   { id: "new-leads", title: "Novos Leads (IA)" },
