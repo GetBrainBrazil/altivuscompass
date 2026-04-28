@@ -1338,6 +1338,7 @@ export default function CRM() {
           onDropOnColumn={handleDropOnColumn}
           onTemperatureChange={handleTemperatureChange}
           onCardDelete={handleCardDelete}
+          focusCardId={focusCardId}
         />
       </main>
 
