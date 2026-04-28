@@ -567,6 +567,35 @@ export default function ServiceCenter() {
   const [sidePanelTab, setSidePanelTab] = useState<"summary" | "crm">("summary");
   const [newMsgOpen, setNewMsgOpen] = useState(false);
 
+  // ===== Pausa global da IA (modo dev) =====
+  const { data: agencySettings } = useQuery({
+    queryKey: ["agency-settings-ai-pause"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("agency_settings")
+        .select("id, ai_globally_paused")
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+  const aiGloballyPaused = agencySettings?.ai_globally_paused === true;
+
+  const toggleGlobalAi = async () => {
+    if (!agencySettings?.id) return;
+    const next = !aiGloballyPaused;
+    const { error } = await supabase
+      .from("agency_settings")
+      .update({ ai_globally_paused: next })
+      .eq("id", agencySettings.id);
+    if (error) {
+      toast.error("Falha ao atualizar: " + error.message);
+      return;
+    }
+    toast.success(next ? "IA pausada para todos os números." : "IA reativada globalmente.");
+    qc.invalidateQueries({ queryKey: ["agency-settings-ai-pause"] });
+  };
+
   // ===== Carrega conversas reais do WhatsApp (Z-API) =====
   const { data: convoRows = [] } = useQuery({
     queryKey: ["wa_conversations"],
