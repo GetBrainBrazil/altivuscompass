@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { KanbanCard, type KanbanCardData, type LeadTemperature } from "@/components/crm/KanbanCard";
+import { ClientPromotionDialog } from "@/components/crm/ClientPromotionDialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
