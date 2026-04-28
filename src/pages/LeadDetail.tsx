@@ -220,11 +220,27 @@ export default function LeadDetail() {
                 <Section title="Resumo">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <Field label="Nome do cliente" defaultValue={card?.clientName ?? ""} />
-                    <Field
-                      label="Telefone"
-                      defaultValue={formatPhoneBR(card?.phone)}
-                      placeholder="Ainda não informado"
-                    />
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-muted-foreground">
+                        Telefone
+                      </Label>
+                      <IntlPhoneInput
+                        value={card?.phone ?? ""}
+                        onChange={(v) => {
+                          setCard((prev) =>
+                            prev ? { ...prev, phone: v } : prev
+                          );
+                        }}
+                        onBlur={async () => {
+                          if (!leadId) return;
+                          await supabase
+                            .from("leads")
+                            .update({ phone: card?.phone ?? null })
+                            .eq("id", leadId);
+                        }}
+                        placeholder="Ainda não informado"
+                      />
+                    </div>
                     <Field label="Destino" defaultValue={card?.destination ?? ""} />
                     <Field label="Data da viagem" defaultValue={card?.travelDate ?? ""} />
                     <Field
