@@ -1326,6 +1326,13 @@ export type Database = {
             referencedRelation: "itineraries"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "itinerary_activities_itinerary_id_fkey"
+            columns: ["itinerary_id"]
+            isOneToOne: false
+            referencedRelation: "public_itineraries"
+            referencedColumns: ["id"]
+          },
         ]
       }
       itinerary_day_activities: {
@@ -1450,6 +1457,13 @@ export type Database = {
             referencedRelation: "itineraries"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "itinerary_days_itinerary_id_fkey"
+            columns: ["itinerary_id"]
+            isOneToOne: false
+            referencedRelation: "public_itineraries"
+            referencedColumns: ["id"]
+          },
         ]
       }
       itinerary_hotels: {
@@ -1497,6 +1511,13 @@ export type Database = {
             referencedRelation: "itineraries"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "itinerary_hotels_itinerary_id_fkey"
+            columns: ["itinerary_id"]
+            isOneToOne: false
+            referencedRelation: "public_itineraries"
+            referencedColumns: ["id"]
+          },
         ]
       }
       itinerary_restaurants: {
@@ -1539,6 +1560,13 @@ export type Database = {
             columns: ["itinerary_id"]
             isOneToOne: false
             referencedRelation: "itineraries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "itinerary_restaurants_itinerary_id_fkey"
+            columns: ["itinerary_id"]
+            isOneToOne: false
+            referencedRelation: "public_itineraries"
             referencedColumns: ["id"]
           },
         ]
@@ -3052,7 +3080,96 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_basic: {
+        Row: {
+          avatar_url: string | null
+          email: string | null
+          full_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          email?: string | null
+          full_name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          email?: string | null
+          full_name?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      public_itineraries: {
+        Row: {
+          ai_status: string | null
+          arrival_airport_id: string | null
+          arrival_datetime: string | null
+          created_at: string | null
+          departure_airport_id: string | null
+          departure_datetime: string | null
+          destination: string | null
+          id: string | null
+          notes: string | null
+          public_token: string | null
+          sleep_time: string | null
+          summary: string | null
+          title: string | null
+          updated_at: string | null
+          wake_time: string | null
+        }
+        Insert: {
+          ai_status?: string | null
+          arrival_airport_id?: string | null
+          arrival_datetime?: string | null
+          created_at?: string | null
+          departure_airport_id?: string | null
+          departure_datetime?: string | null
+          destination?: string | null
+          id?: string | null
+          notes?: string | null
+          public_token?: string | null
+          sleep_time?: string | null
+          summary?: string | null
+          title?: string | null
+          updated_at?: string | null
+          wake_time?: string | null
+        }
+        Update: {
+          ai_status?: string | null
+          arrival_airport_id?: string | null
+          arrival_datetime?: string | null
+          created_at?: string | null
+          departure_airport_id?: string | null
+          departure_datetime?: string | null
+          destination?: string | null
+          id?: string | null
+          notes?: string | null
+          public_token?: string | null
+          sleep_time?: string | null
+          summary?: string | null
+          title?: string | null
+          updated_at?: string | null
+          wake_time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itineraries_arrival_airport_id_fkey"
+            columns: ["arrival_airport_id"]
+            isOneToOne: false
+            referencedRelation: "airports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "itineraries_departure_airport_id_fkey"
+            columns: ["departure_airport_id"]
+            isOneToOne: false
+            referencedRelation: "airports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_role: {

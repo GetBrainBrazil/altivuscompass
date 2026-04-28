@@ -109,7 +109,7 @@ export default function Tasks() {
   const { data: profiles = [] } = useQuery({
     queryKey: ["profiles-list"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("user_id, full_name");
+      const { data } = await supabase.from("profiles_basic").select("user_id, full_name");
       return data ?? [];
     },
   });
