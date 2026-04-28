@@ -32,6 +32,7 @@ import type { KanbanCardData } from "@/components/crm/KanbanCard";
 import { IntlPhoneInput } from "@/components/ui/intl-phone-input";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadTimeline } from "@/components/crm/LeadTimeline";
+import { LeadWhatsAppPanel } from "@/components/crm/LeadWhatsAppPanel";
 import { UserPicker } from "@/components/ui/user-picker";
 
 const FUNNEL_STAGES = [
@@ -119,7 +120,7 @@ export default function LeadDetail() {
   const [contactId, setContactId] = useState<string | null>(null);
   const [users, setUsers] = useState<Array<{ id: string; name: string; avatarUrl?: string | null }>>([]);
   const [quotesCount, setQuotesCount] = useState(0);
-  const [conversationsCount, setConversationsCount] = useState(0);
+  const [waPanelOpen, setWaPanelOpen] = useState(false);
 
   useEffect(() => {
     if (!card && id) setCard(readCard(id));
@@ -203,13 +204,6 @@ export default function LeadDetail() {
       if (contact) {
         setContactLevel((contact.level as ContactLevel) ?? "lead");
         setContactId(contact.id);
-        if (contact.phone) {
-          const { count: cc } = await supabase
-            .from("wa_conversations")
-            .select("id", { count: "exact", head: true })
-            .eq("phone", contact.phone);
-          if (!cancelled) setConversationsCount(cc ?? 0);
-        }
       } else {
         setContactLevel("lead");
       }
@@ -357,6 +351,15 @@ export default function LeadDetail() {
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-emerald-500/40 text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                onClick={() => setWaPanelOpen(true)}
+              >
+                <MessageCircle className="h-4 w-4 mr-1.5" />
+                WhatsApp
+              </Button>
               {!isClient && leadId && (
                 <Button
                   variant="outline"
@@ -442,7 +445,6 @@ export default function LeadDetail() {
                 <TabTriggerItem value="main" icon={FileText} label="Principal" />
                 <TabTriggerItem value="timeline" icon={Clock} label="Timeline" />
                 <TabTriggerItem value="quotes" icon={FileText} label="Cotações" count={quotesCount} />
-                <TabTriggerItem value="conversations" icon={MessageCircle} label="Conversas" count={conversationsCount} />
                 <TabTriggerItem value="documents" icon={FileBox} label="Documentos" />
                 <TabTriggerItem value="notes" icon={StickyNote} label="Observações" />
               </TabsList>
@@ -616,26 +618,6 @@ export default function LeadDetail() {
                 </Section>
               </TabsContent>
 
-              <TabsContent value="conversations" className="mt-0">
-                <Section title={`Conversas (${conversationsCount})`}>
-                  {conversationsCount === 0 ? (
-                    <EmptyState
-                      icon={MessageCircle}
-                      title="Nenhuma conversa registrada"
-                      description="As conversas da Central de Atendimento aparecerão aqui."
-                    />
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/service-center?phone=${form.phone}`)}
-                    >
-                      <ExternalLink className="h-4 w-4 mr-1.5" />
-                      Abrir na Central de Atendimento
-                    </Button>
-                  )}
-                </Section>
-              </TabsContent>
 
               <TabsContent value="documents" className="mt-0">
                 <Section title="Documentos">
@@ -672,8 +654,16 @@ export default function LeadDetail() {
               </TabsContent>
             </div>
           </div>
-        </Tabs>
+      </Tabs>
       </main>
+
+      <LeadWhatsAppPanel
+        open={waPanelOpen}
+        onOpenChange={setWaPanelOpen}
+        contactName={form.full_name || card?.clientName || "Contato"}
+        phone={form.phone || card?.phone || null}
+        contactId={contactId}
+      />
     </div>
   );
 }
