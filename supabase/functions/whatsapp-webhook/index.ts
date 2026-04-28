@@ -50,12 +50,24 @@ Deno.serve(async (req) => {
     const isTextMsg = body.text?.message != null
     const isImageMsg = body.image != null
     const isDocumentMsg = body.document != null
+    const isAudioMsg = body.audio != null
+    const isVideoMsg = body.video != null
+    const isStickerMsg = body.sticker != null
+    const isLocationMsg = body.location != null
     const senderName = body.senderName || body.chatName || ''
 
     const messageText = body.text?.message || ''
     const imageUrl = body.image?.imageUrl || body.image?.url || ''
     const documentUrl = body.document?.documentUrl || body.document?.url || ''
     const documentMimeType = body.document?.mimeType || ''
+    const audioUrl = body.audio?.audioUrl || body.audio?.url || ''
+    const audioMime = body.audio?.mimeType || ''
+    const videoUrl = body.video?.videoUrl || body.video?.url || ''
+    const videoMime = body.video?.mimeType || ''
+    const stickerUrl = body.sticker?.stickerUrl || body.sticker?.url || ''
+    const imageCaption = body.image?.caption || ''
+    const videoCaption = body.video?.caption || ''
+    const documentCaption = body.document?.caption || body.document?.fileName || ''
 
     if (!phone) {
       return new Response(JSON.stringify({ status: 'ignored', reason: 'no phone' }), {
