@@ -238,12 +238,6 @@ export function LeadDetailPanel({ card, open, onOpenChange }: Props) {
           </TabsContent>
         </Tabs>
       </SheetContent>
-      <LeadConversionDialog
-        leadId={leadId}
-        open={convertOpen}
-        onOpenChange={setConvertOpen}
-        onConverted={() => onOpenChange(false)}
-      />
     </Sheet>
   );
 }
