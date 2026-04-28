@@ -373,6 +373,7 @@ export default function CRM() {
           !!l.destination &&
           (!!l.travel_date_start || !!l.travel_date_end || !!l.flexible_dates_description) &&
           !!l.travelers_count;
+        const isAI = l.source === "whatsapp_ai";
         return {
           id: `lead-${l.id}`,
           clientName: l.full_name,
@@ -381,12 +382,13 @@ export default function CRM() {
             ? new Date(l.travel_date_start).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })
             : (l.flexible_dates_description ?? undefined),
           estimatedValue: l.budget_estimate ? Number(l.budget_estimate) : undefined,
-          isAILead: l.source === "whatsapp_ai",
+          isAILead: isAI,
+          isManualLead: !isAI,
           aiSummary: l.ai_summary ?? undefined,
           contactLevel: hasTravelData ? "lead" : "prospect",
           tags: [
             l.travelers_count ? { label: `${l.travelers_count} viajante(s)`, tone: "blue" as const } : null,
-            l.source === "whatsapp_ai" ? { label: "WhatsApp", tone: "green" as const } : null,
+            isAI ? { label: "WhatsApp", tone: "green" as const } : null,
           ].filter(Boolean) as KanbanCardData["tags"],
         };
       });
