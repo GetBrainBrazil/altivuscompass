@@ -378,7 +378,7 @@ export default function CRM() {
     const fetchLeads = async () => {
       const { data, error } = await supabase
         .from("leads")
-        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at")
+        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, is_returning, returned_at")
         .is("converted_client_id", null)
         .order("created_at", { ascending: false })
         .limit(100);
