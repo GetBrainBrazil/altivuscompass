@@ -398,6 +398,7 @@ export default function CRM() {
         return {
           id,
           clientName: l.full_name,
+          phone: l.phone ?? undefined,
           destination: l.destination ?? undefined,
           travelDate: l.travel_date_start
             ? new Date(l.travel_date_start).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })

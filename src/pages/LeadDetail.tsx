@@ -21,6 +21,20 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import type { KanbanCardData } from "@/components/crm/KanbanCard";
 import { LeadConversionDialog } from "@/components/crm/LeadConversionDialog";
+import { supabase } from "@/integrations/supabase/client";
+
+function formatPhoneBR(phone?: string | null): string {
+  if (!phone) return "";
+  const digits = phone.replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) {
+    const ddd = digits.slice(2, 4);
+    const rest = digits.slice(4);
+    if (rest.length === 9) return `+55 ${ddd} ${rest.slice(0, 5)}-${rest.slice(5)}`;
+    if (rest.length === 8) return `+55 ${ddd} ${rest.slice(0, 4)}-${rest.slice(4)}`;
+  }
+  return `+${digits}`;
+}
 
 const FUNNEL_STAGES = [
   { id: "new-leads", title: "Novos Leads (IA)" },
@@ -54,6 +68,30 @@ export default function LeadDetail() {
   useEffect(() => {
     if (!card && id) setCard(readCard(id));
   }, [id, card]);
+
+  // Garante que o telefone esteja disponível mesmo quando o card vem do
+  // sessionStorage sem esse campo (ex.: acesso direto pela URL).
+  useEffect(() => {
+    let cancelled = false;
+    if (!leadId) return;
+    if (card?.phone) return;
+    (async () => {
+      const { data } = await supabase
+        .from("leads")
+        .select("phone, full_name, destination")
+        .eq("id", leadId)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      setCard((prev) => ({
+        id: id!,
+        clientName: prev?.clientName || data.full_name || "",
+        destination: prev?.destination ?? data.destination ?? undefined,
+        ...prev,
+        phone: data.phone ?? undefined,
+      }));
+    })();
+    return () => { cancelled = true; };
+  }, [leadId, id, card?.phone]);
 
   const stageIndex = useMemo(
     () => Math.max(0, FUNNEL_STAGES.findIndex((s) => s.id === stageId)),
@@ -195,6 +233,11 @@ export default function LeadDetail() {
                 <Section title="Resumo">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <Field label="Nome do cliente" defaultValue={card?.clientName ?? ""} />
+                    <Field
+                      label="Telefone"
+                      defaultValue={formatPhoneBR(card?.phone)}
+                      placeholder="Ainda não informado"
+                    />
                     <Field label="Destino" defaultValue={card?.destination ?? ""} />
                     <Field label="Data da viagem" defaultValue={card?.travelDate ?? ""} />
                     <Field

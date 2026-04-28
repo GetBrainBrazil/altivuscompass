@@ -7,6 +7,26 @@ const corsHeaders = {
 
 const ZAPI_BASE_URL = 'https://api.z-api.io'
 
+/**
+ * Formata um número de WhatsApp (E.164 sem '+', ex.: "5511999990000") como
+ * placeholder humano para o campo "Nome do cliente" enquanto a IA ainda não
+ * descobriu o nome real (ex.: "+55 11 99999-0000").
+ */
+function formatPhonePlaceholder(phone: string): string {
+  const digits = (phone || '').replace(/\D/g, '')
+  if (!digits) return 'Contato sem identificação'
+  // BR: 55 + DDD(2) + 9XXXXXXXX (mobile) | 8XXXXXXX (fixed)
+  if (digits.startsWith('55') && (digits.length === 12 || digits.length === 13)) {
+    const cc = digits.slice(0, 2)
+    const ddd = digits.slice(2, 4)
+    const rest = digits.slice(4)
+    if (rest.length === 9) return `+${cc} ${ddd} ${rest.slice(0, 5)}-${rest.slice(5)}`
+    if (rest.length === 8) return `+${cc} ${ddd} ${rest.slice(0, 4)}-${rest.slice(4)}`
+  }
+  return `+${digits}`
+}
+
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -456,12 +476,21 @@ async function handleLeadCapture(
     leadRow = data
   }
 
-  // 3) If no lead exists yet, create one. Use known name from contact if available.
+  // 3) If no lead exists yet, create one. Use known name from contact when available;
+  //    se a IA / WhatsApp não trouxerem um nome real, o placeholder é o número de
+  //    telefone formatado — NUNCA o destino, assunto ou outro campo.
   if (!leadRow) {
+    const contactName = (matchedContact?.full_name || '').trim()
+    const waSenderName = (senderName || '').trim()
+    // Aceita nome do WhatsApp apenas se parecer um nome humano (mais de uma palavra
+    // alfabética e sem dígitos), para evitar pegar coisas como "Cliente WhatsApp"
+    // ou nicknames com números.
+    const looksLikeHumanName = (s: string) =>
+      !!s && !/\d/.test(s) && s.split(/\s+/).filter((w) => w.length > 1).length >= 2
     const cleanName =
-      (matchedContact?.full_name || '').trim() ||
-      (senderName || '').trim() ||
-      `Contato ${phone.slice(-4)}`
+      contactName ||
+      (looksLikeHumanName(waSenderName) ? waSenderName : '') ||
+      formatPhonePlaceholder(phone)
     const { data: newLead, error: leadErr } = await supabase
       .from('leads')
       .insert({
@@ -578,7 +607,28 @@ function buildLeadUpdates(extracted: any, current: any): Record<string, any> {
     if (current?.[field] && String(current[field]).trim()) return // don't overwrite
     updates[field] = value
   }
-  setIfNew('full_name', extracted.full_name)
+
+  // Nome: regras especiais. NUNCA permitir que o nome seja igual ao destino.
+  // Se o nome atual é apenas o placeholder (telefone formatado), aceitamos
+  // substituir por um nome humano extraído pela IA.
+  const extractedName = typeof extracted.full_name === 'string' ? extracted.full_name.trim() : ''
+  const extractedDest = typeof extracted.destination === 'string' ? extracted.destination.trim() : ''
+  const currentName = (current?.full_name || '').trim()
+  const looksLikeHumanName = (s: string) =>
+    !!s && !/\d/.test(s) && s.split(/\s+/).filter((w) => w.length > 1).length >= 2
+  const isPlaceholderName = (s: string) =>
+    !!s && (/^\+?\d/.test(s) || /^Contato\s+\d{2,}$/i.test(s))
+
+  if (
+    extractedName &&
+    looksLikeHumanName(extractedName) &&
+    extractedName.toLowerCase() !== extractedDest.toLowerCase() &&
+    extractedName.toLowerCase() !== (current?.destination || '').toLowerCase() &&
+    (!currentName || isPlaceholderName(currentName))
+  ) {
+    updates.full_name = extractedName
+  }
+
   setIfNew('email', extracted.email)
   setIfNew('destination', extracted.destination)
   setIfNew('travel_date_start', extracted.travel_date_start)
