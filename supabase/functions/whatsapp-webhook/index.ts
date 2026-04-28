@@ -456,12 +456,21 @@ async function handleLeadCapture(
     leadRow = data
   }
 
-  // 3) If no lead exists yet, create one. Use known name from contact if available.
+  // 3) If no lead exists yet, create one. Use known name from contact when available;
+  //    se a IA / WhatsApp não trouxerem um nome real, o placeholder é o número de
+  //    telefone formatado — NUNCA o destino, assunto ou outro campo.
   if (!leadRow) {
+    const contactName = (matchedContact?.full_name || '').trim()
+    const waSenderName = (senderName || '').trim()
+    // Aceita nome do WhatsApp apenas se parecer um nome humano (mais de uma palavra
+    // alfabética e sem dígitos), para evitar pegar coisas como "Cliente WhatsApp"
+    // ou nicknames com números.
+    const looksLikeHumanName = (s: string) =>
+      !!s && !/\d/.test(s) && s.split(/\s+/).filter((w) => w.length > 1).length >= 2
     const cleanName =
-      (matchedContact?.full_name || '').trim() ||
-      (senderName || '').trim() ||
-      `Contato ${phone.slice(-4)}`
+      contactName ||
+      (looksLikeHumanName(waSenderName) ? waSenderName : '') ||
+      formatPhonePlaceholder(phone)
     const { data: newLead, error: leadErr } = await supabase
       .from('leads')
       .insert({
