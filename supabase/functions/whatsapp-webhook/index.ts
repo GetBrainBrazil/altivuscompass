@@ -181,6 +181,23 @@ Deno.serve(async (req) => {
       })
     }
 
+    // ===== Se a conversa foi assumida por um humano, NÃO acionar a IA =====
+    try {
+      const { data: convoStatus } = await supabase
+        .from('wa_conversations')
+        .select('status')
+        .eq('phone', phone)
+        .maybeSingle()
+      if (convoStatus?.status === 'human') {
+        console.log(`[whatsapp-webhook] Conversa ${phone} em modo humano — IA pausada.`)
+        return new Response(JSON.stringify({ status: 'human_takeover', reason: 'ai_paused' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+    } catch (e) {
+      console.error('Erro checando status humano:', e)
+    }
+
     // Check for #pago command
     const isPagoCommand = isTextMsg && messageText.trim().toLowerCase() === '#pago'
     const isCancelarCommand = isTextMsg && ['#cancelar', '#cancela', '#sair'].includes(messageText.trim().toLowerCase())
