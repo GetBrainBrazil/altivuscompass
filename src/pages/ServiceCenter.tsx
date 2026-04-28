@@ -849,13 +849,14 @@ export default function ServiceCenter() {
     () => Array.from(new Set(convoRows.map((c: any) => c.contact_id).filter(Boolean))),
     [convoRows],
   );
+  // Fonte da verdade: tabela contacts. Inclui nome, level, vínculos e datas.
   const { data: contactsMeta = [] } = useQuery({
     queryKey: ["wa_contacts_meta", contactIds.join(",")],
     enabled: contactIds.length > 0,
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("contacts")
-        .select("id, first_contact_at, last_contact_at, is_returning")
+        .select("id, full_name, phone, level, lead_id, client_id, first_contact_at, last_contact_at, is_returning")
         .in("id", contactIds);
       return data ?? [];
     },
