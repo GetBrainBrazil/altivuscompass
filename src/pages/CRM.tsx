@@ -246,20 +246,36 @@ function KanbanColumnCard({
           {column.cards.length === 0 ? (
             <EmptyColumnHint />
           ) : (
-            column.cards.map((card) => (
-              <KanbanCard
-                key={card.id}
-                card={card}
-                onClick={onCardClick}
-                stageBorderClass={dotColor.replace("bg-", "border-l-")}
-                draggable
-                isDragging={draggedCardId === card.id}
-                onDragStart={(c) => onCardDragStart(c)}
-                onDragEnd={() => onCardDragEnd()}
-                onTemperatureChange={onTemperatureChange}
-                onDelete={onCardDelete}
-              />
-            ))
+            column.cards.map((card) => {
+              const isFocused = focusCardId && focusCardId === card.id;
+              return (
+                <div
+                  key={card.id}
+                  data-card-id={card.id}
+                  ref={(el) => {
+                    if (el && isFocused) {
+                      try { el.scrollIntoView({ behavior: "smooth", block: "center" }); } catch { /* noop */ }
+                    }
+                  }}
+                  className={cn(
+                    "transition-all rounded-lg",
+                    isFocused && "ring-2 ring-primary/70 ring-offset-2 ring-offset-background animate-pulse",
+                  )}
+                >
+                  <KanbanCard
+                    card={card}
+                    onClick={onCardClick}
+                    stageBorderClass={dotColor.replace("bg-", "border-l-")}
+                    draggable
+                    isDragging={draggedCardId === card.id}
+                    onDragStart={(c) => onCardDragStart(c)}
+                    onDragEnd={() => onCardDragEnd()}
+                    onTemperatureChange={onTemperatureChange}
+                    onDelete={onCardDelete}
+                  />
+                </div>
+              );
+            })
           )}
         </div>
       </div>
