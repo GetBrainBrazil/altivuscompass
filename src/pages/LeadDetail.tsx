@@ -130,7 +130,7 @@ export default function LeadDetail() {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, full_name, email")
+        .select("user_id, full_name, email, avatar_url")
         .order("full_name", { ascending: true });
       if (cancelled || !data) return;
       setUsers(
@@ -139,6 +139,7 @@ export default function LeadDetail() {
           .map((u) => ({
             id: u.user_id as string,
             name: u.full_name || u.email || "Usuário",
+            avatarUrl: u.avatar_url ?? null,
           }))
       );
     })();
