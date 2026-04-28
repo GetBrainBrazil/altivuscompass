@@ -1643,6 +1643,7 @@ export type Database = {
         Row: {
           ai_collected_data: Json | null
           ai_summary: string | null
+          assigned_user_id: string | null
           budget_estimate: number | null
           converted_at: string | null
           converted_client_id: string | null
@@ -1656,6 +1657,7 @@ export type Database = {
           id: string
           is_returning: boolean
           last_contact_at: string | null
+          lead_temperature: string | null
           phone: string | null
           preferences: string | null
           returned_at: string | null
@@ -1664,11 +1666,13 @@ export type Database = {
           travel_date_end: string | null
           travel_date_start: string | null
           travelers_count: number | null
+          trip_profile: string | null
           updated_at: string
         }
         Insert: {
           ai_collected_data?: Json | null
           ai_summary?: string | null
+          assigned_user_id?: string | null
           budget_estimate?: number | null
           converted_at?: string | null
           converted_client_id?: string | null
@@ -1682,6 +1686,7 @@ export type Database = {
           id?: string
           is_returning?: boolean
           last_contact_at?: string | null
+          lead_temperature?: string | null
           phone?: string | null
           preferences?: string | null
           returned_at?: string | null
@@ -1690,11 +1695,13 @@ export type Database = {
           travel_date_end?: string | null
           travel_date_start?: string | null
           travelers_count?: number | null
+          trip_profile?: string | null
           updated_at?: string
         }
         Update: {
           ai_collected_data?: Json | null
           ai_summary?: string | null
+          assigned_user_id?: string | null
           budget_estimate?: number | null
           converted_at?: string | null
           converted_client_id?: string | null
@@ -1708,6 +1715,7 @@ export type Database = {
           id?: string
           is_returning?: boolean
           last_contact_at?: string | null
+          lead_temperature?: string | null
           phone?: string | null
           preferences?: string | null
           returned_at?: string | null
@@ -1716,6 +1724,7 @@ export type Database = {
           travel_date_end?: string | null
           travel_date_start?: string | null
           travelers_count?: number | null
+          trip_profile?: string | null
           updated_at?: string
         }
         Relationships: []
