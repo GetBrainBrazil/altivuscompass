@@ -48,6 +48,7 @@ import {
 import { cn } from "@/lib/utils";
 import { KanbanCard, type KanbanCardData, type LeadTemperature } from "@/components/crm/KanbanCard";
 import { ClientPromotionDialog } from "@/components/crm/ClientPromotionDialog";
+import { DeleteContactDialog, type DeleteContactTarget } from "@/components/contacts/DeleteContactDialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
