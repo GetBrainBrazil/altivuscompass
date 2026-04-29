@@ -162,6 +162,7 @@ function KanbanColumnCard({
   onTemperatureChange,
   onCardDelete,
   focusCardId,
+  isLoading,
 }: {
   column: KanbanColumn;
   dotColor: string;
@@ -177,6 +178,7 @@ function KanbanColumnCard({
   onTemperatureChange: (card: KanbanCardData, next: LeadTemperature) => void;
   onCardDelete?: (card: KanbanCardData) => void;
   focusCardId?: string | null;
+  isLoading?: boolean;
 }) {
   const [isOver, setIsOver] = useState(false);
 
