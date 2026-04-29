@@ -406,7 +406,7 @@ export function KanbanCard({
       }}
       className={cn(
         "group relative rounded-lg border border-border bg-card text-left",
-        "border-l-[3px] shadow-sm hover:shadow-md transition-all animate-fade-in",
+        "border-l-4 shadow-sm hover:shadow-md transition-all animate-fade-in",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
         draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
         isDragging && "opacity-30",
