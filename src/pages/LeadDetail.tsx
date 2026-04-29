@@ -505,60 +505,62 @@ export default function LeadDetail() {
       {/* Grid de duas colunas: conteúdo + painel lateral */}
       <div className="grid grid-cols-1 lg:grid-cols-[68fr_32fr] items-start flex-1 min-h-0">
         <div className="flex flex-col min-w-0">
-        {/* Stepper — estilo Cotações */}
-        <div className="px-6 lg:px-10 py-5 border-b border-border bg-white dark:bg-slate-900 relative z-10">
-          <div className="glass-card rounded-xl px-3 sm:px-4 py-3 bg-background border border-border">
-            <div className="flex items-center gap-0.5 sm:gap-1 flex-wrap">
-              {FUNNEL_STAGES.map((stage, idx) => {
-                const isActive = idx === stageIndex;
-                const isPast = idx < stageIndex;
-                const isLast = idx === FUNNEL_STAGES.length - 1;
-                return (
-                  <div key={stage.id} className="flex items-center flex-1">
-                    <div
-                      className={cn(
-                        "flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-body font-medium transition-all whitespace-nowrap",
-                        isActive
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : isPast
-                            ? "bg-primary/20 text-primary"
-                            : "bg-muted text-muted-foreground"
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold",
-                          isActive
-                            ? "bg-primary-foreground text-primary"
-                            : isPast
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted-foreground/30 text-muted-foreground"
-                        )}
-                      >
-                        {isPast ? <Check className="w-2.5 h-2.5" /> : idx + 1}
-                      </span>
-                      {stage.title}
-                    </div>
-                    {!isLast && (
-                      <div
-                        className={cn(
-                          "flex-1 h-0.5 mx-1 rounded-full min-w-[8px]",
-                          isPast ? "bg-primary/40" : "bg-border"
-                        )}
-                      />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
       {/* Tabs + content */}
       <main className="flex-1 min-h-0">
         <Tabs defaultValue="main" className="flex flex-col">
-          <div className="border-b border-border bg-white dark:bg-slate-900 sticky top-0 z-20 shadow-sm">
-            <div className="px-6 lg:px-10 py-2">
+          {/* Wrapper sticky agrupando Stepper + Abas */}
+          <div className="sticky top-0 z-50 bg-slate-50 dark:bg-slate-900 pt-4 pb-2 w-full shadow-sm">
+            {/* Stepper — estilo Cotações */}
+            <div className="px-6 lg:px-10 pb-3">
+              <div className="glass-card rounded-xl px-3 sm:px-4 py-3 bg-background border border-border">
+                <div className="flex items-center gap-0.5 sm:gap-1 flex-wrap">
+                  {FUNNEL_STAGES.map((stage, idx) => {
+                    const isActive = idx === stageIndex;
+                    const isPast = idx < stageIndex;
+                    const isLast = idx === FUNNEL_STAGES.length - 1;
+                    return (
+                      <div key={stage.id} className="flex items-center flex-1">
+                        <div
+                          className={cn(
+                            "flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-body font-medium transition-all whitespace-nowrap",
+                            isActive
+                              ? "bg-primary text-primary-foreground shadow-sm"
+                              : isPast
+                                ? "bg-primary/20 text-primary"
+                                : "bg-muted text-muted-foreground"
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold",
+                              isActive
+                                ? "bg-primary-foreground text-primary"
+                                : isPast
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-muted-foreground/30 text-muted-foreground"
+                            )}
+                          >
+                            {isPast ? <Check className="w-2.5 h-2.5" /> : idx + 1}
+                          </span>
+                          {stage.title}
+                        </div>
+                        {!isLast && (
+                          <div
+                            className={cn(
+                              "flex-1 h-0.5 mx-1 rounded-full min-w-[8px]",
+                              isPast ? "bg-primary/40" : "bg-border"
+                            )}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Abas */}
+            <div className="px-6 lg:px-10 border-b border-border">
               <TabsList className="flex flex-wrap h-auto gap-0.5 bg-muted p-0.5 w-full justify-start">
                 <TabTriggerItem value="main" icon={FileText} label="Principal" />
                 <TabTriggerItem value="timeline" icon={Clock} label="Timeline" />
