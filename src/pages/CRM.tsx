@@ -191,7 +191,7 @@ function KanbanColumnCard({
           {column.title}
         </span>
         <span className="text-xs text-muted-foreground font-body ml-auto">
-          {column.cards.length}
+          {isLoading ? "—" : column.cards.length}
         </span>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
