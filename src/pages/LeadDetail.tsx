@@ -310,6 +310,33 @@ export default function LeadDetail() {
     return () => { cancelled = true; };
   }, [leadId, id]);
 
+  // Refetch das cotações vinculadas (chamado ao voltar a aba/janela ou após editor fechar)
+  const refetchLeadQuotes = async () => {
+    if (!leadId) return;
+    const { data } = await supabase
+      .from("quotes")
+      .select("id, title, destination, stage, total_value, travel_date_start, travel_date_end, quote_validity, created_at, conclusion_type, archived_at")
+      .eq("lead_id", leadId)
+      .is("archived_at", null)
+      .order("created_at", { ascending: false });
+    setLeadQuotes((data ?? []) as LeadQuote[]);
+  };
+
+  // Refetch quando a aba/janela volta a ficar visível (cobre voltar de /quotes)
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refetchLeadQuotes();
+    };
+    const onFocus = () => refetchLeadQuotes();
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onFocus);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leadId]);
+
   // Inicializa form a partir do card (sessionStorage)
   useEffect(() => {
     if (!card) return;
