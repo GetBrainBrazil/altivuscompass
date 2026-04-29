@@ -2009,12 +2009,50 @@ export default function CRM() {
       {/* Header */}
       <header className="border-b border-border bg-background">
         <div className="px-6 pt-5 pb-3">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            CRM
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Acompanhe leads, qualificações e operações em viagem em um só lugar.
-          </p>
+          {/* Linha 1: Título à esquerda, seletor Funil/Operações à direita */}
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                CRM
+              </h1>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Acompanhe leads, qualificações e operações em viagem em um só lugar.
+              </p>
+            </div>
+
+            <div className="inline-flex items-center gap-1 rounded-full border border-border bg-card p-1 shadow-sm shrink-0">
+              <button
+                type="button"
+                onClick={() => setTab("sales")}
+                className={cn(
+                  "inline-flex items-center gap-2 h-9 px-5 rounded-full text-sm font-medium transition-colors",
+                  tab === "sales"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted",
+                )}
+                aria-label="Funil de Vendas"
+                aria-pressed={tab === "sales"}
+              >
+                <TrendingUp className="w-4 h-4" />
+                Funil de Vendas
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab("ops")}
+                className={cn(
+                  "inline-flex items-center gap-2 h-9 px-5 rounded-full text-sm font-medium transition-colors",
+                  tab === "ops"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted",
+                )}
+                aria-label="Operações em Viagem"
+                aria-pressed={tab === "ops"}
+              >
+                <Plane className="w-4 h-4" />
+                Operações em Viagem
+              </button>
+            </div>
+          </div>
 
           {/* Linha 2: mini cards de métricas em grid de 3, largura total */}
           <div key={tab} className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 animate-fade-in">
@@ -2071,42 +2109,6 @@ export default function CRM() {
                 />
               </>
             )}
-          </div>
-
-          {/* Linha 3: seletor Funil / Operações centralizado */}
-          <div className="flex justify-center mt-4">
-            <div className="inline-flex items-center gap-1 rounded-full border border-border bg-card p-1 shadow-sm">
-              <button
-                type="button"
-                onClick={() => setTab("sales")}
-                className={cn(
-                  "inline-flex items-center gap-2 h-9 px-5 rounded-full text-sm font-medium transition-colors",
-                  tab === "sales"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted",
-                )}
-                aria-label="Funil de Vendas"
-                aria-pressed={tab === "sales"}
-              >
-                <TrendingUp className="w-4 h-4" />
-                Funil de Vendas
-              </button>
-              <button
-                type="button"
-                onClick={() => setTab("ops")}
-                className={cn(
-                  "inline-flex items-center gap-2 h-9 px-5 rounded-full text-sm font-medium transition-colors",
-                  tab === "ops"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted",
-                )}
-                aria-label="Operações em Viagem"
-                aria-pressed={tab === "ops"}
-              >
-                <Plane className="w-4 h-4" />
-                Operações em Viagem
-              </button>
-            </div>
           </div>
         </div>
       </header>
