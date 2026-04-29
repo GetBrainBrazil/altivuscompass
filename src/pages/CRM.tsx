@@ -184,6 +184,9 @@ function KanbanColumnCard({
   onAddBefore,
   onAddAfter,
   draggedCardId,
+  isValidTarget,
+  isInvalidTarget,
+  isSourceColumn,
   onCardDragStart,
   onCardDragEnd,
   onDropOnColumn,
@@ -203,9 +206,12 @@ function KanbanColumnCard({
   onAddBefore: () => void;
   onAddAfter: () => void;
   draggedCardId: string | null;
+  isValidTarget?: boolean;
+  isInvalidTarget?: boolean;
+  isSourceColumn?: boolean;
   onCardDragStart: (card: KanbanCardData) => void;
   onCardDragEnd: () => void;
-  onDropOnColumn: (columnId: string) => void;
+  onDropOnColumn: (columnId: string, targetIndex?: number) => void;
   onTemperatureChange: (card: KanbanCardData, next: LeadTemperature) => void;
   onCardDelete?: (card: KanbanCardData) => void;
   focusCardId?: string | null;
@@ -215,6 +221,7 @@ function KanbanColumnCard({
   onToggleCollapse?: () => void;
 }) {
   const [isOver, setIsOver] = useState(false);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
 
   const ownerlessCount = column.cards.filter((c) => !c.agent?.name).length;
   const isCollapsed = !!(collapsible && collapsed);
