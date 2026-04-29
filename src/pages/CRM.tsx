@@ -1854,10 +1854,15 @@ export default function CRM() {
   const hasActiveFilters =
     searchTerm !== "" ||
     filterAgent !== "all" ||
-    filterTag !== "all" ||
-    filterTemp !== "all" ||
-    filterLevel !== "all" ||
-    filterSource !== "all";
+    (tab === "sales" &&
+      (filterTag !== "all" ||
+        filterTemp !== "all" ||
+        filterLevel !== "all" ||
+        filterSource !== "all")) ||
+    (tab === "ops" &&
+      (filterBoarding !== "all" ||
+        filterOpsStatus !== "all" ||
+        filterDestination !== "all"));
 
   const handleCardClick = (card: KanbanCardData) => {
     const stage = columns.find((c) => c.cards.some((k) => k.id === card.id));
