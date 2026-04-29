@@ -501,6 +501,35 @@ function KanbanColumnCard({
   );
 }
 
+function MetricCard({
+  icon,
+  value,
+  label,
+  badge,
+}: {
+  icon: React.ReactNode;
+  value: string;
+  label: string;
+  badge?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-4 rounded-xl border border-border bg-card px-5 min-h-[80px] shadow-sm">
+      <div className="flex items-center justify-center w-11 h-11 rounded-full bg-primary/10 shrink-0">
+        {icon}
+      </div>
+      <div className="flex flex-col leading-tight min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl font-bold text-foreground font-display tabular-nums truncate">
+            {value}
+          </span>
+          {badge}
+        </div>
+        <span className="text-xs text-muted-foreground mt-0.5 truncate">{label}</span>
+      </div>
+    </div>
+  );
+}
+
 
 function AddColumnButton({ onClick }: { onClick: () => void }) {
   return (
