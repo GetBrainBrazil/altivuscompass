@@ -1079,6 +1079,9 @@ export default function CRM() {
     setLostReason("Sem resposta");
     setLostDetails("");
   };
+
+  // Avalia restrições por coluna de destino. Devolve a lista de issues; vazia = pode mover.
+  const validateMove = async (
     card: KanbanCardData,
     toColumnId: string,
     leadId: string | null,
