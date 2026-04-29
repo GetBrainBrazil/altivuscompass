@@ -242,7 +242,7 @@ export default function LeadConvert() {
 
           <Section title="Endereço">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FieldText label="CEP" value={form.cep} onChange={(v) => upd("cep", maskCEP(v))} onBlur={handleCepBlur} placeholder="00000-000" inputMode="numeric" maxLength={9} />
+              <FieldText label="CEP" value={form.cep} onChange={(v) => upd("cep", maskCEP(v))} onBlur={handleCepBlur} placeholder="00000-000" inputMode="numeric" maxLength={9} disabled={cepLoading} loading={cepLoading} />
               <div className="md:col-span-2">
                 <FieldText label="Rua / Logradouro" value={form.address_street} onChange={(v) => upd("address_street", v)} />
               </div>
