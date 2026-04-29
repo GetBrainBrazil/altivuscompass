@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, PartyPopper, AlertTriangle, UserCheck, Clock } from "lucide-react";
+import { Loader2, PartyPopper, AlertTriangle, UserCheck, Clock, Receipt, MapPin, Calendar, DollarSign, Users, User } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -14,6 +14,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+
+type SaleSummary = {
+  title: string;
+  destination: string | null;
+  travelDateStart: string | null;
+  travelDateEnd: string | null;
+  totalValue: number | null;
+  travelersCount: number | null;
+  agentName: string | null;
+};
+
+const fmtBRL = (v: number | null) =>
+  v == null ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+const fmtDate = (iso: string | null) => {
+  if (!iso) return null;
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+};
+
+const fmtDateRange = (a: string | null, b: string | null) => {
+  const fa = fmtDate(a);
+  const fb = fmtDate(b);
+  if (fa && fb) return `${fa} → ${fb}`;
+  return fa || fb || "—";
+};
 
 type Traveler = {
   full_name: string;
