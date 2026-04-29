@@ -1423,6 +1423,41 @@ export default function CRM() {
           <p className="text-sm text-muted-foreground mt-1">
             Acompanhe leads, qualificações e operações em viagem em um só lugar.
           </p>
+
+          {/* Métricas compactas */}
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-3">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-lg font-semibold text-foreground font-display tabular-nums">
+                {totalLeads}
+              </span>
+              <span className="text-xs text-muted-foreground">contatos no funil</span>
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-lg font-semibold text-foreground font-display tabular-nums">
+                {newThisWeek}
+              </span>
+              <span className="text-xs text-muted-foreground">leads novos esta semana</span>
+              {weekDeltaPct !== 0 && (
+                <span
+                  className={cn(
+                    "text-[10px] font-medium px-1.5 py-0.5 rounded-full",
+                    weekDeltaPositive
+                      ? "bg-success/10 text-success"
+                      : "bg-destructive/10 text-destructive",
+                  )}
+                  title="Variação vs. semana anterior"
+                >
+                  {weekDeltaPositive ? "↑" : "↓"} {Math.abs(weekDeltaPct)}%
+                </span>
+              )}
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-lg font-semibold text-foreground font-display tabular-nums">
+                {formatCurrency(pipelineValue)}
+              </span>
+              <span className="text-xs text-muted-foreground">pipeline estimado</span>
+            </div>
+          </div>
         </div>
 
         <Tabs
