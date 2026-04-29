@@ -536,7 +536,7 @@ export default function LeadDetail() {
                   variant="outline"
                   size="sm"
                   className="border-primary/40 text-primary hover:bg-primary/5"
-                  onClick={() => navigate("/quotes", { state: { newQuote: true, leadId } })}
+                  onClick={() => { setQuotesReturnTo(); navigate("/quotes", { state: { newQuote: true, leadId } }); }}
                 >
                   <FileText className="h-4 w-4 mr-1.5" />
                   Nova Cotação
@@ -770,9 +770,10 @@ export default function LeadDetail() {
                     {quotesCount > 0 && (
                       <Button
                         size="sm"
-                        onClick={() =>
-                          navigate("/quotes", { state: { newQuote: true, leadId } })
-                        }
+                        onClick={() => {
+                          setQuotesReturnTo();
+                          navigate("/quotes", { state: { newQuote: true, leadId } });
+                        }}
                       >
                         <Plus className="h-4 w-4 mr-1.5" />
                         Nova Cotação
@@ -788,9 +789,10 @@ export default function LeadDetail() {
                       action={
                         <Button
                           size="sm"
-                          onClick={() =>
-                            navigate("/quotes", { state: { newQuote: true, leadId } })
-                          }
+                          onClick={() => {
+                            setQuotesReturnTo();
+                            navigate("/quotes", { state: { newQuote: true, leadId } });
+                          }}
                         >
                           <Plus className="h-4 w-4 mr-1.5" />
                           Nova Cotação
@@ -816,7 +818,7 @@ export default function LeadDetail() {
                             archived_at: q.archived_at,
                           }}
                           assigneeName={form.full_name || card?.clientName || null}
-                          onClick={() => navigate(`/quotes?edit=${q.id}`)}
+                          onClick={() => { setQuotesReturnTo(); navigate(`/quotes?edit=${q.id}`); }}
                           onDragStart={() => {}}
                           onDragEnd={() => {}}
                           menu={<span aria-hidden />}
