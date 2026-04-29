@@ -125,7 +125,7 @@ export function LeadTasksTab({ contactId, contactName }: Props) {
       const { error } = await supabase.from("tasks").insert({
         title,
         description: form.description || null,
-        client_id: contactId,
+        contact_id: contactId,
         status: form.status,
         priority: form.priority,
         assigned_to: form.assigned_to || null,
