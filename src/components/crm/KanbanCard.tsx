@@ -16,8 +16,10 @@ import {
   User,
   Check,
   X as XIcon,
+  GripVertical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
 import {
   DropdownMenu,
