@@ -1376,7 +1376,7 @@ export default function CRM() {
       // Busca todas as cotações do lead para podermos oferecer "Enviar e mover".
       const { data: allQuotes, error } = await supabase
         .from("quotes")
-        .select("id, title, stage, destination, created_at")
+        .select("id, title, stage, destination, total_value, created_at")
         .eq("lead_id", leadId)
         .order("created_at", { ascending: false });
       if (!error) {
@@ -1397,6 +1397,8 @@ export default function CRM() {
                     id: q.id,
                     title: q.title || q.destination || "Cotação sem título",
                     stage: q.stage,
+                    destination: q.destination,
+                    total_value: q.total_value,
                   }))
                 : undefined,
           });
