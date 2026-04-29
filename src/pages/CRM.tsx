@@ -1797,6 +1797,26 @@ export default function CRM() {
     return { newThisWeek: thisW, weekDeltaPct: pct, weekDeltaPositive: positive };
   }, [allCards]);
 
+  // Métricas operacionais (aba Operações em Viagem)
+  const opsMetrics = useMemo(() => {
+    const inTripCol = opsColumns.find((c) => c.id === "in-trip");
+    const preTripCol = opsColumns.find((c) => c.id === "pre-trip");
+    const supportCol = opsColumns.find((c) => c.id === "support");
+    const inTripCount = inTripCol?.cards.length ?? 0;
+    const supportCount = supportCol?.cards.length ?? 0;
+    const now = Date.now();
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+    const boardingSoon =
+      preTripCol?.cards.filter((c) => {
+        if (!c.travelDateISO) return false;
+        const t = new Date(c.travelDateISO).getTime();
+        if (!Number.isFinite(t)) return false;
+        const diff = t - now;
+        return diff >= 0 && diff <= sevenDays;
+      }).length ?? 0;
+    return { inTripCount, boardingSoon, supportCount };
+  }, [opsColumns]);
+
   const hasActiveFilters =
     searchTerm !== "" ||
     filterAgent !== "all" ||
