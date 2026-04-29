@@ -2032,6 +2032,12 @@ export default function CRM() {
           onDropOnColumn={handleDropOnColumn}
           onTemperatureChange={handleTemperatureChange}
           onCardDelete={handleCardDelete}
+          onCardAssignAgent={handleCardAssignAgent}
+          onCardCreateQuote={handleCardCreateQuote}
+          onCardViewConversation={handleCardViewConversation}
+          onCardEdit={handleCardEdit}
+          onCardArchive={handleCardArchive}
+          agentOptions={responsibleOptions}
           focusCardId={focusCardId}
           isLoading={tab === "sales" && isLoadingLeads}
           collapsibleColumnIds={tab === "sales" ? COLLAPSIBLE_COLUMN_IDS : undefined}
