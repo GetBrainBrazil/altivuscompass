@@ -593,9 +593,9 @@ export default function LeadDetail() {
 
           <div className="px-6 lg:px-10 py-8">
             <div className="max-w-5xl mx-auto">
-              <TabsContent value="main" className="mt-0 space-y-8">
+              <TabsContent value="main" className="mt-0 space-y-4">
                 <Section title="Informações do contato">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
                     <Field
                       label="Nome"
                       value={form.full_name}
