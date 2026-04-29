@@ -873,9 +873,31 @@ export default function CRM() {
 
   // ─── Drag & Drop ─────────────────────────────────────────
   const [draggedCardId, setDraggedCardId] = useState<string | null>(null);
+  const [draggedFromColumnId, setDraggedFromColumnId] = useState<string | null>(null);
 
-  const handleCardDragStart = (card: KanbanCardData) => setDraggedCardId(card.id);
-  const handleCardDragEnd = () => setDraggedCardId(null);
+  const handleCardDragStart = (card: KanbanCardData) => {
+    setDraggedCardId(card.id);
+    const src = columns.find((c) => c.cards.some((k) => k.id === card.id));
+    setDraggedFromColumnId(src?.id ?? null);
+  };
+  const handleCardDragEnd = () => {
+    setDraggedCardId(null);
+    setDraggedFromColumnId(null);
+  };
+
+  // Compute valid drop targets: same column (reorder) or adjacent ±1.
+  // The "lost" column is always a valid target in sales funnel.
+  const validTargetColumnIds = useMemo(() => {
+    if (!draggedFromColumnId) return null as Set<string> | null;
+    const fromIdx = columns.findIndex((c) => c.id === draggedFromColumnId);
+    if (fromIdx === -1) return null;
+    const set = new Set<string>();
+    set.add(columns[fromIdx].id);
+    if (fromIdx - 1 >= 0) set.add(columns[fromIdx - 1].id);
+    if (fromIdx + 1 < columns.length) set.add(columns[fromIdx + 1].id);
+    if (tab === "sales") set.add("lost");
+    return set;
+  }, [draggedFromColumnId, columns, tab]);
 
   // ─── Validation modal state ───────────────────────────────
   type PendingMove = {
