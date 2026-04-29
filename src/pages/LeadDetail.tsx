@@ -930,3 +930,217 @@ function EmptyState({
     </div>
   );
 }
+
+// ===== Resumo da IA (origem WhatsApp) =====
+
+type AIDataSnapshot = {
+  ai_summary: string | null;
+  destination: string | null;
+  travel_date_start: string | null;
+  travel_date_end: string | null;
+  flexible_dates: boolean | null;
+  flexible_dates_description: string | null;
+  travelers_count: number | null;
+  budget_estimate: number | null;
+  preferences: string | null;
+  extras: Record<string, any>;
+};
+
+type AIRow = {
+  label: string;
+  value: string;
+  field?: string;
+  applyValue?: string;
+  alreadyApplied?: boolean;
+};
+
+function formatBRL(n: number) {
+  try {
+    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(n);
+  } catch {
+    return `R$ ${n}`;
+  }
+}
+
+function formatDateBR(iso: string) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
+}
+
+function buildAIRows(
+  ai: AIDataSnapshot,
+  form: { destination: string; travel_date_label: string; budget_estimate: string; travelers_count: string; preferences: string },
+): AIRow[] {
+  const rows: AIRow[] = [];
+
+  const intent = ai.extras?.intent || ai.extras?.intencao || ai.extras?.motivo;
+  if (intent) rows.push({ label: "Intenção identificada", value: String(intent) });
+
+  if (ai.destination) {
+    rows.push({
+      label: "Destino mencionado",
+      value: ai.destination,
+      field: "destination",
+      applyValue: ai.destination,
+      alreadyApplied: form.destination.trim().toLowerCase() === ai.destination.trim().toLowerCase(),
+    });
+  }
+
+  if (ai.travel_date_start || ai.travel_date_end || ai.flexible_dates) {
+    let dateValue = "";
+    let applyDate = "";
+    if (ai.flexible_dates) {
+      dateValue = ai.flexible_dates_description ? `Flexíveis — ${ai.flexible_dates_description}` : "Datas flexíveis";
+      applyDate = dateValue;
+    } else if (ai.travel_date_start && ai.travel_date_end && ai.travel_date_start !== ai.travel_date_end) {
+      dateValue = `${formatDateBR(ai.travel_date_start)} a ${formatDateBR(ai.travel_date_end)}`;
+      applyDate = `${ai.travel_date_start} a ${ai.travel_date_end}`;
+    } else if (ai.travel_date_start) {
+      dateValue = formatDateBR(ai.travel_date_start);
+      applyDate = ai.travel_date_start;
+    }
+    if (dateValue) {
+      rows.push({
+        label: "Datas mencionadas",
+        value: dateValue,
+        field: "travel_date_label",
+        applyValue: applyDate,
+        alreadyApplied: form.travel_date_label.trim() === applyDate.trim(),
+      });
+    }
+  }
+
+  if (ai.travelers_count != null) {
+    const v = String(ai.travelers_count);
+    rows.push({
+      label: "Número de viajantes",
+      value: v,
+      field: "travelers_count",
+      applyValue: v,
+      alreadyApplied: form.travelers_count.trim() === v,
+    });
+  }
+
+  if (ai.budget_estimate != null) {
+    const v = String(ai.budget_estimate);
+    rows.push({
+      label: "Orçamento mencionado",
+      value: formatBRL(ai.budget_estimate),
+      field: "budget_estimate",
+      applyValue: v,
+      alreadyApplied: form.budget_estimate.trim() === v,
+    });
+  }
+
+  if (ai.preferences) {
+    rows.push({
+      label: "Preferências",
+      value: ai.preferences,
+      field: "preferences",
+      applyValue: ai.preferences,
+      alreadyApplied: (form.preferences || "").includes(ai.preferences),
+    });
+  }
+
+  const restrictions = ai.extras?.restrictions || ai.extras?.restricoes;
+  if (restrictions) rows.push({ label: "Restrições", value: String(restrictions) });
+
+  return rows;
+}
+
+function AISummarySection({
+  aiData,
+  form,
+  onApply,
+}: {
+  aiData: AIDataSnapshot;
+  form: { destination: string; travel_date_label: string; budget_estimate: string; travelers_count: string; preferences: string };
+  onApply: (field: string, value: string) => void;
+}) {
+  const rows = useMemo(() => buildAIRows(aiData, form), [aiData, form]);
+  const hasData = rows.length > 0 || !!aiData.ai_summary;
+  const [open, setOpen] = useState<boolean>(hasData);
+
+  return (
+    <section>
+      <div className="flex items-center gap-3 mb-4">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap flex items-center gap-1.5">
+          <Sparkles className="h-3.5 w-3.5 text-primary" />
+          Resumo da IA
+        </h2>
+        <div className="flex-1 h-px bg-border" />
+      </div>
+
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <div className="rounded-lg border border-primary/20 bg-primary/[0.04]">
+          <CollapsibleTrigger className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-primary/[0.06] transition-colors rounded-t-lg">
+            <span className="text-xs text-muted-foreground">
+              {hasData
+                ? `${rows.length} informação${rows.length === 1 ? "" : "ões"} coletada${rows.length === 1 ? "" : "s"} pela IA durante a conversa`
+                : "Nenhuma informação coletada pela IA"}
+            </span>
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 text-muted-foreground transition-transform",
+                open && "rotate-180",
+              )}
+            />
+          </CollapsibleTrigger>
+
+          <CollapsibleContent>
+            <div className="px-4 pb-4 pt-1 space-y-3">
+              {aiData.ai_summary && (
+                <div className="rounded-md bg-background/60 border border-border px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                    Resumo da conversa
+                  </p>
+                  <p className="text-sm text-foreground leading-relaxed italic">
+                    "{aiData.ai_summary}"
+                  </p>
+                </div>
+              )}
+
+              {rows.length === 0 && !aiData.ai_summary ? (
+                <p className="text-xs text-muted-foreground italic">
+                  Nenhuma informação estruturada foi extraída ainda.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {rows.map((r, i) => (
+                    <div
+                      key={i}
+                      className="flex items-start justify-between gap-2 rounded-md bg-background/60 border border-border px-3 py-2"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                          {r.label}
+                        </p>
+                        <p className="text-sm text-foreground break-words">{r.value}</p>
+                      </div>
+                      {r.field && r.applyValue ? (
+                        r.alreadyApplied ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground shrink-0 mt-0.5">
+                            <Check className="h-3 w-3" /> aplicado
+                          </span>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-[11px] shrink-0 mt-0.5 text-primary hover:text-primary hover:bg-primary/10"
+                            onClick={() => onApply(r.field!, r.applyValue!)}
+                          >
+                            Usar
+                          </Button>
+                        )
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
+    </section>
+  );
+}
