@@ -2731,7 +2731,7 @@ export default function CRM() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-[540px] md:rounded-3xl md:p-8 md:shadow-[0_25px_60px_-15px_hsl(var(--foreground)/0.18)] [&>*]:min-w-0">
+        <DialogContent className="sm:max-w-[620px] md:rounded-3xl md:p-8 md:shadow-[0_25px_60px_-15px_hsl(var(--foreground)/0.18)] [&>*]:min-w-0">
           {(() => {
             const sendIssue = pendingIssues.find(
               (i) => i.sendQuoteOptions && i.sendQuoteOptions.length > 0,
