@@ -406,12 +406,11 @@ export function LeadWhatsAppColumn({ onClose, contactName, phone, contactId, lea
             const target = conversationId
               ? `/service-center?conversation=${conversationId}`
               : "/service-center";
-            window.open(target, "_blank", "noopener,noreferrer");
+            navigate(target);
           }}
         >
           <MessageCircle className="h-4 w-4 mr-2" />
           Ir para a Central de Atendimento
-          <ExternalLink className="h-3.5 w-3.5 ml-2 opacity-80" />
         </Button>
       </div>
         </>
