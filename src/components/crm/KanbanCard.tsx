@@ -490,158 +490,189 @@ export function KanbanCard({
               )}
             </div>
           )}
-          <div className="shrink-0 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          <div className="shrink-0 flex items-start gap-1" onClick={(e) => e.stopPropagation()}>
             {cornerBadge}
-            {(onDelete || onAssignAgent || onCreateQuote || onViewConversation || onEdit || onArchive || onTemperatureChange) && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    aria-label="Mais ações"
-                    className="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <MoreVertical className="w-3.5 h-3.5" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56" onClick={(e) => e.stopPropagation()}>
-                  {onAssignAgent && agentOptions && agentOptions.length > 0 && (
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        <User className="w-3.5 h-3.5 mr-2" />
-                        Atribuir responsável
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent className="max-h-64 overflow-y-auto w-56">
-                        <DropdownMenuLabel className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                          Consultores
-                        </DropdownMenuLabel>
-                        {agentOptions.map((u) => {
-                          const isCurrent = card.agent?.id === u.user_id;
-                          return (
-                            <DropdownMenuItem
-                              key={u.user_id}
-                              onSelect={(e) => {
-                                e.preventDefault();
-                                onAssignAgent(card, u.user_id);
-                              }}
-                              className={cn("gap-2", isCurrent && "bg-primary/5 text-primary")}
-                            >
-                              {u.avatar_url ? (
-                                <img src={u.avatar_url} alt="" className="w-4 h-4 rounded-full object-cover" />
-                              ) : (
-                                <div className="w-4 h-4 rounded-full bg-primary/10 text-primary text-[8px] font-semibold flex items-center justify-center">
-                                  {getInitials(u.full_name)}
-                                </div>
-                              )}
-                              <span className="truncate">{u.full_name}</span>
-                              {isCurrent && <CheckCircle2 className="w-3 h-3 ml-auto" />}
-                            </DropdownMenuItem>
-                          );
-                        })}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
-                  )}
-                  {onCreateQuote && (
-                    <DropdownMenuItem
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        onCreateQuote(card);
-                      }}
+            <div className="flex flex-col items-end gap-0.5">
+              {(onDelete || onAssignAgent || onCreateQuote || onViewConversation || onEdit || onArchive || onTemperatureChange) && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="Mais ações"
+                      className="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <FileText className="w-3.5 h-3.5 mr-2" />
-                      Criar cotação
-                    </DropdownMenuItem>
+                      <MoreVertical className="w-3.5 h-3.5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56" onClick={(e) => e.stopPropagation()}>
+                    {onAssignAgent && agentOptions && agentOptions.length > 0 && (
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>
+                          <User className="w-3.5 h-3.5 mr-2" />
+                          Atribuir responsável
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent className="max-h-64 overflow-y-auto w-56">
+                          <DropdownMenuLabel className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                            Consultores
+                          </DropdownMenuLabel>
+                          {agentOptions.map((u) => {
+                            const isCurrent = card.agent?.id === u.user_id;
+                            return (
+                              <DropdownMenuItem
+                                key={u.user_id}
+                                onSelect={(e) => {
+                                  e.preventDefault();
+                                  onAssignAgent(card, u.user_id);
+                                }}
+                                className={cn("gap-2", isCurrent && "bg-primary/5 text-primary")}
+                              >
+                                {u.avatar_url ? (
+                                  <img src={u.avatar_url} alt="" className="w-4 h-4 rounded-full object-cover" />
+                                ) : (
+                                  <div className="w-4 h-4 rounded-full bg-primary/10 text-primary text-[8px] font-semibold flex items-center justify-center">
+                                    {getInitials(u.full_name)}
+                                  </div>
+                                )}
+                                <span className="truncate">{u.full_name}</span>
+                                {isCurrent && <CheckCircle2 className="w-3 h-3 ml-auto" />}
+                              </DropdownMenuItem>
+                            );
+                          })}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                    )}
+                    {onCreateQuote && (
+                      <DropdownMenuItem
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          onCreateQuote(card);
+                        }}
+                      >
+                        <FileText className="w-3.5 h-3.5 mr-2" />
+                        Criar cotação
+                      </DropdownMenuItem>
+                    )}
+                    {onViewConversation && (
+                      <DropdownMenuItem
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          onViewConversation(card);
+                        }}
+                        disabled={!card.phone}
+                      >
+                        <MessageCircle className="w-3.5 h-3.5 mr-2" />
+                        Ver conversa
+                      </DropdownMenuItem>
+                    )}
+                    {onEdit && (
+                      <DropdownMenuItem
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          onEdit(card);
+                        }}
+                      >
+                        <Pencil className="w-3.5 h-3.5 mr-2" />
+                        Editar
+                      </DropdownMenuItem>
+                    )}
+                    {onTemperatureChange && (
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>
+                          <Thermometer className="w-3.5 h-3.5 mr-2" />
+                          Marcar temperatura
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent>
+                          <DropdownMenuItem
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              onTemperatureChange(card, "hot");
+                            }}
+                          >
+                            <Flame className="w-3.5 h-3.5 mr-2 text-red-500 fill-red-500/30" />
+                            Quente
+                            {temperature === "hot" && <CheckCircle2 className="w-3 h-3 ml-auto" />}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              onTemperatureChange(card, "warm");
+                            }}
+                          >
+                            <Flame className="w-3.5 h-3.5 mr-2 text-orange-400 fill-orange-400/25" />
+                            Morno
+                            {temperature === "warm" && <CheckCircle2 className="w-3 h-3 ml-auto" />}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              onTemperatureChange(card, "cold");
+                            }}
+                          >
+                            <Flame className="w-3.5 h-3.5 mr-2 text-slate-400" />
+                            Frio
+                            {temperature === "cold" && <CheckCircle2 className="w-3 h-3 ml-auto" />}
+                          </DropdownMenuItem>
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                    )}
+                    {(onArchive || onDelete) && <DropdownMenuSeparator />}
+                    {onArchive && (
+                      <DropdownMenuItem
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          onArchive(card);
+                        }}
+                      >
+                        <Archive className="w-3.5 h-3.5 mr-2" />
+                        Arquivar
+                      </DropdownMenuItem>
+                    )}
+                    {onDelete && (
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          onDelete(card);
+                        }}
+                      >
+                        <Trash2 className="w-3.5 h-3.5 mr-2" />
+                        Excluir
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+              {lastContactDays !== null ? (
+                <span
+                  title={`Último contato há ${lastContactDays} dia(s)`}
+                  className={cn(
+                    "text-[9px] font-medium tabular-nums leading-none pr-0.5",
+                    lastContactDays >= 14
+                      ? "text-destructive"
+                      : lastContactDays >= 7
+                        ? "text-amber-600"
+                        : "text-muted-foreground/70",
                   )}
-                  {onViewConversation && (
-                    <DropdownMenuItem
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        onViewConversation(card);
-                      }}
-                      disabled={!card.phone}
-                    >
-                      <MessageCircle className="w-3.5 h-3.5 mr-2" />
-                      Ver conversa
-                    </DropdownMenuItem>
+                >
+                  {lastContactDays === 0 ? "hoje" : `há ${lastContactDays}d`}
+                </span>
+              ) : stageDays !== null ? (
+                <span
+                  title={`${stageDays} dia(s) nesta etapa`}
+                  className={cn(
+                    "text-[9px] font-medium tabular-nums leading-none pr-0.5",
+                    stageDays >= 14
+                      ? "text-destructive"
+                      : stageDays >= 7
+                        ? "text-amber-600"
+                        : "text-muted-foreground/70",
                   )}
-                  {onEdit && (
-                    <DropdownMenuItem
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        onEdit(card);
-                      }}
-                    >
-                      <Pencil className="w-3.5 h-3.5 mr-2" />
-                      Editar
-                    </DropdownMenuItem>
-                  )}
-                  {onTemperatureChange && (
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        <Thermometer className="w-3.5 h-3.5 mr-2" />
-                        Marcar temperatura
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent>
-                        <DropdownMenuItem
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            onTemperatureChange(card, "hot");
-                          }}
-                        >
-                          <Flame className="w-3.5 h-3.5 mr-2 text-red-500 fill-red-500/30" />
-                          Quente
-                          {temperature === "hot" && <CheckCircle2 className="w-3 h-3 ml-auto" />}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            onTemperatureChange(card, "warm");
-                          }}
-                        >
-                          <Flame className="w-3.5 h-3.5 mr-2 text-orange-400 fill-orange-400/25" />
-                          Morno
-                          {temperature === "warm" && <CheckCircle2 className="w-3 h-3 ml-auto" />}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            onTemperatureChange(card, "cold");
-                          }}
-                        >
-                          <Flame className="w-3.5 h-3.5 mr-2 text-slate-400" />
-                          Frio
-                          {temperature === "cold" && <CheckCircle2 className="w-3 h-3 ml-auto" />}
-                        </DropdownMenuItem>
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
-                  )}
-                  {(onArchive || onDelete) && <DropdownMenuSeparator />}
-                  {onArchive && (
-                    <DropdownMenuItem
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        onArchive(card);
-                      }}
-                    >
-                      <Archive className="w-3.5 h-3.5 mr-2" />
-                      Arquivar
-                    </DropdownMenuItem>
-                  )}
-                  {onDelete && (
-                    <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        onDelete(card);
-                      }}
-                    >
-                      <Trash2 className="w-3.5 h-3.5 mr-2" />
-                      Excluir
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+                >
+                  {stageDaysLabel(stageDays)}
+                </span>
+              ) : null}
+            </div>
           </div>
         </div>
 
@@ -679,27 +710,25 @@ export function KanbanCard({
           </div>
         ) : (
           <>
-            {/* Linha 2: destino · data da viagem */}
-            <div className="min-h-[14px] mb-1 flex items-center gap-1.5 flex-wrap">
-              {card.destination || card.travelDate ? (
-                <p className="text-[11px] text-muted-foreground font-body truncate">
-                  {[card.destination, card.travelDate].filter(Boolean).join(" · ")}
-                </p>
-              ) : (
-                <p className="text-[11px] italic text-muted-foreground/60 font-body truncate">
-                  Destino não definido
-                </p>
-              )}
-              {isBoardingSoon && (
-                <span
-                  title={`Embarque em ${daysToTravel} dia(s)`}
-                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-destructive/15 text-destructive"
-                >
-                  <Plane className="w-3 h-3" />
-                  Embarque próximo
-                </span>
-              )}
-            </div>
+            {/* Linha 2: destino · data da viagem (oculta se vazio) */}
+            {(card.destination || card.travelDate || isBoardingSoon) && (
+              <div className="mb-1 flex items-center gap-1.5 flex-wrap">
+                {(card.destination || card.travelDate) && (
+                  <p className="text-[11px] text-muted-foreground font-body truncate">
+                    {[card.destination, card.travelDate].filter(Boolean).join(" · ")}
+                  </p>
+                )}
+                {isBoardingSoon && (
+                  <span
+                    title={`Embarque em ${daysToTravel} dia(s)`}
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-destructive/15 text-destructive"
+                  >
+                    <Plane className="w-3 h-3" />
+                    Embarque próximo
+                  </span>
+                )}
+              </div>
+            )}
 
             {/* AI summary */}
             {card.isAILead && card.aiSummary && (
@@ -752,49 +781,16 @@ export function KanbanCard({
               >
                 {card.agent?.name || "Sem responsável"}
               </span>
-              {value ? (
-                <span className="text-[12px] font-medium text-foreground font-body shrink-0 tabular-nums">
-                  {value}
-                </span>
-              ) : (
-                <span className="text-[11px] italic text-muted-foreground/70 font-body shrink-0">
-                  Sem valor
-                </span>
-              )}
+              <span className={cn(
+                "font-body shrink-0 tabular-nums ml-auto",
+                value ? "text-[12px] font-medium text-foreground" : "text-[11px] text-muted-foreground/60",
+              )}>
+                {value ?? "—"}
+              </span>
             </div>
           </>
         )}
 
-        {/* Rodapé: "há X dias" do último contato ou tempo na etapa */}
-        {(lastContactDays !== null || stageDays !== null) && (
-          <div className="flex items-center mt-1.5">
-            {lastContactDays !== null ? (
-              <span
-                title={`Último contato há ${lastContactDays} dia(s)`}
-                className={cn(
-                  "inline-flex items-center text-[10px] font-medium tabular-nums",
-                  lastContactDays >= 14
-                    ? "text-destructive"
-                    : lastContactDays >= 7
-                      ? "text-amber-600"
-                      : "text-muted-foreground",
-                )}
-              >
-                {lastContactDays === 0 ? "hoje" : `há ${lastContactDays}d`}
-              </span>
-            ) : stageDays !== null ? (
-              <span
-                title={`${stageDays} dia(s) nesta etapa`}
-                className={cn(
-                  "inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium tabular-nums",
-                  stageDaysBadgeClasses(stageDays),
-                )}
-              >
-                {stageDaysLabel(stageDays)}
-              </span>
-            ) : null}
-          </div>
-        )}
       </div>
     </div>
   );
