@@ -640,6 +640,7 @@ export default function CRM() {
             ? new Date(l.travel_date_start).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })
             : (l.flexible_dates_description ?? undefined),
           travelDateISO: l.travel_date_start ?? undefined,
+          travelersCount: l.travelers_count ?? undefined,
           estimatedValue: l.budget_estimate ? Number(l.budget_estimate) : undefined,
           isAILead: isAI,
           isManualLead: !isAI,

@@ -40,6 +40,8 @@ export type KanbanCardData = {
   phone?: string;
   destination?: string;
   travelDate?: string;
+  /** Número de viajantes — usado para sinalizar nível de triagem da IA. */
+  travelersCount?: number;
   /** ISO date (YYYY-MM-DD) da viagem — usado para calcular "Embarque próximo". */
   travelDateISO?: string;
   tags?: KanbanTag[];
@@ -188,11 +190,22 @@ export function KanbanCard({
       </span>
     );
   } else if (card.isAILead) {
+    const aiFilled = [!!card.destination, !!card.travelDate, !!card.travelersCount].filter(Boolean).length;
+    const aiVariant = aiFilled === 3 ? "complete" : aiFilled === 0 ? "neutral" : "partial";
+    const aiCls =
+      aiVariant === "complete"
+        ? "bg-success/15 text-success"
+        : aiVariant === "partial"
+          ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+          : "bg-muted text-muted-foreground";
+    const aiTitle =
+      aiVariant === "complete"
+        ? "Lead triado pela IA via WhatsApp (destino, período e viajantes coletados)"
+        : aiVariant === "partial"
+          ? `Em qualificação pela IA (${aiFilled}/3 dados de interesse)`
+          : "Recebido pela IA via WhatsApp — ainda sem dados de interesse";
     cornerBadge = (
-      <span
-        title="Lead triado pela IA via WhatsApp"
-        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-success/15 text-success"
-      >
+      <span title={aiTitle} className={cn("inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium", aiCls)}>
         <Sparkles className="w-3 h-3" />
         IA
       </span>
