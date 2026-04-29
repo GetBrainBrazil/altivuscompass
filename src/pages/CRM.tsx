@@ -1746,6 +1746,8 @@ export default function CRM() {
 
   const filteredColumns = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
+    const now = Date.now();
+    const day = 24 * 60 * 60 * 1000;
     return columns.map((col) => ({
       ...col,
       cards: col.cards.filter((card) => {
@@ -1754,19 +1756,37 @@ export default function CRM() {
         } else if (filterAgent !== "all" && card.agent?.name !== filterAgent) {
           return false;
         }
-        if (filterTag !== "all" && !card.tags?.some((t) => t.label === filterTag)) return false;
-        if (filterTemp !== "all") {
-          const t = card.temperature ?? "cold";
-          if (filterTemp === "undefined") {
-            // "Não definida": cards sem temperatura explícita (default cold é considerado definido).
-            // Aqui consideramos "não definida" quando o campo não foi explicitamente setado.
-            // Como sempre cai em "cold" no default, não filtra nada nesse modo.
-            return false;
+
+        if (tab === "sales") {
+          if (filterTag !== "all" && !card.tags?.some((t) => t.label === filterTag)) return false;
+          if (filterTemp !== "all") {
+            const t = card.temperature ?? "cold";
+            if (filterTemp === "undefined") return false;
+            if (t !== filterTemp) return false;
           }
-          if (t !== filterTemp) return false;
+          if (filterLevel !== "all" && (card.contactLevel ?? "prospect") !== filterLevel) return false;
+          if (filterSource !== "all" && normalizeSource(card.source) !== filterSource) return false;
+        } else {
+          // Aba Operações: filtros operacionais
+          if (filterBoarding !== "all") {
+            if (!card.travelDateISO) return false;
+            const t = new Date(card.travelDateISO).getTime();
+            if (!Number.isFinite(t)) return false;
+            const diffDays = (t - now) / day;
+            const limit = Number(filterBoarding);
+            if (diffDays < 0 || diffDays > limit) return false;
+          }
+          if (filterOpsStatus !== "all") {
+            const isUrgent = card.alert?.tone === "destructive";
+            const lastTs = card.lastContactAt ? new Date(card.lastContactAt).getTime() : NaN;
+            const isWaiting =
+              !isUrgent && Number.isFinite(lastTs) && (now - lastTs) / day >= 3;
+            const status = isUrgent ? "urgent" : isWaiting ? "waiting" : "normal";
+            if (status !== filterOpsStatus) return false;
+          }
+          if (filterDestination !== "all" && card.destination !== filterDestination) return false;
         }
-        if (filterLevel !== "all" && (card.contactLevel ?? "prospect") !== filterLevel) return false;
-        if (filterSource !== "all" && normalizeSource(card.source) !== filterSource) return false;
+
         if (!q) return true;
         return (
           card.clientName.toLowerCase().includes(q) ||
@@ -1775,7 +1795,7 @@ export default function CRM() {
         );
       }),
     }));
-  }, [columns, searchTerm, filterAgent, filterTag, filterTemp, filterLevel, filterSource]);
+  }, [columns, searchTerm, tab, filterAgent, filterTag, filterTemp, filterLevel, filterSource, filterBoarding, filterOpsStatus, filterDestination]);
 
   // ─── KPIs ────────────────────────────────────────────────
   const allCards = useMemo(() => columns.flatMap((c) => c.cards), [columns]);
