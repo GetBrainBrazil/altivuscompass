@@ -1,15 +1,20 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar as CalendarIcon, ListChecks, Loader2, Check, X } from "lucide-react";
+import { Calendar as CalendarIcon, ListChecks, Loader2, Check, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { RichTextEditor } from "@/components/RichTextEditor";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -26,12 +31,43 @@ interface TaskRow {
   completed_at: string | null;
 }
 
+const STATUS_OPTIONS = [
+  { value: "pending", label: "A iniciar" },
+  { value: "in_progress", label: "Em andamento" },
+  { value: "review", label: "Em revisão" },
+  { value: "completed", label: "Concluída" },
+];
+
+const PRIORITY_OPTIONS = [
+  { value: "low", label: "Baixa" },
+  { value: "medium", label: "Normal" },
+  { value: "high", label: "Alta" },
+];
+
 export function LeadTasksTab({ contactId, contactName }: Props) {
   const qc = useQueryClient();
-  const [newTitle, setNewTitle] = useState("");
-  const [newDueDate, setNewDueDate] = useState<Date | undefined>(undefined);
-  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const { user } = useAuth();
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+
+  const emptyForm = {
+    title: "",
+    description: "",
+    priority: "medium",
+    status: "pending",
+    assigned_to: user?.id ?? "",
+    quote_id: "none",
+    due_date: null as Date | null,
+  };
+  const [form, setForm] = useState(emptyForm);
+  const [duePickerOpen, setDuePickerOpen] = useState(false);
+
+  useEffect(() => {
+    if (dialogOpen) {
+      setForm({ ...emptyForm, assigned_to: user?.id ?? "" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dialogOpen]);
 
   const { data: tasks = [], isLoading } = useQuery<TaskRow[]>({
     queryKey: ["lead-tasks", contactId],
@@ -49,7 +85,30 @@ export function LeadTasksTab({ contactId, contactName }: Props) {
     },
   });
 
-  // Pendentes primeiro, concluídas no fim
+  const { data: profiles = [] } = useQuery({
+    queryKey: ["profiles-list"],
+    enabled: dialogOpen,
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles_basic").select("user_id, full_name");
+      return data ?? [];
+    },
+  });
+
+  const { data: quotes = [] } = useQuery({
+    queryKey: ["quotes-list-for-tasks", contactId],
+    enabled: dialogOpen,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("quotes")
+        .select("id, title, destination")
+        .eq("is_template", false)
+        .is("archived_at", null)
+        .order("created_at", { ascending: false })
+        .limit(100);
+      return data ?? [];
+    },
+  });
+
   const sortedTasks = useMemo(() => {
     const pending = tasks.filter((t) => t.status !== "completed");
     const done = tasks
@@ -59,22 +118,24 @@ export function LeadTasksTab({ contactId, contactName }: Props) {
   }, [tasks]);
 
   const handleCreate = async () => {
-    const title = newTitle.trim();
+    const title = form.title.trim();
     if (!title || !contactId || creating) return;
     setCreating(true);
     try {
-      const { data: auth } = await supabase.auth.getUser();
       const { error } = await supabase.from("tasks").insert({
         title,
+        description: form.description || null,
         client_id: contactId,
-        status: "pending",
-        priority: "medium",
-        due_date: newDueDate ? format(newDueDate, "yyyy-MM-dd") : null,
-        created_by: auth.user?.id ?? null,
+        status: form.status,
+        priority: form.priority,
+        assigned_to: form.assigned_to || null,
+        quote_id: form.quote_id && form.quote_id !== "none" ? form.quote_id : null,
+        due_date: form.due_date ? format(form.due_date, "yyyy-MM-dd") : null,
+        created_by: user?.id ?? null,
       });
       if (error) throw error;
-      setNewTitle("");
-      setNewDueDate(undefined);
+      toast.success("Tarefa criada");
+      setDialogOpen(false);
       qc.invalidateQueries({ queryKey: ["lead-tasks", contactId] });
     } catch (err: any) {
       toast.error(err?.message || "Falha ao criar tarefa");
@@ -89,7 +150,6 @@ export function LeadTasksTab({ contactId, contactName }: Props) {
       ? { status: "pending", completed_at: null }
       : { status: "completed", completed_at: new Date().toISOString() };
 
-    // Optimistic update
     qc.setQueryData<TaskRow[]>(["lead-tasks", contactId], (old) =>
       (old ?? []).map((t) => (t.id === task.id ? { ...t, ...update } : t)),
     );
@@ -114,76 +174,23 @@ export function LeadTasksTab({ contactId, contactName }: Props) {
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* Quick add */}
-      <div className="px-3 py-2.5 border-b border-border bg-background space-y-2">
+      {/* Internal-use banner */}
+      <div className="px-3 py-2 border-b border-amber-200/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/20 flex items-center gap-2">
+        <Lock className="h-3.5 w-3.5 text-amber-700 dark:text-amber-400 shrink-0" />
+        <p className="text-[11.5px] leading-snug text-amber-900 dark:text-amber-200">
+          <span className="font-medium">Uso Interno:</span> O lead não visualiza estas tarefas
+        </p>
+      </div>
+
+      {/* Quick add (opens modal) */}
+      <div className="px-3 py-2.5 border-b border-border bg-background">
         <Input
-          value={newTitle}
-          onChange={(e) => setNewTitle(e.target.value)}
+          readOnly
+          onClick={() => setDialogOpen(true)}
+          onFocus={() => setDialogOpen(true)}
           placeholder={`Nova tarefa${contactName ? ` para ${contactName}` : ""}...`}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              handleCreate();
-            }
-          }}
-          className="h-9"
-          disabled={creating}
+          className="h-9 cursor-pointer"
         />
-        <div className="flex items-center gap-2">
-          <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className={cn(
-                  "h-9 px-2.5 gap-1.5 text-xs font-normal flex-1 justify-start",
-                  !newDueDate && "text-muted-foreground",
-                )}
-              >
-                <CalendarIcon className="h-3.5 w-3.5" />
-                {newDueDate
-                  ? format(newDueDate, "dd/MM/yyyy", { locale: ptBR })
-                  : "Vencimento (opcional)"}
-                {newDueDate && (
-                  <X
-                    className="h-3 w-3 ml-auto text-muted-foreground hover:text-foreground"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setNewDueDate(undefined);
-                    }}
-                  />
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={newDueDate}
-                onSelect={(d) => {
-                  setNewDueDate(d);
-                  setDatePickerOpen(false);
-                }}
-                locale={ptBR}
-                initialFocus
-                className="pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-          <Button
-            onClick={handleCreate}
-            disabled={!newTitle.trim() || creating}
-            size="sm"
-            className="h-9 shrink-0"
-          >
-            {creating ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              "Adicionar"
-            )}
-          </Button>
-        </div>
       </div>
 
       {/* List */}
@@ -252,6 +259,133 @@ export function LeadTasksTab({ contactId, contactName }: Props) {
           </ScrollArea>
         )}
       </div>
+
+      {/* Create Task Modal */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="md:max-w-2xl md:max-h-[85vh] md:overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Nova tarefa{contactName ? ` — ${contactName}` : ""}</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="task-title">Título *</Label>
+              <Input
+                id="task-title"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                placeholder="Ex: Ligar para confirmar interesse"
+                autoFocus
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Responsável</Label>
+                <Select value={form.assigned_to} onValueChange={(v) => setForm({ ...form, assigned_to: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent>
+                    {profiles.map((p: any) => (
+                      <SelectItem key={p.user_id} value={p.user_id}>{p.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Importância</Label>
+                <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {PRIORITY_OPTIONS.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Prazo de Entrega</Label>
+                <Popover open={duePickerOpen} onOpenChange={setDuePickerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start font-normal",
+                        !form.due_date && "text-muted-foreground",
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {form.due_date
+                        ? format(form.due_date, "dd/MM/yyyy", { locale: ptBR })
+                        : "Selecionar data"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={form.due_date ?? undefined}
+                      onSelect={(d) => {
+                        setForm({ ...form, due_date: d ?? null });
+                        setDuePickerOpen(false);
+                      }}
+                      locale={ptBR}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Status</Label>
+                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Cotação Vinculada</Label>
+              <Select value={form.quote_id} onValueChange={(v) => setForm({ ...form, quote_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Nenhuma" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhuma</SelectItem>
+                  {quotes.map((q: any) => (
+                    <SelectItem key={q.id} value={q.id}>
+                      {q.title || q.destination || q.id.slice(0, 8)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Descrição</Label>
+              <RichTextEditor
+                value={form.description}
+                onChange={(html) => setForm({ ...form, description: html })}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="pt-4">
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={creating}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreate} disabled={!form.title.trim() || creating}>
+              {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Criar tarefa
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
