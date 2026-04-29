@@ -85,6 +85,20 @@ const INITIAL_SALES_COLUMNS: KanbanColumn[] = [
   { id: "lost", title: "Perdidos", cards: [] },
 ];
 
+// Mapeamento bidirecional entre coluna do kanban (sales) e leads.status no banco.
+// Mantém persistência: ao mover, gravamos status; ao carregar, posicionamos no kanban.
+const SALES_COLUMN_TO_STATUS: Record<string, string> = {
+  "new-leads": "new",
+  "qualifying": "qualifying",
+  "quote": "quote",
+  "proposal-sent": "proposal_sent",
+  "closed": "closed",
+  "lost": "lost",
+};
+const STATUS_TO_SALES_COLUMN: Record<string, string> = Object.entries(
+  SALES_COLUMN_TO_STATUS,
+).reduce((acc, [col, st]) => ({ ...acc, [st]: col }), {});
+
 const INITIAL_OPS_COLUMNS: KanbanColumn[] = [
   { id: "pre-trip", title: "Pré-Viagem", cards: [] },
   { id: "in-trip", title: "Em Viagem", cards: [] },
@@ -672,7 +686,7 @@ export default function CRM() {
     const fetchLeads = async () => {
       const { data, error } = await supabase
         .from("leads")
-        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, is_returning, returned_at, assigned_user_id")
+        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, is_returning, returned_at, assigned_user_id, status")
         .is("converted_client_id", null)
         .or("archived.is.null,archived.eq.false")
         .order("created_at", { ascending: false })
@@ -717,6 +731,9 @@ export default function CRM() {
         return prevSnap;
       });
 
+      // Atribui cada card ao seu status persistido (vindo do banco). Mantemos
+      // num map auxiliar para evitar incluir um campo não usado no KanbanCardData.
+      const statusByCardId = new Map<string, string>();
       const leadCards: KanbanCardData[] = data.map((l: any) => {
         const id = `lead-${l.id}`;
         const existing = existingByLeadId.get(id);
@@ -727,6 +744,7 @@ export default function CRM() {
         const isFromWhatsApp = l.source === "whatsapp_ai" || l.source === "whatsapp";
         const isAI = isFromWhatsApp; // origem WhatsApp (com ou sem IA ativa) ganha o badge "IA"
         const assignedUser = l.assigned_user_id ? userById.get(l.assigned_user_id) : null;
+        statusByCardId.set(id, (l.status as string) || "new");
         return {
           id,
           clientName: l.full_name,
@@ -816,37 +834,40 @@ export default function CRM() {
       };
 
       setSalesColumns((prev) => {
-        // IDs de leads que já estão em OUTRAS colunas (não devem voltar para "Novos Contatos")
-        // EXCETO os marcados como is_returning (devem voltar para a primeira coluna)
-        const returningLeadIds = new Set(
-          leadCards.filter((c) => c.isReturning).map((c) => c.id),
-        );
-        const idsInOtherColumns = new Set<string>();
+        // Cards não-lead (manuais e quote-*) são preservados nas suas colunas atuais
+        // (sem fonte de status no banco para eles aqui).
+        const nonLeadByColumn = new Map<string, KanbanCardData[]>();
         prev.forEach((col) => {
-          if (col.id !== "new-leads") {
-            col.cards.forEach((c) => {
-              if (c.id.startsWith("lead-") && !returningLeadIds.has(c.id)) {
-                idsInOtherColumns.add(c.id);
-              }
-            });
-          }
-        });
-        const filteredLeadCards = leadCards
-          .filter((c) => !idsInOtherColumns.has(c.id))
-          .map(enrichCard);
-
-        return prev.map((col) => {
-          if (col.id === "new-leads") {
-            return { ...col, cards: filteredLeadCards };
-          }
-          // Outras colunas: remove órfãos (leads/cotações excluídos) + cards retornados (foram para new-leads) + enriquece
-          return {
-            ...col,
-            cards: col.cards
-              .filter((c) => isCardStillValid(c.id) && !returningLeadIds.has(c.id))
+          nonLeadByColumn.set(
+            col.id,
+            col.cards
+              .filter((c) => !c.id.startsWith("lead-") && isCardStillValid(c.id))
               .map(enrichCard),
-          };
+          );
         });
+
+        // Distribui leads do banco usando o status persistido como fonte da verdade.
+        // is_returning força o card de volta para "Novos Contatos".
+        const leadsByColumn = new Map<string, KanbanCardData[]>();
+        prev.forEach((col) => leadsByColumn.set(col.id, []));
+        leadCards.forEach((c) => {
+          const enriched = enrichCard(c);
+          let targetCol = "new-leads";
+          if (!c.isReturning) {
+            const status = statusByCardId.get(c.id) || "new";
+            targetCol = STATUS_TO_SALES_COLUMN[status] || "new-leads";
+          }
+          if (!leadsByColumn.has(targetCol)) targetCol = "new-leads";
+          leadsByColumn.get(targetCol)!.push(enriched);
+        });
+
+        return prev.map((col) => ({
+          ...col,
+          cards: [
+            ...(leadsByColumn.get(col.id) ?? []),
+            ...(nonLeadByColumn.get(col.id) ?? []),
+          ],
+        }));
       });
 
       // Também sanitiza o kanban de Operações (ops)
@@ -1168,9 +1189,13 @@ export default function CRM() {
     }
   };
 
-  // Move o card de fato no estado e registra no histórico
+  // Move o card de fato no estado e registra no histórico.
+  // Para o funil de Vendas, persiste leads.status no banco e faz rollback
+  // (devolvendo o card à coluna de origem) caso a requisição falhe.
   const performMove = (move: PendingMove, forced: boolean) => {
+    let originalSnapshot: KanbanColumn[] | null = null;
     setColumns((prev) => {
+      originalSnapshot = prev;
       let moving: KanbanCardData | null = null;
       const stripped = prev.map((col) => {
         const idx = col.cards.findIndex((c) => c.id === move.cardId);
@@ -1180,7 +1205,6 @@ export default function CRM() {
         return { ...col, cards: col.cards.filter((c) => c.id !== move.cardId) };
       });
       if (!moving) return prev;
-      const wasReturning = (moving as KanbanCardData).isReturning;
       const movedCard: KanbanCardData = {
         ...(moving as KanbanCardData),
         // Saindo de "Novos Contatos": consultor já viu, limpa o badge "Retornou"
@@ -1192,12 +1216,39 @@ export default function CRM() {
       );
       return next;
     });
-    if (forced) {
-      toast.warning(`Lead movido para "${move.toTitle}" (movimentação forçada).`);
+
+    // Persistência no banco do novo status (apenas funil de Vendas + leads reais)
+    const newStatus = SALES_COLUMN_TO_STATUS[move.toColumnId];
+    const isSalesLead = tab === "sales" && !!move.leadId && !!newStatus;
+    if (isSalesLead) {
+      void (async () => {
+        const { error } = await supabase
+          .from("leads")
+          .update({ status: newStatus })
+          .eq("id", move.leadId!);
+        if (error) {
+          console.error("[performMove] failed to persist lead status:", error);
+          toast.error("Não foi possível salvar a movimentação. Revertendo...");
+          // Rollback: restaura o snapshot anterior
+          if (originalSnapshot) setColumns(() => originalSnapshot!);
+          return;
+        }
+        if (forced) {
+          toast.warning(`Lead movido para "${move.toTitle}" (movimentação forçada).`);
+        } else {
+          toast.success(`Lead movido para "${move.toTitle}".`);
+        }
+        void logLeadHistory(move.leadId, move.fromTitle, move.toTitle, forced);
+      })();
     } else {
-      toast.success(`Lead movido para "${move.toTitle}".`);
+      if (forced) {
+        toast.warning(`Lead movido para "${move.toTitle}" (movimentação forçada).`);
+      } else {
+        toast.success(`Lead movido para "${move.toTitle}".`);
+      }
+      void logLeadHistory(move.leadId, move.fromTitle, move.toTitle, forced);
     }
-    void logLeadHistory(move.leadId, move.fromTitle, move.toTitle, forced);
+
     // Persiste limpeza do retorno no banco se saiu de Novos Contatos
     if (move.toColumnId !== "new-leads" && move.leadId) {
       void supabase.from("leads").update({ is_returning: false }).eq("id", move.leadId);
