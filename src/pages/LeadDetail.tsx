@@ -125,8 +125,8 @@ export default function LeadDetail() {
 
   // Quantidade de mensagens não lidas no WhatsApp
   const onlyDigits = (s: string) => (s || "").replace(/\D/g, "");
-  const { data: waUnread = 0 } = useQuery({
-    queryKey: ["lead-wa-unread", contactId, form.phone],
+  const { data: waInfo = { unread: 0, hasConversation: false } } = useQuery({
+    queryKey: ["lead-wa-info", contactId, form.phone],
     enabled: !!contactId || !!form.phone,
     queryFn: async () => {
       let conv: any = null;
@@ -142,21 +142,24 @@ export default function LeadDetail() {
       }
       if (!conv) {
         const tail = onlyDigits(form.phone || "").slice(-9);
-        if (!tail) return 0;
-        const { data } = await supabase
-          .from("wa_conversations")
-          .select("phone, unread_count")
-          .ilike("phone", `%${tail}%`)
-          .order("last_message_at", { ascending: false, nullsFirst: false })
-          .limit(5);
-        const found = (data || []).find((c: any) =>
-          onlyDigits(c.phone || "").endsWith(tail),
-        );
-        conv = found ?? null;
+        if (tail) {
+          const { data } = await supabase
+            .from("wa_conversations")
+            .select("phone, unread_count")
+            .ilike("phone", `%${tail}%`)
+            .order("last_message_at", { ascending: false, nullsFirst: false })
+            .limit(5);
+          const found = (data || []).find((c: any) =>
+            onlyDigits(c.phone || "").endsWith(tail),
+          );
+          conv = found ?? null;
+        }
       }
-      return Number(conv?.unread_count ?? 0);
+      return { unread: Number(conv?.unread_count ?? 0), hasConversation: !!conv };
     },
   });
+  const waUnread = waInfo.unread;
+  const hasConversation = waInfo.hasConversation;
 
   useEffect(() => {
     if (!card && id) setCard(readCard(id));
