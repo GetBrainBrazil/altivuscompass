@@ -104,6 +104,12 @@ function KanbanBoard({
   onDropOnColumn,
   onTemperatureChange,
   onCardDelete,
+  onCardAssignAgent,
+  onCardCreateQuote,
+  onCardViewConversation,
+  onCardEdit,
+  onCardArchive,
+  agentOptions,
   focusCardId,
   isLoading,
   collapsibleColumnIds,
@@ -125,6 +131,12 @@ function KanbanBoard({
   onDropOnColumn: (columnId: string, targetIndex?: number) => void;
   onTemperatureChange: (card: KanbanCardData, next: LeadTemperature) => void;
   onCardDelete?: (card: KanbanCardData) => void;
+  onCardAssignAgent?: (card: KanbanCardData, userId: string) => void;
+  onCardCreateQuote?: (card: KanbanCardData) => void;
+  onCardViewConversation?: (card: KanbanCardData) => void;
+  onCardEdit?: (card: KanbanCardData) => void;
+  onCardArchive?: (card: KanbanCardData) => void;
+  agentOptions?: { user_id: string; full_name: string; avatar_url?: string | null }[];
   focusCardId?: string | null;
   isLoading?: boolean;
   collapsibleColumnIds?: Set<string>;
