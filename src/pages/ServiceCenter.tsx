@@ -831,7 +831,7 @@ export default function ServiceCenter() {
   };
 
   // ===== Carrega conversas reais do WhatsApp (Z-API) =====
-  const { data: convoRows = [] } = useQuery({
+  const { data: convoRows = [], isLoading: isLoadingConvos } = useQuery({
     queryKey: ["wa_conversations"],
     queryFn: async () => {
       const { data, error } = await supabase
