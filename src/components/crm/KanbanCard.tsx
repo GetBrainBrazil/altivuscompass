@@ -260,7 +260,7 @@ export function KanbanCard({
   const isBoardingSoon = daysToTravel !== null && daysToTravel >= 0 && daysToTravel <= 30;
   const nameIsPhone = isPhoneLikeName(card.clientName);
   const isIncomplete =
-    !card.destination && !card.travelDate && !card.agent && !card.estimatedValue;
+    !card.destination && !card.travelDate && !card.agent && !card.estimatedValue && !card.phone;
 
   // ── Edição inline do nome (quando ainda é apenas um telefone) ─────────────
   const [isEditingName, setIsEditingName] = useState(false);
