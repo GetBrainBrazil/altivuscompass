@@ -83,6 +83,24 @@ export function AppSidebar() {
 
   const visibleItems = navItems.filter((item) => canAccess(userRole, item.url));
 
+  // Track which collapsibles are open. Auto-open whenever a parent or any of its
+  // children matches the current route, while still letting the user toggle manually.
+  const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    setOpenMap((prev) => {
+      const next = { ...prev };
+      for (const item of visibleItems) {
+        if (!('subItems' in item) || !item.subItems?.length) continue;
+        const isParentActive =
+          location.pathname === item.url ||
+          item.subItems.some((s) => location.pathname === s.url.split("?")[0]);
+        if (isParentActive) next[item.title] = true;
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, location.search]);
+
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border/30 bg-gradient-to-b from-sidebar to-[hsl(220_55%_8%)]">
       <SidebarHeader className="p-3 border-b border-sidebar-border/30">
