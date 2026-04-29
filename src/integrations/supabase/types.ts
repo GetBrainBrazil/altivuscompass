@@ -3356,27 +3356,6 @@ export type Database = {
       }
     }
     Views: {
-      profiles_basic: {
-        Row: {
-          avatar_url: string | null
-          email: string | null
-          full_name: string | null
-          user_id: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          email?: string | null
-          full_name?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          email?: string | null
-          full_name?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       public_itineraries: {
         Row: {
           ai_status: string | null
