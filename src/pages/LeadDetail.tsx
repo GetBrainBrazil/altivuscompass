@@ -601,7 +601,7 @@ export default function LeadDetail() {
                       value={form.full_name}
                       onChange={(e) => updateField("full_name", e.target.value)}
                     />
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <Label className="text-xs font-medium text-muted-foreground">Telefone</Label>
                       <IntlPhoneInput
                         value={form.phone}
