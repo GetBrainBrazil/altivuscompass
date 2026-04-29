@@ -124,7 +124,21 @@ export default function LeadDetail() {
   const [contactLevel, setContactLevel] = useState<ContactLevel>("lead");
   const [contactId, setContactId] = useState<string | null>(null);
   const [users, setUsers] = useState<Array<{ id: string; name: string; avatarUrl?: string | null }>>([]);
-  const [quotesCount, setQuotesCount] = useState(0);
+  type LeadQuote = {
+    id: string;
+    title: string | null;
+    destination: string | null;
+    stage: string;
+    total_value: number | null;
+    travel_date_start: string | null;
+    travel_date_end: string | null;
+    quote_validity: string | null;
+    created_at: string | null;
+    conclusion_type: string | null;
+    archived_at: string | null;
+  };
+  const [leadQuotes, setLeadQuotes] = useState<LeadQuote[]>([]);
+  const quotesCount = leadQuotes.length;
   const [waPanelOpen, setWaPanelOpen] = useState(false);
   const [aiData, setAiData] = useState<{
     ai_summary: string | null;
