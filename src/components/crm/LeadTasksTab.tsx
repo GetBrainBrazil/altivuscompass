@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar as CalendarIcon, ListChecks, Loader2, Check, Lock } from "lucide-react";
+import { Calendar as CalendarIcon, ListChecks, Loader2, Check, Lock, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -183,15 +183,16 @@ export function LeadTasksTab({ contactId, contactName }: Props) {
         </p>
       </div>
 
-      {/* Quick add (opens modal) */}
-      <div className="px-3 py-2.5 border-b border-border bg-background">
-        <Input
-          readOnly
+      {/* Primary CTA to open task modal */}
+      <div className="px-3 py-3 border-b border-border bg-background">
+        <Button
+          type="button"
           onClick={() => setDialogOpen(true)}
-          onFocus={() => setDialogOpen(true)}
-          placeholder={`Nova tarefa${contactName ? ` para ${contactName}` : ""}...`}
-          className="h-9 cursor-pointer"
-        />
+          className="w-full h-10 bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Adicionar Nova Tarefa Interna
+        </Button>
       </div>
 
       {/* List */}
