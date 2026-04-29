@@ -1050,10 +1050,20 @@ export default function CRM() {
     toTitle: string;
     leadId: string | null;
   };
-  type Issue = { title: string; detail: string; cta?: { label: string; onClick: () => void } };
+  type QuoteOption = { id: string; title: string; stage: string };
+  type Issue = {
+    title: string;
+    detail: string;
+    cta?: { label: string; onClick: () => void };
+    // When set, modal renders the "Enviar cotação e mover" primary action with a
+    // selector for which quote should be marked as sent.
+    sendQuoteOptions?: QuoteOption[];
+  };
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
   const [pendingIssues, setPendingIssues] = useState<Issue[]>([]);
   const [validating, setValidating] = useState(false);
+  const [selectedQuoteToSend, setSelectedQuoteToSend] = useState<string>("");
+  const [sendingQuoteAndMoving, setSendingQuoteAndMoving] = useState(false);
 
   // Modal: atribuir responsável (bloqueia entrada em "Em Qualificação" sem agente)
   const [assignOpen, setAssignOpen] = useState(false);
@@ -1198,6 +1208,66 @@ export default function CRM() {
     }
   };
 
+  // Marca a cotação selecionada como "Enviada" e move o card para "Proposta Enviada".
+  const handleSendQuoteAndMove = async () => {
+    if (!pendingMove) return;
+    const sendIssue = pendingIssues.find(
+      (i) => i.sendQuoteOptions && i.sendQuoteOptions.length > 0,
+    );
+    const quote = sendIssue?.sendQuoteOptions?.find((q) => q.id === selectedQuoteToSend);
+    if (!quote) {
+      toast.error("Selecione qual cotação está sendo enviada.");
+      return;
+    }
+    setSendingQuoteAndMoving(true);
+    try {
+      const { error: updErr } = await supabase
+        .from("quotes")
+        .update({ stage: "sent" })
+        .eq("id", quote.id);
+      if (updErr) throw updErr;
+
+      // Identifica usuário para a timeline
+      const { data: { user } } = await supabase.auth.getUser();
+      let userName = user?.email ?? null;
+      if (user?.id) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (prof?.full_name) userName = prof.full_name;
+      }
+
+      // Registra na timeline do contato
+      if (pendingMove.leadId) {
+        await supabase.from("contact_events" as any).insert({
+          lead_id: pendingMove.leadId,
+          event_type: "quote_sent",
+          title: "Cotação marcada como enviada",
+          description: `Cotação "${quote.title}" marcada como enviada e card movido para Proposta Enviada por ${userName ?? "Usuário"}.`,
+          link: `/quotes?id=${quote.id}`,
+          is_manual: false,
+          user_id: user?.id ?? null,
+          user_name: userName,
+          metadata: { quote_id: quote.id, quote_title: quote.title },
+        });
+      }
+
+      const move = pendingMove;
+      setPendingMove(null);
+      setPendingIssues([]);
+      setSelectedQuoteToSend("");
+      performMove(move, false);
+      toast.success(`Cotação "${quote.title}" enviada e card movido.`);
+    } catch (err) {
+      console.error("[handleSendQuoteAndMove] error:", err);
+      toast.error("Não foi possível enviar a cotação. Tente novamente.");
+    } finally {
+      setSendingQuoteAndMoving(false);
+    }
+  };
+
   // Confirma a perda: registra motivo no banco e move o card para "Perdidos"
   const confirmLost = async () => {
     if (!lostMove) {
@@ -1303,17 +1373,34 @@ export default function CRM() {
 
     if (toColumnId === "proposal-sent") {
       const sentStages = ["sent", "negotiation", "confirmed", "issued", "completed", "post_sale"] as const;
-      const { data, error } = await supabase
+      // Busca todas as cotações do lead para podermos oferecer "Enviar e mover".
+      const { data: allQuotes, error } = await supabase
         .from("quotes")
-        .select("id, stage")
+        .select("id, title, stage, destination, created_at")
         .eq("lead_id", leadId)
-        .in("stage", sentStages)
-        .limit(1);
-      if (!error && (!data || data.length === 0)) {
-        issues.push({
-          title: "Nenhuma proposta enviada",
-          detail: "Nenhuma cotação deste lead foi marcada como enviada (Enviada/Negociação/Confirmada).",
-        });
+        .order("created_at", { ascending: false });
+      if (!error) {
+        const hasSent = (allQuotes ?? []).some((q: any) => sentStages.includes(q.stage));
+        if (!hasSent) {
+          const sendable = (allQuotes ?? []).filter(
+            (q: any) => !sentStages.includes(q.stage),
+          );
+          issues.push({
+            title: "Nenhuma proposta enviada",
+            detail:
+              sendable.length > 0
+                ? "Nenhuma cotação deste lead foi marcada como enviada. Selecione qual cotação está sendo enviada e clique em \"Enviar cotação e mover\"."
+                : "Nenhuma cotação deste lead foi marcada como enviada (Enviada/Negociação/Confirmada).",
+            sendQuoteOptions:
+              sendable.length > 0
+                ? sendable.map((q: any) => ({
+                    id: q.id,
+                    title: q.title || q.destination || "Cotação sem título",
+                    stage: q.stage,
+                  }))
+                : undefined,
+          });
+        }
       }
     }
 
@@ -1434,6 +1521,9 @@ export default function CRM() {
       } else {
         setPendingMove(move);
         setPendingIssues(issues);
+        // Pré-seleciona primeira cotação disponível (caso a issue ofereça envio)
+        const sendIssue = issues.find((i) => i.sendQuoteOptions && i.sendQuoteOptions.length > 0);
+        setSelectedQuoteToSend(sendIssue?.sendQuoteOptions?.[0]?.id ?? "");
       }
     } finally {
       setValidating(false);
@@ -2634,6 +2724,7 @@ export default function CRM() {
           if (!open) {
             setPendingMove(null);
             setPendingIssues([]);
+            setSelectedQuoteToSend("");
           }
         }}
       >
@@ -2659,6 +2750,40 @@ export default function CRM() {
                 <div className="flex-1 space-y-2">
                   <p className="text-sm font-semibold text-foreground">{iss.title}</p>
                   <p className="text-xs text-muted-foreground leading-relaxed">{iss.detail}</p>
+                  {iss.sendQuoteOptions && iss.sendQuoteOptions.length > 0 && (
+                    <div className="mt-2 rounded-lg border border-border bg-background p-3">
+                      {iss.sendQuoteOptions.length === 1 ? (
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="text-muted-foreground">Cotação a enviar:</span>
+                          <span className="font-medium text-foreground">
+                            {iss.sendQuoteOptions[0].title}
+                          </span>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-xs font-medium text-foreground mb-2">
+                            Selecione a cotação que está sendo enviada:
+                          </p>
+                          <RadioGroup
+                            value={selectedQuoteToSend}
+                            onValueChange={setSelectedQuoteToSend}
+                            className="gap-2"
+                          >
+                            {iss.sendQuoteOptions.map((q) => (
+                              <label
+                                key={q.id}
+                                htmlFor={`send-quote-${q.id}`}
+                                className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 cursor-pointer hover:bg-accent transition-colors"
+                              >
+                                <RadioGroupItem value={q.id} id={`send-quote-${q.id}`} />
+                                <span className="text-sm text-foreground flex-1">{q.title}</span>
+                              </label>
+                            ))}
+                          </RadioGroup>
+                        </>
+                      )}
+                    </div>
+                  )}
                   {iss.cta && (
                     <Button
                       size="sm"
@@ -2668,6 +2793,7 @@ export default function CRM() {
                         iss.cta!.onClick();
                         setPendingMove(null);
                         setPendingIssues([]);
+                        setSelectedQuoteToSend("");
                       }}
                     >
                       <FilePlus className="h-4 w-4" />
@@ -2685,6 +2811,7 @@ export default function CRM() {
               onClick={() => {
                 setPendingMove(null);
                 setPendingIssues([]);
+                setSelectedQuoteToSend("");
               }}
             >
               Cancelar
@@ -2704,10 +2831,20 @@ export default function CRM() {
                 }
                 setPendingMove(null);
                 setPendingIssues([]);
+                setSelectedQuoteToSend("");
               }}
             >
               Mover mesmo assim
             </Button>
+            {pendingIssues.some((i) => i.sendQuoteOptions && i.sendQuoteOptions.length > 0) && (
+              <Button
+                className="rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
+                onClick={handleSendQuoteAndMove}
+                disabled={sendingQuoteAndMoving || !selectedQuoteToSend}
+              >
+                {sendingQuoteAndMoving ? "Enviando..." : "Enviar cotação e mover"}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
