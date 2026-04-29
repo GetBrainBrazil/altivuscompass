@@ -1727,6 +1727,19 @@ export default function CRM() {
     return Array.from(map.values()).sort();
   }, [columns, responsibleOptions]);
 
+  // Contagem de leads ativos (não perdidos / fechados) por consultor
+  const activeLeadsByUser = useMemo(() => {
+    const counts = new Map<string, number>();
+    columns.forEach((c) => {
+      if (c.id === "lost" || c.id === "closed") return;
+      c.cards.forEach((k) => {
+        const id = k.agent?.id;
+        if (id) counts.set(id, (counts.get(id) ?? 0) + 1);
+      });
+    });
+    return counts;
+  }, [columns]);
+
   const tagOptions = useMemo(() => {
     const set = new Set<string>();
     columns.forEach((c) => c.cards.forEach((k) => k.tags?.forEach((t) => set.add(t.label))));
