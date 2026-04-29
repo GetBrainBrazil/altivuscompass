@@ -247,6 +247,7 @@ function KanbanColumnCard({
   onCardViewConversation?: (card: KanbanCardData) => void;
   onCardEdit?: (card: KanbanCardData) => void;
   onCardArchive?: (card: KanbanCardData) => void;
+  onCardRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
   agentOptions?: { user_id: string; full_name: string; avatar_url?: string | null }[];
   focusCardId?: string | null;
   isLoading?: boolean;
