@@ -134,8 +134,8 @@ export function AppSidebar() {
                     return (
                       <Collapsible
                         key={item.title}
-                        open={isParentActive || undefined}
-                        defaultOpen={isParentActive}
+                        open={openMap[item.title] ?? isParentActive}
+                        onOpenChange={(o) => setOpenMap((p) => ({ ...p, [item.title]: o }))}
                         className="group/collapsible"
                       >
                         <SidebarMenuItem>
