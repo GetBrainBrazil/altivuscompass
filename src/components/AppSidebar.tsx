@@ -166,7 +166,10 @@ export function AppSidebar() {
             <TooltipProvider delayDuration={0}>
               {visibleItems.map((item, idx) => {
                 const hasSubItems = 'subItems' in item && item.subItems && item.subItems.length > 0;
-                const isParentActive = location.pathname === item.url || (hasSubItems && item.subItems!.some(s => location.pathname === s.url));
+                const isParentActive = effectivePath === item.url || (hasSubItems && item.subItems!.some(s => effectivePath === s.url.split("?")[0]));
+                const isItemActive = item.url === "/"
+                  ? effectivePath === "/"
+                  : effectivePath === item.url || effectivePath.startsWith(item.url + "/");
                 const prev = visibleItems[idx - 1];
                 const showDivider = !collapsed && prev && prev.group !== item.group;
 
@@ -186,11 +189,11 @@ export function AppSidebar() {
                       >
                         <SidebarMenuItem>
                           <div className="flex items-center gap-0.5">
-                            <SidebarMenuButton asChild className={cn("h-9 rounded-md flex-1", activeBase)}>
-                              <NavLink to={item.url} end className={linkBase} activeClassName={linkActive}>
+                            <SidebarMenuButton asChild className={cn("h-9 rounded-md flex-1", activeBase)} data-active={isItemActive}>
+                              <Link to={item.url} className={cn(linkBase, isItemActive && linkActive)}>
                                 <item.icon />
                                 <span className="text-[13px] font-body flex-1 tracking-[0.01em]">{item.title}</span>
-                              </NavLink>
+                              </Link>
                             </SidebarMenuButton>
                             <CollapsibleTrigger asChild>
                               <button className="h-7 w-7 flex items-center justify-center text-sidebar-foreground/50 hover:text-white transition-colors rounded-md hover:bg-white/[0.05]">
@@ -203,7 +206,7 @@ export function AppSidebar() {
                           <ul className="mt-1 ml-[18px] pl-3 border-l border-sidebar-border/40 flex flex-col gap-0.5">
                             {item.subItems!.filter(s => canAccess(userRole, s.url.split("?")[0])).map((sub) => {
                               const [subPath, subQuery] = sub.url.split("?");
-                              const isSubActive = location.pathname === subPath && (
+                              const isSubActive = effectivePath === subPath && (
                                 subQuery ? location.search.includes(subQuery) : !location.search
                               );
                               return (
@@ -237,11 +240,11 @@ export function AppSidebar() {
                     <SidebarMenuItem key={item.title}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <SidebarMenuButton asChild className={cn("h-9 rounded-md", activeBase)}>
-                            <NavLink to={item.url} end={item.url === "/"} className={linkBase} activeClassName={linkActive}>
+                          <SidebarMenuButton asChild className={cn("h-9 rounded-md", activeBase)} data-active={isItemActive}>
+                            <Link to={item.url} className={cn(linkBase, isItemActive && linkActive)}>
                               <item.icon />
                               {!collapsed && <span className="text-[13px] font-body tracking-[0.01em]">{item.title}</span>}
-                            </NavLink>
+                            </Link>
                           </SidebarMenuButton>
                         </TooltipTrigger>
                         {collapsed && (
