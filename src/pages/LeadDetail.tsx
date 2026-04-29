@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -385,14 +385,28 @@ export default function LeadDetail() {
     [stageId]
   );
 
-
+  const headerRef = useRef<HTMLElement | null>(null);
+  const [headerH, setHeaderH] = useState(0);
+  useEffect(() => {
+    if (!headerRef.current) return;
+    const el = headerRef.current;
+    const update = () => setHeaderH(el.getBoundingClientRect().height);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    window.addEventListener("resize", update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, []);
 
   const isClient = contactLevel === "cliente";
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-0px)] bg-slate-50 dark:bg-slate-950">
       {/* Cabeçalho principal — largura total */}
-      <header className="border-b border-border bg-background w-full">
+      <header ref={headerRef} className="border-b border-border bg-background w-full">
         <div className="px-6 lg:px-10 pt-6 pb-5">
           <Button
             variant="ghost"
@@ -770,7 +784,10 @@ export default function LeadDetail() {
       </main>
       </div>
 
-      <aside className="hidden lg:block min-w-0 self-start sticky top-0 h-screen border-l border-border overflow-hidden">
+      <aside
+        className="hidden lg:block min-w-0 self-start sticky border-l border-border overflow-hidden"
+        style={{ top: headerH, height: `calc(100vh - ${headerH}px)` }}
+      >
         <LeadWhatsAppColumn
           onClose={() => setWaPanelOpen(false)}
           contactName={form.full_name || card?.clientName || "Contato"}
