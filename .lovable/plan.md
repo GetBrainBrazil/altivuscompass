@@ -1,40 +1,46 @@
-# Voltar inteligente do editor de cotações + integração 2 vias confirmada
+## Objetivo
+Fazer com que a cotação aberta a partir do CRM continue com aparência de contexto do CRM na barra lateral, sem quebrar o comportamento atual de voltar para o card da pessoa. Quando a cotação for aberta diretamente pelo módulo de Cotações, tudo continua como hoje.
 
-## Problema
-Hoje, ao clicar na seta "voltar" dentro do editor de cotações, o usuário sempre cai no pipeline `/quotes`, mesmo quando abriu a cotação a partir do card do lead no CRM. Deveria voltar para o lead de origem.
+## O que vou ajustar
+1. Consolidar a origem da navegação CRM -> Cotação
+- Expandir o metadado já salvo para retorno (`quotes:returnTo`) para também guardar o contexto visual de origem.
+- Salvar algo como: origem = `crm`, URL de retorno e timestamp.
+- Aplicar isso em todos os pontos do perfil do lead que abrem uma cotação existente ou criam uma nova.
 
-## Sobre a "integração 2 vias" do pipeline
-**Já está funcionando.** Toda cotação criada a partir do card do lead salva `lead_id` na tabela `quotes` (Quotes.tsx:817) e dispara `invalidateQueries(["quotes"])` (linhas 968, 1018, 1034…). Resultado: a nova cotação **já aparece automaticamente** no pipeline `/quotes` e segue vinculada ao lead. Nenhuma mudança extra é necessária aqui — vou apenas confirmar isso visualmente para o usuário ao final.
+2. Preservar esse contexto dentro de `Quotes.tsx`
+- Hoje o fluxo de `Quotes.tsx` limpa `location.state` ao normalizar `?edit=` e `newQuote`, o que apaga a noção de origem.
+- Ajustar a lógica para manter o contexto de origem enquanto o editor foi aberto a partir do CRM.
+- Garantir que isso funcione tanto para:
+  - abrir cotação existente via `?edit=<id>`
+  - criar nova cotação via `state.newQuote`
+  - abrir depois de um refresh recente, se o contexto ainda estiver válido
 
-## Solução do "voltar" — origem persistida em `sessionStorage`
+3. Fazer a sidebar respeitar o contexto visual
+- Em `AppSidebar.tsx`, calcular um “caminho efetivo ativo” para a navegação.
+- Regra:
+  - se a rota real for `/quotes` e houver contexto ativo vindo do CRM, destacar `CRM` na sidebar
+  - não destacar `Cotações` nesse caso
+  - se a cotação foi aberta pelo fluxo normal de Cotações, a sidebar continua destacando `Cotações`
+- Manter compatibilidade com os subitens já existentes do CRM.
 
-Padrão simples, robusto contra refresh, sem precisar refatorar a navegação:
+4. Limpar o contexto na hora certa
+- Ao fechar o editor e voltar ao CRM, remover o contexto temporário.
+- Ao entrar em `/quotes` pelo caminho normal do módulo de Cotações, não usar contexto antigo.
+- Manter a proteção de expiração curta para evitar “vazamento” de contexto entre navegações antigas.
 
-### 1. `src/pages/LeadDetail.tsx` — gravar origem antes de navegar
-Sempre que o lead navegar para o editor (clique em card de cotação OU botão "Nova Cotação"), gravar:
-```ts
-sessionStorage.setItem("quotes:returnTo", `/crm/lead/${id}${location.search}`);
-```
-Pontos a alterar: os 3 locais que já existem na aba/header (clique no `QuoteKanbanCard`, botão "Nova Cotação" do header e do empty state).
+## Resultado esperado
+- Abriu cotação pelo CRM: sidebar continua mostrando CRM como módulo ativo enquanto a cotação estiver aberta.
+- Clicou para voltar: volta para o card do CRM como já está hoje.
+- Abriu cotação pelo pipeline de Cotações: sidebar continua mostrando Cotações.
+- As cotações seguem conectadas ao pipeline global, sem duplicação nem perda de vínculo.
 
-### 2. `src/pages/Quotes.tsx` — consumir e limpar origem ao fechar
-No `performCloseDialog` (linha ~1440), após o reset normal do estado, ler `sessionStorage.getItem("quotes:returnTo")`:
-- Se existir: remover a chave e `navigate(returnTo)` — volta para o lead.
-- Se não existir: comportamento atual (fica em `/quotes`).
-
-Isso cobre tanto o botão de voltar (seta) quanto o "Cancelar" e o auto-fechamento após salvar com sucesso (que também passa por `performCloseDialog`).
-
-### 3. Edge case — abandono da chave
-A chave fica em `sessionStorage` (some quando a aba é fechada) e é deletada assim que consumida. Para evitar consumo indevido se o usuário abrir o editor por outro caminho (ex.: clicar num card direto no `/quotes`), gravo também um carimbo de tempo e expiração curta:
-- Chave: `quotes:returnTo` com valor `{ url, ts }` (JSON).
-- Consumir só se `Date.now() - ts < 5 * 60_000` (5 min).
-- Caso contrário, descartar.
+## Arquivos previstos
+- `src/pages/LeadDetail.tsx`
+- `src/pages/Quotes.tsx`
+- `src/components/AppSidebar.tsx`
 
 ## Detalhes técnicos
-- Arquivos editados:
-  - `src/pages/LeadDetail.tsx` — 3 pontos de navegação setam `sessionStorage`.
-  - `src/pages/Quotes.tsx` — `performCloseDialog` lê e roteia.
-- Sem mudanças de banco, sem novas dependências, sem novas rotas.
-
-## Fora de escopo
-- Refator do editor para componente isolado embutido no LeadDetail (já discutido antes como evolução futura).
+- A sidebar hoje usa `useLocation()` e ativa itens por `location.pathname`, então `/quotes` sempre acende “Cotações”.
+- O fluxo atual de retorno CRM -> Cotação já existe via `sessionStorage`, então a solução mais segura é reutilizar esse mesmo padrão para o contexto visual.
+- O cuidado principal será não apagar esse contexto quando `Quotes.tsx` fizer os `navigate(..., { replace: true, state: {} })` usados para abrir o editor via query/state.
+- A solução será restrita ao comportamento visual e de navegação; não altera o vínculo de dados entre CRM e Cotações.

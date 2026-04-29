@@ -94,16 +94,21 @@ export default function LeadDetail() {
   const leadId = id?.startsWith("lead-") ? id.slice("lead-".length) : null;
 
   // Marca a origem para que o editor de cotações volte para o card do CRM ao fechar
+  // e para que a sidebar continue destacando "CRM" enquanto a cotação estiver aberta.
   const setQuotesReturnTo = () => {
     if (!id) return;
     try {
+      const payload = {
+        url: `/crm/lead/${id}${window.location.search}`,
+        ts: Date.now(),
+      };
+      sessionStorage.setItem("quotes:returnTo", JSON.stringify(payload));
       sessionStorage.setItem(
-        "quotes:returnTo",
-        JSON.stringify({
-          url: `/crm/lead/${id}${window.location.search}`,
-          ts: Date.now(),
-        }),
+        "quotes:origin",
+        JSON.stringify({ origin: "crm", ts: Date.now() }),
       );
+      // Notifica a sidebar para reavaliar o item ativo imediatamente
+      window.dispatchEvent(new Event("quotes:origin-changed"));
     } catch { /* ignore */ }
   };
 
