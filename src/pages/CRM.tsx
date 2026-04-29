@@ -428,6 +428,12 @@ function KanbanColumnCard({
                       onDragEnd={() => { onCardDragEnd(); setOverIndex(null); }}
                       onTemperatureChange={onTemperatureChange}
                       onDelete={onCardDelete}
+                      onAssignAgent={onCardAssignAgent}
+                      agentOptions={agentOptions}
+                      onCreateQuote={onCardCreateQuote}
+                      onViewConversation={onCardViewConversation}
+                      onEdit={onCardEdit}
+                      onArchive={onCardArchive}
                     />
                   </div>
                 );
