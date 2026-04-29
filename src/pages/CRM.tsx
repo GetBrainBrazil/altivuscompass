@@ -975,7 +975,7 @@ export default function CRM() {
             setColumns((prev) => {
               let movedCard: KanbanCardData | null = null;
               const without = prev.map((col) => {
-                const idx = col.cards.findIndex((c) => c.leadId === newRow.id);
+                const idx = col.cards.findIndex((c) => c.id === newRow.id);
                 if (idx === -1) return col;
                 movedCard = col.cards[idx];
                 return { ...col, cards: col.cards.filter((_, i) => i !== idx) };
