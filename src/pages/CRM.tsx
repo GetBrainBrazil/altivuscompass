@@ -129,11 +129,11 @@ function KanbanBoard({
 }: {
   columns: KanbanColumn[];
   onCardClick: (card: KanbanCardData) => void;
-  onDeleteColumn: (columnId: string) => void;
+  onDeleteColumn?: (columnId: string) => void;
   onAddColumn?: () => void;
-  onRenameColumn: (columnId: string) => void;
-  onAddBefore: (columnId: string) => void;
-  onAddAfter: (columnId: string) => void;
+  onRenameColumn?: (columnId: string) => void;
+  onAddBefore?: (columnId: string) => void;
+  onAddAfter?: (columnId: string) => void;
   draggedCardId: string | null;
   draggedFromColumnId?: string | null;
   validTargetColumnIds?: Set<string> | null;
@@ -170,10 +170,10 @@ function KanbanBoard({
               column={col}
               dotColor={STAGE_DOT_COLORS[idx % STAGE_DOT_COLORS.length]}
               onCardClick={onCardClick}
-              onDelete={() => onDeleteColumn(col.id)}
-              onRename={() => onRenameColumn(col.id)}
-              onAddBefore={() => onAddBefore(col.id)}
-              onAddAfter={() => onAddAfter(col.id)}
+              onDelete={onDeleteColumn ? () => onDeleteColumn(col.id) : undefined}
+              onRename={onRenameColumn ? () => onRenameColumn(col.id) : undefined}
+              onAddBefore={onAddBefore ? () => onAddBefore(col.id) : undefined}
+              onAddAfter={onAddAfter ? () => onAddAfter(col.id) : undefined}
               draggedCardId={draggedCardId}
               isValidTarget={isValidTarget}
               isInvalidTarget={isInvalidTarget}
@@ -239,10 +239,10 @@ function KanbanColumnCard({
   column: KanbanColumn;
   dotColor: string;
   onCardClick: (card: KanbanCardData) => void;
-  onDelete: () => void;
-  onRename: () => void;
-  onAddBefore: () => void;
-  onAddAfter: () => void;
+  onDelete?: () => void;
+  onRename?: () => void;
+  onAddBefore?: () => void;
+  onAddAfter?: () => void;
   draggedCardId: string | null;
   isValidTarget?: boolean;
   isInvalidTarget?: boolean;
