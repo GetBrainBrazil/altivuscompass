@@ -486,9 +486,13 @@ export default function LeadDetail() {
             </div>
           </div>
         </div>
+      </header>
 
+      {/* Grid de duas colunas: conteúdo + painel lateral */}
+      <div className="grid grid-cols-1 lg:grid-cols-[68fr_32fr] flex-1 min-h-0">
+        <div className="flex flex-col min-w-0">
         {/* Stepper — estilo Cotações */}
-        <div className="px-6 lg:px-10 pb-5">
+        <div className="px-6 lg:px-10 py-5 border-b border-border bg-background">
           <div className="glass-card rounded-xl px-3 sm:px-4 py-3 bg-background border border-border">
             <div className="flex items-center gap-0.5 sm:gap-1 flex-wrap">
               {FUNNEL_STAGES.map((stage, idx) => {
@@ -535,7 +539,6 @@ export default function LeadDetail() {
             </div>
           </div>
         </div>
-      </header>
 
       {/* Tabs + content */}
       <main className="flex-1 min-h-0">
