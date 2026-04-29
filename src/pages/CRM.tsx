@@ -500,6 +500,7 @@ export default function CRM() {
           isAILead: isAI,
           isManualLead: !isAI,
           aiSummary: l.ai_summary ?? undefined,
+          source: l.source ?? undefined,
           contactLevel: hasTravelData ? "lead" : "prospect",
           isReturning: !!l.is_returning,
           stageEnteredAt: existing?.stageEnteredAt ?? l.created_at ?? new Date().toISOString(),
