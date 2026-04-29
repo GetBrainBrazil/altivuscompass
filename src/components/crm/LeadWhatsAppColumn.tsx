@@ -276,6 +276,15 @@ export function LeadWhatsAppColumn({ onClose, contactName, phone, contactId, lea
         </Button>
       </div>
 
+      {/* Nota rápida — fixa abaixo do header */}
+      {leadId && onApplyNoteSuggestion && (
+        <LeadQuickNote
+          leadId={leadId}
+          form={formSnapshot ?? {}}
+          onApplySuggestion={onApplyNoteSuggestion}
+        />
+      )}
+
       {/* Messages */}
       <div className="flex-1 min-h-0 bg-slate-50 dark:bg-slate-900/40">
         {loadingConv ? (
