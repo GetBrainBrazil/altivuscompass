@@ -1926,6 +1926,12 @@ export default function Quotes() {
     return sorted;
   }, [quotes, searchTerm, filterAssignee, filterLeadSource, pipelineSort]);
 
+  // Placeholder neutro enquanto o editor está sendo aberto a partir de outra página
+  // (ex.: card do CRM). Evita o "flash" do pipeline antes do editor renderizar.
+  if (externalEditPending && !dialogOpen) {
+    return <div className="min-h-[60vh] bg-background" aria-hidden />;
+  }
+
   // ─── FORM VIEW ─────────────────────────────────────────────
   if (dialogOpen) {
     const itemsForType = (type: string) => items.filter(i => i.item_type === type);
