@@ -138,6 +138,26 @@ const TEMP_CLASSES: Record<LeadTemperature, string> = {
   cold: "text-slate-400",
 };
 
+/**
+ * Formata telefone E.164 (ex: "5511987654321") em formato BR amigável:
+ * "+55 (11) 98765-4321". Para números não-BR ou inválidos, retorna como veio
+ * com prefixo "+".
+ */
+function formatPhone(raw?: string): string | null {
+  if (!raw) return null;
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return null;
+  // Brasil: 55 + DDD(2) + 8 ou 9 dígitos
+  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) {
+    const ddd = digits.slice(2, 4);
+    const rest = digits.slice(4);
+    const mid = rest.length === 9 ? rest.slice(0, 5) : rest.slice(0, 4);
+    const end = rest.length === 9 ? rest.slice(5) : rest.slice(4);
+    return `+55 (${ddd}) ${mid}-${end}`;
+  }
+  return `+${digits}`;
+}
+
 function formatBRL(value?: number) {
   if (value == null) return null;
   return value.toLocaleString("pt-BR", {
@@ -453,31 +473,22 @@ export function KanbanCard({
               </button>
             </div>
           ) : (
-            <div className="flex-1 min-w-0 flex items-center gap-1">
+            <div className="flex-1 min-w-0">
               <p
                 className={cn(
-                  "text-sm font-medium font-body min-w-0 truncate leading-snug",
+                  "font-sans text-[14px] font-semibold min-w-0 truncate leading-tight tracking-tight",
                   nameIsPhone
                     ? "italic text-muted-foreground"
-                    : "text-foreground",
+                    : "text-slate-800",
                 )}
-                title={nameIsPhone ? "Nome do contato ainda não informado — clique no lápis para atualizar" : undefined}
+                title={nameIsPhone ? "Nome do contato ainda não informado — use 'Editar' no menu para atualizar" : undefined}
               >
                 {card.clientName}
               </p>
-              {nameIsPhone && onRenameClient && (
-                <button
-                  type="button"
-                  aria-label="Editar nome do contato"
-                  title="Editar nome do contato"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    startEditingName();
-                  }}
-                  className="shrink-0 inline-flex items-center justify-center w-5 h-5 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                >
-                  <Pencil className="w-3 h-3" />
-                </button>
+              {!nameIsPhone && card.phone && (
+                <p className="font-sans text-[11px] text-slate-500 truncate leading-snug mt-0.5 tabular-nums">
+                  {formatPhone(card.phone)}
+                </p>
               )}
             </div>
           )}
