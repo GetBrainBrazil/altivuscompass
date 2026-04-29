@@ -52,6 +52,8 @@ export type KanbanCardData = {
   isAILead?: boolean;
   isManualLead?: boolean;
   aiSummary?: string;
+  /** Origem do contato/lead — usado para filtros (whatsapp, manual, phone, email, referral, etc). */
+  source?: string;
   alert?: KanbanCardAlert;
   contactLevel?: ContactLevel;
   /** Timestamp ISO de quando o card entrou na coluna atual. Usado para badge "Xd na etapa". */

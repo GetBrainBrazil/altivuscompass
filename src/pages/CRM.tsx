@@ -182,17 +182,25 @@ function KanbanColumnCard({
 }) {
   const [isOver, setIsOver] = useState(false);
 
+  const ownerlessCount = column.cards.filter((c) => !c.agent?.name).length;
   return (
     <div className="flex flex-col w-[320px] shrink-0 max-h-full">
       {/* Column header (fixed) — flat, dot + title + count */}
-      <div className="flex items-center gap-2 px-1 py-2 mb-1 shrink-0">
-        <div className={cn("w-2 h-2 rounded-full shrink-0", dotColor)} />
-        <span className="text-xs font-medium text-foreground font-body truncate">
+      <div className="flex items-start gap-2 px-1 py-2 mb-1 shrink-0">
+        <div className={cn("w-2 h-2 rounded-full shrink-0 mt-1.5", dotColor)} />
+        <span className="text-xs font-medium text-foreground font-body truncate mt-0.5">
           {column.title}
         </span>
-        <span className="text-xs text-muted-foreground font-body ml-auto">
-          {isLoading ? "—" : column.cards.length}
-        </span>
+        <div className="ml-auto flex flex-col items-end leading-tight">
+          <span className="text-xs text-muted-foreground font-body">
+            {isLoading ? "—" : column.cards.length}
+          </span>
+          {!isLoading && ownerlessCount > 0 && (
+            <span className="text-[10px] text-destructive font-body">
+              {ownerlessCount} sem dono
+            </span>
+          )}
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -500,6 +508,7 @@ export default function CRM() {
           isAILead: isAI,
           isManualLead: !isAI,
           aiSummary: l.ai_summary ?? undefined,
+          source: l.source ?? undefined,
           contactLevel: hasTravelData ? "lead" : "prospect",
           isReturning: !!l.is_returning,
           stageEnteredAt: existing?.stageEnteredAt ?? l.created_at ?? new Date().toISOString(),
@@ -1209,12 +1218,19 @@ export default function CRM() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterAgent, setFilterAgent] = useState<string>("all");
   const [filterTag, setFilterTag] = useState<string>("all");
+  const [filterTemp, setFilterTemp] = useState<string>("all");
+  const [filterLevel, setFilterLevel] = useState<string>("all");
+  const [filterSource, setFilterSource] = useState<string>("all");
 
   const agentOptions = useMemo(() => {
-    const set = new Set<string>();
-    columns.forEach((c) => c.cards.forEach((k) => k.agent?.name && set.add(k.agent.name)));
-    return Array.from(set).sort();
-  }, [columns]);
+    // Lista de consultores cadastrados na plataforma + nomes que já aparecem
+    const map = new Map<string, string>();
+    responsibleOptions.forEach((r) => map.set(r.full_name, r.full_name));
+    columns.forEach((c) =>
+      c.cards.forEach((k) => k.agent?.name && map.set(k.agent.name, k.agent.name)),
+    );
+    return Array.from(map.values()).sort();
+  }, [columns, responsibleOptions]);
 
   const tagOptions = useMemo(() => {
     const set = new Set<string>();
@@ -1222,13 +1238,43 @@ export default function CRM() {
     return Array.from(set).sort();
   }, [columns]);
 
+  // Mapeia `source` técnico → label legível para filtro
+  const SOURCE_LABEL: Record<string, string> = {
+    whatsapp: "WhatsApp",
+    whatsapp_ai: "WhatsApp",
+    manual: "Manual",
+    phone: "Telefone",
+    email: "E-mail",
+    referral: "Indicação",
+  };
+  const normalizeSource = (s?: string): string => {
+    if (!s) return "manual";
+    return SOURCE_LABEL[s] ?? s;
+  };
+
   const filteredColumns = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     return columns.map((col) => ({
       ...col,
       cards: col.cards.filter((card) => {
-        if (filterAgent !== "all" && card.agent?.name !== filterAgent) return false;
+        if (filterAgent === "__none__") {
+          if (card.agent?.name) return false;
+        } else if (filterAgent !== "all" && card.agent?.name !== filterAgent) {
+          return false;
+        }
         if (filterTag !== "all" && !card.tags?.some((t) => t.label === filterTag)) return false;
+        if (filterTemp !== "all") {
+          const t = card.temperature ?? "cold";
+          if (filterTemp === "undefined") {
+            // "Não definida": cards sem temperatura explícita (default cold é considerado definido).
+            // Aqui consideramos "não definida" quando o campo não foi explicitamente setado.
+            // Como sempre cai em "cold" no default, não filtra nada nesse modo.
+            return false;
+          }
+          if (t !== filterTemp) return false;
+        }
+        if (filterLevel !== "all" && (card.contactLevel ?? "prospect") !== filterLevel) return false;
+        if (filterSource !== "all" && normalizeSource(card.source) !== filterSource) return false;
         if (!q) return true;
         return (
           card.clientName.toLowerCase().includes(q) ||
@@ -1237,7 +1283,7 @@ export default function CRM() {
         );
       }),
     }));
-  }, [columns, searchTerm, filterAgent, filterTag]);
+  }, [columns, searchTerm, filterAgent, filterTag, filterTemp, filterLevel, filterSource]);
 
   // ─── KPIs ────────────────────────────────────────────────
   const allCards = useMemo(() => columns.flatMap((c) => c.cards), [columns]);
@@ -1247,7 +1293,39 @@ export default function CRM() {
   const formatCurrency = (v: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
 
-  const hasActiveFilters = searchTerm !== "" || filterAgent !== "all" || filterTag !== "all";
+  // Métricas: novos leads esta semana vs semana anterior (com base em stageEnteredAt como proxy de criação)
+  const { newThisWeek, weekDeltaPct, weekDeltaPositive } = useMemo(() => {
+    const now = Date.now();
+    const day = 24 * 60 * 60 * 1000;
+    const startThis = now - 7 * day;
+    const startLast = now - 14 * day;
+    let thisW = 0;
+    let lastW = 0;
+    allCards.forEach((c) => {
+      const ts = c.stageEnteredAt ? new Date(c.stageEnteredAt).getTime() : NaN;
+      if (!Number.isFinite(ts)) return;
+      if (ts >= startThis) thisW += 1;
+      else if (ts >= startLast) lastW += 1;
+    });
+    let pct = 0;
+    let positive = true;
+    if (lastW === 0 && thisW > 0) {
+      pct = 100;
+      positive = true;
+    } else if (lastW > 0) {
+      pct = Math.round(((thisW - lastW) / lastW) * 100);
+      positive = pct >= 0;
+    }
+    return { newThisWeek: thisW, weekDeltaPct: pct, weekDeltaPositive: positive };
+  }, [allCards]);
+
+  const hasActiveFilters =
+    searchTerm !== "" ||
+    filterAgent !== "all" ||
+    filterTag !== "all" ||
+    filterTemp !== "all" ||
+    filterLevel !== "all" ||
+    filterSource !== "all";
 
   const handleCardClick = (card: KanbanCardData) => {
     const stage = columns.find((c) => c.cards.some((k) => k.id === card.id));
@@ -1345,6 +1423,41 @@ export default function CRM() {
           <p className="text-sm text-muted-foreground mt-1">
             Acompanhe leads, qualificações e operações em viagem em um só lugar.
           </p>
+
+          {/* Métricas compactas */}
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-3">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-lg font-semibold text-foreground font-display tabular-nums">
+                {totalLeads}
+              </span>
+              <span className="text-xs text-muted-foreground">contatos no funil</span>
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-lg font-semibold text-foreground font-display tabular-nums">
+                {newThisWeek}
+              </span>
+              <span className="text-xs text-muted-foreground">leads novos esta semana</span>
+              {weekDeltaPct !== 0 && (
+                <span
+                  className={cn(
+                    "text-[10px] font-medium px-1.5 py-0.5 rounded-full",
+                    weekDeltaPositive
+                      ? "bg-success/10 text-success"
+                      : "bg-destructive/10 text-destructive",
+                  )}
+                  title="Variação vs. semana anterior"
+                >
+                  {weekDeltaPositive ? "↑" : "↓"} {Math.abs(weekDeltaPct)}%
+                </span>
+              )}
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-lg font-semibold text-foreground font-display tabular-nums">
+                {formatCurrency(pipelineValue)}
+              </span>
+              <span className="text-xs text-muted-foreground">pipeline estimado</span>
+            </div>
+          </div>
         </div>
 
         <Tabs
@@ -1386,8 +1499,8 @@ export default function CRM() {
 
       {/* KPIs + Toolbar (gestão acima do Kanban) */}
       <section className="px-6 pt-5 pb-2 bg-background border-b border-border space-y-4">
-        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-          <div className="relative flex-1 min-w-0">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:items-center">
+          <div className="relative flex-1 min-w-[220px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <Input
               value={searchTerm}
@@ -1397,25 +1510,68 @@ export default function CRM() {
             />
           </div>
           <Select value={filterAgent} onValueChange={setFilterAgent}>
-            <SelectTrigger className="h-9 w-full sm:w-[180px] text-sm">
+            <SelectTrigger className="h-9 w-full sm:w-[170px] text-sm">
               <SelectValue placeholder="Responsável" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os responsáveis</SelectItem>
+              <SelectItem value="__none__">Sem responsável</SelectItem>
               {agentOptions.map((name) => (
                 <SelectItem key={name} value={name}>{name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+          <Select value={filterTemp} onValueChange={setFilterTemp}>
+            <SelectTrigger className="h-9 w-full sm:w-[150px] text-sm">
+              <SelectValue placeholder="Temperatura" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas temperaturas</SelectItem>
+              <SelectItem value="hot">Quente</SelectItem>
+              <SelectItem value="warm">Morno</SelectItem>
+              <SelectItem value="cold">Frio</SelectItem>
+              <SelectItem value="undefined">Não definida</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterLevel} onValueChange={setFilterLevel}>
+            <SelectTrigger className="h-9 w-full sm:w-[140px] text-sm">
+              <SelectValue placeholder="Nível" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os níveis</SelectItem>
+              <SelectItem value="prospect">Prospect</SelectItem>
+              <SelectItem value="lead">Lead</SelectItem>
+              <SelectItem value="cliente">Cliente</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterSource} onValueChange={setFilterSource}>
+            <SelectTrigger className="h-9 w-full sm:w-[150px] text-sm">
+              <SelectValue placeholder="Origem" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as origens</SelectItem>
+              <SelectItem value="WhatsApp">WhatsApp</SelectItem>
+              <SelectItem value="Manual">Manual</SelectItem>
+              <SelectItem value="Telefone">Telefone</SelectItem>
+              <SelectItem value="E-mail">E-mail</SelectItem>
+              <SelectItem value="Indicação">Indicação</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={filterTag} onValueChange={setFilterTag}>
-            <SelectTrigger className="h-9 w-full sm:w-[170px] text-sm">
+            <SelectTrigger className="h-9 w-full sm:w-[160px] text-sm">
               <SelectValue placeholder="Tag" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as tags</SelectItem>
-              {tagOptions.map((label) => (
-                <SelectItem key={label} value={label}>{label}</SelectItem>
-              ))}
+              {tagOptions.length === 0 ? (
+                <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                  Nenhuma tag disponível
+                </div>
+              ) : (
+                tagOptions.map((label) => (
+                  <SelectItem key={label} value={label}>{label}</SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
           {hasActiveFilters && (
@@ -1423,7 +1579,14 @@ export default function CRM() {
               variant="ghost"
               size="sm"
               className="h-9 gap-1.5"
-              onClick={() => { setSearchTerm(""); setFilterAgent("all"); setFilterTag("all"); }}
+              onClick={() => {
+                setSearchTerm("");
+                setFilterAgent("all");
+                setFilterTag("all");
+                setFilterTemp("all");
+                setFilterLevel("all");
+                setFilterSource("all");
+              }}
             >
               <X className="w-3.5 h-3.5" /> Limpar
             </Button>
