@@ -2750,6 +2750,40 @@ export default function CRM() {
                 <div className="flex-1 space-y-2">
                   <p className="text-sm font-semibold text-foreground">{iss.title}</p>
                   <p className="text-xs text-muted-foreground leading-relaxed">{iss.detail}</p>
+                  {iss.sendQuoteOptions && iss.sendQuoteOptions.length > 0 && (
+                    <div className="mt-2 rounded-lg border border-border bg-background p-3">
+                      {iss.sendQuoteOptions.length === 1 ? (
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="text-muted-foreground">Cotação a enviar:</span>
+                          <span className="font-medium text-foreground">
+                            {iss.sendQuoteOptions[0].title}
+                          </span>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-xs font-medium text-foreground mb-2">
+                            Selecione a cotação que está sendo enviada:
+                          </p>
+                          <RadioGroup
+                            value={selectedQuoteToSend}
+                            onValueChange={setSelectedQuoteToSend}
+                            className="gap-2"
+                          >
+                            {iss.sendQuoteOptions.map((q) => (
+                              <label
+                                key={q.id}
+                                htmlFor={`send-quote-${q.id}`}
+                                className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 cursor-pointer hover:bg-accent transition-colors"
+                              >
+                                <RadioGroupItem value={q.id} id={`send-quote-${q.id}`} />
+                                <span className="text-sm text-foreground flex-1">{q.title}</span>
+                              </label>
+                            ))}
+                          </RadioGroup>
+                        </>
+                      )}
+                    </div>
+                  )}
                   {iss.cta && (
                     <Button
                       size="sm"
@@ -2759,6 +2793,7 @@ export default function CRM() {
                         iss.cta!.onClick();
                         setPendingMove(null);
                         setPendingIssues([]);
+                        setSelectedQuoteToSend("");
                       }}
                     >
                       <FilePlus className="h-4 w-4" />
@@ -2776,6 +2811,7 @@ export default function CRM() {
               onClick={() => {
                 setPendingMove(null);
                 setPendingIssues([]);
+                setSelectedQuoteToSend("");
               }}
             >
               Cancelar
@@ -2795,10 +2831,20 @@ export default function CRM() {
                 }
                 setPendingMove(null);
                 setPendingIssues([]);
+                setSelectedQuoteToSend("");
               }}
             >
               Mover mesmo assim
             </Button>
+            {pendingIssues.some((i) => i.sendQuoteOptions && i.sendQuoteOptions.length > 0) && (
+              <Button
+                className="rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
+                onClick={handleSendQuoteAndMove}
+                disabled={sendingQuoteAndMoving || !selectedQuoteToSend}
+              >
+                {sendingQuoteAndMoving ? "Enviando..." : "Enviar cotação e mover"}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
