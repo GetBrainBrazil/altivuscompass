@@ -1723,6 +1723,8 @@ export type Database = {
         Row: {
           ai_collected_data: Json | null
           ai_summary: string | null
+          archived: boolean
+          archived_at: string | null
           assigned_user_id: string | null
           budget_estimate: number | null
           converted_at: string | null
@@ -1752,6 +1754,8 @@ export type Database = {
         Insert: {
           ai_collected_data?: Json | null
           ai_summary?: string | null
+          archived?: boolean
+          archived_at?: string | null
           assigned_user_id?: string | null
           budget_estimate?: number | null
           converted_at?: string | null
@@ -1781,6 +1785,8 @@ export type Database = {
         Update: {
           ai_collected_data?: Json | null
           ai_summary?: string | null
+          archived?: boolean
+          archived_at?: string | null
           assigned_user_id?: string | null
           budget_estimate?: number | null
           converted_at?: string | null
