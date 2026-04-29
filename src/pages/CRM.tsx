@@ -1223,9 +1223,22 @@ export default function CRM() {
     if (!draggedCardId) return;
     const draggedId = draggedCardId;
     setDraggedCardId(null);
+    setDraggedFromColumnId(null);
 
     const sourceColumn = columns.find((c) => c.cards.some((k) => k.id === draggedId));
-    if (!sourceColumn || sourceColumn.id === targetColumnId) return;
+    if (!sourceColumn) return;
+    // Same column: reorder (drag-to-prioritize)
+    if (sourceColumn.id === targetColumnId) {
+      if (typeof targetIndex === "number") {
+        reorderWithinColumn(sourceColumn.id, draggedId, targetIndex);
+      }
+      return;
+    }
+    // Block invalid (non-adjacent) cross-column moves silently
+    if (validTargetColumnIds && !validTargetColumnIds.has(targetColumnId)) {
+      toast.warning("Movimento inválido: arraste para uma etapa adjacente.");
+      return;
+    }
     const card = sourceColumn.cards.find((c) => c.id === draggedId);
     const targetColumn = columns.find((c) => c.id === targetColumnId);
     if (!card || !targetColumn) return;
