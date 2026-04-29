@@ -2056,6 +2056,65 @@ export default function CRM() {
         onPromoted={handlePromotionDone}
       />
 
+      {/* Motivo da perda — ao mover para "Perdidos" */}
+      <Dialog
+        open={lostOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setLostOpen(false);
+            setLostMove(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>Marcar lead como perdido</DialogTitle>
+            <DialogDescription>
+              Selecione o motivo da perda. Esta informação ficará registrada para análise futura.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <RadioGroup value={lostReason} onValueChange={setLostReason} className="space-y-2">
+              {[
+                "Sem resposta",
+                "Escolheu concorrente",
+                "Preço acima do orçamento",
+                "Desistiu da viagem",
+                "Outro",
+              ].map((r) => (
+                <div key={r} className="flex items-center gap-2">
+                  <RadioGroupItem value={r} id={`lost-${r}`} />
+                  <Label htmlFor={`lost-${r}`} className="text-sm font-normal cursor-pointer">
+                    {r}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+            <div className="space-y-1.5">
+              <Label htmlFor="lost-details" className="text-xs">
+                {lostReason === "Outro" ? "Descreva o motivo" : "Observações (opcional)"}
+              </Label>
+              <Textarea
+                id="lost-details"
+                value={lostDetails}
+                onChange={(e) => setLostDetails(e.target.value)}
+                placeholder={lostReason === "Outro" ? "Explique o motivo da perda..." : "Detalhes adicionais..."}
+                rows={3}
+                className="text-sm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setLostOpen(false); setLostMove(null); }}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={confirmLost}>
+              Marcar como perdido
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <DeleteContactDialog
         open={deleteOpen}
         onOpenChange={(v) => {
