@@ -1363,6 +1363,7 @@ export default function Quotes() {
           .maybeSingle();
         if (error || !data) {
           toast({ title: "Cotação não encontrada", description: error?.message ?? "", variant: "destructive" });
+          setExternalEditPending(false);
           clearParams();
           return;
         }
