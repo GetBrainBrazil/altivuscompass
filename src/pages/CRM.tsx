@@ -2388,11 +2388,11 @@ export default function CRM() {
           <KanbanBoard
             columns={filteredColumns}
             onCardClick={handleCardClick}
-            onDeleteColumn={handleRequestDelete}
-            onAddColumn={() => openAddAt(null)}
-            onRenameColumn={handleRequestRename}
-            onAddBefore={handleAddBefore}
-            onAddAfter={handleAddAfter}
+            onDeleteColumn={tab === "sales" ? handleRequestDelete : undefined}
+            onAddColumn={tab === "sales" ? () => openAddAt(null) : undefined}
+            onRenameColumn={tab === "sales" ? handleRequestRename : undefined}
+            onAddBefore={tab === "sales" ? handleAddBefore : undefined}
+            onAddAfter={tab === "sales" ? handleAddAfter : undefined}
             draggedCardId={draggedCardId}
             draggedFromColumnId={draggedFromColumnId}
             validTargetColumnIds={validTargetColumnIds}
