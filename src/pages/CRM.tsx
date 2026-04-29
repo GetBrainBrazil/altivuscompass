@@ -175,6 +175,9 @@ function KanbanColumnCard({
   onCardDelete,
   focusCardId,
   isLoading,
+  collapsible,
+  collapsed,
+  onToggleCollapse,
 }: {
   column: KanbanColumn;
   dotColor: string;
@@ -191,130 +194,197 @@ function KanbanColumnCard({
   onCardDelete?: (card: KanbanCardData) => void;
   focusCardId?: string | null;
   isLoading?: boolean;
+  collapsible?: boolean;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }) {
   const [isOver, setIsOver] = useState(false);
 
   const ownerlessCount = column.cards.filter((c) => !c.agent?.name).length;
+  const isCollapsed = !!(collapsible && collapsed);
   return (
-    <div className="flex flex-col w-[320px] shrink-0 max-h-full">
+    <div
+      className={cn(
+        "flex flex-col shrink-0 max-h-full transition-[width] duration-200",
+        isCollapsed ? "w-[56px]" : "w-[320px]",
+      )}
+    >
       {/* Column header (fixed) — flat, dot + title + count */}
-      <div className="flex items-start gap-2 px-1 py-2 mb-1 shrink-0">
-        <div className={cn("w-2 h-2 rounded-full shrink-0 mt-1.5", dotColor)} />
-        <span className="text-xs font-medium text-foreground font-body truncate mt-0.5">
+      <div
+        className={cn(
+          "flex items-start gap-2 px-1 py-2 mb-1 shrink-0",
+          collapsible && "cursor-pointer rounded-md hover:bg-muted/40",
+          isCollapsed && "flex-col items-center gap-1.5 py-3",
+        )}
+        onClick={collapsible ? onToggleCollapse : undefined}
+        role={collapsible ? "button" : undefined}
+        aria-expanded={collapsible ? !collapsed : undefined}
+        title={collapsible ? (isCollapsed ? "Expandir etapa" : "Recolher etapa") : undefined}
+      >
+        <div
+          className={cn(
+            "w-2 h-2 rounded-full shrink-0",
+            isCollapsed ? "" : "mt-1.5",
+            dotColor,
+          )}
+        />
+        <span
+          className={cn(
+            "text-xs font-medium text-foreground font-body truncate",
+            isCollapsed
+              ? "[writing-mode:vertical-rl] [text-orientation:mixed] rotate-180 max-h-[180px]"
+              : "mt-0.5",
+          )}
+        >
           {column.title}
         </span>
-        <div className="ml-auto flex flex-col items-end leading-tight">
+        <div
+          className={cn(
+            "flex flex-col leading-tight",
+            isCollapsed ? "items-center mt-1" : "ml-auto items-end",
+          )}
+        >
           <span className="text-xs text-muted-foreground font-body">
             {isLoading ? "—" : column.cards.length}
           </span>
-          {!isLoading && ownerlessCount > 0 && (
+          {!isLoading && ownerlessCount > 0 && !isCollapsed && (
             <span className="text-[10px] text-destructive font-body">
               {ownerlessCount} sem dono
             </span>
           )}
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 text-muted-foreground/60 hover:text-foreground opacity-60 hover:opacity-100"
-              aria-label="Opções da etapa"
-            >
-              <MoreVertical className="h-3.5 w-3.5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem onClick={onAddBefore}>
-              <ArrowLeftToLine className="h-4 w-4 mr-2" />
-              Adicionar etapa à esquerda
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onAddAfter}>
-              <ArrowRightToLine className="h-4 w-4 mr-2" />
-              Adicionar etapa à direita
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onRename}>
-              <Pencil className="h-4 w-4 mr-2" />
-              Renomear etapa
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={onDelete}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Excluir etapa
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {!isCollapsed && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-muted-foreground/60 hover:text-foreground opacity-60 hover:opacity-100"
+                aria-label="Opções da etapa"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreVertical className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={onAddBefore}>
+                <ArrowLeftToLine className="h-4 w-4 mr-2" />
+                Adicionar etapa à esquerda
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onAddAfter}>
+                <ArrowRightToLine className="h-4 w-4 mr-2" />
+                Adicionar etapa à direita
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={onRename}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Renomear etapa
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={onDelete}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Excluir etapa
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       {/* Column body — scrolls vertically and acts as the drop zone */}
-      <div
-        onDragOver={(e) => {
-          if (!draggedCardId) return;
-          e.preventDefault();
-          e.dataTransfer.dropEffect = "move";
-          if (!isOver) setIsOver(true);
-        }}
-        onDragLeave={(e) => {
-          // só limpa quando o cursor sai realmente do contêiner
-          if (e.currentTarget.contains(e.relatedTarget as Node)) return;
-          setIsOver(false);
-        }}
-        onDrop={(e) => {
-          e.preventDefault();
-          setIsOver(false);
-          onDropOnColumn(column.id);
-        }}
-        className={cn(
-          "flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin pr-1 rounded-lg transition-colors",
-          isOver && "bg-primary/10 ring-2 ring-primary/40 ring-inset",
-        )}
-      >
-        <div className="space-y-3 min-h-[120px] p-1">
-          {isLoading && column.cards.length === 0 ? (
-            <>
-              <KanbanCardSkeleton />
-              <KanbanCardSkeleton />
-              <KanbanCardSkeleton />
-            </>
-          ) : column.cards.length === 0 ? (
-            <EmptyColumnHint />
-          ) : (
-            column.cards.map((card) => {
-              const isFocused = focusCardId && focusCardId === card.id;
-              return (
-                <div
-                  key={card.id}
-                  data-card-id={card.id}
-                  ref={(el) => {
-                    if (el && isFocused) {
-                      try { el.scrollIntoView({ behavior: "smooth", block: "center" }); } catch { /* noop */ }
-                    }
-                  }}
-                  className={cn(
-                    "transition-all rounded-lg animate-fade-in",
-                    isFocused && "ring-2 ring-primary/70 ring-offset-2 ring-offset-background animate-pulse",
-                  )}
-                >
-                  <KanbanCard
-                    card={card}
-                    onClick={onCardClick}
-                    stageBorderClass={dotColor.replace("bg-", "border-l-")}
-                    draggable
-                    isDragging={draggedCardId === card.id}
-                    onDragStart={(c) => onCardDragStart(c)}
-                    onDragEnd={() => onCardDragEnd()}
-                    onTemperatureChange={onTemperatureChange}
-                    onDelete={onCardDelete}
-                  />
-                </div>
-              );
-            })
+      {!isCollapsed && (
+        <div
+          onDragOver={(e) => {
+            if (!draggedCardId) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+            if (!isOver) setIsOver(true);
+          }}
+          onDragLeave={(e) => {
+            if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+            setIsOver(false);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsOver(false);
+            onDropOnColumn(column.id);
+          }}
+          className={cn(
+            "flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin pr-1 rounded-lg transition-colors",
+            isOver && "bg-primary/10 ring-2 ring-primary/40 ring-inset",
           )}
+        >
+          <div className="space-y-3 min-h-[120px] p-1">
+            {isLoading && column.cards.length === 0 ? (
+              <>
+                <KanbanCardSkeleton />
+                <KanbanCardSkeleton />
+                <KanbanCardSkeleton />
+              </>
+            ) : column.cards.length === 0 ? (
+              <EmptyColumnHint />
+            ) : (
+              column.cards.map((card) => {
+                const isFocused = focusCardId && focusCardId === card.id;
+                return (
+                  <div
+                    key={card.id}
+                    data-card-id={card.id}
+                    ref={(el) => {
+                      if (el && isFocused) {
+                        try { el.scrollIntoView({ behavior: "smooth", block: "center" }); } catch { /* noop */ }
+                      }
+                    }}
+                    className={cn(
+                      "transition-all rounded-lg animate-fade-in",
+                      isFocused && "ring-2 ring-primary/70 ring-offset-2 ring-offset-background animate-pulse",
+                    )}
+                  >
+                    <KanbanCard
+                      card={card}
+                      onClick={onCardClick}
+                      stageBorderClass={dotColor.replace("bg-", "border-l-")}
+                      draggable
+                      isDragging={draggedCardId === card.id}
+                      onDragStart={(c) => onCardDragStart(c)}
+                      onDragEnd={() => onCardDragEnd()}
+                      onTemperatureChange={onTemperatureChange}
+                      onDelete={onCardDelete}
+                    />
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Collapsed: ainda aceita drop para mover cards (ex.: para Perdidos) */}
+      {isCollapsed && (
+        <div
+          onDragOver={(e) => {
+            if (!draggedCardId) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+            if (!isOver) setIsOver(true);
+          }}
+          onDragLeave={(e) => {
+            if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+            setIsOver(false);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsOver(false);
+            onDropOnColumn(column.id);
+          }}
+          className={cn(
+            "flex-1 min-h-[120px] rounded-lg transition-colors border border-dashed border-transparent",
+            isOver && "bg-destructive/10 border-destructive/40",
+          )}
+          title="Solte aqui para marcar como Perdido"
+        />
+      )}
     </div>
   );
 }
