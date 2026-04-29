@@ -218,6 +218,7 @@ function KanbanColumnCard({
   onCardViewConversation,
   onCardEdit,
   onCardArchive,
+  onCardRenameClient,
   agentOptions,
   focusCardId,
   isLoading,
