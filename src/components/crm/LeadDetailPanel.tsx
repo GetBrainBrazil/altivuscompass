@@ -94,16 +94,29 @@ export function LeadDetailPanel({ card, open, onOpenChange }: Props) {
             {card?.destination ? `${card.destination}` : "Lead sem destino definido"}
             {card?.travelDate ? ` • ${card.travelDate}` : ""}
           </SheetDescription>
-          {card?.isAILead && (
-            <div className="mt-3">
-              <Badge
-                variant="secondary"
-                className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 ring-1 ring-inset ring-emerald-100"
-              >
-                <Bot className="h-3 w-3 mr-1" /> Lead triado pela IA
-              </Badge>
-            </div>
-          )}
+          {card?.isAILead && (() => {
+            const filled = [!!card.destination, !!card.travelDate, !!card.travelersCount].filter(Boolean).length;
+            const variant = filled === 3 ? "complete" : filled === 0 ? "neutral" : "partial";
+            const cls =
+              variant === "complete"
+                ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-50 ring-1 ring-inset ring-emerald-100"
+                : variant === "partial"
+                  ? "bg-amber-50 text-amber-700 hover:bg-amber-50 ring-1 ring-inset ring-amber-100"
+                  : "bg-muted text-muted-foreground hover:bg-muted ring-1 ring-inset ring-border";
+            const label =
+              variant === "complete"
+                ? "Lead triado pela IA"
+                : variant === "partial"
+                  ? "Em qualificação pela IA"
+                  : "Recebido pela IA";
+            return (
+              <div className="mt-3">
+                <Badge variant="secondary" className={cls}>
+                  <Bot className="h-3 w-3 mr-1" /> {label}
+                </Badge>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Tabs */}
