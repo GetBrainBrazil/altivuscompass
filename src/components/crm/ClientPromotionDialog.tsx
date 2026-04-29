@@ -571,3 +571,35 @@ function Field({
     </div>
   );
 }
+
+function SummaryRow({
+  icon: Icon,
+  label,
+  value,
+  highlight,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="flex items-start gap-2 min-w-0">
+      <Icon className="h-3.5 w-3.5 mt-0.5 text-muted-foreground shrink-0" />
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none mb-0.5">
+          {label}
+        </p>
+        <p
+          className={
+            highlight
+              ? "text-sm font-semibold text-foreground truncate"
+              : "text-xs text-foreground truncate"
+          }
+        >
+          {value}
+        </p>
+      </div>
+    </div>
+  );
+}
