@@ -130,7 +130,7 @@ function KanbanBoard({
   columns: KanbanColumn[];
   onCardClick: (card: KanbanCardData) => void;
   onDeleteColumn: (columnId: string) => void;
-  onAddColumn: () => void;
+  onAddColumn?: () => void;
   onRenameColumn: (columnId: string) => void;
   onAddBefore: (columnId: string) => void;
   onAddAfter: (columnId: string) => void;
@@ -200,7 +200,7 @@ function KanbanBoard({
             />
           );
         })}
-        <AddColumnButton onClick={onAddColumn} />
+        {onAddColumn && <AddColumnButton onClick={onAddColumn} />}
       </div>
     </div>
   );
