@@ -284,12 +284,14 @@ export default function LeadDetail() {
         phone: data.phone ?? prev?.phone,
       }));
 
-      // Quotes count
-      const { count: qc } = await supabase
+      // Quotes (lista completa para renderizar inline na aba "Cotações")
+      const { data: lq } = await supabase
         .from("quotes")
-        .select("id", { count: "exact", head: true })
-        .eq("lead_id", leadId);
-      if (!cancelled) setQuotesCount(qc ?? 0);
+        .select("id, title, destination, stage, total_value, travel_date_start, travel_date_end, quote_validity, created_at, conclusion_type, archived_at")
+        .eq("lead_id", leadId)
+        .is("archived_at", null)
+        .order("created_at", { ascending: false });
+      if (!cancelled) setLeadQuotes((lq ?? []) as LeadQuote[]);
 
       // Contact level + conversations
       const { data: contact } = await supabase
