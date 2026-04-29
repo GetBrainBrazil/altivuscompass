@@ -2423,6 +2423,7 @@ export default function CRM() {
             onCardViewConversation={handleCardViewConversation}
             onCardEdit={handleCardEdit}
             onCardArchive={handleCardArchive}
+            onCardRenameClient={handleCardRenameClient}
             agentOptions={responsibleOptions}
           />
         )}
