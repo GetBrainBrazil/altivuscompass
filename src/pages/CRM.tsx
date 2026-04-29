@@ -1218,12 +1218,19 @@ export default function CRM() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterAgent, setFilterAgent] = useState<string>("all");
   const [filterTag, setFilterTag] = useState<string>("all");
+  const [filterTemp, setFilterTemp] = useState<string>("all");
+  const [filterLevel, setFilterLevel] = useState<string>("all");
+  const [filterSource, setFilterSource] = useState<string>("all");
 
   const agentOptions = useMemo(() => {
-    const set = new Set<string>();
-    columns.forEach((c) => c.cards.forEach((k) => k.agent?.name && set.add(k.agent.name)));
-    return Array.from(set).sort();
-  }, [columns]);
+    // Lista de consultores cadastrados na plataforma + nomes que já aparecem
+    const map = new Map<string, string>();
+    responsibleOptions.forEach((r) => map.set(r.full_name, r.full_name));
+    columns.forEach((c) =>
+      c.cards.forEach((k) => k.agent?.name && map.set(k.agent.name, k.agent.name)),
+    );
+    return Array.from(map.values()).sort();
+  }, [columns, responsibleOptions]);
 
   const tagOptions = useMemo(() => {
     const set = new Set<string>();
@@ -1231,13 +1238,43 @@ export default function CRM() {
     return Array.from(set).sort();
   }, [columns]);
 
+  // Mapeia `source` técnico → label legível para filtro
+  const SOURCE_LABEL: Record<string, string> = {
+    whatsapp: "WhatsApp",
+    whatsapp_ai: "WhatsApp",
+    manual: "Manual",
+    phone: "Telefone",
+    email: "E-mail",
+    referral: "Indicação",
+  };
+  const normalizeSource = (s?: string): string => {
+    if (!s) return "manual";
+    return SOURCE_LABEL[s] ?? s;
+  };
+
   const filteredColumns = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     return columns.map((col) => ({
       ...col,
       cards: col.cards.filter((card) => {
-        if (filterAgent !== "all" && card.agent?.name !== filterAgent) return false;
+        if (filterAgent === "__none__") {
+          if (card.agent?.name) return false;
+        } else if (filterAgent !== "all" && card.agent?.name !== filterAgent) {
+          return false;
+        }
         if (filterTag !== "all" && !card.tags?.some((t) => t.label === filterTag)) return false;
+        if (filterTemp !== "all") {
+          const t = card.temperature ?? "cold";
+          if (filterTemp === "undefined") {
+            // "Não definida": cards sem temperatura explícita (default cold é considerado definido).
+            // Aqui consideramos "não definida" quando o campo não foi explicitamente setado.
+            // Como sempre cai em "cold" no default, não filtra nada nesse modo.
+            return false;
+          }
+          if (t !== filterTemp) return false;
+        }
+        if (filterLevel !== "all" && (card.contactLevel ?? "prospect") !== filterLevel) return false;
+        if (filterSource !== "all" && normalizeSource(card.source) !== filterSource) return false;
         if (!q) return true;
         return (
           card.clientName.toLowerCase().includes(q) ||
@@ -1246,7 +1283,7 @@ export default function CRM() {
         );
       }),
     }));
-  }, [columns, searchTerm, filterAgent, filterTag]);
+  }, [columns, searchTerm, filterAgent, filterTag, filterTemp, filterLevel, filterSource]);
 
   // ─── KPIs ────────────────────────────────────────────────
   const allCards = useMemo(() => columns.flatMap((c) => c.cards), [columns]);
@@ -1256,7 +1293,39 @@ export default function CRM() {
   const formatCurrency = (v: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
 
-  const hasActiveFilters = searchTerm !== "" || filterAgent !== "all" || filterTag !== "all";
+  // Métricas: novos leads esta semana vs semana anterior (com base em stageEnteredAt como proxy de criação)
+  const { newThisWeek, weekDeltaPct, weekDeltaPositive } = useMemo(() => {
+    const now = Date.now();
+    const day = 24 * 60 * 60 * 1000;
+    const startThis = now - 7 * day;
+    const startLast = now - 14 * day;
+    let thisW = 0;
+    let lastW = 0;
+    allCards.forEach((c) => {
+      const ts = c.stageEnteredAt ? new Date(c.stageEnteredAt).getTime() : NaN;
+      if (!Number.isFinite(ts)) return;
+      if (ts >= startThis) thisW += 1;
+      else if (ts >= startLast) lastW += 1;
+    });
+    let pct = 0;
+    let positive = true;
+    if (lastW === 0 && thisW > 0) {
+      pct = 100;
+      positive = true;
+    } else if (lastW > 0) {
+      pct = Math.round(((thisW - lastW) / lastW) * 100);
+      positive = pct >= 0;
+    }
+    return { newThisWeek: thisW, weekDeltaPct: pct, weekDeltaPositive: positive };
+  }, [allCards]);
+
+  const hasActiveFilters =
+    searchTerm !== "" ||
+    filterAgent !== "all" ||
+    filterTag !== "all" ||
+    filterTemp !== "all" ||
+    filterLevel !== "all" ||
+    filterSource !== "all";
 
   const handleCardClick = (card: KanbanCardData) => {
     const stage = columns.find((c) => c.cards.some((k) => k.id === card.id));
