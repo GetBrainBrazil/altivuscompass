@@ -1689,6 +1689,36 @@ export type Database = {
           },
         ]
       }
+      lead_loss_reasons: {
+        Row: {
+          created_at: string
+          details: string | null
+          id: string
+          lead_id: string
+          reason: string
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          lead_id: string
+          reason: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          lead_id?: string
+          reason?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           ai_collected_data: Json | null
