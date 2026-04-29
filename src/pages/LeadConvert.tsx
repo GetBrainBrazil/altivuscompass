@@ -294,26 +294,34 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function FieldText({
-  label, value, onChange, onBlur, type = "text", placeholder, inputMode, maxLength,
+  label, value, onChange, onBlur, type = "text", placeholder, inputMode, maxLength, disabled, loading,
 }: {
   label: string; value: string; onChange: (v: string) => void;
   onBlur?: () => void; type?: string; placeholder?: string;
   inputMode?: "text" | "numeric" | "tel" | "email" | "url" | "search" | "decimal" | "none";
   maxLength?: number;
+  disabled?: boolean;
+  loading?: boolean;
 }) {
   return (
     <div className="space-y-1.5">
       <Label className="text-xs font-medium text-muted-foreground font-body">{label}</Label>
-      <Input
-        type={type}
-        value={value}
-        placeholder={placeholder}
-        inputMode={inputMode}
-        maxLength={maxLength}
-        onChange={(e) => onChange(e.target.value)}
-        onBlur={onBlur}
-        className="h-9"
-      />
+      <div className="relative">
+        <Input
+          type={type}
+          value={value}
+          placeholder={placeholder}
+          inputMode={inputMode}
+          maxLength={maxLength}
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur}
+          className="h-9"
+        />
+        {loading && (
+          <Loader2 className="h-4 w-4 absolute right-2 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />
+        )}
+      </div>
     </div>
   );
 }
