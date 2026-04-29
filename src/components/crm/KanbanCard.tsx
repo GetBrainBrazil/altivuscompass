@@ -82,6 +82,8 @@ export type KanbanCardData = {
   contactLevel?: ContactLevel;
   /** Timestamp ISO de quando o card entrou na coluna atual. Usado para badge "Xd na etapa". */
   stageEnteredAt?: string;
+  /** Timestamp ISO do último contato com o lead (mensagem, ligação, etc). */
+  lastContactAt?: string;
   /** Temperatura do lead (default: "cold"). */
   temperature?: LeadTemperature;
   /** Cliente já existente iniciando uma nova jornada de compra. */
