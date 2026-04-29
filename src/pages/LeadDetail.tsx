@@ -668,8 +668,8 @@ export default function LeadDetail() {
                 </Section>
 
                 <Section title="Atribuição">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div className="space-y-1.5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+                    <div className="space-y-1">
                       <Label className="text-xs font-medium text-muted-foreground">
                         Responsável
                       </Label>
@@ -680,7 +680,7 @@ export default function LeadDetail() {
                         placeholder="Selecione um responsável"
                       />
                     </div>
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <Label className="text-xs font-medium text-muted-foreground">
                         Temperatura do lead
                       </Label>
@@ -696,7 +696,7 @@ export default function LeadDetail() {
                                 updateField("lead_temperature", active ? "" : t.value)
                               }
                               className={cn(
-                                "flex-1 inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-md border text-xs font-medium transition-colors",
+                                "flex-1 inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-md border text-xs font-medium transition-colors",
                                 active
                                   ? t.activeClass
                                   : "border-input bg-background text-muted-foreground hover:bg-accent"
