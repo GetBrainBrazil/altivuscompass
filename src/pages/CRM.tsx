@@ -1720,6 +1720,16 @@ export default function CRM() {
     return Array.from(set).sort();
   }, [columns]);
 
+  const destinationOptions = useMemo(() => {
+    const set = new Set<string>();
+    columns.forEach((c) =>
+      c.cards.forEach((k) => {
+        if (k.destination) set.add(k.destination);
+      }),
+    );
+    return Array.from(set).sort();
+  }, [columns]);
+
   // Mapeia `source` técnico → label legível para filtro
   const SOURCE_LABEL: Record<string, string> = {
     whatsapp: "WhatsApp",
