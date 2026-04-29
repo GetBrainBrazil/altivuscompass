@@ -183,15 +183,16 @@ export function LeadTasksTab({ contactId, contactName }: Props) {
         </p>
       </div>
 
-      {/* Quick add (opens modal) */}
-      <div className="px-3 py-2.5 border-b border-border bg-background">
-        <Input
-          readOnly
+      {/* Primary CTA to open task modal */}
+      <div className="px-3 py-3 border-b border-border bg-background">
+        <Button
+          type="button"
           onClick={() => setDialogOpen(true)}
-          onFocus={() => setDialogOpen(true)}
-          placeholder={`Nova tarefa${contactName ? ` para ${contactName}` : ""}...`}
-          className="h-9 cursor-pointer"
-        />
+          className="w-full h-10 bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Adicionar Nova Tarefa Interna
+        </Button>
       </div>
 
       {/* List */}
