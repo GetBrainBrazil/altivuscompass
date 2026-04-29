@@ -19,6 +19,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { UserPicker } from "@/components/ui/user-picker";
 import { MetricCard } from "@/components/MetricCard";
 import {
@@ -66,6 +68,7 @@ const INITIAL_SALES_COLUMNS: KanbanColumn[] = [
   { id: "quote", title: "Cotação", cards: [] },
   { id: "proposal-sent", title: "Proposta Enviada", cards: [] },
   { id: "closed", title: "Fechado", cards: [] },
+  { id: "lost", title: "Perdidos", cards: [] },
 ];
 
 const INITIAL_OPS_COLUMNS: KanbanColumn[] = [
@@ -101,6 +104,9 @@ function KanbanBoard({
   onCardDelete,
   focusCardId,
   isLoading,
+  collapsibleColumnIds,
+  collapsedColumnIds,
+  onToggleColumnCollapse,
 }: {
   columns: KanbanColumn[];
   onCardClick: (card: KanbanCardData) => void;
@@ -117,6 +123,9 @@ function KanbanBoard({
   onCardDelete?: (card: KanbanCardData) => void;
   focusCardId?: string | null;
   isLoading?: boolean;
+  collapsibleColumnIds?: Set<string>;
+  collapsedColumnIds?: Set<string>;
+  onToggleColumnCollapse?: (columnId: string) => void;
 }) {
   return (
     <div className="flex-1 min-h-0 mt-4 pb-5 overflow-x-auto overflow-y-hidden scrollbar-elegant [transform:scaleY(-1)]">
@@ -139,6 +148,11 @@ function KanbanBoard({
             onCardDelete={onCardDelete}
             focusCardId={focusCardId}
             isLoading={isLoading}
+            collapsible={collapsibleColumnIds?.has(col.id) ?? false}
+            collapsed={collapsedColumnIds?.has(col.id) ?? false}
+            onToggleCollapse={
+              onToggleColumnCollapse ? () => onToggleColumnCollapse(col.id) : undefined
+            }
           />
         ))}
         <AddColumnButton onClick={onAddColumn} />
@@ -163,6 +177,9 @@ function KanbanColumnCard({
   onCardDelete,
   focusCardId,
   isLoading,
+  collapsible,
+  collapsed,
+  onToggleCollapse,
 }: {
   column: KanbanColumn;
   dotColor: string;
@@ -179,130 +196,197 @@ function KanbanColumnCard({
   onCardDelete?: (card: KanbanCardData) => void;
   focusCardId?: string | null;
   isLoading?: boolean;
+  collapsible?: boolean;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }) {
   const [isOver, setIsOver] = useState(false);
 
   const ownerlessCount = column.cards.filter((c) => !c.agent?.name).length;
+  const isCollapsed = !!(collapsible && collapsed);
   return (
-    <div className="flex flex-col w-[320px] shrink-0 max-h-full">
+    <div
+      className={cn(
+        "flex flex-col shrink-0 max-h-full transition-[width] duration-200",
+        isCollapsed ? "w-[56px]" : "w-[320px]",
+      )}
+    >
       {/* Column header (fixed) — flat, dot + title + count */}
-      <div className="flex items-start gap-2 px-1 py-2 mb-1 shrink-0">
-        <div className={cn("w-2 h-2 rounded-full shrink-0 mt-1.5", dotColor)} />
-        <span className="text-xs font-medium text-foreground font-body truncate mt-0.5">
+      <div
+        className={cn(
+          "flex items-start gap-2 px-1 py-2 mb-1 shrink-0",
+          collapsible && "cursor-pointer rounded-md hover:bg-muted/40",
+          isCollapsed && "flex-col items-center gap-1.5 py-3",
+        )}
+        onClick={collapsible ? onToggleCollapse : undefined}
+        role={collapsible ? "button" : undefined}
+        aria-expanded={collapsible ? !collapsed : undefined}
+        title={collapsible ? (isCollapsed ? "Expandir etapa" : "Recolher etapa") : undefined}
+      >
+        <div
+          className={cn(
+            "w-2 h-2 rounded-full shrink-0",
+            isCollapsed ? "" : "mt-1.5",
+            dotColor,
+          )}
+        />
+        <span
+          className={cn(
+            "text-xs font-medium text-foreground font-body truncate",
+            isCollapsed
+              ? "[writing-mode:vertical-rl] [text-orientation:mixed] rotate-180 max-h-[180px]"
+              : "mt-0.5",
+          )}
+        >
           {column.title}
         </span>
-        <div className="ml-auto flex flex-col items-end leading-tight">
+        <div
+          className={cn(
+            "flex flex-col leading-tight",
+            isCollapsed ? "items-center mt-1" : "ml-auto items-end",
+          )}
+        >
           <span className="text-xs text-muted-foreground font-body">
             {isLoading ? "—" : column.cards.length}
           </span>
-          {!isLoading && ownerlessCount > 0 && (
+          {!isLoading && ownerlessCount > 0 && !isCollapsed && (
             <span className="text-[10px] text-destructive font-body">
               {ownerlessCount} sem dono
             </span>
           )}
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 text-muted-foreground/60 hover:text-foreground opacity-60 hover:opacity-100"
-              aria-label="Opções da etapa"
-            >
-              <MoreVertical className="h-3.5 w-3.5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem onClick={onAddBefore}>
-              <ArrowLeftToLine className="h-4 w-4 mr-2" />
-              Adicionar etapa à esquerda
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onAddAfter}>
-              <ArrowRightToLine className="h-4 w-4 mr-2" />
-              Adicionar etapa à direita
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onRename}>
-              <Pencil className="h-4 w-4 mr-2" />
-              Renomear etapa
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={onDelete}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Excluir etapa
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {!isCollapsed && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-muted-foreground/60 hover:text-foreground opacity-60 hover:opacity-100"
+                aria-label="Opções da etapa"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreVertical className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={onAddBefore}>
+                <ArrowLeftToLine className="h-4 w-4 mr-2" />
+                Adicionar etapa à esquerda
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onAddAfter}>
+                <ArrowRightToLine className="h-4 w-4 mr-2" />
+                Adicionar etapa à direita
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={onRename}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Renomear etapa
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={onDelete}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Excluir etapa
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       {/* Column body — scrolls vertically and acts as the drop zone */}
-      <div
-        onDragOver={(e) => {
-          if (!draggedCardId) return;
-          e.preventDefault();
-          e.dataTransfer.dropEffect = "move";
-          if (!isOver) setIsOver(true);
-        }}
-        onDragLeave={(e) => {
-          // só limpa quando o cursor sai realmente do contêiner
-          if (e.currentTarget.contains(e.relatedTarget as Node)) return;
-          setIsOver(false);
-        }}
-        onDrop={(e) => {
-          e.preventDefault();
-          setIsOver(false);
-          onDropOnColumn(column.id);
-        }}
-        className={cn(
-          "flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin pr-1 rounded-lg transition-colors",
-          isOver && "bg-primary/10 ring-2 ring-primary/40 ring-inset",
-        )}
-      >
-        <div className="space-y-3 min-h-[120px] p-1">
-          {isLoading && column.cards.length === 0 ? (
-            <>
-              <KanbanCardSkeleton />
-              <KanbanCardSkeleton />
-              <KanbanCardSkeleton />
-            </>
-          ) : column.cards.length === 0 ? (
-            <EmptyColumnHint />
-          ) : (
-            column.cards.map((card) => {
-              const isFocused = focusCardId && focusCardId === card.id;
-              return (
-                <div
-                  key={card.id}
-                  data-card-id={card.id}
-                  ref={(el) => {
-                    if (el && isFocused) {
-                      try { el.scrollIntoView({ behavior: "smooth", block: "center" }); } catch { /* noop */ }
-                    }
-                  }}
-                  className={cn(
-                    "transition-all rounded-lg animate-fade-in",
-                    isFocused && "ring-2 ring-primary/70 ring-offset-2 ring-offset-background animate-pulse",
-                  )}
-                >
-                  <KanbanCard
-                    card={card}
-                    onClick={onCardClick}
-                    stageBorderClass={dotColor.replace("bg-", "border-l-")}
-                    draggable
-                    isDragging={draggedCardId === card.id}
-                    onDragStart={(c) => onCardDragStart(c)}
-                    onDragEnd={() => onCardDragEnd()}
-                    onTemperatureChange={onTemperatureChange}
-                    onDelete={onCardDelete}
-                  />
-                </div>
-              );
-            })
+      {!isCollapsed && (
+        <div
+          onDragOver={(e) => {
+            if (!draggedCardId) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+            if (!isOver) setIsOver(true);
+          }}
+          onDragLeave={(e) => {
+            if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+            setIsOver(false);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsOver(false);
+            onDropOnColumn(column.id);
+          }}
+          className={cn(
+            "flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin pr-1 rounded-lg transition-colors",
+            isOver && "bg-primary/10 ring-2 ring-primary/40 ring-inset",
           )}
+        >
+          <div className="space-y-3 min-h-[120px] p-1">
+            {isLoading && column.cards.length === 0 ? (
+              <>
+                <KanbanCardSkeleton />
+                <KanbanCardSkeleton />
+                <KanbanCardSkeleton />
+              </>
+            ) : column.cards.length === 0 ? (
+              <EmptyColumnHint />
+            ) : (
+              column.cards.map((card) => {
+                const isFocused = focusCardId && focusCardId === card.id;
+                return (
+                  <div
+                    key={card.id}
+                    data-card-id={card.id}
+                    ref={(el) => {
+                      if (el && isFocused) {
+                        try { el.scrollIntoView({ behavior: "smooth", block: "center" }); } catch { /* noop */ }
+                      }
+                    }}
+                    className={cn(
+                      "transition-all rounded-lg animate-fade-in",
+                      isFocused && "ring-2 ring-primary/70 ring-offset-2 ring-offset-background animate-pulse",
+                    )}
+                  >
+                    <KanbanCard
+                      card={card}
+                      onClick={onCardClick}
+                      stageBorderClass={dotColor.replace("bg-", "border-l-")}
+                      draggable
+                      isDragging={draggedCardId === card.id}
+                      onDragStart={(c) => onCardDragStart(c)}
+                      onDragEnd={() => onCardDragEnd()}
+                      onTemperatureChange={onTemperatureChange}
+                      onDelete={onCardDelete}
+                    />
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Collapsed: ainda aceita drop para mover cards (ex.: para Perdidos) */}
+      {isCollapsed && (
+        <div
+          onDragOver={(e) => {
+            if (!draggedCardId) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+            if (!isOver) setIsOver(true);
+          }}
+          onDragLeave={(e) => {
+            if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+            setIsOver(false);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsOver(false);
+            onDropOnColumn(column.id);
+          }}
+          className={cn(
+            "flex-1 min-h-[120px] rounded-lg transition-colors border border-dashed border-transparent",
+            isOver && "bg-destructive/10 border-destructive/40",
+          )}
+          title="Solte aqui para marcar como Perdido"
+        />
+      )}
     </div>
   );
 }
@@ -397,12 +481,19 @@ export default function CRM() {
       const parsed = JSON.parse(raw) as KanbanColumn[];
       if (!Array.isArray(parsed) || parsed.length === 0) return fallback;
       // Sanitiza: remove cards que não vieram do banco (sem prefixo lead-/quote-/manual-)
-      return parsed.map((col) => ({
+      const sanitized = parsed.map((col) => ({
         ...col,
         cards: col.cards.filter(
           (c) => c.id.startsWith("lead-") || c.id.startsWith("quote-") || c.id.startsWith("manual-"),
         ),
       }));
+      // Garante que colunas obrigatórias do fallback existam (ex.: "Perdidos" foi
+      // adicionada depois — usuários antigos não têm esta coluna no localStorage).
+      const existingIds = new Set(sanitized.map((c) => c.id));
+      fallback.forEach((fc) => {
+        if (!existingIds.has(fc.id)) sanitized.push({ ...fc, cards: [] });
+      });
+      return sanitized;
     } catch {
       return fallback;
     }
@@ -807,6 +898,42 @@ export default function CRM() {
   const [responsibleOptions, setResponsibleOptions] = useState<{ user_id: string; full_name: string; avatar_url?: string | null }[]>([]);
   const [selectedResponsibleId, setSelectedResponsibleId] = useState<string>("");
 
+  // Modal: motivo de perda (ao mover para "Perdidos")
+  const [lostOpen, setLostOpen] = useState(false);
+  const [lostMove, setLostMove] = useState<PendingMove | null>(null);
+  const [lostReason, setLostReason] = useState<string>("Sem resposta");
+  const [lostDetails, setLostDetails] = useState<string>("");
+
+  // Colapso de colunas (Perdidos colapsada por padrão)
+  const COLLAPSE_KEY = "crm:columns:collapsed:v1";
+  const [collapsedCols, setCollapsedCols] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set(["lost"]);
+    try {
+      const raw = localStorage.getItem(COLLAPSE_KEY);
+      if (!raw) return new Set(["lost"]);
+      const parsed = JSON.parse(raw) as string[];
+      return new Set(Array.isArray(parsed) ? parsed : ["lost"]);
+    } catch {
+      return new Set(["lost"]);
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem(COLLAPSE_KEY, JSON.stringify(Array.from(collapsedCols)));
+    } catch {
+      /* ignore */
+    }
+  }, [collapsedCols]);
+  const toggleColumnCollapse = (columnId: string) => {
+    setCollapsedCols((prev) => {
+      const next = new Set(prev);
+      if (next.has(columnId)) next.delete(columnId);
+      else next.add(columnId);
+      return next;
+    });
+  };
+  const COLLAPSIBLE_COLUMN_IDS = useMemo(() => new Set(["lost"]), []);
+
   useEffect(() => {
     // carrega lista de responsáveis (usuários) do sistema
     let cancelled = false;
@@ -905,6 +1032,52 @@ export default function CRM() {
         .update({ is_returning: false })
         .eq("lead_id", move.leadId);
     }
+  };
+
+  // Confirma a perda: registra motivo no banco e move o card para "Perdidos"
+  const confirmLost = async () => {
+    if (!lostMove) {
+      setLostOpen(false);
+      return;
+    }
+    const reason = lostReason.trim();
+    if (!reason) {
+      toast.error("Selecione um motivo da perda.");
+      return;
+    }
+    if (reason === "Outro" && !lostDetails.trim()) {
+      toast.error("Descreva o motivo no campo de texto.");
+      return;
+    }
+    if (lostMove.leadId) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        let userName = user?.email ?? null;
+        if (user?.id) {
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          if (prof?.full_name) userName = prof.full_name;
+        }
+        await (supabase as any).from("lead_loss_reasons").insert({
+          lead_id: lostMove.leadId,
+          reason,
+          details: lostDetails.trim() || null,
+          user_id: user?.id ?? null,
+          user_name: userName,
+        });
+      } catch (err) {
+        console.error("[lead_loss_reasons] insert error:", err);
+        toast.error("Não foi possível registrar o motivo. O card será movido mesmo assim.");
+      }
+    }
+    performMove(lostMove, false);
+    setLostOpen(false);
+    setLostMove(null);
+    setLostReason("Sem resposta");
+    setLostDetails("");
   };
 
   // Avalia restrições por coluna de destino. Devolve a lista de issues; vazia = pode mover.
@@ -1035,6 +1208,15 @@ export default function CRM() {
       setAssignTargetColumn(targetColumnId);
       setSelectedResponsibleId("");
       setAssignOpen(true);
+      return;
+    }
+
+    // Caso especial: "Perdidos" → abre modal pedindo motivo da perda
+    if (tab === "sales" && targetColumnId === "lost") {
+      setLostMove(move);
+      setLostReason("Sem resposta");
+      setLostDetails("");
+      setLostOpen(true);
       return;
     }
 
@@ -1621,6 +1803,9 @@ export default function CRM() {
           onCardDelete={handleCardDelete}
           focusCardId={focusCardId}
           isLoading={tab === "sales" && isLoadingLeads}
+          collapsibleColumnIds={tab === "sales" ? COLLAPSIBLE_COLUMN_IDS : undefined}
+          collapsedColumnIds={collapsedCols}
+          onToggleColumnCollapse={toggleColumnCollapse}
         />
       </main>
 
@@ -1870,6 +2055,65 @@ export default function CRM() {
         leadId={promotionLeadId}
         onPromoted={handlePromotionDone}
       />
+
+      {/* Motivo da perda — ao mover para "Perdidos" */}
+      <Dialog
+        open={lostOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setLostOpen(false);
+            setLostMove(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>Marcar lead como perdido</DialogTitle>
+            <DialogDescription>
+              Selecione o motivo da perda. Esta informação ficará registrada para análise futura.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <RadioGroup value={lostReason} onValueChange={setLostReason} className="space-y-2">
+              {[
+                "Sem resposta",
+                "Escolheu concorrente",
+                "Preço acima do orçamento",
+                "Desistiu da viagem",
+                "Outro",
+              ].map((r) => (
+                <div key={r} className="flex items-center gap-2">
+                  <RadioGroupItem value={r} id={`lost-${r}`} />
+                  <Label htmlFor={`lost-${r}`} className="text-sm font-normal cursor-pointer">
+                    {r}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+            <div className="space-y-1.5">
+              <Label htmlFor="lost-details" className="text-xs">
+                {lostReason === "Outro" ? "Descreva o motivo" : "Observações (opcional)"}
+              </Label>
+              <Textarea
+                id="lost-details"
+                value={lostDetails}
+                onChange={(e) => setLostDetails(e.target.value)}
+                placeholder={lostReason === "Outro" ? "Explique o motivo da perda..." : "Detalhes adicionais..."}
+                rows={3}
+                className="text-sm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setLostOpen(false); setLostMove(null); }}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={confirmLost}>
+              Marcar como perdido
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <DeleteContactDialog
         open={deleteOpen}
