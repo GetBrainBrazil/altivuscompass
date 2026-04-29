@@ -2154,6 +2154,25 @@ export default function CRM() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Confirmação de arquivamento */}
+      <AlertDialog open={!!archiveTarget} onOpenChange={(open) => { if (!open) setArchiveTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Arquivar este card?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {archiveTarget
+                ? `O card de "${archiveTarget.clientName}" será movido para a área de arquivados e deixará de aparecer no funil. Você poderá restaurá-lo depois.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmArchive}>Arquivar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
       {/* Atribuir responsável (bloqueia entrada em "Em Qualificação") */}
       <Dialog
         open={assignOpen}
