@@ -509,7 +509,7 @@ export default function LeadDetail() {
       <main className="flex-1 min-h-0">
         <Tabs defaultValue="main" className="flex flex-col">
           {/* Wrapper sticky agrupando Stepper + Abas */}
-          <div className="sticky top-0 z-50 bg-slate-50 dark:bg-slate-900 pt-4 pb-2 w-full shadow-sm">
+          <div className="sticky z-40 bg-slate-50 dark:bg-slate-900 pt-4 pb-2 w-full shadow-sm" style={{ top: headerH }}>
             {/* Stepper — estilo Cotações */}
             <div className="px-6 lg:px-10 pb-3">
               <div className="glass-card rounded-xl px-3 sm:px-4 py-3 bg-background border border-border">
