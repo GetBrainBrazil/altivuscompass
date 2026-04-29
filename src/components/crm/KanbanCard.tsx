@@ -175,6 +175,12 @@ export function KanbanCard({
   onDragEnd,
   onTemperatureChange,
   onDelete,
+  onAssignAgent,
+  agentOptions,
+  onCreateQuote,
+  onViewConversation,
+  onEdit,
+  onArchive,
 }: {
   card: KanbanCardData;
   onClick?: (card: KanbanCardData) => void;
@@ -187,6 +193,18 @@ export function KanbanCard({
   onTemperatureChange?: (card: KanbanCardData, next: LeadTemperature) => void;
   /** Callback ao clicar em "Excluir" no menu de 3 pontos. */
   onDelete?: (card: KanbanCardData) => void;
+  /** Atribuir um responsável (consultor) inline pelo dropdown. */
+  onAssignAgent?: (card: KanbanCardData, userId: string) => void;
+  /** Lista de consultores disponíveis para atribuição rápida. */
+  agentOptions?: { user_id: string; full_name: string; avatar_url?: string | null }[];
+  /** Criar nova cotação pré-preenchida com os dados do lead. */
+  onCreateQuote?: (card: KanbanCardData) => void;
+  /** Abrir conversa no WhatsApp / Central de Atendimento. */
+  onViewConversation?: (card: KanbanCardData) => void;
+  /** Abrir ficha completa para edição. */
+  onEdit?: (card: KanbanCardData) => void;
+  /** Arquivar o card (mover para área oculta). */
+  onArchive?: (card: KanbanCardData) => void;
 }) {
   const value = formatBRL(card.estimatedValue);
   const alert = card.alert;
