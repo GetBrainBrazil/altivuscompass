@@ -653,15 +653,9 @@ export function KanbanCard({
           </div>
         </div>
 
-        {/* Linha secundária: badge de nível + corner badge (IA/Manual) + dias */}
-        {(card.contactLevel || cornerBadge || lastContactDays !== null || stageDays !== null) && (
-          <div className="flex items-center justify-between gap-1.5 mb-2 pl-[34px]">
-            <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
-              {card.contactLevel && (
-                <ContactLevelBadge level={card.contactLevel} size="xs" className="shrink-0" />
-              )}
-              {cornerBadge}
-            </div>
+        {/* Linha secundária: apenas indicador de dias (badges movidas para o rodapé) */}
+        {(lastContactDays !== null || stageDays !== null) && (
+          <div className="flex items-center justify-end gap-1.5 mb-2 pl-[34px]">
             {lastContactDays !== null ? (
               <span
                 title={`Último contato há ${lastContactDays} dia(s)`}
@@ -767,9 +761,13 @@ export function KanbanCard({
               ) : null;
             })()}
 
-            {/* Badges adicionais (Recompra/Retornou) — ContactLevel agora aparece ao lado do nome */}
-            {(card.isRepurchase || card.isReturning) && (
-              <div className="mb-1.5 flex items-center gap-1 flex-wrap">
+            {/* Rodapé: pílulas (ContactLevel, IA/Manual, Recompra/Retornou) à esquerda + valor + avatar do responsável à direita */}
+            <div className="flex items-center gap-1.5 pt-2 border-t border-border/60 -mx-4 px-4">
+              <div className="flex items-center gap-1 flex-wrap min-w-0 flex-1">
+                {card.contactLevel && (
+                  <ContactLevelBadge level={card.contactLevel} size="xs" className="shrink-0" />
+                )}
+                {cornerBadge}
                 {card.isRepurchase && (
                   <span
                     title="Cliente iniciando uma nova jornada de compra"
@@ -789,20 +787,23 @@ export function KanbanCard({
                   </span>
                 )}
               </div>
-            )}
-
-            {/* Linha 3: responsável (avatar + nome) + valor estimado */}
-            <div className="flex items-center gap-1.5 pt-2 border-t border-border/60 -mx-4 px-4">
+              {value && (
+                <span className="font-body shrink-0 tabular-nums text-[12px] font-medium text-foreground">
+                  {value}
+                </span>
+              )}
               {card.agent?.avatarUrl ? (
                 <img
                   src={card.agent.avatarUrl}
                   alt={card.agent.name}
-                  className="shrink-0 w-[18px] h-[18px] rounded-full object-cover"
+                  title={card.agent.name}
+                  className="shrink-0 w-[22px] h-[22px] rounded-full object-cover"
                 />
               ) : (
                 <div
+                  title={card.agent?.name || "Sem responsável"}
                   className={cn(
-                    "shrink-0 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-semibold",
+                    "shrink-0 w-[22px] h-[22px] rounded-full flex items-center justify-center text-[10px] font-semibold",
                     card.agent ? "bg-primary/10 text-primary" : "bg-destructive/15 text-destructive",
                   )}
                   aria-hidden
@@ -810,20 +811,6 @@ export function KanbanCard({
                   {card.agent ? getInitials(card.agent.name) : "?"}
                 </div>
               )}
-              <span
-                className={cn(
-                  "text-[11px] font-body truncate flex-1 min-w-0",
-                  noAgent ? "text-destructive font-medium" : "text-muted-foreground",
-                )}
-              >
-                {card.agent?.name || "Sem responsável"}
-              </span>
-              <span className={cn(
-                "font-body shrink-0 tabular-nums ml-auto",
-                value ? "text-[12px] font-medium text-foreground" : "text-[11px] text-muted-foreground/60",
-              )}>
-                {value ?? "—"}
-              </span>
             </div>
           </>
         )}
