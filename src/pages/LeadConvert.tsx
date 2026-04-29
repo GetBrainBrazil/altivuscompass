@@ -40,7 +40,8 @@ const EMPTY: FormState = {
 };
 
 export default function LeadConvert() {
-  const { id: leadId } = useParams<{ id: string }>();
+  const { id: routeId } = useParams<{ id: string }>();
+  const leadId = routeId?.startsWith("lead-") ? routeId.slice("lead-".length) : routeId ?? null;
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
