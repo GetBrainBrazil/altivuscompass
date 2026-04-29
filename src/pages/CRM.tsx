@@ -109,6 +109,7 @@ function KanbanBoard({
   onCardViewConversation,
   onCardEdit,
   onCardArchive,
+  onCardRenameClient,
   agentOptions,
   focusCardId,
   isLoading,
