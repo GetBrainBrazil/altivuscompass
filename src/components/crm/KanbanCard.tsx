@@ -328,13 +328,20 @@ export function KanbanCard({
     );
   }
 
+  const tempBorder: Record<LeadTemperature, string> = {
+    hot: "border-l-red-500",
+    warm: "border-l-orange-400",
+    cold: "border-l-slate-300",
+  };
   const leftBorder = alert?.tone === "destructive"
     ? "border-l-destructive"
     : card.isRepurchase
       ? "border-l-amber-400"
       : card.isReturning
         ? "border-l-sky-400"
-        : stageBorderClass;
+        : card.temperature
+          ? tempBorder[card.temperature]
+          : "border-l-transparent";
   const noAgent = !card.agent;
 
   return (
