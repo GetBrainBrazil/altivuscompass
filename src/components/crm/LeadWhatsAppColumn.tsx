@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LeadQuickNote, type QuickNoteFormSnapshot, type QuickNoteSuggestion } from "@/components/crm/LeadQuickNote";
 
 type Sender = "lead" | "ai" | "agent";
 type Status = "ai" | "human";
@@ -25,6 +26,9 @@ interface Props {
   contactName: string;
   phone: string | null;
   contactId?: string | null;
+  leadId?: string | null;
+  formSnapshot?: QuickNoteFormSnapshot;
+  onApplyNoteSuggestion?: (s: QuickNoteSuggestion) => void;
 }
 
 const formatTime = (iso: string) =>
