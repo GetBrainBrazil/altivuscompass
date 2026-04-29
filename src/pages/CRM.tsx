@@ -2648,11 +2648,13 @@ export default function CRM() {
       >
         <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-warning" />
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/15">
+              <Info className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+            </div>
+            <DialogTitle className="text-center">
               Mover para "{pendingMove?.toTitle}"?
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-center">
               Identificamos pendências para esta etapa. Resolva as pendências ou avance manualmente em situações excepcionais.
             </DialogDescription>
           </DialogHeader>
@@ -2660,30 +2662,35 @@ export default function CRM() {
             {pendingIssues.map((iss, i) => (
               <div
                 key={i}
-                className="rounded-md border border-warning/30 bg-warning/5 p-3 space-y-1.5"
+                className="rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10 p-4 flex gap-3"
               >
-                <p className="text-sm font-medium text-foreground">{iss.title}</p>
-                <p className="text-xs text-muted-foreground">{iss.detail}</p>
-                {iss.cta && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 mt-1"
-                    onClick={() => {
-                      iss.cta!.onClick();
-                      setPendingMove(null);
-                      setPendingIssues([]);
-                    }}
-                  >
-                    {iss.cta.label}
-                  </Button>
-                )}
+                <Info className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div className="flex-1 space-y-2">
+                  <p className="text-sm font-semibold text-foreground">{iss.title}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{iss.detail}</p>
+                  {iss.cta && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-1 h-9 rounded-lg border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                      onClick={() => {
+                        iss.cta!.onClick();
+                        setPendingMove(null);
+                        setPendingIssues([]);
+                      }}
+                    >
+                      <FilePlus className="h-4 w-4" />
+                      {iss.cta.label}
+                    </Button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
           <DialogFooter className="gap-2 sm:gap-2">
             <Button
               variant="outline"
+              className="rounded-lg"
               onClick={() => {
                 setPendingMove(null);
                 setPendingIssues([]);
@@ -2692,7 +2699,8 @@ export default function CRM() {
               Cancelar
             </Button>
             <Button
-              variant="destructive"
+              variant="secondary"
+              className="rounded-lg bg-muted text-muted-foreground hover:bg-muted/80"
               onClick={() => {
                 if (pendingMove) {
                   if (pendingMove.toColumnId === "closed" && pendingMove.leadId) {
