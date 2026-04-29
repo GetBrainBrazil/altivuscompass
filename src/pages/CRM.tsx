@@ -171,6 +171,12 @@ function KanbanBoard({
               onDropOnColumn={onDropOnColumn}
               onTemperatureChange={onTemperatureChange}
               onCardDelete={onCardDelete}
+              onCardAssignAgent={onCardAssignAgent}
+              onCardCreateQuote={onCardCreateQuote}
+              onCardViewConversation={onCardViewConversation}
+              onCardEdit={onCardEdit}
+              onCardArchive={onCardArchive}
+              agentOptions={agentOptions}
               focusCardId={focusCardId}
               isLoading={isLoading}
               collapsible={collapsibleColumnIds?.has(col.id) ?? false}
