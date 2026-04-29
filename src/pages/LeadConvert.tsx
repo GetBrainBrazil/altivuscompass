@@ -198,9 +198,9 @@ export default function LeadConvert() {
           <Section title="Dados pessoais">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FieldText label="Nome completo *" value={form.full_name} onChange={(v) => upd("full_name", v)} />
-              <FieldText label="CPF *" value={form.cpf_cnpj} onChange={(v) => upd("cpf_cnpj", v)} placeholder="000.000.000-00" />
+              <FieldText label="CPF *" value={form.cpf_cnpj} onChange={(v) => upd("cpf_cnpj", maskCPF(v))} placeholder="000.000.000-00" inputMode="numeric" maxLength={14} />
               <FieldText label="E-mail *" type="email" value={form.email} onChange={(v) => upd("email", v)} />
-              <FieldText label="Telefone" value={form.phone} onChange={(v) => upd("phone", v)} />
+              <FieldText label="Telefone" value={form.phone} onChange={(v) => upd("phone", maskPhoneBR(v))} placeholder="(00) 00000-0000" inputMode="tel" maxLength={15} />
               <FieldText label="Data de nascimento *" type="date" value={form.birth_date} onChange={(v) => upd("birth_date", v)} />
               <FieldText label="Nacionalidade" value={form.nationality} onChange={(v) => upd("nationality", v)} placeholder="Brasileira" />
             </div>
