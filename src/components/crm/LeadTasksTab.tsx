@@ -76,7 +76,7 @@ export function LeadTasksTab({ contactId, contactName }: Props) {
       const { data, error } = await supabase
         .from("tasks")
         .select("id, title, status, due_date, priority, completed_at")
-        .eq("client_id", contactId!)
+        .eq("contact_id", contactId!)
         .order("due_date", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: false })
         .limit(200);
@@ -125,7 +125,7 @@ export function LeadTasksTab({ contactId, contactName }: Props) {
       const { error } = await supabase.from("tasks").insert({
         title,
         description: form.description || null,
-        client_id: contactId,
+        contact_id: contactId,
         status: form.status,
         priority: form.priority,
         assigned_to: form.assigned_to || null,

@@ -3029,6 +3029,7 @@ export type Database = {
           assigned_to: string | null
           client_id: string | null
           completed_at: string | null
+          contact_id: string | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -3045,6 +3046,7 @@ export type Database = {
           assigned_to?: string | null
           client_id?: string | null
           completed_at?: string | null
+          contact_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -3061,6 +3063,7 @@ export type Database = {
           assigned_to?: string | null
           client_id?: string | null
           completed_at?: string | null
+          contact_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -3079,6 +3082,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
           {
