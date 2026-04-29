@@ -791,36 +791,6 @@ export function KanbanCard({
           </>
         )}
 
-        {/* Rodapé: "há X dias" do último contato ou tempo na etapa */}
-        {(lastContactDays !== null || stageDays !== null) && (
-          <div className="flex items-center mt-1.5">
-            {lastContactDays !== null ? (
-              <span
-                title={`Último contato há ${lastContactDays} dia(s)`}
-                className={cn(
-                  "inline-flex items-center text-[10px] font-medium tabular-nums",
-                  lastContactDays >= 14
-                    ? "text-destructive"
-                    : lastContactDays >= 7
-                      ? "text-amber-600"
-                      : "text-muted-foreground",
-                )}
-              >
-                {lastContactDays === 0 ? "hoje" : `há ${lastContactDays}d`}
-              </span>
-            ) : stageDays !== null ? (
-              <span
-                title={`${stageDays} dia(s) nesta etapa`}
-                className={cn(
-                  "inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium tabular-nums",
-                  stageDaysBadgeClasses(stageDays),
-                )}
-              >
-                {stageDaysLabel(stageDays)}
-              </span>
-            ) : null}
-          </div>
-        )}
       </div>
     </div>
   );
