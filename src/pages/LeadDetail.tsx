@@ -786,6 +786,7 @@ export default function LeadDetail() {
           onApplyNoteSuggestion={(s) => updateField(s.field as any, s.value as any)}
         />
       </aside>
+      </div>
     </div>
   );
 }
