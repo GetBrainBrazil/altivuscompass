@@ -1313,17 +1313,34 @@ export default function CRM() {
 
     if (toColumnId === "proposal-sent") {
       const sentStages = ["sent", "negotiation", "confirmed", "issued", "completed", "post_sale"] as const;
-      const { data, error } = await supabase
+      // Busca todas as cotações do lead para podermos oferecer "Enviar e mover".
+      const { data: allQuotes, error } = await supabase
         .from("quotes")
-        .select("id, stage")
+        .select("id, title, stage, destination, created_at")
         .eq("lead_id", leadId)
-        .in("stage", sentStages)
-        .limit(1);
-      if (!error && (!data || data.length === 0)) {
-        issues.push({
-          title: "Nenhuma proposta enviada",
-          detail: "Nenhuma cotação deste lead foi marcada como enviada (Enviada/Negociação/Confirmada).",
-        });
+        .order("created_at", { ascending: false });
+      if (!error) {
+        const hasSent = (allQuotes ?? []).some((q: any) => sentStages.includes(q.stage));
+        if (!hasSent) {
+          const sendable = (allQuotes ?? []).filter(
+            (q: any) => !sentStages.includes(q.stage),
+          );
+          issues.push({
+            title: "Nenhuma proposta enviada",
+            detail:
+              sendable.length > 0
+                ? "Nenhuma cotação deste lead foi marcada como enviada. Selecione qual cotação está sendo enviada e clique em \"Enviar cotação e mover\"."
+                : "Nenhuma cotação deste lead foi marcada como enviada (Enviada/Negociação/Confirmada).",
+            sendQuoteOptions:
+              sendable.length > 0
+                ? sendable.map((q: any) => ({
+                    id: q.id,
+                    title: q.title || q.destination || "Cotação sem título",
+                    stage: q.stage,
+                  }))
+                : undefined,
+          });
+        }
       }
     }
 
