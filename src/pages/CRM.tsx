@@ -2754,7 +2754,7 @@ export default function CRM() {
                   </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-5 py-4">
+                <div className="space-y-5 py-4 min-w-0">
                   {sendIssue?.sendQuoteOptions && (
                     <RadioGroup
                       value={selectedQuoteToSend}
