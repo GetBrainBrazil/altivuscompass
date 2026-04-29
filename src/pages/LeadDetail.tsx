@@ -93,6 +93,20 @@ export default function LeadDetail() {
 
   const leadId = id?.startsWith("lead-") ? id.slice("lead-".length) : null;
 
+  // Marca a origem para que o editor de cotações volte para o card do CRM ao fechar
+  const setQuotesReturnTo = () => {
+    if (!id) return;
+    try {
+      sessionStorage.setItem(
+        "quotes:returnTo",
+        JSON.stringify({
+          url: `/crm/lead/${id}${window.location.search}`,
+          ts: Date.now(),
+        }),
+      );
+    } catch { /* ignore */ }
+  };
+
   type FormState = {
     full_name: string;
     phone: string;
@@ -522,7 +536,7 @@ export default function LeadDetail() {
                   variant="outline"
                   size="sm"
                   className="border-primary/40 text-primary hover:bg-primary/5"
-                  onClick={() => navigate("/quotes", { state: { newQuote: true, leadId } })}
+                  onClick={() => { setQuotesReturnTo(); navigate("/quotes", { state: { newQuote: true, leadId } }); }}
                 >
                   <FileText className="h-4 w-4 mr-1.5" />
                   Nova Cotação
@@ -756,9 +770,10 @@ export default function LeadDetail() {
                     {quotesCount > 0 && (
                       <Button
                         size="sm"
-                        onClick={() =>
-                          navigate("/quotes", { state: { newQuote: true, leadId } })
-                        }
+                        onClick={() => {
+                          setQuotesReturnTo();
+                          navigate("/quotes", { state: { newQuote: true, leadId } });
+                        }}
                       >
                         <Plus className="h-4 w-4 mr-1.5" />
                         Nova Cotação
@@ -774,9 +789,10 @@ export default function LeadDetail() {
                       action={
                         <Button
                           size="sm"
-                          onClick={() =>
-                            navigate("/quotes", { state: { newQuote: true, leadId } })
-                          }
+                          onClick={() => {
+                            setQuotesReturnTo();
+                            navigate("/quotes", { state: { newQuote: true, leadId } });
+                          }}
                         >
                           <Plus className="h-4 w-4 mr-1.5" />
                           Nova Cotação
@@ -802,7 +818,7 @@ export default function LeadDetail() {
                             archived_at: q.archived_at,
                           }}
                           assigneeName={form.full_name || card?.clientName || null}
-                          onClick={() => navigate(`/quotes?edit=${q.id}`)}
+                          onClick={() => { setQuotesReturnTo(); navigate(`/quotes?edit=${q.id}`); }}
                           onDragStart={() => {}}
                           onDragEnd={() => {}}
                           menu={<span aria-hidden />}
