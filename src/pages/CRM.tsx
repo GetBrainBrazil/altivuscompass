@@ -1050,10 +1050,20 @@ export default function CRM() {
     toTitle: string;
     leadId: string | null;
   };
-  type Issue = { title: string; detail: string; cta?: { label: string; onClick: () => void } };
+  type QuoteOption = { id: string; title: string; stage: string };
+  type Issue = {
+    title: string;
+    detail: string;
+    cta?: { label: string; onClick: () => void };
+    // When set, modal renders the "Enviar cotação e mover" primary action with a
+    // selector for which quote should be marked as sent.
+    sendQuoteOptions?: QuoteOption[];
+  };
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
   const [pendingIssues, setPendingIssues] = useState<Issue[]>([]);
   const [validating, setValidating] = useState(false);
+  const [selectedQuoteToSend, setSelectedQuoteToSend] = useState<string>("");
+  const [sendingQuoteAndMoving, setSendingQuoteAndMoving] = useState(false);
 
   // Modal: atribuir responsável (bloqueia entrada em "Em Qualificação" sem agente)
   const [assignOpen, setAssignOpen] = useState(false);
