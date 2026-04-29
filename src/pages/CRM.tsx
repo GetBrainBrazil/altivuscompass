@@ -1189,9 +1189,13 @@ export default function CRM() {
     }
   };
 
-  // Move o card de fato no estado e registra no histórico
+  // Move o card de fato no estado e registra no histórico.
+  // Para o funil de Vendas, persiste leads.status no banco e faz rollback
+  // (devolvendo o card à coluna de origem) caso a requisição falhe.
   const performMove = (move: PendingMove, forced: boolean) => {
+    let originalSnapshot: KanbanColumn[] | null = null;
     setColumns((prev) => {
+      originalSnapshot = prev;
       let moving: KanbanCardData | null = null;
       const stripped = prev.map((col) => {
         const idx = col.cards.findIndex((c) => c.id === move.cardId);
@@ -1201,7 +1205,6 @@ export default function CRM() {
         return { ...col, cards: col.cards.filter((c) => c.id !== move.cardId) };
       });
       if (!moving) return prev;
-      const wasReturning = (moving as KanbanCardData).isReturning;
       const movedCard: KanbanCardData = {
         ...(moving as KanbanCardData),
         // Saindo de "Novos Contatos": consultor já viu, limpa o badge "Retornou"
@@ -1213,12 +1216,39 @@ export default function CRM() {
       );
       return next;
     });
-    if (forced) {
-      toast.warning(`Lead movido para "${move.toTitle}" (movimentação forçada).`);
+
+    // Persistência no banco do novo status (apenas funil de Vendas + leads reais)
+    const newStatus = SALES_COLUMN_TO_STATUS[move.toColumnId];
+    const isSalesLead = tab === "sales" && !!move.leadId && !!newStatus;
+    if (isSalesLead) {
+      void (async () => {
+        const { error } = await supabase
+          .from("leads")
+          .update({ status: newStatus })
+          .eq("id", move.leadId!);
+        if (error) {
+          console.error("[performMove] failed to persist lead status:", error);
+          toast.error("Não foi possível salvar a movimentação. Revertendo...");
+          // Rollback: restaura o snapshot anterior
+          if (originalSnapshot) setColumns(() => originalSnapshot!);
+          return;
+        }
+        if (forced) {
+          toast.warning(`Lead movido para "${move.toTitle}" (movimentação forçada).`);
+        } else {
+          toast.success(`Lead movido para "${move.toTitle}".`);
+        }
+        void logLeadHistory(move.leadId, move.fromTitle, move.toTitle, forced);
+      })();
     } else {
-      toast.success(`Lead movido para "${move.toTitle}".`);
+      if (forced) {
+        toast.warning(`Lead movido para "${move.toTitle}" (movimentação forçada).`);
+      } else {
+        toast.success(`Lead movido para "${move.toTitle}".`);
+      }
+      void logLeadHistory(move.leadId, move.fromTitle, move.toTitle, forced);
     }
-    void logLeadHistory(move.leadId, move.fromTitle, move.toTitle, forced);
+
     // Persiste limpeza do retorno no banco se saiu de Novos Contatos
     if (move.toColumnId !== "new-leads" && move.leadId) {
       void supabase.from("leads").update({ is_returning: false }).eq("id", move.leadId);
