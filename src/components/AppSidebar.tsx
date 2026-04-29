@@ -83,6 +83,52 @@ export function AppSidebar() {
 
   const visibleItems = navItems.filter((item) => canAccess(userRole, item.url));
 
+  // Origem visual: quando o editor de Cotações é aberto a partir do CRM,
+  // a sidebar deve continuar destacando "CRM" enquanto o usuário estiver em /quotes.
+  const [quotesOrigin, setQuotesOrigin] = useState<string | null>(null);
+  useEffect(() => {
+    const read = () => {
+      try {
+        const raw = sessionStorage.getItem("quotes:origin");
+        if (!raw) { setQuotesOrigin(null); return; }
+        const parsed = JSON.parse(raw) as { origin?: string; ts?: number };
+        if (parsed?.origin && parsed?.ts && Date.now() - parsed.ts < 30 * 60_000) {
+          setQuotesOrigin(parsed.origin);
+        } else {
+          sessionStorage.removeItem("quotes:origin");
+          setQuotesOrigin(null);
+        }
+      } catch { setQuotesOrigin(null); }
+    };
+    read();
+    const onChange = () => read();
+    window.addEventListener("quotes:origin-changed", onChange);
+    window.addEventListener("storage", onChange);
+    return () => {
+      window.removeEventListener("quotes:origin-changed", onChange);
+      window.removeEventListener("storage", onChange);
+    };
+  }, [location.pathname, location.search]);
+
+  // Limpa o contexto de origem se o usuário sair do /quotes para qualquer rota
+  // que não seja a página de retorno ao card do CRM.
+  useEffect(() => {
+    if (location.pathname === "/quotes") return;
+    if (location.pathname.startsWith("/crm/lead/")) return;
+    try {
+      if (sessionStorage.getItem("quotes:origin")) {
+        sessionStorage.removeItem("quotes:origin");
+        setQuotesOrigin(null);
+      }
+    } catch { /* ignore */ }
+  }, [location.pathname]);
+
+  // Caminho efetivo usado para destacar o item ativo na sidebar.
+  // Se estiver em /quotes vindo do CRM, finge que o item ativo é o CRM.
+  const effectivePath = location.pathname === "/quotes" && quotesOrigin === "crm"
+    ? "/crm"
+    : location.pathname;
+
   // Track which collapsibles are open. Auto-open whenever a parent or any of its
   // children matches the current route, while still letting the user toggle manually.
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
@@ -92,14 +138,14 @@ export function AppSidebar() {
       for (const item of visibleItems) {
         if (!('subItems' in item) || !item.subItems?.length) continue;
         const isParentActive =
-          location.pathname === item.url ||
-          item.subItems.some((s) => location.pathname === s.url.split("?")[0]);
+          effectivePath === item.url ||
+          item.subItems.some((s) => effectivePath === s.url.split("?")[0]);
         if (isParentActive) next[item.title] = true;
       }
       return next;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, location.search]);
+  }, [effectivePath, location.search]);
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border/30 bg-gradient-to-b from-sidebar to-[hsl(220_55%_8%)]">
