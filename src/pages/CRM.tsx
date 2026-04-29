@@ -100,6 +100,7 @@ function KanbanBoard({
   onTemperatureChange,
   onCardDelete,
   focusCardId,
+  isLoading,
 }: {
   columns: KanbanColumn[];
   onCardClick: (card: KanbanCardData) => void;
@@ -115,6 +116,7 @@ function KanbanBoard({
   onTemperatureChange: (card: KanbanCardData, next: LeadTemperature) => void;
   onCardDelete?: (card: KanbanCardData) => void;
   focusCardId?: string | null;
+  isLoading?: boolean;
 }) {
   return (
     <div className="flex-1 min-h-0 mt-4 pb-5 overflow-x-auto overflow-y-hidden scrollbar-elegant [transform:scaleY(-1)]">
@@ -136,6 +138,7 @@ function KanbanBoard({
             onTemperatureChange={onTemperatureChange}
             onCardDelete={onCardDelete}
             focusCardId={focusCardId}
+            isLoading={isLoading}
           />
         ))}
         <AddColumnButton onClick={onAddColumn} />
