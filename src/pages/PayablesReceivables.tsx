@@ -126,7 +126,7 @@ export default function PayablesReceivables() {
   const [showChart, setShowChart] = useState(true);
 
   // ----- data fetching -----
-  const { data: transactions = [] } = useQuery({
+  const { data: transactions = [], isLoading: isLoadingTransactions } = useQuery({
     queryKey: ["finance-transactions"],
     queryFn: async () => {
       const { data, error } = await (supabase.from("financial_transactions") as any)
