@@ -756,27 +756,29 @@ export function KanbanCard({
               </p>
             )}
 
-            {/* Tags compactas */}
-            {card.tags && card.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1 mb-1.5">
-                {card.tags.map((tag, i) => (
-                  <span
-                    key={i}
-                    className={cn(
-                      "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium font-body",
-                      TAG_TONE_CLASSES[tag.tone ?? "slate"],
-                    )}
-                  >
-                    {tag.label}
-                  </span>
-                ))}
-              </div>
-            )}
+            {/* Tags compactas (exclui WhatsApp — agora exibido como ícone na linha do telefone) */}
+            {(() => {
+              const visibleTags = card.tags?.filter((t) => t.label !== "WhatsApp") ?? [];
+              return visibleTags.length > 0 ? (
+                <div className="flex flex-wrap gap-1 mb-1.5">
+                  {visibleTags.map((tag, i) => (
+                    <span
+                      key={i}
+                      className={cn(
+                        "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium font-body",
+                        TAG_TONE_CLASSES[tag.tone ?? "slate"],
+                      )}
+                    >
+                      {tag.label}
+                    </span>
+                  ))}
+                </div>
+              ) : null;
+            })()}
 
-            {/* Badges de qualificação (logo acima do rodapé) */}
-            {(card.contactLevel || card.isRepurchase || card.isReturning) && (
+            {/* Badges adicionais (Recompra/Retornou) — ContactLevel agora aparece ao lado do nome */}
+            {(card.isRepurchase || card.isReturning) && (
               <div className="mb-1.5 flex items-center gap-1 flex-wrap">
-                {card.contactLevel && <ContactLevelBadge level={card.contactLevel} size="xs" />}
                 {card.isRepurchase && (
                   <span
                     title="Cliente iniciando uma nova jornada de compra"
