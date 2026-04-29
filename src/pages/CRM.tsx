@@ -24,6 +24,7 @@ import {
   Target,
   Info,
   FilePlus,
+  FileText,
 } from "lucide-react";
 import { FilterChip, SearchableList } from "@/components/tasks/FilterChip";
 import { CRMTableView } from "@/components/crm/CRMTableView";
@@ -1050,7 +1051,7 @@ export default function CRM() {
     toTitle: string;
     leadId: string | null;
   };
-  type QuoteOption = { id: string; title: string; stage: string };
+  type QuoteOption = { id: string; title: string; stage: string; destination?: string | null; total_value?: number | null };
   type Issue = {
     title: string;
     detail: string;
@@ -1376,7 +1377,7 @@ export default function CRM() {
       // Busca todas as cotações do lead para podermos oferecer "Enviar e mover".
       const { data: allQuotes, error } = await supabase
         .from("quotes")
-        .select("id, title, stage, destination, created_at")
+        .select("id, title, stage, destination, total_value, created_at")
         .eq("lead_id", leadId)
         .order("created_at", { ascending: false });
       if (!error) {
@@ -1397,6 +1398,8 @@ export default function CRM() {
                     id: q.id,
                     title: q.title || q.destination || "Cotação sem título",
                     stage: q.stage,
+                    destination: q.destination,
+                    total_value: q.total_value,
                   }))
                 : undefined,
           });
@@ -2728,124 +2731,154 @@ export default function CRM() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-[520px]">
-          <DialogHeader>
-            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/15">
-              <Info className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-            </div>
-            <DialogTitle className="text-center">
-              Mover para "{pendingMove?.toTitle}"?
-            </DialogTitle>
-            <DialogDescription className="text-center">
-              Identificamos pendências para esta etapa. Resolva as pendências ou avance manualmente em situações excepcionais.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            {pendingIssues.map((iss, i) => (
-              <div
-                key={i}
-                className="rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10 p-4 flex gap-3"
-              >
-                <Info className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                <div className="flex-1 space-y-2">
-                  <p className="text-sm font-semibold text-foreground">{iss.title}</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{iss.detail}</p>
-                  {iss.sendQuoteOptions && iss.sendQuoteOptions.length > 0 && (
-                    <div className="mt-2 rounded-lg border border-border bg-background p-3">
-                      {iss.sendQuoteOptions.length === 1 ? (
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="text-muted-foreground">Cotação a enviar:</span>
-                          <span className="font-medium text-foreground">
-                            {iss.sendQuoteOptions[0].title}
-                          </span>
-                        </div>
-                      ) : (
-                        <>
-                          <p className="text-xs font-medium text-foreground mb-2">
-                            Selecione a cotação que está sendo enviada:
-                          </p>
-                          <RadioGroup
-                            value={selectedQuoteToSend}
-                            onValueChange={setSelectedQuoteToSend}
-                            className="gap-2"
-                          >
-                            {iss.sendQuoteOptions.map((q) => (
-                              <label
-                                key={q.id}
-                                htmlFor={`send-quote-${q.id}`}
-                                className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 cursor-pointer hover:bg-accent transition-colors"
-                              >
-                                <RadioGroupItem value={q.id} id={`send-quote-${q.id}`} />
-                                <span className="text-sm text-foreground flex-1">{q.title}</span>
-                              </label>
-                            ))}
-                          </RadioGroup>
-                        </>
-                      )}
-                    </div>
-                  )}
-                  {iss.cta && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="mt-1 h-9 rounded-lg border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                      onClick={() => {
-                        iss.cta!.onClick();
-                        setPendingMove(null);
-                        setPendingIssues([]);
-                        setSelectedQuoteToSend("");
-                      }}
+        <DialogContent className="sm:max-w-[540px] md:rounded-3xl md:p-8 md:shadow-[0_25px_60px_-15px_hsl(var(--foreground)/0.18)]">
+          {(() => {
+            const sendIssue = pendingIssues.find(
+              (i) => i.sendQuoteOptions && i.sendQuoteOptions.length > 0,
+            );
+            const otherIssues = pendingIssues.filter((i) => i !== sendIssue);
+            const fmtBRL = (v?: number | null) =>
+              typeof v === "number"
+                ? v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+                : null;
+            return (
+              <>
+                <DialogHeader className="space-y-2">
+                  <DialogTitle className="text-2xl font-bold tracking-tight">
+                    Mover para "{pendingMove?.toTitle}"?
+                  </DialogTitle>
+                  <DialogDescription className="text-sm text-muted-foreground">
+                    {sendIssue
+                      ? "Esta cotação será marcada como enviada automaticamente."
+                      : "Identificamos pendências para esta etapa."}
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-5 py-4">
+                  {sendIssue?.sendQuoteOptions && (
+                    <RadioGroup
+                      value={selectedQuoteToSend}
+                      onValueChange={setSelectedQuoteToSend}
+                      className="gap-3"
                     >
-                      <FilePlus className="h-4 w-4" />
-                      {iss.cta.label}
+                      {sendIssue.sendQuoteOptions.map((q) => {
+                        const isSelected = selectedQuoteToSend === q.id;
+                        const single = sendIssue.sendQuoteOptions!.length === 1;
+                        const totalLabel = fmtBRL(q.total_value);
+                        return (
+                          <label
+                            key={q.id}
+                            htmlFor={`send-quote-${q.id}`}
+                            className={cn(
+                              "group flex items-center gap-4 rounded-xl border bg-card p-4 transition-all",
+                              single
+                                ? "border-border cursor-default"
+                                : "cursor-pointer hover:border-primary/40 hover:bg-accent/30",
+                              !single && isSelected && "border-primary ring-1 ring-primary/30 bg-primary/5",
+                            )}
+                          >
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                              <FileText className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-semibold text-foreground">
+                                {q.title}
+                              </p>
+                              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                {[q.destination, totalLabel].filter(Boolean).join(" · ") || "Sem detalhes"}
+                              </p>
+                            </div>
+                            {!single && (
+                              <RadioGroupItem
+                                value={q.id}
+                                id={`send-quote-${q.id}`}
+                                className="shrink-0"
+                              />
+                            )}
+                            {single && (
+                              <input type="hidden" id={`send-quote-${q.id}`} value={q.id} readOnly />
+                            )}
+                          </label>
+                        );
+                      })}
+                    </RadioGroup>
+                  )}
+
+                  {otherIssues.map((iss, i) => (
+                    <div
+                      key={i}
+                      className="rounded-xl border border-border bg-card p-4 flex gap-3"
+                    >
+                      <Info className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                      <div className="flex-1 space-y-1.5">
+                        <p className="text-sm font-semibold text-foreground">{iss.title}</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{iss.detail}</p>
+                        {iss.cta && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="mt-2 h-9 rounded-lg border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                            onClick={() => {
+                              iss.cta!.onClick();
+                              setPendingMove(null);
+                              setPendingIssues([]);
+                              setSelectedQuoteToSend("");
+                            }}
+                          >
+                            <FilePlus className="h-4 w-4" />
+                            {iss.cta.label}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <DialogFooter className="gap-2 pt-2 sm:gap-3 sm:items-center">
+                  <Button
+                    variant="ghost"
+                    className="text-muted-foreground hover:bg-transparent hover:text-foreground"
+                    onClick={() => {
+                      setPendingMove(null);
+                      setPendingIssues([]);
+                      setSelectedQuoteToSend("");
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="rounded-lg border-border text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      if (pendingMove) {
+                        if (pendingMove.toColumnId === "closed" && pendingMove.leadId) {
+                          setPromotionLeadId(pendingMove.leadId);
+                          setPromotionPendingMove(pendingMove);
+                          setPromotionOpen(true);
+                        } else {
+                          performMove(pendingMove, true);
+                        }
+                      }
+                      setPendingMove(null);
+                      setPendingIssues([]);
+                      setSelectedQuoteToSend("");
+                    }}
+                  >
+                    Mover mesmo assim
+                  </Button>
+                  {sendIssue && (
+                    <Button
+                      className="rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 px-6 sm:min-w-[200px]"
+                      onClick={handleSendQuoteAndMove}
+                      disabled={sendingQuoteAndMoving || !selectedQuoteToSend}
+                    >
+                      {sendingQuoteAndMoving ? "Enviando..." : "Enviar cotação e mover"}
                     </Button>
                   )}
-                </div>
-              </div>
-            ))}
-          </div>
-          <DialogFooter className="gap-2 sm:gap-2">
-            <Button
-              variant="outline"
-              className="rounded-lg"
-              onClick={() => {
-                setPendingMove(null);
-                setPendingIssues([]);
-                setSelectedQuoteToSend("");
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="secondary"
-              className="rounded-lg bg-muted text-muted-foreground hover:bg-muted/80"
-              onClick={() => {
-                if (pendingMove) {
-                  if (pendingMove.toColumnId === "closed" && pendingMove.leadId) {
-                    setPromotionLeadId(pendingMove.leadId);
-                    setPromotionPendingMove(pendingMove);
-                    setPromotionOpen(true);
-                  } else {
-                    performMove(pendingMove, true);
-                  }
-                }
-                setPendingMove(null);
-                setPendingIssues([]);
-                setSelectedQuoteToSend("");
-              }}
-            >
-              Mover mesmo assim
-            </Button>
-            {pendingIssues.some((i) => i.sendQuoteOptions && i.sendQuoteOptions.length > 0) && (
-              <Button
-                className="rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
-                onClick={handleSendQuoteAndMove}
-                disabled={sendingQuoteAndMoving || !selectedQuoteToSend}
-              >
-                {sendingQuoteAndMoving ? "Enviando..." : "Enviar cotação e mover"}
-              </Button>
-            )}
-          </DialogFooter>
+                </DialogFooter>
+              </>
+            );
+          })()}
         </DialogContent>
       </Dialog>
 
