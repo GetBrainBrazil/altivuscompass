@@ -253,7 +253,13 @@ function KanbanColumnCard({
         )}
       >
         <div className="space-y-3 min-h-[120px] p-1">
-          {column.cards.length === 0 ? (
+          {isLoading && column.cards.length === 0 ? (
+            <>
+              <KanbanCardSkeleton />
+              <KanbanCardSkeleton />
+              <KanbanCardSkeleton />
+            </>
+          ) : column.cards.length === 0 ? (
             <EmptyColumnHint />
           ) : (
             column.cards.map((card) => {
@@ -268,7 +274,7 @@ function KanbanColumnCard({
                     }
                   }}
                   className={cn(
-                    "transition-all rounded-lg",
+                    "transition-all rounded-lg animate-fade-in",
                     isFocused && "ring-2 ring-primary/70 ring-offset-2 ring-offset-background animate-pulse",
                   )}
                 >
