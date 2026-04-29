@@ -681,6 +681,7 @@ export default function CRM() {
       } catch (err) {
         console.error("[crm:autoMove] error:", err);
       }
+      if (!cancelled) setIsLoadingLeads(false);
     };
     fetchLeads();
     const interval = setInterval(fetchLeads, 30_000);
