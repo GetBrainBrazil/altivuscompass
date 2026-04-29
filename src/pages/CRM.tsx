@@ -1755,6 +1755,9 @@ export default function CRM() {
           onCardDelete={handleCardDelete}
           focusCardId={focusCardId}
           isLoading={tab === "sales" && isLoadingLeads}
+          collapsibleColumnIds={tab === "sales" ? COLLAPSIBLE_COLUMN_IDS : undefined}
+          collapsedColumnIds={collapsedCols}
+          onToggleColumnCollapse={toggleColumnCollapse}
         />
       </main>
 
