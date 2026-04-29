@@ -331,15 +331,22 @@ function KanbanColumnCard({
           onDragLeave={(e) => {
             if (e.currentTarget.contains(e.relatedTarget as Node)) return;
             setIsOver(false);
+            setOverIndex(null);
           }}
           onDrop={(e) => {
             e.preventDefault();
+            const idx = overIndex;
             setIsOver(false);
-            onDropOnColumn(column.id);
+            setOverIndex(null);
+            onDropOnColumn(column.id, idx ?? column.cards.length);
           }}
           className={cn(
-            "flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin pr-1 rounded-lg transition-colors",
-            isOver && "bg-primary/10 ring-2 ring-primary/40 ring-inset",
+            "flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin pr-1 rounded-lg transition-colors border border-dashed",
+            isOver
+              ? "bg-primary/10 ring-2 ring-primary/40 ring-inset border-primary/60"
+              : showValidHint
+                ? "border-primary/40 bg-primary/[0.03]"
+                : "border-transparent",
           )}
         >
           <div className="space-y-3 min-h-[120px] p-1">
@@ -352,8 +359,9 @@ function KanbanColumnCard({
             ) : column.cards.length === 0 ? (
               <EmptyColumnHint />
             ) : (
-              column.cards.map((card) => {
+              column.cards.map((card, cardIdx) => {
                 const isFocused = focusCardId && focusCardId === card.id;
+                const showInsertAbove = isOver && overIndex === cardIdx && draggedCardId !== card.id;
                 return (
                   <div
                     key={card.id}
@@ -363,9 +371,21 @@ function KanbanColumnCard({
                         try { el.scrollIntoView({ behavior: "smooth", block: "center" }); } catch { /* noop */ }
                       }
                     }}
+                    onDragOver={(e) => {
+                      if (!draggedCardId) return;
+                      e.preventDefault();
+                      e.stopPropagation();
+                      e.dataTransfer.dropEffect = "move";
+                      const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                      const before = e.clientY < rect.top + rect.height / 2;
+                      const next = before ? cardIdx : cardIdx + 1;
+                      if (!isOver) setIsOver(true);
+                      if (overIndex !== next) setOverIndex(next);
+                    }}
                     className={cn(
                       "transition-all rounded-lg animate-fade-in",
                       isFocused && "ring-2 ring-primary/70 ring-offset-2 ring-offset-background animate-pulse",
+                      showInsertAbove && "mt-3 border-t-2 border-primary/60 pt-1",
                     )}
                   >
                     <KanbanCard
@@ -375,7 +395,7 @@ function KanbanColumnCard({
                       draggable
                       isDragging={draggedCardId === card.id}
                       onDragStart={(c) => onCardDragStart(c)}
-                      onDragEnd={() => onCardDragEnd()}
+                      onDragEnd={() => { onCardDragEnd(); setOverIndex(null); }}
                       onTemperatureChange={onTemperatureChange}
                       onDelete={onCardDelete}
                     />
