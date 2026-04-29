@@ -250,6 +250,18 @@ export default function Quotes() {
   const [saveAsTemplateName, setSaveAsTemplateName] = useState("");
   const [deleteTemplateTarget, setDeleteTemplateTarget] = useState<Quote | null>(null);
   const [duplicating, setDuplicating] = useState(false);
+  // Quando o editor é aberto a partir de outra página (ex.: card do CRM),
+  // escondemos o pipeline para evitar o "flash" da listagem antes do dialog abrir.
+  const [externalEditPending, setExternalEditPending] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      const st: any = (window.history.state as any)?.usr ?? null;
+      return !!sp.get("edit") || !!st?.editQuoteId || !!st?.newQuote;
+    } catch {
+      return false;
+    }
+  });
 
   // Debounce search
   useEffect(() => {
@@ -1243,8 +1255,33 @@ export default function Quotes() {
 
   // Open editor pre-filled when navigated from elsewhere (e.g. Clients page, CRM)
   useEffect(() => {
-    const state = (location.state ?? {}) as { newQuote?: boolean; clientId?: string; leadId?: string };
-    if (!state.newQuote) return;
+    const state = (location.state ?? {}) as { newQuote?: boolean; clientId?: string; leadId?: string; editQuoteId?: string };
+
+    // Edit existing quote via in-memory state (no flash, no URL param)
+    if (state.editQuoteId) {
+      (async () => {
+        const { data, error } = await supabase
+          .from("quotes")
+          .select("*, clients(full_name)")
+          .eq("id", state.editQuoteId)
+          .maybeSingle();
+        if (error || !data) {
+          toast({ title: "Cotação não encontrada", description: error?.message ?? "", variant: "destructive" });
+          setExternalEditPending(false);
+          navigate(location.pathname, { replace: true, state: {} });
+          return;
+        }
+        openEdit({ ...(data as any), client_name: (data as any).clients?.full_name } as Quote);
+        navigate(location.pathname, { replace: true, state: {} });
+      })();
+      return;
+    }
+
+    if (!state.newQuote) {
+      // Nothing external pending; release the placeholder if it was set on initial render.
+      if (externalEditPending && !dialogOpen) setExternalEditPending(false);
+      return;
+    }
 
     if (state.leadId) {
       // Prefill a partir do lead vindo do CRM
@@ -1326,6 +1363,7 @@ export default function Quotes() {
           .maybeSingle();
         if (error || !data) {
           toast({ title: "Cotação não encontrada", description: error?.message ?? "", variant: "destructive" });
+          setExternalEditPending(false);
           clearParams();
           return;
         }
@@ -1355,6 +1393,12 @@ export default function Quotes() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
+
+  // Libera o placeholder assim que o dialog do editor abre — o overlay do
+  // shadcn já cobre o pipeline e evita o "flash".
+  useEffect(() => {
+    if (dialogOpen && externalEditPending) setExternalEditPending(false);
+  }, [dialogOpen, externalEditPending]);
 
   const openEdit = (q: Quote) => {
     setIsHydratingEditQuote(true);
@@ -1881,6 +1925,12 @@ export default function Quotes() {
     });
     return sorted;
   }, [quotes, searchTerm, filterAssignee, filterLeadSource, pipelineSort]);
+
+  // Placeholder neutro enquanto o editor está sendo aberto a partir de outra página
+  // (ex.: card do CRM). Evita o "flash" do pipeline antes do editor renderizar.
+  if (externalEditPending && !dialogOpen) {
+    return <div className="min-h-[60vh] bg-background" aria-hidden />;
+  }
 
   // ─── FORM VIEW ─────────────────────────────────────────────
   if (dialogOpen) {

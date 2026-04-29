@@ -823,7 +823,7 @@ export default function LeadDetail() {
                             archived_at: q.archived_at,
                           }}
                           assigneeName={form.full_name || card?.clientName || null}
-                          onClick={() => { setQuotesReturnTo(); navigate(`/quotes?edit=${q.id}`); }}
+                          onClick={() => { setQuotesReturnTo(); navigate("/quotes", { state: { editQuoteId: q.id } }); }}
                           onDragStart={() => {}}
                           onDragEnd={() => {}}
                           menu={<span aria-hidden />}
