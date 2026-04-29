@@ -647,7 +647,7 @@ export default function CRM() {
       const userById = new Map<string, { name: string; avatarUrl?: string | null }>();
       if (assignedIds.length > 0) {
         const { data: profs } = await supabase
-          .from("profiles")
+          .from("profiles_basic")
           .select("user_id, full_name, email, avatar_url")
           .in("user_id", assignedIds);
         (profs ?? []).forEach((p: any) => {
