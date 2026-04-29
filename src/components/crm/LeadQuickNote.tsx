@@ -224,12 +224,9 @@ export function LeadQuickNote({ leadId, form, onApplySuggestion }: Props) {
           {visibleSuggestions.map((s) => (
             <div
               key={s.field}
-              className={cn(
-                "flex items-center justify-between gap-2 rounded-md border border-amber-300/60 dark:border-amber-700/40",
-                "bg-amber-100/60 dark:bg-amber-900/20 px-2 py-1.5"
-              )}
+              className="flex items-center justify-between gap-2 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 px-2 py-1.5"
             >
-              <span className="text-[11px] text-amber-900 dark:text-amber-200 inline-flex items-center gap-1.5 min-w-0">
+              <span className="text-[11px] text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 min-w-0">
                 <Sparkles className="h-3 w-3 shrink-0" />
                 <span className="truncate">{s.label}</span>
               </span>
@@ -237,7 +234,7 @@ export function LeadQuickNote({ leadId, form, onApplySuggestion }: Props) {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-6 px-2 text-[11px] hover:bg-amber-200/60 dark:hover:bg-amber-800/40"
+                  className="h-6 px-2 text-[11px]"
                   onClick={() => handleApply(s)}
                 >
                   <Check className="h-3 w-3 mr-1" />
