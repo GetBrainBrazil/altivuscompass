@@ -2834,7 +2834,7 @@ export default function CRM() {
                   ))}
                 </div>
 
-                <DialogFooter className="gap-2 pt-2 sm:gap-3 sm:items-center">
+                <DialogFooter className="flex-row flex-wrap justify-end gap-2 pt-2 sm:gap-3 sm:items-center sm:space-x-0">
                   <Button
                     variant="ghost"
                     className="text-muted-foreground hover:bg-transparent hover:text-foreground"
