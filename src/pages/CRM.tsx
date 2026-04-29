@@ -1228,7 +1228,7 @@ export default function CRM() {
           .eq("id", move.leadId!);
         if (error) {
           console.error("[performMove] failed to persist lead status:", error);
-          toast.error("Não foi possível salvar a movimentação. Revertendo...");
+          toast.error("Erro ao mover o lead. Tente novamente.");
           // Rollback: restaura o snapshot anterior
           if (originalSnapshot) setColumns(() => originalSnapshot!);
           return;
