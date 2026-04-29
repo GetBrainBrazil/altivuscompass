@@ -105,6 +105,19 @@ const ALERT_BADGE_CLASSES: Record<KanbanCardAlert["tone"], string> = {
   success: "bg-success/15 text-success",
 };
 
+/**
+ * Detecta se o "nome" do contato é, na verdade, apenas um número de telefone
+ * (apenas dígitos, espaços, hífens, parênteses e o prefixo +). Indica que o
+ * consultor ainda precisa atualizar o nome real.
+ */
+function isPhoneLikeName(name?: string): boolean {
+  if (!name) return false;
+  const trimmed = name.trim();
+  if (!trimmed) return false;
+  if (/[A-Za-zÀ-ÿ]/.test(trimmed)) return false;
+  return /\d/.test(trimmed) && /^[+\d\s().\-]+$/.test(trimmed);
+}
+
 const TEMP_NEXT: Record<LeadTemperature, LeadTemperature> = {
   cold: "warm",
   warm: "hot",
