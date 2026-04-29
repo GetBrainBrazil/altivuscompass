@@ -196,6 +196,7 @@ export function KanbanCard({
   onViewConversation,
   onEdit,
   onArchive,
+  onRenameClient,
 }: {
   card: KanbanCardData;
   onClick?: (card: KanbanCardData) => void;
@@ -220,6 +221,8 @@ export function KanbanCard({
   onEdit?: (card: KanbanCardData) => void;
   /** Arquivar o card (mover para área oculta). */
   onArchive?: (card: KanbanCardData) => void;
+  /** Renomear o contato inline (quando o nome ainda é apenas um telefone). */
+  onRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
 }) {
   const value = formatBRL(card.estimatedValue);
   const alert = card.alert;
