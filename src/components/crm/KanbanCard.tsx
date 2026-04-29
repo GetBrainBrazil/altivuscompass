@@ -473,31 +473,22 @@ export function KanbanCard({
               </button>
             </div>
           ) : (
-            <div className="flex-1 min-w-0 flex items-center gap-1">
+            <div className="flex-1 min-w-0">
               <p
                 className={cn(
-                  "text-sm font-medium font-body min-w-0 truncate leading-snug",
+                  "font-sans text-[14px] font-semibold min-w-0 truncate leading-tight tracking-tight",
                   nameIsPhone
                     ? "italic text-muted-foreground"
-                    : "text-foreground",
+                    : "text-slate-800",
                 )}
-                title={nameIsPhone ? "Nome do contato ainda não informado — clique no lápis para atualizar" : undefined}
+                title={nameIsPhone ? "Nome do contato ainda não informado — use 'Editar' no menu para atualizar" : undefined}
               >
                 {card.clientName}
               </p>
-              {nameIsPhone && onRenameClient && (
-                <button
-                  type="button"
-                  aria-label="Editar nome do contato"
-                  title="Editar nome do contato"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    startEditingName();
-                  }}
-                  className="shrink-0 inline-flex items-center justify-center w-5 h-5 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                >
-                  <Pencil className="w-3 h-3" />
-                </button>
+              {!nameIsPhone && card.phone && (
+                <p className="font-sans text-[11px] text-slate-500 truncate leading-snug mt-0.5 tabular-nums">
+                  {formatPhone(card.phone)}
+                </p>
               )}
             </div>
           )}
