@@ -2724,6 +2724,7 @@ export default function CRM() {
           if (!open) {
             setPendingMove(null);
             setPendingIssues([]);
+            setSelectedQuoteToSend("");
           }
         }}
       >
