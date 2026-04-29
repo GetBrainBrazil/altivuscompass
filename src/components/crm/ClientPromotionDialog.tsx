@@ -85,26 +85,6 @@ export function ClientPromotionDialog({
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [travelers, setTravelers] = useState<Traveler[]>([{ ...emptyTraveler }]);
-
-  // Pre-fill from lead
-  useEffect(() => {
-    if (!open || !leadId) return;
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      try {
-        const { data: lead } = await supabase
-          .from("leads")
-          .select("*")
-          .eq("id", leadId)
-          .maybeSingle();
-        if (cancelled || !lead) return;
-
-        setLeadName(lead.full_name ?? "");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [travelers, setTravelers] = useState<Traveler[]>([{ ...emptyTraveler }]);
   const [saleSummary, setSaleSummary] = useState<SaleSummary | null>(null);
 
   // Pre-fill from lead
