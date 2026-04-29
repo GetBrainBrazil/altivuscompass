@@ -896,6 +896,42 @@ export default function CRM() {
   const [responsibleOptions, setResponsibleOptions] = useState<{ user_id: string; full_name: string; avatar_url?: string | null }[]>([]);
   const [selectedResponsibleId, setSelectedResponsibleId] = useState<string>("");
 
+  // Modal: motivo de perda (ao mover para "Perdidos")
+  const [lostOpen, setLostOpen] = useState(false);
+  const [lostMove, setLostMove] = useState<PendingMove | null>(null);
+  const [lostReason, setLostReason] = useState<string>("Sem resposta");
+  const [lostDetails, setLostDetails] = useState<string>("");
+
+  // Colapso de colunas (Perdidos colapsada por padrão)
+  const COLLAPSE_KEY = "crm:columns:collapsed:v1";
+  const [collapsedCols, setCollapsedCols] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set(["lost"]);
+    try {
+      const raw = localStorage.getItem(COLLAPSE_KEY);
+      if (!raw) return new Set(["lost"]);
+      const parsed = JSON.parse(raw) as string[];
+      return new Set(Array.isArray(parsed) ? parsed : ["lost"]);
+    } catch {
+      return new Set(["lost"]);
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem(COLLAPSE_KEY, JSON.stringify(Array.from(collapsedCols)));
+    } catch {
+      /* ignore */
+    }
+  }, [collapsedCols]);
+  const toggleColumnCollapse = (columnId: string) => {
+    setCollapsedCols((prev) => {
+      const next = new Set(prev);
+      if (next.has(columnId)) next.delete(columnId);
+      else next.add(columnId);
+      return next;
+    });
+  };
+  const COLLAPSIBLE_COLUMN_IDS = useMemo(() => new Set(["lost"]), []);
+
   useEffect(() => {
     // carrega lista de responsáveis (usuários) do sistema
     let cancelled = false;
