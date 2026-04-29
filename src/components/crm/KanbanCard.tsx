@@ -230,9 +230,12 @@ export function KanbanCard({
   const alert = card.alert;
   const temperature: LeadTemperature = card.temperature ?? "cold";
   const stageDays = daysSince(card.stageEnteredAt);
+  const lastContactDays = daysSince(card.lastContactAt);
   const daysToTravel = daysUntil(card.travelDateISO);
   const isBoardingSoon = daysToTravel !== null && daysToTravel >= 0 && daysToTravel <= 30;
   const nameIsPhone = isPhoneLikeName(card.clientName);
+  const isIncomplete =
+    !card.destination && !card.travelDate && !card.agent && !card.estimatedValue;
 
   // ── Edição inline do nome (quando ainda é apenas um telefone) ─────────────
   const [isEditingName, setIsEditingName] = useState(false);
