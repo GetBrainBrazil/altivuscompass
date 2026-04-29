@@ -244,6 +244,23 @@ export default function LeadDetail() {
         assigned_user_id: (data as any).assigned_user_id ?? prev.assigned_user_id,
         lead_temperature: (data as any).lead_temperature ?? prev.lead_temperature,
       }));
+
+      // Snapshot dos dados extraídos pela IA (origem WhatsApp)
+      const collected = ((data as any).ai_collected_data ?? {}) as Record<string, any>;
+      const { whatsapp_sender_name: _ignored, ...extras } = collected;
+      setAiData({
+        ai_summary: (data as any).ai_summary ?? null,
+        destination: data.destination ?? null,
+        travel_date_start: data.travel_date_start ?? null,
+        travel_date_end: data.travel_date_end ?? null,
+        flexible_dates: (data as any).flexible_dates ?? null,
+        flexible_dates_description: (data as any).flexible_dates_description ?? null,
+        travelers_count: data.travelers_count ?? null,
+        budget_estimate: data.budget_estimate != null ? Number(data.budget_estimate) : null,
+        preferences: data.preferences ?? null,
+        extras: extras || {},
+      });
+
       setCard((prev) => ({
         id: id!,
         clientName: data.full_name || prev?.clientName || "",
