@@ -21,6 +21,7 @@ export type UserOption = {
   id: string;
   name: string;
   avatarUrl?: string | null;
+  meta?: string | null;
 };
 
 export function getUserInitials(name?: string | null): string {
