@@ -171,7 +171,7 @@ export default function LeadConvert() {
         items={[
           { label: "CRM", to: "/crm" },
           { label: "Leads", to: "/crm" },
-          { label: "Detalhes do Lead", to: leadId ? `/crm/lead/${leadId}` : "/crm" },
+          { label: "Detalhes do Lead", to: routeId ? `/crm/lead/${routeId}` : "/crm" },
           { label: "Converter em Cliente" },
         ]}
       />
