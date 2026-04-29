@@ -1,5 +1,26 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
+/**
+ * A single Kanban-card skeleton mimicking the real CRM card layout:
+ * left-border accent, name, badge, destination line, agent row.
+ */
+export function KanbanCardSkeleton() {
+  return (
+    <div className="glass-card rounded-xl p-3 border-l-2 border-l-muted/40 space-y-2.5 animate-fade-in">
+      <div className="flex items-start justify-between gap-2">
+        <Skeleton className="h-3.5 w-32" />
+        <Skeleton className="h-4 w-12 rounded-full" />
+      </div>
+      <Skeleton className="h-3 w-24" />
+      <Skeleton className="h-2.5 w-40" />
+      <div className="flex items-center gap-2 pt-1">
+        <Skeleton className="h-5 w-5 rounded-full" />
+        <Skeleton className="h-2.5 w-20" />
+      </div>
+    </div>
+  );
+}
+
 /** Kanban-style loading: N columns, each with a few card skeletons. */
 export function KanbanSkeleton({ columns = 5, cardsPerColumn = 3 }: { columns?: number; cardsPerColumn?: number }) {
   return (
