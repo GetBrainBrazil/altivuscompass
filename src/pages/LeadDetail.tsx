@@ -9,7 +9,7 @@ import {
   MapPin,
   Calendar as CalendarIcon,
   MessageCircle,
-  ExternalLink,
+  
   CircleDot,
   FileText,
   UserCheck,
