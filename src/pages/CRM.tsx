@@ -16,8 +16,11 @@ import {
   TrendingUp,
   ArrowUp,
   ArrowDown,
+  LayoutGrid,
+  Rows3,
 } from "lucide-react";
 import { FilterChip, SearchableList } from "@/components/tasks/FilterChip";
+import { CRMTableView } from "@/components/crm/CRMTableView";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
