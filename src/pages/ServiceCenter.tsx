@@ -1015,6 +1015,32 @@ export default function ServiceCenter() {
     }
   }, [searchParams, convoRows, setSearchParams]);
 
+  // Deep link: ?conversation=<id> → seleciona diretamente
+  useEffect(() => {
+    const convParam = searchParams.get("conversation");
+    if (!convParam || convoRows.length === 0) return;
+    const match = (convoRows as any[]).find((c) => c.id === convParam);
+    if (match) {
+      setSelectedId(match.id);
+      const next = new URLSearchParams(searchParams);
+      next.delete("conversation");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, convoRows, setSearchParams]);
+
+  // Deep link: ?leadId=<uuid> → seleciona a conversa do lead
+  useEffect(() => {
+    const leadIdParam = searchParams.get("leadId");
+    if (!leadIdParam || conversations.length === 0) return;
+    const match = conversations.find((c) => c.leadId === leadIdParam);
+    if (match) {
+      setSelectedId(match.id);
+      const next = new URLSearchParams(searchParams);
+      next.delete("leadId");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, conversations, setSearchParams]);
+
 
   const handleSend = async () => {
     if (!selectedId || !draft.trim() || sending) return;

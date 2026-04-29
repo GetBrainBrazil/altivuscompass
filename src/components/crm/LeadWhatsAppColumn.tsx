@@ -403,10 +403,11 @@ export function LeadWhatsAppColumn({ onClose, contactName, phone, contactId, lea
           type="button"
           className="w-full h-11"
           onClick={() => {
-            const target = conversationId
-              ? `/service-center?conversation=${conversationId}`
-              : "/service-center";
-            navigate(target);
+            const params = new URLSearchParams();
+            if (leadId) params.set("leadId", leadId);
+            if (conversationId) params.set("conversation", conversationId);
+            const qs = params.toString();
+            navigate(`/service-center${qs ? `?${qs}` : ""}`);
           }}
         >
           <MessageCircle className="h-4 w-4 mr-2" />
