@@ -157,7 +157,12 @@ export function UserPicker({
                       className="flex items-center gap-2"
                     >
                       <UserAvatar name={u.name} avatarUrl={u.avatarUrl} className="h-6 w-6" />
-                      <span className="flex-1 truncate text-sm">{u.name}</span>
+                      <span className="flex-1 truncate text-sm">
+                        {u.name}
+                        {u.meta ? (
+                          <span className="text-muted-foreground"> ({u.meta})</span>
+                        ) : null}
+                      </span>
                       {isSelected && <Check className="h-4 w-4 text-primary" />}
                     </CommandItem>
                   );
