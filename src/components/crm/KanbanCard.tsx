@@ -17,6 +17,8 @@ import {
   Check,
   X as XIcon,
   GripVertical,
+  Phone,
+  MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -498,9 +500,10 @@ export function KanbanCard({
                 >
                   {card.clientName}
                 </p>
-                {!nameIsPhone && card.phone && (
-                  <p className="font-sans text-[11px] text-slate-500 truncate leading-snug mt-0.5 tabular-nums">
-                    {formatPhone(card.phone)}
+                {card.destination && (
+                  <p className="flex items-center gap-1 font-sans text-[11px] text-slate-500 truncate leading-snug mt-0.5">
+                    <MapPin className="w-3 h-3 shrink-0 text-slate-400" aria-hidden="true" />
+                    <span className="truncate">{card.destination}</span>
                   </p>
                 )}
               </div>
@@ -726,22 +729,32 @@ export function KanbanCard({
           </div>
         ) : (
           <>
-            {/* Linha 2: destino · data da viagem (oculta se vazio) */}
-            {(card.destination || card.travelDate || isBoardingSoon) && (
-              <div className="mb-1 flex items-center gap-1.5 flex-wrap">
-                {(card.destination || card.travelDate) && (
-                  <p className="text-[11px] text-muted-foreground font-body truncate">
-                    {[card.destination, card.travelDate].filter(Boolean).join(" · ")}
+            {/* Linhas com ícones: telefone e data da viagem */}
+            {(card.phone || card.travelDate || isBoardingSoon) && (
+              <div className="mb-1.5 flex flex-col gap-1">
+                {!nameIsPhone && card.phone && (
+                  <p className="flex items-center gap-1.5 text-[11px] text-slate-500 font-body truncate tabular-nums">
+                    <Phone className="w-3 h-3 shrink-0 text-slate-400" aria-hidden="true" />
+                    <span className="truncate">{formatPhone(card.phone)}</span>
                   </p>
                 )}
-                {isBoardingSoon && (
-                  <span
-                    title={`Embarque em ${daysToTravel} dia(s)`}
-                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-destructive/15 text-destructive"
-                  >
-                    <Plane className="w-3 h-3" />
-                    Embarque próximo
-                  </span>
+                {(card.travelDate || isBoardingSoon) && (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {card.travelDate && (
+                      <p className="text-[11px] text-slate-500 font-body truncate">
+                        {card.travelDate}
+                      </p>
+                    )}
+                    {isBoardingSoon && (
+                      <span
+                        title={`Embarque em ${daysToTravel} dia(s)`}
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-destructive/15 text-destructive"
+                      >
+                        <Plane className="w-3 h-3" />
+                        Embarque próximo
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
             )}
