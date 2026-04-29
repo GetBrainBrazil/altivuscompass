@@ -2144,10 +2144,42 @@ export default function CRM() {
             </Button>
           )}
 
+          {/* View toggle */}
+          <div className="ml-auto flex items-center gap-1 rounded-full border border-border bg-card p-0.5">
+            <button
+              type="button"
+              onClick={() => handleViewModeChange("kanban")}
+              className={cn(
+                "inline-flex items-center justify-center h-7 w-8 rounded-full transition-colors",
+                viewMode === "kanban"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
+              )}
+              aria-label="Visualização em Kanban"
+              title="Kanban"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleViewModeChange("table")}
+              className={cn(
+                "inline-flex items-center justify-center h-7 w-8 rounded-full transition-colors",
+                viewMode === "table"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
+              )}
+              aria-label="Visualização em Tabela"
+              title="Tabela"
+            >
+              <Rows3 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
           {tab === "sales" && (
             <Button
               size="sm"
-              className="h-8 gap-1.5 ml-auto rounded-full"
+              className="h-8 gap-1.5 rounded-full"
               onClick={() => navigate("/crm/lead/new")}
             >
               <Plus className="w-3.5 h-3.5" /> Novo Lead
