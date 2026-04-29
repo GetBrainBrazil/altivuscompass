@@ -964,7 +964,39 @@ export default function CRM() {
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "leads" },
-        () => fetchLeads(),
+        (payload) => {
+          const newRow: any = payload.new;
+          const oldRow: any = payload.old;
+          if (!newRow?.id) return;
+
+          // Se o status mudou, reposicionar o card incrementalmente em todos os clientes.
+          if (newRow.status && newRow.status !== oldRow?.status) {
+            const targetColumnId = STATUS_TO_SALES_COLUMN[newRow.status] || "new-leads";
+            setColumns((prev) => {
+              let movedCard: KanbanCardData | null = null;
+              const without = prev.map((col) => {
+                const idx = col.cards.findIndex((c) => c.leadId === newRow.id);
+                if (idx === -1) return col;
+                movedCard = col.cards[idx];
+                return { ...col, cards: col.cards.filter((_, i) => i !== idx) };
+              });
+              if (!movedCard) {
+                // Card ainda não está no estado local: refetch para sincronizar.
+                fetchLeads();
+                return prev;
+              }
+              return without.map((col) =>
+                col.id === targetColumnId
+                  ? { ...col, cards: [movedCard as KanbanCardData, ...col.cards] }
+                  : col,
+              );
+            });
+            return;
+          }
+
+          // Outras alterações relevantes (nome, telefone, responsável, etc.) → refetch leve.
+          fetchLeads();
+        },
       )
       .subscribe();
 
