@@ -21,6 +21,7 @@ export type UserOption = {
   id: string;
   name: string;
   avatarUrl?: string | null;
+  meta?: string | null;
 };
 
 export function getUserInitials(name?: string | null): string {
@@ -108,6 +109,9 @@ export function UserPicker({
                   />
                   <span className="truncate text-sm text-foreground">
                     {selected.name}
+                    {selected.meta ? (
+                      <span className="text-muted-foreground"> ({selected.meta})</span>
+                    ) : null}
                   </span>
                 </>
               ) : (
@@ -153,7 +157,12 @@ export function UserPicker({
                       className="flex items-center gap-2"
                     >
                       <UserAvatar name={u.name} avatarUrl={u.avatarUrl} className="h-6 w-6" />
-                      <span className="flex-1 truncate text-sm">{u.name}</span>
+                      <span className="flex-1 truncate text-sm">
+                        {u.name}
+                        {u.meta ? (
+                          <span className="text-muted-foreground"> ({u.meta})</span>
+                        ) : null}
+                      </span>
                       {isSelected && <Check className="h-4 w-4 text-primary" />}
                     </CommandItem>
                   );

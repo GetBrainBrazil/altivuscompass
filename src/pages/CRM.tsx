@@ -21,6 +21,9 @@ import {
   Plane,
   LifeBuoy,
   MapPin,
+  Target,
+  Info,
+  FilePlus,
 } from "lucide-react";
 import { FilterChip, SearchableList } from "@/components/tasks/FilterChip";
 import { CRMTableView } from "@/components/crm/CRMTableView";
@@ -1724,6 +1727,19 @@ export default function CRM() {
     return Array.from(map.values()).sort();
   }, [columns, responsibleOptions]);
 
+  // Contagem de leads ativos (não perdidos / fechados) por consultor
+  const activeLeadsByUser = useMemo(() => {
+    const counts = new Map<string, number>();
+    columns.forEach((c) => {
+      if (c.id === "lost" || c.id === "closed") return;
+      c.cards.forEach((k) => {
+        const id = k.agent?.id;
+        if (id) counts.set(id, (counts.get(id) ?? 0) + 1);
+      });
+    });
+    return counts;
+  }, [columns]);
+
   const tagOptions = useMemo(() => {
     const set = new Set<string>();
     columns.forEach((c) => c.cards.forEach((k) => k.tags?.forEach((t) => set.add(t.label))));
@@ -2568,28 +2584,39 @@ export default function CRM() {
       >
         <DialogContent className="sm:max-w-[460px]">
           <DialogHeader>
-            <DialogTitle>Atribuir consultor responsável</DialogTitle>
-            <DialogDescription>
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              <Users className="h-6 w-6 text-primary" />
+            </div>
+            <DialogTitle className="text-center">Atribuir consultor responsável</DialogTitle>
+            <DialogDescription className="text-center">
               Para mover este lead para "Em Qualificação", selecione o consultor responsável.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-2">
             <Label htmlFor="assign-responsible">Responsável</Label>
             <UserPicker
-              users={responsibleOptions.map((r) => ({
-                id: r.user_id,
-                name: r.full_name,
-                avatarUrl: r.avatar_url ?? null,
-              }))}
+              users={responsibleOptions.map((r) => {
+                const count = activeLeadsByUser.get(r.user_id) ?? 0;
+                return {
+                  id: r.user_id,
+                  name: r.full_name,
+                  avatarUrl: r.avatar_url ?? null,
+                  meta: `${count} ${count === 1 ? "lead" : "leads"}`,
+                };
+              })}
               value={selectedResponsibleId || null}
               onChange={(v) => setSelectedResponsibleId(v ?? "")}
               placeholder="Selecione um consultor"
               allowClear={false}
             />
+            <p className="text-xs text-muted-foreground">
+              O número entre parênteses indica leads ativos atualmente sob responsabilidade do consultor.
+            </p>
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-2">
             <Button
               variant="outline"
+              className="rounded-lg"
               onClick={() => {
                 setAssignOpen(false);
                 setAssignCardId(null);
@@ -2598,7 +2625,11 @@ export default function CRM() {
             >
               Cancelar
             </Button>
-            <Button onClick={handleConfirmAssign} disabled={!selectedResponsibleId}>
+            <Button
+              className="rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={handleConfirmAssign}
+              disabled={!selectedResponsibleId}
+            >
               Atribuir e mover
             </Button>
           </DialogFooter>
@@ -2617,11 +2648,13 @@ export default function CRM() {
       >
         <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-warning" />
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/15">
+              <Info className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+            </div>
+            <DialogTitle className="text-center">
               Mover para "{pendingMove?.toTitle}"?
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-center">
               Identificamos pendências para esta etapa. Resolva as pendências ou avance manualmente em situações excepcionais.
             </DialogDescription>
           </DialogHeader>
@@ -2629,30 +2662,35 @@ export default function CRM() {
             {pendingIssues.map((iss, i) => (
               <div
                 key={i}
-                className="rounded-md border border-warning/30 bg-warning/5 p-3 space-y-1.5"
+                className="rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10 p-4 flex gap-3"
               >
-                <p className="text-sm font-medium text-foreground">{iss.title}</p>
-                <p className="text-xs text-muted-foreground">{iss.detail}</p>
-                {iss.cta && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 mt-1"
-                    onClick={() => {
-                      iss.cta!.onClick();
-                      setPendingMove(null);
-                      setPendingIssues([]);
-                    }}
-                  >
-                    {iss.cta.label}
-                  </Button>
-                )}
+                <Info className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div className="flex-1 space-y-2">
+                  <p className="text-sm font-semibold text-foreground">{iss.title}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{iss.detail}</p>
+                  {iss.cta && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-1 h-9 rounded-lg border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                      onClick={() => {
+                        iss.cta!.onClick();
+                        setPendingMove(null);
+                        setPendingIssues([]);
+                      }}
+                    >
+                      <FilePlus className="h-4 w-4" />
+                      {iss.cta.label}
+                    </Button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
           <DialogFooter className="gap-2 sm:gap-2">
             <Button
               variant="outline"
+              className="rounded-lg"
               onClick={() => {
                 setPendingMove(null);
                 setPendingIssues([]);
@@ -2661,7 +2699,8 @@ export default function CRM() {
               Cancelar
             </Button>
             <Button
-              variant="destructive"
+              variant="secondary"
+              className="rounded-lg bg-muted text-muted-foreground hover:bg-muted/80"
               onClick={() => {
                 if (pendingMove) {
                   if (pendingMove.toColumnId === "closed" && pendingMove.leadId) {
@@ -2705,29 +2744,49 @@ export default function CRM() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-[480px]">
+        <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
-            <DialogTitle>Marcar lead como perdido</DialogTitle>
-            <DialogDescription>
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              <Target className="h-6 w-6 text-primary" />
+            </div>
+            <DialogTitle className="text-center">Marcar lead como perdido</DialogTitle>
+            <DialogDescription className="text-center">
               Selecione o motivo da perda. Esta informação ficará registrada para análise futura.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 py-2">
-            <RadioGroup value={lostReason} onValueChange={setLostReason} className="space-y-2">
+          <div className="space-y-4 py-2">
+            <RadioGroup value={lostReason} onValueChange={setLostReason} className="grid gap-2">
               {[
                 "Sem resposta",
                 "Escolheu concorrente",
                 "Preço acima do orçamento",
                 "Desistiu da viagem",
                 "Outro",
-              ].map((r) => (
-                <div key={r} className="flex items-center gap-2">
-                  <RadioGroupItem value={r} id={`lost-${r}`} />
-                  <Label htmlFor={`lost-${r}`} className="text-sm font-normal cursor-pointer">
-                    {r}
-                  </Label>
-                </div>
-              ))}
+              ].map((r) => {
+                const selected = lostReason === r;
+                return (
+                  <label
+                    key={r}
+                    htmlFor={`lost-${r}`}
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl border-2 px-4 py-3 cursor-pointer transition-all",
+                      selected
+                        ? "border-primary bg-primary/5 shadow-sm"
+                        : "border-border hover:border-primary/40 hover:bg-muted/40",
+                    )}
+                  >
+                    <RadioGroupItem value={r} id={`lost-${r}`} className="shrink-0" />
+                    <span
+                      className={cn(
+                        "text-sm font-medium",
+                        selected ? "text-foreground" : "text-muted-foreground",
+                      )}
+                    >
+                      {r}
+                    </span>
+                  </label>
+                );
+              })}
             </RadioGroup>
             <div className="space-y-1.5">
               <Label htmlFor="lost-details" className="text-xs">
@@ -2739,15 +2798,22 @@ export default function CRM() {
                 onChange={(e) => setLostDetails(e.target.value)}
                 placeholder={lostReason === "Outro" ? "Explique o motivo da perda..." : "Detalhes adicionais..."}
                 rows={3}
-                className="text-sm"
+                className="text-sm rounded-lg"
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setLostOpen(false); setLostMove(null); }}>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              className="rounded-lg"
+              onClick={() => { setLostOpen(false); setLostMove(null); }}
+            >
               Cancelar
             </Button>
-            <Button variant="destructive" onClick={confirmLost}>
+            <Button
+              className="rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={confirmLost}
+            >
               Marcar como perdido
             </Button>
           </DialogFooter>
