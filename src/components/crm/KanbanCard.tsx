@@ -40,6 +40,8 @@ export type KanbanCardData = {
   phone?: string;
   destination?: string;
   travelDate?: string;
+  /** Número de viajantes — usado para sinalizar nível de triagem da IA. */
+  travelersCount?: number;
   /** ISO date (YYYY-MM-DD) da viagem — usado para calcular "Embarque próximo". */
   travelDateISO?: string;
   tags?: KanbanTag[];
