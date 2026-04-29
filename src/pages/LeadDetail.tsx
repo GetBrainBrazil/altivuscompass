@@ -768,24 +768,22 @@ export default function LeadDetail() {
       </main>
       </div>
 
-      {waPanelOpen && (
-        <div className="w-[30%] min-w-0 sticky top-0 h-screen">
-          <LeadWhatsAppColumn
-            onClose={() => setWaPanelOpen(false)}
-            contactName={form.full_name || card?.clientName || "Contato"}
-            phone={form.phone || card?.phone || null}
-            contactId={contactId}
-            leadId={leadId}
-            formSnapshot={{
-              destination: form.destination,
-              travel_date_label: form.travel_date_label,
-              budget_estimate: form.budget_estimate,
-              travelers_count: form.travelers_count,
-            }}
-            onApplyNoteSuggestion={(s) => updateField(s.field as any, s.value as any)}
-          />
-        </div>
-      )}
+      <aside className="hidden lg:block min-w-0 sticky top-0 h-screen border-l border-border">
+        <LeadWhatsAppColumn
+          onClose={() => setWaPanelOpen(false)}
+          contactName={form.full_name || card?.clientName || "Contato"}
+          phone={form.phone || card?.phone || null}
+          contactId={contactId}
+          leadId={leadId}
+          formSnapshot={{
+            destination: form.destination,
+            travel_date_label: form.travel_date_label,
+            budget_estimate: form.budget_estimate,
+            travelers_count: form.travelers_count,
+          }}
+          onApplyNoteSuggestion={(s) => updateField(s.field as any, s.value as any)}
+        />
+      </aside>
     </div>
   );
 }
