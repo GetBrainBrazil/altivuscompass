@@ -2584,28 +2584,39 @@ export default function CRM() {
       >
         <DialogContent className="sm:max-w-[460px]">
           <DialogHeader>
-            <DialogTitle>Atribuir consultor responsável</DialogTitle>
-            <DialogDescription>
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              <Users className="h-6 w-6 text-primary" />
+            </div>
+            <DialogTitle className="text-center">Atribuir consultor responsável</DialogTitle>
+            <DialogDescription className="text-center">
               Para mover este lead para "Em Qualificação", selecione o consultor responsável.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-2">
             <Label htmlFor="assign-responsible">Responsável</Label>
             <UserPicker
-              users={responsibleOptions.map((r) => ({
-                id: r.user_id,
-                name: r.full_name,
-                avatarUrl: r.avatar_url ?? null,
-              }))}
+              users={responsibleOptions.map((r) => {
+                const count = activeLeadsByUser.get(r.user_id) ?? 0;
+                return {
+                  id: r.user_id,
+                  name: r.full_name,
+                  avatarUrl: r.avatar_url ?? null,
+                  meta: `${count} ${count === 1 ? "lead" : "leads"}`,
+                };
+              })}
               value={selectedResponsibleId || null}
               onChange={(v) => setSelectedResponsibleId(v ?? "")}
               placeholder="Selecione um consultor"
               allowClear={false}
             />
+            <p className="text-xs text-muted-foreground">
+              O número entre parênteses indica leads ativos atualmente sob responsabilidade do consultor.
+            </p>
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-2">
             <Button
               variant="outline"
+              className="rounded-lg"
               onClick={() => {
                 setAssignOpen(false);
                 setAssignCardId(null);
@@ -2614,7 +2625,11 @@ export default function CRM() {
             >
               Cancelar
             </Button>
-            <Button onClick={handleConfirmAssign} disabled={!selectedResponsibleId}>
+            <Button
+              className="rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={handleConfirmAssign}
+              disabled={!selectedResponsibleId}
+            >
               Atribuir e mover
             </Button>
           </DialogFooter>
