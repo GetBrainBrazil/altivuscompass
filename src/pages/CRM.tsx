@@ -1454,14 +1454,110 @@ export default function CRM() {
     void logLeadHistory(move.leadId, move.fromTitle, move.toTitle, false);
   };
 
-  const handleTemperatureChange = (card: KanbanCardData, next: LeadTemperature) => {
+  const handleTemperatureChange = async (card: KanbanCardData, next: LeadTemperature) => {
     setColumns((prev) =>
       prev.map((col) => ({
         ...col,
         cards: col.cards.map((c) => (c.id === card.id ? { ...c, temperature: next } : c)),
       })),
     );
+    const leadId = extractLeadId(card.id);
+    if (!leadId) return;
+    const { error } = await supabase
+      .from("leads")
+      .update({ lead_temperature: next } as any)
+      .eq("id", leadId);
+    if (error) {
+      console.error("[CRM] update temperature error:", error);
+      toast.error("Não foi possível salvar a temperatura.");
+    }
   };
+
+  // ─── Quick actions do menu de 3 pontos do card ─────────────
+  const handleCardAssignAgent = async (card: KanbanCardData, userId: string) => {
+    const responsible = responsibleOptions.find((r) => r.user_id === userId);
+    if (!responsible) return;
+    const leadId = extractLeadId(card.id);
+    if (leadId) {
+      const { error } = await supabase
+        .from("leads")
+        .update({ assigned_user_id: userId } as any)
+        .eq("id", leadId);
+      if (error) {
+        console.error("[CRM] quick assign error:", error);
+        toast.error("Não foi possível atribuir o responsável.");
+        return;
+      }
+    }
+    setColumns((prev) =>
+      prev.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) =>
+          c.id === card.id
+            ? {
+                ...c,
+                agent: {
+                  id: responsible.user_id,
+                  name: responsible.full_name,
+                  avatarUrl: responsible.avatar_url ?? undefined,
+                },
+              }
+            : c,
+        ),
+      })),
+    );
+    toast.success(`Responsável atribuído: ${responsible.full_name}`);
+  };
+
+  const handleCardCreateQuote = (card: KanbanCardData) => {
+    const leadId = extractLeadId(card.id);
+    if (!leadId) {
+      toast.error("Lead inválido para criar cotação.");
+      return;
+    }
+    navigate(`/quotes?new=1&lead_id=${leadId}`);
+  };
+
+  const handleCardViewConversation = (card: KanbanCardData) => {
+    if (!card.phone) {
+      toast.error("Este lead não tem telefone vinculado a uma conversa.");
+      return;
+    }
+    navigate(`/service-center?phone=${encodeURIComponent(card.phone)}`);
+  };
+
+  const handleCardEdit = (card: KanbanCardData) => {
+    navigate(`/crm/lead/${card.id}`);
+  };
+
+  const [archiveTarget, setArchiveTarget] = useState<KanbanCardData | null>(null);
+  const handleCardArchive = (card: KanbanCardData) => {
+    setArchiveTarget(card);
+  };
+  const confirmArchive = async () => {
+    if (!archiveTarget) return;
+    const leadId = extractLeadId(archiveTarget.id);
+    if (!leadId) {
+      toast.error("Card sem lead vinculado.");
+      setArchiveTarget(null);
+      return;
+    }
+    const { error } = await supabase
+      .from("leads")
+      .update({ archived: true, archived_at: new Date().toISOString() } as any)
+      .eq("id", leadId);
+    if (error) {
+      console.error("[CRM] archive error:", error);
+      toast.error("Não foi possível arquivar.");
+      return;
+    }
+    const cardId = archiveTarget.id;
+    setSalesColumns((prev) => prev.map((col) => ({ ...col, cards: col.cards.filter((c) => c.id !== cardId) })));
+    setOpsColumns((prev) => prev.map((col) => ({ ...col, cards: col.cards.filter((c) => c.id !== cardId) })));
+    toast.success("Card arquivado.");
+    setArchiveTarget(null);
+  };
+
 
   const handleConfirmAssign = async () => {
     if (!assignCardId || !assignTargetColumn) return;
