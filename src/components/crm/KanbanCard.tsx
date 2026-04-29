@@ -351,7 +351,7 @@ export function KanbanCard({
   const tempBorder: Record<LeadTemperature, string> = {
     hot: "border-l-red-500",
     warm: "border-l-orange-400",
-    cold: "border-l-slate-300",
+    cold: "border-l-sky-400",
   };
   const leftBorder = alert?.tone === "destructive"
     ? "border-l-destructive"
@@ -359,9 +359,7 @@ export function KanbanCard({
       ? "border-l-amber-400"
       : card.isReturning
         ? "border-l-sky-400"
-        : card.temperature
-          ? tempBorder[card.temperature]
-          : "border-l-transparent";
+        : tempBorder[temperature];
   const noAgent = !card.agent;
 
   return (
@@ -408,7 +406,7 @@ export function KanbanCard({
       }}
       className={cn(
         "group relative rounded-lg border border-border bg-card text-left",
-        "border-l-[3px] shadow-sm hover:shadow-md transition-all animate-fade-in",
+        "border-l-4 shadow-sm hover:shadow-md transition-all animate-fade-in",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
         draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
         isDragging && "opacity-30",
@@ -767,64 +765,36 @@ export function KanbanCard({
           </>
         )}
 
-        {/* Rodapé: "há X dias" do último contato (esquerda) + temperatura (direita) */}
-        <div className="flex items-center justify-between mt-1.5">
-          {lastContactDays !== null ? (
-            <span
-              title={`Último contato há ${lastContactDays} dia(s)`}
-              className={cn(
-                "inline-flex items-center text-[10px] font-medium tabular-nums",
-                lastContactDays >= 14
-                  ? "text-destructive"
-                  : lastContactDays >= 7
-                    ? "text-amber-600"
-                    : "text-muted-foreground",
-              )}
-            >
-              {lastContactDays === 0 ? "hoje" : `há ${lastContactDays}d`}
-            </span>
-          ) : stageDays !== null ? (
-            <span
-              title={`${stageDays} dia(s) nesta etapa`}
-              className={cn(
-                "inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium tabular-nums",
-                stageDaysBadgeClasses(stageDays),
-              )}
-            >
-              {stageDaysLabel(stageDays)}
-            </span>
-          ) : (
-            <span />
-          )}
-
-          {card.temperature ? (
-            <button
-              type="button"
-              title={`${TEMP_LABEL[temperature]} (clique para alterar)`}
-              aria-label={`Temperatura: ${TEMP_LABEL[temperature]}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                onTemperatureChange?.(card, TEMP_NEXT[temperature]);
-              }}
-              className="inline-flex items-center justify-center w-5 h-5 rounded hover:bg-muted/60 transition-colors"
-            >
-              <Flame className={cn("w-3.5 h-3.5 transition-colors", TEMP_CLASSES[temperature])} />
-            </button>
-          ) : (
-            <button
-              type="button"
-              title="Definir temperatura do lead"
-              aria-label="Definir temperatura"
-              onClick={(e) => {
-                e.stopPropagation();
-                onTemperatureChange?.(card, "warm");
-              }}
-              className="inline-flex items-center justify-center w-5 h-5 rounded hover:bg-muted/60 text-muted-foreground/40 hover:text-muted-foreground transition-colors"
-            >
-              <Thermometer className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
+        {/* Rodapé: "há X dias" do último contato ou tempo na etapa */}
+        {(lastContactDays !== null || stageDays !== null) && (
+          <div className="flex items-center mt-1.5">
+            {lastContactDays !== null ? (
+              <span
+                title={`Último contato há ${lastContactDays} dia(s)`}
+                className={cn(
+                  "inline-flex items-center text-[10px] font-medium tabular-nums",
+                  lastContactDays >= 14
+                    ? "text-destructive"
+                    : lastContactDays >= 7
+                      ? "text-amber-600"
+                      : "text-muted-foreground",
+                )}
+              >
+                {lastContactDays === 0 ? "hoje" : `há ${lastContactDays}d`}
+              </span>
+            ) : stageDays !== null ? (
+              <span
+                title={`${stageDays} dia(s) nesta etapa`}
+                className={cn(
+                  "inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium tabular-nums",
+                  stageDaysBadgeClasses(stageDays),
+                )}
+              >
+                {stageDaysLabel(stageDays)}
+              </span>
+            ) : null}
+          </div>
+        )}
       </div>
     </div>
   );
