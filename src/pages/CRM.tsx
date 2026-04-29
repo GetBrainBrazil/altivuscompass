@@ -731,6 +731,9 @@ export default function CRM() {
         return prevSnap;
       });
 
+      // Atribui cada card ao seu status persistido (vindo do banco). Mantemos
+      // num map auxiliar para evitar incluir um campo não usado no KanbanCardData.
+      const statusByCardId = new Map<string, string>();
       const leadCards: KanbanCardData[] = data.map((l: any) => {
         const id = `lead-${l.id}`;
         const existing = existingByLeadId.get(id);
@@ -741,6 +744,7 @@ export default function CRM() {
         const isFromWhatsApp = l.source === "whatsapp_ai" || l.source === "whatsapp";
         const isAI = isFromWhatsApp; // origem WhatsApp (com ou sem IA ativa) ganha o badge "IA"
         const assignedUser = l.assigned_user_id ? userById.get(l.assigned_user_id) : null;
+        statusByCardId.set(id, (l.status as string) || "new");
         return {
           id,
           clientName: l.full_name,
