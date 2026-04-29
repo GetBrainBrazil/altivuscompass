@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -386,30 +386,15 @@ export default function LeadDetail() {
     [stageId]
   );
 
-  const headerRef = useRef<HTMLElement | null>(null);
-  const [headerH, setHeaderH] = useState(0);
   const appHeaderH = 56;
-  const stickyTabsTop = appHeaderH + headerH;
-  useEffect(() => {
-    if (!headerRef.current) return;
-    const el = headerRef.current;
-    const update = () => setHeaderH(el.getBoundingClientRect().height);
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    window.addEventListener("resize", update);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", update);
-    };
-  }, []);
+  const stickyTabsTop = appHeaderH;
 
   const isClient = contactLevel === "cliente";
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-0px)] bg-slate-50 dark:bg-slate-950">
       {/* Cabeçalho principal — largura total */}
-      <header ref={headerRef} className="border-b border-border bg-white dark:bg-slate-900 w-full sticky z-30" style={{ top: appHeaderH }}>
+      <header className="border-b border-border bg-white dark:bg-slate-900 w-full">
         <div className="px-6 lg:px-10 pt-6 pb-5">
           <CRMBreadcrumb
             className="mb-3"
