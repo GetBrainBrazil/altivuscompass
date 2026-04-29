@@ -14,9 +14,11 @@ import {
   UserRound,
   ExternalLink,
   X,
+  ListChecks,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LeadQuickNote, type QuickNoteFormSnapshot, type QuickNoteSuggestion } from "@/components/crm/LeadQuickNote";
+import { LeadTasksTab } from "@/components/crm/LeadTasksTab";
 
 type Sender = "lead" | "ai" | "agent";
 type Status = "ai" | "human";
