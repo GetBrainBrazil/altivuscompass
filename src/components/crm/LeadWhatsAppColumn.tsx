@@ -51,7 +51,7 @@ const getInitials = (name: string) =>
 
 const onlyDigits = (s: string) => (s || "").replace(/\D/g, "");
 
-export function LeadWhatsAppColumn({ onClose, contactName, phone, contactId }: Props) {
+export function LeadWhatsAppColumn({ onClose, contactName, phone, contactId, leadId, formSnapshot, onApplyNoteSuggestion }: Props) {
   const qc = useQueryClient();
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
