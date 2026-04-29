@@ -1892,6 +1892,8 @@ export default function CRM() {
           onAddBefore={handleAddBefore}
           onAddAfter={handleAddAfter}
           draggedCardId={draggedCardId}
+          draggedFromColumnId={draggedFromColumnId}
+          validTargetColumnIds={validTargetColumnIds}
           onCardDragStart={handleCardDragStart}
           onCardDragEnd={handleCardDragEnd}
           onDropOnColumn={handleDropOnColumn}
