@@ -698,8 +698,7 @@ export function KanbanCard({
         </div>
 
 
-        {isIncomplete ? null : (
-        ) : (
+        {!isIncomplete && (
           <>
             {/* Linhas com ícones: telefone e data da viagem */}
             {(card.phone || card.travelDate || isBoardingSoon) && (
