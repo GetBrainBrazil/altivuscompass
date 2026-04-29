@@ -14,9 +14,11 @@ import {
   UserRound,
   ExternalLink,
   X,
+  ListChecks,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LeadQuickNote, type QuickNoteFormSnapshot, type QuickNoteSuggestion } from "@/components/crm/LeadQuickNote";
+import { LeadTasksTab } from "@/components/crm/LeadTasksTab";
 
 type Sender = "lead" | "ai" | "agent";
 type Status = "ai" | "human";
@@ -57,6 +59,7 @@ export function LeadWhatsAppColumn({ onClose, contactName, phone, contactId, lea
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentUserName, setCurrentUserName] = useState<string>("Consultor");
+  const [activeTab, setActiveTab] = useState<"chat" | "tasks">("chat");
 
   // Nome do usuário atual (para exibir abaixo do balão de agente)
   useEffect(() => {
@@ -276,6 +279,38 @@ export function LeadWhatsAppColumn({ onClose, contactName, phone, contactId, lea
         </Button>
       </div>
 
+      {/* Tabs: Conversa / Tarefas */}
+      <div className="flex items-center gap-1 px-2 pt-2 pb-0 border-b border-border bg-background">
+        <button
+          type="button"
+          onClick={() => setActiveTab("chat")}
+          className={cn(
+            "flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded-t-md text-xs font-medium border-b-2 transition-colors",
+            activeTab === "chat"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <MessageCircle className="h-3.5 w-3.5" /> Conversa
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("tasks")}
+          className={cn(
+            "flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded-t-md text-xs font-medium border-b-2 transition-colors",
+            activeTab === "tasks"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <ListChecks className="h-3.5 w-3.5" /> Tarefas
+        </button>
+      </div>
+
+      {activeTab === "tasks" ? (
+        <LeadTasksTab contactId={contactId} contactName={contactName} />
+      ) : (
+        <>
       {/* Nota rápida — fixa abaixo do header */}
       {leadId && onApplyNoteSuggestion && (
         <LeadQuickNote
@@ -393,6 +428,8 @@ export function LeadWhatsAppColumn({ onClose, contactName, phone, contactId, lea
             </p>
           )}
         </div>
+      )}
+        </>
       )}
     </aside>
   );
