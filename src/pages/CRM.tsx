@@ -178,6 +178,7 @@ function KanbanBoard({
               onCardViewConversation={onCardViewConversation}
               onCardEdit={onCardEdit}
               onCardArchive={onCardArchive}
+              onCardRenameClient={onCardRenameClient}
               agentOptions={agentOptions}
               focusCardId={focusCardId}
               isLoading={isLoading}
