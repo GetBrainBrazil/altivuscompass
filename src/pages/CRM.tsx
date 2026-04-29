@@ -501,6 +501,35 @@ function KanbanColumnCard({
   );
 }
 
+function MetricCard({
+  icon,
+  value,
+  label,
+  badge,
+}: {
+  icon: React.ReactNode;
+  value: string;
+  label: string;
+  badge?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-4 rounded-xl border border-border bg-card px-5 min-h-[80px] shadow-sm">
+      <div className="flex items-center justify-center w-11 h-11 rounded-full bg-primary/10 shrink-0">
+        {icon}
+      </div>
+      <div className="flex flex-col leading-tight min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl font-bold text-foreground font-display tabular-nums truncate">
+            {value}
+          </span>
+          {badge}
+        </div>
+        <span className="text-xs text-muted-foreground mt-0.5 truncate">{label}</span>
+      </div>
+    </div>
+  );
+}
+
 
 function AddColumnButton({ onClick }: { onClick: () => void }) {
   return (
@@ -1987,111 +2016,71 @@ export default function CRM() {
             Acompanhe leads, qualificações e operações em viagem em um só lugar.
           </p>
 
-          {/* Linha: mini cards de métricas (esq) + seletor Funil/Operações (dir) */}
-          <div className="flex flex-wrap items-center gap-3 mt-3">
-            <div key={tab} className="flex flex-wrap items-stretch gap-2 animate-fade-in flex-1 min-w-0">
-              {tab === "sales" ? (
-                <>
-                  <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[160px]">
-                    <div className="p-1.5 rounded-md bg-background border border-border/50">
-                      <Users className="w-3.5 h-3.5 text-muted-foreground" />
-                    </div>
-                    <div className="flex flex-col leading-tight">
-                      <span className="text-lg font-semibold text-foreground font-display tabular-nums">
-                        {totalLeads}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground">Contatos no funil</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[180px]">
-                    <div className="p-1.5 rounded-md bg-background border border-border/50">
-                      <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
-                    </div>
-                    <div className="flex flex-col leading-tight">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-lg font-semibold text-foreground font-display tabular-nums">
-                          {newThisWeek}
-                        </span>
-                        {weekDeltaPct !== 0 && (
-                          <span
-                            className={cn(
-                              "inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full",
-                              weekDeltaPositive
-                                ? "bg-success/10 text-success"
-                                : "bg-destructive/10 text-destructive",
-                            )}
-                            title="Variação vs. semana anterior"
-                          >
-                            {weekDeltaPositive ? <ArrowUp className="w-2.5 h-2.5" /> : <ArrowDown className="w-2.5 h-2.5" />}
-                            {Math.abs(weekDeltaPct)}%
-                          </span>
+          {/* Linha 2: mini cards de métricas em grid de 3, largura total */}
+          <div key={tab} className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 animate-fade-in">
+            {tab === "sales" ? (
+              <>
+                <MetricCard
+                  icon={<Users className="w-5 h-5 text-primary" />}
+                  value={String(totalLeads)}
+                  label="Contatos no funil"
+                />
+                <MetricCard
+                  icon={<TrendingUp className="w-5 h-5 text-primary" />}
+                  value={String(newThisWeek)}
+                  label="Novos esta semana"
+                  badge={
+                    weekDeltaPct !== 0 ? (
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-0.5 text-[11px] font-medium px-2 py-0.5 rounded-full",
+                          weekDeltaPositive
+                            ? "bg-success/10 text-success"
+                            : "bg-destructive/10 text-destructive",
                         )}
-                      </div>
-                      <span className="text-[11px] text-muted-foreground">Novos esta semana</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[180px]">
-                    <div className="p-1.5 rounded-md bg-background border border-border/50">
-                      <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
-                    </div>
-                    <div className="flex flex-col leading-tight">
-                      <span className="text-lg font-semibold text-foreground font-display tabular-nums">
-                        {formatCurrency(pipelineValue)}
+                        title="Variação vs. semana anterior"
+                      >
+                        {weekDeltaPositive ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                        {Math.abs(weekDeltaPct)}%
                       </span>
-                      <span className="text-[11px] text-muted-foreground">Pipeline estimado</span>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[180px]">
-                    <div className="p-1.5 rounded-md bg-background border border-border/50">
-                      <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
-                    </div>
-                    <div className="flex flex-col leading-tight">
-                      <span className="text-lg font-semibold text-foreground font-display tabular-nums">
-                        {opsMetrics.inTripCount}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground">Clientes em viagem agora</span>
-                    </div>
-                  </div>
+                    ) : null
+                  }
+                />
+                <MetricCard
+                  icon={<DollarSign className="w-5 h-5 text-primary" />}
+                  value={formatCurrency(pipelineValue)}
+                  label="Pipeline estimado"
+                />
+              </>
+            ) : (
+              <>
+                <MetricCard
+                  icon={<MapPin className="w-5 h-5 text-primary" />}
+                  value={String(opsMetrics.inTripCount)}
+                  label="Clientes em viagem agora"
+                />
+                <MetricCard
+                  icon={<Plane className="w-5 h-5 text-primary" />}
+                  value={String(opsMetrics.boardingSoon)}
+                  label="Embarques nos próximos 7 dias"
+                />
+                <MetricCard
+                  icon={<LifeBuoy className="w-5 h-5 text-primary" />}
+                  value={String(opsMetrics.supportCount)}
+                  label="Chamados de suporte abertos"
+                />
+              </>
+            )}
+          </div>
 
-                  <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[200px]">
-                    <div className="p-1.5 rounded-md bg-background border border-border/50">
-                      <Plane className="w-3.5 h-3.5 text-muted-foreground" />
-                    </div>
-                    <div className="flex flex-col leading-tight">
-                      <span className="text-lg font-semibold text-foreground font-display tabular-nums">
-                        {opsMetrics.boardingSoon}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground">Embarques nos próximos 7 dias</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[200px]">
-                    <div className="p-1.5 rounded-md bg-background border border-border/50">
-                      <LifeBuoy className="w-3.5 h-3.5 text-muted-foreground" />
-                    </div>
-                    <div className="flex flex-col leading-tight">
-                      <span className="text-lg font-semibold text-foreground font-display tabular-nums">
-                        {opsMetrics.supportCount}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground">Chamados de suporte abertos</span>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Segmented control: Funil / Operações */}
-            <div className="ml-auto flex items-center gap-1 rounded-full border border-border bg-card p-0.5 shrink-0">
+          {/* Linha 3: seletor Funil / Operações centralizado */}
+          <div className="flex justify-center mt-4">
+            <div className="inline-flex items-center gap-1 rounded-full border border-border bg-card p-1 shadow-sm">
               <button
                 type="button"
                 onClick={() => setTab("sales")}
                 className={cn(
-                  "inline-flex items-center gap-1.5 h-8 px-3.5 rounded-full text-xs font-medium transition-colors",
+                  "inline-flex items-center gap-2 h-9 px-5 rounded-full text-sm font-medium transition-colors",
                   tab === "sales"
                     ? "bg-primary text-primary-foreground"
                     : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted",
@@ -2099,14 +2088,14 @@ export default function CRM() {
                 aria-label="Funil de Vendas"
                 aria-pressed={tab === "sales"}
               >
-                <TrendingUp className="w-3.5 h-3.5" />
+                <TrendingUp className="w-4 h-4" />
                 Funil de Vendas
               </button>
               <button
                 type="button"
                 onClick={() => setTab("ops")}
                 className={cn(
-                  "inline-flex items-center gap-1.5 h-8 px-3.5 rounded-full text-xs font-medium transition-colors",
+                  "inline-flex items-center gap-2 h-9 px-5 rounded-full text-sm font-medium transition-colors",
                   tab === "ops"
                     ? "bg-primary text-primary-foreground"
                     : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted",
@@ -2114,7 +2103,7 @@ export default function CRM() {
                 aria-label="Operações em Viagem"
                 aria-pressed={tab === "ops"}
               >
-                <Plane className="w-3.5 h-3.5" />
+                <Plane className="w-4 h-4" />
                 Operações em Viagem
               </button>
             </div>
