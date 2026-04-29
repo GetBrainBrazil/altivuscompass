@@ -467,39 +467,6 @@ export default function LeadDetail() {
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn(
-                  "relative border-border hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 dark:hover:bg-emerald-950/20",
-                  waPanelOpen && "text-emerald-700 bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20",
-                  !hasConversation && "opacity-60",
-                )}
-                onClick={() => {
-                  if (!hasConversation) {
-                    const phone = onlyDigits(form.phone || "");
-                    toast.message("Nenhuma conversa encontrada", {
-                      description: "Inicie uma conversa pelo WhatsApp.",
-                      action: phone
-                        ? {
-                            label: "Iniciar conversa",
-                            onClick: () => window.open(`https://wa.me/${phone}`, "_blank"),
-                          }
-                        : undefined,
-                    });
-                    return;
-                  }
-                  setWaPanelOpen((v) => !v);
-                }}
-              >
-                <MessageCircle className="h-4 w-4 mr-1.5" />
-                Ver Conversa
-                {waUnread > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-semibold flex items-center justify-center ring-2 ring-background">
-                    {waUnread > 99 ? "99+" : waUnread}
-                  </span>
-                )}
-              </Button>
               {!isClient && leadId && (
                 <Button
                   variant="outline"
