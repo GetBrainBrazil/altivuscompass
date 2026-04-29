@@ -9,18 +9,17 @@ const LEVEL_CONFIG: Record<
 > = {
   prospect: {
     label: "Prospect",
-    classes: "bg-slate-200 text-slate-700 border-slate-300",
+    classes: "bg-slate-100 text-slate-600",
     Icon: User,
   },
   lead: {
     label: "Lead",
-    classes: "bg-sky-100 text-sky-700 border-sky-300",
+    classes: "bg-sky-50 text-sky-700",
     Icon: Sparkles,
   },
   cliente: {
     label: "Cliente",
-    // Dourado
-    classes: "bg-amber-100 text-amber-800 border-amber-300",
+    classes: "bg-amber-50 text-amber-700",
     Icon: Crown,
   },
 };
