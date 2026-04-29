@@ -1461,6 +1461,9 @@ export default function CRM() {
       } else {
         setPendingMove(move);
         setPendingIssues(issues);
+        // Pré-seleciona primeira cotação disponível (caso a issue ofereça envio)
+        const sendIssue = issues.find((i) => i.sendQuoteOptions && i.sendQuoteOptions.length > 0);
+        setSelectedQuoteToSend(sendIssue?.sendQuoteOptions?.[0]?.id ?? "");
       }
     } finally {
       setValidating(false);
