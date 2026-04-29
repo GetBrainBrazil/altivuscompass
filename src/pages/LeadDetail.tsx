@@ -410,15 +410,33 @@ export default function LeadDetail() {
       {/* Cabeçalho principal — largura total */}
       <header ref={headerRef} className="border-b border-border bg-white dark:bg-slate-900 w-full sticky z-30" style={{ top: appHeaderH }}>
         <div className="px-6 lg:px-10 pt-6 pb-5">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mb-3 -ml-2 text-muted-foreground hover:text-foreground"
-            onClick={() => navigate("/crm")}
-          >
-            <ArrowLeft className="h-4 w-4 mr-1.5" />
-            Voltar
-          </Button>
+          <nav aria-label="breadcrumb" className="mb-3 text-sm text-slate-500">
+            <ol className="flex flex-wrap items-center gap-1.5">
+              <li>
+                <button
+                  type="button"
+                  onClick={() => navigate("/crm")}
+                  className="hover:text-slate-700 transition-colors"
+                >
+                  CRM
+                </button>
+              </li>
+              <li aria-hidden="true" className="text-slate-400">/</li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => navigate("/crm")}
+                  className="hover:text-slate-700 transition-colors"
+                >
+                  Leads
+                </button>
+              </li>
+              <li aria-hidden="true" className="text-slate-400">/</li>
+              <li aria-current="page" className="font-medium text-slate-800">
+                Detalhes do Lead
+              </li>
+            </ol>
+          </nav>
 
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
