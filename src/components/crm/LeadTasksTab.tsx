@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Check, ListChecks, Plus, Loader2 } from "lucide-react";
+import { Calendar as CalendarIcon, ListChecks, Loader2, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -28,6 +29,8 @@ interface TaskRow {
 export function LeadTasksTab({ contactId, contactName }: Props) {
   const qc = useQueryClient();
   const [newTitle, setNewTitle] = useState("");
+  const [newDueDate, setNewDueDate] = useState<Date | undefined>(undefined);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [creating, setCreating] = useState(false);
 
   const { data: tasks = [], isLoading } = useQuery<TaskRow[]>({
@@ -38,13 +41,22 @@ export function LeadTasksTab({ contactId, contactName }: Props) {
         .from("tasks")
         .select("id, title, status, due_date, priority, completed_at")
         .eq("client_id", contactId!)
-        .order("status", { ascending: true })
         .order("due_date", { ascending: true, nullsFirst: false })
-        .limit(100);
+        .order("created_at", { ascending: false })
+        .limit(200);
       if (error) throw error;
       return (data ?? []) as TaskRow[];
     },
   });
+
+  // Pendentes primeiro, concluídas no fim
+  const sortedTasks = useMemo(() => {
+    const pending = tasks.filter((t) => t.status !== "completed");
+    const done = tasks
+      .filter((t) => t.status === "completed")
+      .sort((a, b) => (b.completed_at || "").localeCompare(a.completed_at || ""));
+    return [...pending, ...done];
+  }, [tasks]);
 
   const handleCreate = async () => {
     const title = newTitle.trim();
@@ -57,10 +69,12 @@ export function LeadTasksTab({ contactId, contactName }: Props) {
         client_id: contactId,
         status: "pending",
         priority: "medium",
+        due_date: newDueDate ? format(newDueDate, "yyyy-MM-dd") : null,
         created_by: auth.user?.id ?? null,
       });
       if (error) throw error;
       setNewTitle("");
+      setNewDueDate(undefined);
       qc.invalidateQueries({ queryKey: ["lead-tasks", contactId] });
     } catch (err: any) {
       toast.error(err?.message || "Falha ao criar tarefa");
@@ -74,9 +88,16 @@ export function LeadTasksTab({ contactId, contactName }: Props) {
     const update = done
       ? { status: "pending", completed_at: null }
       : { status: "completed", completed_at: new Date().toISOString() };
+
+    // Optimistic update
+    qc.setQueryData<TaskRow[]>(["lead-tasks", contactId], (old) =>
+      (old ?? []).map((t) => (t.id === task.id ? { ...t, ...update } : t)),
+    );
+
     const { error } = await supabase.from("tasks").update(update).eq("id", task.id);
     if (error) {
       toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["lead-tasks", contactId] });
       return;
     }
     qc.invalidateQueries({ queryKey: ["lead-tasks", contactId] });
@@ -94,29 +115,73 @@ export function LeadTasksTab({ contactId, contactName }: Props) {
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* Quick add */}
-      <div className="px-3 py-2 border-b border-border bg-background">
+      <div className="px-3 py-2.5 border-b border-border bg-background space-y-2">
+        <Input
+          value={newTitle}
+          onChange={(e) => setNewTitle(e.target.value)}
+          placeholder={`Nova tarefa${contactName ? ` para ${contactName}` : ""}...`}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleCreate();
+            }
+          }}
+          className="h-9"
+          disabled={creating}
+        />
         <div className="flex items-center gap-2">
-          <Input
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            placeholder={`Nova tarefa para ${contactName || "este contato"}...`}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleCreate();
-              }
-            }}
-            className="h-9"
-            disabled={creating}
-          />
+          <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className={cn(
+                  "h-9 px-2.5 gap-1.5 text-xs font-normal flex-1 justify-start",
+                  !newDueDate && "text-muted-foreground",
+                )}
+              >
+                <CalendarIcon className="h-3.5 w-3.5" />
+                {newDueDate
+                  ? format(newDueDate, "dd/MM/yyyy", { locale: ptBR })
+                  : "Vencimento (opcional)"}
+                {newDueDate && (
+                  <X
+                    className="h-3 w-3 ml-auto text-muted-foreground hover:text-foreground"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setNewDueDate(undefined);
+                    }}
+                  />
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={newDueDate}
+                onSelect={(d) => {
+                  setNewDueDate(d);
+                  setDatePickerOpen(false);
+                }}
+                locale={ptBR}
+                initialFocus
+                className="pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
           <Button
-            size="icon"
             onClick={handleCreate}
             disabled={!newTitle.trim() || creating}
-            className="h-9 w-9 shrink-0"
-            aria-label="Criar tarefa"
+            size="sm"
+            className="h-9 shrink-0"
           >
-            {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            {creating ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              "Adicionar"
+            )}
           </Button>
         </div>
       </div>
@@ -127,7 +192,7 @@ export function LeadTasksTab({ contactId, contactName }: Props) {
           <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
             Carregando tarefas...
           </div>
-        ) : tasks.length === 0 ? (
+        ) : sortedTasks.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-6 gap-2 text-muted-foreground">
             <ListChecks className="h-10 w-10" />
             <p className="text-sm">Nenhuma tarefa para este lead.</p>
@@ -135,45 +200,50 @@ export function LeadTasksTab({ contactId, contactName }: Props) {
           </div>
         ) : (
           <ScrollArea className="h-full">
-            <ul className="divide-y divide-border">
-              {tasks.map((task) => {
+            <ul className="divide-y divide-border/60">
+              {sortedTasks.map((task) => {
                 const done = task.status === "completed";
                 return (
                   <li
                     key={task.id}
-                    className="flex items-start gap-3 px-3 py-2.5 hover:bg-muted/40 transition-colors"
+                    className={cn(
+                      "flex items-start gap-3 px-3 py-2.5 hover:bg-muted/40 transition-colors",
+                      done && "opacity-70",
+                    )}
                   >
-                    <Checkbox
-                      checked={done}
-                      onCheckedChange={() => toggleDone(task)}
-                      className="mt-0.5"
+                    <button
+                      type="button"
+                      onClick={() => toggleDone(task)}
                       aria-label={done ? "Reabrir tarefa" : "Concluir tarefa"}
-                    />
+                      className={cn(
+                        "mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 inline-flex items-center justify-center transition-colors",
+                        done
+                          ? "bg-primary border-primary text-primary-foreground"
+                          : "border-muted-foreground/40 hover:border-primary hover:bg-primary/5",
+                      )}
+                    >
+                      {done && <Check className="h-3 w-3" strokeWidth={3} />}
+                    </button>
                     <div className="min-w-0 flex-1">
                       <p
                         className={cn(
-                          "text-sm leading-snug",
-                          done && "line-through text-muted-foreground",
+                          "text-sm leading-snug break-words",
+                          done && "line-through text-muted-foreground/70",
                         )}
                       >
                         {task.title}
                       </p>
-                      <div className="mt-0.5 flex items-center gap-2 text-[11px] text-muted-foreground">
-                        {task.due_date && (
-                          <span>
-                            Vence{" "}
-                            {format(new Date(task.due_date), "dd/MM/yyyy", { locale: ptBR })}
-                          </span>
-                        )}
-                        {task.priority && task.priority !== "medium" && (
-                          <span className="capitalize">{task.priority}</span>
-                        )}
-                        {done && (
-                          <span className="inline-flex items-center gap-1 text-success">
-                            <Check className="h-3 w-3" /> Concluída
-                          </span>
-                        )}
-                      </div>
+                      {task.due_date && (
+                        <div
+                          className={cn(
+                            "mt-0.5 inline-flex items-center gap-1 text-[11px]",
+                            done ? "text-muted-foreground/60" : "text-muted-foreground",
+                          )}
+                        >
+                          <CalendarIcon className="h-3 w-3" />
+                          {format(new Date(task.due_date), "dd/MM/yyyy", { locale: ptBR })}
+                        </div>
+                      )}
                     </div>
                   </li>
                 );
