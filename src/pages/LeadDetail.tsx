@@ -593,15 +593,15 @@ export default function LeadDetail() {
 
           <div className="px-6 lg:px-10 py-8">
             <div className="max-w-5xl mx-auto">
-              <TabsContent value="main" className="mt-0 space-y-8">
+              <TabsContent value="main" className="mt-0 space-y-4">
                 <Section title="Informações do contato">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
                     <Field
                       label="Nome"
                       value={form.full_name}
                       onChange={(e) => updateField("full_name", e.target.value)}
                     />
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <Label className="text-xs font-medium text-muted-foreground">Telefone</Label>
                       <IntlPhoneInput
                         value={form.phone}
@@ -634,7 +634,7 @@ export default function LeadDetail() {
                 )}
 
                 <Section title="Interesse">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
                     <Field
                       label="Destino"
                       value={form.destination}
@@ -668,8 +668,8 @@ export default function LeadDetail() {
                 </Section>
 
                 <Section title="Atribuição">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div className="space-y-1.5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+                    <div className="space-y-1">
                       <Label className="text-xs font-medium text-muted-foreground">
                         Responsável
                       </Label>
@@ -680,7 +680,7 @@ export default function LeadDetail() {
                         placeholder="Selecione um responsável"
                       />
                     </div>
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <Label className="text-xs font-medium text-muted-foreground">
                         Temperatura do lead
                       </Label>
@@ -696,7 +696,7 @@ export default function LeadDetail() {
                                 updateField("lead_temperature", active ? "" : t.value)
                               }
                               className={cn(
-                                "flex-1 inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-md border text-xs font-medium transition-colors",
+                                "flex-1 inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-md border text-xs font-medium transition-colors",
                                 active
                                   ? t.activeClass
                                   : "border-input bg-background text-muted-foreground hover:bg-accent"
@@ -855,7 +855,7 @@ function TabTriggerItem({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-3 mb-2">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
           {title}
         </h2>
@@ -871,9 +871,9 @@ function Field({
   ...props
 }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1">
       <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
-      <Input className="h-10" {...props} />
+      <Input className="h-9" {...props} />
     </div>
   );
 }
@@ -892,10 +892,10 @@ function SelectField({
   placeholder?: string;
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1">
       <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
       <Select value={value || undefined} onValueChange={onChange}>
-        <SelectTrigger className="h-10">
+        <SelectTrigger className="h-9">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
