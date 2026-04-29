@@ -500,9 +500,10 @@ export function KanbanCard({
                 >
                   {card.clientName}
                 </p>
-                {!nameIsPhone && card.phone && (
-                  <p className="font-sans text-[11px] text-slate-500 truncate leading-snug mt-0.5 tabular-nums">
-                    {formatPhone(card.phone)}
+                {card.destination && (
+                  <p className="flex items-center gap-1 font-sans text-[11px] text-slate-500 truncate leading-snug mt-0.5">
+                    <MapPin className="w-3 h-3 shrink-0 text-slate-400" aria-hidden="true" />
+                    <span className="truncate">{card.destination}</span>
                   </p>
                 )}
               </div>
