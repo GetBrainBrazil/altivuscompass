@@ -693,7 +693,7 @@ export function KanbanCard({
           <>
             {/* Bloco de dados: destino + data + telefone */}
             {(card.destination || card.travelDate || card.phone || isBoardingSoon) && (
-              <div className="mb-2 flex flex-col gap-2">
+              <div className="mb-2 flex flex-col gap-0.5">
                 {(card.destination || card.travelDate) && (
                   <div className="flex items-center gap-3 flex-wrap text-[11px] text-slate-500 font-body min-w-0">
                     {card.destination && (
