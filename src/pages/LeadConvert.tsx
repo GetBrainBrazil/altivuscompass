@@ -46,7 +46,9 @@ export default function LeadConvert() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [cepLoading, setCepLoading] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY);
+  const lastCepFetched = useRef<string>("");
 
   useEffect(() => {
     if (!leadId) return;
@@ -78,13 +80,19 @@ export default function LeadConvert() {
   const upd = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((p) => ({ ...p, [k]: v }));
 
-  const handleCepBlur = async () => {
-    const cep = form.cep.replace(/\D/g, "");
+  const fetchCep = async (rawCep: string) => {
+    const cep = rawCep.replace(/\D/g, "");
     if (cep.length !== 8) return;
+    if (lastCepFetched.current === cep) return;
+    lastCepFetched.current = cep;
+    setCepLoading(true);
     try {
       const r = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
       const d = await r.json();
-      if (d.erro) return;
+      if (d.erro) {
+        toast.error("CEP não encontrado.");
+        return;
+      }
       setForm((p) => ({
         ...p,
         address_street: d.logradouro || p.address_street,
@@ -93,8 +101,25 @@ export default function LeadConvert() {
         state: d.uf || p.state,
         country: "Brasil",
       }));
-    } catch { /* ignore */ }
+    } catch {
+      toast.error("Falha ao consultar o CEP.");
+    } finally {
+      setCepLoading(false);
+    }
   };
+
+  // Dispara busca automática ao completar 8 dígitos
+  useEffect(() => {
+    const digits = form.cep.replace(/\D/g, "");
+    if (digits.length === 8) {
+      fetchCep(digits);
+    } else {
+      lastCepFetched.current = "";
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.cep]);
+
+  const handleCepBlur = () => fetchCep(form.cep);
 
   const handleConvert = async () => {
     if (!leadId) return;
