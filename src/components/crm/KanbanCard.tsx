@@ -17,6 +17,8 @@ import {
   Check,
   X as XIcon,
   GripVertical,
+  Phone,
+  MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
