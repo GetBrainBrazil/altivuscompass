@@ -387,6 +387,8 @@ export default function LeadDetail() {
 
   const headerRef = useRef<HTMLElement | null>(null);
   const [headerH, setHeaderH] = useState(0);
+  const appHeaderH = 56;
+  const stickyTabsTop = appHeaderH + headerH;
   useEffect(() => {
     if (!headerRef.current) return;
     const el = headerRef.current;
@@ -406,7 +408,7 @@ export default function LeadDetail() {
   return (
     <div className="flex flex-col min-h-[calc(100vh-0px)] bg-slate-50 dark:bg-slate-950">
       {/* Cabeçalho principal — largura total */}
-      <header ref={headerRef} className="border-b border-border bg-white dark:bg-slate-900 w-full sticky top-0 z-50">
+      <header ref={headerRef} className="border-b border-border bg-white dark:bg-slate-900 w-full sticky z-30" style={{ top: appHeaderH }}>
         <div className="px-6 lg:px-10 pt-6 pb-5">
           <Button
             variant="ghost"
@@ -509,7 +511,7 @@ export default function LeadDetail() {
       <main className="flex-1 min-h-0">
         <Tabs defaultValue="main" className="flex flex-col">
           {/* Wrapper sticky agrupando Stepper + Abas */}
-          <div className="sticky z-40 bg-slate-50 dark:bg-slate-900 pt-4 pb-2 w-full shadow-sm" style={{ top: headerH }}>
+          <div className="sticky z-20 bg-slate-50 dark:bg-slate-900 pt-4 pb-2 w-full shadow-sm" style={{ top: stickyTabsTop }}>
             {/* Stepper — estilo Cotações */}
             <div className="px-6 lg:px-10 pb-3">
               <div className="glass-card rounded-xl px-3 sm:px-4 py-3 bg-background border border-border">
@@ -788,7 +790,7 @@ export default function LeadDetail() {
 
       <aside
         className="hidden lg:block min-w-0 self-start sticky border-l border-border overflow-hidden bg-white dark:bg-slate-900 z-10"
-        style={{ top: headerH, height: `calc(100vh - ${headerH}px)` }}
+        style={{ top: stickyTabsTop, height: `calc(100vh - ${stickyTabsTop}px)` }}
       >
         <LeadWhatsAppColumn
           onClose={() => setWaPanelOpen(false)}
