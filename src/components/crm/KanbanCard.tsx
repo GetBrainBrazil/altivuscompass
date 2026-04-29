@@ -489,17 +489,22 @@ export function KanbanCard({
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p
-                  className={cn(
-                    "font-sans text-[14px] font-semibold min-w-0 truncate leading-tight tracking-tight",
-                    nameIsPhone
-                      ? "italic text-muted-foreground"
-                      : "text-slate-800",
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <p
+                    className={cn(
+                      "font-sans text-[14px] font-semibold min-w-0 truncate leading-tight tracking-tight",
+                      nameIsPhone
+                        ? "italic text-muted-foreground"
+                        : "text-slate-800",
+                    )}
+                    title={nameIsPhone ? "Nome do contato ainda não informado — use 'Editar' no menu para atualizar" : undefined}
+                  >
+                    {card.clientName}
+                  </p>
+                  {card.contactLevel && (
+                    <ContactLevelBadge level={card.contactLevel} size="xs" className="shrink-0" />
                   )}
-                  title={nameIsPhone ? "Nome do contato ainda não informado — use 'Editar' no menu para atualizar" : undefined}
-                >
-                  {card.clientName}
-                </p>
+                </div>
                 {card.destination && (
                   <p className="flex items-center gap-1 font-sans text-[11px] text-slate-500 truncate leading-snug mt-0.5">
                     <MapPin className="w-3 h-3 shrink-0 text-slate-400" aria-hidden="true" />
