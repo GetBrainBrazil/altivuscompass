@@ -834,37 +834,40 @@ export default function CRM() {
       };
 
       setSalesColumns((prev) => {
-        // IDs de leads que já estão em OUTRAS colunas (não devem voltar para "Novos Contatos")
-        // EXCETO os marcados como is_returning (devem voltar para a primeira coluna)
-        const returningLeadIds = new Set(
-          leadCards.filter((c) => c.isReturning).map((c) => c.id),
-        );
-        const idsInOtherColumns = new Set<string>();
+        // Cards não-lead (manuais e quote-*) são preservados nas suas colunas atuais
+        // (sem fonte de status no banco para eles aqui).
+        const nonLeadByColumn = new Map<string, KanbanCardData[]>();
         prev.forEach((col) => {
-          if (col.id !== "new-leads") {
-            col.cards.forEach((c) => {
-              if (c.id.startsWith("lead-") && !returningLeadIds.has(c.id)) {
-                idsInOtherColumns.add(c.id);
-              }
-            });
-          }
-        });
-        const filteredLeadCards = leadCards
-          .filter((c) => !idsInOtherColumns.has(c.id))
-          .map(enrichCard);
-
-        return prev.map((col) => {
-          if (col.id === "new-leads") {
-            return { ...col, cards: filteredLeadCards };
-          }
-          // Outras colunas: remove órfãos (leads/cotações excluídos) + cards retornados (foram para new-leads) + enriquece
-          return {
-            ...col,
-            cards: col.cards
-              .filter((c) => isCardStillValid(c.id) && !returningLeadIds.has(c.id))
+          nonLeadByColumn.set(
+            col.id,
+            col.cards
+              .filter((c) => !c.id.startsWith("lead-") && isCardStillValid(c.id))
               .map(enrichCard),
-          };
+          );
         });
+
+        // Distribui leads do banco usando o status persistido como fonte da verdade.
+        // is_returning força o card de volta para "Novos Contatos".
+        const leadsByColumn = new Map<string, KanbanCardData[]>();
+        prev.forEach((col) => leadsByColumn.set(col.id, []));
+        leadCards.forEach((c) => {
+          const enriched = enrichCard(c);
+          let targetCol = "new-leads";
+          if (!c.isReturning) {
+            const status = statusByCardId.get(c.id) || "new";
+            targetCol = STATUS_TO_SALES_COLUMN[status] || "new-leads";
+          }
+          if (!leadsByColumn.has(targetCol)) targetCol = "new-leads";
+          leadsByColumn.get(targetCol)!.push(enriched);
+        });
+
+        return prev.map((col) => ({
+          ...col,
+          cards: [
+            ...(leadsByColumn.get(col.id) ?? []),
+            ...(nonLeadByColumn.get(col.id) ?? []),
+          ],
+        }));
       });
 
       // Também sanitiza o kanban de Operações (ops)
