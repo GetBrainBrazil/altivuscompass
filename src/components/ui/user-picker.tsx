@@ -109,6 +109,9 @@ export function UserPicker({
                   />
                   <span className="truncate text-sm text-foreground">
                     {selected.name}
+                    {selected.meta ? (
+                      <span className="text-muted-foreground"> ({selected.meta})</span>
+                    ) : null}
                   </span>
                 </>
               ) : (
