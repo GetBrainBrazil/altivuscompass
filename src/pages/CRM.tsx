@@ -18,6 +18,9 @@ import {
   ArrowDown,
   LayoutGrid,
   Rows3,
+  Plane,
+  LifeBuoy,
+  MapPin,
 } from "lucide-react";
 import { FilterChip, SearchableList } from "@/components/tasks/FilterChip";
 import { CRMTableView } from "@/components/crm/CRMTableView";
@@ -1794,6 +1797,26 @@ export default function CRM() {
     return { newThisWeek: thisW, weekDeltaPct: pct, weekDeltaPositive: positive };
   }, [allCards]);
 
+  // Métricas operacionais (aba Operações em Viagem)
+  const opsMetrics = useMemo(() => {
+    const inTripCol = opsColumns.find((c) => c.id === "in-trip");
+    const preTripCol = opsColumns.find((c) => c.id === "pre-trip");
+    const supportCol = opsColumns.find((c) => c.id === "support");
+    const inTripCount = inTripCol?.cards.length ?? 0;
+    const supportCount = supportCol?.cards.length ?? 0;
+    const now = Date.now();
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+    const boardingSoon =
+      preTripCol?.cards.filter((c) => {
+        if (!c.travelDateISO) return false;
+        const t = new Date(c.travelDateISO).getTime();
+        if (!Number.isFinite(t)) return false;
+        const diff = t - now;
+        return diff >= 0 && diff <= sevenDays;
+      }).length ?? 0;
+    return { inTripCount, boardingSoon, supportCount };
+  }, [opsColumns]);
+
   const hasActiveFilters =
     searchTerm !== "" ||
     filterAgent !== "all" ||
@@ -1899,59 +1922,101 @@ export default function CRM() {
             Acompanhe leads, qualificações e operações em viagem em um só lugar.
           </p>
 
-          {/* Mini cards de métricas */}
-          <div className="flex flex-wrap items-stretch gap-2 mt-3">
-            <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[160px]">
-              <div className="p-1.5 rounded-md bg-background border border-border/50">
-                <Users className="w-3.5 h-3.5 text-muted-foreground" />
-              </div>
-              <div className="flex flex-col leading-tight">
-                <span className="text-lg font-semibold text-foreground font-display tabular-nums">
-                  {totalLeads}
-                </span>
-                <span className="text-[11px] text-muted-foreground">Contatos no funil</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[180px]">
-              <div className="p-1.5 rounded-md bg-background border border-border/50">
-                <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
-              </div>
-              <div className="flex flex-col leading-tight">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-lg font-semibold text-foreground font-display tabular-nums">
-                    {newThisWeek}
-                  </span>
-                  {weekDeltaPct !== 0 && (
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full",
-                        weekDeltaPositive
-                          ? "bg-success/10 text-success"
-                          : "bg-destructive/10 text-destructive",
-                      )}
-                      title="Variação vs. semana anterior"
-                    >
-                      {weekDeltaPositive ? <ArrowUp className="w-2.5 h-2.5" /> : <ArrowDown className="w-2.5 h-2.5" />}
-                      {Math.abs(weekDeltaPct)}%
+          {/* Mini cards de métricas — variam por aba */}
+          <div key={tab} className="flex flex-wrap items-stretch gap-2 mt-3 animate-fade-in">
+            {tab === "sales" ? (
+              <>
+                <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[160px]">
+                  <div className="p-1.5 rounded-md bg-background border border-border/50">
+                    <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                  </div>
+                  <div className="flex flex-col leading-tight">
+                    <span className="text-lg font-semibold text-foreground font-display tabular-nums">
+                      {totalLeads}
                     </span>
-                  )}
+                    <span className="text-[11px] text-muted-foreground">Contatos no funil</span>
+                  </div>
                 </div>
-                <span className="text-[11px] text-muted-foreground">Novos esta semana</span>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[180px]">
-              <div className="p-1.5 rounded-md bg-background border border-border/50">
-                <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
-              </div>
-              <div className="flex flex-col leading-tight">
-                <span className="text-lg font-semibold text-foreground font-display tabular-nums">
-                  {formatCurrency(pipelineValue)}
-                </span>
-                <span className="text-[11px] text-muted-foreground">Pipeline estimado</span>
-              </div>
-            </div>
+                <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[180px]">
+                  <div className="p-1.5 rounded-md bg-background border border-border/50">
+                    <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
+                  </div>
+                  <div className="flex flex-col leading-tight">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-lg font-semibold text-foreground font-display tabular-nums">
+                        {newThisWeek}
+                      </span>
+                      {weekDeltaPct !== 0 && (
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full",
+                            weekDeltaPositive
+                              ? "bg-success/10 text-success"
+                              : "bg-destructive/10 text-destructive",
+                          )}
+                          title="Variação vs. semana anterior"
+                        >
+                          {weekDeltaPositive ? <ArrowUp className="w-2.5 h-2.5" /> : <ArrowDown className="w-2.5 h-2.5" />}
+                          {Math.abs(weekDeltaPct)}%
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-muted-foreground">Novos esta semana</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[180px]">
+                  <div className="p-1.5 rounded-md bg-background border border-border/50">
+                    <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
+                  </div>
+                  <div className="flex flex-col leading-tight">
+                    <span className="text-lg font-semibold text-foreground font-display tabular-nums">
+                      {formatCurrency(pipelineValue)}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">Pipeline estimado</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[180px]">
+                  <div className="p-1.5 rounded-md bg-background border border-border/50">
+                    <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
+                  </div>
+                  <div className="flex flex-col leading-tight">
+                    <span className="text-lg font-semibold text-foreground font-display tabular-nums">
+                      {opsMetrics.inTripCount}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">Clientes em viagem agora</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[200px]">
+                  <div className="p-1.5 rounded-md bg-background border border-border/50">
+                    <Plane className="w-3.5 h-3.5 text-muted-foreground" />
+                  </div>
+                  <div className="flex flex-col leading-tight">
+                    <span className="text-lg font-semibold text-foreground font-display tabular-nums">
+                      {opsMetrics.boardingSoon}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">Embarques nos próximos 7 dias</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[200px]">
+                  <div className="p-1.5 rounded-md bg-background border border-border/50">
+                    <LifeBuoy className="w-3.5 h-3.5 text-muted-foreground" />
+                  </div>
+                  <div className="flex flex-col leading-tight">
+                    <span className="text-lg font-semibold text-foreground font-display tabular-nums">
+                      {opsMetrics.supportCount}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">Chamados de suporte abertos</span>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
