@@ -129,11 +129,11 @@ function KanbanBoard({
 }: {
   columns: KanbanColumn[];
   onCardClick: (card: KanbanCardData) => void;
-  onDeleteColumn: (columnId: string) => void;
-  onAddColumn: () => void;
-  onRenameColumn: (columnId: string) => void;
-  onAddBefore: (columnId: string) => void;
-  onAddAfter: (columnId: string) => void;
+  onDeleteColumn?: (columnId: string) => void;
+  onAddColumn?: () => void;
+  onRenameColumn?: (columnId: string) => void;
+  onAddBefore?: (columnId: string) => void;
+  onAddAfter?: (columnId: string) => void;
   draggedCardId: string | null;
   draggedFromColumnId?: string | null;
   validTargetColumnIds?: Set<string> | null;
@@ -170,10 +170,10 @@ function KanbanBoard({
               column={col}
               dotColor={STAGE_DOT_COLORS[idx % STAGE_DOT_COLORS.length]}
               onCardClick={onCardClick}
-              onDelete={() => onDeleteColumn(col.id)}
-              onRename={() => onRenameColumn(col.id)}
-              onAddBefore={() => onAddBefore(col.id)}
-              onAddAfter={() => onAddAfter(col.id)}
+              onDelete={onDeleteColumn ? () => onDeleteColumn(col.id) : undefined}
+              onRename={onRenameColumn ? () => onRenameColumn(col.id) : undefined}
+              onAddBefore={onAddBefore ? () => onAddBefore(col.id) : undefined}
+              onAddAfter={onAddAfter ? () => onAddAfter(col.id) : undefined}
               draggedCardId={draggedCardId}
               isValidTarget={isValidTarget}
               isInvalidTarget={isInvalidTarget}
@@ -200,7 +200,7 @@ function KanbanBoard({
             />
           );
         })}
-        <AddColumnButton onClick={onAddColumn} />
+        {onAddColumn && <AddColumnButton onClick={onAddColumn} />}
       </div>
     </div>
   );
@@ -239,10 +239,10 @@ function KanbanColumnCard({
   column: KanbanColumn;
   dotColor: string;
   onCardClick: (card: KanbanCardData) => void;
-  onDelete: () => void;
-  onRename: () => void;
-  onAddBefore: () => void;
-  onAddAfter: () => void;
+  onDelete?: () => void;
+  onRename?: () => void;
+  onAddBefore?: () => void;
+  onAddAfter?: () => void;
   draggedCardId: string | null;
   isValidTarget?: boolean;
   isInvalidTarget?: boolean;
@@ -325,7 +325,7 @@ function KanbanColumnCard({
             </span>
           )}
         </div>
-        {!isCollapsed && (
+        {!isCollapsed && (onAddBefore || onAddAfter || onRename || onDelete) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -339,26 +339,36 @@ function KanbanColumnCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={onAddBefore}>
-                <ArrowLeftToLine className="h-4 w-4 mr-2" />
-                Adicionar etapa à esquerda
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onAddAfter}>
-                <ArrowRightToLine className="h-4 w-4 mr-2" />
-                Adicionar etapa à direita
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onRename}>
-                <Pencil className="h-4 w-4 mr-2" />
-                Renomear etapa
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={onDelete}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Excluir etapa
-              </DropdownMenuItem>
+              {onAddBefore && (
+                <DropdownMenuItem onClick={onAddBefore}>
+                  <ArrowLeftToLine className="h-4 w-4 mr-2" />
+                  Adicionar etapa à esquerda
+                </DropdownMenuItem>
+              )}
+              {onAddAfter && (
+                <DropdownMenuItem onClick={onAddAfter}>
+                  <ArrowRightToLine className="h-4 w-4 mr-2" />
+                  Adicionar etapa à direita
+                </DropdownMenuItem>
+              )}
+              {(onAddBefore || onAddAfter) && (onRename || onDelete) && (
+                <DropdownMenuSeparator />
+              )}
+              {onRename && (
+                <DropdownMenuItem onClick={onRename}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Renomear etapa
+                </DropdownMenuItem>
+              )}
+              {onDelete && (
+                <DropdownMenuItem
+                  onClick={onDelete}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir etapa
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}
@@ -1686,6 +1696,10 @@ export default function CRM() {
   const [filterTemp, setFilterTemp] = useState<string>("all");
   const [filterLevel, setFilterLevel] = useState<string>("all");
   const [filterSource, setFilterSource] = useState<string>("all");
+  // Filtros específicos da aba Operações
+  const [filterBoarding, setFilterBoarding] = useState<"all" | "7" | "15" | "30">("all");
+  const [filterOpsStatus, setFilterOpsStatus] = useState<"all" | "normal" | "urgent" | "waiting">("all");
+  const [filterDestination, setFilterDestination] = useState<string>("all");
 
   // View mode (kanban | table) — persistido em localStorage
   const [viewMode, setViewMode] = useState<"kanban" | "table">(() => {
@@ -1716,6 +1730,16 @@ export default function CRM() {
     return Array.from(set).sort();
   }, [columns]);
 
+  const destinationOptions = useMemo(() => {
+    const set = new Set<string>();
+    columns.forEach((c) =>
+      c.cards.forEach((k) => {
+        if (k.destination) set.add(k.destination);
+      }),
+    );
+    return Array.from(set).sort();
+  }, [columns]);
+
   // Mapeia `source` técnico → label legível para filtro
   const SOURCE_LABEL: Record<string, string> = {
     whatsapp: "WhatsApp",
@@ -1732,6 +1756,8 @@ export default function CRM() {
 
   const filteredColumns = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
+    const now = Date.now();
+    const day = 24 * 60 * 60 * 1000;
     return columns.map((col) => ({
       ...col,
       cards: col.cards.filter((card) => {
@@ -1740,19 +1766,37 @@ export default function CRM() {
         } else if (filterAgent !== "all" && card.agent?.name !== filterAgent) {
           return false;
         }
-        if (filterTag !== "all" && !card.tags?.some((t) => t.label === filterTag)) return false;
-        if (filterTemp !== "all") {
-          const t = card.temperature ?? "cold";
-          if (filterTemp === "undefined") {
-            // "Não definida": cards sem temperatura explícita (default cold é considerado definido).
-            // Aqui consideramos "não definida" quando o campo não foi explicitamente setado.
-            // Como sempre cai em "cold" no default, não filtra nada nesse modo.
-            return false;
+
+        if (tab === "sales") {
+          if (filterTag !== "all" && !card.tags?.some((t) => t.label === filterTag)) return false;
+          if (filterTemp !== "all") {
+            const t = card.temperature ?? "cold";
+            if (filterTemp === "undefined") return false;
+            if (t !== filterTemp) return false;
           }
-          if (t !== filterTemp) return false;
+          if (filterLevel !== "all" && (card.contactLevel ?? "prospect") !== filterLevel) return false;
+          if (filterSource !== "all" && normalizeSource(card.source) !== filterSource) return false;
+        } else {
+          // Aba Operações: filtros operacionais
+          if (filterBoarding !== "all") {
+            if (!card.travelDateISO) return false;
+            const t = new Date(card.travelDateISO).getTime();
+            if (!Number.isFinite(t)) return false;
+            const diffDays = (t - now) / day;
+            const limit = Number(filterBoarding);
+            if (diffDays < 0 || diffDays > limit) return false;
+          }
+          if (filterOpsStatus !== "all") {
+            const isUrgent = card.alert?.tone === "destructive";
+            const lastTs = card.lastContactAt ? new Date(card.lastContactAt).getTime() : NaN;
+            const isWaiting =
+              !isUrgent && Number.isFinite(lastTs) && (now - lastTs) / day >= 3;
+            const status = isUrgent ? "urgent" : isWaiting ? "waiting" : "normal";
+            if (status !== filterOpsStatus) return false;
+          }
+          if (filterDestination !== "all" && card.destination !== filterDestination) return false;
         }
-        if (filterLevel !== "all" && (card.contactLevel ?? "prospect") !== filterLevel) return false;
-        if (filterSource !== "all" && normalizeSource(card.source) !== filterSource) return false;
+
         if (!q) return true;
         return (
           card.clientName.toLowerCase().includes(q) ||
@@ -1761,7 +1805,7 @@ export default function CRM() {
         );
       }),
     }));
-  }, [columns, searchTerm, filterAgent, filterTag, filterTemp, filterLevel, filterSource]);
+  }, [columns, searchTerm, tab, filterAgent, filterTag, filterTemp, filterLevel, filterSource, filterBoarding, filterOpsStatus, filterDestination]);
 
   // ─── KPIs ────────────────────────────────────────────────
   const allCards = useMemo(() => columns.flatMap((c) => c.cards), [columns]);
@@ -1820,10 +1864,15 @@ export default function CRM() {
   const hasActiveFilters =
     searchTerm !== "" ||
     filterAgent !== "all" ||
-    filterTag !== "all" ||
-    filterTemp !== "all" ||
-    filterLevel !== "all" ||
-    filterSource !== "all";
+    (tab === "sales" &&
+      (filterTag !== "all" ||
+        filterTemp !== "all" ||
+        filterLevel !== "all" ||
+        filterSource !== "all")) ||
+    (tab === "ops" &&
+      (filterBoarding !== "all" ||
+        filterOpsStatus !== "all" ||
+        filterDestination !== "all"));
 
   const handleCardClick = (card: KanbanCardData) => {
     const stage = columns.find((c) => c.cards.some((k) => k.id === card.id));
@@ -2095,102 +2144,178 @@ export default function CRM() {
             />
           </FilterChip>
 
-          <FilterChip
-            label="Temperatura"
-            value={
-              filterTemp === "all"
-                ? "Temperatura"
-                : `Temp.: ${
-                    { hot: "Quente", warm: "Morno", cold: "Frio", undefined: "Não definida" }[
-                      filterTemp as "hot" | "warm" | "cold" | "undefined"
-                    ] ?? filterTemp
-                  }`
-            }
-            active={filterTemp !== "all"}
-            onClear={() => setFilterTemp("all")}
-            width={200}
-          >
-            <SearchableList
-              items={[
-                { id: "all", label: "Todas temperaturas" },
-                { id: "hot", label: "Quente" },
-                { id: "warm", label: "Morno" },
-                { id: "cold", label: "Frio" },
-                { id: "undefined", label: "Não definida" },
-              ]}
-              selected={filterTemp}
-              onSelect={setFilterTemp}
-              placeholder="Buscar..."
-            />
-          </FilterChip>
+          {tab === "sales" ? (
+            <>
+              <FilterChip
+                label="Temperatura"
+                value={
+                  filterTemp === "all"
+                    ? "Temperatura"
+                    : `Temp.: ${
+                        { hot: "Quente", warm: "Morno", cold: "Frio", undefined: "Não definida" }[
+                          filterTemp as "hot" | "warm" | "cold" | "undefined"
+                        ] ?? filterTemp
+                      }`
+                }
+                active={filterTemp !== "all"}
+                onClear={() => setFilterTemp("all")}
+                width={200}
+              >
+                <SearchableList
+                  items={[
+                    { id: "all", label: "Todas temperaturas" },
+                    { id: "hot", label: "Quente" },
+                    { id: "warm", label: "Morno" },
+                    { id: "cold", label: "Frio" },
+                    { id: "undefined", label: "Não definida" },
+                  ]}
+                  selected={filterTemp}
+                  onSelect={setFilterTemp}
+                  placeholder="Buscar..."
+                />
+              </FilterChip>
 
-          <FilterChip
-            label="Nível"
-            value={
-              filterLevel === "all"
-                ? "Nível"
-                : `Nível: ${
-                    { prospect: "Prospect", lead: "Lead", cliente: "Cliente" }[
-                      filterLevel as "prospect" | "lead" | "cliente"
-                    ] ?? filterLevel
-                  }`
-            }
-            active={filterLevel !== "all"}
-            onClear={() => setFilterLevel("all")}
-            width={200}
-          >
-            <SearchableList
-              items={[
-                { id: "all", label: "Todos os níveis" },
-                { id: "prospect", label: "Prospect" },
-                { id: "lead", label: "Lead" },
-                { id: "cliente", label: "Cliente" },
-              ]}
-              selected={filterLevel}
-              onSelect={setFilterLevel}
-              placeholder="Buscar..."
-            />
-          </FilterChip>
+              <FilterChip
+                label="Nível"
+                value={
+                  filterLevel === "all"
+                    ? "Nível"
+                    : `Nível: ${
+                        { prospect: "Prospect", lead: "Lead", cliente: "Cliente" }[
+                          filterLevel as "prospect" | "lead" | "cliente"
+                        ] ?? filterLevel
+                      }`
+                }
+                active={filterLevel !== "all"}
+                onClear={() => setFilterLevel("all")}
+                width={200}
+              >
+                <SearchableList
+                  items={[
+                    { id: "all", label: "Todos os níveis" },
+                    { id: "prospect", label: "Prospect" },
+                    { id: "lead", label: "Lead" },
+                    { id: "cliente", label: "Cliente" },
+                  ]}
+                  selected={filterLevel}
+                  onSelect={setFilterLevel}
+                  placeholder="Buscar..."
+                />
+              </FilterChip>
 
-          <FilterChip
-            label="Origem"
-            value={filterSource === "all" ? "Origem" : `Origem: ${filterSource}`}
-            active={filterSource !== "all"}
-            onClear={() => setFilterSource("all")}
-            width={220}
-          >
-            <SearchableList
-              items={[
-                { id: "all", label: "Todas as origens" },
-                { id: "WhatsApp", label: "WhatsApp" },
-                { id: "Manual", label: "Manual" },
-                { id: "Telefone", label: "Telefone" },
-                { id: "E-mail", label: "E-mail" },
-                { id: "Indicação", label: "Indicação" },
-              ]}
-              selected={filterSource}
-              onSelect={setFilterSource}
-              placeholder="Buscar origem..."
-            />
-          </FilterChip>
+              <FilterChip
+                label="Origem"
+                value={filterSource === "all" ? "Origem" : `Origem: ${filterSource}`}
+                active={filterSource !== "all"}
+                onClear={() => setFilterSource("all")}
+                width={220}
+              >
+                <SearchableList
+                  items={[
+                    { id: "all", label: "Todas as origens" },
+                    { id: "WhatsApp", label: "WhatsApp" },
+                    { id: "Manual", label: "Manual" },
+                    { id: "Telefone", label: "Telefone" },
+                    { id: "E-mail", label: "E-mail" },
+                    { id: "Indicação", label: "Indicação" },
+                  ]}
+                  selected={filterSource}
+                  onSelect={setFilterSource}
+                  placeholder="Buscar origem..."
+                />
+              </FilterChip>
 
-          <FilterChip
-            label="Tags"
-            value={filterTag === "all" ? "Tags" : `Tag: ${filterTag}`}
-            active={filterTag !== "all"}
-            onClear={() => setFilterTag("all")}
-            width={240}
-          >
-            <SearchableList
-              items={[
-                { id: "all", label: "Todas as tags" },
-                ...tagOptions.map((t) => ({ id: t, label: t })),
-              ]}
-              selected={filterTag}
-              onSelect={setFilterTag}
-              placeholder="Buscar tag..."
-            />
-          </FilterChip>
+              <FilterChip
+                label="Tags"
+                value={filterTag === "all" ? "Tags" : `Tag: ${filterTag}`}
+                active={filterTag !== "all"}
+                onClear={() => setFilterTag("all")}
+                width={240}
+              >
+                <SearchableList
+                  items={[
+                    { id: "all", label: "Todas as tags" },
+                    ...tagOptions.map((t) => ({ id: t, label: t })),
+                  ]}
+                  selected={filterTag}
+                  onSelect={setFilterTag}
+                  placeholder="Buscar tag..."
+                />
+              </FilterChip>
+            </>
+          ) : (
+            <>
+              <FilterChip
+                label="Embarque"
+                value={
+                  filterBoarding === "all"
+                    ? "Embarque"
+                    : `Embarque: Próx. ${filterBoarding} dias`
+                }
+                active={filterBoarding !== "all"}
+                onClear={() => setFilterBoarding("all")}
+                width={220}
+              >
+                <SearchableList
+                  items={[
+                    { id: "all", label: "Todos" },
+                    { id: "7", label: "Próximos 7 dias" },
+                    { id: "15", label: "Próximos 15 dias" },
+                    { id: "30", label: "Próximos 30 dias" },
+                  ]}
+                  selected={filterBoarding}
+                  onSelect={(v) => setFilterBoarding(v as "all" | "7" | "15" | "30")}
+                  placeholder="Buscar..."
+                />
+              </FilterChip>
+
+              <FilterChip
+                label="Status"
+                value={
+                  filterOpsStatus === "all"
+                    ? "Status"
+                    : `Status: ${
+                        { normal: "Normal", urgent: "Urgente", waiting: "Aguardando retorno" }[
+                          filterOpsStatus
+                        ]
+                      }`
+                }
+                active={filterOpsStatus !== "all"}
+                onClear={() => setFilterOpsStatus("all")}
+                width={240}
+              >
+                <SearchableList
+                  items={[
+                    { id: "all", label: "Todos os status" },
+                    { id: "normal", label: "Normal" },
+                    { id: "urgent", label: "Urgente" },
+                    { id: "waiting", label: "Aguardando retorno" },
+                  ]}
+                  selected={filterOpsStatus}
+                  onSelect={(v) => setFilterOpsStatus(v as "all" | "normal" | "urgent" | "waiting")}
+                  placeholder="Buscar..."
+                />
+              </FilterChip>
+
+              <FilterChip
+                label="Destino"
+                value={filterDestination === "all" ? "Destino" : `Destino: ${filterDestination}`}
+                active={filterDestination !== "all"}
+                onClear={() => setFilterDestination("all")}
+                width={260}
+              >
+                <SearchableList
+                  items={[
+                    { id: "all", label: "Todos os destinos" },
+                    ...destinationOptions.map((d) => ({ id: d, label: d })),
+                  ]}
+                  selected={filterDestination}
+                  onSelect={setFilterDestination}
+                  placeholder="Buscar destino..."
+                />
+              </FilterChip>
+            </>
+          )}
 
           {hasActiveFilters && (
             <Button
@@ -2204,6 +2329,9 @@ export default function CRM() {
                 setFilterTemp("all");
                 setFilterLevel("all");
                 setFilterSource("all");
+                setFilterBoarding("all");
+                setFilterOpsStatus("all");
+                setFilterDestination("all");
               }}
             >
               <X className="w-3 h-3" /> Limpar
@@ -2260,11 +2388,11 @@ export default function CRM() {
           <KanbanBoard
             columns={filteredColumns}
             onCardClick={handleCardClick}
-            onDeleteColumn={handleRequestDelete}
-            onAddColumn={() => openAddAt(null)}
-            onRenameColumn={handleRequestRename}
-            onAddBefore={handleAddBefore}
-            onAddAfter={handleAddAfter}
+            onDeleteColumn={tab === "sales" ? handleRequestDelete : undefined}
+            onAddColumn={tab === "sales" ? () => openAddAt(null) : undefined}
+            onRenameColumn={tab === "sales" ? handleRequestRename : undefined}
+            onAddBefore={tab === "sales" ? handleAddBefore : undefined}
+            onAddAfter={tab === "sales" ? handleAddAfter : undefined}
             draggedCardId={draggedCardId}
             draggedFromColumnId={draggedFromColumnId}
             validTargetColumnIds={validTargetColumnIds}
