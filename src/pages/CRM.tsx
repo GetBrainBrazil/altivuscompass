@@ -1874,46 +1874,66 @@ export default function CRM() {
     <div className="flex flex-col h-[calc(100vh-0px)] min-h-0 bg-slate-50 dark:bg-slate-950">
       {/* Header */}
       <header className="border-b border-border bg-background">
-        <div className="px-6 pt-6 pb-3">
+        <div className="px-6 pt-5 pb-3">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             CRM
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-0.5">
             Acompanhe leads, qualificações e operações em viagem em um só lugar.
           </p>
 
-          {/* Métricas compactas */}
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-3">
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-lg font-semibold text-foreground font-display tabular-nums">
-                {totalLeads}
-              </span>
-              <span className="text-xs text-muted-foreground">contatos no funil</span>
-            </div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-lg font-semibold text-foreground font-display tabular-nums">
-                {newThisWeek}
-              </span>
-              <span className="text-xs text-muted-foreground">leads novos esta semana</span>
-              {weekDeltaPct !== 0 && (
-                <span
-                  className={cn(
-                    "text-[10px] font-medium px-1.5 py-0.5 rounded-full",
-                    weekDeltaPositive
-                      ? "bg-success/10 text-success"
-                      : "bg-destructive/10 text-destructive",
-                  )}
-                  title="Variação vs. semana anterior"
-                >
-                  {weekDeltaPositive ? "↑" : "↓"} {Math.abs(weekDeltaPct)}%
+          {/* Mini cards de métricas */}
+          <div className="flex flex-wrap items-stretch gap-2 mt-3">
+            <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[160px]">
+              <div className="p-1.5 rounded-md bg-background border border-border/50">
+                <Users className="w-3.5 h-3.5 text-muted-foreground" />
+              </div>
+              <div className="flex flex-col leading-tight">
+                <span className="text-lg font-semibold text-foreground font-display tabular-nums">
+                  {totalLeads}
                 </span>
-              )}
+                <span className="text-[11px] text-muted-foreground">Contatos no funil</span>
+              </div>
             </div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-lg font-semibold text-foreground font-display tabular-nums">
-                {formatCurrency(pipelineValue)}
-              </span>
-              <span className="text-xs text-muted-foreground">pipeline estimado</span>
+
+            <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[180px]">
+              <div className="p-1.5 rounded-md bg-background border border-border/50">
+                <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
+              </div>
+              <div className="flex flex-col leading-tight">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-lg font-semibold text-foreground font-display tabular-nums">
+                    {newThisWeek}
+                  </span>
+                  {weekDeltaPct !== 0 && (
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full",
+                        weekDeltaPositive
+                          ? "bg-success/10 text-success"
+                          : "bg-destructive/10 text-destructive",
+                      )}
+                      title="Variação vs. semana anterior"
+                    >
+                      {weekDeltaPositive ? <ArrowUp className="w-2.5 h-2.5" /> : <ArrowDown className="w-2.5 h-2.5" />}
+                      {Math.abs(weekDeltaPct)}%
+                    </span>
+                  )}
+                </div>
+                <span className="text-[11px] text-muted-foreground">Novos esta semana</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[180px]">
+              <div className="p-1.5 rounded-md bg-background border border-border/50">
+                <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
+              </div>
+              <div className="flex flex-col leading-tight">
+                <span className="text-lg font-semibold text-foreground font-display tabular-nums">
+                  {formatCurrency(pipelineValue)}
+                </span>
+                <span className="text-[11px] text-muted-foreground">Pipeline estimado</span>
+              </div>
             </div>
           </div>
         </div>
