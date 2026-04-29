@@ -522,7 +522,7 @@ export default function LeadDetail() {
                   variant="outline"
                   size="sm"
                   className="border-primary/40 text-primary hover:bg-primary/5"
-                  onClick={() => navigate(`/quotes?new=1&lead_id=${leadId}`)}
+                  onClick={() => navigate("/quotes", { state: { newQuote: true, leadId } })}
                 >
                   <FileText className="h-4 w-4 mr-1.5" />
                   Nova Cotação
