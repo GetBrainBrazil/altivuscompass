@@ -93,6 +93,28 @@ export default function LeadDetail() {
 
   const leadId = id?.startsWith("lead-") ? id.slice("lead-".length) : null;
 
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    if (!id) return "main";
+    try {
+      return sessionStorage.getItem(`crm:lead:${id}:tab`) || "main";
+    } catch {
+      return "main";
+    }
+  });
+
+  // Re-sincroniza ao voltar para a tela (ex.: ao fechar o editor de cotações)
+  useEffect(() => {
+    if (!id) return;
+    const onFocus = () => {
+      try {
+        const v = sessionStorage.getItem(`crm:lead:${id}:tab`);
+        if (v) setActiveTab(v);
+      } catch {}
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [id]);
+
   // Marca a origem para que o editor de cotações volte para o card do CRM ao fechar
   // e para que a sidebar continue destacando "CRM" enquanto a cotação estiver aberta.
   const setQuotesReturnTo = () => {
@@ -557,7 +579,16 @@ export default function LeadDetail() {
         <div className="flex flex-col min-w-0">
       {/* Tabs + content */}
       <main className="flex-1 min-h-0">
-        <Tabs defaultValue="main" className="flex flex-col">
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => {
+            setActiveTab(v);
+            if (id) {
+              try { sessionStorage.setItem(`crm:lead:${id}:tab`, v); } catch {}
+            }
+          }}
+          className="flex flex-col"
+        >
           {/* Wrapper sticky agrupando Stepper + Abas */}
           <div className="sticky z-20 bg-slate-50 dark:bg-slate-900 pt-4 pb-2 w-full shadow-sm" style={{ top: stickyTabsTop }}>
             {/* Stepper — estilo Cotações */}
