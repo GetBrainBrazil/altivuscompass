@@ -506,7 +506,7 @@ export default function LeadDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-[68fr_32fr] flex-1 min-h-0">
         <div className="flex flex-col min-w-0">
         {/* Stepper — estilo Cotações */}
-        <div className="px-6 lg:px-10 py-5 border-b border-border bg-background">
+        <div className="px-6 lg:px-10 py-5 border-b border-border bg-white dark:bg-slate-900 relative z-10">
           <div className="glass-card rounded-xl px-3 sm:px-4 py-3 bg-background border border-border">
             <div className="flex items-center gap-0.5 sm:gap-1 flex-wrap">
               {FUNNEL_STAGES.map((stage, idx) => {
