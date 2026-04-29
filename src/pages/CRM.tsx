@@ -225,11 +225,15 @@ function KanbanColumnCard({
 
   const ownerlessCount = column.cards.filter((c) => !c.agent?.name).length;
   const isCollapsed = !!(collapsible && collapsed);
+  // Visual feedback states for drag operation
+  const showValidHint = !!draggedCardId && !!isValidTarget && !isSourceColumn && !isOver;
+  const dimmedInvalid = !!draggedCardId && !!isInvalidTarget;
   return (
     <div
       className={cn(
-        "flex flex-col shrink-0 max-h-full transition-[width] duration-200",
+        "flex flex-col shrink-0 max-h-full transition-all duration-200",
         isCollapsed ? "w-[56px]" : "w-[320px]",
+        dimmedInvalid && "opacity-40 pointer-events-none",
       )}
     >
       {/* Column header (fixed) — flat, dot + title + count */}
