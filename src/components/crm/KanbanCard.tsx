@@ -695,30 +695,6 @@ export function KanbanCard({
           </div>
         </div>
 
-        {/* Badge de nível do contato */}
-        {(card.contactLevel || card.isRepurchase || card.isReturning) && (
-          <div className="mb-1 flex items-center gap-1 flex-wrap">
-            {card.contactLevel && <ContactLevelBadge level={card.contactLevel} size="xs" />}
-            {card.isRepurchase && (
-              <span
-                title="Cliente iniciando uma nova jornada de compra"
-                className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-gradient-to-r from-amber-100 to-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800"
-              >
-                <Sparkles className="w-2.5 h-2.5" />
-                Recompra
-              </span>
-            )}
-            {card.isReturning && !card.isRepurchase && (
-              <span
-                title="Contato antigo que voltou a falar após mais de 30 dias"
-                className="inline-flex items-center gap-1 rounded-full border border-sky-300 bg-gradient-to-r from-sky-100 to-sky-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-800"
-              >
-                <Sparkles className="w-2.5 h-2.5" />
-                Retornou
-              </span>
-            )}
-          </div>
-        )}
 
         {isIncomplete ? (
           /* Estado incompleto: CTA central discreto */
@@ -780,6 +756,31 @@ export function KanbanCard({
                     {tag.label}
                   </span>
                 ))}
+              </div>
+            )}
+
+            {/* Badges de qualificação (logo acima do rodapé) */}
+            {(card.contactLevel || card.isRepurchase || card.isReturning) && (
+              <div className="mb-1.5 flex items-center gap-1 flex-wrap">
+                {card.contactLevel && <ContactLevelBadge level={card.contactLevel} size="xs" />}
+                {card.isRepurchase && (
+                  <span
+                    title="Cliente iniciando uma nova jornada de compra"
+                    className="inline-flex items-center gap-0.5 rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-amber-700"
+                  >
+                    <Sparkles className="w-2.5 h-2.5" />
+                    Recompra
+                  </span>
+                )}
+                {card.isReturning && !card.isRepurchase && (
+                  <span
+                    title="Contato antigo que voltou a falar após mais de 30 dias"
+                    className="inline-flex items-center gap-0.5 rounded-full bg-sky-50 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-sky-700"
+                  >
+                    <Sparkles className="w-2.5 h-2.5" />
+                    Retornou
+                  </span>
+                )}
               </div>
             )}
 
