@@ -2190,35 +2190,48 @@ export default function CRM() {
 
       {/* Board area */}
       <main className="flex-1 min-h-0 flex flex-col">
-        <KanbanBoard
-          columns={filteredColumns}
-          onCardClick={handleCardClick}
-          onDeleteColumn={handleRequestDelete}
-          onAddColumn={() => openAddAt(null)}
-          onRenameColumn={handleRequestRename}
-          onAddBefore={handleAddBefore}
-          onAddAfter={handleAddAfter}
-          draggedCardId={draggedCardId}
-          draggedFromColumnId={draggedFromColumnId}
-          validTargetColumnIds={validTargetColumnIds}
-          onCardDragStart={handleCardDragStart}
-          onCardDragEnd={handleCardDragEnd}
-          onDropOnColumn={handleDropOnColumn}
-          onTemperatureChange={handleTemperatureChange}
-          onCardDelete={handleCardDelete}
-          onCardAssignAgent={handleCardAssignAgent}
-          onCardCreateQuote={handleCardCreateQuote}
-          onCardViewConversation={handleCardViewConversation}
-          onCardEdit={handleCardEdit}
-          onCardArchive={handleCardArchive}
-          onCardRenameClient={handleCardRenameClient}
-          agentOptions={responsibleOptions}
-          focusCardId={focusCardId}
-          isLoading={tab === "sales" && isLoadingLeads}
-          collapsibleColumnIds={tab === "sales" ? COLLAPSIBLE_COLUMN_IDS : undefined}
-          collapsedColumnIds={collapsedCols}
-          onToggleColumnCollapse={toggleColumnCollapse}
-        />
+        {viewMode === "kanban" ? (
+          <KanbanBoard
+            columns={filteredColumns}
+            onCardClick={handleCardClick}
+            onDeleteColumn={handleRequestDelete}
+            onAddColumn={() => openAddAt(null)}
+            onRenameColumn={handleRequestRename}
+            onAddBefore={handleAddBefore}
+            onAddAfter={handleAddAfter}
+            draggedCardId={draggedCardId}
+            draggedFromColumnId={draggedFromColumnId}
+            validTargetColumnIds={validTargetColumnIds}
+            onCardDragStart={handleCardDragStart}
+            onCardDragEnd={handleCardDragEnd}
+            onDropOnColumn={handleDropOnColumn}
+            onTemperatureChange={handleTemperatureChange}
+            onCardDelete={handleCardDelete}
+            onCardAssignAgent={handleCardAssignAgent}
+            onCardCreateQuote={handleCardCreateQuote}
+            onCardViewConversation={handleCardViewConversation}
+            onCardEdit={handleCardEdit}
+            onCardArchive={handleCardArchive}
+            onCardRenameClient={handleCardRenameClient}
+            agentOptions={responsibleOptions}
+            focusCardId={focusCardId}
+            isLoading={tab === "sales" && isLoadingLeads}
+            collapsibleColumnIds={tab === "sales" ? COLLAPSIBLE_COLUMN_IDS : undefined}
+            collapsedColumnIds={collapsedCols}
+            onToggleColumnCollapse={toggleColumnCollapse}
+          />
+        ) : (
+          <CRMTableView
+            columns={filteredColumns}
+            onCardClick={handleCardClick}
+            onCardAssignAgent={handleCardAssignAgent}
+            onCardCreateQuote={handleCardCreateQuote}
+            onCardViewConversation={handleCardViewConversation}
+            onCardEdit={handleCardEdit}
+            onCardArchive={handleCardArchive}
+            agentOptions={responsibleOptions}
+          />
+        )}
       </main>
 
 
