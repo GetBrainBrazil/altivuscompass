@@ -762,6 +762,14 @@ export default function LeadDetail() {
             contactName={form.full_name || card?.clientName || "Contato"}
             phone={form.phone || card?.phone || null}
             contactId={contactId}
+            leadId={leadId}
+            formSnapshot={{
+              destination: form.destination,
+              travel_date_label: form.travel_date_label,
+              budget_estimate: form.budget_estimate,
+              travelers_count: form.travelers_count,
+            }}
+            onApplyNoteSuggestion={(s) => updateField(s.field as any, s.value as any)}
           />
         </div>
       )}

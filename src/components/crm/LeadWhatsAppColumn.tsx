@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LeadQuickNote, type QuickNoteFormSnapshot, type QuickNoteSuggestion } from "@/components/crm/LeadQuickNote";
 
 type Sender = "lead" | "ai" | "agent";
 type Status = "ai" | "human";
@@ -25,6 +26,9 @@ interface Props {
   contactName: string;
   phone: string | null;
   contactId?: string | null;
+  leadId?: string | null;
+  formSnapshot?: QuickNoteFormSnapshot;
+  onApplyNoteSuggestion?: (s: QuickNoteSuggestion) => void;
 }
 
 const formatTime = (iso: string) =>
@@ -47,7 +51,7 @@ const getInitials = (name: string) =>
 
 const onlyDigits = (s: string) => (s || "").replace(/\D/g, "");
 
-export function LeadWhatsAppColumn({ onClose, contactName, phone, contactId }: Props) {
+export function LeadWhatsAppColumn({ onClose, contactName, phone, contactId, leadId, formSnapshot, onApplyNoteSuggestion }: Props) {
   const qc = useQueryClient();
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -271,6 +275,15 @@ export function LeadWhatsAppColumn({ onClose, contactName, phone, contactId }: P
           <X className="h-4 w-4" />
         </Button>
       </div>
+
+      {/* Nota rápida — fixa abaixo do header */}
+      {leadId && onApplyNoteSuggestion && (
+        <LeadQuickNote
+          leadId={leadId}
+          form={formSnapshot ?? {}}
+          onApplySuggestion={onApplyNoteSuggestion}
+        />
+      )}
 
       {/* Messages */}
       <div className="flex-1 min-h-0 bg-slate-50 dark:bg-slate-900/40">
