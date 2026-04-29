@@ -625,6 +625,14 @@ export default function LeadDetail() {
                   </div>
                 </Section>
 
+                {form.source === "whatsapp" && (
+                  <AISummarySection
+                    aiData={aiData}
+                    form={form}
+                    onApply={(field, value) => updateField(field as any, value as any)}
+                  />
+                )}
+
                 <Section title="Interesse">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <Field
