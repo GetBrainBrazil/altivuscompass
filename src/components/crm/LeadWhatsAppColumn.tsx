@@ -270,15 +270,6 @@ export function LeadWhatsAppColumn({ onClose, contactName, phone, contactId, lea
             {statusBadge()}
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 -mr-1 text-muted-foreground hover:text-foreground"
-          onClick={onClose}
-          aria-label="Fechar conversa"
-        >
-          <X className="h-4 w-4" />
-        </Button>
       </div>
 
       {/* Tabs: Conversa / Tarefas */}
