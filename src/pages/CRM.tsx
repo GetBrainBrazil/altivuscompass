@@ -1680,6 +1680,19 @@ export default function CRM() {
   const [filterLevel, setFilterLevel] = useState<string>("all");
   const [filterSource, setFilterSource] = useState<string>("all");
 
+  // View mode (kanban | table) — persistido em localStorage
+  const [viewMode, setViewMode] = useState<"kanban" | "table">(() => {
+    if (typeof window === "undefined") return "kanban";
+    const saved = window.localStorage.getItem("crm:viewMode");
+    return saved === "table" ? "table" : "kanban";
+  });
+  const handleViewModeChange = (mode: "kanban" | "table") => {
+    setViewMode(mode);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("crm:viewMode", mode);
+    }
+  };
+
   const agentOptions = useMemo(() => {
     // Lista de consultores cadastrados na plataforma + nomes que já aparecem
     const map = new Map<string, string>();
