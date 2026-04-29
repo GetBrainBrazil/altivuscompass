@@ -781,15 +781,12 @@ export function KanbanCard({
               >
                 {card.agent?.name || "Sem responsável"}
               </span>
-              {value ? (
-                <span className="text-[12px] font-medium text-foreground font-body shrink-0 tabular-nums">
-                  {value}
-                </span>
-              ) : (
-                <span className="text-[11px] italic text-muted-foreground/70 font-body shrink-0">
-                  Sem valor
-                </span>
-              )}
+              <span className={cn(
+                "font-body shrink-0 tabular-nums ml-auto",
+                value ? "text-[12px] font-medium text-foreground" : "text-[11px] text-muted-foreground/60",
+              )}>
+                {value ?? "—"}
+              </span>
             </div>
           </>
         )}
