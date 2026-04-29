@@ -437,7 +437,10 @@ export default function CRM() {
         .is("converted_client_id", null)
         .order("created_at", { ascending: false })
         .limit(100);
-      if (error || cancelled || !data) return;
+      if (error || cancelled || !data) {
+        if (!cancelled) setIsLoadingLeads(false);
+        return;
+      }
 
       // Mapa user_id → { name, avatarUrl } para popular agent
       const assignedIds = Array.from(
