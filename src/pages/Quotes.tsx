@@ -1451,6 +1451,19 @@ export default function Quotes() {
     setCoverFile(null);
     setCoverPreview(null);
     initialSnapshotRef.current = "";
+
+    // Se este editor foi aberto a partir de outra página (ex.: card do CRM),
+    // voltar para a origem em vez de ficar no pipeline de cotações.
+    try {
+      const raw = sessionStorage.getItem("quotes:returnTo");
+      if (raw) {
+        sessionStorage.removeItem("quotes:returnTo");
+        const parsed = JSON.parse(raw) as { url?: string; ts?: number };
+        if (parsed?.url && parsed?.ts && Date.now() - parsed.ts < 5 * 60_000) {
+          navigate(parsed.url);
+        }
+      }
+    } catch { /* ignore */ }
   };
 
   const closeDialog = () => {
