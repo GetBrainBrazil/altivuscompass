@@ -16,6 +16,7 @@ import {
   X,
   ListChecks,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { LeadQuickNote, type QuickNoteFormSnapshot, type QuickNoteSuggestion } from "@/components/crm/LeadQuickNote";
 import { LeadTasksTab } from "@/components/crm/LeadTasksTab";
@@ -55,6 +56,7 @@ const onlyDigits = (s: string) => (s || "").replace(/\D/g, "");
 
 export function LeadWhatsAppColumn({ onClose, contactName, phone, contactId, leadId, formSnapshot, onApplyNoteSuggestion }: Props) {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -404,12 +406,11 @@ export function LeadWhatsAppColumn({ onClose, contactName, phone, contactId, lea
             const target = conversationId
               ? `/service-center?conversation=${conversationId}`
               : "/service-center";
-            window.open(target, "_blank", "noopener,noreferrer");
+            navigate(target);
           }}
         >
           <MessageCircle className="h-4 w-4 mr-2" />
           Ir para a Central de Atendimento
-          <ExternalLink className="h-3.5 w-3.5 ml-2 opacity-80" />
         </Button>
       </div>
         </>
