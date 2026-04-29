@@ -1255,8 +1255,33 @@ export default function Quotes() {
 
   // Open editor pre-filled when navigated from elsewhere (e.g. Clients page, CRM)
   useEffect(() => {
-    const state = (location.state ?? {}) as { newQuote?: boolean; clientId?: string; leadId?: string };
-    if (!state.newQuote) return;
+    const state = (location.state ?? {}) as { newQuote?: boolean; clientId?: string; leadId?: string; editQuoteId?: string };
+
+    // Edit existing quote via in-memory state (no flash, no URL param)
+    if (state.editQuoteId) {
+      (async () => {
+        const { data, error } = await supabase
+          .from("quotes")
+          .select("*, clients(full_name)")
+          .eq("id", state.editQuoteId)
+          .maybeSingle();
+        if (error || !data) {
+          toast({ title: "Cotação não encontrada", description: error?.message ?? "", variant: "destructive" });
+          setExternalEditPending(false);
+          navigate(location.pathname, { replace: true, state: {} });
+          return;
+        }
+        openEdit({ ...(data as any), client_name: (data as any).clients?.full_name } as Quote);
+        navigate(location.pathname, { replace: true, state: {} });
+      })();
+      return;
+    }
+
+    if (!state.newQuote) {
+      // Nothing external pending; release the placeholder if it was set on initial render.
+      if (externalEditPending && !dialogOpen) setExternalEditPending(false);
+      return;
+    }
 
     if (state.leadId) {
       // Prefill a partir do lead vindo do CRM
