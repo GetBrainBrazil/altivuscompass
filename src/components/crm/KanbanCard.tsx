@@ -710,27 +710,25 @@ export function KanbanCard({
           </div>
         ) : (
           <>
-            {/* Linha 2: destino · data da viagem */}
-            <div className="min-h-[14px] mb-1 flex items-center gap-1.5 flex-wrap">
-              {card.destination || card.travelDate ? (
-                <p className="text-[11px] text-muted-foreground font-body truncate">
-                  {[card.destination, card.travelDate].filter(Boolean).join(" · ")}
-                </p>
-              ) : (
-                <p className="text-[11px] italic text-muted-foreground/60 font-body truncate">
-                  Destino não definido
-                </p>
-              )}
-              {isBoardingSoon && (
-                <span
-                  title={`Embarque em ${daysToTravel} dia(s)`}
-                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-destructive/15 text-destructive"
-                >
-                  <Plane className="w-3 h-3" />
-                  Embarque próximo
-                </span>
-              )}
-            </div>
+            {/* Linha 2: destino · data da viagem (oculta se vazio) */}
+            {(card.destination || card.travelDate || isBoardingSoon) && (
+              <div className="mb-1 flex items-center gap-1.5 flex-wrap">
+                {(card.destination || card.travelDate) && (
+                  <p className="text-[11px] text-muted-foreground font-body truncate">
+                    {[card.destination, card.travelDate].filter(Boolean).join(" · ")}
+                  </p>
+                )}
+                {isBoardingSoon && (
+                  <span
+                    title={`Embarque em ${daysToTravel} dia(s)`}
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-destructive/15 text-destructive"
+                  >
+                    <Plane className="w-3 h-3" />
+                    Embarque próximo
+                  </span>
+                )}
+              </div>
+            )}
 
             {/* AI summary */}
             {card.isAILead && card.aiSummary && (
