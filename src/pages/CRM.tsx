@@ -1565,8 +1565,43 @@ export default function CRM() {
     setArchiveTarget(null);
   };
 
+  // Renomear o contato inline no card. Atualiza leads.full_name (trigger
+  // sync_contact_from_lead propaga para contacts → reflete na Central, CRM e
+  // listagens). Para o nome aparecer imediatamente, também atualizamos o estado
+  // local do board.
+  const handleCardRenameClient = async (card: KanbanCardData, newName: string) => {
+    const finalName = newName.trim();
+    if (!finalName) return;
+    const leadId = extractLeadId(card.id);
+    if (!leadId) {
+      toast.error("Card sem lead vinculado.");
+      return;
+    }
+    const { error } = await supabase
+      .from("leads")
+      .update({ full_name: finalName } as any)
+      .eq("id", leadId);
+    if (error) {
+      console.error("[CRM] rename lead error:", error);
+      toast.error("Não foi possível salvar o nome.");
+      throw error;
+    }
+    setSalesColumns((prev) =>
+      prev.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) => (c.id === card.id ? { ...c, clientName: finalName } : c)),
+      })),
+    );
+    setOpsColumns((prev) =>
+      prev.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) => (c.id === card.id ? { ...c, clientName: finalName } : c)),
+      })),
+    );
+    toast.success("Nome atualizado.");
+  };
 
-  const handleConfirmAssign = async () => {
+
     if (!assignCardId || !assignTargetColumn) return;
     const responsible = responsibleOptions.find((r) => r.user_id === selectedResponsibleId);
     if (!responsible) {
