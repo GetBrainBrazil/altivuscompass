@@ -97,6 +97,8 @@ function KanbanBoard({
   onAddBefore,
   onAddAfter,
   draggedCardId,
+  draggedFromColumnId,
+  validTargetColumnIds,
   onCardDragStart,
   onCardDragEnd,
   onDropOnColumn,
@@ -116,9 +118,11 @@ function KanbanBoard({
   onAddBefore: (columnId: string) => void;
   onAddAfter: (columnId: string) => void;
   draggedCardId: string | null;
+  draggedFromColumnId?: string | null;
+  validTargetColumnIds?: Set<string> | null;
   onCardDragStart: (card: KanbanCardData) => void;
   onCardDragEnd: () => void;
-  onDropOnColumn: (columnId: string) => void;
+  onDropOnColumn: (columnId: string, targetIndex?: number) => void;
   onTemperatureChange: (card: KanbanCardData, next: LeadTemperature) => void;
   onCardDelete?: (card: KanbanCardData) => void;
   focusCardId?: string | null;
@@ -130,31 +134,41 @@ function KanbanBoard({
   return (
     <div className="flex-1 min-h-0 mt-4 pb-5 overflow-x-auto overflow-y-hidden scrollbar-elegant [transform:scaleY(-1)]">
       <div className="flex gap-2 px-6 py-2 min-w-max h-full items-stretch [transform:scaleY(-1)]">
-        {columns.map((col, idx) => (
-          <KanbanColumnCard
-            key={col.id}
-            column={col}
-            dotColor={STAGE_DOT_COLORS[idx % STAGE_DOT_COLORS.length]}
-            onCardClick={onCardClick}
-            onDelete={() => onDeleteColumn(col.id)}
-            onRename={() => onRenameColumn(col.id)}
-            onAddBefore={() => onAddBefore(col.id)}
-            onAddAfter={() => onAddAfter(col.id)}
-            draggedCardId={draggedCardId}
-            onCardDragStart={onCardDragStart}
-            onCardDragEnd={onCardDragEnd}
-            onDropOnColumn={onDropOnColumn}
-            onTemperatureChange={onTemperatureChange}
-            onCardDelete={onCardDelete}
-            focusCardId={focusCardId}
-            isLoading={isLoading}
-            collapsible={collapsibleColumnIds?.has(col.id) ?? false}
-            collapsed={collapsedColumnIds?.has(col.id) ?? false}
-            onToggleCollapse={
-              onToggleColumnCollapse ? () => onToggleColumnCollapse(col.id) : undefined
-            }
-          />
-        ))}
+        {columns.map((col, idx) => {
+          const isValidTarget =
+            !!draggedCardId &&
+            (validTargetColumnIds ? validTargetColumnIds.has(col.id) : true);
+          const isInvalidTarget = !!draggedCardId && !isValidTarget;
+          const isSourceColumn = !!draggedCardId && col.id === draggedFromColumnId;
+          return (
+            <KanbanColumnCard
+              key={col.id}
+              column={col}
+              dotColor={STAGE_DOT_COLORS[idx % STAGE_DOT_COLORS.length]}
+              onCardClick={onCardClick}
+              onDelete={() => onDeleteColumn(col.id)}
+              onRename={() => onRenameColumn(col.id)}
+              onAddBefore={() => onAddBefore(col.id)}
+              onAddAfter={() => onAddAfter(col.id)}
+              draggedCardId={draggedCardId}
+              isValidTarget={isValidTarget}
+              isInvalidTarget={isInvalidTarget}
+              isSourceColumn={isSourceColumn}
+              onCardDragStart={onCardDragStart}
+              onCardDragEnd={onCardDragEnd}
+              onDropOnColumn={onDropOnColumn}
+              onTemperatureChange={onTemperatureChange}
+              onCardDelete={onCardDelete}
+              focusCardId={focusCardId}
+              isLoading={isLoading}
+              collapsible={collapsibleColumnIds?.has(col.id) ?? false}
+              collapsed={collapsedColumnIds?.has(col.id) ?? false}
+              onToggleCollapse={
+                onToggleColumnCollapse ? () => onToggleColumnCollapse(col.id) : undefined
+              }
+            />
+          );
+        })}
         <AddColumnButton onClick={onAddColumn} />
       </div>
     </div>
