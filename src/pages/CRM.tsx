@@ -1050,7 +1050,7 @@ export default function CRM() {
     toTitle: string;
     leadId: string | null;
   };
-  type QuoteOption = { id: string; title: string; stage: string };
+  type QuoteOption = { id: string; title: string; stage: string; destination?: string | null; total_value?: number | null };
   type Issue = {
     title: string;
     detail: string;
