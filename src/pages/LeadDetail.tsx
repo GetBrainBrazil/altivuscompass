@@ -93,6 +93,28 @@ export default function LeadDetail() {
 
   const leadId = id?.startsWith("lead-") ? id.slice("lead-".length) : null;
 
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    if (!id) return "main";
+    try {
+      return sessionStorage.getItem(`crm:lead:${id}:tab`) || "main";
+    } catch {
+      return "main";
+    }
+  });
+
+  // Re-sincroniza ao voltar para a tela (ex.: ao fechar o editor de cotações)
+  useEffect(() => {
+    if (!id) return;
+    const onFocus = () => {
+      try {
+        const v = sessionStorage.getItem(`crm:lead:${id}:tab`);
+        if (v) setActiveTab(v);
+      } catch {}
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [id]);
+
   // Marca a origem para que o editor de cotações volte para o card do CRM ao fechar
   // e para que a sidebar continue destacando "CRM" enquanto a cotação estiver aberta.
   const setQuotesReturnTo = () => {
