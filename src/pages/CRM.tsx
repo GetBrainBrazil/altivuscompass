@@ -1602,6 +1602,7 @@ export default function CRM() {
   };
 
 
+  const handleConfirmAssign = async () => {
     if (!assignCardId || !assignTargetColumn) return;
     const responsible = responsibleOptions.find((r) => r.user_id === selectedResponsibleId);
     if (!responsible) {
