@@ -422,7 +422,7 @@ export function KanbanCard({
           "border-sky-300/70 ring-1 ring-sky-200/60 bg-gradient-to-br from-sky-50/40 to-transparent",
       )}
     >
-      <div className="px-2.5 py-2">
+      <div className="p-4">
         {/* Topo: nome + badge + menu no canto superior direito */}
         <div className="flex items-start justify-between gap-1.5 mb-0.5">
           {isEditingName ? (
@@ -785,7 +785,7 @@ export function KanbanCard({
             )}
 
             {/* Linha 3: responsável (avatar + nome) + valor estimado */}
-            <div className="flex items-center gap-1.5 pt-1.5 border-t border-border/60 -mx-2.5 px-2.5">
+            <div className="flex items-center gap-1.5 pt-2 border-t border-border/60 -mx-4 px-4">
               {card.agent?.avatarUrl ? (
                 <img
                   src={card.agent.avatarUrl}
