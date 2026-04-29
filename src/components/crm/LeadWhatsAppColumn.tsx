@@ -279,6 +279,38 @@ export function LeadWhatsAppColumn({ onClose, contactName, phone, contactId, lea
         </Button>
       </div>
 
+      {/* Tabs: Conversa / Tarefas */}
+      <div className="flex items-center gap-1 px-2 pt-2 pb-0 border-b border-border bg-background">
+        <button
+          type="button"
+          onClick={() => setActiveTab("chat")}
+          className={cn(
+            "flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded-t-md text-xs font-medium border-b-2 transition-colors",
+            activeTab === "chat"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <MessageCircle className="h-3.5 w-3.5" /> Conversa
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("tasks")}
+          className={cn(
+            "flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded-t-md text-xs font-medium border-b-2 transition-colors",
+            activeTab === "tasks"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <ListChecks className="h-3.5 w-3.5" /> Tarefas
+        </button>
+      </div>
+
+      {activeTab === "tasks" ? (
+        <LeadTasksTab contactId={contactId} contactName={contactName} />
+      ) : (
+        <>
       {/* Nota rápida — fixa abaixo do header */}
       {leadId && onApplyNoteSuggestion && (
         <LeadQuickNote
