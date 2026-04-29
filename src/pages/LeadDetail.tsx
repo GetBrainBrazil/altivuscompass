@@ -390,13 +390,8 @@ export default function LeadDetail() {
   const isClient = contactLevel === "cliente";
 
   return (
-    <div className="flex min-h-[calc(100vh-0px)] bg-slate-50 dark:bg-slate-950">
-      <div
-        className={cn(
-          "flex flex-col min-w-0 transition-[width] duration-300 ease-out",
-          waPanelOpen ? "w-[70%]" : "w-full",
-        )}
-      >
+    <div className="grid grid-cols-1 lg:grid-cols-[68fr_32fr] min-h-[calc(100vh-0px)] bg-slate-50 dark:bg-slate-950">
+      <div className="flex flex-col min-w-0">
       {/* Header */}
       <header className="border-b border-border bg-background">
         <div className="px-6 lg:px-10 pt-6 pb-5">
