@@ -363,6 +363,45 @@ export function ClientPromotionDialog({
           </div>
         ) : (
           <div className="space-y-5 pt-2">
+            {/* Resumo da venda */}
+            {saleSummary && (
+              <section className="rounded-xl border border-primary/20 bg-primary/5 dark:bg-primary/10 p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Receipt className="h-4 w-4 text-primary" />
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-primary font-body">
+                    Resumo da venda
+                  </h4>
+                </div>
+                <p className="text-sm font-semibold text-foreground font-display leading-tight">
+                  {saleSummary.title}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-xs font-body">
+                  <SummaryRow icon={MapPin} label="Destino" value={saleSummary.destination || "—"} />
+                  <SummaryRow
+                    icon={Calendar}
+                    label="Datas"
+                    value={fmtDateRange(saleSummary.travelDateStart, saleSummary.travelDateEnd)}
+                  />
+                  <SummaryRow
+                    icon={DollarSign}
+                    label="Valor total"
+                    value={fmtBRL(saleSummary.totalValue)}
+                    highlight
+                  />
+                  <SummaryRow
+                    icon={Users}
+                    label="Viajantes"
+                    value={saleSummary.travelersCount != null ? String(saleSummary.travelersCount) : "—"}
+                  />
+                  <SummaryRow
+                    icon={User}
+                    label="Consultor"
+                    value={saleSummary.agentName || "Não atribuído"}
+                  />
+                </div>
+              </section>
+            )}
+
             {/* Contact */}
             <section className="space-y-3">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-body">
