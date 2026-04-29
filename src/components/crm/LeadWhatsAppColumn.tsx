@@ -16,6 +16,7 @@ import {
   X,
   ListChecks,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { LeadQuickNote, type QuickNoteFormSnapshot, type QuickNoteSuggestion } from "@/components/crm/LeadQuickNote";
 import { LeadTasksTab } from "@/components/crm/LeadTasksTab";
