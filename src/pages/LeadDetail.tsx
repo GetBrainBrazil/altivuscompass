@@ -747,7 +747,24 @@ export default function LeadDetail() {
               </TabsContent>
 
               <TabsContent value="quotes" className="mt-0">
-                <Section title={`Cotações vinculadas (${quotesCount})`}>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-xs uppercase tracking-[0.18em] font-body text-muted-foreground">
+                      Cotações vinculadas ({quotesCount})
+                    </h3>
+                    {quotesCount > 0 && (
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          navigate("/quotes", { state: { newQuote: true, leadId } })
+                        }
+                      >
+                        <Plus className="h-4 w-4 mr-1.5" />
+                        Nova Cotação
+                      </Button>
+                    )}
+                  </div>
+
                   {quotesCount === 0 ? (
                     <EmptyState
                       icon={FileText}
@@ -756,7 +773,9 @@ export default function LeadDetail() {
                       action={
                         <Button
                           size="sm"
-                          onClick={() => navigate(`/quotes?new=1&lead_id=${leadId}`)}
+                          onClick={() =>
+                            navigate("/quotes", { state: { newQuote: true, leadId } })
+                          }
                         >
                           <Plus className="h-4 w-4 mr-1.5" />
                           Nova Cotação
@@ -764,16 +783,33 @@ export default function LeadDetail() {
                       }
                     />
                   ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/quotes?lead_id=${leadId}`)}
-                    >
-                      <ExternalLink className="h-4 w-4 mr-1.5" />
-                      Ver todas as cotações
-                    </Button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                      {leadQuotes.map((q) => (
+                        <QuoteKanbanCard
+                          key={q.id}
+                          quote={{
+                            id: q.id,
+                            title: q.title,
+                            destination: q.destination,
+                            stage: q.stage,
+                            total_value: q.total_value,
+                            travel_date_start: q.travel_date_start,
+                            travel_date_end: q.travel_date_end,
+                            quote_validity: q.quote_validity,
+                            created_at: q.created_at,
+                            conclusion_type: q.conclusion_type,
+                            archived_at: q.archived_at,
+                          }}
+                          assigneeName={form.full_name || card?.clientName || null}
+                          onClick={() => navigate(`/quotes?edit=${q.id}`)}
+                          onDragStart={() => {}}
+                          onDragEnd={() => {}}
+                          menu={<span aria-hidden />}
+                        />
+                      ))}
+                    </div>
                   )}
-                </Section>
+                </div>
               </TabsContent>
 
 
