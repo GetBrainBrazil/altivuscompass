@@ -674,6 +674,7 @@ export function KanbanCard({
               ) : null}
             </div>
           </div>
+        </div>
 
         {/* Badge de nível do contato */}
         {(card.contactLevel || card.isRepurchase || card.isReturning) && (
