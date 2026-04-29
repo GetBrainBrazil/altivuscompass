@@ -138,6 +138,26 @@ const TEMP_CLASSES: Record<LeadTemperature, string> = {
   cold: "text-slate-400",
 };
 
+/**
+ * Formata telefone E.164 (ex: "5511987654321") em formato BR amigável:
+ * "+55 (11) 98765-4321". Para números não-BR ou inválidos, retorna como veio
+ * com prefixo "+".
+ */
+function formatPhone(raw?: string): string | null {
+  if (!raw) return null;
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return null;
+  // Brasil: 55 + DDD(2) + 8 ou 9 dígitos
+  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) {
+    const ddd = digits.slice(2, 4);
+    const rest = digits.slice(4);
+    const mid = rest.length === 9 ? rest.slice(0, 5) : rest.slice(0, 4);
+    const end = rest.length === 9 ? rest.slice(5) : rest.slice(4);
+    return `+55 (${ddd}) ${mid}-${end}`;
+  }
+  return `+${digits}`;
+}
+
 function formatBRL(value?: number) {
   if (value == null) return null;
   return value.toLocaleString("pt-BR", {
