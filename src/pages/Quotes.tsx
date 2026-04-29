@@ -1400,6 +1400,16 @@ export default function Quotes() {
     if (dialogOpen && externalEditPending) setExternalEditPending(false);
   }, [dialogOpen, externalEditPending]);
 
+  // Safety net: se por algum motivo o editor não abrir em até 4s, libera o
+  // placeholder para evitar tela travada.
+  useEffect(() => {
+    if (!externalEditPending) return;
+    const t = window.setTimeout(() => {
+      setExternalEditPending(false);
+    }, 4000);
+    return () => window.clearTimeout(t);
+  }, [externalEditPending]);
+
   const openEdit = (q: Quote) => {
     setIsHydratingEditQuote(true);
     setEditingQuote(q);
