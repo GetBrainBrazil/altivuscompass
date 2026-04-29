@@ -170,7 +170,7 @@ export default function LeadDetail() {
     let cancelled = false;
     (async () => {
       const { data } = await supabase
-        .from("profiles")
+        .from("profiles_basic")
         .select("user_id, full_name, email, avatar_url")
         .order("full_name", { ascending: true });
       if (cancelled || !data) return;
