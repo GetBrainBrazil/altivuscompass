@@ -557,7 +557,16 @@ export default function LeadDetail() {
         <div className="flex flex-col min-w-0">
       {/* Tabs + content */}
       <main className="flex-1 min-h-0">
-        <Tabs defaultValue="main" className="flex flex-col">
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => {
+            setActiveTab(v);
+            if (id) {
+              try { sessionStorage.setItem(`crm:lead:${id}:tab`, v); } catch {}
+            }
+          }}
+          className="flex flex-col"
+        >
           {/* Wrapper sticky agrupando Stepper + Abas */}
           <div className="sticky z-20 bg-slate-50 dark:bg-slate-900 pt-4 pb-2 w-full shadow-sm" style={{ top: stickyTabsTop }}>
             {/* Stepper — estilo Cotações */}
