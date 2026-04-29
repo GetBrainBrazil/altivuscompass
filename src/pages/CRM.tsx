@@ -1208,6 +1208,66 @@ export default function CRM() {
     }
   };
 
+  // Marca a cotação selecionada como "Enviada" e move o card para "Proposta Enviada".
+  const handleSendQuoteAndMove = async () => {
+    if (!pendingMove) return;
+    const sendIssue = pendingIssues.find(
+      (i) => i.sendQuoteOptions && i.sendQuoteOptions.length > 0,
+    );
+    const quote = sendIssue?.sendQuoteOptions?.find((q) => q.id === selectedQuoteToSend);
+    if (!quote) {
+      toast.error("Selecione qual cotação está sendo enviada.");
+      return;
+    }
+    setSendingQuoteAndMoving(true);
+    try {
+      const { error: updErr } = await supabase
+        .from("quotes")
+        .update({ stage: "sent" })
+        .eq("id", quote.id);
+      if (updErr) throw updErr;
+
+      // Identifica usuário para a timeline
+      const { data: { user } } = await supabase.auth.getUser();
+      let userName = user?.email ?? null;
+      if (user?.id) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (prof?.full_name) userName = prof.full_name;
+      }
+
+      // Registra na timeline do contato
+      if (pendingMove.leadId) {
+        await supabase.from("contact_events" as any).insert({
+          lead_id: pendingMove.leadId,
+          event_type: "quote_sent",
+          title: "Cotação marcada como enviada",
+          description: `Cotação "${quote.title}" marcada como enviada e card movido para Proposta Enviada por ${userName ?? "Usuário"}.`,
+          link: `/quotes?id=${quote.id}`,
+          is_manual: false,
+          user_id: user?.id ?? null,
+          user_name: userName,
+          metadata: { quote_id: quote.id, quote_title: quote.title },
+        });
+      }
+
+      const move = pendingMove;
+      setPendingMove(null);
+      setPendingIssues([]);
+      setSelectedQuoteToSend("");
+      performMove(move, false);
+      toast.success(`Cotação "${quote.title}" enviada e card movido.`);
+    } catch (err) {
+      console.error("[handleSendQuoteAndMove] error:", err);
+      toast.error("Não foi possível enviar a cotação. Tente novamente.");
+    } finally {
+      setSendingQuoteAndMoving(false);
+    }
+  };
+
   // Confirma a perda: registra motivo no banco e move o card para "Perdidos"
   const confirmLost = async () => {
     if (!lostMove) {
