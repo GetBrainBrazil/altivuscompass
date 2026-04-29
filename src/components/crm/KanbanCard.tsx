@@ -82,6 +82,8 @@ export type KanbanCardData = {
   contactLevel?: ContactLevel;
   /** Timestamp ISO de quando o card entrou na coluna atual. Usado para badge "Xd na etapa". */
   stageEnteredAt?: string;
+  /** Timestamp ISO do último contato com o lead (mensagem, ligação, etc). */
+  lastContactAt?: string;
   /** Temperatura do lead (default: "cold"). */
   temperature?: LeadTemperature;
   /** Cliente já existente iniciando uma nova jornada de compra. */
@@ -228,9 +230,12 @@ export function KanbanCard({
   const alert = card.alert;
   const temperature: LeadTemperature = card.temperature ?? "cold";
   const stageDays = daysSince(card.stageEnteredAt);
+  const lastContactDays = daysSince(card.lastContactAt);
   const daysToTravel = daysUntil(card.travelDateISO);
   const isBoardingSoon = daysToTravel !== null && daysToTravel >= 0 && daysToTravel <= 30;
   const nameIsPhone = isPhoneLikeName(card.clientName);
+  const isIncomplete =
+    !card.destination && !card.travelDate && !card.agent && !card.estimatedValue;
 
   // ── Edição inline do nome (quando ainda é apenas um telefone) ─────────────
   const [isEditingName, setIsEditingName] = useState(false);
@@ -323,13 +328,20 @@ export function KanbanCard({
     );
   }
 
+  const tempBorder: Record<LeadTemperature, string> = {
+    hot: "border-l-red-500",
+    warm: "border-l-orange-400",
+    cold: "border-l-slate-300",
+  };
   const leftBorder = alert?.tone === "destructive"
     ? "border-l-destructive"
     : card.isRepurchase
       ? "border-l-amber-400"
       : card.isReturning
         ? "border-l-sky-400"
-        : stageBorderClass;
+        : card.temperature
+          ? tempBorder[card.temperature]
+          : "border-l-transparent";
   const noAgent = !card.agent;
 
   return (
@@ -649,92 +661,118 @@ export function KanbanCard({
           </div>
         )}
 
-        {/* Linha de contexto: destino · data */}
-        <div className="min-h-[14px] mb-1.5 flex items-center gap-1.5 flex-wrap">
-          {(card.destination || card.travelDate) && (
-            <p className="text-[11px] text-muted-foreground font-body truncate">
-              {[card.destination, card.travelDate].filter(Boolean).join(" · ")}
+        {isIncomplete ? (
+          /* Estado incompleto: CTA central discreto */
+          <div className="py-3 text-center">
+            <p className="text-[11px] italic text-muted-foreground/80 font-body leading-snug">
+              Dados incompletos — clique para completar
             </p>
-          )}
-          {isBoardingSoon && (
-            <span
-              title={`Embarque em ${daysToTravel} dia(s)`}
-              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-destructive/15 text-destructive"
-            >
-              <Plane className="w-3 h-3" />
-              Embarque próximo
-            </span>
-          )}
-        </div>
+          </div>
+        ) : (
+          <>
+            {/* Linha 2: destino · data da viagem */}
+            <div className="min-h-[14px] mb-1 flex items-center gap-1.5 flex-wrap">
+              {card.destination || card.travelDate ? (
+                <p className="text-[11px] text-muted-foreground font-body truncate">
+                  {[card.destination, card.travelDate].filter(Boolean).join(" · ")}
+                </p>
+              ) : (
+                <p className="text-[11px] italic text-muted-foreground/60 font-body truncate">
+                  Destino não definido
+                </p>
+              )}
+              {isBoardingSoon && (
+                <span
+                  title={`Embarque em ${daysToTravel} dia(s)`}
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-destructive/15 text-destructive"
+                >
+                  <Plane className="w-3 h-3" />
+                  Embarque próximo
+                </span>
+              )}
+            </div>
 
-        {/* AI summary */}
-        {card.isAILead && card.aiSummary && (
-          <p className="text-[11px] italic text-muted-foreground/80 font-body leading-snug line-clamp-2 mb-2">
-            "{card.aiSummary}"
-          </p>
-        )}
+            {/* AI summary */}
+            {card.isAILead && card.aiSummary && (
+              <p className="text-[11px] italic text-muted-foreground/80 font-body leading-snug line-clamp-2 mb-1.5">
+                "{card.aiSummary}"
+              </p>
+            )}
 
-        {/* Tags compactas */}
-        {card.tags && card.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-2.5">
-            {card.tags.map((tag, i) => (
+            {/* Tags compactas */}
+            {card.tags && card.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-1.5">
+                {card.tags.map((tag, i) => (
+                  <span
+                    key={i}
+                    className={cn(
+                      "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium font-body",
+                      TAG_TONE_CLASSES[tag.tone ?? "slate"],
+                    )}
+                  >
+                    {tag.label}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Linha 3: responsável (avatar + nome) + valor estimado */}
+            <div className="flex items-center gap-1.5 pt-1.5 border-t border-border/60 -mx-2.5 px-2.5">
+              {card.agent?.avatarUrl ? (
+                <img
+                  src={card.agent.avatarUrl}
+                  alt={card.agent.name}
+                  className="shrink-0 w-[18px] h-[18px] rounded-full object-cover"
+                />
+              ) : (
+                <div
+                  className={cn(
+                    "shrink-0 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-semibold",
+                    card.agent ? "bg-primary/10 text-primary" : "bg-destructive/15 text-destructive",
+                  )}
+                  aria-hidden
+                >
+                  {card.agent ? getInitials(card.agent.name) : "?"}
+                </div>
+              )}
               <span
-                key={i}
                 className={cn(
-                  "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium font-body",
-                  TAG_TONE_CLASSES[tag.tone ?? "slate"],
+                  "text-[11px] font-body truncate flex-1 min-w-0",
+                  noAgent ? "text-destructive font-medium" : "text-muted-foreground",
                 )}
               >
-                {tag.label}
+                {card.agent?.name || "Sem responsável"}
               </span>
-            ))}
-          </div>
+              {value ? (
+                <span className="text-[12px] font-medium text-foreground font-body shrink-0 tabular-nums">
+                  {value}
+                </span>
+              ) : (
+                <span className="text-[11px] italic text-muted-foreground/70 font-body shrink-0">
+                  Sem valor
+                </span>
+              )}
+            </div>
+          </>
         )}
 
-        {/* Divisor sutil */}
-        <div className="h-px bg-border/60 -mx-2.5" />
-
-        {/* Rodapé: avatar + responsável + valor */}
-        <div className="flex items-center gap-1.5 pt-1.5">
-          {card.agent?.avatarUrl ? (
-            <img
-              src={card.agent.avatarUrl}
-              alt={card.agent.name}
-              className="shrink-0 w-[18px] h-[18px] rounded-full object-cover"
-            />
-          ) : (
-            <div
-              className={cn(
-                "shrink-0 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-semibold",
-                card.agent ? "bg-primary/10 text-primary" : "bg-destructive/15 text-destructive",
-              )}
-              aria-hidden
-            >
-              {card.agent ? getInitials(card.agent.name) : "?"}
-            </div>
-          )}
-          <span
-            className={cn(
-              "text-[11px] font-body truncate flex-1 min-w-0",
-              noAgent ? "text-destructive font-medium" : "text-muted-foreground",
-            )}
-          >
-            {card.agent?.name || "Sem responsável"}
-          </span>
-          {value ? (
-            <span className="text-[12px] font-medium text-foreground font-body shrink-0 tabular-nums">
-              {value}
-            </span>
-          ) : (
-            <span className="text-[11px] italic text-muted-foreground/70 font-body shrink-0">
-              Sem valor
-            </span>
-          )}
-        </div>
-
-        {/* Linha inferior: dias na etapa (esquerda) + temperatura (direita) */}
+        {/* Rodapé: "há X dias" do último contato (esquerda) + temperatura (direita) */}
         <div className="flex items-center justify-between mt-1.5">
-          {stageDays !== null ? (
+          {lastContactDays !== null ? (
+            <span
+              title={`Último contato há ${lastContactDays} dia(s)`}
+              className={cn(
+                "inline-flex items-center text-[10px] font-medium tabular-nums",
+                lastContactDays >= 14
+                  ? "text-destructive"
+                  : lastContactDays >= 7
+                    ? "text-amber-600"
+                    : "text-muted-foreground",
+              )}
+            >
+              {lastContactDays === 0 ? "hoje" : `há ${lastContactDays}d`}
+            </span>
+          ) : stageDays !== null ? (
             <span
               title={`${stageDays} dia(s) nesta etapa`}
               className={cn(
@@ -748,18 +786,33 @@ export function KanbanCard({
             <span />
           )}
 
-          <button
-            type="button"
-            title={`${TEMP_LABEL[temperature]} (clique para alterar)`}
-            aria-label={`Temperatura: ${TEMP_LABEL[temperature]}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onTemperatureChange?.(card, TEMP_NEXT[temperature]);
-            }}
-            className="inline-flex items-center justify-center w-5 h-5 rounded hover:bg-muted/60 transition-colors"
-          >
-            <Flame className={cn("w-3.5 h-3.5 transition-colors", TEMP_CLASSES[temperature])} />
-          </button>
+          {card.temperature ? (
+            <button
+              type="button"
+              title={`${TEMP_LABEL[temperature]} (clique para alterar)`}
+              aria-label={`Temperatura: ${TEMP_LABEL[temperature]}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onTemperatureChange?.(card, TEMP_NEXT[temperature]);
+              }}
+              className="inline-flex items-center justify-center w-5 h-5 rounded hover:bg-muted/60 transition-colors"
+            >
+              <Flame className={cn("w-3.5 h-3.5 transition-colors", TEMP_CLASSES[temperature])} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              title="Definir temperatura do lead"
+              aria-label="Definir temperatura"
+              onClick={(e) => {
+                e.stopPropagation();
+                onTemperatureChange?.(card, "warm");
+              }}
+              className="inline-flex items-center justify-center w-5 h-5 rounded hover:bg-muted/60 text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+            >
+              <Thermometer className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
     </div>
