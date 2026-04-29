@@ -59,6 +59,7 @@ export function LeadWhatsAppColumn({ onClose, contactName, phone, contactId, lea
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentUserName, setCurrentUserName] = useState<string>("Consultor");
+  const [activeTab, setActiveTab] = useState<"chat" | "tasks">("chat");
 
   // Nome do usuário atual (para exibir abaixo do balão de agente)
   useEffect(() => {
