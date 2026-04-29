@@ -153,8 +153,8 @@ function KanbanBoard({
   onToggleColumnCollapse?: (columnId: string) => void;
 }) {
   return (
-    <div className="flex-1 min-h-0 mt-4 pb-5 overflow-x-auto overflow-y-hidden scrollbar-elegant [transform:scaleY(-1)]">
-      <div className="flex gap-2 px-6 py-2 min-w-max h-full items-stretch [transform:scaleY(-1)]">
+    <div className="flex-1 min-h-0 mt-3 pb-4 overflow-x-auto overflow-y-hidden scrollbar-elegant [transform:scaleY(-1)]">
+      <div className="flex gap-1.5 px-3 py-2 min-w-max h-full items-stretch [transform:scaleY(-1)]">
         {columns.map((col, idx) => {
           const isValidTarget =
             !!draggedCardId &&
@@ -274,7 +274,7 @@ function KanbanColumnCard({
     <div
       className={cn(
         "flex flex-col shrink-0 max-h-full transition-all duration-200",
-        isCollapsed ? "w-[56px]" : "w-[320px]",
+        isCollapsed ? "w-[48px]" : "w-[232px]",
         dimmedInvalid && "opacity-40 pointer-events-none",
       )}
     >
@@ -391,7 +391,7 @@ function KanbanColumnCard({
                 : "border-transparent",
           )}
         >
-          <div className="space-y-3 min-h-[120px] p-1">
+          <div className="space-y-1.5 min-h-[120px] p-1">
             {isLoading && column.cards.length === 0 ? (
               <>
                 <KanbanCardSkeleton />
@@ -492,7 +492,7 @@ function AddColumnButton({ onClick }: { onClick: () => void }) {
       type="button"
       onClick={onClick}
       className={cn(
-        "group flex flex-col items-center justify-center w-[320px] shrink-0 rounded-xl",
+        "group flex flex-col items-center justify-center w-[232px] shrink-0 rounded-xl",
         "min-h-[200px] border-2 border-dashed border-slate-300 dark:border-slate-700",
         "text-muted-foreground hover:text-foreground",
         "hover:border-slate-400 dark:hover:border-slate-600",

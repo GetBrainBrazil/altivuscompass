@@ -388,9 +388,9 @@ export function KanbanCard({
           "border-sky-300/70 ring-1 ring-sky-200/60 bg-gradient-to-br from-sky-50/40 to-transparent",
       )}
     >
-      <div className="px-3.5 py-3">
+      <div className="px-2.5 py-2">
         {/* Topo: nome + badge + menu no canto superior direito */}
-        <div className="flex items-start justify-between gap-2 mb-1">
+        <div className="flex items-start justify-between gap-1.5 mb-0.5">
           {isEditingName ? (
             <div
               className="flex-1 min-w-0 flex items-center gap-1"
@@ -626,7 +626,7 @@ export function KanbanCard({
 
         {/* Badge de nível do contato */}
         {(card.contactLevel || card.isRepurchase || card.isReturning) && (
-          <div className="mb-1.5 flex items-center gap-1.5 flex-wrap">
+          <div className="mb-1 flex items-center gap-1 flex-wrap">
             {card.contactLevel && <ContactLevelBadge level={card.contactLevel} size="xs" />}
             {card.isRepurchase && (
               <span
@@ -650,9 +650,9 @@ export function KanbanCard({
         )}
 
         {/* Linha de contexto: destino · data */}
-        <div className="min-h-[16px] mb-2 flex items-center gap-1.5 flex-wrap">
+        <div className="min-h-[14px] mb-1.5 flex items-center gap-1.5 flex-wrap">
           {(card.destination || card.travelDate) && (
-            <p className="text-xs text-muted-foreground font-body truncate">
+            <p className="text-[11px] text-muted-foreground font-body truncate">
               {[card.destination, card.travelDate].filter(Boolean).join(" · ")}
             </p>
           )}
@@ -692,10 +692,10 @@ export function KanbanCard({
         )}
 
         {/* Divisor sutil */}
-        <div className="h-px bg-border/60 -mx-3.5" />
+        <div className="h-px bg-border/60 -mx-2.5" />
 
         {/* Rodapé: avatar + responsável + valor */}
-        <div className="flex items-center gap-2 pt-2.5">
+        <div className="flex items-center gap-1.5 pt-1.5">
           {card.agent?.avatarUrl ? (
             <img
               src={card.agent.avatarUrl}
@@ -715,25 +715,25 @@ export function KanbanCard({
           )}
           <span
             className={cn(
-              "text-xs font-body truncate flex-1 min-w-0",
+              "text-[11px] font-body truncate flex-1 min-w-0",
               noAgent ? "text-destructive font-medium" : "text-muted-foreground",
             )}
           >
             {card.agent?.name || "Sem responsável"}
           </span>
           {value ? (
-            <span className="text-[13px] font-medium text-foreground font-body shrink-0 tabular-nums">
+            <span className="text-[12px] font-medium text-foreground font-body shrink-0 tabular-nums">
               {value}
             </span>
           ) : (
-            <span className="text-xs italic text-muted-foreground/70 font-body shrink-0">
+            <span className="text-[11px] italic text-muted-foreground/70 font-body shrink-0">
               Sem valor
             </span>
           )}
         </div>
 
         {/* Linha inferior: dias na etapa (esquerda) + temperatura (direita) */}
-        <div className="flex items-center justify-between mt-2">
+        <div className="flex items-center justify-between mt-1.5">
           {stageDays !== null ? (
             <span
               title={`${stageDays} dia(s) nesta etapa`}
