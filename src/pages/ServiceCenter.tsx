@@ -999,6 +999,23 @@ export default function ServiceCenter() {
     });
   }, [convoRows, msgRows, selectedId, contactMetaById]);
 
+  // Deep link: ?phone=55119xxxx → seleciona a conversa correspondente (sufixo dos últimos 9 dígitos)
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const phoneParam = searchParams.get("phone");
+    if (!phoneParam || convoRows.length === 0) return;
+    const tail = phoneParam.replace(/\D/g, "").slice(-9);
+    if (!tail) return;
+    const match = (convoRows as any[]).find((c) => (c.phone || "").replace(/\D/g, "").endsWith(tail));
+    if (match) {
+      setSelectedId(match.id);
+      const next = new URLSearchParams(searchParams);
+      next.delete("phone");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, convoRows, setSearchParams]);
+
+
   const handleSend = async () => {
     if (!selectedId || !draft.trim() || sending) return;
     const convo = convoRows.find((c: any) => c.id === selectedId);
