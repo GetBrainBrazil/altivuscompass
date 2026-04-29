@@ -391,9 +391,84 @@ export function KanbanCard({
       <div className="px-3.5 py-3">
         {/* Topo: nome + badge + menu no canto superior direito */}
         <div className="flex items-start justify-between gap-2 mb-1">
-          <p className="text-sm font-medium font-body text-foreground flex-1 min-w-0 truncate leading-snug">
-            {card.clientName}
-          </p>
+          {isEditingName ? (
+            <div
+              className="flex-1 min-w-0 flex items-center gap-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <input
+                ref={inputRef}
+                type="text"
+                value={nameDraft}
+                disabled={savingName}
+                placeholder="Nome do contato"
+                onChange={(e) => setNameDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void saveName();
+                  } else if (e.key === "Escape") {
+                    e.preventDefault();
+                    cancelEditingName();
+                  }
+                }}
+                className="flex-1 min-w-0 text-sm font-medium font-body bg-background border border-primary/40 rounded px-1.5 py-0.5 outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <button
+                type="button"
+                aria-label="Salvar nome"
+                disabled={savingName || !nameDraft.trim()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void saveName();
+                }}
+                className="inline-flex items-center justify-center w-6 h-6 rounded text-success hover:bg-success/10 disabled:opacity-40"
+              >
+                <Check className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                aria-label="Cancelar edição"
+                disabled={savingName}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  cancelEditingName();
+                }}
+                className="inline-flex items-center justify-center w-6 h-6 rounded text-muted-foreground hover:bg-muted/60"
+              >
+                <XIcon className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex-1 min-w-0 flex items-center gap-1">
+              <p
+                className={cn(
+                  "text-sm font-medium font-body min-w-0 truncate leading-snug",
+                  nameIsPhone
+                    ? "italic text-muted-foreground"
+                    : "text-foreground",
+                )}
+                title={nameIsPhone ? "Nome do contato ainda não informado — clique no lápis para atualizar" : undefined}
+              >
+                {card.clientName}
+              </p>
+              {nameIsPhone && onRenameClient && (
+                <button
+                  type="button"
+                  aria-label="Editar nome do contato"
+                  title="Editar nome do contato"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    startEditingName();
+                  }}
+                  className="shrink-0 inline-flex items-center justify-center w-5 h-5 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                >
+                  <Pencil className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          )}
           <div className="shrink-0 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
             {cornerBadge}
             {(onDelete || onAssignAgent || onCreateQuote || onViewConversation || onEdit || onArchive || onTemperatureChange) && (
