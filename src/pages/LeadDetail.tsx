@@ -125,6 +125,29 @@ export default function LeadDetail() {
   const [users, setUsers] = useState<Array<{ id: string; name: string; avatarUrl?: string | null }>>([]);
   const [quotesCount, setQuotesCount] = useState(0);
   const [waPanelOpen, setWaPanelOpen] = useState(false);
+  const [aiData, setAiData] = useState<{
+    ai_summary: string | null;
+    destination: string | null;
+    travel_date_start: string | null;
+    travel_date_end: string | null;
+    flexible_dates: boolean | null;
+    flexible_dates_description: string | null;
+    travelers_count: number | null;
+    budget_estimate: number | null;
+    preferences: string | null;
+    extras: Record<string, any>;
+  }>({
+    ai_summary: null,
+    destination: null,
+    travel_date_start: null,
+    travel_date_end: null,
+    flexible_dates: null,
+    flexible_dates_description: null,
+    travelers_count: null,
+    budget_estimate: null,
+    preferences: null,
+    extras: {},
+  });
 
   // Quantidade de mensagens não lidas no WhatsApp
   const onlyDigits = (s: string) => (s || "").replace(/\D/g, "");
