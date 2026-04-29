@@ -473,23 +473,37 @@ export function KanbanCard({
               </button>
             </div>
           ) : (
-            <div className="flex-1 min-w-0">
-              <p
+            <div className="flex-1 min-w-0 flex items-center gap-1.5">
+              <GripVertical
+                aria-hidden="true"
                 className={cn(
-                  "font-sans text-[14px] font-semibold min-w-0 truncate leading-tight tracking-tight",
-                  nameIsPhone
-                    ? "italic text-muted-foreground"
-                    : "text-slate-800",
+                  "w-3.5 h-3.5 shrink-0 text-slate-300 opacity-0 transition-opacity",
+                  draggable && "group-hover:opacity-100",
                 )}
-                title={nameIsPhone ? "Nome do contato ainda não informado — use 'Editar' no menu para atualizar" : undefined}
-              >
-                {card.clientName}
-              </p>
-              {!nameIsPhone && card.phone && (
-                <p className="font-sans text-[11px] text-slate-500 truncate leading-snug mt-0.5 tabular-nums">
-                  {formatPhone(card.phone)}
+              />
+              <Avatar className="h-6 w-6 shrink-0">
+                <AvatarFallback className="bg-slate-100 text-slate-600 text-[10px] font-medium font-sans">
+                  {getInitials(card.clientName) || <User className="w-3 h-3" />}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p
+                  className={cn(
+                    "font-sans text-[14px] font-semibold min-w-0 truncate leading-tight tracking-tight",
+                    nameIsPhone
+                      ? "italic text-muted-foreground"
+                      : "text-slate-800",
+                  )}
+                  title={nameIsPhone ? "Nome do contato ainda não informado — use 'Editar' no menu para atualizar" : undefined}
+                >
+                  {card.clientName}
                 </p>
-              )}
+                {!nameIsPhone && card.phone && (
+                  <p className="font-sans text-[11px] text-slate-500 truncate leading-snug mt-0.5 tabular-nums">
+                    {formatPhone(card.phone)}
+                  </p>
+                )}
+              </div>
             </div>
           )}
           <div className="shrink-0 flex items-start gap-1" onClick={(e) => e.stopPropagation()}>
