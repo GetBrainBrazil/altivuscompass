@@ -38,6 +38,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LeadTimeline } from "@/components/crm/LeadTimeline";
 import { LeadWhatsAppColumn } from "@/components/crm/LeadWhatsAppColumn";
 import { UserPicker } from "@/components/ui/user-picker";
+import { CRMBreadcrumb } from "@/components/crm/CRMBreadcrumb";
 
 const FUNNEL_STAGES = [
   { id: "new-leads", title: "Novos Leads" },
@@ -410,33 +411,14 @@ export default function LeadDetail() {
       {/* Cabeçalho principal — largura total */}
       <header ref={headerRef} className="border-b border-border bg-white dark:bg-slate-900 w-full sticky z-30" style={{ top: appHeaderH }}>
         <div className="px-6 lg:px-10 pt-6 pb-5">
-          <nav aria-label="breadcrumb" className="mb-3 text-sm text-slate-500">
-            <ol className="flex flex-wrap items-center gap-1.5">
-              <li>
-                <button
-                  type="button"
-                  onClick={() => navigate("/crm")}
-                  className="hover:text-slate-700 transition-colors"
-                >
-                  CRM
-                </button>
-              </li>
-              <li aria-hidden="true" className="text-slate-400">/</li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => navigate("/crm")}
-                  className="hover:text-slate-700 transition-colors"
-                >
-                  Leads
-                </button>
-              </li>
-              <li aria-hidden="true" className="text-slate-400">/</li>
-              <li aria-current="page" className="font-medium text-slate-800">
-                Detalhes do Lead
-              </li>
-            </ol>
-          </nav>
+          <CRMBreadcrumb
+            className="mb-3"
+            items={[
+              { label: "CRM", to: "/crm" },
+              { label: "Leads", to: "/crm" },
+              { label: "Detalhes do Lead" },
+            ]}
+          />
 
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">

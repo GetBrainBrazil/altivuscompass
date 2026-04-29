@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, UserCheck, Loader2 } from "lucide-react";
+import { UserCheck, Loader2 } from "lucide-react";
+import { CRMBreadcrumb } from "@/components/crm/CRMBreadcrumb";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -164,13 +165,15 @@ export default function LeadConvert() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <button
-        type="button"
-        onClick={() => navigate(-1)}
-        className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4 font-body"
-      >
-        <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
-      </button>
+      <CRMBreadcrumb
+        className="mb-4"
+        items={[
+          { label: "CRM", to: "/crm" },
+          { label: "Leads", to: "/crm" },
+          { label: "Detalhes do Lead", to: leadId ? `/crm/lead/${leadId}` : "/crm" },
+          { label: "Converter em Cliente" },
+        ]}
+      />
 
       <header className="mb-6">
         <div className="flex items-center gap-2">
