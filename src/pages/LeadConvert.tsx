@@ -217,7 +217,7 @@ export default function LeadConvert() {
 
           <Section title="Endereço">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FieldText label="CEP" value={form.cep} onChange={(v) => upd("cep", v)} onBlur={handleCepBlur} placeholder="00000-000" />
+              <FieldText label="CEP" value={form.cep} onChange={(v) => upd("cep", maskCEP(v))} onBlur={handleCepBlur} placeholder="00000-000" inputMode="numeric" maxLength={9} />
               <div className="md:col-span-2">
                 <FieldText label="Rua / Logradouro" value={form.address_street} onChange={(v) => upd("address_street", v)} />
               </div>
@@ -269,10 +269,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function FieldText({
-  label, value, onChange, onBlur, type = "text", placeholder,
+  label, value, onChange, onBlur, type = "text", placeholder, inputMode, maxLength,
 }: {
   label: string; value: string; onChange: (v: string) => void;
   onBlur?: () => void; type?: string; placeholder?: string;
+  inputMode?: "text" | "numeric" | "tel" | "email" | "url" | "search" | "decimal" | "none";
+  maxLength?: number;
 }) {
   return (
     <div className="space-y-1.5">
@@ -281,10 +283,43 @@ function FieldText({
         type={type}
         value={value}
         placeholder={placeholder}
+        inputMode={inputMode}
+        maxLength={maxLength}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
         className="h-9"
       />
     </div>
   );
+}
+
+// ===== Máscaras BR =====
+function onlyDigits(v: string): string {
+  return (v ?? "").replace(/\D+/g, "");
+}
+
+function maskCPF(v: string): string {
+  const d = onlyDigits(v).slice(0, 11);
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
+  if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+}
+
+function maskPhoneBR(v: string): string {
+  // Remove DDI 55 se presente no início e mais de 11 dígitos
+  let d = onlyDigits(v);
+  if (d.length > 11 && d.startsWith("55")) d = d.slice(2);
+  d = d.slice(0, 11);
+  if (d.length === 0) return "";
+  if (d.length <= 2) return `(${d}`;
+  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+}
+
+function maskCEP(v: string): string {
+  const d = onlyDigits(v).slice(0, 8);
+  if (d.length <= 5) return d;
+  return `${d.slice(0, 5)}-${d.slice(5)}`;
 }
