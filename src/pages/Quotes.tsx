@@ -1301,6 +1301,61 @@ export default function Quotes() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state]);
 
+  // Open editor pre-filled when navigated via URL query params
+  // Supports: ?edit=<quoteId>  and  ?new=1&lead_id=<leadId>  and  ?new=1&client_id=<clientId>
+  const urlOpenedRef = useRef(false);
+  useEffect(() => {
+    if (urlOpenedRef.current) return;
+    const sp = new URLSearchParams(location.search);
+    const editId = sp.get("edit");
+    const isNew = sp.get("new") === "1";
+    const leadIdParam = sp.get("lead_id");
+    const clientIdParam = sp.get("client_id");
+
+    const clearParams = () => {
+      navigate(location.pathname, { replace: true, state: {} });
+    };
+
+    if (editId) {
+      urlOpenedRef.current = true;
+      (async () => {
+        const { data, error } = await supabase
+          .from("quotes")
+          .select("*, clients(full_name)")
+          .eq("id", editId)
+          .maybeSingle();
+        if (error || !data) {
+          toast({ title: "Cotação não encontrada", description: error?.message ?? "", variant: "destructive" });
+          clearParams();
+          return;
+        }
+        openEdit({ ...(data as any), client_name: (data as any).clients?.full_name } as Quote);
+        clearParams();
+      })();
+      return;
+    }
+
+    if (isNew && leadIdParam) {
+      urlOpenedRef.current = true;
+      // Reuse existing flow that handles location.state.leadId
+      navigate(location.pathname, { replace: true, state: { newQuote: true, leadId: leadIdParam } });
+      return;
+    }
+
+    if (isNew && clientIdParam) {
+      urlOpenedRef.current = true;
+      navigate(location.pathname, { replace: true, state: { newQuote: true, clientId: clientIdParam } });
+      return;
+    }
+
+    if (isNew) {
+      urlOpenedRef.current = true;
+      openCreate();
+      clearParams();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
+
   const openEdit = (q: Quote) => {
     setIsHydratingEditQuote(true);
     setEditingQuote(q);

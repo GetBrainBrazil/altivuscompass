@@ -9,7 +9,7 @@ import {
   MapPin,
   Calendar as CalendarIcon,
   MessageCircle,
-  ExternalLink,
+  
   CircleDot,
   FileText,
   UserCheck,
@@ -39,6 +39,7 @@ import { LeadTimeline } from "@/components/crm/LeadTimeline";
 import { LeadWhatsAppColumn } from "@/components/crm/LeadWhatsAppColumn";
 import { UserPicker } from "@/components/ui/user-picker";
 import { CRMBreadcrumb } from "@/components/crm/CRMBreadcrumb";
+import { QuoteKanbanCard } from "@/components/quotes/QuoteKanbanCard";
 
 const FUNNEL_STAGES = [
   { id: "new-leads", title: "Novos Leads" },
@@ -124,7 +125,21 @@ export default function LeadDetail() {
   const [contactLevel, setContactLevel] = useState<ContactLevel>("lead");
   const [contactId, setContactId] = useState<string | null>(null);
   const [users, setUsers] = useState<Array<{ id: string; name: string; avatarUrl?: string | null }>>([]);
-  const [quotesCount, setQuotesCount] = useState(0);
+  type LeadQuote = {
+    id: string;
+    title: string | null;
+    destination: string | null;
+    stage: string;
+    total_value: number | null;
+    travel_date_start: string | null;
+    travel_date_end: string | null;
+    quote_validity: string | null;
+    created_at: string | null;
+    conclusion_type: string | null;
+    archived_at: string | null;
+  };
+  const [leadQuotes, setLeadQuotes] = useState<LeadQuote[]>([]);
+  const quotesCount = leadQuotes.length;
   const [waPanelOpen, setWaPanelOpen] = useState(false);
   const [aiData, setAiData] = useState<{
     ai_summary: string | null;
@@ -270,12 +285,14 @@ export default function LeadDetail() {
         phone: data.phone ?? prev?.phone,
       }));
 
-      // Quotes count
-      const { count: qc } = await supabase
+      // Quotes (lista completa para renderizar inline na aba "Cotações")
+      const { data: lq } = await supabase
         .from("quotes")
-        .select("id", { count: "exact", head: true })
-        .eq("lead_id", leadId);
-      if (!cancelled) setQuotesCount(qc ?? 0);
+        .select("id, title, destination, stage, total_value, travel_date_start, travel_date_end, quote_validity, created_at, conclusion_type, archived_at")
+        .eq("lead_id", leadId)
+        .is("archived_at", null)
+        .order("created_at", { ascending: false });
+      if (!cancelled) setLeadQuotes((lq ?? []) as LeadQuote[]);
 
       // Contact level + conversations
       const { data: contact } = await supabase
@@ -293,6 +310,33 @@ export default function LeadDetail() {
     })();
     return () => { cancelled = true; };
   }, [leadId, id]);
+
+  // Refetch das cotações vinculadas (chamado ao voltar a aba/janela ou após editor fechar)
+  const refetchLeadQuotes = async () => {
+    if (!leadId) return;
+    const { data } = await supabase
+      .from("quotes")
+      .select("id, title, destination, stage, total_value, travel_date_start, travel_date_end, quote_validity, created_at, conclusion_type, archived_at")
+      .eq("lead_id", leadId)
+      .is("archived_at", null)
+      .order("created_at", { ascending: false });
+    setLeadQuotes((data ?? []) as LeadQuote[]);
+  };
+
+  // Refetch quando a aba/janela volta a ficar visível (cobre voltar de /quotes)
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refetchLeadQuotes();
+    };
+    const onFocus = () => refetchLeadQuotes();
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onFocus);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leadId]);
 
   // Inicializa form a partir do card (sessionStorage)
   useEffect(() => {
@@ -478,7 +522,7 @@ export default function LeadDetail() {
                   variant="outline"
                   size="sm"
                   className="border-primary/40 text-primary hover:bg-primary/5"
-                  onClick={() => navigate(`/quotes?new=1&lead_id=${leadId}`)}
+                  onClick={() => navigate("/quotes", { state: { newQuote: true, leadId } })}
                 >
                   <FileText className="h-4 w-4 mr-1.5" />
                   Nova Cotação
@@ -704,7 +748,24 @@ export default function LeadDetail() {
               </TabsContent>
 
               <TabsContent value="quotes" className="mt-0">
-                <Section title={`Cotações vinculadas (${quotesCount})`}>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-xs uppercase tracking-[0.18em] font-body text-muted-foreground">
+                      Cotações vinculadas ({quotesCount})
+                    </h3>
+                    {quotesCount > 0 && (
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          navigate("/quotes", { state: { newQuote: true, leadId } })
+                        }
+                      >
+                        <Plus className="h-4 w-4 mr-1.5" />
+                        Nova Cotação
+                      </Button>
+                    )}
+                  </div>
+
                   {quotesCount === 0 ? (
                     <EmptyState
                       icon={FileText}
@@ -713,7 +774,9 @@ export default function LeadDetail() {
                       action={
                         <Button
                           size="sm"
-                          onClick={() => navigate(`/quotes?new=1&lead_id=${leadId}`)}
+                          onClick={() =>
+                            navigate("/quotes", { state: { newQuote: true, leadId } })
+                          }
                         >
                           <Plus className="h-4 w-4 mr-1.5" />
                           Nova Cotação
@@ -721,16 +784,33 @@ export default function LeadDetail() {
                       }
                     />
                   ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/quotes?lead_id=${leadId}`)}
-                    >
-                      <ExternalLink className="h-4 w-4 mr-1.5" />
-                      Ver todas as cotações
-                    </Button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                      {leadQuotes.map((q) => (
+                        <QuoteKanbanCard
+                          key={q.id}
+                          quote={{
+                            id: q.id,
+                            title: q.title,
+                            destination: q.destination,
+                            stage: q.stage,
+                            total_value: q.total_value,
+                            travel_date_start: q.travel_date_start,
+                            travel_date_end: q.travel_date_end,
+                            quote_validity: q.quote_validity,
+                            created_at: q.created_at,
+                            conclusion_type: q.conclusion_type,
+                            archived_at: q.archived_at,
+                          }}
+                          assigneeName={form.full_name || card?.clientName || null}
+                          onClick={() => navigate(`/quotes?edit=${q.id}`)}
+                          onDragStart={() => {}}
+                          onDragEnd={() => {}}
+                          menu={<span aria-hidden />}
+                        />
+                      ))}
+                    </div>
                   )}
-                </Section>
+                </div>
               </TabsContent>
 
 
