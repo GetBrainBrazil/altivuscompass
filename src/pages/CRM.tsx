@@ -1034,8 +1034,51 @@ export default function CRM() {
     }
   };
 
-  // Avalia restrições por coluna de destino. Devolve a lista de issues; vazia = pode mover.
-  const validateMove = async (
+  // Confirma a perda: registra motivo no banco e move o card para "Perdidos"
+  const confirmLost = async () => {
+    if (!lostMove) {
+      setLostOpen(false);
+      return;
+    }
+    const reason = lostReason.trim();
+    if (!reason) {
+      toast.error("Selecione um motivo da perda.");
+      return;
+    }
+    if (reason === "Outro" && !lostDetails.trim()) {
+      toast.error("Descreva o motivo no campo de texto.");
+      return;
+    }
+    if (lostMove.leadId) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        let userName = user?.email ?? null;
+        if (user?.id) {
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          if (prof?.full_name) userName = prof.full_name;
+        }
+        await (supabase as any).from("lead_loss_reasons").insert({
+          lead_id: lostMove.leadId,
+          reason,
+          details: lostDetails.trim() || null,
+          user_id: user?.id ?? null,
+          user_name: userName,
+        });
+      } catch (err) {
+        console.error("[lead_loss_reasons] insert error:", err);
+        toast.error("Não foi possível registrar o motivo. O card será movido mesmo assim.");
+      }
+    }
+    performMove(lostMove, false);
+    setLostOpen(false);
+    setLostMove(null);
+    setLostReason("Sem resposta");
+    setLostDetails("");
+  };
     card: KanbanCardData,
     toColumnId: string,
     leadId: string | null,
