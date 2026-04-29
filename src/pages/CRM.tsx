@@ -182,17 +182,25 @@ function KanbanColumnCard({
 }) {
   const [isOver, setIsOver] = useState(false);
 
+  const ownerlessCount = column.cards.filter((c) => !c.agent?.name).length;
   return (
     <div className="flex flex-col w-[320px] shrink-0 max-h-full">
       {/* Column header (fixed) — flat, dot + title + count */}
-      <div className="flex items-center gap-2 px-1 py-2 mb-1 shrink-0">
-        <div className={cn("w-2 h-2 rounded-full shrink-0", dotColor)} />
-        <span className="text-xs font-medium text-foreground font-body truncate">
+      <div className="flex items-start gap-2 px-1 py-2 mb-1 shrink-0">
+        <div className={cn("w-2 h-2 rounded-full shrink-0 mt-1.5", dotColor)} />
+        <span className="text-xs font-medium text-foreground font-body truncate mt-0.5">
           {column.title}
         </span>
-        <span className="text-xs text-muted-foreground font-body ml-auto">
-          {isLoading ? "—" : column.cards.length}
-        </span>
+        <div className="ml-auto flex flex-col items-end leading-tight">
+          <span className="text-xs text-muted-foreground font-body">
+            {isLoading ? "—" : column.cards.length}
+          </span>
+          {!isLoading && ownerlessCount > 0 && (
+            <span className="text-[10px] text-destructive font-body">
+              {ownerlessCount} sem dono
+            </span>
+          )}
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
