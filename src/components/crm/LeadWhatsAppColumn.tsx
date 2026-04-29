@@ -56,6 +56,7 @@ const onlyDigits = (s: string) => (s || "").replace(/\D/g, "");
 
 export function LeadWhatsAppColumn({ onClose, contactName, phone, contactId, leadId, formSnapshot, onApplyNoteSuggestion }: Props) {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
