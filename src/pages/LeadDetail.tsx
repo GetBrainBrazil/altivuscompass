@@ -390,13 +390,8 @@ export default function LeadDetail() {
   const isClient = contactLevel === "cliente";
 
   return (
-    <div className="flex min-h-[calc(100vh-0px)] bg-slate-50 dark:bg-slate-950">
-      <div
-        className={cn(
-          "flex flex-col min-w-0 transition-[width] duration-300 ease-out",
-          waPanelOpen ? "w-[70%]" : "w-full",
-        )}
-      >
+    <div className="grid grid-cols-1 lg:grid-cols-[68fr_32fr] min-h-[calc(100vh-0px)] bg-slate-50 dark:bg-slate-950">
+      <div className="flex flex-col min-w-0">
       {/* Header */}
       <header className="border-b border-border bg-background">
         <div className="px-6 lg:px-10 pt-6 pb-5">
@@ -773,24 +768,22 @@ export default function LeadDetail() {
       </main>
       </div>
 
-      {waPanelOpen && (
-        <div className="w-[30%] min-w-0 sticky top-0 h-screen">
-          <LeadWhatsAppColumn
-            onClose={() => setWaPanelOpen(false)}
-            contactName={form.full_name || card?.clientName || "Contato"}
-            phone={form.phone || card?.phone || null}
-            contactId={contactId}
-            leadId={leadId}
-            formSnapshot={{
-              destination: form.destination,
-              travel_date_label: form.travel_date_label,
-              budget_estimate: form.budget_estimate,
-              travelers_count: form.travelers_count,
-            }}
-            onApplyNoteSuggestion={(s) => updateField(s.field as any, s.value as any)}
-          />
-        </div>
-      )}
+      <aside className="hidden lg:block min-w-0 sticky top-0 h-screen border-l border-border">
+        <LeadWhatsAppColumn
+          onClose={() => setWaPanelOpen(false)}
+          contactName={form.full_name || card?.clientName || "Contato"}
+          phone={form.phone || card?.phone || null}
+          contactId={contactId}
+          leadId={leadId}
+          formSnapshot={{
+            destination: form.destination,
+            travel_date_label: form.travel_date_label,
+            budget_estimate: form.budget_estimate,
+            travelers_count: form.travelers_count,
+          }}
+          onApplyNoteSuggestion={(s) => updateField(s.field as any, s.value as any)}
+        />
+      </aside>
     </div>
   );
 }
