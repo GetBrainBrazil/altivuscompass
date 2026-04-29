@@ -230,6 +230,51 @@ export function KanbanCard({
   const stageDays = daysSince(card.stageEnteredAt);
   const daysToTravel = daysUntil(card.travelDateISO);
   const isBoardingSoon = daysToTravel !== null && daysToTravel >= 0 && daysToTravel <= 30;
+  const nameIsPhone = isPhoneLikeName(card.clientName);
+
+  // ── Edição inline do nome (quando ainda é apenas um telefone) ─────────────
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const [savingName, setSavingName] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (isEditingName) {
+      // Foca o input ao entrar em modo de edição
+      const t = window.setTimeout(() => inputRef.current?.focus(), 0);
+      return () => window.clearTimeout(t);
+    }
+  }, [isEditingName]);
+
+  const startEditingName = () => {
+    if (!onRenameClient) return;
+    setNameDraft("");
+    setIsEditingName(true);
+  };
+  const cancelEditingName = () => {
+    setIsEditingName(false);
+    setNameDraft("");
+  };
+  const saveName = async () => {
+    const next = nameDraft.trim();
+    if (!next) {
+      cancelEditingName();
+      return;
+    }
+    if (!onRenameClient) {
+      cancelEditingName();
+      return;
+    }
+    try {
+      setSavingName(true);
+      await onRenameClient(card, next);
+      setIsEditingName(false);
+      setNameDraft("");
+    } finally {
+      setSavingName(false);
+    }
+  };
+
 
   let cornerBadge: ReactNode = null;
   if (alert) {
