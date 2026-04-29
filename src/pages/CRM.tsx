@@ -2834,10 +2834,10 @@ export default function CRM() {
                   ))}
                 </div>
 
-                <DialogFooter className="flex-row items-center justify-between flex-nowrap gap-2 pt-2 sm:space-x-0">
+                <DialogFooter className="flex-row items-center justify-end flex-nowrap gap-2 sm:gap-3 pt-2 sm:space-x-0">
                   <Button
                     variant="ghost"
-                    className="text-muted-foreground hover:bg-transparent hover:text-foreground shrink-0"
+                    className="h-10 px-4 text-sm text-muted-foreground hover:bg-accent hover:text-foreground shrink-0"
                     onClick={() => {
                       setPendingMove(null);
                       setPendingIssues([]);
@@ -2846,37 +2846,35 @@ export default function CRM() {
                   >
                     Cancelar
                   </Button>
-                  <div className="flex items-center gap-2 sm:gap-3 flex-nowrap">
-                    <Button
-                      variant="outline"
-                      className="rounded-lg border-border text-muted-foreground hover:text-foreground shrink-0 whitespace-nowrap"
-                      onClick={() => {
-                        if (pendingMove) {
-                          if (pendingMove.toColumnId === "closed" && pendingMove.leadId) {
-                            setPromotionLeadId(pendingMove.leadId);
-                            setPromotionPendingMove(pendingMove);
-                            setPromotionOpen(true);
-                          } else {
-                            performMove(pendingMove, true);
-                          }
+                  <Button
+                    variant="outline"
+                    className="h-10 rounded-lg border-border text-muted-foreground hover:text-foreground shrink-0 whitespace-nowrap"
+                    onClick={() => {
+                      if (pendingMove) {
+                        if (pendingMove.toColumnId === "closed" && pendingMove.leadId) {
+                          setPromotionLeadId(pendingMove.leadId);
+                          setPromotionPendingMove(pendingMove);
+                          setPromotionOpen(true);
+                        } else {
+                          performMove(pendingMove, true);
                         }
-                        setPendingMove(null);
-                        setPendingIssues([]);
-                        setSelectedQuoteToSend("");
-                      }}
+                      }
+                      setPendingMove(null);
+                      setPendingIssues([]);
+                      setSelectedQuoteToSend("");
+                    }}
+                  >
+                    Mover mesmo assim
+                  </Button>
+                  {sendIssue && (
+                    <Button
+                      className="h-10 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 px-6 shrink-0 whitespace-nowrap"
+                      onClick={handleSendQuoteAndMove}
+                      disabled={sendingQuoteAndMoving || !selectedQuoteToSend}
                     >
-                      Mover mesmo assim
+                      {sendingQuoteAndMoving ? "Enviando..." : "Enviar cotação e mover"}
                     </Button>
-                    {sendIssue && (
-                      <Button
-                        className="rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 px-6 shrink-0 whitespace-nowrap"
-                        onClick={handleSendQuoteAndMove}
-                        disabled={sendingQuoteAndMoving || !selectedQuoteToSend}
-                      >
-                        {sendingQuoteAndMoving ? "Enviando..." : "Enviar cotação e mover"}
-                      </Button>
-                    )}
-                  </div>
+                  )}
                 </DialogFooter>
               </>
             );
