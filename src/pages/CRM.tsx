@@ -109,6 +109,7 @@ function KanbanBoard({
   onCardViewConversation,
   onCardEdit,
   onCardArchive,
+  onCardRenameClient,
   agentOptions,
   focusCardId,
   isLoading,
@@ -136,6 +137,7 @@ function KanbanBoard({
   onCardViewConversation?: (card: KanbanCardData) => void;
   onCardEdit?: (card: KanbanCardData) => void;
   onCardArchive?: (card: KanbanCardData) => void;
+  onCardRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
   agentOptions?: { user_id: string; full_name: string; avatar_url?: string | null }[];
   focusCardId?: string | null;
   isLoading?: boolean;
@@ -176,6 +178,7 @@ function KanbanBoard({
               onCardViewConversation={onCardViewConversation}
               onCardEdit={onCardEdit}
               onCardArchive={onCardArchive}
+              onCardRenameClient={onCardRenameClient}
               agentOptions={agentOptions}
               focusCardId={focusCardId}
               isLoading={isLoading}
@@ -215,6 +218,7 @@ function KanbanColumnCard({
   onCardViewConversation,
   onCardEdit,
   onCardArchive,
+  onCardRenameClient,
   agentOptions,
   focusCardId,
   isLoading,
@@ -243,6 +247,7 @@ function KanbanColumnCard({
   onCardViewConversation?: (card: KanbanCardData) => void;
   onCardEdit?: (card: KanbanCardData) => void;
   onCardArchive?: (card: KanbanCardData) => void;
+  onCardRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
   agentOptions?: { user_id: string; full_name: string; avatar_url?: string | null }[];
   focusCardId?: string | null;
   isLoading?: boolean;
@@ -434,6 +439,7 @@ function KanbanColumnCard({
                       onViewConversation={onCardViewConversation}
                       onEdit={onCardEdit}
                       onArchive={onCardArchive}
+                      onRenameClient={onCardRenameClient}
                     />
                   </div>
                 );
@@ -1559,6 +1565,42 @@ export default function CRM() {
     setArchiveTarget(null);
   };
 
+  // Renomear o contato inline no card. Atualiza leads.full_name (trigger
+  // sync_contact_from_lead propaga para contacts → reflete na Central, CRM e
+  // listagens). Para o nome aparecer imediatamente, também atualizamos o estado
+  // local do board.
+  const handleCardRenameClient = async (card: KanbanCardData, newName: string) => {
+    const finalName = newName.trim();
+    if (!finalName) return;
+    const leadId = extractLeadId(card.id);
+    if (!leadId) {
+      toast.error("Card sem lead vinculado.");
+      return;
+    }
+    const { error } = await supabase
+      .from("leads")
+      .update({ full_name: finalName } as any)
+      .eq("id", leadId);
+    if (error) {
+      console.error("[CRM] rename lead error:", error);
+      toast.error("Não foi possível salvar o nome.");
+      throw error;
+    }
+    setSalesColumns((prev) =>
+      prev.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) => (c.id === card.id ? { ...c, clientName: finalName } : c)),
+      })),
+    );
+    setOpsColumns((prev) =>
+      prev.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) => (c.id === card.id ? { ...c, clientName: finalName } : c)),
+      })),
+    );
+    toast.success("Nome atualizado.");
+  };
+
 
   const handleConfirmAssign = async () => {
     if (!assignCardId || !assignTargetColumn) return;
@@ -2038,6 +2080,7 @@ export default function CRM() {
           onCardViewConversation={handleCardViewConversation}
           onCardEdit={handleCardEdit}
           onCardArchive={handleCardArchive}
+          onCardRenameClient={handleCardRenameClient}
           agentOptions={responsibleOptions}
           focusCardId={focusCardId}
           isLoading={tab === "sales" && isLoadingLeads}

@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState, useRef, useEffect } from "react";
 import {
   Sparkles,
   AlertTriangle,
@@ -14,6 +14,8 @@ import {
   Archive,
   Thermometer,
   User,
+  Check,
+  X as XIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
@@ -103,6 +105,19 @@ const ALERT_BADGE_CLASSES: Record<KanbanCardAlert["tone"], string> = {
   success: "bg-success/15 text-success",
 };
 
+/**
+ * Detecta se o "nome" do contato é, na verdade, apenas um número de telefone
+ * (apenas dígitos, espaços, hífens, parênteses e o prefixo +). Indica que o
+ * consultor ainda precisa atualizar o nome real.
+ */
+function isPhoneLikeName(name?: string): boolean {
+  if (!name) return false;
+  const trimmed = name.trim();
+  if (!trimmed) return false;
+  if (/[A-Za-zÀ-ÿ]/.test(trimmed)) return false;
+  return /\d/.test(trimmed) && /^[+\d\s().\-]+$/.test(trimmed);
+}
+
 const TEMP_NEXT: Record<LeadTemperature, LeadTemperature> = {
   cold: "warm",
   warm: "hot",
@@ -181,6 +196,7 @@ export function KanbanCard({
   onViewConversation,
   onEdit,
   onArchive,
+  onRenameClient,
 }: {
   card: KanbanCardData;
   onClick?: (card: KanbanCardData) => void;
@@ -205,6 +221,8 @@ export function KanbanCard({
   onEdit?: (card: KanbanCardData) => void;
   /** Arquivar o card (mover para área oculta). */
   onArchive?: (card: KanbanCardData) => void;
+  /** Renomear o contato inline (quando o nome ainda é apenas um telefone). */
+  onRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
 }) {
   const value = formatBRL(card.estimatedValue);
   const alert = card.alert;
@@ -212,6 +230,51 @@ export function KanbanCard({
   const stageDays = daysSince(card.stageEnteredAt);
   const daysToTravel = daysUntil(card.travelDateISO);
   const isBoardingSoon = daysToTravel !== null && daysToTravel >= 0 && daysToTravel <= 30;
+  const nameIsPhone = isPhoneLikeName(card.clientName);
+
+  // ── Edição inline do nome (quando ainda é apenas um telefone) ─────────────
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const [savingName, setSavingName] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (isEditingName) {
+      // Foca o input ao entrar em modo de edição
+      const t = window.setTimeout(() => inputRef.current?.focus(), 0);
+      return () => window.clearTimeout(t);
+    }
+  }, [isEditingName]);
+
+  const startEditingName = () => {
+    if (!onRenameClient) return;
+    setNameDraft("");
+    setIsEditingName(true);
+  };
+  const cancelEditingName = () => {
+    setIsEditingName(false);
+    setNameDraft("");
+  };
+  const saveName = async () => {
+    const next = nameDraft.trim();
+    if (!next) {
+      cancelEditingName();
+      return;
+    }
+    if (!onRenameClient) {
+      cancelEditingName();
+      return;
+    }
+    try {
+      setSavingName(true);
+      await onRenameClient(card, next);
+      setIsEditingName(false);
+      setNameDraft("");
+    } finally {
+      setSavingName(false);
+    }
+  };
+
 
   let cornerBadge: ReactNode = null;
   if (alert) {
@@ -328,9 +391,84 @@ export function KanbanCard({
       <div className="px-3.5 py-3">
         {/* Topo: nome + badge + menu no canto superior direito */}
         <div className="flex items-start justify-between gap-2 mb-1">
-          <p className="text-sm font-medium font-body text-foreground flex-1 min-w-0 truncate leading-snug">
-            {card.clientName}
-          </p>
+          {isEditingName ? (
+            <div
+              className="flex-1 min-w-0 flex items-center gap-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <input
+                ref={inputRef}
+                type="text"
+                value={nameDraft}
+                disabled={savingName}
+                placeholder="Nome do contato"
+                onChange={(e) => setNameDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void saveName();
+                  } else if (e.key === "Escape") {
+                    e.preventDefault();
+                    cancelEditingName();
+                  }
+                }}
+                className="flex-1 min-w-0 text-sm font-medium font-body bg-background border border-primary/40 rounded px-1.5 py-0.5 outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <button
+                type="button"
+                aria-label="Salvar nome"
+                disabled={savingName || !nameDraft.trim()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void saveName();
+                }}
+                className="inline-flex items-center justify-center w-6 h-6 rounded text-success hover:bg-success/10 disabled:opacity-40"
+              >
+                <Check className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                aria-label="Cancelar edição"
+                disabled={savingName}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  cancelEditingName();
+                }}
+                className="inline-flex items-center justify-center w-6 h-6 rounded text-muted-foreground hover:bg-muted/60"
+              >
+                <XIcon className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex-1 min-w-0 flex items-center gap-1">
+              <p
+                className={cn(
+                  "text-sm font-medium font-body min-w-0 truncate leading-snug",
+                  nameIsPhone
+                    ? "italic text-muted-foreground"
+                    : "text-foreground",
+                )}
+                title={nameIsPhone ? "Nome do contato ainda não informado — clique no lápis para atualizar" : undefined}
+              >
+                {card.clientName}
+              </p>
+              {nameIsPhone && onRenameClient && (
+                <button
+                  type="button"
+                  aria-label="Editar nome do contato"
+                  title="Editar nome do contato"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    startEditingName();
+                  }}
+                  className="shrink-0 inline-flex items-center justify-center w-5 h-5 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                >
+                  <Pencil className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          )}
           <div className="shrink-0 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
             {cornerBadge}
             {(onDelete || onAssignAgent || onCreateQuote || onViewConversation || onEdit || onArchive || onTemperatureChange) && (
