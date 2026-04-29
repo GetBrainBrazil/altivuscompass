@@ -398,12 +398,19 @@ export default function CRM() {
       const parsed = JSON.parse(raw) as KanbanColumn[];
       if (!Array.isArray(parsed) || parsed.length === 0) return fallback;
       // Sanitiza: remove cards que não vieram do banco (sem prefixo lead-/quote-/manual-)
-      return parsed.map((col) => ({
+      const sanitized = parsed.map((col) => ({
         ...col,
         cards: col.cards.filter(
           (c) => c.id.startsWith("lead-") || c.id.startsWith("quote-") || c.id.startsWith("manual-"),
         ),
       }));
+      // Garante que colunas obrigatórias do fallback existam (ex.: "Perdidos" foi
+      // adicionada depois — usuários antigos não têm esta coluna no localStorage).
+      const existingIds = new Set(sanitized.map((c) => c.id));
+      fallback.forEach((fc) => {
+        if (!existingIds.has(fc.id)) sanitized.push({ ...fc, cards: [] });
+      });
+      return sanitized;
     } catch {
       return fallback;
     }
