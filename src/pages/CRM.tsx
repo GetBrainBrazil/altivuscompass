@@ -281,7 +281,7 @@ function KanbanColumnCard({
     <div
       className={cn(
         "flex flex-col shrink-0 max-h-full transition-all duration-200",
-        isCollapsed ? "w-[48px]" : "w-[232px]",
+        isCollapsed ? "w-[48px]" : "w-[340px]",
         dimmedInvalid && "opacity-40 pointer-events-none",
       )}
     >
@@ -538,7 +538,7 @@ function AddColumnButton({ onClick }: { onClick: () => void }) {
       type="button"
       onClick={onClick}
       className={cn(
-        "group flex flex-col items-center justify-center w-[232px] shrink-0 rounded-xl",
+        "group flex flex-col items-center justify-center w-[340px] shrink-0 rounded-xl",
         "min-h-[200px] border-2 border-dashed border-slate-300 dark:border-slate-700",
         "text-muted-foreground hover:text-foreground",
         "hover:border-slate-400 dark:hover:border-slate-600",
