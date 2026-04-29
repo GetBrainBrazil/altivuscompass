@@ -1457,6 +1457,7 @@ export default function CRM() {
           onTemperatureChange={handleTemperatureChange}
           onCardDelete={handleCardDelete}
           focusCardId={focusCardId}
+          isLoading={tab === "sales" && isLoadingLeads}
         />
       </main>
 
