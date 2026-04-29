@@ -390,10 +390,9 @@ export default function LeadDetail() {
   const isClient = contactLevel === "cliente";
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[68fr_32fr] min-h-[calc(100vh-0px)] bg-slate-50 dark:bg-slate-950">
-      <div className="flex flex-col min-w-0">
-      {/* Header */}
-      <header className="border-b border-border bg-background">
+    <div className="flex flex-col min-h-[calc(100vh-0px)] bg-slate-50 dark:bg-slate-950">
+      {/* Cabeçalho principal — largura total */}
+      <header className="border-b border-border bg-background w-full">
         <div className="px-6 lg:px-10 pt-6 pb-5">
           <Button
             variant="ghost"
