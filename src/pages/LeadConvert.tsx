@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { UserCheck, Loader2 } from "lucide-react";
 import { CRMBreadcrumb } from "@/components/crm/CRMBreadcrumb";
@@ -46,7 +46,9 @@ export default function LeadConvert() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [cepLoading, setCepLoading] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY);
+  const lastCepFetched = useRef<string>("");
 
   useEffect(() => {
     if (!leadId) return;
@@ -78,13 +80,19 @@ export default function LeadConvert() {
   const upd = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((p) => ({ ...p, [k]: v }));
 
-  const handleCepBlur = async () => {
-    const cep = form.cep.replace(/\D/g, "");
+  const fetchCep = async (rawCep: string) => {
+    const cep = rawCep.replace(/\D/g, "");
     if (cep.length !== 8) return;
+    if (lastCepFetched.current === cep) return;
+    lastCepFetched.current = cep;
+    setCepLoading(true);
     try {
       const r = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
       const d = await r.json();
-      if (d.erro) return;
+      if (d.erro) {
+        toast.error("CEP não encontrado.");
+        return;
+      }
       setForm((p) => ({
         ...p,
         address_street: d.logradouro || p.address_street,
@@ -93,8 +101,25 @@ export default function LeadConvert() {
         state: d.uf || p.state,
         country: "Brasil",
       }));
-    } catch { /* ignore */ }
+    } catch {
+      toast.error("Falha ao consultar o CEP.");
+    } finally {
+      setCepLoading(false);
+    }
   };
+
+  // Dispara busca automática ao completar 8 dígitos
+  useEffect(() => {
+    const digits = form.cep.replace(/\D/g, "");
+    if (digits.length === 8) {
+      fetchCep(digits);
+    } else {
+      lastCepFetched.current = "";
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.cep]);
+
+  const handleCepBlur = () => fetchCep(form.cep);
 
   const handleConvert = async () => {
     if (!leadId) return;
@@ -217,7 +242,7 @@ export default function LeadConvert() {
 
           <Section title="Endereço">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FieldText label="CEP" value={form.cep} onChange={(v) => upd("cep", maskCEP(v))} onBlur={handleCepBlur} placeholder="00000-000" inputMode="numeric" maxLength={9} />
+              <FieldText label="CEP" value={form.cep} onChange={(v) => upd("cep", maskCEP(v))} onBlur={handleCepBlur} placeholder="00000-000" inputMode="numeric" maxLength={9} disabled={cepLoading} loading={cepLoading} />
               <div className="md:col-span-2">
                 <FieldText label="Rua / Logradouro" value={form.address_street} onChange={(v) => upd("address_street", v)} />
               </div>
@@ -269,26 +294,34 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function FieldText({
-  label, value, onChange, onBlur, type = "text", placeholder, inputMode, maxLength,
+  label, value, onChange, onBlur, type = "text", placeholder, inputMode, maxLength, disabled, loading,
 }: {
   label: string; value: string; onChange: (v: string) => void;
   onBlur?: () => void; type?: string; placeholder?: string;
   inputMode?: "text" | "numeric" | "tel" | "email" | "url" | "search" | "decimal" | "none";
   maxLength?: number;
+  disabled?: boolean;
+  loading?: boolean;
 }) {
   return (
     <div className="space-y-1.5">
       <Label className="text-xs font-medium text-muted-foreground font-body">{label}</Label>
-      <Input
-        type={type}
-        value={value}
-        placeholder={placeholder}
-        inputMode={inputMode}
-        maxLength={maxLength}
-        onChange={(e) => onChange(e.target.value)}
-        onBlur={onBlur}
-        className="h-9"
-      />
+      <div className="relative">
+        <Input
+          type={type}
+          value={value}
+          placeholder={placeholder}
+          inputMode={inputMode}
+          maxLength={maxLength}
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur}
+          className="h-9"
+        />
+        {loading && (
+          <Loader2 className="h-4 w-4 absolute right-2 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />
+        )}
+      </div>
     </div>
   );
 }
