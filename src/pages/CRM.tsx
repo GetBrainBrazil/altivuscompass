@@ -1499,8 +1499,8 @@ export default function CRM() {
 
       {/* KPIs + Toolbar (gestão acima do Kanban) */}
       <section className="px-6 pt-5 pb-2 bg-background border-b border-border space-y-4">
-        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-          <div className="relative flex-1 min-w-0">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:items-center">
+          <div className="relative flex-1 min-w-[220px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <Input
               value={searchTerm}
@@ -1510,25 +1510,68 @@ export default function CRM() {
             />
           </div>
           <Select value={filterAgent} onValueChange={setFilterAgent}>
-            <SelectTrigger className="h-9 w-full sm:w-[180px] text-sm">
+            <SelectTrigger className="h-9 w-full sm:w-[170px] text-sm">
               <SelectValue placeholder="Responsável" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os responsáveis</SelectItem>
+              <SelectItem value="__none__">Sem responsável</SelectItem>
               {agentOptions.map((name) => (
                 <SelectItem key={name} value={name}>{name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+          <Select value={filterTemp} onValueChange={setFilterTemp}>
+            <SelectTrigger className="h-9 w-full sm:w-[150px] text-sm">
+              <SelectValue placeholder="Temperatura" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas temperaturas</SelectItem>
+              <SelectItem value="hot">Quente</SelectItem>
+              <SelectItem value="warm">Morno</SelectItem>
+              <SelectItem value="cold">Frio</SelectItem>
+              <SelectItem value="undefined">Não definida</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterLevel} onValueChange={setFilterLevel}>
+            <SelectTrigger className="h-9 w-full sm:w-[140px] text-sm">
+              <SelectValue placeholder="Nível" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os níveis</SelectItem>
+              <SelectItem value="prospect">Prospect</SelectItem>
+              <SelectItem value="lead">Lead</SelectItem>
+              <SelectItem value="cliente">Cliente</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterSource} onValueChange={setFilterSource}>
+            <SelectTrigger className="h-9 w-full sm:w-[150px] text-sm">
+              <SelectValue placeholder="Origem" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as origens</SelectItem>
+              <SelectItem value="WhatsApp">WhatsApp</SelectItem>
+              <SelectItem value="Manual">Manual</SelectItem>
+              <SelectItem value="Telefone">Telefone</SelectItem>
+              <SelectItem value="E-mail">E-mail</SelectItem>
+              <SelectItem value="Indicação">Indicação</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={filterTag} onValueChange={setFilterTag}>
-            <SelectTrigger className="h-9 w-full sm:w-[170px] text-sm">
+            <SelectTrigger className="h-9 w-full sm:w-[160px] text-sm">
               <SelectValue placeholder="Tag" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as tags</SelectItem>
-              {tagOptions.map((label) => (
-                <SelectItem key={label} value={label}>{label}</SelectItem>
-              ))}
+              {tagOptions.length === 0 ? (
+                <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                  Nenhuma tag disponível
+                </div>
+              ) : (
+                tagOptions.map((label) => (
+                  <SelectItem key={label} value={label}>{label}</SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
           {hasActiveFilters && (
@@ -1536,7 +1579,14 @@ export default function CRM() {
               variant="ghost"
               size="sm"
               className="h-9 gap-1.5"
-              onClick={() => { setSearchTerm(""); setFilterAgent("all"); setFilterTag("all"); }}
+              onClick={() => {
+                setSearchTerm("");
+                setFilterAgent("all");
+                setFilterTag("all");
+                setFilterTemp("all");
+                setFilterLevel("all");
+                setFilterSource("all");
+              }}
             >
               <X className="w-3.5 h-3.5" /> Limpar
             </Button>
