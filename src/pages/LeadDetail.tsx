@@ -406,7 +406,7 @@ export default function LeadDetail() {
   return (
     <div className="flex flex-col min-h-[calc(100vh-0px)] bg-slate-50 dark:bg-slate-950">
       {/* Cabeçalho principal — largura total */}
-      <header ref={headerRef} className="border-b border-border bg-background w-full">
+      <header ref={headerRef} className="border-b border-border bg-white dark:bg-slate-900 w-full relative z-20">
         <div className="px-6 lg:px-10 pt-6 pb-5">
           <Button
             variant="ghost"
@@ -506,7 +506,7 @@ export default function LeadDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-[68fr_32fr] flex-1 min-h-0">
         <div className="flex flex-col min-w-0">
         {/* Stepper — estilo Cotações */}
-        <div className="px-6 lg:px-10 py-5 border-b border-border bg-background">
+        <div className="px-6 lg:px-10 py-5 border-b border-border bg-white dark:bg-slate-900 relative z-10">
           <div className="glass-card rounded-xl px-3 sm:px-4 py-3 bg-background border border-border">
             <div className="flex items-center gap-0.5 sm:gap-1 flex-wrap">
               {FUNNEL_STAGES.map((stage, idx) => {
@@ -557,7 +557,7 @@ export default function LeadDetail() {
       {/* Tabs + content */}
       <main className="flex-1 min-h-0">
         <Tabs defaultValue="main" className="flex flex-col">
-          <div className="border-b border-border bg-background sticky top-0 z-10">
+          <div className="border-b border-border bg-white dark:bg-slate-900 sticky top-0 z-20 shadow-sm">
             <div className="px-6 lg:px-10 py-2">
               <TabsList className="flex flex-wrap h-auto gap-0.5 bg-muted p-0.5 w-full justify-start">
                 <TabTriggerItem value="main" icon={FileText} label="Principal" />
