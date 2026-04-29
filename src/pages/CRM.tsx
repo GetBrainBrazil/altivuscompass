@@ -1686,6 +1686,10 @@ export default function CRM() {
   const [filterTemp, setFilterTemp] = useState<string>("all");
   const [filterLevel, setFilterLevel] = useState<string>("all");
   const [filterSource, setFilterSource] = useState<string>("all");
+  // Filtros específicos da aba Operações
+  const [filterBoarding, setFilterBoarding] = useState<"all" | "7" | "15" | "30">("all");
+  const [filterOpsStatus, setFilterOpsStatus] = useState<"all" | "normal" | "urgent" | "waiting">("all");
+  const [filterDestination, setFilterDestination] = useState<string>("all");
 
   // View mode (kanban | table) — persistido em localStorage
   const [viewMode, setViewMode] = useState<"kanban" | "table">(() => {
