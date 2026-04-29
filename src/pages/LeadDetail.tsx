@@ -385,14 +385,42 @@ export default function LeadDetail() {
                     {form.travel_date_label}
                   </span>
                 )}
-                {card?.isAILead && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 ring-1 ring-inset ring-emerald-100"
-                  >
-                    <Bot className="h-3 w-3 mr-1" /> Lead triado pela IA
-                  </Badge>
-                )}
+                {card?.isAILead && (() => {
+                  const filled = [
+                    !!form.destination?.trim(),
+                    !!form.travel_date_label?.trim(),
+                    !!form.travelers_count?.toString().trim(),
+                  ].filter(Boolean).length;
+                  const variant =
+                    filled === 3 ? "complete" : filled === 0 ? "neutral" : "partial";
+                  const cls =
+                    variant === "complete"
+                      ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-50 ring-1 ring-inset ring-emerald-100"
+                      : variant === "partial"
+                        ? "bg-amber-50 text-amber-700 hover:bg-amber-50 ring-1 ring-inset ring-amber-100"
+                        : "bg-muted text-muted-foreground hover:bg-muted ring-1 ring-inset ring-border";
+                  const label =
+                    variant === "complete"
+                      ? "Lead triado pela IA"
+                      : variant === "partial"
+                        ? "Em qualificação pela IA"
+                        : "Recebido pela IA";
+                  return (
+                    <Badge
+                      variant="secondary"
+                      className={cls}
+                      title={
+                        variant === "complete"
+                          ? "Destino, período e número de viajantes coletados pela IA"
+                          : variant === "partial"
+                            ? `IA coletou ${filled} de 3 dados de interesse (destino, período, viajantes)`
+                            : "IA iniciou a conversa, mas ainda não coletou dados de interesse"
+                      }
+                    >
+                      <Bot className="h-3 w-3 mr-1" /> {label}
+                    </Badge>
+                  );
+                })()}
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
