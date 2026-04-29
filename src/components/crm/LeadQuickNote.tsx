@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { StickyNote, Sparkles, X, Check } from "lucide-react";
+import { Zap, Sparkles, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type QuickNoteFormSnapshot = {
@@ -185,36 +185,38 @@ export function LeadQuickNote({ leadId, form, onApplySuggestion }: Props) {
   };
 
   return (
-    <div className="border-b border-border bg-amber-50/60 dark:bg-amber-950/20 px-3 py-2.5">
-      <div className="flex items-center gap-1.5 mb-1.5">
-        <StickyNote className="h-3.5 w-3.5 text-amber-700 dark:text-amber-400" />
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-amber-800 dark:text-amber-300">
-          Nota rápida
-        </span>
-      </div>
-      <div className="flex items-start gap-2">
-        <Textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="Ex: Quer hotel 5 estrelas, orçamento até R$15k..."
-          rows={2}
-          className="min-h-[44px] text-xs resize-none bg-background flex-1"
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              handleSave();
-            }
-          }}
-          disabled={saving}
-        />
-        <Button
-          size="sm"
-          onClick={handleSave}
-          disabled={!note.trim() || saving}
-          className="h-9 shrink-0 text-xs"
-        >
-          {saving ? "..." : "Salvar"}
-        </Button>
+    <div className="border-b border-border px-3 py-2.5">
+      <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 p-2.5">
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <Zap className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+            Nota rápida
+          </span>
+        </div>
+        <div className="flex items-start gap-2">
+          <Textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Ex: Quer hotel 5 estrelas, orçamento até R$15k..."
+            rows={2}
+            className="min-h-[44px] text-xs resize-none bg-background flex-1 border-slate-200 dark:border-slate-800"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                handleSave();
+              }
+            }}
+            disabled={saving}
+          />
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={!note.trim() || saving}
+            className="h-9 shrink-0 text-xs"
+          >
+            {saving ? "..." : "Salvar"}
+          </Button>
+        </div>
       </div>
 
       {visibleSuggestions.length > 0 && (
@@ -222,12 +224,9 @@ export function LeadQuickNote({ leadId, form, onApplySuggestion }: Props) {
           {visibleSuggestions.map((s) => (
             <div
               key={s.field}
-              className={cn(
-                "flex items-center justify-between gap-2 rounded-md border border-amber-300/60 dark:border-amber-700/40",
-                "bg-amber-100/60 dark:bg-amber-900/20 px-2 py-1.5"
-              )}
+              className="flex items-center justify-between gap-2 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 px-2 py-1.5"
             >
-              <span className="text-[11px] text-amber-900 dark:text-amber-200 inline-flex items-center gap-1.5 min-w-0">
+              <span className="text-[11px] text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 min-w-0">
                 <Sparkles className="h-3 w-3 shrink-0" />
                 <span className="truncate">{s.label}</span>
               </span>
@@ -235,7 +234,7 @@ export function LeadQuickNote({ leadId, form, onApplySuggestion }: Props) {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-6 px-2 text-[11px] hover:bg-amber-200/60 dark:hover:bg-amber-800/40"
+                  className="h-6 px-2 text-[11px]"
                   onClick={() => handleApply(s)}
                 >
                   <Check className="h-3 w-3 mr-1" />
