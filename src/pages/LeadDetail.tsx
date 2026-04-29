@@ -93,6 +93,20 @@ export default function LeadDetail() {
 
   const leadId = id?.startsWith("lead-") ? id.slice("lead-".length) : null;
 
+  // Marca a origem para que o editor de cotações volte para o card do CRM ao fechar
+  const setQuotesReturnTo = () => {
+    if (!id) return;
+    try {
+      sessionStorage.setItem(
+        "quotes:returnTo",
+        JSON.stringify({
+          url: `/crm/lead/${id}${window.location.search}`,
+          ts: Date.now(),
+        }),
+      );
+    } catch { /* ignore */ }
+  };
+
   type FormState = {
     full_name: string;
     phone: string;
