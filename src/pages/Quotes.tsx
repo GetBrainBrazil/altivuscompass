@@ -1394,6 +1394,12 @@ export default function Quotes() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
 
+  // Libera o placeholder assim que o dialog do editor abre — o overlay do
+  // shadcn já cobre o pipeline e evita o "flash".
+  useEffect(() => {
+    if (dialogOpen && externalEditPending) setExternalEditPending(false);
+  }, [dialogOpen, externalEditPending]);
+
   const openEdit = (q: Quote) => {
     setIsHydratingEditQuote(true);
     setEditingQuote(q);
