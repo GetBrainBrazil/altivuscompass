@@ -1127,6 +1127,15 @@ export default function CRM() {
       return;
     }
 
+    // Caso especial: "Perdidos" → abre modal pedindo motivo da perda
+    if (tab === "sales" && targetColumnId === "lost") {
+      setLostMove(move);
+      setLostReason("Sem resposta");
+      setLostDetails("");
+      setLostOpen(true);
+      return;
+    }
+
     // Validações específicas só para o funil de vendas
     if (tab !== "sales") {
       performMove(move, false);
