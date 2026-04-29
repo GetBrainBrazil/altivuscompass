@@ -1203,7 +1203,23 @@ export default function CRM() {
     return issues;
   };
 
-  const handleDropOnColumn = async (targetColumnId: string) => {
+  // Reorder cards within the same column (drag-to-prioritize)
+  const reorderWithinColumn = (columnId: string, cardId: string, targetIndex: number) => {
+    setColumns((prev) =>
+      prev.map((col) => {
+        if (col.id !== columnId) return col;
+        const fromIdx = col.cards.findIndex((c) => c.id === cardId);
+        if (fromIdx === -1) return col;
+        const next = col.cards.slice();
+        const [moved] = next.splice(fromIdx, 1);
+        const insertAt = Math.max(0, Math.min(next.length, targetIndex > fromIdx ? targetIndex - 1 : targetIndex));
+        next.splice(insertAt, 0, moved);
+        return { ...col, cards: next };
+      }),
+    );
+  };
+
+  const handleDropOnColumn = async (targetColumnId: string, targetIndex?: number) => {
     if (!draggedCardId) return;
     const draggedId = draggedCardId;
     setDraggedCardId(null);
