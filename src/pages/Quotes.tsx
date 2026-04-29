@@ -1454,6 +1454,7 @@ export default function Quotes() {
 
     // Se este editor foi aberto a partir de outra página (ex.: card do CRM),
     // voltar para a origem em vez de ficar no pipeline de cotações.
+    let navigatedBack = false;
     try {
       const raw = sessionStorage.getItem("quotes:returnTo");
       if (raw) {
@@ -1461,9 +1462,17 @@ export default function Quotes() {
         const parsed = JSON.parse(raw) as { url?: string; ts?: number };
         if (parsed?.url && parsed?.ts && Date.now() - parsed.ts < 5 * 60_000) {
           navigate(parsed.url);
+          navigatedBack = true;
         }
       }
     } catch { /* ignore */ }
+    // Limpa o contexto visual de origem (CRM) ao fechar o editor,
+    // independentemente de termos voltado ou não para a origem.
+    try {
+      sessionStorage.removeItem("quotes:origin");
+      window.dispatchEvent(new Event("quotes:origin-changed"));
+    } catch { /* ignore */ }
+    void navigatedBack;
   };
 
   const closeDialog = () => {
