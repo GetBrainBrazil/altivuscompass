@@ -325,7 +325,7 @@ function KanbanColumnCard({
             </span>
           )}
         </div>
-        {!isCollapsed && (
+        {!isCollapsed && (onAddBefore || onAddAfter || onRename || onDelete) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -339,26 +339,36 @@ function KanbanColumnCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={onAddBefore}>
-                <ArrowLeftToLine className="h-4 w-4 mr-2" />
-                Adicionar etapa à esquerda
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onAddAfter}>
-                <ArrowRightToLine className="h-4 w-4 mr-2" />
-                Adicionar etapa à direita
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onRename}>
-                <Pencil className="h-4 w-4 mr-2" />
-                Renomear etapa
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={onDelete}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Excluir etapa
-              </DropdownMenuItem>
+              {onAddBefore && (
+                <DropdownMenuItem onClick={onAddBefore}>
+                  <ArrowLeftToLine className="h-4 w-4 mr-2" />
+                  Adicionar etapa à esquerda
+                </DropdownMenuItem>
+              )}
+              {onAddAfter && (
+                <DropdownMenuItem onClick={onAddAfter}>
+                  <ArrowRightToLine className="h-4 w-4 mr-2" />
+                  Adicionar etapa à direita
+                </DropdownMenuItem>
+              )}
+              {(onAddBefore || onAddAfter) && (onRename || onDelete) && (
+                <DropdownMenuSeparator />
+              )}
+              {onRename && (
+                <DropdownMenuItem onClick={onRename}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Renomear etapa
+                </DropdownMenuItem>
+              )}
+              {onDelete && (
+                <DropdownMenuItem
+                  onClick={onDelete}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir etapa
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}
