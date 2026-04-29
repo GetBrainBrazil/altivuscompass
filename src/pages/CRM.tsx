@@ -2731,7 +2731,7 @@ export default function CRM() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-[540px] md:rounded-3xl md:p-8 md:shadow-[0_25px_60px_-15px_hsl(var(--foreground)/0.18)] overflow-hidden [&>*]:min-w-0">
+        <DialogContent className="sm:max-w-[540px] md:rounded-3xl md:p-8 md:shadow-[0_25px_60px_-15px_hsl(var(--foreground)/0.18)] [&>*]:min-w-0">
           {(() => {
             const sendIssue = pendingIssues.find(
               (i) => i.sendQuoteOptions && i.sendQuoteOptions.length > 0,
@@ -2834,7 +2834,7 @@ export default function CRM() {
                   ))}
                 </div>
 
-                <DialogFooter className="gap-2 pt-2 sm:gap-3 sm:items-center">
+                <DialogFooter className="flex-row flex-wrap justify-end gap-2 pt-2 sm:gap-3 sm:items-center sm:space-x-0">
                   <Button
                     variant="ghost"
                     className="text-muted-foreground hover:bg-transparent hover:text-foreground"
