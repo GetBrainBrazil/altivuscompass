@@ -395,40 +395,23 @@ export function LeadWhatsAppColumn({ onClose, contactName, phone, contactId, lea
         )}
       </div>
 
-      {/* Composer */}
-      {conversation && (
-        <div className="border-t border-border p-3 bg-background">
-          {canType ? (
-            <div className="flex items-end gap-2">
-              <Input
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder="Escreva uma mensagem..."
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-                disabled={sending}
-                className="h-10"
-              />
-              <Button
-                size="icon"
-                onClick={handleSend}
-                disabled={!draft.trim() || sending}
-                className="h-10 w-10 shrink-0"
-              >
-                <SendHorizontal className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <p className="text-[11px] text-muted-foreground text-center italic">
-              Atendimento automático ativo — assuma na Central para responder
-            </p>
-          )}
-        </div>
-      )}
+      {/* Footer CTA */}
+      <div className="border-t border-border p-3 bg-background">
+        <Button
+          type="button"
+          className="w-full h-11"
+          onClick={() => {
+            const target = conversationId
+              ? `/service-center?conversation=${conversationId}`
+              : "/service-center";
+            window.open(target, "_blank", "noopener,noreferrer");
+          }}
+        >
+          <MessageCircle className="h-4 w-4 mr-2" />
+          Ir para a Central de Atendimento
+          <ExternalLink className="h-3.5 w-3.5 ml-2 opacity-80" />
+        </Button>
+      </div>
         </>
       )}
     </aside>
