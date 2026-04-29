@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { UserCheck, Loader2 } from "lucide-react";
 import { CRMBreadcrumb } from "@/components/crm/CRMBreadcrumb";
