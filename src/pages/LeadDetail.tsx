@@ -787,8 +787,8 @@ export default function LeadDetail() {
       </div>
 
       <aside
-        className="hidden lg:block min-w-0 self-start sticky top-0 border-l border-border overflow-hidden bg-white dark:bg-slate-900 z-10"
-        style={{ height: "100vh" }}
+        className="hidden lg:block min-w-0 self-start sticky border-l border-border overflow-hidden bg-white dark:bg-slate-900 z-10"
+        style={{ top: headerH, height: `calc(100vh - ${headerH}px)` }}
       >
         <LeadWhatsAppColumn
           onClose={() => setWaPanelOpen(false)}
