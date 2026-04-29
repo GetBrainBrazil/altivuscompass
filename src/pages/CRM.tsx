@@ -2731,7 +2731,7 @@ export default function CRM() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-[540px] md:rounded-3xl md:p-8 md:shadow-[0_25px_60px_-15px_hsl(var(--foreground)/0.18)] [&>*]:min-w-0">
+        <DialogContent className="sm:max-w-[620px] md:rounded-3xl md:p-8 md:shadow-[0_25px_60px_-15px_hsl(var(--foreground)/0.18)] [&>*]:min-w-0">
           {(() => {
             const sendIssue = pendingIssues.find(
               (i) => i.sendQuoteOptions && i.sendQuoteOptions.length > 0,
@@ -2834,10 +2834,10 @@ export default function CRM() {
                   ))}
                 </div>
 
-                <DialogFooter className="flex-row flex-wrap justify-end gap-2 pt-2 sm:gap-3 sm:items-center sm:space-x-0">
+                <DialogFooter className="flex-row items-center justify-between flex-nowrap gap-2 pt-2 sm:space-x-0">
                   <Button
                     variant="ghost"
-                    className="text-muted-foreground hover:bg-transparent hover:text-foreground"
+                    className="text-muted-foreground hover:bg-transparent hover:text-foreground shrink-0"
                     onClick={() => {
                       setPendingMove(null);
                       setPendingIssues([]);
@@ -2846,35 +2846,37 @@ export default function CRM() {
                   >
                     Cancelar
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="rounded-lg border-border text-muted-foreground hover:text-foreground"
-                    onClick={() => {
-                      if (pendingMove) {
-                        if (pendingMove.toColumnId === "closed" && pendingMove.leadId) {
-                          setPromotionLeadId(pendingMove.leadId);
-                          setPromotionPendingMove(pendingMove);
-                          setPromotionOpen(true);
-                        } else {
-                          performMove(pendingMove, true);
-                        }
-                      }
-                      setPendingMove(null);
-                      setPendingIssues([]);
-                      setSelectedQuoteToSend("");
-                    }}
-                  >
-                    Mover mesmo assim
-                  </Button>
-                  {sendIssue && (
+                  <div className="flex items-center gap-2 sm:gap-3 flex-nowrap">
                     <Button
-                      className="rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 px-6 sm:min-w-[200px]"
-                      onClick={handleSendQuoteAndMove}
-                      disabled={sendingQuoteAndMoving || !selectedQuoteToSend}
+                      variant="outline"
+                      className="rounded-lg border-border text-muted-foreground hover:text-foreground shrink-0 whitespace-nowrap"
+                      onClick={() => {
+                        if (pendingMove) {
+                          if (pendingMove.toColumnId === "closed" && pendingMove.leadId) {
+                            setPromotionLeadId(pendingMove.leadId);
+                            setPromotionPendingMove(pendingMove);
+                            setPromotionOpen(true);
+                          } else {
+                            performMove(pendingMove, true);
+                          }
+                        }
+                        setPendingMove(null);
+                        setPendingIssues([]);
+                        setSelectedQuoteToSend("");
+                      }}
                     >
-                      {sendingQuoteAndMoving ? "Enviando..." : "Enviar cotação e mover"}
+                      Mover mesmo assim
                     </Button>
-                  )}
+                    {sendIssue && (
+                      <Button
+                        className="rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 px-6 shrink-0 whitespace-nowrap"
+                        onClick={handleSendQuoteAndMove}
+                        disabled={sendingQuoteAndMoving || !selectedQuoteToSend}
+                      >
+                        {sendingQuoteAndMoving ? "Enviando..." : "Enviar cotação e mover"}
+                      </Button>
+                    )}
+                  </div>
                 </DialogFooter>
               </>
             );
