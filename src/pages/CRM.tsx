@@ -66,6 +66,7 @@ const INITIAL_SALES_COLUMNS: KanbanColumn[] = [
   { id: "quote", title: "Cotação", cards: [] },
   { id: "proposal-sent", title: "Proposta Enviada", cards: [] },
   { id: "closed", title: "Fechado", cards: [] },
+  { id: "lost", title: "Perdidos", cards: [] },
 ];
 
 const INITIAL_OPS_COLUMNS: KanbanColumn[] = [
