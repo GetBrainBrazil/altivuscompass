@@ -768,7 +768,7 @@ export default function LeadDetail() {
       </main>
       </div>
 
-      <aside className="hidden lg:block min-w-0 sticky top-0 h-screen border-l border-border">
+      <aside className="hidden lg:block min-w-0 self-start sticky top-0 h-screen border-l border-border overflow-hidden">
         <LeadWhatsAppColumn
           onClose={() => setWaPanelOpen(false)}
           contactName={form.full_name || card?.clientName || "Contato"}
