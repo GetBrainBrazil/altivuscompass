@@ -174,11 +174,12 @@ export function LeadTasksTab({ contactId, contactName }: Props) {
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* Internal-use banner */}
-      <div className="px-3 py-2 border-b border-amber-200/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/20 flex items-center gap-2">
-        <Lock className="h-3.5 w-3.5 text-amber-700 dark:text-amber-400 shrink-0" />
-        <p className="text-[11.5px] leading-snug text-amber-900 dark:text-amber-200">
-          <span className="font-medium">Uso Interno:</span> O lead não visualiza estas tarefas
+      {/* Header with subtle internal-use note */}
+      <div className="px-3 pt-3 pb-2 border-b border-border">
+        <h3 className="text-sm font-semibold text-foreground">✅ Tarefas</h3>
+        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400 inline-flex items-center gap-1.5">
+          <Lock className="h-3 w-3 shrink-0" />
+          Estas tarefas são apenas para uso interno da equipe.
         </p>
       </div>
 
