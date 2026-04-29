@@ -13,7 +13,11 @@ import {
   Sparkles,
   X,
   AlertTriangle,
+  TrendingUp,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
+import { FilterChip, SearchableList } from "@/components/tasks/FilterChip";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
