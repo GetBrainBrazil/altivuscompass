@@ -101,9 +101,71 @@ export function ClientPromotionDialog({
         if (cancelled || !lead) return;
 
         setLeadName(lead.full_name ?? "");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [travelers, setTravelers] = useState<Traveler[]>([{ ...emptyTraveler }]);
+  const [saleSummary, setSaleSummary] = useState<SaleSummary | null>(null);
+
+  // Pre-fill from lead
+  useEffect(() => {
+    if (!open || !leadId) return;
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const { data: lead } = await supabase
+          .from("leads")
+          .select("*")
+          .eq("id", leadId)
+          .maybeSingle();
+        if (cancelled || !lead) return;
+
+        setLeadName(lead.full_name ?? "");
         setEmail(lead.email ?? "");
         setPhone(lead.phone ?? "");
         setAddress("");
+
+        // --- Resumo da venda: cotação concluída mais recente vinculada ---
+        const { data: quotes } = await supabase
+          .from("quotes")
+          .select("id, title, destination, travel_date_start, travel_date_end, total_value, assigned_to, stage, updated_at")
+          .eq("lead_id", leadId)
+          .in("stage", ["completed", "issued", "confirmed"])
+          .order("updated_at", { ascending: false })
+          .limit(1);
+        const quote = (quotes ?? [])[0] as any;
+
+        if (quote && !cancelled) {
+          // contagem de viajantes
+          const { count: paxCount } = await supabase
+            .from("quote_passengers")
+            .select("id", { count: "exact", head: true })
+            .eq("quote_id", quote.id);
+
+          // nome do consultor
+          let agentName: string | null = null;
+          if (quote.assigned_to) {
+            const { data: prof } = await supabase
+              .from("profiles")
+              .select("full_name, email")
+              .eq("user_id", quote.assigned_to)
+              .maybeSingle();
+            agentName = prof?.full_name || prof?.email || null;
+          }
+
+          setSaleSummary({
+            title: quote.title || "Cotação sem título",
+            destination: quote.destination ?? null,
+            travelDateStart: quote.travel_date_start ?? null,
+            travelDateEnd: quote.travel_date_end ?? null,
+            totalValue: quote.total_value != null ? Number(quote.total_value) : null,
+            travelersCount: paxCount ?? lead.travelers_count ?? null,
+            agentName,
+          });
+        } else {
+          setSaleSummary(null);
+        }
 
         // Try to get an existing client (in case already converted previously)
         let existingClient: any = null;
@@ -134,7 +196,7 @@ export function ClientPromotionDialog({
               birth_date: existingClient.birth_date ?? "",
               passport_number: existingClient.passport_number ?? "",
               passport_expiry: existingClient.passport_expiry_date ?? "",
-              passport_country: existingClient.passport_nationality ?? "",
+              passport_country: existingClient.passport_nationality ?? existingClient.nationality ?? "",
             },
           ]);
         } else {
@@ -142,6 +204,7 @@ export function ClientPromotionDialog({
             {
               ...emptyTraveler,
               full_name: lead.full_name ?? "",
+              passport_country: "Brasil",
             },
           ]);
         }
