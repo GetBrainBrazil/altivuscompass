@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, PartyPopper, AlertTriangle, UserCheck, Clock } from "lucide-react";
+import { Loader2, PartyPopper, AlertTriangle, UserCheck, Clock, Receipt, MapPin, Calendar, DollarSign, Users, User } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -14,6 +14,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+
+type SaleSummary = {
+  title: string;
+  destination: string | null;
+  travelDateStart: string | null;
+  travelDateEnd: string | null;
+  totalValue: number | null;
+  travelersCount: number | null;
+  agentName: string | null;
+};
+
+const fmtBRL = (v: number | null) =>
+  v == null ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+const fmtDate = (iso: string | null) => {
+  if (!iso) return null;
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+};
+
+const fmtDateRange = (a: string | null, b: string | null) => {
+  const fa = fmtDate(a);
+  const fb = fmtDate(b);
+  if (fa && fb) return `${fa} → ${fb}`;
+  return fa || fb || "—";
+};
 
 type Traveler = {
   full_name: string;
@@ -59,6 +85,7 @@ export function ClientPromotionDialog({
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [travelers, setTravelers] = useState<Traveler[]>([{ ...emptyTraveler }]);
+  const [saleSummary, setSaleSummary] = useState<SaleSummary | null>(null);
 
   // Pre-fill from lead
   useEffect(() => {
@@ -78,6 +105,47 @@ export function ClientPromotionDialog({
         setEmail(lead.email ?? "");
         setPhone(lead.phone ?? "");
         setAddress("");
+
+        // --- Resumo da venda: cotação concluída mais recente vinculada ---
+        const { data: quotes } = await supabase
+          .from("quotes")
+          .select("id, title, destination, travel_date_start, travel_date_end, total_value, assigned_to, stage, updated_at")
+          .eq("lead_id", leadId)
+          .in("stage", ["completed", "issued", "confirmed"])
+          .order("updated_at", { ascending: false })
+          .limit(1);
+        const quote = (quotes ?? [])[0] as any;
+
+        if (quote && !cancelled) {
+          // contagem de viajantes
+          const { count: paxCount } = await supabase
+            .from("quote_passengers")
+            .select("id", { count: "exact", head: true })
+            .eq("quote_id", quote.id);
+
+          // nome do consultor
+          let agentName: string | null = null;
+          if (quote.assigned_to) {
+            const { data: prof } = await supabase
+              .from("profiles")
+              .select("full_name, email")
+              .eq("user_id", quote.assigned_to)
+              .maybeSingle();
+            agentName = prof?.full_name || prof?.email || null;
+          }
+
+          setSaleSummary({
+            title: quote.title || "Cotação sem título",
+            destination: quote.destination ?? null,
+            travelDateStart: quote.travel_date_start ?? null,
+            travelDateEnd: quote.travel_date_end ?? null,
+            totalValue: quote.total_value != null ? Number(quote.total_value) : null,
+            travelersCount: paxCount ?? lead.travelers_count ?? null,
+            agentName,
+          });
+        } else {
+          setSaleSummary(null);
+        }
 
         // Try to get an existing client (in case already converted previously)
         let existingClient: any = null;
@@ -108,7 +176,7 @@ export function ClientPromotionDialog({
               birth_date: existingClient.birth_date ?? "",
               passport_number: existingClient.passport_number ?? "",
               passport_expiry: existingClient.passport_expiry_date ?? "",
-              passport_country: existingClient.passport_nationality ?? "",
+              passport_country: existingClient.passport_nationality ?? existingClient.nationality ?? "",
             },
           ]);
         } else {
@@ -116,6 +184,7 @@ export function ClientPromotionDialog({
             {
               ...emptyTraveler,
               full_name: lead.full_name ?? "",
+              passport_country: "Brasil",
             },
           ]);
         }
@@ -294,6 +363,45 @@ export function ClientPromotionDialog({
           </div>
         ) : (
           <div className="space-y-5 pt-2">
+            {/* Resumo da venda */}
+            {saleSummary && (
+              <section className="rounded-xl border border-primary/20 bg-primary/5 dark:bg-primary/10 p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Receipt className="h-4 w-4 text-primary" />
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-primary font-body">
+                    Resumo da venda
+                  </h4>
+                </div>
+                <p className="text-sm font-semibold text-foreground font-display leading-tight">
+                  {saleSummary.title}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-xs font-body">
+                  <SummaryRow icon={MapPin} label="Destino" value={saleSummary.destination || "—"} />
+                  <SummaryRow
+                    icon={Calendar}
+                    label="Datas"
+                    value={fmtDateRange(saleSummary.travelDateStart, saleSummary.travelDateEnd)}
+                  />
+                  <SummaryRow
+                    icon={DollarSign}
+                    label="Valor total"
+                    value={fmtBRL(saleSummary.totalValue)}
+                    highlight
+                  />
+                  <SummaryRow
+                    icon={Users}
+                    label="Viajantes"
+                    value={saleSummary.travelersCount != null ? String(saleSummary.travelersCount) : "—"}
+                  />
+                  <SummaryRow
+                    icon={User}
+                    label="Consultor"
+                    value={saleSummary.agentName || "Não atribuído"}
+                  />
+                </div>
+              </section>
+            )}
+
             {/* Contact */}
             <section className="space-y-3">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-body">
@@ -460,6 +568,38 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         className="h-9"
       />
+    </div>
+  );
+}
+
+function SummaryRow({
+  icon: Icon,
+  label,
+  value,
+  highlight,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="flex items-start gap-2 min-w-0">
+      <Icon className="h-3.5 w-3.5 mt-0.5 text-muted-foreground shrink-0" />
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none mb-0.5">
+          {label}
+        </p>
+        <p
+          className={
+            highlight
+              ? "text-sm font-semibold text-foreground truncate"
+              : "text-xs text-foreground truncate"
+          }
+        >
+          {value}
+        </p>
+      </div>
     </div>
   );
 }
