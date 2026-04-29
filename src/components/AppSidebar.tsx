@@ -113,7 +113,12 @@ export function AppSidebar() {
                 const renderItem = () => {
                   if (hasSubItems && !collapsed) {
                     return (
-                      <Collapsible key={item.title} defaultOpen={isParentActive} className="group/collapsible">
+                      <Collapsible
+                        key={item.title}
+                        open={isParentActive || undefined}
+                        defaultOpen={isParentActive}
+                        className="group/collapsible"
+                      >
                         <SidebarMenuItem>
                           <div className="flex items-center gap-0.5">
                             <SidebarMenuButton asChild className={cn("h-9 rounded-md flex-1", activeBase)}>
