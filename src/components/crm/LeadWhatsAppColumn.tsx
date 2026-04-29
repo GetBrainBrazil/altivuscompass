@@ -429,6 +429,8 @@ export function LeadWhatsAppColumn({ onClose, contactName, phone, contactId, lea
           )}
         </div>
       )}
+        </>
+      )}
     </aside>
   );
 }
