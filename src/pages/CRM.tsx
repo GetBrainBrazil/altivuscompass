@@ -2134,102 +2134,178 @@ export default function CRM() {
             />
           </FilterChip>
 
-          <FilterChip
-            label="Temperatura"
-            value={
-              filterTemp === "all"
-                ? "Temperatura"
-                : `Temp.: ${
-                    { hot: "Quente", warm: "Morno", cold: "Frio", undefined: "Não definida" }[
-                      filterTemp as "hot" | "warm" | "cold" | "undefined"
-                    ] ?? filterTemp
-                  }`
-            }
-            active={filterTemp !== "all"}
-            onClear={() => setFilterTemp("all")}
-            width={200}
-          >
-            <SearchableList
-              items={[
-                { id: "all", label: "Todas temperaturas" },
-                { id: "hot", label: "Quente" },
-                { id: "warm", label: "Morno" },
-                { id: "cold", label: "Frio" },
-                { id: "undefined", label: "Não definida" },
-              ]}
-              selected={filterTemp}
-              onSelect={setFilterTemp}
-              placeholder="Buscar..."
-            />
-          </FilterChip>
+          {tab === "sales" ? (
+            <>
+              <FilterChip
+                label="Temperatura"
+                value={
+                  filterTemp === "all"
+                    ? "Temperatura"
+                    : `Temp.: ${
+                        { hot: "Quente", warm: "Morno", cold: "Frio", undefined: "Não definida" }[
+                          filterTemp as "hot" | "warm" | "cold" | "undefined"
+                        ] ?? filterTemp
+                      }`
+                }
+                active={filterTemp !== "all"}
+                onClear={() => setFilterTemp("all")}
+                width={200}
+              >
+                <SearchableList
+                  items={[
+                    { id: "all", label: "Todas temperaturas" },
+                    { id: "hot", label: "Quente" },
+                    { id: "warm", label: "Morno" },
+                    { id: "cold", label: "Frio" },
+                    { id: "undefined", label: "Não definida" },
+                  ]}
+                  selected={filterTemp}
+                  onSelect={setFilterTemp}
+                  placeholder="Buscar..."
+                />
+              </FilterChip>
 
-          <FilterChip
-            label="Nível"
-            value={
-              filterLevel === "all"
-                ? "Nível"
-                : `Nível: ${
-                    { prospect: "Prospect", lead: "Lead", cliente: "Cliente" }[
-                      filterLevel as "prospect" | "lead" | "cliente"
-                    ] ?? filterLevel
-                  }`
-            }
-            active={filterLevel !== "all"}
-            onClear={() => setFilterLevel("all")}
-            width={200}
-          >
-            <SearchableList
-              items={[
-                { id: "all", label: "Todos os níveis" },
-                { id: "prospect", label: "Prospect" },
-                { id: "lead", label: "Lead" },
-                { id: "cliente", label: "Cliente" },
-              ]}
-              selected={filterLevel}
-              onSelect={setFilterLevel}
-              placeholder="Buscar..."
-            />
-          </FilterChip>
+              <FilterChip
+                label="Nível"
+                value={
+                  filterLevel === "all"
+                    ? "Nível"
+                    : `Nível: ${
+                        { prospect: "Prospect", lead: "Lead", cliente: "Cliente" }[
+                          filterLevel as "prospect" | "lead" | "cliente"
+                        ] ?? filterLevel
+                      }`
+                }
+                active={filterLevel !== "all"}
+                onClear={() => setFilterLevel("all")}
+                width={200}
+              >
+                <SearchableList
+                  items={[
+                    { id: "all", label: "Todos os níveis" },
+                    { id: "prospect", label: "Prospect" },
+                    { id: "lead", label: "Lead" },
+                    { id: "cliente", label: "Cliente" },
+                  ]}
+                  selected={filterLevel}
+                  onSelect={setFilterLevel}
+                  placeholder="Buscar..."
+                />
+              </FilterChip>
 
-          <FilterChip
-            label="Origem"
-            value={filterSource === "all" ? "Origem" : `Origem: ${filterSource}`}
-            active={filterSource !== "all"}
-            onClear={() => setFilterSource("all")}
-            width={220}
-          >
-            <SearchableList
-              items={[
-                { id: "all", label: "Todas as origens" },
-                { id: "WhatsApp", label: "WhatsApp" },
-                { id: "Manual", label: "Manual" },
-                { id: "Telefone", label: "Telefone" },
-                { id: "E-mail", label: "E-mail" },
-                { id: "Indicação", label: "Indicação" },
-              ]}
-              selected={filterSource}
-              onSelect={setFilterSource}
-              placeholder="Buscar origem..."
-            />
-          </FilterChip>
+              <FilterChip
+                label="Origem"
+                value={filterSource === "all" ? "Origem" : `Origem: ${filterSource}`}
+                active={filterSource !== "all"}
+                onClear={() => setFilterSource("all")}
+                width={220}
+              >
+                <SearchableList
+                  items={[
+                    { id: "all", label: "Todas as origens" },
+                    { id: "WhatsApp", label: "WhatsApp" },
+                    { id: "Manual", label: "Manual" },
+                    { id: "Telefone", label: "Telefone" },
+                    { id: "E-mail", label: "E-mail" },
+                    { id: "Indicação", label: "Indicação" },
+                  ]}
+                  selected={filterSource}
+                  onSelect={setFilterSource}
+                  placeholder="Buscar origem..."
+                />
+              </FilterChip>
 
-          <FilterChip
-            label="Tags"
-            value={filterTag === "all" ? "Tags" : `Tag: ${filterTag}`}
-            active={filterTag !== "all"}
-            onClear={() => setFilterTag("all")}
-            width={240}
-          >
-            <SearchableList
-              items={[
-                { id: "all", label: "Todas as tags" },
-                ...tagOptions.map((t) => ({ id: t, label: t })),
-              ]}
-              selected={filterTag}
-              onSelect={setFilterTag}
-              placeholder="Buscar tag..."
-            />
-          </FilterChip>
+              <FilterChip
+                label="Tags"
+                value={filterTag === "all" ? "Tags" : `Tag: ${filterTag}`}
+                active={filterTag !== "all"}
+                onClear={() => setFilterTag("all")}
+                width={240}
+              >
+                <SearchableList
+                  items={[
+                    { id: "all", label: "Todas as tags" },
+                    ...tagOptions.map((t) => ({ id: t, label: t })),
+                  ]}
+                  selected={filterTag}
+                  onSelect={setFilterTag}
+                  placeholder="Buscar tag..."
+                />
+              </FilterChip>
+            </>
+          ) : (
+            <>
+              <FilterChip
+                label="Embarque"
+                value={
+                  filterBoarding === "all"
+                    ? "Embarque"
+                    : `Embarque: Próx. ${filterBoarding} dias`
+                }
+                active={filterBoarding !== "all"}
+                onClear={() => setFilterBoarding("all")}
+                width={220}
+              >
+                <SearchableList
+                  items={[
+                    { id: "all", label: "Todos" },
+                    { id: "7", label: "Próximos 7 dias" },
+                    { id: "15", label: "Próximos 15 dias" },
+                    { id: "30", label: "Próximos 30 dias" },
+                  ]}
+                  selected={filterBoarding}
+                  onSelect={(v) => setFilterBoarding(v as "all" | "7" | "15" | "30")}
+                  placeholder="Buscar..."
+                />
+              </FilterChip>
+
+              <FilterChip
+                label="Status"
+                value={
+                  filterOpsStatus === "all"
+                    ? "Status"
+                    : `Status: ${
+                        { normal: "Normal", urgent: "Urgente", waiting: "Aguardando retorno" }[
+                          filterOpsStatus
+                        ]
+                      }`
+                }
+                active={filterOpsStatus !== "all"}
+                onClear={() => setFilterOpsStatus("all")}
+                width={240}
+              >
+                <SearchableList
+                  items={[
+                    { id: "all", label: "Todos os status" },
+                    { id: "normal", label: "Normal" },
+                    { id: "urgent", label: "Urgente" },
+                    { id: "waiting", label: "Aguardando retorno" },
+                  ]}
+                  selected={filterOpsStatus}
+                  onSelect={(v) => setFilterOpsStatus(v as "all" | "normal" | "urgent" | "waiting")}
+                  placeholder="Buscar..."
+                />
+              </FilterChip>
+
+              <FilterChip
+                label="Destino"
+                value={filterDestination === "all" ? "Destino" : `Destino: ${filterDestination}`}
+                active={filterDestination !== "all"}
+                onClear={() => setFilterDestination("all")}
+                width={260}
+              >
+                <SearchableList
+                  items={[
+                    { id: "all", label: "Todos os destinos" },
+                    ...destinationOptions.map((d) => ({ id: d, label: d })),
+                  ]}
+                  selected={filterDestination}
+                  onSelect={setFilterDestination}
+                  placeholder="Buscar destino..."
+                />
+              </FilterChip>
+            </>
+          )}
 
           {hasActiveFilters && (
             <Button
@@ -2243,6 +2319,9 @@ export default function CRM() {
                 setFilterTemp("all");
                 setFilterLevel("all");
                 setFilterSource("all");
+                setFilterBoarding("all");
+                setFilterOpsStatus("all");
+                setFilterDestination("all");
               }}
             >
               <X className="w-3 h-3" /> Limpar
