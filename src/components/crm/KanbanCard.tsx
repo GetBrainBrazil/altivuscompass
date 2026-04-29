@@ -478,10 +478,7 @@ export function KanbanCard({
             <div className="flex-1 min-w-0 flex items-center gap-1.5">
               <GripVertical
                 aria-hidden="true"
-                className={cn(
-                  "w-3.5 h-3.5 shrink-0 text-slate-300 opacity-0 transition-opacity",
-                  draggable && "group-hover:opacity-100",
-                )}
+                className="w-3.5 h-3.5 shrink-0 text-slate-300"
               />
               <Avatar className="h-6 w-6 shrink-0">
                 <AvatarFallback className="bg-slate-100 text-slate-600 text-[10px] font-medium font-sans">
@@ -701,13 +698,7 @@ export function KanbanCard({
         </div>
 
 
-        {isIncomplete ? (
-          /* Estado incompleto: CTA central discreto */
-          <div className="py-3 text-center">
-            <p className="text-[11px] italic text-muted-foreground/80 font-body leading-snug">
-              Dados incompletos — clique para completar
-            </p>
-          </div>
+        {isIncomplete ? null : (
         ) : (
           <>
             {/* Linhas com ícones: telefone e data da viagem */}
