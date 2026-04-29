@@ -2150,29 +2150,29 @@ export default function CRM() {
               type="button"
               onClick={() => handleViewModeChange("kanban")}
               className={cn(
-                "inline-flex items-center justify-center h-7 w-8 rounded-full transition-colors",
+                "inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-xs font-medium transition-colors",
                 viewMode === "kanban"
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                  : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted",
               )}
               aria-label="Visualização em Kanban"
-              title="Kanban"
             >
               <LayoutGrid className="w-3.5 h-3.5" />
+              Kanban
             </button>
             <button
               type="button"
               onClick={() => handleViewModeChange("table")}
               className={cn(
-                "inline-flex items-center justify-center h-7 w-8 rounded-full transition-colors",
+                "inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-xs font-medium transition-colors",
                 viewMode === "table"
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                  : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted",
               )}
               aria-label="Visualização em Tabela"
-              title="Tabela"
             >
               <Rows3 className="w-3.5 h-3.5" />
+              Tabela
             </button>
           </div>
 
