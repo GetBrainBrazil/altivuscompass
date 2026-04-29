@@ -439,6 +439,7 @@ function KanbanColumnCard({
                       onViewConversation={onCardViewConversation}
                       onEdit={onCardEdit}
                       onArchive={onCardArchive}
+                      onRenameClient={onCardRenameClient}
                     />
                   </div>
                 );
