@@ -2744,29 +2744,49 @@ export default function CRM() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-[480px]">
+        <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
-            <DialogTitle>Marcar lead como perdido</DialogTitle>
-            <DialogDescription>
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              <Target className="h-6 w-6 text-primary" />
+            </div>
+            <DialogTitle className="text-center">Marcar lead como perdido</DialogTitle>
+            <DialogDescription className="text-center">
               Selecione o motivo da perda. Esta informação ficará registrada para análise futura.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 py-2">
-            <RadioGroup value={lostReason} onValueChange={setLostReason} className="space-y-2">
+          <div className="space-y-4 py-2">
+            <RadioGroup value={lostReason} onValueChange={setLostReason} className="grid gap-2">
               {[
                 "Sem resposta",
                 "Escolheu concorrente",
                 "Preço acima do orçamento",
                 "Desistiu da viagem",
                 "Outro",
-              ].map((r) => (
-                <div key={r} className="flex items-center gap-2">
-                  <RadioGroupItem value={r} id={`lost-${r}`} />
-                  <Label htmlFor={`lost-${r}`} className="text-sm font-normal cursor-pointer">
-                    {r}
-                  </Label>
-                </div>
-              ))}
+              ].map((r) => {
+                const selected = lostReason === r;
+                return (
+                  <label
+                    key={r}
+                    htmlFor={`lost-${r}`}
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl border-2 px-4 py-3 cursor-pointer transition-all",
+                      selected
+                        ? "border-primary bg-primary/5 shadow-sm"
+                        : "border-border hover:border-primary/40 hover:bg-muted/40",
+                    )}
+                  >
+                    <RadioGroupItem value={r} id={`lost-${r}`} className="shrink-0" />
+                    <span
+                      className={cn(
+                        "text-sm font-medium",
+                        selected ? "text-foreground" : "text-muted-foreground",
+                      )}
+                    >
+                      {r}
+                    </span>
+                  </label>
+                );
+              })}
             </RadioGroup>
             <div className="space-y-1.5">
               <Label htmlFor="lost-details" className="text-xs">
@@ -2778,15 +2798,22 @@ export default function CRM() {
                 onChange={(e) => setLostDetails(e.target.value)}
                 placeholder={lostReason === "Outro" ? "Explique o motivo da perda..." : "Detalhes adicionais..."}
                 rows={3}
-                className="text-sm"
+                className="text-sm rounded-lg"
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setLostOpen(false); setLostMove(null); }}>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              className="rounded-lg"
+              onClick={() => { setLostOpen(false); setLostMove(null); }}
+            >
               Cancelar
             </Button>
-            <Button variant="destructive" onClick={confirmLost}>
+            <Button
+              className="rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={confirmLost}
+            >
               Marcar como perdido
             </Button>
           </DialogFooter>
