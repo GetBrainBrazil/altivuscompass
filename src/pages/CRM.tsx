@@ -427,6 +427,7 @@ export default function CRM() {
   // "Novos Leads (IA)" column. We poll every 30s so newly captured leads show
   // up automatically without a page refresh.
   const [leadsRefreshTick, setLeadsRefreshTick] = useState(0);
+  const [isLoadingLeads, setIsLoadingLeads] = useState(true);
   useEffect(() => {
     let cancelled = false;
     const fetchLeads = async () => {
