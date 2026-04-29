@@ -97,6 +97,8 @@ function KanbanBoard({
   onAddBefore,
   onAddAfter,
   draggedCardId,
+  draggedFromColumnId,
+  validTargetColumnIds,
   onCardDragStart,
   onCardDragEnd,
   onDropOnColumn,
@@ -116,9 +118,11 @@ function KanbanBoard({
   onAddBefore: (columnId: string) => void;
   onAddAfter: (columnId: string) => void;
   draggedCardId: string | null;
+  draggedFromColumnId?: string | null;
+  validTargetColumnIds?: Set<string> | null;
   onCardDragStart: (card: KanbanCardData) => void;
   onCardDragEnd: () => void;
-  onDropOnColumn: (columnId: string) => void;
+  onDropOnColumn: (columnId: string, targetIndex?: number) => void;
   onTemperatureChange: (card: KanbanCardData, next: LeadTemperature) => void;
   onCardDelete?: (card: KanbanCardData) => void;
   focusCardId?: string | null;
@@ -130,31 +134,41 @@ function KanbanBoard({
   return (
     <div className="flex-1 min-h-0 mt-4 pb-5 overflow-x-auto overflow-y-hidden scrollbar-elegant [transform:scaleY(-1)]">
       <div className="flex gap-2 px-6 py-2 min-w-max h-full items-stretch [transform:scaleY(-1)]">
-        {columns.map((col, idx) => (
-          <KanbanColumnCard
-            key={col.id}
-            column={col}
-            dotColor={STAGE_DOT_COLORS[idx % STAGE_DOT_COLORS.length]}
-            onCardClick={onCardClick}
-            onDelete={() => onDeleteColumn(col.id)}
-            onRename={() => onRenameColumn(col.id)}
-            onAddBefore={() => onAddBefore(col.id)}
-            onAddAfter={() => onAddAfter(col.id)}
-            draggedCardId={draggedCardId}
-            onCardDragStart={onCardDragStart}
-            onCardDragEnd={onCardDragEnd}
-            onDropOnColumn={onDropOnColumn}
-            onTemperatureChange={onTemperatureChange}
-            onCardDelete={onCardDelete}
-            focusCardId={focusCardId}
-            isLoading={isLoading}
-            collapsible={collapsibleColumnIds?.has(col.id) ?? false}
-            collapsed={collapsedColumnIds?.has(col.id) ?? false}
-            onToggleCollapse={
-              onToggleColumnCollapse ? () => onToggleColumnCollapse(col.id) : undefined
-            }
-          />
-        ))}
+        {columns.map((col, idx) => {
+          const isValidTarget =
+            !!draggedCardId &&
+            (validTargetColumnIds ? validTargetColumnIds.has(col.id) : true);
+          const isInvalidTarget = !!draggedCardId && !isValidTarget;
+          const isSourceColumn = !!draggedCardId && col.id === draggedFromColumnId;
+          return (
+            <KanbanColumnCard
+              key={col.id}
+              column={col}
+              dotColor={STAGE_DOT_COLORS[idx % STAGE_DOT_COLORS.length]}
+              onCardClick={onCardClick}
+              onDelete={() => onDeleteColumn(col.id)}
+              onRename={() => onRenameColumn(col.id)}
+              onAddBefore={() => onAddBefore(col.id)}
+              onAddAfter={() => onAddAfter(col.id)}
+              draggedCardId={draggedCardId}
+              isValidTarget={isValidTarget}
+              isInvalidTarget={isInvalidTarget}
+              isSourceColumn={isSourceColumn}
+              onCardDragStart={onCardDragStart}
+              onCardDragEnd={onCardDragEnd}
+              onDropOnColumn={onDropOnColumn}
+              onTemperatureChange={onTemperatureChange}
+              onCardDelete={onCardDelete}
+              focusCardId={focusCardId}
+              isLoading={isLoading}
+              collapsible={collapsibleColumnIds?.has(col.id) ?? false}
+              collapsed={collapsedColumnIds?.has(col.id) ?? false}
+              onToggleCollapse={
+                onToggleColumnCollapse ? () => onToggleColumnCollapse(col.id) : undefined
+              }
+            />
+          );
+        })}
         <AddColumnButton onClick={onAddColumn} />
       </div>
     </div>
@@ -170,6 +184,9 @@ function KanbanColumnCard({
   onAddBefore,
   onAddAfter,
   draggedCardId,
+  isValidTarget,
+  isInvalidTarget,
+  isSourceColumn,
   onCardDragStart,
   onCardDragEnd,
   onDropOnColumn,
@@ -189,9 +206,12 @@ function KanbanColumnCard({
   onAddBefore: () => void;
   onAddAfter: () => void;
   draggedCardId: string | null;
+  isValidTarget?: boolean;
+  isInvalidTarget?: boolean;
+  isSourceColumn?: boolean;
   onCardDragStart: (card: KanbanCardData) => void;
   onCardDragEnd: () => void;
-  onDropOnColumn: (columnId: string) => void;
+  onDropOnColumn: (columnId: string, targetIndex?: number) => void;
   onTemperatureChange: (card: KanbanCardData, next: LeadTemperature) => void;
   onCardDelete?: (card: KanbanCardData) => void;
   focusCardId?: string | null;
@@ -201,14 +221,19 @@ function KanbanColumnCard({
   onToggleCollapse?: () => void;
 }) {
   const [isOver, setIsOver] = useState(false);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
 
   const ownerlessCount = column.cards.filter((c) => !c.agent?.name).length;
   const isCollapsed = !!(collapsible && collapsed);
+  // Visual feedback states for drag operation
+  const showValidHint = !!draggedCardId && !!isValidTarget && !isSourceColumn && !isOver;
+  const dimmedInvalid = !!draggedCardId && !!isInvalidTarget;
   return (
     <div
       className={cn(
-        "flex flex-col shrink-0 max-h-full transition-[width] duration-200",
+        "flex flex-col shrink-0 max-h-full transition-all duration-200",
         isCollapsed ? "w-[56px]" : "w-[320px]",
+        dimmedInvalid && "opacity-40 pointer-events-none",
       )}
     >
       {/* Column header (fixed) — flat, dot + title + count */}
@@ -306,15 +331,22 @@ function KanbanColumnCard({
           onDragLeave={(e) => {
             if (e.currentTarget.contains(e.relatedTarget as Node)) return;
             setIsOver(false);
+            setOverIndex(null);
           }}
           onDrop={(e) => {
             e.preventDefault();
+            const idx = overIndex;
             setIsOver(false);
-            onDropOnColumn(column.id);
+            setOverIndex(null);
+            onDropOnColumn(column.id, idx ?? column.cards.length);
           }}
           className={cn(
-            "flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin pr-1 rounded-lg transition-colors",
-            isOver && "bg-primary/10 ring-2 ring-primary/40 ring-inset",
+            "flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin pr-1 rounded-lg transition-colors border border-dashed",
+            isOver
+              ? "bg-primary/10 ring-2 ring-primary/40 ring-inset border-primary/60"
+              : showValidHint
+                ? "border-primary/40 bg-primary/[0.03]"
+                : "border-transparent",
           )}
         >
           <div className="space-y-3 min-h-[120px] p-1">
@@ -327,8 +359,9 @@ function KanbanColumnCard({
             ) : column.cards.length === 0 ? (
               <EmptyColumnHint />
             ) : (
-              column.cards.map((card) => {
+              column.cards.map((card, cardIdx) => {
                 const isFocused = focusCardId && focusCardId === card.id;
+                const showInsertAbove = isOver && overIndex === cardIdx && draggedCardId !== card.id;
                 return (
                   <div
                     key={card.id}
@@ -338,9 +371,21 @@ function KanbanColumnCard({
                         try { el.scrollIntoView({ behavior: "smooth", block: "center" }); } catch { /* noop */ }
                       }
                     }}
+                    onDragOver={(e) => {
+                      if (!draggedCardId) return;
+                      e.preventDefault();
+                      e.stopPropagation();
+                      e.dataTransfer.dropEffect = "move";
+                      const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                      const before = e.clientY < rect.top + rect.height / 2;
+                      const next = before ? cardIdx : cardIdx + 1;
+                      if (!isOver) setIsOver(true);
+                      if (overIndex !== next) setOverIndex(next);
+                    }}
                     className={cn(
                       "transition-all rounded-lg animate-fade-in",
                       isFocused && "ring-2 ring-primary/70 ring-offset-2 ring-offset-background animate-pulse",
+                      showInsertAbove && "mt-3 border-t-2 border-primary/60 pt-1",
                     )}
                   >
                     <KanbanCard
@@ -350,7 +395,7 @@ function KanbanColumnCard({
                       draggable
                       isDragging={draggedCardId === card.id}
                       onDragStart={(c) => onCardDragStart(c)}
-                      onDragEnd={() => onCardDragEnd()}
+                      onDragEnd={() => { onCardDragEnd(); setOverIndex(null); }}
                       onTemperatureChange={onTemperatureChange}
                       onDelete={onCardDelete}
                     />
@@ -873,9 +918,31 @@ export default function CRM() {
 
   // ─── Drag & Drop ─────────────────────────────────────────
   const [draggedCardId, setDraggedCardId] = useState<string | null>(null);
+  const [draggedFromColumnId, setDraggedFromColumnId] = useState<string | null>(null);
 
-  const handleCardDragStart = (card: KanbanCardData) => setDraggedCardId(card.id);
-  const handleCardDragEnd = () => setDraggedCardId(null);
+  const handleCardDragStart = (card: KanbanCardData) => {
+    setDraggedCardId(card.id);
+    const src = columns.find((c) => c.cards.some((k) => k.id === card.id));
+    setDraggedFromColumnId(src?.id ?? null);
+  };
+  const handleCardDragEnd = () => {
+    setDraggedCardId(null);
+    setDraggedFromColumnId(null);
+  };
+
+  // Compute valid drop targets: same column (reorder) or adjacent ±1.
+  // The "lost" column is always a valid target in sales funnel.
+  const validTargetColumnIds = useMemo(() => {
+    if (!draggedFromColumnId) return null as Set<string> | null;
+    const fromIdx = columns.findIndex((c) => c.id === draggedFromColumnId);
+    if (fromIdx === -1) return null;
+    const set = new Set<string>();
+    set.add(columns[fromIdx].id);
+    if (fromIdx - 1 >= 0) set.add(columns[fromIdx - 1].id);
+    if (fromIdx + 1 < columns.length) set.add(columns[fromIdx + 1].id);
+    if (tab === "sales") set.add("lost");
+    return set;
+  }, [draggedFromColumnId, columns, tab]);
 
   // ─── Validation modal state ───────────────────────────────
   type PendingMove = {
@@ -1181,13 +1248,42 @@ export default function CRM() {
     return issues;
   };
 
-  const handleDropOnColumn = async (targetColumnId: string) => {
+  // Reorder cards within the same column (drag-to-prioritize)
+  const reorderWithinColumn = (columnId: string, cardId: string, targetIndex: number) => {
+    setColumns((prev) =>
+      prev.map((col) => {
+        if (col.id !== columnId) return col;
+        const fromIdx = col.cards.findIndex((c) => c.id === cardId);
+        if (fromIdx === -1) return col;
+        const next = col.cards.slice();
+        const [moved] = next.splice(fromIdx, 1);
+        const insertAt = Math.max(0, Math.min(next.length, targetIndex > fromIdx ? targetIndex - 1 : targetIndex));
+        next.splice(insertAt, 0, moved);
+        return { ...col, cards: next };
+      }),
+    );
+  };
+
+  const handleDropOnColumn = async (targetColumnId: string, targetIndex?: number) => {
     if (!draggedCardId) return;
     const draggedId = draggedCardId;
     setDraggedCardId(null);
+    setDraggedFromColumnId(null);
 
     const sourceColumn = columns.find((c) => c.cards.some((k) => k.id === draggedId));
-    if (!sourceColumn || sourceColumn.id === targetColumnId) return;
+    if (!sourceColumn) return;
+    // Same column: reorder (drag-to-prioritize)
+    if (sourceColumn.id === targetColumnId) {
+      if (typeof targetIndex === "number") {
+        reorderWithinColumn(sourceColumn.id, draggedId, targetIndex);
+      }
+      return;
+    }
+    // Block invalid (non-adjacent) cross-column moves silently
+    if (validTargetColumnIds && !validTargetColumnIds.has(targetColumnId)) {
+      toast.warning("Movimento inválido: arraste para uma etapa adjacente.");
+      return;
+    }
     const card = sourceColumn.cards.find((c) => c.id === draggedId);
     const targetColumn = columns.find((c) => c.id === targetColumnId);
     if (!card || !targetColumn) return;
@@ -1796,6 +1892,8 @@ export default function CRM() {
           onAddBefore={handleAddBefore}
           onAddAfter={handleAddAfter}
           draggedCardId={draggedCardId}
+          draggedFromColumnId={draggedFromColumnId}
+          validTargetColumnIds={validTargetColumnIds}
           onCardDragStart={handleCardDragStart}
           onCardDragEnd={handleCardDragEnd}
           onDropOnColumn={handleDropOnColumn}
