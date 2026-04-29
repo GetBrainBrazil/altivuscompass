@@ -250,6 +250,18 @@ export default function Quotes() {
   const [saveAsTemplateName, setSaveAsTemplateName] = useState("");
   const [deleteTemplateTarget, setDeleteTemplateTarget] = useState<Quote | null>(null);
   const [duplicating, setDuplicating] = useState(false);
+  // Quando o editor é aberto a partir de outra página (ex.: card do CRM),
+  // escondemos o pipeline para evitar o "flash" da listagem antes do dialog abrir.
+  const [externalEditPending, setExternalEditPending] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      const st: any = (window.history.state as any)?.usr ?? null;
+      return !!sp.get("edit") || !!st?.editQuoteId || !!st?.newQuote;
+    } catch {
+      return false;
+    }
+  });
 
   // Debounce search
   useEffect(() => {

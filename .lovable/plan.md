@@ -1,46 +1,37 @@
-## Objetivo
-Fazer com que a cotação aberta a partir do CRM continue com aparência de contexto do CRM na barra lateral, sem quebrar o comportamento atual de voltar para o card da pessoa. Quando a cotação for aberta diretamente pelo módulo de Cotações, tudo continua como hoje.
+## Problema
+Ao clicar em uma cotação dentro do card do lead em `/crm/lead/:id`, a navegação vai para `/quotes?edit=<id>`, o que renderiza brevemente o pipeline de cotações antes de o dialog do editor abrir. Isso gera um "flash" indesejado.
 
-## O que vou ajustar
-1. Consolidar a origem da navegação CRM -> Cotação
-- Expandir o metadado já salvo para retorno (`quotes:returnTo`) para também guardar o contexto visual de origem.
-- Salvar algo como: origem = `crm`, URL de retorno e timestamp.
-- Aplicar isso em todos os pontos do perfil do lead que abrem uma cotação existente ou criam uma nova.
+## Solução
+Eliminar o flash escondendo o pipeline enquanto o editor está sendo aberto a partir de uma origem externa (CRM ou outra). O usuário só vê o dialog do editor abrindo sobre um fundo neutro, sem ver o pipeline atrás.
 
-2. Preservar esse contexto dentro de `Quotes.tsx`
-- Hoje o fluxo de `Quotes.tsx` limpa `location.state` ao normalizar `?edit=` e `newQuote`, o que apaga a noção de origem.
-- Ajustar a lógica para manter o contexto de origem enquanto o editor foi aberto a partir do CRM.
-- Garantir que isso funcione tanto para:
-  - abrir cotação existente via `?edit=<id>`
-  - criar nova cotação via `state.newQuote`
-  - abrir depois de um refresh recente, se o contexto ainda estiver válido
+## Mudanças
 
-3. Fazer a sidebar respeitar o contexto visual
-- Em `AppSidebar.tsx`, calcular um “caminho efetivo ativo” para a navegação.
-- Regra:
-  - se a rota real for `/quotes` e houver contexto ativo vindo do CRM, destacar `CRM` na sidebar
-  - não destacar `Cotações` nesse caso
-  - se a cotação foi aberta pelo fluxo normal de Cotações, a sidebar continua destacando `Cotações`
-- Manter compatibilidade com os subitens já existentes do CRM.
+### 1. `src/pages/Quotes.tsx`
+- Adicionar um estado `externalEditPending` inicializado de forma síncrona (no primeiro render) lendo `?edit=` da URL e `location.state.editQuoteId`/`newQuote`.
+  - Como é inicializado no `useState(initializer)`, a página já nasce sabendo que deve esconder o pipeline — sem flash.
+- No effect do `?edit=`, manter o estado `true` durante a busca da cotação.
+- Em `openEdit()` (e em `openCreate()` quando vem de origem externa), virar `externalEditPending` para `false` assim que o dialog abre — neste ponto o `Dialog` já cobre a tela com o overlay do shadcn.
+- No retorno principal do componente (a partir da linha ~3491), envolver o JSX do pipeline com uma checagem: se `externalEditPending && !dialogOpen`, renderizar apenas um placeholder neutro (um `<div>` com `min-h-screen bg-background`) + os Dialogs já existentes. Os dialogs continuam montados normalmente.
+- Caso a busca falhe (toast de "Cotação não encontrada"), liberar `externalEditPending` para `false` para o usuário não ficar preso na tela em branco.
 
-4. Limpar o contexto na hora certa
-- Ao fechar o editor e voltar ao CRM, remover o contexto temporário.
-- Ao entrar em `/quotes` pelo caminho normal do módulo de Cotações, não usar contexto antigo.
-- Manter a proteção de expiração curta para evitar “vazamento” de contexto entre navegações antigas.
+### 2. `src/pages/LeadDetail.tsx`
+- Trocar a navegação atual `navigate(\`/quotes?edit=${q.id}\`)` por `navigate("/quotes", { state: { editQuoteId: q.id } })`.
+- Isso passa o ID via `location.state` (em memória), evitando que o `?edit=` apareça na URL e que o effect dependa de `location.search`. O pipeline já nasce em modo "pending" graças ao state inicial síncrono em `Quotes.tsx`.
+- Manter `setQuotesReturnTo()` antes de navegar (para o botão de voltar continuar funcionando) e a marcação de origem CRM já existente (para a sidebar continuar destacando CRM).
+
+### 3. Suporte ao novo `state.editQuoteId` em `Quotes.tsx`
+- No effect que escuta `location.state` (linha ~1245), adicionar tratamento para `state.editQuoteId`:
+  - Buscar a cotação por id.
+  - Chamar `openEdit(...)`.
+  - Limpar o state com `navigate(location.pathname, { replace: true, state: {} })`.
+  - Em caso de erro, mostrar toast e liberar `externalEditPending`.
 
 ## Resultado esperado
-- Abriu cotação pelo CRM: sidebar continua mostrando CRM como módulo ativo enquanto a cotação estiver aberta.
-- Clicou para voltar: volta para o card do CRM como já está hoje.
-- Abriu cotação pelo pipeline de Cotações: sidebar continua mostrando Cotações.
-- As cotações seguem conectadas ao pipeline global, sem duplicação nem perda de vínculo.
+- Clicar no card de cotação dentro do lead abre o dialog do editor diretamente, sobre um fundo neutro — sem mostrar o pipeline.
+- O botão "voltar" do editor continua retornando para o card do lead.
+- Sidebar continua destacando "CRM" enquanto o editor está aberto vindo do CRM.
+- Abrir uma cotação pelo pipeline normal (`/quotes`) continua funcionando como hoje, sem regressão.
 
-## Arquivos previstos
-- `src/pages/LeadDetail.tsx`
+## Arquivos
 - `src/pages/Quotes.tsx`
-- `src/components/AppSidebar.tsx`
-
-## Detalhes técnicos
-- A sidebar hoje usa `useLocation()` e ativa itens por `location.pathname`, então `/quotes` sempre acende “Cotações”.
-- O fluxo atual de retorno CRM -> Cotação já existe via `sessionStorage`, então a solução mais segura é reutilizar esse mesmo padrão para o contexto visual.
-- O cuidado principal será não apagar esse contexto quando `Quotes.tsx` fizer os `navigate(..., { replace: true, state: {} })` usados para abrir o editor via query/state.
-- A solução será restrita ao comportamento visual e de navegação; não altera o vínculo de dados entre CRM e Cotações.
+- `src/pages/LeadDetail.tsx`
