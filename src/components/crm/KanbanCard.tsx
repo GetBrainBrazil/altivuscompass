@@ -1,11 +1,31 @@
 import { ReactNode } from "react";
-import { Sparkles, AlertTriangle, CheckCircle2, UserPlus, Flame, Plane, MoreVertical, Trash2 } from "lucide-react";
+import {
+  Sparkles,
+  AlertTriangle,
+  CheckCircle2,
+  UserPlus,
+  Flame,
+  Plane,
+  MoreVertical,
+  Trash2,
+  FileText,
+  MessageCircle,
+  Pencil,
+  Archive,
+  Thermometer,
+  User,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
