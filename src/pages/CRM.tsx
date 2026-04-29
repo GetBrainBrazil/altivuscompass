@@ -16,8 +16,11 @@ import {
   TrendingUp,
   ArrowUp,
   ArrowDown,
+  LayoutGrid,
+  Rows3,
 } from "lucide-react";
 import { FilterChip, SearchableList } from "@/components/tasks/FilterChip";
+import { CRMTableView } from "@/components/crm/CRMTableView";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1680,6 +1683,19 @@ export default function CRM() {
   const [filterLevel, setFilterLevel] = useState<string>("all");
   const [filterSource, setFilterSource] = useState<string>("all");
 
+  // View mode (kanban | table) — persistido em localStorage
+  const [viewMode, setViewMode] = useState<"kanban" | "table">(() => {
+    if (typeof window === "undefined") return "kanban";
+    const saved = window.localStorage.getItem("crm:viewMode");
+    return saved === "table" ? "table" : "kanban";
+  });
+  const handleViewModeChange = (mode: "kanban" | "table") => {
+    setViewMode(mode);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("crm:viewMode", mode);
+    }
+  };
+
   const agentOptions = useMemo(() => {
     // Lista de consultores cadastrados na plataforma + nomes que já aparecem
     const map = new Map<string, string>();
@@ -2128,10 +2144,42 @@ export default function CRM() {
             </Button>
           )}
 
+          {/* View toggle */}
+          <div className="ml-auto flex items-center gap-1 rounded-full border border-border bg-card p-0.5">
+            <button
+              type="button"
+              onClick={() => handleViewModeChange("kanban")}
+              className={cn(
+                "inline-flex items-center justify-center h-7 w-8 rounded-full transition-colors",
+                viewMode === "kanban"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
+              )}
+              aria-label="Visualização em Kanban"
+              title="Kanban"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleViewModeChange("table")}
+              className={cn(
+                "inline-flex items-center justify-center h-7 w-8 rounded-full transition-colors",
+                viewMode === "table"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
+              )}
+              aria-label="Visualização em Tabela"
+              title="Tabela"
+            >
+              <Rows3 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
           {tab === "sales" && (
             <Button
               size="sm"
-              className="h-8 gap-1.5 ml-auto rounded-full"
+              className="h-8 gap-1.5 rounded-full"
               onClick={() => navigate("/crm/lead/new")}
             >
               <Plus className="w-3.5 h-3.5" /> Novo Lead
@@ -2142,35 +2190,48 @@ export default function CRM() {
 
       {/* Board area */}
       <main className="flex-1 min-h-0 flex flex-col">
-        <KanbanBoard
-          columns={filteredColumns}
-          onCardClick={handleCardClick}
-          onDeleteColumn={handleRequestDelete}
-          onAddColumn={() => openAddAt(null)}
-          onRenameColumn={handleRequestRename}
-          onAddBefore={handleAddBefore}
-          onAddAfter={handleAddAfter}
-          draggedCardId={draggedCardId}
-          draggedFromColumnId={draggedFromColumnId}
-          validTargetColumnIds={validTargetColumnIds}
-          onCardDragStart={handleCardDragStart}
-          onCardDragEnd={handleCardDragEnd}
-          onDropOnColumn={handleDropOnColumn}
-          onTemperatureChange={handleTemperatureChange}
-          onCardDelete={handleCardDelete}
-          onCardAssignAgent={handleCardAssignAgent}
-          onCardCreateQuote={handleCardCreateQuote}
-          onCardViewConversation={handleCardViewConversation}
-          onCardEdit={handleCardEdit}
-          onCardArchive={handleCardArchive}
-          onCardRenameClient={handleCardRenameClient}
-          agentOptions={responsibleOptions}
-          focusCardId={focusCardId}
-          isLoading={tab === "sales" && isLoadingLeads}
-          collapsibleColumnIds={tab === "sales" ? COLLAPSIBLE_COLUMN_IDS : undefined}
-          collapsedColumnIds={collapsedCols}
-          onToggleColumnCollapse={toggleColumnCollapse}
-        />
+        {viewMode === "kanban" ? (
+          <KanbanBoard
+            columns={filteredColumns}
+            onCardClick={handleCardClick}
+            onDeleteColumn={handleRequestDelete}
+            onAddColumn={() => openAddAt(null)}
+            onRenameColumn={handleRequestRename}
+            onAddBefore={handleAddBefore}
+            onAddAfter={handleAddAfter}
+            draggedCardId={draggedCardId}
+            draggedFromColumnId={draggedFromColumnId}
+            validTargetColumnIds={validTargetColumnIds}
+            onCardDragStart={handleCardDragStart}
+            onCardDragEnd={handleCardDragEnd}
+            onDropOnColumn={handleDropOnColumn}
+            onTemperatureChange={handleTemperatureChange}
+            onCardDelete={handleCardDelete}
+            onCardAssignAgent={handleCardAssignAgent}
+            onCardCreateQuote={handleCardCreateQuote}
+            onCardViewConversation={handleCardViewConversation}
+            onCardEdit={handleCardEdit}
+            onCardArchive={handleCardArchive}
+            onCardRenameClient={handleCardRenameClient}
+            agentOptions={responsibleOptions}
+            focusCardId={focusCardId}
+            isLoading={tab === "sales" && isLoadingLeads}
+            collapsibleColumnIds={tab === "sales" ? COLLAPSIBLE_COLUMN_IDS : undefined}
+            collapsedColumnIds={collapsedCols}
+            onToggleColumnCollapse={toggleColumnCollapse}
+          />
+        ) : (
+          <CRMTableView
+            columns={filteredColumns}
+            onCardClick={handleCardClick}
+            onCardAssignAgent={handleCardAssignAgent}
+            onCardCreateQuote={handleCardCreateQuote}
+            onCardViewConversation={handleCardViewConversation}
+            onCardEdit={handleCardEdit}
+            onCardArchive={handleCardArchive}
+            agentOptions={responsibleOptions}
+          />
+        )}
       </main>
 
 
