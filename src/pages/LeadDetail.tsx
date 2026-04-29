@@ -855,7 +855,7 @@ function TabTriggerItem({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-3 mb-2">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
           {title}
         </h2>
@@ -871,9 +871,9 @@ function Field({
   ...props
 }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1">
       <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
-      <Input className="h-10" {...props} />
+      <Input className="h-9" {...props} />
     </div>
   );
 }
@@ -892,10 +892,10 @@ function SelectField({
   placeholder?: string;
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1">
       <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
       <Select value={value || undefined} onValueChange={onChange}>
-        <SelectTrigger className="h-10">
+        <SelectTrigger className="h-9">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
