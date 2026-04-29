@@ -351,7 +351,7 @@ export default function LeadDetail() {
       <div
         className={cn(
           "flex flex-col min-w-0 transition-[width] duration-300 ease-out",
-          waPanelOpen ? "w-[55%]" : "w-full",
+          waPanelOpen ? "w-[70%]" : "w-full",
         )}
       >
       {/* Header */}
@@ -756,7 +756,7 @@ export default function LeadDetail() {
       </div>
 
       {waPanelOpen && (
-        <div className="w-[45%] min-w-0 sticky top-0 h-screen">
+        <div className="w-[30%] min-w-0 sticky top-0 h-screen">
           <LeadWhatsAppColumn
             onClose={() => setWaPanelOpen(false)}
             contactName={form.full_name || card?.clientName || "Contato"}
