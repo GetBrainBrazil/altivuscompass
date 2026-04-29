@@ -104,6 +104,12 @@ function KanbanBoard({
   onDropOnColumn,
   onTemperatureChange,
   onCardDelete,
+  onCardAssignAgent,
+  onCardCreateQuote,
+  onCardViewConversation,
+  onCardEdit,
+  onCardArchive,
+  agentOptions,
   focusCardId,
   isLoading,
   collapsibleColumnIds,
@@ -125,6 +131,12 @@ function KanbanBoard({
   onDropOnColumn: (columnId: string, targetIndex?: number) => void;
   onTemperatureChange: (card: KanbanCardData, next: LeadTemperature) => void;
   onCardDelete?: (card: KanbanCardData) => void;
+  onCardAssignAgent?: (card: KanbanCardData, userId: string) => void;
+  onCardCreateQuote?: (card: KanbanCardData) => void;
+  onCardViewConversation?: (card: KanbanCardData) => void;
+  onCardEdit?: (card: KanbanCardData) => void;
+  onCardArchive?: (card: KanbanCardData) => void;
+  agentOptions?: { user_id: string; full_name: string; avatar_url?: string | null }[];
   focusCardId?: string | null;
   isLoading?: boolean;
   collapsibleColumnIds?: Set<string>;
@@ -159,6 +171,12 @@ function KanbanBoard({
               onDropOnColumn={onDropOnColumn}
               onTemperatureChange={onTemperatureChange}
               onCardDelete={onCardDelete}
+              onCardAssignAgent={onCardAssignAgent}
+              onCardCreateQuote={onCardCreateQuote}
+              onCardViewConversation={onCardViewConversation}
+              onCardEdit={onCardEdit}
+              onCardArchive={onCardArchive}
+              agentOptions={agentOptions}
               focusCardId={focusCardId}
               isLoading={isLoading}
               collapsible={collapsibleColumnIds?.has(col.id) ?? false}
@@ -192,6 +210,12 @@ function KanbanColumnCard({
   onDropOnColumn,
   onTemperatureChange,
   onCardDelete,
+  onCardAssignAgent,
+  onCardCreateQuote,
+  onCardViewConversation,
+  onCardEdit,
+  onCardArchive,
+  agentOptions,
   focusCardId,
   isLoading,
   collapsible,
@@ -214,6 +238,12 @@ function KanbanColumnCard({
   onDropOnColumn: (columnId: string, targetIndex?: number) => void;
   onTemperatureChange: (card: KanbanCardData, next: LeadTemperature) => void;
   onCardDelete?: (card: KanbanCardData) => void;
+  onCardAssignAgent?: (card: KanbanCardData, userId: string) => void;
+  onCardCreateQuote?: (card: KanbanCardData) => void;
+  onCardViewConversation?: (card: KanbanCardData) => void;
+  onCardEdit?: (card: KanbanCardData) => void;
+  onCardArchive?: (card: KanbanCardData) => void;
+  agentOptions?: { user_id: string; full_name: string; avatar_url?: string | null }[];
   focusCardId?: string | null;
   isLoading?: boolean;
   collapsible?: boolean;
@@ -398,6 +428,12 @@ function KanbanColumnCard({
                       onDragEnd={() => { onCardDragEnd(); setOverIndex(null); }}
                       onTemperatureChange={onTemperatureChange}
                       onDelete={onCardDelete}
+                      onAssignAgent={onCardAssignAgent}
+                      agentOptions={agentOptions}
+                      onCreateQuote={onCardCreateQuote}
+                      onViewConversation={onCardViewConversation}
+                      onEdit={onCardEdit}
+                      onArchive={onCardArchive}
                     />
                   </div>
                 );
@@ -579,6 +615,7 @@ export default function CRM() {
         .from("leads")
         .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, is_returning, returned_at, assigned_user_id")
         .is("converted_client_id", null)
+        .or("archived.is.null,archived.eq.false")
         .order("created_at", { ascending: false })
         .limit(100);
       if (error || cancelled || !data) {
@@ -1418,14 +1455,110 @@ export default function CRM() {
     void logLeadHistory(move.leadId, move.fromTitle, move.toTitle, false);
   };
 
-  const handleTemperatureChange = (card: KanbanCardData, next: LeadTemperature) => {
+  const handleTemperatureChange = async (card: KanbanCardData, next: LeadTemperature) => {
     setColumns((prev) =>
       prev.map((col) => ({
         ...col,
         cards: col.cards.map((c) => (c.id === card.id ? { ...c, temperature: next } : c)),
       })),
     );
+    const leadId = extractLeadId(card.id);
+    if (!leadId) return;
+    const { error } = await supabase
+      .from("leads")
+      .update({ lead_temperature: next } as any)
+      .eq("id", leadId);
+    if (error) {
+      console.error("[CRM] update temperature error:", error);
+      toast.error("Não foi possível salvar a temperatura.");
+    }
   };
+
+  // ─── Quick actions do menu de 3 pontos do card ─────────────
+  const handleCardAssignAgent = async (card: KanbanCardData, userId: string) => {
+    const responsible = responsibleOptions.find((r) => r.user_id === userId);
+    if (!responsible) return;
+    const leadId = extractLeadId(card.id);
+    if (leadId) {
+      const { error } = await supabase
+        .from("leads")
+        .update({ assigned_user_id: userId } as any)
+        .eq("id", leadId);
+      if (error) {
+        console.error("[CRM] quick assign error:", error);
+        toast.error("Não foi possível atribuir o responsável.");
+        return;
+      }
+    }
+    setColumns((prev) =>
+      prev.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) =>
+          c.id === card.id
+            ? {
+                ...c,
+                agent: {
+                  id: responsible.user_id,
+                  name: responsible.full_name,
+                  avatarUrl: responsible.avatar_url ?? undefined,
+                },
+              }
+            : c,
+        ),
+      })),
+    );
+    toast.success(`Responsável atribuído: ${responsible.full_name}`);
+  };
+
+  const handleCardCreateQuote = (card: KanbanCardData) => {
+    const leadId = extractLeadId(card.id);
+    if (!leadId) {
+      toast.error("Lead inválido para criar cotação.");
+      return;
+    }
+    navigate(`/quotes?new=1&lead_id=${leadId}`);
+  };
+
+  const handleCardViewConversation = (card: KanbanCardData) => {
+    if (!card.phone) {
+      toast.error("Este lead não tem telefone vinculado a uma conversa.");
+      return;
+    }
+    navigate(`/service-center?phone=${encodeURIComponent(card.phone)}`);
+  };
+
+  const handleCardEdit = (card: KanbanCardData) => {
+    navigate(`/crm/lead/${card.id}`);
+  };
+
+  const [archiveTarget, setArchiveTarget] = useState<KanbanCardData | null>(null);
+  const handleCardArchive = (card: KanbanCardData) => {
+    setArchiveTarget(card);
+  };
+  const confirmArchive = async () => {
+    if (!archiveTarget) return;
+    const leadId = extractLeadId(archiveTarget.id);
+    if (!leadId) {
+      toast.error("Card sem lead vinculado.");
+      setArchiveTarget(null);
+      return;
+    }
+    const { error } = await supabase
+      .from("leads")
+      .update({ archived: true, archived_at: new Date().toISOString() } as any)
+      .eq("id", leadId);
+    if (error) {
+      console.error("[CRM] archive error:", error);
+      toast.error("Não foi possível arquivar.");
+      return;
+    }
+    const cardId = archiveTarget.id;
+    setSalesColumns((prev) => prev.map((col) => ({ ...col, cards: col.cards.filter((c) => c.id !== cardId) })));
+    setOpsColumns((prev) => prev.map((col) => ({ ...col, cards: col.cards.filter((c) => c.id !== cardId) })));
+    toast.success("Card arquivado.");
+    setArchiveTarget(null);
+  };
+
 
   const handleConfirmAssign = async () => {
     if (!assignCardId || !assignTargetColumn) return;
@@ -1900,6 +2033,12 @@ export default function CRM() {
           onDropOnColumn={handleDropOnColumn}
           onTemperatureChange={handleTemperatureChange}
           onCardDelete={handleCardDelete}
+          onCardAssignAgent={handleCardAssignAgent}
+          onCardCreateQuote={handleCardCreateQuote}
+          onCardViewConversation={handleCardViewConversation}
+          onCardEdit={handleCardEdit}
+          onCardArchive={handleCardArchive}
+          agentOptions={responsibleOptions}
           focusCardId={focusCardId}
           isLoading={tab === "sales" && isLoadingLeads}
           collapsibleColumnIds={tab === "sales" ? COLLAPSIBLE_COLUMN_IDS : undefined}
@@ -2014,6 +2153,25 @@ export default function CRM() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Confirmação de arquivamento */}
+      <AlertDialog open={!!archiveTarget} onOpenChange={(open) => { if (!open) setArchiveTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Arquivar este card?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {archiveTarget
+                ? `O card de "${archiveTarget.clientName}" será movido para a área de arquivados e deixará de aparecer no funil. Você poderá restaurá-lo depois.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmArchive}>Arquivar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {/* Atribuir responsável (bloqueia entrada em "Em Qualificação") */}
       <Dialog

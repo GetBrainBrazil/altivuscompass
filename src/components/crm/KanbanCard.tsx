@@ -1,11 +1,31 @@
 import { ReactNode } from "react";
-import { Sparkles, AlertTriangle, CheckCircle2, UserPlus, Flame, Plane, MoreVertical, Trash2 } from "lucide-react";
+import {
+  Sparkles,
+  AlertTriangle,
+  CheckCircle2,
+  UserPlus,
+  Flame,
+  Plane,
+  MoreVertical,
+  Trash2,
+  FileText,
+  MessageCircle,
+  Pencil,
+  Archive,
+  Thermometer,
+  User,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -155,6 +175,12 @@ export function KanbanCard({
   onDragEnd,
   onTemperatureChange,
   onDelete,
+  onAssignAgent,
+  agentOptions,
+  onCreateQuote,
+  onViewConversation,
+  onEdit,
+  onArchive,
 }: {
   card: KanbanCardData;
   onClick?: (card: KanbanCardData) => void;
@@ -167,6 +193,18 @@ export function KanbanCard({
   onTemperatureChange?: (card: KanbanCardData, next: LeadTemperature) => void;
   /** Callback ao clicar em "Excluir" no menu de 3 pontos. */
   onDelete?: (card: KanbanCardData) => void;
+  /** Atribuir um responsável (consultor) inline pelo dropdown. */
+  onAssignAgent?: (card: KanbanCardData, userId: string) => void;
+  /** Lista de consultores disponíveis para atribuição rápida. */
+  agentOptions?: { user_id: string; full_name: string; avatar_url?: string | null }[];
+  /** Criar nova cotação pré-preenchida com os dados do lead. */
+  onCreateQuote?: (card: KanbanCardData) => void;
+  /** Abrir conversa no WhatsApp / Central de Atendimento. */
+  onViewConversation?: (card: KanbanCardData) => void;
+  /** Abrir ficha completa para edição. */
+  onEdit?: (card: KanbanCardData) => void;
+  /** Arquivar o card (mover para área oculta). */
+  onArchive?: (card: KanbanCardData) => void;
 }) {
   const value = formatBRL(card.estimatedValue);
   const alert = card.alert;
@@ -295,7 +333,7 @@ export function KanbanCard({
           </p>
           <div className="shrink-0 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
             {cornerBadge}
-            {onDelete && (
+            {(onDelete || onAssignAgent || onCreateQuote || onViewConversation || onEdit || onArchive || onTemperatureChange) && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -307,17 +345,141 @@ export function KanbanCard({
                     <MoreVertical className="w-3.5 h-3.5" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      onDelete(card);
-                    }}
-                  >
-                    <Trash2 className="w-3.5 h-3.5 mr-2" />
-                    Excluir
-                  </DropdownMenuItem>
+                <DropdownMenuContent align="end" className="w-56" onClick={(e) => e.stopPropagation()}>
+                  {onAssignAgent && agentOptions && agentOptions.length > 0 && (
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <User className="w-3.5 h-3.5 mr-2" />
+                        Atribuir responsável
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="max-h-64 overflow-y-auto w-56">
+                        <DropdownMenuLabel className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                          Consultores
+                        </DropdownMenuLabel>
+                        {agentOptions.map((u) => {
+                          const isCurrent = card.agent?.id === u.user_id;
+                          return (
+                            <DropdownMenuItem
+                              key={u.user_id}
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                onAssignAgent(card, u.user_id);
+                              }}
+                              className={cn("gap-2", isCurrent && "bg-primary/5 text-primary")}
+                            >
+                              {u.avatar_url ? (
+                                <img src={u.avatar_url} alt="" className="w-4 h-4 rounded-full object-cover" />
+                              ) : (
+                                <div className="w-4 h-4 rounded-full bg-primary/10 text-primary text-[8px] font-semibold flex items-center justify-center">
+                                  {getInitials(u.full_name)}
+                                </div>
+                              )}
+                              <span className="truncate">{u.full_name}</span>
+                              {isCurrent && <CheckCircle2 className="w-3 h-3 ml-auto" />}
+                            </DropdownMenuItem>
+                          );
+                        })}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  )}
+                  {onCreateQuote && (
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        onCreateQuote(card);
+                      }}
+                    >
+                      <FileText className="w-3.5 h-3.5 mr-2" />
+                      Criar cotação
+                    </DropdownMenuItem>
+                  )}
+                  {onViewConversation && (
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        onViewConversation(card);
+                      }}
+                      disabled={!card.phone}
+                    >
+                      <MessageCircle className="w-3.5 h-3.5 mr-2" />
+                      Ver conversa
+                    </DropdownMenuItem>
+                  )}
+                  {onEdit && (
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        onEdit(card);
+                      }}
+                    >
+                      <Pencil className="w-3.5 h-3.5 mr-2" />
+                      Editar
+                    </DropdownMenuItem>
+                  )}
+                  {onTemperatureChange && (
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <Thermometer className="w-3.5 h-3.5 mr-2" />
+                        Marcar temperatura
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        <DropdownMenuItem
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            onTemperatureChange(card, "hot");
+                          }}
+                        >
+                          <Flame className="w-3.5 h-3.5 mr-2 text-red-500 fill-red-500/30" />
+                          Quente
+                          {temperature === "hot" && <CheckCircle2 className="w-3 h-3 ml-auto" />}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            onTemperatureChange(card, "warm");
+                          }}
+                        >
+                          <Flame className="w-3.5 h-3.5 mr-2 text-orange-400 fill-orange-400/25" />
+                          Morno
+                          {temperature === "warm" && <CheckCircle2 className="w-3 h-3 ml-auto" />}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            onTemperatureChange(card, "cold");
+                          }}
+                        >
+                          <Flame className="w-3.5 h-3.5 mr-2 text-slate-400" />
+                          Frio
+                          {temperature === "cold" && <CheckCircle2 className="w-3 h-3 ml-auto" />}
+                        </DropdownMenuItem>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  )}
+                  {(onArchive || onDelete) && <DropdownMenuSeparator />}
+                  {onArchive && (
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        onArchive(card);
+                      }}
+                    >
+                      <Archive className="w-3.5 h-3.5 mr-2" />
+                      Arquivar
+                    </DropdownMenuItem>
+                  )}
+                  {onDelete && (
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        onDelete(card);
+                      }}
+                    >
+                      <Trash2 className="w-3.5 h-3.5 mr-2" />
+                      Excluir
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
