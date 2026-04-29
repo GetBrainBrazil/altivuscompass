@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { StickyNote, Sparkles, X, Check } from "lucide-react";
+import { Zap, Sparkles, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type QuickNoteFormSnapshot = {
@@ -185,36 +185,38 @@ export function LeadQuickNote({ leadId, form, onApplySuggestion }: Props) {
   };
 
   return (
-    <div className="border-b border-border bg-amber-50/60 dark:bg-amber-950/20 px-3 py-2.5">
-      <div className="flex items-center gap-1.5 mb-1.5">
-        <StickyNote className="h-3.5 w-3.5 text-amber-700 dark:text-amber-400" />
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-amber-800 dark:text-amber-300">
-          Nota rápida
-        </span>
-      </div>
-      <div className="flex items-start gap-2">
-        <Textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="Ex: Quer hotel 5 estrelas, orçamento até R$15k..."
-          rows={2}
-          className="min-h-[44px] text-xs resize-none bg-background flex-1"
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              handleSave();
-            }
-          }}
-          disabled={saving}
-        />
-        <Button
-          size="sm"
-          onClick={handleSave}
-          disabled={!note.trim() || saving}
-          className="h-9 shrink-0 text-xs"
-        >
-          {saving ? "..." : "Salvar"}
-        </Button>
+    <div className="border-b border-border px-3 py-2.5">
+      <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 p-2.5">
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <Zap className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+            Nota rápida
+          </span>
+        </div>
+        <div className="flex items-start gap-2">
+          <Textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Ex: Quer hotel 5 estrelas, orçamento até R$15k..."
+            rows={2}
+            className="min-h-[44px] text-xs resize-none bg-background flex-1 border-slate-200 dark:border-slate-800"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                handleSave();
+              }
+            }}
+            disabled={saving}
+          />
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={!note.trim() || saving}
+            className="h-9 shrink-0 text-xs"
+          >
+            {saving ? "..." : "Salvar"}
+          </Button>
+        </div>
       </div>
 
       {visibleSuggestions.length > 0 && (
