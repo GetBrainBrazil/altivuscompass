@@ -391,7 +391,7 @@ function KanbanColumnCard({
                 : "border-transparent",
           )}
         >
-          <div className="space-y-3 min-h-[120px] p-1">
+          <div className="space-y-1.5 min-h-[120px] p-1">
             {isLoading && column.cards.length === 0 ? (
               <>
                 <KanbanCardSkeleton />
