@@ -102,6 +102,9 @@ function KanbanBoard({
   onCardDelete,
   focusCardId,
   isLoading,
+  collapsibleColumnIds,
+  collapsedColumnIds,
+  onToggleColumnCollapse,
 }: {
   columns: KanbanColumn[];
   onCardClick: (card: KanbanCardData) => void;
@@ -118,6 +121,9 @@ function KanbanBoard({
   onCardDelete?: (card: KanbanCardData) => void;
   focusCardId?: string | null;
   isLoading?: boolean;
+  collapsibleColumnIds?: Set<string>;
+  collapsedColumnIds?: Set<string>;
+  onToggleColumnCollapse?: (columnId: string) => void;
 }) {
   return (
     <div className="flex-1 min-h-0 mt-4 pb-5 overflow-x-auto overflow-y-hidden scrollbar-elegant [transform:scaleY(-1)]">
@@ -140,6 +146,11 @@ function KanbanBoard({
             onCardDelete={onCardDelete}
             focusCardId={focusCardId}
             isLoading={isLoading}
+            collapsible={collapsibleColumnIds?.has(col.id) ?? false}
+            collapsed={collapsedColumnIds?.has(col.id) ?? false}
+            onToggleCollapse={
+              onToggleColumnCollapse ? () => onToggleColumnCollapse(col.id) : undefined
+            }
           />
         ))}
         <AddColumnButton onClick={onAddColumn} />
