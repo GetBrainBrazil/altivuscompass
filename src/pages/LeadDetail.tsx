@@ -557,7 +557,7 @@ export default function LeadDetail() {
       {/* Tabs + content */}
       <main className="flex-1 min-h-0">
         <Tabs defaultValue="main" className="flex flex-col">
-          <div className="border-b border-border bg-background sticky top-0 z-10">
+          <div className="border-b border-border bg-white dark:bg-slate-900 sticky top-0 z-20 shadow-sm">
             <div className="px-6 lg:px-10 py-2">
               <TabsList className="flex flex-wrap h-auto gap-0.5 bg-muted p-0.5 w-full justify-start">
                 <TabTriggerItem value="main" icon={FileText} label="Principal" />
