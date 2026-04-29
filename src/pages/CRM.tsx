@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { KanbanCard, type KanbanCardData, type LeadTemperature } from "@/components/crm/KanbanCard";
+import { KanbanCardSkeleton } from "@/components/ui/loading-skeletons";
 import { ClientPromotionDialog } from "@/components/crm/ClientPromotionDialog";
 import { DeleteContactDialog, type DeleteContactTarget } from "@/components/contacts/DeleteContactDialog";
 import { toast } from "sonner";
@@ -99,6 +100,7 @@ function KanbanBoard({
   onTemperatureChange,
   onCardDelete,
   focusCardId,
+  isLoading,
 }: {
   columns: KanbanColumn[];
   onCardClick: (card: KanbanCardData) => void;
@@ -114,6 +116,7 @@ function KanbanBoard({
   onTemperatureChange: (card: KanbanCardData, next: LeadTemperature) => void;
   onCardDelete?: (card: KanbanCardData) => void;
   focusCardId?: string | null;
+  isLoading?: boolean;
 }) {
   return (
     <div className="flex-1 min-h-0 mt-4 pb-5 overflow-x-auto overflow-y-hidden scrollbar-elegant [transform:scaleY(-1)]">
@@ -135,6 +138,7 @@ function KanbanBoard({
             onTemperatureChange={onTemperatureChange}
             onCardDelete={onCardDelete}
             focusCardId={focusCardId}
+            isLoading={isLoading}
           />
         ))}
         <AddColumnButton onClick={onAddColumn} />
@@ -158,6 +162,7 @@ function KanbanColumnCard({
   onTemperatureChange,
   onCardDelete,
   focusCardId,
+  isLoading,
 }: {
   column: KanbanColumn;
   dotColor: string;
@@ -173,6 +178,7 @@ function KanbanColumnCard({
   onTemperatureChange: (card: KanbanCardData, next: LeadTemperature) => void;
   onCardDelete?: (card: KanbanCardData) => void;
   focusCardId?: string | null;
+  isLoading?: boolean;
 }) {
   const [isOver, setIsOver] = useState(false);
 
@@ -185,7 +191,7 @@ function KanbanColumnCard({
           {column.title}
         </span>
         <span className="text-xs text-muted-foreground font-body ml-auto">
-          {column.cards.length}
+          {isLoading ? "—" : column.cards.length}
         </span>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -247,7 +253,13 @@ function KanbanColumnCard({
         )}
       >
         <div className="space-y-3 min-h-[120px] p-1">
-          {column.cards.length === 0 ? (
+          {isLoading && column.cards.length === 0 ? (
+            <>
+              <KanbanCardSkeleton />
+              <KanbanCardSkeleton />
+              <KanbanCardSkeleton />
+            </>
+          ) : column.cards.length === 0 ? (
             <EmptyColumnHint />
           ) : (
             column.cards.map((card) => {
@@ -262,7 +274,7 @@ function KanbanColumnCard({
                     }
                   }}
                   className={cn(
-                    "transition-all rounded-lg",
+                    "transition-all rounded-lg animate-fade-in",
                     isFocused && "ring-2 ring-primary/70 ring-offset-2 ring-offset-background animate-pulse",
                   )}
                 >
@@ -415,6 +427,7 @@ export default function CRM() {
   // "Novos Leads (IA)" column. We poll every 30s so newly captured leads show
   // up automatically without a page refresh.
   const [leadsRefreshTick, setLeadsRefreshTick] = useState(0);
+  const [isLoadingLeads, setIsLoadingLeads] = useState(true);
   useEffect(() => {
     let cancelled = false;
     const fetchLeads = async () => {
@@ -424,7 +437,10 @@ export default function CRM() {
         .is("converted_client_id", null)
         .order("created_at", { ascending: false })
         .limit(100);
-      if (error || cancelled || !data) return;
+      if (error || cancelled || !data) {
+        if (!cancelled) setIsLoadingLeads(false);
+        return;
+      }
 
       // Mapa user_id → { name, avatarUrl } para popular agent
       const assignedIds = Array.from(
@@ -665,6 +681,7 @@ export default function CRM() {
       } catch (err) {
         console.error("[crm:autoMove] error:", err);
       }
+      if (!cancelled) setIsLoadingLeads(false);
     };
     fetchLeads();
     const interval = setInterval(fetchLeads, 30_000);
@@ -1440,6 +1457,7 @@ export default function CRM() {
           onTemperatureChange={handleTemperatureChange}
           onCardDelete={handleCardDelete}
           focusCardId={focusCardId}
+          isLoading={tab === "sales" && isLoadingLeads}
         />
       </main>
 

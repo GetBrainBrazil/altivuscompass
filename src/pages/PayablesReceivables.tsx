@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -126,7 +127,7 @@ export default function PayablesReceivables() {
   const [showChart, setShowChart] = useState(true);
 
   // ----- data fetching -----
-  const { data: transactions = [] } = useQuery({
+  const { data: transactions = [], isLoading: isLoadingTransactions } = useQuery({
     queryKey: ["finance-transactions"],
     queryFn: async () => {
       const { data, error } = await (supabase.from("financial_transactions") as any)
@@ -585,7 +586,17 @@ export default function PayablesReceivables() {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 && (
+              {isLoadingTransactions ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={`sk-${i}`} className="border-t border-border/40">
+                    {Array.from({ length: 8 }).map((__, j) => (
+                      <td key={j} className="px-4 py-3">
+                        <Skeleton className="h-3.5 w-full max-w-[140px]" />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-4 py-12">
                     <div className="flex flex-col items-center justify-center gap-3 text-center">
@@ -604,7 +615,7 @@ export default function PayablesReceivables() {
                     </div>
                   </td>
                 </tr>
-              )}
+              ) : null}
               {filtered.map((t: any) => {
                 const partyName =
                   clientsMap[t.client_id] || suppliersMap[t.supplier_id] || t.party_name || "—";

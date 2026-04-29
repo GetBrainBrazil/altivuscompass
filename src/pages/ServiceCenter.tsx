@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Search,
@@ -831,7 +832,7 @@ export default function ServiceCenter() {
   };
 
   // ===== Carrega conversas reais do WhatsApp (Z-API) =====
-  const { data: convoRows = [] } = useQuery({
+  const { data: convoRows = [], isLoading: isLoadingConvos } = useQuery({
     queryKey: ["wa_conversations"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -1155,7 +1156,21 @@ export default function ServiceCenter() {
 
         <ScrollArea className="flex-1">
           <div className="px-4 py-3 space-y-3">
-            {filtered.length === 0 ? (
+            {isLoadingConvos && filtered.length === 0 ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={`sk-${i}`} className="flex items-start gap-3 p-3 rounded-lg border border-border/40 bg-card/40 animate-fade-in">
+                  <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                  <div className="flex-1 space-y-2 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <Skeleton className="h-3 w-28" />
+                      <Skeleton className="h-2.5 w-10" />
+                    </div>
+                    <Skeleton className="h-2.5 w-full max-w-[180px]" />
+                    <Skeleton className="h-2.5 w-1/2" />
+                  </div>
+                </div>
+              ))
+            ) : filtered.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-8 px-4">
                 Nenhuma conversa encontrada.
               </p>
