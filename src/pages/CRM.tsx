@@ -699,7 +699,8 @@ export default function CRM() {
           contactLevel: hasTravelData ? "lead" : "prospect",
           isReturning: !!l.is_returning,
           stageEnteredAt: existing?.stageEnteredAt ?? l.created_at ?? new Date().toISOString(),
-          temperature: existing?.temperature ?? "cold",
+          lastContactAt: l.last_contact_at ?? l.updated_at ?? l.created_at ?? undefined,
+          temperature: existing?.temperature ?? (l.lead_temperature as LeadTemperature | null) ?? undefined,
           agent: assignedUser
             ? {
                 id: l.assigned_user_id,
