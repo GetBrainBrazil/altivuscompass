@@ -1987,139 +1987,139 @@ export default function CRM() {
             Acompanhe leads, qualificações e operações em viagem em um só lugar.
           </p>
 
-          {/* Mini cards de métricas — variam por aba */}
-          <div key={tab} className="flex flex-wrap items-stretch gap-2 mt-3 animate-fade-in">
-            {tab === "sales" ? (
-              <>
-                <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[160px]">
-                  <div className="p-1.5 rounded-md bg-background border border-border/50">
-                    <Users className="w-3.5 h-3.5 text-muted-foreground" />
-                  </div>
-                  <div className="flex flex-col leading-tight">
-                    <span className="text-lg font-semibold text-foreground font-display tabular-nums">
-                      {totalLeads}
-                    </span>
-                    <span className="text-[11px] text-muted-foreground">Contatos no funil</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[180px]">
-                  <div className="p-1.5 rounded-md bg-background border border-border/50">
-                    <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
-                  </div>
-                  <div className="flex flex-col leading-tight">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-lg font-semibold text-foreground font-display tabular-nums">
-                        {newThisWeek}
-                      </span>
-                      {weekDeltaPct !== 0 && (
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full",
-                            weekDeltaPositive
-                              ? "bg-success/10 text-success"
-                              : "bg-destructive/10 text-destructive",
-                          )}
-                          title="Variação vs. semana anterior"
-                        >
-                          {weekDeltaPositive ? <ArrowUp className="w-2.5 h-2.5" /> : <ArrowDown className="w-2.5 h-2.5" />}
-                          {Math.abs(weekDeltaPct)}%
-                        </span>
-                      )}
+          {/* Linha: mini cards de métricas (esq) + seletor Funil/Operações (dir) */}
+          <div className="flex flex-wrap items-center gap-3 mt-3">
+            <div key={tab} className="flex flex-wrap items-stretch gap-2 animate-fade-in flex-1 min-w-0">
+              {tab === "sales" ? (
+                <>
+                  <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[160px]">
+                    <div className="p-1.5 rounded-md bg-background border border-border/50">
+                      <Users className="w-3.5 h-3.5 text-muted-foreground" />
                     </div>
-                    <span className="text-[11px] text-muted-foreground">Novos esta semana</span>
+                    <div className="flex flex-col leading-tight">
+                      <span className="text-lg font-semibold text-foreground font-display tabular-nums">
+                        {totalLeads}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">Contatos no funil</span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[180px]">
-                  <div className="p-1.5 rounded-md bg-background border border-border/50">
-                    <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
+                  <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[180px]">
+                    <div className="p-1.5 rounded-md bg-background border border-border/50">
+                      <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
+                    </div>
+                    <div className="flex flex-col leading-tight">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-lg font-semibold text-foreground font-display tabular-nums">
+                          {newThisWeek}
+                        </span>
+                        {weekDeltaPct !== 0 && (
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full",
+                              weekDeltaPositive
+                                ? "bg-success/10 text-success"
+                                : "bg-destructive/10 text-destructive",
+                            )}
+                            title="Variação vs. semana anterior"
+                          >
+                            {weekDeltaPositive ? <ArrowUp className="w-2.5 h-2.5" /> : <ArrowDown className="w-2.5 h-2.5" />}
+                            {Math.abs(weekDeltaPct)}%
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-muted-foreground">Novos esta semana</span>
+                    </div>
                   </div>
-                  <div className="flex flex-col leading-tight">
-                    <span className="text-lg font-semibold text-foreground font-display tabular-nums">
-                      {formatCurrency(pipelineValue)}
-                    </span>
-                    <span className="text-[11px] text-muted-foreground">Pipeline estimado</span>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[180px]">
-                  <div className="p-1.5 rounded-md bg-background border border-border/50">
-                    <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
-                  </div>
-                  <div className="flex flex-col leading-tight">
-                    <span className="text-lg font-semibold text-foreground font-display tabular-nums">
-                      {opsMetrics.inTripCount}
-                    </span>
-                    <span className="text-[11px] text-muted-foreground">Clientes em viagem agora</span>
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[200px]">
-                  <div className="p-1.5 rounded-md bg-background border border-border/50">
-                    <Plane className="w-3.5 h-3.5 text-muted-foreground" />
+                  <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[180px]">
+                    <div className="p-1.5 rounded-md bg-background border border-border/50">
+                      <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
+                    </div>
+                    <div className="flex flex-col leading-tight">
+                      <span className="text-lg font-semibold text-foreground font-display tabular-nums">
+                        {formatCurrency(pipelineValue)}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">Pipeline estimado</span>
+                    </div>
                   </div>
-                  <div className="flex flex-col leading-tight">
-                    <span className="text-lg font-semibold text-foreground font-display tabular-nums">
-                      {opsMetrics.boardingSoon}
-                    </span>
-                    <span className="text-[11px] text-muted-foreground">Embarques nos próximos 7 dias</span>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[180px]">
+                    <div className="p-1.5 rounded-md bg-background border border-border/50">
+                      <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
+                    </div>
+                    <div className="flex flex-col leading-tight">
+                      <span className="text-lg font-semibold text-foreground font-display tabular-nums">
+                        {opsMetrics.inTripCount}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">Clientes em viagem agora</span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[200px]">
-                  <div className="p-1.5 rounded-md bg-background border border-border/50">
-                    <LifeBuoy className="w-3.5 h-3.5 text-muted-foreground" />
+                  <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[200px]">
+                    <div className="p-1.5 rounded-md bg-background border border-border/50">
+                      <Plane className="w-3.5 h-3.5 text-muted-foreground" />
+                    </div>
+                    <div className="flex flex-col leading-tight">
+                      <span className="text-lg font-semibold text-foreground font-display tabular-nums">
+                        {opsMetrics.boardingSoon}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">Embarques nos próximos 7 dias</span>
+                    </div>
                   </div>
-                  <div className="flex flex-col leading-tight">
-                    <span className="text-lg font-semibold text-foreground font-display tabular-nums">
-                      {opsMetrics.supportCount}
-                    </span>
-                    <span className="text-[11px] text-muted-foreground">Chamados de suporte abertos</span>
+
+                  <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 min-w-[200px]">
+                    <div className="p-1.5 rounded-md bg-background border border-border/50">
+                      <LifeBuoy className="w-3.5 h-3.5 text-muted-foreground" />
+                    </div>
+                    <div className="flex flex-col leading-tight">
+                      <span className="text-lg font-semibold text-foreground font-display tabular-nums">
+                        {opsMetrics.supportCount}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">Chamados de suporte abertos</span>
+                    </div>
                   </div>
-                </div>
-              </>
-            )}
+                </>
+              )}
+            </div>
+
+            {/* Segmented control: Funil / Operações */}
+            <div className="ml-auto flex items-center gap-1 rounded-full border border-border bg-card p-0.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setTab("sales")}
+                className={cn(
+                  "inline-flex items-center gap-1.5 h-8 px-3.5 rounded-full text-xs font-medium transition-colors",
+                  tab === "sales"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted",
+                )}
+                aria-label="Funil de Vendas"
+                aria-pressed={tab === "sales"}
+              >
+                <TrendingUp className="w-3.5 h-3.5" />
+                Funil de Vendas
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab("ops")}
+                className={cn(
+                  "inline-flex items-center gap-1.5 h-8 px-3.5 rounded-full text-xs font-medium transition-colors",
+                  tab === "ops"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted",
+                )}
+                aria-label="Operações em Viagem"
+                aria-pressed={tab === "ops"}
+              >
+                <Plane className="w-3.5 h-3.5" />
+                Operações em Viagem
+              </button>
+            </div>
           </div>
         </div>
-
-        <Tabs
-          value={tab}
-          onValueChange={(v) => setTab(v as "sales" | "ops")}
-          className="px-6"
-        >
-          <TabsList className="h-10 bg-transparent p-0 gap-2 border-b-0 rounded-none justify-start">
-            <TabsTrigger
-              value="sales"
-              className={cn(
-                "relative h-10 px-4 rounded-none bg-transparent",
-                "data-[state=active]:bg-transparent data-[state=active]:shadow-none",
-                "data-[state=active]:text-primary",
-                "data-[state=active]:after:absolute data-[state=active]:after:left-0 data-[state=active]:after:right-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-0.5 data-[state=active]:after:bg-primary",
-                "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Funil de Vendas
-            </TabsTrigger>
-            <TabsTrigger
-              value="ops"
-              className={cn(
-                "relative h-10 px-4 rounded-none bg-transparent",
-                "data-[state=active]:bg-transparent data-[state=active]:shadow-none",
-                "data-[state=active]:text-primary",
-                "data-[state=active]:after:absolute data-[state=active]:after:left-0 data-[state=active]:after:right-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-0.5 data-[state=active]:after:bg-primary",
-                "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Operações em Viagem
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="sales" className="hidden" />
-          <TabsContent value="ops" className="hidden" />
-        </Tabs>
       </header>
 
       {/* Toolbar (gestão acima do Kanban) */}
