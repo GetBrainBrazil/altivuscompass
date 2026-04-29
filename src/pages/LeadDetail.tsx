@@ -406,7 +406,7 @@ export default function LeadDetail() {
   return (
     <div className="flex flex-col min-h-[calc(100vh-0px)] bg-slate-50 dark:bg-slate-950">
       {/* Cabeçalho principal — largura total */}
-      <header ref={headerRef} className="border-b border-border bg-white dark:bg-slate-900 w-full relative z-20">
+      <header ref={headerRef} className="border-b border-border bg-white dark:bg-slate-900 w-full sticky top-0 z-50">
         <div className="px-6 lg:px-10 pt-6 pb-5">
           <Button
             variant="ghost"
