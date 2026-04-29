@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState, useRef, useEffect } from "react";
 import {
   Sparkles,
   AlertTriangle,
@@ -14,6 +14,8 @@ import {
   Archive,
   Thermometer,
   User,
+  Check,
+  X as XIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
