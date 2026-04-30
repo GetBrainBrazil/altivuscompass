@@ -70,27 +70,38 @@ export default function Permissions({ embedded = false }: { embedded?: boolean }
               </TableRow>
             </TableHeader>
             <TableBody>
-              {permissions.map((page) => (
-                <TableRow key={page.path} className="hover:bg-slate-50 transition-colors">
-                  <TableCell className="font-body text-sm font-medium">{page.label}</TableCell>
-                  {allRoles.map((role) => {
-                    const isAdmin = role === "admin";
-                    const checked = isAdmin || page.allowedRoles.includes(role);
-                    return (
-                      <TableCell key={role} className="text-center">
-                        <div className="flex justify-center">
-                          <Switch
-                            checked={checked}
-                            disabled={isAdmin}
-                            onCheckedChange={(v) => togglePageRole(page, role, v)}
-                            aria-label={`${ROLE_LABELS[role]} - ${page.label}`}
-                          />
-                        </div>
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              ))}
+              {permissions.map((page) => {
+                const isSubPage = page.path.startsWith("/crm?");
+                return (
+                  <TableRow key={page.path} className="hover:bg-slate-50 transition-colors">
+                    <TableCell
+                      className={
+                        isSubPage
+                          ? "font-body text-sm text-muted-foreground pl-8 border-l-2 border-l-primary/30"
+                          : "font-body text-sm font-medium"
+                      }
+                    >
+                      {isSubPage ? page.label.replace(/^CRM\s*—\s*/, "↳ ") : page.label}
+                    </TableCell>
+                    {allRoles.map((role) => {
+                      const isAdmin = role === "admin";
+                      const checked = isAdmin || page.allowedRoles.includes(role);
+                      return (
+                        <TableCell key={role} className="text-center">
+                          <div className="flex justify-center">
+                            <Switch
+                              checked={checked}
+                              disabled={isAdmin}
+                              onCheckedChange={(v) => togglePageRole(page, role, v)}
+                              aria-label={`${ROLE_LABELS[role]} - ${page.label}`}
+                            />
+                          </div>
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
