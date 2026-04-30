@@ -68,7 +68,7 @@ interface Props {
 }
 
 export function LeadNotesTab({ leadId, legacyText }: Props) {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [notes, setNotes] = useState<LeadNote[]>([]);
   const [loading, setLoading] = useState(false);
   const [body, setBody] = useState("");
