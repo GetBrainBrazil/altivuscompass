@@ -5,17 +5,45 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { KanbanCardData } from "@/components/crm/KanbanCard";
+
+type ContactLevel = "prospect" | "lead" | "cliente";
 
 type ContactClient = {
   id: string;
-  clientId: string;
+  clientId: string | null;
   fullName: string;
-  level: "prospect" | "lead" | "cliente" | string;
+  level: ContactLevel | string;
 };
+
+const LEVEL_META: Record<string, { label: string; className: string }> = {
+  cliente: {
+    label: "Cliente",
+    className: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30",
+  },
+  lead: {
+    label: "Lead",
+    className: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30",
+  },
+  prospect: {
+    label: "Prospect",
+    className: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-500/15 dark:text-slate-300 dark:border-slate-500/30",
+  },
+};
+
+function LevelBadge({ level, className }: { level: string; className?: string }) {
+  const meta = LEVEL_META[level] ?? LEVEL_META.prospect;
+  return (
+    <Badge variant="outline" className={cn("text-[10px] font-medium px-1.5 py-0 h-5", meta.className, className)}>
+      {meta.label}
+    </Badge>
+  );
+}
 
 type QuoteOption = {
   id: string;
@@ -82,12 +110,15 @@ export default function OpsNew() {
         .limit(500);
 
       const list: ContactClient[] = [];
-      const seen = new Set<string>();
+      const seenClientIds = new Set<string>();
       (contactRows || []).forEach((c: any) => {
-        if (c.level === "cliente" && c.client_id) {
-          list.push({ id: c.id, clientId: c.client_id, fullName: c.full_name, level: c.level });
-          seen.add(c.client_id);
-        }
+        list.push({
+          id: c.id,
+          clientId: c.client_id ?? null,
+          fullName: c.full_name,
+          level: c.level,
+        });
+        if (c.client_id) seenClientIds.add(c.client_id);
       });
 
       const { data: clientRows } = await supabase
@@ -98,7 +129,7 @@ export default function OpsNew() {
         .limit(500);
 
       (clientRows || []).forEach((c: any) => {
-        if (!seen.has(c.id)) {
+        if (!seenClientIds.has(c.id)) {
           list.push({ id: `client-${c.id}`, clientId: c.id, fullName: c.full_name, level: "cliente" });
         }
       });
@@ -120,7 +151,7 @@ export default function OpsNew() {
   );
 
   useEffect(() => {
-    if (!selectedContact) {
+    if (!selectedContact || !selectedContact.clientId) {
       setQuotes([]);
       setQuoteId("none");
       return;
@@ -224,15 +255,25 @@ export default function OpsNew() {
           <Label>Cliente *</Label>
           <Select value={contactId} onValueChange={setContactId}>
             <SelectTrigger>
-              <SelectValue placeholder={loadingContacts ? "Carregando..." : "Selecione um cliente"} />
+              {selectedContact ? (
+                <span className="flex items-center gap-2 min-w-0">
+                  <span className="truncate">{selectedContact.fullName}</span>
+                  <LevelBadge level={selectedContact.level} />
+                </span>
+              ) : (
+                <SelectValue placeholder={loadingContacts ? "Carregando..." : "Selecione um cliente"} />
+              )}
             </SelectTrigger>
             <SelectContent className="max-h-[260px]">
               {contacts.length === 0 && !loadingContacts ? (
-                <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum cliente encontrado.</div>
+                <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum contato encontrado.</div>
               ) : (
                 contacts.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
-                    {c.fullName}
+                    <span className="flex items-center gap-2 w-full">
+                      <span className="truncate">{c.fullName}</span>
+                      <LevelBadge level={c.level} className="ml-auto" />
+                    </span>
                   </SelectItem>
                 ))
               )}
@@ -243,7 +284,11 @@ export default function OpsNew() {
               Apenas clientes com venda fechada podem ter operações de viagem.
             </p>
           )}
-          <p className="text-xs text-muted-foreground">Apenas contatos com nível "Cliente" são listados.</p>
+          {!selectedContact && (
+            <p className="text-xs text-muted-foreground">
+              A categoria de cada contato é exibida ao lado do nome (Prospect, Lead ou Cliente).
+            </p>
+          )}
         </div>
 
         <div className="space-y-1.5">
