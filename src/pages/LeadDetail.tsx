@@ -882,28 +882,8 @@ export default function LeadDetail() {
                 </Section>
               </TabsContent>
 
-              <TabsContent value="notes" className="mt-0 space-y-8">
-                <Section title="Observações">
-                  <Textarea
-                    rows={6}
-                    placeholder="Preferências, restrições, pedidos especiais..."
-                    value={form.preferences}
-                    onChange={(e) => updateField("preferences", e.target.value)}
-                  />
-                </Section>
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate("/crm")}
-                    disabled={saving}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button size="sm" onClick={handleSave} disabled={saving}>
-                    {saving ? "Salvando..." : "Salvar alterações"}
-                  </Button>
-                </div>
+              <TabsContent value="notes" className="mt-0 space-y-4">
+                <LeadNotesTab leadId={leadId} legacyText={legacyPreferences} />
               </TabsContent>
             </div>
           </div>
