@@ -147,6 +147,20 @@ Deno.serve(async (req) => {
       else if (isDocumentMsg) { messageType = 'document'; mediaUrl = documentUrl; mediaMime = documentMimeType; mediaCaption = documentCaption }
       else if (isStickerMsg) { messageType = 'sticker'; mediaUrl = stickerUrl }
       else if (isLocationMsg) { messageType = 'location'; content = JSON.stringify(body.location) }
+      else if (isContactMsg) {
+        messageType = 'contact'
+        const c = body.contact || (Array.isArray(body.contacts) ? body.contacts[0] : null)
+        content = c ? (c.displayName || c.name || c.vcard || JSON.stringify(c)) : 'Contato compartilhado'
+      }
+      else {
+        // Unknown type — preserve a readable preview so the UI never shows just "Mensagem"
+        messageType = 'other'
+        try {
+          const safe = { ...body }
+          delete (safe as any).senderPhoto
+          content = JSON.stringify(safe).slice(0, 500)
+        } catch { content = 'Mensagem (formato não reconhecido)' }
+      }
 
       const preview =
         messageType === 'text' ? (content ?? '').slice(0, 200) :
