@@ -86,7 +86,7 @@ export default function Permissions({ embedded = false }: { embedded?: boolean }
                         </TableCell>
                       </TableRow>
                     )}
-                    <TableRow key={page.path} className="hover:bg-slate-50 transition-colors">
+                    <TableRow className="hover:bg-slate-50 transition-colors">
                       <TableCell
                         className={
                           isSubPage
