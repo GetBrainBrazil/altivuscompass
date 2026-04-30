@@ -691,7 +691,7 @@ export function CRMTableView({
                       )}
                     </td>
                     <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap">
-                      {r.source || "—"}
+                      <SourceCell source={r.source} />
                     </td>
                     <td
                       className={cn(
