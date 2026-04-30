@@ -13,13 +13,13 @@ type ToastOpts = {
 
 function AnimatedCheckIcon() {
   return (
-    <span className="relative inline-flex items-center justify-center w-7 h-7 rounded-full bg-white/20 shrink-0">
-      <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none">
+    <span className="relative inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/15 shrink-0">
+      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
         <circle
           cx="12"
           cy="12"
           r="10"
-          stroke="white"
+          stroke="currentColor"
           strokeWidth="2"
           strokeDasharray="63"
           strokeDashoffset="63"
@@ -27,7 +27,7 @@ function AnimatedCheckIcon() {
         />
         <path
           d="M7 12.5l3.2 3.2L17 9"
-          stroke="white"
+          stroke="currentColor"
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -42,8 +42,8 @@ function AnimatedCheckIcon() {
 
 function AlertIcon() {
   return (
-    <span className="relative inline-flex items-center justify-center w-7 h-7 rounded-full bg-white/20 shrink-0 animate-[notify-pulse_0.6s_ease-out]">
-      <AlertTriangle className="w-4 h-4 text-white" strokeWidth={2.5} />
+    <span className="relative inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-500/15 shrink-0 animate-[notify-pulse_0.6s_ease-out]">
+      <AlertTriangle className="w-3.5 h-3.5" strokeWidth={2.5} />
     </span>
   );
 }
@@ -61,20 +61,22 @@ function ToastBody({
   onClose: () => void;
   showClose?: boolean;
 }) {
-  const bg =
+  const accent =
     variant === "success"
-      ? "bg-gradient-to-r from-emerald-700 to-emerald-600"
-      : "bg-gradient-to-r from-red-700 to-red-600";
+      ? "text-emerald-400"
+      : "text-red-400";
 
   return (
     <div
-      className={`${bg} text-white shadow-2xl rounded-lg px-4 py-3 flex items-start gap-3 min-w-[300px] max-w-[420px] border border-white/10`}
+      className="bg-slate-900 text-white shadow-[0_10px_40px_-5px_rgba(0,0,0,0.5)] rounded-xl px-5 py-4 flex items-center gap-3 min-w-[300px] max-w-[440px] border border-white/10"
     >
-      {variant === "success" ? <AnimatedCheckIcon /> : <AlertIcon />}
-      <div className="flex-1 min-w-0 pt-0.5">
-        <div className="font-semibold text-sm leading-snug">{title}</div>
+      <span className={`shrink-0 inline-flex items-center justify-center ${accent}`}>
+        {variant === "success" ? <AnimatedCheckIcon /> : <AlertIcon />}
+      </span>
+      <div className="flex-1 min-w-0">
+        <div className="font-semibold text-sm leading-tight">{title}</div>
         {description && (
-          <div className="text-xs text-white/85 mt-0.5 leading-snug">{description}</div>
+          <div className="text-xs text-white/70 mt-1 leading-snug">{description}</div>
         )}
       </div>
       {showClose && (
@@ -82,9 +84,9 @@ function ToastBody({
           type="button"
           onClick={onClose}
           aria-label="Fechar"
-          className="shrink-0 -mr-1 -mt-0.5 p-1 rounded hover:bg-white/15 transition-colors"
+          className="shrink-0 p-1 rounded-md hover:bg-white/10 transition-colors"
         >
-          <X className="w-4 h-4 text-white" />
+          <X className="w-4 h-4 text-white/80" />
         </button>
       )}
     </div>
