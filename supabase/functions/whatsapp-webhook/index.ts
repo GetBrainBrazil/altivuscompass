@@ -70,16 +70,35 @@ Deno.serve(async (req) => {
 
     // Z-API webhook payload structure
     const phone = body.phone || body.from || ''
-    const isTextMsg = body.text?.message != null
+
+    // Extract text from many possible Z-API shapes
+    const extractedText: string =
+      body.text?.message ||
+      body.text?.body ||
+      body.message?.conversation ||
+      body.message?.extendedTextMessage?.text ||
+      body.extendedTextMessage?.text ||
+      body.buttonsResponseMessage?.selectedDisplayText ||
+      body.buttonsResponseMessage?.message ||
+      body.listResponseMessage?.title ||
+      body.listResponseMessage?.message ||
+      body.templateButtonReplyMessage?.selectedDisplayText ||
+      body.reaction?.value ||
+      body.body ||
+      body.caption ||
+      ''
+
+    const isTextMsg = !!extractedText
     const isImageMsg = body.image != null
     const isDocumentMsg = body.document != null
     const isAudioMsg = body.audio != null
     const isVideoMsg = body.video != null
     const isStickerMsg = body.sticker != null
     const isLocationMsg = body.location != null
+    const isContactMsg = body.contact != null || body.contacts != null
     const senderName = body.senderName || body.chatName || ''
 
-    const messageText = body.text?.message || ''
+    const messageText = extractedText
     const imageUrl = body.image?.imageUrl || body.image?.url || ''
     const documentUrl = body.document?.documentUrl || body.document?.url || ''
     const documentMimeType = body.document?.mimeType || ''
