@@ -66,7 +66,7 @@ import { cn } from "@/lib/utils";
 import { KanbanCard, type KanbanCardData, type LeadTemperature } from "@/components/crm/KanbanCard";
 import { KanbanCardSkeleton } from "@/components/ui/loading-skeletons";
 import { ClientPromotionDialog } from "@/components/crm/ClientPromotionDialog";
-import { NewOpsDialog } from "@/components/crm/NewOpsDialog";
+import { PENDING_OPS_CARD_KEY } from "@/pages/OpsNew";
 import { DeleteContactDialog, type DeleteContactTarget } from "@/components/contacts/DeleteContactDialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -1126,7 +1126,7 @@ export default function CRM() {
   const [assignTargetColumn, setAssignTargetColumn] = useState<string | null>(null);
   const [responsibleOptions, setResponsibleOptions] = useState<{ user_id: string; full_name: string; avatar_url?: string | null }[]>([]);
   const [selectedResponsibleId, setSelectedResponsibleId] = useState<string>("");
-  const [newOpsOpen, setNewOpsOpen] = useState(false);
+  // (página dedicada /crm/ops/new substitui o dialog antigo)
 
   // Modal: motivo de perda (ao mover para "Perdidos")
   const [lostOpen, setLostOpen] = useState(false);
