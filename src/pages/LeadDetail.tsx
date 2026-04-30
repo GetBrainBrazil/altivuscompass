@@ -598,48 +598,42 @@ export default function LeadDetail() {
         >
           {/* Wrapper sticky agrupando Stepper + Abas */}
           <div className="sticky z-20 bg-slate-50 dark:bg-slate-900 pt-4 pb-2 w-full shadow-sm" style={{ top: stickyTabsTop }}>
-            {/* Stepper — estilo Cotações */}
+            {/* Stepper — estilo chevron (etapas do funil) */}
             <div className="px-6 lg:px-10 pb-3">
-              <div className="glass-card rounded-xl px-3 sm:px-4 py-3 bg-background border border-border">
-                <div className="flex items-center gap-0.5 sm:gap-1 flex-wrap">
+              <div className="rounded-xl px-2 sm:px-3 py-2 bg-background border border-border overflow-x-auto">
+                <div className="flex items-stretch w-full min-w-max">
                   {FUNNEL_STAGES.map((stage, idx) => {
                     const isActive = idx === stageIndex;
                     const isPast = idx < stageIndex;
+                    const isFirst = idx === 0;
                     const isLast = idx === FUNNEL_STAGES.length - 1;
+
+                    // Chevron clip-path: ponta à direita (exceto último) e recorte à esquerda (exceto primeiro)
+                    const clipPath = !isFirst && !isLast
+                      ? "polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%, 12px 50%)"
+                      : isFirst && !isLast
+                        ? "polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%)"
+                        : !isFirst && isLast
+                          ? "polygon(0 0, 100% 0, 100% 100%, 0 100%, 12px 50%)"
+                          : undefined;
+
+                    const colorClasses = isActive
+                      ? "bg-amber-400 text-amber-950 font-semibold"
+                      : isPast
+                        ? "bg-rose-100 text-rose-700"
+                        : "bg-slate-50 text-slate-500 hover:bg-slate-100";
+
                     return (
-                      <div key={stage.id} className="flex items-center flex-1">
-                        <div
-                          className={cn(
-                            "flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-body font-medium transition-all whitespace-nowrap",
-                            isActive
-                              ? "bg-primary text-primary-foreground shadow-sm"
-                              : isPast
-                                ? "bg-primary/20 text-primary"
-                                : "bg-muted text-muted-foreground"
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              "flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold",
-                              isActive
-                                ? "bg-primary-foreground text-primary"
-                                : isPast
-                                  ? "bg-primary text-primary-foreground"
-                                  : "bg-muted-foreground/30 text-muted-foreground"
-                            )}
-                          >
-                            {isPast ? <Check className="w-2.5 h-2.5" /> : idx + 1}
-                          </span>
-                          {stage.title}
-                        </div>
-                        {!isLast && (
-                          <div
-                            className={cn(
-                              "flex-1 h-0.5 mx-1 rounded-full min-w-[8px]",
-                              isPast ? "bg-primary/40" : "bg-border"
-                            )}
-                          />
+                      <div
+                        key={stage.id}
+                        className={cn(
+                          "flex items-center justify-center text-xs sm:text-sm py-2 px-4 sm:px-5 transition-colors flex-1 min-w-[110px]",
+                          colorClasses,
+                          !isFirst && "-ml-2",
                         )}
+                        style={{ clipPath }}
+                      >
+                        <span className="whitespace-nowrap">{stage.title}</span>
                       </div>
                     );
                   })}
