@@ -516,7 +516,7 @@ export function CRMTableView({
           <tbody>
             {sortedRows.length === 0 ? (
               <tr>
-                <td colSpan={14} className="px-3 py-12 text-center text-sm text-muted-foreground">
+                <td colSpan={13} className="px-3 py-12 text-center text-sm text-muted-foreground">
                   Nenhum contato encontrado com os filtros atuais.
                 </td>
               </tr>
