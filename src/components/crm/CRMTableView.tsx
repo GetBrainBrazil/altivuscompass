@@ -6,11 +6,13 @@ import {
   Flame,
   MoreVertical,
   UserPlus,
+  UserMinus,
   FileText,
   MessageCircle,
   Pencil,
   Archive,
   Check,
+  Sparkles,
   X as XIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
