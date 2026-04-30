@@ -41,6 +41,28 @@ Deno.serve(async (req) => {
     const zapiToken = Deno.env.get('ZAPI_TOKEN')!
     const zapiSecurityToken = Deno.env.get('ZAPI_SECURITY_TOKEN')!
 
+    // Validate that the request actually came from Z-API.
+    // Z-API sends the configured Account Security Token in the `Client-Token` header
+    // on every webhook call. Also accept it via `?token=` query param as a fallback
+    // for environments where custom headers cannot be configured.
+    if (zapiSecurityToken) {
+      const url = new URL(req.url)
+      const headerToken =
+        req.headers.get('client-token') ||
+        req.headers.get('Client-Token') ||
+        req.headers.get('x-client-token') ||
+        ''
+      const queryToken = url.searchParams.get('token') || url.searchParams.get('secret') || ''
+      const provided = headerToken || queryToken
+      if (provided !== zapiSecurityToken) {
+        console.warn('Webhook rejected: invalid or missing Z-API security token')
+        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+    }
+
     const supabase = createClient(supabaseUrl, serviceRoleKey)
 
     const body = await req.json()
