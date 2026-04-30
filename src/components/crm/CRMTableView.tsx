@@ -537,10 +537,6 @@ export function CRMTableView({
                 />
               </th>
               <HeaderCell label="Contato" sortKey="name" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
-              <HeaderCell label="Destino" sortKey="destination" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
-              <HeaderCell label="Data" sortKey="travelDate" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
-              <HeaderCell label="Pax" sortKey="travelers" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} className="text-right" />
-              <HeaderCell label="Orçamento" sortKey="value" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} className="text-right" />
               <HeaderCell label="Etapa" sortKey="stage" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
               <HeaderCell label="Responsável" sortKey="agent" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
               <HeaderCell label="Temp." sortKey="temperature" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
@@ -553,7 +549,7 @@ export function CRMTableView({
           <tbody>
             {sortedRows.length === 0 ? (
               <tr>
-                <td colSpan={13} className="px-3 py-12 text-center text-sm text-muted-foreground">
+                <td colSpan={9} className="px-3 py-12 text-center text-sm text-muted-foreground">
                   Nenhum contato encontrado com os filtros atuais.
                 </td>
               </tr>
@@ -570,7 +566,7 @@ export function CRMTableView({
                     key={r.id}
                     className={cn(
                       "border-b border-border/60 cursor-pointer transition-colors",
-                      isSelected ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-muted/40",
+                      isSelected ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-slate-50 dark:hover:bg-muted/40",
                     )}
                     onClick={() => {
                       if (isEditing) return;
@@ -603,7 +599,7 @@ export function CRMTableView({
                                 )}
                                 title={
                                   nameIsPhone
-                                    ? "Nome do contato ainda não informado — clique no lápis para atualizar"
+                                    ? "Nome do contato ainda não informado"
                                     : undefined
                                 }
                               >
@@ -617,36 +613,10 @@ export function CRMTableView({
                                 </span>
                               )}
                             </div>
-                            {nameIsPhone && onCardRenameClient && (
-                              <button
-                                type="button"
-                                aria-label="Editar nome do contato"
-                                title="Editar nome do contato"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingNameId(r.id);
-                                }}
-                                className="shrink-0 inline-flex items-center justify-center w-5 h-5 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                              >
-                                <Pencil className="w-3 h-3" />
-                              </button>
-                            )}
                             {r.contactLevel && <ContactLevelBadge level={r.contactLevel} />}
                           </>
                         )}
                       </div>
-                    </td>
-                    <td className="px-3 py-2.5 text-foreground/90 truncate max-w-[180px]">
-                      {r.destination || "—"}
-                    </td>
-                    <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap">
-                      {r.travelDate || "—"}
-                    </td>
-                    <td className="px-3 py-2.5 text-right tabular-nums text-muted-foreground">
-                      {r.travelersCount ?? "—"}
-                    </td>
-                    <td className="px-3 py-2.5 text-right tabular-nums text-foreground/90 whitespace-nowrap">
-                      {formatCurrency(r.estimatedValue)}
                     </td>
                     <td className="px-3 py-2.5">
                       <span
