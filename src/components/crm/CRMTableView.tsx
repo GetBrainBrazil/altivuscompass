@@ -500,7 +500,6 @@ export function CRMTableView({
                 />
               </th>
               <HeaderCell label="Contato" sortKey="name" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
-              <HeaderCell label="Telefone" sortKey="phone" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
               <HeaderCell label="Destino" sortKey="destination" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
               <HeaderCell label="Data" sortKey="travelDate" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
               <HeaderCell label="Pax" sortKey="travelers" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} className="text-right" />
