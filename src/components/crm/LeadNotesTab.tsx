@@ -79,7 +79,6 @@ export function LeadNotesTab({ leadId, legacyText }: Props) {
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   const userName =
-    (profile as any)?.full_name ||
     (user as any)?.user_metadata?.full_name ||
     user?.email ||
     "Você";
