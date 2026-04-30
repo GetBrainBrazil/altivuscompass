@@ -61,9 +61,9 @@ export default function Permissions({ embedded = false }: { embedded?: boolean }
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="font-body text-xs min-w-[100px]">Página</TableHead>
+                <TableHead className="font-body text-xs min-w-[100px] sticky top-0 z-10 bg-background">Página</TableHead>
                 {allRoles.map((role) => (
-                  <TableHead key={role} className="font-body text-xs text-center min-w-[80px]">
+                  <TableHead key={role} className="font-body text-xs text-center min-w-[80px] sticky top-0 z-10 bg-background">
                     {ROLE_LABELS[role]}
                   </TableHead>
                 ))}
@@ -71,7 +71,7 @@ export default function Permissions({ embedded = false }: { embedded?: boolean }
             </TableHeader>
             <TableBody>
               {permissions.map((page) => (
-                <TableRow key={page.path}>
+                <TableRow key={page.path} className="hover:bg-slate-50 transition-colors">
                   <TableCell className="font-body text-sm font-medium">{page.label}</TableCell>
                   {allRoles.map((role) => {
                     const isAdmin = role === "admin";
