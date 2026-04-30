@@ -2563,6 +2563,15 @@ export default function CRM() {
               <Plus className="w-3.5 h-3.5" /> Novo Lead
             </Button>
           )}
+          {tab === "ops" && (
+            <Button
+              size="sm"
+              className="h-8 gap-1.5 rounded-full"
+              onClick={() => setNewOpsOpen(true)}
+            >
+              <Plus className="w-3.5 h-3.5" /> Nova Operação
+            </Button>
+          )}
         </div>
       </section>
 
