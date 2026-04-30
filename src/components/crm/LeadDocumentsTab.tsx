@@ -70,7 +70,19 @@ export function LeadDocumentsTab({ leadId }: { leadId: string }) {
   };
 
   useEffect(() => {
-    if (leadId) load();
+    if (!leadId) return;
+    load();
+    const channel = supabase
+      .channel(`lead-documents-${leadId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "lead_documents", filter: `lead_id=eq.${leadId}` },
+        () => load(),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leadId]);
 
