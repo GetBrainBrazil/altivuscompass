@@ -625,10 +625,10 @@ export default function LeadDetail() {
                           : undefined;
 
                     const colorClasses = isActive
-                      ? "bg-amber-400 text-amber-950 font-semibold"
+                      ? "bg-navy text-gold font-semibold shadow-sm"
                       : isPast
-                        ? "bg-rose-100 text-rose-700"
-                        : "bg-slate-50 text-slate-500 hover:bg-slate-100";
+                        ? "bg-soft-blue/30 text-navy"
+                        : "bg-muted text-muted-foreground hover:bg-soft-blue/15";
 
                     return (
                       <div
