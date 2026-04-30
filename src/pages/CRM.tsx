@@ -3085,6 +3085,21 @@ export default function CRM() {
         onDeleted={handleAfterDelete}
       />
 
+      <NewOpsDialog
+        open={newOpsOpen}
+        onOpenChange={setNewOpsOpen}
+        responsibleOptions={responsibleOptions}
+        onCreated={(card, columnId) => {
+          setOpsColumns((prev) =>
+            prev.map((col) =>
+              col.id === columnId ? { ...col, cards: [card, ...col.cards] } : col,
+            ),
+          );
+          // Garante que está na aba ops
+          if (tab !== "ops") setTab("ops");
+        }}
+      />
+
     </div>
   );
 }
