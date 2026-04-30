@@ -1126,6 +1126,7 @@ export default function CRM() {
   const [assignTargetColumn, setAssignTargetColumn] = useState<string | null>(null);
   const [responsibleOptions, setResponsibleOptions] = useState<{ user_id: string; full_name: string; avatar_url?: string | null }[]>([]);
   const [selectedResponsibleId, setSelectedResponsibleId] = useState<string>("");
+  const [newOpsOpen, setNewOpsOpen] = useState(false);
 
   // Modal: motivo de perda (ao mover para "Perdidos")
   const [lostOpen, setLostOpen] = useState(false);
