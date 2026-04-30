@@ -661,15 +661,16 @@ export function CRMTableView({
                     <td className="px-3 py-2.5">
                       {r.agent?.name ? (
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center shrink-0">
-                            {initials(r.agent.name)}
+                          <div className="w-6 h-6 aspect-square rounded-full bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center shrink-0 leading-none">
+                            <span className="block">{initials(r.agent.name)}</span>
                           </div>
                           <span className="text-foreground/90 truncate max-w-[140px]">
                             {r.agent.name}
                           </span>
                         </div>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-[11px] font-medium">
+                        <span className="inline-flex items-center gap-1.5 text-xs text-slate-400 dark:text-muted-foreground/70">
+                          <UserMinus className="w-3.5 h-3.5" aria-hidden="true" />
                           Não atribuído
                         </span>
                       )}
