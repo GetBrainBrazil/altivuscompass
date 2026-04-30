@@ -667,6 +667,7 @@ export default function LeadDetail() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
                     <Field
                       label="Nome"
+                      icon={UserIcon}
                       value={form.full_name}
                       onChange={(e) => updateField("full_name", e.target.value)}
                     />
@@ -680,12 +681,14 @@ export default function LeadDetail() {
                     </div>
                     <Field
                       label="E-mail"
+                      icon={Mail}
                       type="email"
                       value={form.email}
                       onChange={(e) => updateField("email", e.target.value)}
                     />
                     <SelectField
                       label="Origem do lead"
+                      icon={Globe}
                       value={form.source}
                       onChange={(v) => updateField("source", v)}
                       options={SOURCES}
