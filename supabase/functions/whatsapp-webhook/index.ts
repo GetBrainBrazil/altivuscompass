@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey)
 
     const body = await req.json()
-    console.log('Webhook payload:', JSON.stringify(body).substring(0, 500))
+    console.log('Webhook payload:', JSON.stringify(body).substring(0, 2000))
 
     // Z-API webhook payload structure
     const phone = body.phone || body.from || ''
