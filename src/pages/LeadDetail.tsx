@@ -605,7 +605,7 @@ export default function LeadDetail() {
         >
           {/* Wrapper sticky agrupando Stepper + Abas */}
           <div className="sticky z-20 bg-slate-50 dark:bg-slate-900 pt-4 pb-2 w-full shadow-sm" style={{ top: stickyTabsTop }}>
-            {/* Stepper — estilo chevron (etapas do funil) */}
+             {/* Stepper — estilo chevron (etapas do funil) */}
             <div className="px-6 lg:px-10 pb-3">
               <div className="rounded-xl px-2 sm:px-3 py-2 bg-background border border-border overflow-x-auto">
                 <div className="flex items-stretch w-full min-w-max">
@@ -617,30 +617,40 @@ export default function LeadDetail() {
 
                     // Chevron clip-path: ponta à direita (exceto último) e recorte à esquerda (exceto primeiro)
                     const clipPath = !isFirst && !isLast
-                      ? "polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%, 12px 50%)"
+                      ? "polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%)"
                       : isFirst && !isLast
-                        ? "polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%)"
+                        ? "polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%)"
                         : !isFirst && isLast
-                          ? "polygon(0 0, 100% 0, 100% 100%, 0 100%, 12px 50%)"
+                          ? "polygon(0 0, 100% 0, 100% 100%, 0 100%, 14px 50%)"
                           : undefined;
 
+                    // Padding extra à esquerda/direita para compensar o recorte do chevron
+                    const chevronPadding = cn(
+                      !isFirst && "pl-7 sm:pl-8",
+                      !isLast && "pr-7 sm:pr-8",
+                      isFirst && "pl-4 sm:pl-5",
+                      isLast && "pr-4 sm:pr-5",
+                    );
+
                     const colorClasses = isActive
-                      ? "bg-background text-navy font-semibold ring-1 ring-inset ring-navy shadow-sm"
+                      ? "bg-primary text-primary-foreground font-semibold shadow-sm"
                       : isPast
-                        ? "bg-navy text-primary-foreground"
+                        ? "bg-primary/90 text-primary-foreground"
                         : "bg-muted text-muted-foreground hover:bg-muted/80";
 
                     return (
                       <div
                         key={stage.id}
                         className={cn(
-                          "flex items-center justify-center text-xs sm:text-sm py-2 px-4 sm:px-5 transition-colors flex-1 min-w-[110px]",
+                          "flex items-center justify-center gap-1.5 text-[11px] sm:text-xs py-2 transition-colors flex-1 min-w-[120px]",
+                          chevronPadding,
                           colorClasses,
-                          !isFirst && "-ml-2",
+                          !isFirst && "-ml-3",
                         )}
                         style={{ clipPath }}
                       >
-                        <span className="whitespace-nowrap">{stage.title}</span>
+                        {isPast && <Check className="h-3 w-3 shrink-0" />}
+                        <span className="whitespace-nowrap truncate">{stage.title}</span>
                       </div>
                     );
                   })}
