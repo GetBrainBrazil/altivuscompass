@@ -976,13 +976,11 @@ function Field({
 }: React.InputHTMLAttributes<HTMLInputElement> & { label: string; icon?: LucideIcon }) {
   return (
     <div className="space-y-1">
-      <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
-      <div className="relative">
-        {Icon && (
-          <Icon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-        )}
-        <Input className={cn("h-9", Icon && "pl-9")} {...props} />
-      </div>
+      <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+        {Icon && <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />}
+        {label}
+      </Label>
+      <Input className="h-9" {...props} />
     </div>
   );
 }
@@ -1004,24 +1002,22 @@ function SelectField({
 }) {
   return (
     <div className="space-y-1">
-      <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
-      <div className="relative">
-        {Icon && (
-          <Icon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
-        )}
-        <Select value={value || undefined} onValueChange={onChange}>
-          <SelectTrigger className={cn("h-9", Icon && "pl-9")}>
-            <SelectValue placeholder={placeholder} />
-          </SelectTrigger>
-          <SelectContent>
-            {options.map((o) => (
-              <SelectItem key={o.value} value={o.value}>
-                {o.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+        {Icon && <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />}
+        {label}
+      </Label>
+      <Select value={value || undefined} onValueChange={onChange}>
+        <SelectTrigger className="h-9">
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((o) => (
+            <SelectItem key={o.value} value={o.value}>
+              {o.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
