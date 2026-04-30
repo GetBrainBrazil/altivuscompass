@@ -1719,6 +1719,39 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_notes: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          is_imported: boolean
+          lead_id: string
+          updated_at: string
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          is_imported?: boolean
+          lead_id: string
+          updated_at?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          is_imported?: boolean
+          lead_id?: string
+          updated_at?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           ai_collected_data: Json | null

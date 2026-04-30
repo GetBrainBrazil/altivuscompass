@@ -40,6 +40,7 @@ import { LeadWhatsAppColumn } from "@/components/crm/LeadWhatsAppColumn";
 import { UserPicker } from "@/components/ui/user-picker";
 import { CRMBreadcrumb } from "@/components/crm/CRMBreadcrumb";
 import { QuoteKanbanCard } from "@/components/quotes/QuoteKanbanCard";
+import { LeadNotesTab } from "@/components/crm/LeadNotesTab";
 
 const FUNNEL_STAGES = [
   { id: "new-leads", title: "Novos Leads" },
@@ -182,6 +183,7 @@ export default function LeadDetail() {
   const [leadQuotes, setLeadQuotes] = useState<LeadQuote[]>([]);
   const quotesCount = leadQuotes.length;
   const [waPanelOpen, setWaPanelOpen] = useState(false);
+  const [legacyPreferences, setLegacyPreferences] = useState<string | null>(null);
   const [aiData, setAiData] = useState<{
     ai_summary: string | null;
     destination: string | null;
@@ -301,6 +303,10 @@ export default function LeadDetail() {
         assigned_user_id: (data as any).assigned_user_id ?? prev.assigned_user_id,
         lead_temperature: (data as any).lead_temperature ?? prev.lead_temperature,
       }));
+
+      // Captura observação legada (campo `preferences` antigo) só uma vez,
+      // para exibi-la como "Observação importada" no novo sistema de notas.
+      setLegacyPreferences((prev) => prev ?? (data.preferences ?? null));
 
       // Snapshot dos dados extraídos pela IA (origem WhatsApp)
       const collected = ((data as any).ai_collected_data ?? {}) as Record<string, any>;
@@ -876,28 +882,8 @@ export default function LeadDetail() {
                 </Section>
               </TabsContent>
 
-              <TabsContent value="notes" className="mt-0 space-y-8">
-                <Section title="Observações">
-                  <Textarea
-                    rows={6}
-                    placeholder="Preferências, restrições, pedidos especiais..."
-                    value={form.preferences}
-                    onChange={(e) => updateField("preferences", e.target.value)}
-                  />
-                </Section>
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate("/crm")}
-                    disabled={saving}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button size="sm" onClick={handleSave} disabled={saving}>
-                    {saving ? "Salvando..." : "Salvar alterações"}
-                  </Button>
-                </div>
+              <TabsContent value="notes" className="mt-0 space-y-4">
+                <LeadNotesTab leadId={leadId} legacyText={legacyPreferences} />
               </TabsContent>
             </div>
           </div>
