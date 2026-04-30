@@ -295,7 +295,7 @@ function KanbanColumnCard({
   return (
     <div
       className={cn(
-        "flex flex-col shrink-0 max-h-full transition-all duration-200",
+        "flex flex-col shrink-0 h-full min-h-0 transition-all duration-200",
         isCollapsed ? "w-[48px]" : "w-[290px]",
         dimmedInvalid && "opacity-40 pointer-events-none",
       )}
