@@ -66,6 +66,7 @@ import { cn } from "@/lib/utils";
 import { KanbanCard, type KanbanCardData, type LeadTemperature } from "@/components/crm/KanbanCard";
 import { KanbanCardSkeleton } from "@/components/ui/loading-skeletons";
 import { ClientPromotionDialog } from "@/components/crm/ClientPromotionDialog";
+import { NewOpsDialog } from "@/components/crm/NewOpsDialog";
 import { DeleteContactDialog, type DeleteContactTarget } from "@/components/contacts/DeleteContactDialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -1125,6 +1126,7 @@ export default function CRM() {
   const [assignTargetColumn, setAssignTargetColumn] = useState<string | null>(null);
   const [responsibleOptions, setResponsibleOptions] = useState<{ user_id: string; full_name: string; avatar_url?: string | null }[]>([]);
   const [selectedResponsibleId, setSelectedResponsibleId] = useState<string>("");
+  const [newOpsOpen, setNewOpsOpen] = useState(false);
 
   // Modal: motivo de perda (ao mover para "Perdidos")
   const [lostOpen, setLostOpen] = useState(false);
@@ -2562,6 +2564,15 @@ export default function CRM() {
               <Plus className="w-3.5 h-3.5" /> Novo Lead
             </Button>
           )}
+          {tab === "ops" && (
+            <Button
+              size="sm"
+              className="h-8 gap-1.5 rounded-full"
+              onClick={() => setNewOpsOpen(true)}
+            >
+              <Plus className="w-3.5 h-3.5" /> Nova Operação
+            </Button>
+          )}
         </div>
       </section>
 
@@ -3072,6 +3083,21 @@ export default function CRM() {
         }}
         target={deleteTarget}
         onDeleted={handleAfterDelete}
+      />
+
+      <NewOpsDialog
+        open={newOpsOpen}
+        onOpenChange={setNewOpsOpen}
+        responsibleOptions={responsibleOptions}
+        onCreated={(card, columnId) => {
+          setOpsColumns((prev) =>
+            prev.map((col) =>
+              col.id === columnId ? { ...col, cards: [card, ...col.cards] } : col,
+            ),
+          );
+          // Garante que está na aba ops
+          if (tab !== "ops") setTab("ops");
+        }}
       />
 
     </div>
