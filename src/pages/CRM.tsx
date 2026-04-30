@@ -677,6 +677,29 @@ export default function CRM() {
     }
   }, [opsColumns]);
 
+  // Consome card pendente criado em /crm/ops/new
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(PENDING_OPS_CARD_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { card: KanbanCardData; columnId: string };
+      if (!parsed?.card || !parsed?.columnId) {
+        sessionStorage.removeItem(PENDING_OPS_CARD_KEY);
+        return;
+      }
+      setOpsColumns((prev) =>
+        prev.map((col) =>
+          col.id === parsed.columnId
+            ? { ...col, cards: [parsed.card, ...col.cards] }
+            : col,
+        ),
+      );
+      sessionStorage.removeItem(PENDING_OPS_CARD_KEY);
+    } catch {
+      sessionStorage.removeItem(PENDING_OPS_CARD_KEY);
+    }
+  }, []);
+
   // ─── Sync inbound leads (from WhatsApp AI / manual quick-create) into the
   // "Novos Leads (IA)" column. We poll every 30s so newly captured leads show
   // up automatically without a page refresh.
