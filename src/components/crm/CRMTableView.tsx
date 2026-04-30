@@ -566,7 +566,7 @@ export function CRMTableView({
                     key={r.id}
                     className={cn(
                       "border-b border-border/60 cursor-pointer transition-colors",
-                      isSelected ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-muted/40",
+                      isSelected ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-slate-50 dark:hover:bg-muted/40",
                     )}
                     onClick={() => {
                       if (isEditing) return;
