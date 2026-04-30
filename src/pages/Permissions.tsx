@@ -90,7 +90,7 @@ export default function Permissions({ embedded = false }: { embedded?: boolean }
                       <TableCell
                         className={
                           isSubPage
-                            ? "font-body text-sm text-muted-foreground pl-8 border-l-2 border-l-primary/30"
+                            ? "font-body text-sm text-muted-foreground pl-12 border-l-2 border-l-primary/30"
                             : "font-body text-sm font-medium"
                         }
                       >
