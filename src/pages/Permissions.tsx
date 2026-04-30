@@ -75,7 +75,7 @@ export default function Permissions({ embedded = false }: { embedded?: boolean }
                 const prev = permissions[idx - 1];
                 const isFirstCrm = isSubPage && (!prev || !prev.path.startsWith("/crm?"));
                 return (
-                  <>
+                  <React.Fragment key={page.path}>
                     {isFirstCrm && (
                       <TableRow key="crm-group-header" className="bg-slate-50/80 hover:bg-slate-50/80">
                         <TableCell
