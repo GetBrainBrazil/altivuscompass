@@ -35,7 +35,7 @@ const OPS_STAGES: { id: string; title: string }[] = [
   { id: "post-trip", title: "Pós-Viagem" },
 ];
 
-const FINISHED_STAGES = ["confirmed", "issued", "completed", "post_sale"];
+const FINISHED_STAGES = ["confirmed", "issued", "completed", "post_sale"] as const;
 
 interface Props {
   open: boolean;
