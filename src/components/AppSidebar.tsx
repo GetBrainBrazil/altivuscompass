@@ -7,6 +7,7 @@ import logoSymbol from "@/assets/logo-altivus-symbol.png";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
@@ -18,7 +19,7 @@ import {
 import { NavLink } from "@/components/NavLink";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -280,6 +281,48 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      {canAccess(userRole, "/system") && (
+        <SidebarFooter className="px-2.5 py-3 border-t border-sidebar-border/30">
+          <SidebarMenu className="gap-0.5">
+            <TooltipProvider delayDuration={0}>
+              <SidebarMenuItem>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <SidebarMenuButton
+                      asChild
+                      className={cn(
+                        "h-9 rounded-md",
+                        "data-[active=true]:bg-white/[0.06] data-[active=true]:text-white data-[active=true]:font-medium data-[active=true]:shadow-[inset_2px_0_0_0_hsl(var(--gold))]",
+                      )}
+                      data-active={effectivePath === "/system" || effectivePath.startsWith("/system/")}
+                    >
+                      <Link
+                        to="/system"
+                        className={cn(
+                          "relative flex items-center gap-3 px-3 text-sidebar-foreground/85 hover:bg-white/[0.04] hover:text-white transition-all duration-200 rounded-md",
+                          (effectivePath === "/system" || effectivePath.startsWith("/system/")) &&
+                            "bg-white/[0.06] text-white font-medium shadow-[inset_2px_0_0_0_hsl(var(--gold))] hover:bg-white/[0.08] hover:text-white",
+                        )}
+                      >
+                        <Settings size={20} strokeWidth={1.2} />
+                        {!collapsed && (
+                          <span className="text-[13px] font-body tracking-[0.01em]">Admin</span>
+                        )}
+                      </Link>
+                    </SidebarMenuButton>
+                  </TooltipTrigger>
+                  {collapsed && (
+                    <TooltipContent side="right" className="font-body">
+                      Admin
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </SidebarMenuItem>
+            </TooltipProvider>
+          </SidebarMenu>
+        </SidebarFooter>
+      )}
     </Sidebar>
   );
 }
