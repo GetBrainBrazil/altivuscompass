@@ -77,7 +77,7 @@ export default function Permissions({ embedded = false }: { embedded?: boolean }
                 return (
                   <React.Fragment key={page.path}>
                     {isFirstCrm && (
-                      <TableRow key="crm-group-header" className="bg-slate-50/80 hover:bg-slate-50/80">
+                      <TableRow className="bg-slate-50/80 hover:bg-slate-50/80">
                         <TableCell
                           colSpan={1 + allRoles.length}
                           className="font-body text-xs font-semibold text-slate-800 uppercase tracking-wider py-2"
