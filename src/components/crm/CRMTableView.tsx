@@ -599,7 +599,7 @@ export function CRMTableView({
                                 )}
                                 title={
                                   nameIsPhone
-                                    ? "Nome do contato ainda não informado — clique no lápis para atualizar"
+                                    ? "Nome do contato ainda não informado"
                                     : undefined
                                 }
                               >
