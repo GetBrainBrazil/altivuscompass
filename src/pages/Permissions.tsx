@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -70,36 +70,50 @@ export default function Permissions({ embedded = false }: { embedded?: boolean }
               </TableRow>
             </TableHeader>
             <TableBody>
-              {permissions.map((page) => {
+              {permissions.map((page, idx) => {
                 const isSubPage = page.path.startsWith("/crm?");
+                const prev = permissions[idx - 1];
+                const isFirstCrm = isSubPage && (!prev || !prev.path.startsWith("/crm?"));
                 return (
-                  <TableRow key={page.path} className="hover:bg-slate-50 transition-colors">
-                    <TableCell
-                      className={
-                        isSubPage
-                          ? "font-body text-sm text-muted-foreground pl-8 border-l-2 border-l-primary/30"
-                          : "font-body text-sm font-medium"
-                      }
-                    >
-                      {isSubPage ? page.label.replace(/^CRM\s*—\s*/, "↳ ") : page.label}
-                    </TableCell>
-                    {allRoles.map((role) => {
-                      const isAdmin = role === "admin";
-                      const checked = isAdmin || page.allowedRoles.includes(role);
-                      return (
-                        <TableCell key={role} className="text-center">
-                          <div className="flex justify-center">
-                            <Switch
-                              checked={checked}
-                              disabled={isAdmin}
-                              onCheckedChange={(v) => togglePageRole(page, role, v)}
-                              aria-label={`${ROLE_LABELS[role]} - ${page.label}`}
-                            />
-                          </div>
+                  <React.Fragment key={page.path}>
+                    {isFirstCrm && (
+                      <TableRow className="bg-slate-50/80 hover:bg-slate-50/80">
+                        <TableCell
+                          colSpan={1 + allRoles.length}
+                          className="font-body text-xs font-semibold text-slate-800 uppercase tracking-wider py-2"
+                        >
+                          Módulo CRM
                         </TableCell>
-                      );
-                    })}
-                  </TableRow>
+                      </TableRow>
+                    )}
+                    <TableRow className="hover:bg-slate-50 transition-colors">
+                      <TableCell
+                        className={
+                          isSubPage
+                            ? "font-body text-sm text-muted-foreground pl-8 border-l-2 border-l-primary/30"
+                            : "font-body text-sm font-medium"
+                        }
+                      >
+                        {isSubPage ? page.label.replace(/^CRM\s*—\s*/, "↳ ") : page.label}
+                      </TableCell>
+                      {allRoles.map((role) => {
+                        const isAdmin = role === "admin";
+                        const checked = isAdmin || page.allowedRoles.includes(role);
+                        return (
+                          <TableCell key={role} className="text-center">
+                            <div className="flex justify-center">
+                              <Switch
+                                checked={checked}
+                                disabled={isAdmin}
+                                onCheckedChange={(v) => togglePageRole(page, role, v)}
+                                aria-label={`${ROLE_LABELS[role]} - ${page.label}`}
+                              />
+                            </div>
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  </React.Fragment>
                 );
               })}
             </TableBody>
