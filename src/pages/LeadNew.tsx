@@ -1,15 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, CalendarIcon, Minus, Plus } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -19,7 +14,6 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
 
 const SOURCE_OPTIONS = [
   { value: "whatsapp", label: "WhatsApp" },
@@ -32,84 +26,76 @@ const SOURCE_OPTIONS = [
   { value: "other", label: "Outro" },
 ];
 
-const MONTHS = [
-  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
-];
-
-const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <div className="flex items-center gap-3 pt-2">
-    <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-muted-foreground">
-      {children}
-    </span>
-    <div className="flex-1 h-px bg-border" />
-  </div>
-);
+const initialForm = {
+  full_name: "",
+  phone: "",
+  email: "",
+  source: "whatsapp",
+  destination: "",
+  travel_period: "",
+  travelers_count: "",
+  notes: "",
+};
 
 export default function LeadNew() {
   const navigate = useNavigate();
+  const [form, setForm] = useState(initialForm);
   const [saving, setSaving] = useState(false);
 
-  const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [source, setSource] = useState("whatsapp");
+  const setField = <K extends keyof typeof initialForm>(k: K, v: string) =>
+    setForm((f) => ({ ...f, [k]: v }));
 
-  const [destination, setDestination] = useState("");
-  const [dateStart, setDateStart] = useState<Date | undefined>();
-  const [dateEnd, setDateEnd] = useState<Date | undefined>();
-  const [flexibleDates, setFlexibleDates] = useState(false);
-  const currentYear = new Date().getFullYear();
-  const [flexMonth, setFlexMonth] = useState<string>("");
-  const [flexYear, setFlexYear] = useState<string>(String(currentYear));
-  const [travelers, setTravelers] = useState<number>(0);
-  const [notes, setNotes] = useState("");
-
-  const hasPeriod = flexibleDates ? !!flexMonth : !!dateStart;
   const willBeLead =
-    !!destination.trim() && hasPeriod && travelers > 0;
-
-  const incTravelers = () => setTravelers((n) => Math.min(99, n + 1));
-  const decTravelers = () => setTravelers((n) => Math.max(0, n - 1));
+    !!form.destination.trim() &&
+    !!form.travel_period.trim() &&
+    !!form.travelers_count.trim();
 
   const handleSubmit = async () => {
-    const name = fullName.trim();
-    const ph = phone.trim();
-    if (!name) return toast.error("Informe o nome completo.");
-    if (!ph) return toast.error("Telefone é obrigatório.");
-
+    const name = form.full_name.trim();
+    const phone = form.phone.trim();
+    if (!name) {
+      toast.error("Informe o nome completo.");
+      return;
+    }
+    if (!phone) {
+      toast.error("Telefone é obrigatório.");
+      return;
+    }
     setSaving(true);
     try {
       let travel_date_start: string | null = null;
-      let travel_date_end: string | null = null;
       let flexible_dates = false;
       let flexible_dates_description: string | null = null;
-
-      if (flexibleDates) {
-        if (flexMonth && flexYear) {
-          const m = String(parseInt(flexMonth, 10) + 1).padStart(2, "0");
-          travel_date_start = `${flexYear}-${m}-01`;
+      const period = form.travel_period.trim();
+      if (period) {
+        const isoMatch = period.match(/^(\d{4})-(\d{2})(?:-(\d{2}))?$/);
+        const brMatch = period.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (isoMatch) {
+          travel_date_start = `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3] ?? "01"}`;
+        } else if (brMatch) {
+          travel_date_start = `${brMatch[3]}-${brMatch[2]}-${brMatch[1]}`;
+        } else {
           flexible_dates = true;
-          flexible_dates_description = `${MONTHS[parseInt(flexMonth, 10)]}/${flexYear}`;
+          flexible_dates_description = period;
         }
-      } else {
-        if (dateStart) travel_date_start = format(dateStart, "yyyy-MM-dd");
-        if (dateEnd) travel_date_end = format(dateEnd, "yyyy-MM-dd");
       }
+      const travelersNum = form.travelers_count
+        ? parseInt(form.travelers_count, 10)
+        : null;
 
       const payload: any = {
         full_name: name,
-        phone: ph,
-        email: email.trim() || null,
-        source,
+        phone,
+        email: form.email.trim() || null,
+        source: form.source,
         status: "new",
-        destination: destination.trim() || null,
+        destination: form.destination.trim() || null,
         travel_date_start,
-        travel_date_end,
         flexible_dates,
         flexible_dates_description,
-        travelers_count: travelers > 0 ? travelers : null,
-        preferences: notes.trim() || null,
+        travelers_count:
+          travelersNum && !Number.isNaN(travelersNum) ? travelersNum : null,
+        preferences: form.notes.trim() || null,
       };
 
       const { error } = await supabase.from("leads").insert(payload);
@@ -128,12 +114,10 @@ export default function LeadNew() {
     }
   };
 
-  const years = Array.from({ length: 5 }, (_, i) => currentYear + i);
-
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-[calc(100vh-0px)] bg-slate-50 dark:bg-slate-950">
       {/* Header */}
-      <header className="border-b border-border bg-background sticky top-0 z-10">
+      <header className="border-b border-border bg-background">
         <div className="px-6 py-4 flex items-center gap-3">
           <Button
             variant="ghost"
@@ -148,42 +132,34 @@ export default function LeadNew() {
               Novo lead
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Preencha os dados básicos do contato.
+              Preencha os dados básicos. Se incluir destino, período e número de
+              viajantes, o contato é criado já como Lead. Caso contrário, fica
+              como Prospect em "Novos Leads".
             </p>
-          </div>
-
-          {/* Dynamic status badge */}
-          <div
-            className={cn(
-              "shrink-0 inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-300 ease-out",
-              willBeLead
-                ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900"
-                : "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700",
-            )}
-          >
-            <span
-              className={cn(
-                "h-1.5 w-1.5 rounded-full mr-2 transition-colors duration-300",
-                willBeLead ? "bg-blue-500" : "bg-slate-400",
-              )}
-            />
-            {willBeLead ? "Será criado como Lead" : "Será criado como Prospect"}
           </div>
         </div>
       </header>
 
       {/* Body */}
-      <main className="px-6 py-8">
-        <div className="mx-auto w-full max-w-[700px]">
-          <div className="rounded-xl border border-border bg-background p-6 sm:p-8 space-y-6">
-            <SectionLabel>Informações do contato</SectionLabel>
+      <main className="px-6 py-6">
+        <div className="mx-auto w-full max-w-3xl space-y-6">
+          {/* Identificação */}
+          <section className="rounded-xl border border-border bg-background p-5 sm:p-6 space-y-4">
+            <header className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-foreground">
+                Identificação
+              </h2>
+              <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                Obrigatório
+              </span>
+            </header>
 
             <div className="space-y-1.5">
               <Label htmlFor="lead-name">Nome completo *</Label>
               <Input
                 id="lead-name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                value={form.full_name}
+                onChange={(e) => setField("full_name", e.target.value)}
                 placeholder="Ex: Ana Souza"
                 autoFocus
               />
@@ -194,8 +170,8 @@ export default function LeadNew() {
                 <Label htmlFor="lead-phone">Telefone *</Label>
                 <Input
                   id="lead-phone"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  value={form.phone}
+                  onChange={(e) => setField("phone", e.target.value)}
                   placeholder="(11) 99999-0000"
                 />
               </div>
@@ -204,8 +180,8 @@ export default function LeadNew() {
                 <Input
                   id="lead-email"
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={form.email}
+                  onChange={(e) => setField("email", e.target.value)}
                   placeholder="opcional"
                 />
               </div>
@@ -213,7 +189,10 @@ export default function LeadNew() {
 
             <div className="space-y-1.5">
               <Label htmlFor="lead-source">Origem do lead</Label>
-              <Select value={source} onValueChange={setSource}>
+              <Select
+                value={form.source}
+                onValueChange={(v) => setField("source", v)}
+              >
                 <SelectTrigger id="lead-source">
                   <SelectValue />
                 </SelectTrigger>
@@ -226,147 +205,63 @@ export default function LeadNew() {
                 </SelectContent>
               </Select>
             </div>
+          </section>
 
-            <SectionLabel>Interesse</SectionLabel>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="lead-destination">Destino</Label>
-              <Input
-                id="lead-destination"
-                value={destination}
-                onChange={(e) => setDestination(e.target.value)}
-                placeholder="Ex: Paris"
-              />
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="m-0">Período pretendido</Label>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">
-                    Datas flexíveis
-                  </span>
-                  <Switch
-                    checked={flexibleDates}
-                    onCheckedChange={setFlexibleDates}
-                  />
-                </div>
+          {/* Interesse */}
+          <section className="rounded-xl border border-border bg-background p-5 sm:p-6 space-y-4">
+            <header className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-semibold text-foreground">
+                  Interesse
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Opcional. Preenchendo destino, período e número de viajantes,
+                  o contato é promovido automaticamente a Lead.
+                </p>
               </div>
+              <span
+                className={
+                  willBeLead
+                    ? "shrink-0 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-success/15 text-success"
+                    : "shrink-0 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground"
+                }
+              >
+                {willBeLead ? "Será criado como Lead" : "Será criado como Prospect"}
+              </span>
+            </header>
 
-              {!flexibleDates ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "justify-start text-left font-normal",
-                          !dateStart && "text-muted-foreground",
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {dateStart
-                          ? format(dateStart, "dd/MM/yyyy", { locale: ptBR })
-                          : "Data início"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={dateStart}
-                        onSelect={setDateStart}
-                        initialFocus
-                        locale={ptBR}
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "justify-start text-left font-normal",
-                          !dateEnd && "text-muted-foreground",
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {dateEnd
-                          ? format(dateEnd, "dd/MM/yyyy", { locale: ptBR })
-                          : "Data fim"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={dateEnd}
-                        onSelect={setDateEnd}
-                        initialFocus
-                        locale={ptBR}
-                        disabled={(d) => (dateStart ? d < dateStart : false)}
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  <Select value={flexMonth} onValueChange={setFlexMonth}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Mês" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MONTHS.map((m, i) => (
-                        <SelectItem key={i} value={String(i)}>
-                          {m}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={flexYear} onValueChange={setFlexYear}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Ano" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {years.map((y) => (
-                        <SelectItem key={y} value={String(y)}>
-                          {y}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="lead-destination">Destino</Label>
+                <Input
+                  id="lead-destination"
+                  value={form.destination}
+                  onChange={(e) => setField("destination", e.target.value)}
+                  placeholder="Ex: Paris"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="lead-period">Período pretendido</Label>
+                <Input
+                  id="lead-period"
+                  value={form.travel_period}
+                  onChange={(e) => setField("travel_period", e.target.value)}
+                  placeholder="Ex: 2025-07 ou Jul/2025 (flexível)"
+                />
+              </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label>Número de viajantes</Label>
-              <div className="inline-flex items-center rounded-md border border-input bg-background">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={decTravelers}
-                  disabled={travelers <= 0}
-                  className="h-10 w-10 rounded-r-none"
-                  aria-label="Diminuir"
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <div className="w-14 text-center text-sm font-medium tabular-nums select-none">
-                  {travelers}
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={incTravelers}
-                  className="h-10 w-10 rounded-l-none"
-                  aria-label="Aumentar"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="lead-travelers">Número de viajantes</Label>
+                <Input
+                  id="lead-travelers"
+                  type="number"
+                  min={1}
+                  value={form.travelers_count}
+                  onChange={(e) => setField("travelers_count", e.target.value)}
+                  placeholder="Ex: 2"
+                />
               </div>
             </div>
 
@@ -375,17 +270,17 @@ export default function LeadNew() {
               <Textarea
                 id="lead-notes"
                 rows={4}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                value={form.notes}
+                onChange={(e) => setField("notes", e.target.value)}
                 placeholder="Preferências, restrições, contexto..."
               />
             </div>
-          </div>
+          </section>
 
           {/* Footer actions */}
-          <div className="flex items-center justify-between mt-6">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
             <Button
-              variant="ghost"
+              variant="outline"
               onClick={() => navigate("/crm?tab=sales")}
               disabled={saving}
             >
