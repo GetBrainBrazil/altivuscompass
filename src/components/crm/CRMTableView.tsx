@@ -6,11 +6,13 @@ import {
   Flame,
   MoreVertical,
   UserPlus,
+  UserMinus,
   FileText,
   MessageCircle,
   Pencil,
   Archive,
   Check,
+  Sparkles,
   X as XIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -86,8 +88,43 @@ const TEMP_LABEL: Record<LeadTemperature, string> = {
 
 function initials(name?: string): string {
   if (!name) return "?";
-  const parts = name.trim().split(/\s+/);
-  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
+  // Remove parênteses/colchetes e seu conteúdo (ex: "Diego (Admin)" → "Diego")
+  const cleaned = name.replace(/[\(\[\{].*?[\)\]\}]/g, " ").trim();
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  const pick = (s?: string) => {
+    if (!s) return "";
+    const m = s.match(/[\p{L}\p{N}]/u);
+    return m ? m[0].toUpperCase() : "";
+  };
+  return (pick(parts[0]) + pick(parts[1])) || pick(parts[0]) || "?";
+}
+
+/** Ícone simples do WhatsApp (SVG inline) — segue currentColor. */
+function WhatsAppIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
+      <path d="M19.11 4.91A9.82 9.82 0 0 0 12.04 2C6.6 2 2.18 6.42 2.18 11.86c0 1.74.46 3.43 1.32 4.92L2.1 22l5.36-1.4a9.86 9.86 0 0 0 4.58 1.13h.01c5.44 0 9.86-4.42 9.86-9.86 0-2.63-1.02-5.1-2.8-6.96zM12.05 20.05h-.01a8.2 8.2 0 0 1-4.18-1.14l-.3-.18-3.18.83.85-3.1-.2-.32a8.18 8.18 0 0 1-1.25-4.36c0-4.52 3.68-8.2 8.21-8.2 2.19 0 4.25.85 5.8 2.4a8.16 8.16 0 0 1 2.4 5.8c0 4.53-3.68 8.21-8.14 8.21zm4.5-6.14c-.25-.13-1.46-.72-1.69-.8-.23-.08-.39-.13-.56.13-.16.25-.64.8-.78.96-.14.17-.28.18-.53.06-.25-.13-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.14-.25-.02-.39.11-.51.11-.11.25-.28.37-.42.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.44-.06-.13-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.09 0 1.23.9 2.42 1.03 2.59.13.17 1.78 2.71 4.31 3.8.6.26 1.07.42 1.44.54.6.19 1.15.16 1.58.1.48-.07 1.46-.6 1.67-1.18.21-.58.21-1.07.14-1.18-.06-.11-.23-.17-.48-.3z" />
+    </svg>
+  );
+}
+
+function SourceCell({ source }: { source?: string | null }) {
+  const s = (source || "").toLowerCase().trim();
+  if (!s) return <span className="text-muted-foreground">—</span>;
+  if (s === "whatsapp" || s === "whatsapp_ai" || s.startsWith("whatsapp")) {
+    const isAi = s === "whatsapp_ai" || s.includes("ai");
+    return (
+      <span
+        className="inline-flex items-center gap-1"
+        title={isAi ? "WhatsApp (IA)" : "WhatsApp"}
+        aria-label={isAi ? "WhatsApp com IA" : "WhatsApp"}
+      >
+        <WhatsAppIcon className="w-4 h-4 text-emerald-600" />
+        {isAi && <Sparkles className="w-3 h-3 text-amber-500" aria-hidden="true" />}
+      </span>
+    );
+  }
+  return <span className="capitalize">{source}</span>;
 }
 
 /**
@@ -624,15 +661,16 @@ export function CRMTableView({
                     <td className="px-3 py-2.5">
                       {r.agent?.name ? (
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center shrink-0">
-                            {initials(r.agent.name)}
+                          <div className="w-6 h-6 aspect-square rounded-full bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center shrink-0 leading-none">
+                            <span className="block">{initials(r.agent.name)}</span>
                           </div>
                           <span className="text-foreground/90 truncate max-w-[140px]">
                             {r.agent.name}
                           </span>
                         </div>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-[11px] font-medium">
+                        <span className="inline-flex items-center gap-1.5 text-xs text-slate-400 dark:text-muted-foreground/70">
+                          <UserMinus className="w-3.5 h-3.5" aria-hidden="true" />
                           Não atribuído
                         </span>
                       )}
@@ -653,7 +691,7 @@ export function CRMTableView({
                       )}
                     </td>
                     <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap">
-                      {r.source || "—"}
+                      <SourceCell source={r.source} />
                     </td>
                     <td
                       className={cn(
