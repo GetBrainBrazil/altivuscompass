@@ -304,6 +304,10 @@ export default function LeadDetail() {
         lead_temperature: (data as any).lead_temperature ?? prev.lead_temperature,
       }));
 
+      // Captura observação legada (campo `preferences` antigo) só uma vez,
+      // para exibi-la como "Observação importada" no novo sistema de notas.
+      setLegacyPreferences((prev) => prev ?? (data.preferences ?? null));
+
       // Snapshot dos dados extraídos pela IA (origem WhatsApp)
       const collected = ((data as any).ai_collected_data ?? {}) as Record<string, any>;
       const { whatsapp_sender_name: _ignored, ...extras } = collected;
