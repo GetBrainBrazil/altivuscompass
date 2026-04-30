@@ -307,14 +307,14 @@ export function AppSidebar() {
                       >
                         <Settings size={20} strokeWidth={1.2} />
                         {!collapsed && (
-                          <span className="text-[13px] font-body tracking-[0.01em]">Admin</span>
+                          <span className="text-[13px] font-body tracking-[0.01em]">Configurações</span>
                         )}
                       </Link>
                     </SidebarMenuButton>
                   </TooltipTrigger>
                   {collapsed && (
                     <TooltipContent side="right" className="font-body">
-                      Admin
+                      Configurações
                     </TooltipContent>
                   )}
                 </Tooltip>
