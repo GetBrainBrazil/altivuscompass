@@ -110,12 +110,15 @@ export default function OpsNew() {
         .limit(500);
 
       const list: ContactClient[] = [];
-      const seen = new Set<string>();
+      const seenClientIds = new Set<string>();
       (contactRows || []).forEach((c: any) => {
-        if (c.level === "cliente" && c.client_id) {
-          list.push({ id: c.id, clientId: c.client_id, fullName: c.full_name, level: c.level });
-          seen.add(c.client_id);
-        }
+        list.push({
+          id: c.id,
+          clientId: c.client_id ?? null,
+          fullName: c.full_name,
+          level: c.level,
+        });
+        if (c.client_id) seenClientIds.add(c.client_id);
       });
 
       const { data: clientRows } = await supabase
@@ -126,7 +129,7 @@ export default function OpsNew() {
         .limit(500);
 
       (clientRows || []).forEach((c: any) => {
-        if (!seen.has(c.id)) {
+        if (!seenClientIds.has(c.id)) {
           list.push({ id: `client-${c.id}`, clientId: c.id, fullName: c.full_name, level: "cliente" });
         }
       });
@@ -148,7 +151,7 @@ export default function OpsNew() {
   );
 
   useEffect(() => {
-    if (!selectedContact) {
+    if (!selectedContact || !selectedContact.clientId) {
       setQuotes([]);
       setQuoteId("none");
       return;
