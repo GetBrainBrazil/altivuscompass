@@ -41,6 +41,7 @@ import { UserPicker } from "@/components/ui/user-picker";
 import { CRMBreadcrumb } from "@/components/crm/CRMBreadcrumb";
 import { QuoteKanbanCard } from "@/components/quotes/QuoteKanbanCard";
 import { LeadNotesTab } from "@/components/crm/LeadNotesTab";
+import { LeadDocumentsTab } from "@/components/crm/LeadDocumentsTab";
 
 const FUNNEL_STAGES = [
   { id: "new-leads", title: "Novos Leads" },
@@ -874,11 +875,7 @@ export default function LeadDetail() {
 
               <TabsContent value="documents" className="mt-0">
                 <Section title="Documentos">
-                  <EmptyState
-                    icon={FileBox}
-                    title="Nenhum documento anexado"
-                    description="Anexe documentos relacionados a este contato."
-                  />
+                  <LeadDocumentsTab leadId={leadId} />
                 </Section>
               </TabsContent>
 
