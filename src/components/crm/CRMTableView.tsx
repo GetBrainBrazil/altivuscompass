@@ -613,36 +613,10 @@ export function CRMTableView({
                                 </span>
                               )}
                             </div>
-                            {nameIsPhone && onCardRenameClient && (
-                              <button
-                                type="button"
-                                aria-label="Editar nome do contato"
-                                title="Editar nome do contato"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingNameId(r.id);
-                                }}
-                                className="shrink-0 inline-flex items-center justify-center w-5 h-5 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                              >
-                                <Pencil className="w-3 h-3" />
-                              </button>
-                            )}
                             {r.contactLevel && <ContactLevelBadge level={r.contactLevel} />}
                           </>
                         )}
                       </div>
-                    </td>
-                    <td className="px-3 py-2.5 text-foreground/90 truncate max-w-[180px]">
-                      {r.destination || "—"}
-                    </td>
-                    <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap">
-                      {r.travelDate || "—"}
-                    </td>
-                    <td className="px-3 py-2.5 text-right tabular-nums text-muted-foreground">
-                      {r.travelersCount ?? "—"}
-                    </td>
-                    <td className="px-3 py-2.5 text-right tabular-nums text-foreground/90 whitespace-nowrap">
-                      {formatCurrency(r.estimatedValue)}
                     </td>
                     <td className="px-3 py-2.5">
                       <span
