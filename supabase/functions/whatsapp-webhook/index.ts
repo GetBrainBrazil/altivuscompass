@@ -66,20 +66,39 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey)
 
     const body = await req.json()
-    console.log('Webhook payload:', JSON.stringify(body).substring(0, 500))
+    console.log('Webhook payload:', JSON.stringify(body).substring(0, 2000))
 
     // Z-API webhook payload structure
     const phone = body.phone || body.from || ''
-    const isTextMsg = body.text?.message != null
+
+    // Extract text from many possible Z-API shapes
+    const extractedText: string =
+      body.text?.message ||
+      body.text?.body ||
+      body.message?.conversation ||
+      body.message?.extendedTextMessage?.text ||
+      body.extendedTextMessage?.text ||
+      body.buttonsResponseMessage?.selectedDisplayText ||
+      body.buttonsResponseMessage?.message ||
+      body.listResponseMessage?.title ||
+      body.listResponseMessage?.message ||
+      body.templateButtonReplyMessage?.selectedDisplayText ||
+      body.reaction?.value ||
+      body.body ||
+      body.caption ||
+      ''
+
+    const isTextMsg = !!extractedText
     const isImageMsg = body.image != null
     const isDocumentMsg = body.document != null
     const isAudioMsg = body.audio != null
     const isVideoMsg = body.video != null
     const isStickerMsg = body.sticker != null
     const isLocationMsg = body.location != null
+    const isContactMsg = body.contact != null || body.contacts != null
     const senderName = body.senderName || body.chatName || ''
 
-    const messageText = body.text?.message || ''
+    const messageText = extractedText
     const imageUrl = body.image?.imageUrl || body.image?.url || ''
     const documentUrl = body.document?.documentUrl || body.document?.url || ''
     const documentMimeType = body.document?.mimeType || ''
@@ -128,6 +147,20 @@ Deno.serve(async (req) => {
       else if (isDocumentMsg) { messageType = 'document'; mediaUrl = documentUrl; mediaMime = documentMimeType; mediaCaption = documentCaption }
       else if (isStickerMsg) { messageType = 'sticker'; mediaUrl = stickerUrl }
       else if (isLocationMsg) { messageType = 'location'; content = JSON.stringify(body.location) }
+      else if (isContactMsg) {
+        messageType = 'contact'
+        const c = body.contact || (Array.isArray(body.contacts) ? body.contacts[0] : null)
+        content = c ? (c.displayName || c.name || c.vcard || JSON.stringify(c)) : 'Contato compartilhado'
+      }
+      else {
+        // Unknown type — preserve a readable preview so the UI never shows just "Mensagem"
+        messageType = 'other'
+        try {
+          const safe = { ...body }
+          delete (safe as any).senderPhoto
+          content = JSON.stringify(safe).slice(0, 500)
+        } catch { content = 'Mensagem (formato não reconhecido)' }
+      }
 
       const preview =
         messageType === 'text' ? (content ?? '').slice(0, 200) :
@@ -136,7 +169,9 @@ Deno.serve(async (req) => {
         messageType === 'video' ? '🎥 Vídeo' :
         messageType === 'document' ? '📄 Documento' :
         messageType === 'sticker' ? '🌟 Figurinha' :
-        messageType === 'location' ? '📍 Localização' : 'Mensagem'
+        messageType === 'location' ? '📍 Localização' :
+        messageType === 'contact' ? '👤 Contato' :
+        (content ?? '').slice(0, 200) || 'Mensagem'
 
       // ====== Garantir contato/lead/cliente ANTES da pausa global ======
       // Mesmo com IA pausada, todo número novo precisa virar Prospect no CRM e
