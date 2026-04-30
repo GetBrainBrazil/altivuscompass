@@ -295,7 +295,7 @@ function KanbanColumnCard({
   return (
     <div
       className={cn(
-        "flex flex-col shrink-0 max-h-full transition-all duration-200",
+        "flex flex-col shrink-0 h-full min-h-0 transition-all duration-200",
         isCollapsed ? "w-[48px]" : "w-[290px]",
         dimmedInvalid && "opacity-40 pointer-events-none",
       )}
@@ -2206,7 +2206,7 @@ export default function CRM() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-0px)] min-h-0 bg-slate-50 dark:bg-slate-950">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] min-h-0 overflow-hidden bg-slate-50 dark:bg-slate-950 -m-3 sm:-m-4 md:-m-6 lg:-m-8">
       {/* Header */}
       <header className="border-b border-border bg-background">
         <div className="px-6 pt-5 pb-3">
