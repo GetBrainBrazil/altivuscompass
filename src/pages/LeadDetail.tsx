@@ -709,28 +709,33 @@ export default function LeadDetail() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
                     <Field
                       label="Destino"
+                      icon={MapPin}
                       value={form.destination}
                       onChange={(e) => updateField("destination", e.target.value)}
                     />
                     <Field
                       label="Data da viagem"
+                      icon={CalendarIcon}
                       value={form.travel_date_label}
                       onChange={(e) => updateField("travel_date_label", e.target.value)}
                     />
                     <Field
                       label="Número de viajantes"
+                      icon={UsersIcon}
                       placeholder="Ex.: 2"
                       value={form.travelers_count}
                       onChange={(e) => updateField("travelers_count", e.target.value)}
                     />
                     <Field
                       label="Orçamento estimado (R$)"
+                      icon={DollarSign}
                       type="number"
                       value={form.budget_estimate}
                       onChange={(e) => updateField("budget_estimate", e.target.value)}
                     />
                     <SelectField
                       label="Perfil de viagem"
+                      icon={Target}
                       value={form.trip_profile}
                       onChange={(v) => updateField("trip_profile", v)}
                       options={TRIP_PROFILES}
