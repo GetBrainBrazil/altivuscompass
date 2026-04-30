@@ -9,7 +9,6 @@ import {
   MapPin,
   Calendar as CalendarIcon,
   MessageCircle,
-  
   CircleDot,
   FileText,
   UserCheck,
@@ -22,6 +21,14 @@ import {
   Plus,
   Sparkles,
   ChevronDown,
+  User as UserIcon,
+  Phone,
+  Mail,
+  Globe,
+  Users as UsersIcon,
+  DollarSign,
+  Target,
+  type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
