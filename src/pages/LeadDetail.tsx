@@ -9,7 +9,6 @@ import {
   MapPin,
   Calendar as CalendarIcon,
   MessageCircle,
-  
   CircleDot,
   FileText,
   UserCheck,
@@ -22,6 +21,14 @@ import {
   Plus,
   Sparkles,
   ChevronDown,
+  User as UserIcon,
+  Phone,
+  Mail,
+  Globe,
+  Users as UsersIcon,
+  DollarSign,
+  Target,
+  type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -660,6 +667,7 @@ export default function LeadDetail() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
                     <Field
                       label="Nome"
+                      icon={UserIcon}
                       value={form.full_name}
                       onChange={(e) => updateField("full_name", e.target.value)}
                     />
@@ -673,12 +681,14 @@ export default function LeadDetail() {
                     </div>
                     <Field
                       label="E-mail"
+                      icon={Mail}
                       type="email"
                       value={form.email}
                       onChange={(e) => updateField("email", e.target.value)}
                     />
                     <SelectField
                       label="Origem do lead"
+                      icon={Globe}
                       value={form.source}
                       onChange={(v) => updateField("source", v)}
                       options={SOURCES}
@@ -699,28 +709,33 @@ export default function LeadDetail() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
                     <Field
                       label="Destino"
+                      icon={MapPin}
                       value={form.destination}
                       onChange={(e) => updateField("destination", e.target.value)}
                     />
                     <Field
                       label="Data da viagem"
+                      icon={CalendarIcon}
                       value={form.travel_date_label}
                       onChange={(e) => updateField("travel_date_label", e.target.value)}
                     />
                     <Field
                       label="Número de viajantes"
+                      icon={UsersIcon}
                       placeholder="Ex.: 2"
                       value={form.travelers_count}
                       onChange={(e) => updateField("travelers_count", e.target.value)}
                     />
                     <Field
                       label="Orçamento estimado (R$)"
+                      icon={DollarSign}
                       type="number"
                       value={form.budget_estimate}
                       onChange={(e) => updateField("budget_estimate", e.target.value)}
                     />
                     <SelectField
                       label="Perfil de viagem"
+                      icon={Target}
                       value={form.trip_profile}
                       onChange={(v) => updateField("trip_profile", v)}
                       options={TRIP_PROFILES}
@@ -946,12 +961,18 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Field({
   label,
+  icon: Icon,
   ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
+}: React.InputHTMLAttributes<HTMLInputElement> & { label: string; icon?: LucideIcon }) {
   return (
     <div className="space-y-1">
       <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
-      <Input className="h-9" {...props} />
+      <div className="relative">
+        {Icon && (
+          <Icon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+        )}
+        <Input className={cn("h-9", Icon && "pl-9")} {...props} />
+      </div>
     </div>
   );
 }
@@ -962,28 +983,35 @@ function SelectField({
   onChange,
   options,
   placeholder,
+  icon: Icon,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   options: Array<{ value: string; label: string }>;
   placeholder?: string;
+  icon?: LucideIcon;
 }) {
   return (
     <div className="space-y-1">
       <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
-      <Select value={value || undefined} onValueChange={onChange}>
-        <SelectTrigger className="h-9">
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((o) => (
-            <SelectItem key={o.value} value={o.value}>
-              {o.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="relative">
+        {Icon && (
+          <Icon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+        )}
+        <Select value={value || undefined} onValueChange={onChange}>
+          <SelectTrigger className={cn("h-9", Icon && "pl-9")}>
+            <SelectValue placeholder={placeholder} />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 }
