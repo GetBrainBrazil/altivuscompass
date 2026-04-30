@@ -169,7 +169,9 @@ Deno.serve(async (req) => {
         messageType === 'video' ? '🎥 Vídeo' :
         messageType === 'document' ? '📄 Documento' :
         messageType === 'sticker' ? '🌟 Figurinha' :
-        messageType === 'location' ? '📍 Localização' : 'Mensagem'
+        messageType === 'location' ? '📍 Localização' :
+        messageType === 'contact' ? '👤 Contato' :
+        (content ?? '').slice(0, 200) || 'Mensagem'
 
       // ====== Garantir contato/lead/cliente ANTES da pausa global ======
       // Mesmo com IA pausada, todo número novo precisa virar Prospect no CRM e
