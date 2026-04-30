@@ -40,6 +40,7 @@ import { LeadWhatsAppColumn } from "@/components/crm/LeadWhatsAppColumn";
 import { UserPicker } from "@/components/ui/user-picker";
 import { CRMBreadcrumb } from "@/components/crm/CRMBreadcrumb";
 import { QuoteKanbanCard } from "@/components/quotes/QuoteKanbanCard";
+import { LeadNotesTab } from "@/components/crm/LeadNotesTab";
 
 const FUNNEL_STAGES = [
   { id: "new-leads", title: "Novos Leads" },
