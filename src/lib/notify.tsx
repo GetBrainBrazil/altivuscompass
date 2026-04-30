@@ -13,13 +13,13 @@ type ToastOpts = {
 
 function AnimatedCheckIcon() {
   return (
-    <span className="relative inline-flex items-center justify-center w-7 h-7 rounded-full bg-white/20 shrink-0">
-      <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none">
+    <span className="relative inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/15 shrink-0">
+      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
         <circle
           cx="12"
           cy="12"
           r="10"
-          stroke="white"
+          stroke="currentColor"
           strokeWidth="2"
           strokeDasharray="63"
           strokeDashoffset="63"
@@ -27,7 +27,7 @@ function AnimatedCheckIcon() {
         />
         <path
           d="M7 12.5l3.2 3.2L17 9"
-          stroke="white"
+          stroke="currentColor"
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -42,8 +42,8 @@ function AnimatedCheckIcon() {
 
 function AlertIcon() {
   return (
-    <span className="relative inline-flex items-center justify-center w-7 h-7 rounded-full bg-white/20 shrink-0 animate-[notify-pulse_0.6s_ease-out]">
-      <AlertTriangle className="w-4 h-4 text-white" strokeWidth={2.5} />
+    <span className="relative inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-500/15 shrink-0 animate-[notify-pulse_0.6s_ease-out]">
+      <AlertTriangle className="w-3.5 h-3.5" strokeWidth={2.5} />
     </span>
   );
 }
