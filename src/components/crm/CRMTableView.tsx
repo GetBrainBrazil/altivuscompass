@@ -558,21 +558,28 @@ export function CRMTableView({
                           />
                         ) : (
                           <>
-                            <span
-                              className={cn(
-                                "truncate max-w-[200px]",
-                                nameIsPhone
-                                  ? "italic text-muted-foreground"
-                                  : "font-medium text-foreground",
+                            <div className="min-w-0 flex flex-col">
+                              <span
+                                className={cn(
+                                  "truncate max-w-[220px] font-medium text-slate-900 dark:text-foreground",
+                                  nameIsPhone && "tabular-nums",
+                                )}
+                                title={
+                                  nameIsPhone
+                                    ? "Nome do contato ainda não informado — clique no lápis para atualizar"
+                                    : undefined
+                                }
+                              >
+                                {nameIsPhone
+                                  ? formatPhone(r.clientName) || r.clientName
+                                  : r.clientName || formatPhone(r.phone) || "—"}
+                              </span>
+                              {!nameIsPhone && r.phone && (
+                                <span className="text-sm text-slate-500 dark:text-muted-foreground tabular-nums truncate max-w-[220px]">
+                                  {formatPhone(r.phone)}
+                                </span>
                               )}
-                              title={
-                                nameIsPhone
-                                  ? "Nome do contato ainda não informado — clique no lápis para atualizar"
-                                  : undefined
-                              }
-                            >
-                              {r.clientName || "—"}
-                            </span>
+                            </div>
                             {nameIsPhone && onCardRenameClient && (
                               <button
                                 type="button"
@@ -591,9 +598,6 @@ export function CRMTableView({
                           </>
                         )}
                       </div>
-                    </td>
-                    <td className="px-3 py-2.5 text-muted-foreground tabular-nums whitespace-nowrap">
-                      {formatPhone(r.phone)}
                     </td>
                     <td className="px-3 py-2.5 text-foreground/90 truncate max-w-[180px]">
                       {r.destination || "—"}
