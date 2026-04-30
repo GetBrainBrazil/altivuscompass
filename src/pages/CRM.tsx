@@ -2568,7 +2568,7 @@ export default function CRM() {
             <Button
               size="sm"
               className="h-8 gap-1.5 rounded-full"
-              onClick={() => setNewOpsOpen(true)}
+              onClick={() => navigate("/crm/ops/new")}
             >
               <Plus className="w-3.5 h-3.5" /> Nova Operação
             </Button>
@@ -3085,20 +3085,6 @@ export default function CRM() {
         onDeleted={handleAfterDelete}
       />
 
-      <NewOpsDialog
-        open={newOpsOpen}
-        onOpenChange={setNewOpsOpen}
-        responsibleOptions={responsibleOptions}
-        onCreated={(card, columnId) => {
-          setOpsColumns((prev) =>
-            prev.map((col) =>
-              col.id === columnId ? { ...col, cards: [card, ...col.cards] } : col,
-            ),
-          );
-          // Garante que está na aba ops
-          if (tab !== "ops") setTab("ops");
-        }}
-      />
 
     </div>
   );
