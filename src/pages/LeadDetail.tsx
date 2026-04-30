@@ -183,6 +183,7 @@ export default function LeadDetail() {
   const [leadQuotes, setLeadQuotes] = useState<LeadQuote[]>([]);
   const quotesCount = leadQuotes.length;
   const [waPanelOpen, setWaPanelOpen] = useState(false);
+  const [legacyPreferences, setLegacyPreferences] = useState<string | null>(null);
   const [aiData, setAiData] = useState<{
     ai_summary: string | null;
     destination: string | null;
