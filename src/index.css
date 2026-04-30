@@ -217,57 +217,77 @@
   z-index: 10000 !important;
 }
 
-/* Thin custom scrollbar (used by Kanban board and similar horizontal scrollers) */
+/* Refined Kanban scrollbar — ultra-thin, subtle slate thumb, visible on hover only */
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: hsl(220 13% 80%) transparent;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 200ms ease;
+}
+.scrollbar-thin:hover,
+.scrollbar-thin:focus-within {
+  scrollbar-color: hsl(215 20% 75% / 0.6) transparent; /* slate-300 sutil */
 }
 .scrollbar-thin::-webkit-scrollbar {
-  height: 8px;
-  width: 8px;
+  height: 6px;
+  width: 6px;
 }
 .scrollbar-thin::-webkit-scrollbar-track {
   background: transparent;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: hsl(220 13% 80%);
+  background-color: transparent;
   border-radius: 9999px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
+  transition: background-color 200ms ease;
+  min-height: 32px;
+  min-width: 32px;
+}
+.scrollbar-thin:hover::-webkit-scrollbar-thumb,
+.scrollbar-thin:focus-within::-webkit-scrollbar-thumb {
+  background-color: hsl(215 20% 75% / 0.65); /* slate-300 sutil */
 }
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background-color: hsl(220 13% 65%);
+  background-color: hsl(215 16% 60% / 0.85); /* slate-400 ao passar direto */
 }
-.dark .scrollbar-thin {
-  scrollbar-color: hsl(220 10% 30%) transparent;
+.dark .scrollbar-thin:hover,
+.dark .scrollbar-thin:focus-within {
+  scrollbar-color: hsl(215 14% 45% / 0.55) transparent;
 }
-.dark .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: hsl(220 10% 30%);
+.dark .scrollbar-thin:hover::-webkit-scrollbar-thumb,
+.dark .scrollbar-thin:focus-within::-webkit-scrollbar-thumb {
+  background-color: hsl(215 14% 45% / 0.55);
 }
 .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background-color: hsl(220 10% 45%);
+  background-color: hsl(215 14% 60% / 0.75);
 }
 
-/* Elegant scrollbar — refined, brand-aligned (Altivus navy), used on Kanban top scroller */
+/* Elegant scrollbar — refined, used on Kanban top scroller */
 .scrollbar-elegant {
   scrollbar-width: thin;
-  scrollbar-color: hsl(var(--primary) / 0.25) transparent;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 200ms ease;
+}
+.scrollbar-elegant:hover,
+.scrollbar-elegant:focus-within {
+  scrollbar-color: hsl(215 20% 75% / 0.7) transparent;
 }
 .scrollbar-elegant::-webkit-scrollbar {
-  height: 10px;
-  width: 10px;
+  height: 6px;
+  width: 6px;
 }
 .scrollbar-elegant::-webkit-scrollbar-track {
   background: transparent;
   margin: 0 8px;
 }
 .scrollbar-elegant::-webkit-scrollbar-thumb {
-  background-color: hsl(var(--primary) / 0.22);
+  background-color: transparent;
   border-radius: 9999px;
-  border: 3px solid transparent;
-  background-clip: padding-box;
   transition: background-color 200ms ease;
   min-width: 48px;
+  min-height: 32px;
+}
+.scrollbar-elegant:hover::-webkit-scrollbar-thumb,
+.scrollbar-elegant:focus-within::-webkit-scrollbar-thumb {
+  background-color: hsl(215 20% 75% / 0.7);
 }
 .scrollbar-elegant::-webkit-scrollbar-thumb:hover {
   background-color: hsl(var(--primary) / 0.45);
@@ -275,11 +295,13 @@
 .scrollbar-elegant::-webkit-scrollbar-thumb:active {
   background-color: hsl(var(--primary) / 0.6);
 }
-.dark .scrollbar-elegant {
-  scrollbar-color: hsl(var(--primary) / 0.35) transparent;
+.dark .scrollbar-elegant:hover,
+.dark .scrollbar-elegant:focus-within {
+  scrollbar-color: hsl(215 14% 50% / 0.55) transparent;
 }
-.dark .scrollbar-elegant::-webkit-scrollbar-thumb {
-  background-color: hsl(var(--primary) / 0.35);
+.dark .scrollbar-elegant:hover::-webkit-scrollbar-thumb,
+.dark .scrollbar-elegant:focus-within::-webkit-scrollbar-thumb {
+  background-color: hsl(215 14% 50% / 0.55);
 }
 .dark .scrollbar-elegant::-webkit-scrollbar-thumb:hover {
   background-color: hsl(var(--primary) / 0.55);
