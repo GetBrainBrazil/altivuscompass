@@ -5,17 +5,45 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { KanbanCardData } from "@/components/crm/KanbanCard";
+
+type ContactLevel = "prospect" | "lead" | "cliente";
 
 type ContactClient = {
   id: string;
-  clientId: string;
+  clientId: string | null;
   fullName: string;
-  level: "prospect" | "lead" | "cliente" | string;
+  level: ContactLevel | string;
 };
+
+const LEVEL_META: Record<string, { label: string; className: string }> = {
+  cliente: {
+    label: "Cliente",
+    className: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30",
+  },
+  lead: {
+    label: "Lead",
+    className: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30",
+  },
+  prospect: {
+    label: "Prospect",
+    className: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-500/15 dark:text-slate-300 dark:border-slate-500/30",
+  },
+};
+
+function LevelBadge({ level, className }: { level: string; className?: string }) {
+  const meta = LEVEL_META[level] ?? LEVEL_META.prospect;
+  return (
+    <Badge variant="outline" className={cn("text-[10px] font-medium px-1.5 py-0 h-5", meta.className, className)}>
+      {meta.label}
+    </Badge>
+  );
+}
 
 type QuoteOption = {
   id: string;
