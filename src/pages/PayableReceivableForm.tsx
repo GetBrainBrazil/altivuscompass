@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowDown, ArrowUp, ArrowLeft, Plus, Repeat } from "lucide-react";
+import { ArrowLeft, Plus, Repeat, Layers, Upload, X, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type TxType = "payable" | "receivable";
@@ -21,12 +21,23 @@ const tourismCategories = [
   "Experiências/Passeios", "Cruzeiro", "Comissão", "Custo Operacional", "Outros",
 ];
 
+const costCenters = [
+  "Operacional", "Comercial", "Marketing", "Administrativo", "Financeiro", "Outros",
+];
+
 const recurrencePeriods = [
-  { value: "weekly", label: "Semana" },
-  { value: "monthly", label: "Mês" },
-  { value: "quarterly", label: "Trimestre" },
-  { value: "biannual", label: "Semestre" },
-  { value: "yearly", label: "Ano" },
+  { value: "weekly", label: "Semanal" },
+  { value: "monthly", label: "Mensal" },
+  { value: "quarterly", label: "Trimestral" },
+  { value: "biannual", label: "Semestral" },
+  { value: "yearly", label: "Anual" },
+];
+
+const installmentIntervals = [
+  { value: "weekly", label: "Semanal" },
+  { value: "biweekly", label: "Quinzenal" },
+  { value: "monthly", label: "Mensal" },
+  { value: "bimonthly", label: "Bimestral" },
 ];
 
 const paymentMethods = [
@@ -44,7 +55,7 @@ const emptyForm = {
   description: "",
   category: "",
   cost_center: "",
-  project: "",
+  cost_center_split: false,
   client_id: "",
   supplier_id: "",
   competence_date: todayStr(),
@@ -52,10 +63,9 @@ const emptyForm = {
   bank_account_id: "",
   payment_method: "",
   base_amount: "",
-  discount_amount: "",
-  interest_amount: "",
-  fine_amount: "",
-  admin_fee_amount: "",
+  installments_enabled: false,
+  installments_count: "2",
+  installments_interval: "monthly",
   recurrence_enabled: false,
   recurrence_every: "1",
   recurrence_period: "monthly",
@@ -72,6 +82,9 @@ export default function PayableReceivableForm() {
   const qc = useQueryClient();
 
   const [form, setForm] = useState<typeof emptyForm>({ ...emptyForm, type: initialType });
+  const [attachments, setAttachments] = useState<File[]>([]);
+
+  const isReceivable = form.type === "receivable";
 
   // ----- data -----
   const { data: clients = [] } = useQuery({
@@ -118,12 +131,12 @@ export default function PayableReceivableForm() {
 
   useEffect(() => {
     if (!existing) return;
-    setForm({
+    setForm((prev) => ({
+      ...prev,
       type: existing.type,
       description: existing.description ?? "",
       category: existing.category ?? "",
       cost_center: existing.cost_center ?? "",
-      project: existing.project ?? "",
       client_id: existing.client_id ?? "",
       supplier_id: existing.supplier_id ?? "",
       competence_date: existing.competence_date ?? existing.date ?? todayStr(),
@@ -131,16 +144,10 @@ export default function PayableReceivableForm() {
       bank_account_id: existing.bank_account_id ?? "",
       payment_method: existing.payment_method ?? "",
       base_amount: String(existing.base_amount ?? existing.amount ?? ""),
-      discount_amount: String(existing.discount_amount ?? ""),
-      interest_amount: String(existing.interest_amount ?? ""),
-      fine_amount: String(existing.fine_amount ?? ""),
-      admin_fee_amount: String(existing.admin_fee_amount ?? ""),
       recurrence_enabled: !!existing.recurrence_type && existing.recurrence_type !== "none",
-      recurrence_every: "1",
       recurrence_period: existing.recurrence_type && existing.recurrence_type !== "none" ? existing.recurrence_type : "monthly",
-      recurrence_until: "",
       observations: existing.observations ?? "",
-    });
+    }));
   }, [existing]);
 
   const clientsMap = useMemo(
@@ -148,46 +155,28 @@ export default function PayableReceivableForm() {
   const suppliersMap = useMemo(
     () => Object.fromEntries(suppliers.map((s: any) => [s.id, s.trade_name || s.name])), [suppliers]);
 
-  const totalPreview = useMemo(() => {
-    const b = parseFloat(form.base_amount || "0");
-    const d = parseFloat(form.discount_amount || "0");
-    const i = parseFloat(form.interest_amount || "0");
-    const f = parseFloat(form.fine_amount || "0");
-    const a = parseFloat(form.admin_fee_amount || "0");
-    return b - d + i + f + a;
-  }, [form]);
+  const baseAmountNum = parseFloat(form.base_amount || "0");
 
   // ----- mutation -----
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const isRecurring = form.recurrence_enabled;
-      const baseAmount = parseFloat(form.base_amount || "0");
-      const discount = parseFloat(form.discount_amount || "0");
-      const interest = parseFloat(form.interest_amount || "0");
-      const fine = parseFloat(form.fine_amount || "0");
-      const adminFee = parseFloat(form.admin_fee_amount || "0");
-      const totalPerRow = baseAmount - discount + interest + fine + adminFee;
+      const baseAmount = baseAmountNum;
 
       const rowBase = {
         type: form.type,
         description: form.description,
         category: form.category || null,
         cost_center: form.cost_center || null,
-        project: form.project || null,
         client_id: form.client_id || null,
         supplier_id: form.supplier_id || null,
         competence_date: form.competence_date || null,
         bank_account_id: form.bank_account_id || null,
         payment_method: form.payment_method || null,
         base_amount: baseAmount,
-        discount_amount: discount,
-        interest_amount: interest,
-        fine_amount: fine,
-        admin_fee_amount: adminFee,
-        amount: totalPerRow,
+        amount: baseAmount,
         date: form.competence_date || todayStr(),
         observations: form.observations || null,
-        recurrence_type: isRecurring ? form.recurrence_period : null,
+        recurrence_type: form.recurrence_enabled ? form.recurrence_period : null,
         status: "pending",
         party_name:
           (form.type === "payable" ? suppliersMap[form.supplier_id] : clientsMap[form.client_id]) ?? null,
@@ -196,6 +185,30 @@ export default function PayableReceivableForm() {
       if (editingId) {
         const { error } = await (supabase.from("financial_transactions") as any)
           .update({ ...rowBase, due_date: form.due_date }).eq("id", editingId);
+        if (error) throw error;
+        return;
+      }
+
+      // Installments support: split into N rows
+      if (form.installments_enabled) {
+        const count = Math.max(2, parseInt(form.installments_count || "2", 10));
+        const perAmount = +(baseAmount / count).toFixed(2);
+        const groupId = (crypto as any)?.randomUUID?.() ?? `grp-${Date.now()}`;
+        const rows = Array.from({ length: count }).map((_, i) => {
+          const due = nextDate(form.due_date, form.installments_interval, i);
+          return {
+            ...rowBase,
+            base_amount: perAmount,
+            amount: perAmount,
+            due_date: due,
+            installment_number: i + 1,
+            installment_total: count,
+            installment_group_id: groupId,
+            is_future_recurrence: false,
+            description: `${form.description} (${i + 1}/${count})`,
+          };
+        });
+        const { error } = await (supabase.from("financial_transactions") as any).insert(rows);
         if (error) throw error;
         return;
       }
@@ -213,7 +226,7 @@ export default function PayableReceivableForm() {
     onSuccess: () => {
       toast({ title: editingId ? "Movimentação atualizada" : "Movimentação criada" });
       qc.invalidateQueries({ queryKey: ["finance-transactions"] });
-      navigate("/finance/payables-receivables");
+      navigate(isReceivable ? "/finance/receivables" : "/finance/payables");
     },
     onError: (e: any) =>
       toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" }),
@@ -227,149 +240,177 @@ export default function PayableReceivableForm() {
     saveMutation.mutate();
   };
 
+  const partyLabel = isReceivable ? "Cliente" : "Fornecedor";
+  const titleAction = editingId ? "Editar" : "Nova";
+  const titleNoun = isReceivable ? "Conta a Receber" : "Conta a Pagar";
+  const backTo = isReceivable ? "/finance/receivables" : "/finance/payables";
+
   return (
     <div className="space-y-6 p-4 sm:p-6 max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/finance/payables-receivables")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(backTo)}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
           <h1 className="text-2xl sm:text-3xl font-display font-semibold">
-            {editingId ? "Editar movimentação" : "Nova movimentação financeira"}
+            {titleAction} {titleNoun}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Cadastre uma conta a pagar ou a receber com classificação, vinculação e parcelamento.
+            {isReceivable
+              ? "Cadastre uma entrada com classificação, vinculação e parcelamento."
+              : "Cadastre uma despesa com classificação, vinculação e parcelamento."}
           </p>
         </div>
       </div>
 
-      {/* Type cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {(["payable", "receivable"] as TxType[]).map((t) => (
-          <button
-            key={t}
-            type="button"
-            disabled={!!editingId}
-            onClick={() => setForm({ ...form, type: t })}
-            className={cn(
-              "p-4 rounded-lg border-2 text-left transition-all disabled:opacity-60 disabled:cursor-not-allowed",
-              form.type === t
-                ? "border-success bg-success/5"
-                : "border-border hover:border-muted-foreground/40",
-            )}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              {t === "payable"
-                ? <ArrowDown className="h-4 w-4 text-destructive" />
-                : <ArrowUp className="h-4 w-4 text-success" />}
-              <span className="font-semibold">
-                {t === "payable" ? "Conta a Pagar" : "Conta a Receber"}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {t === "payable"
-                ? "Despesa ou pagamento a fornecedores"
-                : "Recebimento de cliente ou venda"}
-            </p>
-          </button>
-        ))}
-      </div>
-
       <Card>
-        <Section>
-          <div className="space-y-2">
-            <Label>Descrição da Movimentação *</Label>
-            <Input
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Ex.: Reserva de hotel — Cliente João"
-            />
-          </div>
-        </Section>
+        {/* DADOS PRINCIPAIS */}
+        <Section title="Dados principais">
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label>Descrição da movimentação *</Label>
+              <Input
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                placeholder={isReceivable
+                  ? "Ex.: Pacote Europa — Cliente João"
+                  : "Ex.: Reserva de hotel — Fornecedor X"}
+              />
+            </div>
 
-        <Section title="Classificação Financeira">
-          <div className="grid sm:grid-cols-3 gap-3">
-            <div className="space-y-2">
-              <Label>Categoria *</Label>
-              <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  {tourismCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Centro de Custo</Label>
-              <Input value={form.cost_center}
-                onChange={(e) => setForm({ ...form, cost_center: e.target.value })} />
-            </div>
-            <div className="space-y-2">
-              <Label>Projeto / Cotação</Label>
-              <Input value={form.project}
-                onChange={(e) => setForm({ ...form, project: e.target.value })}
-                placeholder="Vincular a uma viagem" />
-            </div>
-          </div>
-        </Section>
-
-        <Section title="Vinculação">
-          {form.type === "receivable" ? (
-            <div className="space-y-2">
-              <Label>Cliente</Label>
-              <div className="flex gap-2">
-                <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecione um cliente" /></SelectTrigger>
-                  <SelectContent>
-                    {clients.length === 0 && (
-                      <div className="px-3 py-2 text-xs text-muted-foreground">
-                        Nenhum cliente cadastrado.
-                      </div>
-                    )}
-                    {clients.map((c: any) => (
-                      <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button type="button" variant="outline" size="icon"
-                  onClick={() => window.open("/clients", "_blank")}
-                  title="Cadastrar novo cliente">
-                  <Plus className="h-4 w-4" />
-                </Button>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {/* Cliente / Fornecedor */}
+              <div className="space-y-2">
+                <Label>{partyLabel}</Label>
+                <div className="flex gap-2">
+                  {isReceivable ? (
+                    <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione um cliente" /></SelectTrigger>
+                      <SelectContent>
+                        {clients.length === 0 && (
+                          <div className="px-3 py-2 text-xs text-muted-foreground">
+                            Nenhum cliente cadastrado.
+                          </div>
+                        )}
+                        {clients.map((c: any) => (
+                          <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Select value={form.supplier_id} onValueChange={(v) => setForm({ ...form, supplier_id: v })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione um fornecedor" /></SelectTrigger>
+                      <SelectContent>
+                        {suppliers.length === 0 && (
+                          <div className="px-3 py-2 text-xs text-muted-foreground">
+                            Nenhum fornecedor cadastrado.
+                          </div>
+                        )}
+                        {suppliers.map((s: any) => (
+                          <SelectItem key={s.id} value={s.id}>{s.trade_name || s.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <Button
+                    type="button" variant="outline" size="icon"
+                    onClick={() => window.open(isReceivable ? "/clients" : "/registrations?tab=suppliers", "_blank")}
+                    title={isReceivable ? "Cadastrar novo cliente" : "Cadastrar novo fornecedor"}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                {isReceivable && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Apenas Clientes da base aparecem (não inclui Leads ou Prospects).
+                  </p>
+                )}
               </div>
-              <p className="text-[11px] text-muted-foreground">
-                Apenas Clientes da base aparecem (não inclui Leads ou Prospects).
-              </p>
+
+              {/* Categoria */}
+              <div className="space-y-2">
+                <Label>Categoria *</Label>
+                <div className="flex gap-2">
+                  <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      {tourismCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button" variant="outline" size="icon"
+                    onClick={() => window.open("/finance/registrations?tab=categories", "_blank")}
+                    title="Cadastrar nova categoria"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Centro de Custo + Rateio */}
+              <div className="space-y-2 sm:col-span-2">
+                <div className="flex items-center justify-between">
+                  <Label>Centro de Custo</Label>
+                  <div className="flex items-center gap-2">
+                    <Layers className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Rateio</span>
+                    <Switch
+                      checked={form.cost_center_split}
+                      onCheckedChange={(v) => setForm({ ...form, cost_center_split: v })}
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Select value={form.cost_center} onValueChange={(v) => setForm({ ...form, cost_center: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      {costCenters.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button" variant="outline" size="icon"
+                    onClick={() => window.open("/finance/registrations?tab=cost-centers", "_blank")}
+                    title="Cadastrar novo centro de custo"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                {form.cost_center_split && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Rateio ativo: o valor poderá ser distribuído entre múltiplos centros de custo.
+                  </p>
+                )}
+              </div>
             </div>
-          ) : (
-            <div className="space-y-2">
-              <Label>Fornecedor</Label>
-              <Select value={form.supplier_id} onValueChange={(v) => setForm({ ...form, supplier_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Selecione um fornecedor" /></SelectTrigger>
-                <SelectContent>
-                  {suppliers.map((s: any) => (
-                    <SelectItem key={s.id} value={s.id}>{s.trade_name || s.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          </div>
         </Section>
 
-        <Section title="Datas e Condições">
-          <div className="grid sm:grid-cols-3 gap-3">
+        {/* DATAS E CONDIÇÕES */}
+        <Section title="Datas e condições">
+          <div className="grid sm:grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Data de Competência *</Label>
+              <Label>Data de competência *</Label>
               <Input type="date" value={form.competence_date}
                 onChange={(e) => setForm({ ...form, competence_date: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>Data de Vencimento *</Label>
+              <Label>Data de vencimento *</Label>
               <Input type="date" value={form.due_date}
                 onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>Conta Bancária</Label>
+              <Label>Forma de pagamento</Label>
+              <Select value={form.payment_method}
+                onValueChange={(v) => setForm({ ...form, payment_method: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {paymentMethods.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Conta bancária</Label>
               <Select value={form.bank_account_id}
                 onValueChange={(v) => setForm({ ...form, bank_account_id: v })}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
@@ -380,68 +421,109 @@ export default function PayableReceivableForm() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2 sm:col-span-3">
-              <Label>Meio de Pagamento</Label>
-              <Select value={form.payment_method}
-                onValueChange={(v) => setForm({ ...form, payment_method: v })}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  {paymentMethods.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         </Section>
 
-        <Section title="Valores e Encargos">
-          <div className="grid sm:grid-cols-3 gap-3">
-            <MoneyField label="Valor Base (R$) *" value={form.base_amount}
-              onChange={(v) => setForm({ ...form, base_amount: v })} />
-            <MoneyField label="Desconto Previsto" value={form.discount_amount}
-              onChange={(v) => setForm({ ...form, discount_amount: v })} />
-            <MoneyField label="Juros Previstos" value={form.interest_amount}
-              onChange={(v) => setForm({ ...form, interest_amount: v })} />
-            <MoneyField label="Multa Prevista" value={form.fine_amount}
-              onChange={(v) => setForm({ ...form, fine_amount: v })} />
-            <MoneyField label="Taxas ADM" value={form.admin_fee_amount}
-              onChange={(v) => setForm({ ...form, admin_fee_amount: v })} />
+        {/* VALOR */}
+        <Section title="Valor">
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Valor (R$) *</Label>
+              <Input
+                type="number" step="0.01" min="0"
+                value={form.base_amount}
+                onChange={(e) => setForm({ ...form, base_amount: e.target.value })}
+                placeholder="0,00"
+              />
+            </div>
             <div className="space-y-2 flex flex-col justify-end">
-              <Label>Total Calculado</Label>
+              <Label>Total</Label>
               <div className="h-10 px-3 rounded-md border border-border bg-muted/30 flex items-center font-semibold">
-                {brl(totalPreview)}
+                {brl(baseAmountNum)}
               </div>
             </div>
           </div>
+          <p className="text-[11px] text-muted-foreground">
+            Descontos, juros e multas serão lançados na baixa da conta, conforme o pagamento real.
+          </p>
         </Section>
 
+        {/* PARCELAR */}
         {!editingId && (
-          <Section title="Recorrência">
+          <Section title="Parcelar">
+            <div className="rounded-lg border border-border p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-primary" />
+                  <h4 className="font-semibold text-sm">Dividir em parcelas</h4>
+                </div>
+                <Switch
+                  checked={form.installments_enabled}
+                  onCheckedChange={(v) => setForm({
+                    ...form,
+                    installments_enabled: v,
+                    recurrence_enabled: v ? false : form.recurrence_enabled,
+                  })}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                O valor será dividido igualmente entre as parcelas, com vencimentos sequenciais.
+              </p>
+
+              {form.installments_enabled && (
+                <div className="grid sm:grid-cols-2 gap-3 pt-2">
+                  <div className="space-y-2">
+                    <Label>Número de parcelas</Label>
+                    <Input
+                      type="number" min={2} max={60}
+                      value={form.installments_count}
+                      onChange={(e) => setForm({ ...form, installments_count: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Intervalo</Label>
+                    <Select value={form.installments_interval}
+                      onValueChange={(v) => setForm({ ...form, installments_interval: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {installmentIntervals.map((r) => (
+                          <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Section>
+        )}
+
+        {/* REPETIR */}
+        {!editingId && (
+          <Section title="Repetir">
             <div className="rounded-lg border border-border p-4 space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <Repeat className="h-4 w-4 text-primary" />
-                  <h4 className="font-semibold text-sm">Conta Recorrente</h4>
+                  <h4 className="font-semibold text-sm">Conta recorrente</h4>
                 </div>
                 <Switch
                   checked={form.recurrence_enabled}
-                  onCheckedChange={(v) => setForm({ ...form, recurrence_enabled: v })}
+                  onCheckedChange={(v) => setForm({
+                    ...form,
+                    recurrence_enabled: v,
+                    installments_enabled: v ? false : form.installments_enabled,
+                  })}
                 />
               </div>
               <p className="text-xs text-muted-foreground">
                 Cria automaticamente novas movimentações no intervalo definido.
-                Ideal para despesas fixas como aluguel, assinaturas e salários.
-                Para parcelamentos, configure como recorrência mensal com data de término.
               </p>
 
               {form.recurrence_enabled && (
-                <div className="grid sm:grid-cols-3 gap-3 pt-2">
+                <div className="grid sm:grid-cols-2 gap-3 pt-2">
                   <div className="space-y-2">
-                    <Label>A cada</Label>
-                    <Input type="number" min={1} value={form.recurrence_every}
-                      onChange={(e) => setForm({ ...form, recurrence_every: e.target.value })} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Período</Label>
+                    <Label>Periodicidade</Label>
                     <Select value={form.recurrence_period}
                       onValueChange={(v) => setForm({ ...form, recurrence_period: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
@@ -463,20 +545,68 @@ export default function PayableReceivableForm() {
           </Section>
         )}
 
-        <Section title="Observações">
+        {/* OBSERVAÇÕES INTERNAS */}
+        <Section title="Observações internas">
           <Textarea value={form.observations}
             onChange={(e) => setForm({ ...form, observations: e.target.value })}
+            placeholder="Notas visíveis apenas para a equipe interna"
             rows={3} />
+        </Section>
+
+        {/* ANEXOS */}
+        <Section title="Anexos">
+          <label
+            htmlFor="pr-attachments"
+            className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted/20 px-4 py-8 cursor-pointer hover:bg-muted/40 transition-colors"
+          >
+            <Upload className="h-6 w-6 text-muted-foreground" />
+            <span className="text-sm font-medium">Clique para enviar arquivos</span>
+            <span className="text-xs text-muted-foreground">
+              Notas fiscais, comprovantes, boletos (PDF, JPG, PNG)
+            </span>
+            <input
+              id="pr-attachments"
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const files = Array.from(e.target.files ?? []);
+                setAttachments((prev) => [...prev, ...files]);
+              }}
+            />
+          </label>
+
+          {attachments.length > 0 && (
+            <ul className="space-y-2 mt-3">
+              {attachments.map((f, i) => (
+                <li key={i} className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="truncate">{f.name}</span>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {(f.size / 1024).toFixed(0)} KB
+                    </span>
+                  </div>
+                  <Button
+                    type="button" variant="ghost" size="icon"
+                    onClick={() => setAttachments((prev) => prev.filter((_, idx) => idx !== i))}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
         </Section>
       </Card>
 
       {/* Actions */}
       <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pb-6">
-        <Button variant="outline" onClick={() => navigate("/finance/payables-receivables")}>
+        <Button variant="outline" onClick={() => navigate(backTo)}>
           Cancelar
         </Button>
         <Button onClick={handleSubmit} disabled={saveMutation.isPending}>
-          {saveMutation.isPending ? "Salvando…" : "Salvar movimentação"}
+          {saveMutation.isPending ? "Salvando…" : "Salvar e Fechar"}
         </Button>
       </div>
     </div>
@@ -484,6 +614,18 @@ export default function PayableReceivableForm() {
 }
 
 // ----- helpers -----
+function nextDate(start: string, interval: string, offset: number): string {
+  const d = new Date(start + "T00:00:00");
+  switch (interval) {
+    case "weekly": d.setDate(d.getDate() + 7 * offset); break;
+    case "biweekly": d.setDate(d.getDate() + 14 * offset); break;
+    case "bimonthly": d.setMonth(d.getMonth() + 2 * offset); break;
+    case "monthly":
+    default: d.setMonth(d.getMonth() + offset); break;
+  }
+  return d.toISOString().slice(0, 10);
+}
+
 function Card({ children }: { children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-border bg-card divide-y divide-border">
@@ -499,18 +641,6 @@ function Section({ title, children }: { title?: string; children: React.ReactNod
         <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{title}</h3>
       )}
       {children}
-    </div>
-  );
-}
-
-function MoneyField({
-  label, value, onChange,
-}: { label: string; value: string; onChange: (v: string) => void }) {
-  return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      <Input type="number" step="0.01" min="0" value={value}
-        onChange={(e) => onChange(e.target.value)} placeholder="0,00" />
     </div>
   );
 }
