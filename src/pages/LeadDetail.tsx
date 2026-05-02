@@ -662,11 +662,11 @@ export default function LeadDetail() {
             <div className="px-6 lg:px-10 pb-3">
               <div className="rounded-xl px-2 sm:px-3 py-2 bg-background border border-border overflow-x-auto">
                 <div className="flex items-stretch w-full min-w-max">
-                  {FUNNEL_STAGES.map((stage, idx) => {
+                  {funnelStages.map((stage, idx) => {
                     const isActive = idx === stageIndex;
                     const isPast = idx < stageIndex;
                     const isFirst = idx === 0;
-                    const isLast = idx === FUNNEL_STAGES.length - 1;
+                    const isLast = idx === funnelStages.length - 1;
 
                     // Chevron clip-path: ponta à direita (exceto último) e recorte à esquerda (exceto primeiro)
                     const clipPath = !isFirst && !isLast
