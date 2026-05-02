@@ -65,7 +65,8 @@ const navItems: NavItem[] = [
     title: "Financeiro", url: "/finance", group: 3,
     icon: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 17l4-4 4 4 4-6 4 2 4-4" /><path d="M2 21h20" /></svg>,
     subItems: [
-      { title: "Contas a Pagar / Receber", url: "/finance/payables-receivables" },
+      { title: "Contas a Pagar", url: "/finance/payables" },
+      { title: "Contas a Receber", url: "/finance/receivables" },
       { title: "Cadastros Financeiros", url: "/finance/registrations" },
       { title: "Relatórios", url: "/finance/reports" },
     ],
