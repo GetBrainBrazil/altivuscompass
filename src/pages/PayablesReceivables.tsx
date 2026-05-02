@@ -57,7 +57,9 @@ function computeTotal(t: any): number {
   return Number(t.amount) || 0;
 }
 
-export default function PayablesReceivables() {
+type Mode = "all" | "payable" | "receivable";
+
+export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = {}) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -123,15 +125,17 @@ export default function PayablesReceivables() {
 
   // ----- compute effective status per tx -----
   const enriched = useMemo(() => {
-    return transactions.map((t: any) => {
-      let status: TxStatus = (t.status as TxStatus) || "pending";
-      if (status === "pending" && t.due_date && t.due_date < todayStr) status = "overdue";
-      const partyName =
-        clientsMap[t.client_id] || suppliersMap[t.supplier_id] || t.party_name || "—";
-      const total = computeTotal(t);
-      return { ...t, _status: status, _party: partyName, _total: total };
-    });
-  }, [transactions, clientsMap, suppliersMap, todayStr]);
+    return transactions
+      .filter((t: any) => mode === "all" ? true : t.type === mode)
+      .map((t: any) => {
+        let status: TxStatus = (t.status as TxStatus) || "pending";
+        if (status === "pending" && t.due_date && t.due_date < todayStr) status = "overdue";
+        const partyName =
+          clientsMap[t.client_id] || suppliersMap[t.supplier_id] || t.party_name || "—";
+        const total = computeTotal(t);
+        return { ...t, _status: status, _party: partyName, _total: total };
+      });
+  }, [transactions, clientsMap, suppliersMap, todayStr, mode]);
 
   // ----- summary cards (period) -----
   const summary = useMemo(() => {
@@ -274,23 +278,46 @@ export default function PayablesReceivables() {
 
   const allOnPageSelected = pageRows.length > 0 && pageRows.every((r: any) => selected.has(r.id));
 
+  const isPayableMode = mode === "payable";
+  const isReceivableMode = mode === "receivable";
+  const pageTitle =
+    isPayableMode ? "Contas a Pagar" :
+    isReceivableMode ? "Contas a Receber" :
+    "Contas a Pagar / Receber";
+  const pageSubtitle =
+    isPayableMode ? "Gerencie suas despesas e pagamentos a fornecedores" :
+    isReceivableMode ? "Gerencie seus recebíveis e cobranças de clientes" :
+    "Gerencie todas as movimentações financeiras da agência";
+  const partyColLabel =
+    isPayableMode ? "Fornecedor" :
+    isReceivableMode ? "Cliente" :
+    "Fornecedor/Cliente";
+  const paidCardLabel = isReceivableMode ? "Recebidos" : "Pagos";
+  const paymentColLabel = isReceivableMode ? "Recebimento" : "Pagamento";
+
   return (
     <div className="space-y-6 p-4 sm:p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-display font-semibold">Contas a Pagar / Receber</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Gerencie todas as movimentações financeiras da agência
-          </p>
+          <h1 className="text-2xl sm:text-3xl font-display font-semibold">{pageTitle}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{pageSubtitle}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => openNew("payable")} className="gap-2" variant="outline">
-            <ArrowDown className="h-4 w-4" /> Conta a Pagar
-          </Button>
-          <Button onClick={() => openNew("receivable")} className="gap-2">
-            <ArrowUp className="h-4 w-4" /> Conta a Receber
-          </Button>
+          {(mode === "all" || isPayableMode) && (
+            <Button
+              onClick={() => openNew("payable")}
+              className="gap-2"
+              variant={mode === "all" ? "outline" : "default"}
+            >
+              <ArrowDown className="h-4 w-4" /> {mode === "all" ? "Conta a Pagar" : "Nova Conta a Pagar"}
+            </Button>
+          )}
+          {(mode === "all" || isReceivableMode) && (
+            <Button onClick={() => openNew("receivable")} className="gap-2">
+              <ArrowUp className="h-4 w-4" /> {mode === "all" ? "Conta a Receber" : "Nova Conta a Receber"}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -318,7 +345,7 @@ export default function PayablesReceivables() {
           iconBg="bg-muted text-foreground"
         />
         <StatCard
-          label="Pagos"
+          label={paidCardLabel}
           value={brl(summary.pagos)}
           icon={<CheckCircle2 className="h-4 w-4" />}
           valueClass="text-success"
@@ -396,9 +423,9 @@ export default function PayablesReceivables() {
                   />
                 </th>
                 <SortableTh label="Vencimento" k="due_date" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
-                <SortableTh label="Pagamento" k="payment_date" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
+                <SortableTh label={paymentColLabel} k="payment_date" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
                 <SortableTh label="Descrição" k="description" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
-                <SortableTh label="Fornecedor/Cliente" k="party" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} icon={<User className="h-3.5 w-3.5" />} />
+                <SortableTh label={partyColLabel} k="party" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} icon={<User className="h-3.5 w-3.5" />} />
                 <SortableTh label="Categoria" k="category" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
                 <SortableTh label="Total" k="total" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
                 <SortableTh label="Status" k="status" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
