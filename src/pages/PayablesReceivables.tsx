@@ -455,7 +455,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
                       </p>
                       <div className="flex flex-wrap gap-2 justify-center mt-1">
                         {mode !== "receivable" && (
-                          <Button size="sm" variant="outline" onClick={() => openNew("payable")} className="gap-2">
+                          <Button size="sm" onClick={() => openNew("payable")} className="gap-2">
                             <ArrowDown className="h-4 w-4" /> Registrar conta a pagar
                           </Button>
                         )}
