@@ -246,7 +246,7 @@ export default function PayableReceivableForm() {
   const backTo = isReceivable ? "/finance/receivables" : "/finance/payables";
 
   return (
-    <div className="space-y-6 p-4 sm:p-6 max-w-5xl mx-auto">
+    <div className="space-y-6 p-4 sm:p-8 max-w-[750px] mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate(backTo)}>
@@ -628,7 +628,7 @@ function nextDate(start: string, interval: string, offset: number): string {
 
 function Card({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-border bg-card divide-y divide-border">
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm divide-y divide-gray-100 [&_label]:text-xs [&_label]:font-medium [&_label]:text-slate-600 [&_label]:uppercase [&_label]:tracking-wide [&_input]:h-9 [&_input]:border-gray-200 [&_input]:text-sm [&_button[role=combobox]]:h-9 [&_button[role=combobox]]:border-gray-200 [&_button[role=combobox]]:text-sm">
       {children}
     </div>
   );
@@ -636,9 +636,9 @@ function Card({ children }: { children: React.ReactNode }) {
 
 function Section({ title, children }: { title?: string; children: React.ReactNode }) {
   return (
-    <div className="p-4 sm:p-6 space-y-3">
+    <div className="p-6 sm:p-8 space-y-4">
       {title && (
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{title}</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 mb-4">{title}</h3>
       )}
       {children}
     </div>
