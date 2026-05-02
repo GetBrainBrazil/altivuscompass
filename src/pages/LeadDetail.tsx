@@ -503,9 +503,39 @@ export default function LeadDetail() {
     }
   };
 
+  const [funnelStages, setFunnelStages] = useState<{ id: string; title: string }[]>(
+    () => readFunnelStages(),
+  );
+
+  // Mantém o stepper sincronizado com o Kanban: ouve eventos do storage
+  // (mudanças vindas de outras abas) e faz polling leve a cada 1.5s para
+  // refletir alterações feitas na mesma aba (criar/renomear/reordenar/excluir
+  // colunas no Kanban). Comparação por JSON evita renders desnecessários.
+  useEffect(() => {
+    let lastSerialized = JSON.stringify(funnelStages);
+    const sync = () => {
+      const next = readFunnelStages();
+      const serialized = JSON.stringify(next);
+      if (serialized !== lastSerialized) {
+        lastSerialized = serialized;
+        setFunnelStages(next);
+      }
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === SALES_COLUMNS_STORAGE_KEY) sync();
+    };
+    window.addEventListener("storage", onStorage);
+    const interval = window.setInterval(sync, 1500);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.clearInterval(interval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const stageIndex = useMemo(
-    () => Math.max(0, FUNNEL_STAGES.findIndex((s) => s.id === stageId)),
-    [stageId]
+    () => Math.max(0, funnelStages.findIndex((s) => s.id === stageId)),
+    [stageId, funnelStages],
   );
 
   const appHeaderH = 56;
