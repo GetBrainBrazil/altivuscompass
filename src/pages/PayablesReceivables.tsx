@@ -278,23 +278,46 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
 
   const allOnPageSelected = pageRows.length > 0 && pageRows.every((r: any) => selected.has(r.id));
 
+  const isPayableMode = mode === "payable";
+  const isReceivableMode = mode === "receivable";
+  const pageTitle =
+    isPayableMode ? "Contas a Pagar" :
+    isReceivableMode ? "Contas a Receber" :
+    "Contas a Pagar / Receber";
+  const pageSubtitle =
+    isPayableMode ? "Gerencie suas despesas e pagamentos a fornecedores" :
+    isReceivableMode ? "Gerencie seus recebíveis e cobranças de clientes" :
+    "Gerencie todas as movimentações financeiras da agência";
+  const partyColLabel =
+    isPayableMode ? "Fornecedor" :
+    isReceivableMode ? "Cliente" :
+    "Fornecedor/Cliente";
+  const paidCardLabel = isReceivableMode ? "Recebidos" : "Pagos";
+  const paymentColLabel = isReceivableMode ? "Recebimento" : "Pagamento";
+
   return (
     <div className="space-y-6 p-4 sm:p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-display font-semibold">Contas a Pagar / Receber</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Gerencie todas as movimentações financeiras da agência
-          </p>
+          <h1 className="text-2xl sm:text-3xl font-display font-semibold">{pageTitle}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{pageSubtitle}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => openNew("payable")} className="gap-2" variant="outline">
-            <ArrowDown className="h-4 w-4" /> Conta a Pagar
-          </Button>
-          <Button onClick={() => openNew("receivable")} className="gap-2">
-            <ArrowUp className="h-4 w-4" /> Conta a Receber
-          </Button>
+          {(mode === "all" || isPayableMode) && (
+            <Button
+              onClick={() => openNew("payable")}
+              className="gap-2"
+              variant={mode === "all" ? "outline" : "default"}
+            >
+              <ArrowDown className="h-4 w-4" /> {mode === "all" ? "Conta a Pagar" : "Nova Conta a Pagar"}
+            </Button>
+          )}
+          {(mode === "all" || isReceivableMode) && (
+            <Button onClick={() => openNew("receivable")} className="gap-2">
+              <ArrowUp className="h-4 w-4" /> {mode === "all" ? "Conta a Receber" : "Nova Conta a Receber"}
+            </Button>
+          )}
         </div>
       </div>
 
