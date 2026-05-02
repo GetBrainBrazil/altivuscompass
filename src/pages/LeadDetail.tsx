@@ -738,40 +738,56 @@ export default function LeadDetail() {
             </div>
           </div>
 
-          <div className="px-6 lg:px-10 py-8">
-            <div className="max-w-5xl mx-auto">
-              <TabsContent value="main" className="mt-0 space-y-4">
+          <div className="px-6 lg:px-8 py-5">
+            <div className="w-full">
+              <TabsContent value="main" className="mt-0 space-y-4 [&_input]:h-8 [&_input]:text-xs [&_input]:py-1.5 [&_button[role=combobox]]:h-8 [&_button[role=combobox]]:text-xs [&_label]:text-[11px] [&_label]:font-normal [&_label]:text-slate-500">
                 <Section title="Informações do contato">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
-                    <Field
-                      label="Nome"
-                      icon={UserIcon}
-                      value={form.full_name}
-                      onChange={(e) => updateField("full_name", e.target.value)}
-                    />
-                    <div className="space-y-1">
-                      <Label className="text-xs font-medium text-muted-foreground">Telefone</Label>
+                  <div className="grid grid-cols-12 gap-x-3 gap-y-3">
+                    <div className="col-span-12 md:col-span-5">
+                      <Field
+                        label="Nome"
+                        icon={UserIcon}
+                        value={form.full_name}
+                        onChange={(e) => updateField("full_name", e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-12 md:col-span-4 space-y-1">
+                      <Label className="text-[11px] font-normal text-slate-500 flex items-center gap-1.5">Telefone</Label>
                       <IntlPhoneInput
                         value={form.phone}
                         onChange={(v) => updateField("phone", v)}
                         placeholder="Ainda não informado"
                       />
                     </div>
-                    <Field
-                      label="E-mail"
-                      icon={Mail}
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => updateField("email", e.target.value)}
-                    />
-                    <SelectField
-                      label="Origem do lead"
-                      icon={Globe}
-                      value={form.source}
-                      onChange={(v) => updateField("source", v)}
-                      options={SOURCES}
-                      placeholder="Selecione a origem"
-                    />
+                    <div className="col-span-12 md:col-span-3">
+                      <SelectField
+                        label="Origem"
+                        icon={Globe}
+                        value={form.source}
+                        onChange={(v) => updateField("source", v)}
+                        options={SOURCES}
+                        placeholder="Selecione"
+                      />
+                    </div>
+                    <div className="col-span-12 md:col-span-6">
+                      <Field
+                        label="E-mail"
+                        icon={Mail}
+                        type="email"
+                        value={form.email}
+                        onChange={(e) => updateField("email", e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-12 md:col-span-6">
+                      <SelectField
+                        label="Perfil de viagem"
+                        icon={Target}
+                        value={form.trip_profile}
+                        onChange={(v) => updateField("trip_profile", v)}
+                        options={TRIP_PROFILES}
+                        placeholder="Selecione o perfil"
+                      />
+                    </div>
                   </div>
                 </Section>
 
@@ -784,61 +800,43 @@ export default function LeadDetail() {
                 )}
 
                 <Section title="Interesse">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
-                    <Field
-                      label="Destino"
-                      icon={MapPin}
-                      value={form.destination}
-                      onChange={(e) => updateField("destination", e.target.value)}
-                    />
-                    <Field
-                      label="Data da viagem"
-                      icon={CalendarIcon}
-                      value={form.travel_date_label}
-                      onChange={(e) => updateField("travel_date_label", e.target.value)}
-                    />
-                    <Field
-                      label="Número de viajantes"
-                      icon={UsersIcon}
-                      placeholder="Ex.: 2"
-                      value={form.travelers_count}
-                      onChange={(e) => updateField("travelers_count", e.target.value)}
-                    />
-                    <Field
-                      label="Orçamento estimado (R$)"
-                      icon={DollarSign}
-                      type="number"
-                      value={form.budget_estimate}
-                      onChange={(e) => updateField("budget_estimate", e.target.value)}
-                    />
-                    <SelectField
-                      label="Perfil de viagem"
-                      icon={Target}
-                      value={form.trip_profile}
-                      onChange={(v) => updateField("trip_profile", v)}
-                      options={TRIP_PROFILES}
-                      placeholder="Selecione o perfil"
-                    />
-                  </div>
-                </Section>
-
-                <Section title="Atribuição">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs font-medium text-muted-foreground">
-                        Responsável
-                      </Label>
-                      <UserPicker
-                        users={users}
-                        value={form.assigned_user_id || null}
-                        onChange={(v) => updateField("assigned_user_id", v ?? "")}
-                        placeholder="Selecione um responsável"
+                  <div className="grid grid-cols-12 gap-x-3 gap-y-3">
+                    <div className="col-span-12 md:col-span-5">
+                      <Field
+                        label="Destino"
+                        icon={MapPin}
+                        value={form.destination}
+                        onChange={(e) => updateField("destination", e.target.value)}
                       />
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs font-medium text-muted-foreground">
-                        Temperatura do lead
-                      </Label>
+                    <div className="col-span-12 md:col-span-4">
+                      <Field
+                        label="Data da viagem"
+                        icon={CalendarIcon}
+                        value={form.travel_date_label}
+                        onChange={(e) => updateField("travel_date_label", e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-12 md:col-span-3">
+                      <Field
+                        label="Nº de viajantes"
+                        icon={UsersIcon}
+                        placeholder="Ex.: 2"
+                        value={form.travelers_count}
+                        onChange={(e) => updateField("travelers_count", e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-12 md:col-span-6">
+                      <Field
+                        label="Orçamento estimado (R$)"
+                        icon={DollarSign}
+                        type="number"
+                        value={form.budget_estimate}
+                        onChange={(e) => updateField("budget_estimate", e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-12 md:col-span-6 space-y-1">
+                      <Label className="text-[11px] font-normal text-slate-500">Temperatura do lead</Label>
                       <div className="flex gap-2">
                         {TEMPERATURES.map((t) => {
                           const Icon = t.icon;
@@ -851,7 +849,7 @@ export default function LeadDetail() {
                                 updateField("lead_temperature", active ? "" : t.value)
                               }
                               className={cn(
-                                "flex-1 inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-md border text-xs font-medium transition-colors",
+                                "flex-1 inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-md border text-xs font-medium transition-colors",
                                 active
                                   ? t.activeClass
                                   : "border-input bg-background text-muted-foreground hover:bg-accent"
@@ -864,6 +862,20 @@ export default function LeadDetail() {
                         })}
                       </div>
                     </div>
+                  </div>
+                </Section>
+
+                <Section title="Atribuição">
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-normal text-slate-500">
+                      Responsável
+                    </Label>
+                    <UserPicker
+                      users={users}
+                      value={form.assigned_user_id || null}
+                      onChange={(v) => updateField("assigned_user_id", v ?? "")}
+                      placeholder="Selecione um responsável"
+                    />
                   </div>
                 </Section>
 
