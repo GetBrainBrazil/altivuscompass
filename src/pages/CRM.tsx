@@ -1655,6 +1655,29 @@ export default function CRM() {
     await requestMoveCard(draggedId, targetColumnId, { enforceAdjacency: true });
   };
 
+  // ?moveTo=<columnId> + ?focus=<cardId> — disparado pelo stepper na ficha
+  // do lead (LeadDetail). Reaproveita o mesmo fluxo de validação/modais do
+  // drag-and-drop, mas sem bloqueio de adjacência (permite movimentação
+  // retroativa). Aguarda o card aparecer nas colunas antes de disparar.
+  const moveToParam = searchParams.get("moveTo");
+  useEffect(() => {
+    const focusCard = searchParams.get("focus");
+    if (!moveToParam || !focusCard) return;
+    if (tab !== "sales") {
+      setTabState("sales");
+      return;
+    }
+    const cardExists = salesColumns.some((c) => c.cards.some((k) => k.id === focusCard));
+    if (!cardExists) return;
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("moveTo");
+      return next;
+    }, { replace: true });
+    void requestMoveCard(focusCard, moveToParam);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [moveToParam, salesColumns, tab]);
+
   // Após promoção bem-sucedida no modal: move o card para "Fechado",
   // adiciona ao Kanban de Operações em "Pré-Viagem" e atualiza badge/alertas.
   const handlePromotionDone = (result: {
