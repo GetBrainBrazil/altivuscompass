@@ -610,7 +610,7 @@ function nextDate(start: string, interval: string, offset: number): string {
 
 function Card({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm divide-y divide-gray-100 [&_label]:text-xs [&_label]:font-medium [&_label]:text-slate-600 [&_label]:uppercase [&_label]:tracking-wide [&_input]:h-9 [&_input]:border-gray-200 [&_input]:text-sm [&_button[role=combobox]]:h-9 [&_button[role=combobox]]:border-gray-200 [&_button[role=combobox]]:text-sm">
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm divide-y divide-gray-100 [&_label]:text-xs [&_label]:font-normal [&_label]:text-slate-600 [&_input]:h-8 [&_input]:py-1 [&_input]:text-sm [&_input]:border-gray-200 [&_button[role=combobox]]:h-8 [&_button[role=combobox]]:py-1 [&_button[role=combobox]]:text-sm [&_button[role=combobox]]:border-gray-200">
       {children}
     </div>
   );
@@ -618,9 +618,9 @@ function Card({ children }: { children: React.ReactNode }) {
 
 function Section({ title, children }: { title?: string; children: React.ReactNode }) {
   return (
-    <div className="p-6 sm:p-8 space-y-4">
+    <div className="px-5 sm:px-6 py-4 space-y-3">
       {title && (
-        <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 mb-4">{title}</h3>
+        <h3 className="text-[11px] font-medium uppercase tracking-[0.1em] text-slate-400 mb-2">{title}</h3>
       )}
       {children}
     </div>
