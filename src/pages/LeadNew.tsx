@@ -141,84 +141,15 @@ export default function LeadNew() {
       </header>
 
       {/* Body */}
-      <main className="px-6 py-6">
-        <div className="mx-auto w-full max-w-3xl space-y-6">
+      <main className="px-8 py-6">
+        <div className="w-full space-y-5 [&_input]:h-8 [&_input]:text-xs [&_input]:py-1.5 [&_button[role=combobox]]:h-8 [&_button[role=combobox]]:text-xs [&_textarea]:text-xs [&_label]:text-[11px] [&_label]:font-normal [&_label]:text-slate-500 [&_label]:normal-case">
           {/* Identificação */}
-          <section className="rounded-xl border border-border bg-background p-5 sm:p-6 space-y-4">
-            <header className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-foreground">
+          <section className="space-y-3">
+            <div className="flex items-center gap-3">
+              <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground whitespace-nowrap">
                 Identificação
               </h2>
-              <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                Obrigatório
-              </span>
-            </header>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="lead-name">Nome completo *</Label>
-              <Input
-                id="lead-name"
-                value={form.full_name}
-                onChange={(e) => setField("full_name", e.target.value)}
-                placeholder="Ex: Ana Souza"
-                autoFocus
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="lead-phone">Telefone *</Label>
-                <Input
-                  id="lead-phone"
-                  value={form.phone}
-                  onChange={(e) => setField("phone", e.target.value)}
-                  placeholder="(11) 99999-0000"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="lead-email">E-mail</Label>
-                <Input
-                  id="lead-email"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setField("email", e.target.value)}
-                  placeholder="opcional"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="lead-source">Origem do lead</Label>
-              <Select
-                value={form.source}
-                onValueChange={(v) => setField("source", v)}
-              >
-                <SelectTrigger id="lead-source">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SOURCE_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </section>
-
-          {/* Interesse */}
-          <section className="rounded-xl border border-border bg-background p-5 sm:p-6 space-y-4">
-            <header className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="text-sm font-semibold text-foreground">
-                  Interesse
-                </h2>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Opcional. Preenchendo destino, período e número de viajantes,
-                  o contato é promovido automaticamente a Lead.
-                </p>
-              </div>
+              <div className="flex-1 h-px bg-border" />
               <span
                 className={
                   willBeLead
@@ -228,10 +159,70 @@ export default function LeadNew() {
               >
                 {willBeLead ? "Será criado como Lead" : "Será criado como Prospect"}
               </span>
-            </header>
+            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="lead-name">Nome completo *</Label>
+                <Input
+                  id="lead-name"
+                  value={form.full_name}
+                  onChange={(e) => setField("full_name", e.target.value)}
+                  placeholder="Ex: Ana Souza"
+                  autoFocus
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="lead-phone">Telefone *</Label>
+                <Input
+                  id="lead-phone"
+                  value={form.phone}
+                  onChange={(e) => setField("phone", e.target.value)}
+                  placeholder="(11) 99999-0000"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="lead-email">E-mail</Label>
+                <Input
+                  id="lead-email"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setField("email", e.target.value)}
+                  placeholder="opcional"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="lead-source">Origem do lead</Label>
+                <Select
+                  value={form.source}
+                  onValueChange={(v) => setField("source", v)}
+                >
+                  <SelectTrigger id="lead-source">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SOURCE_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </section>
+
+          {/* Interesse */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-3">
+              <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground whitespace-nowrap">
+                Interesse
+              </h2>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
                 <Label htmlFor="lead-destination">Destino</Label>
                 <Input
                   id="lead-destination"
@@ -240,7 +231,7 @@ export default function LeadNew() {
                   placeholder="Ex: Paris"
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label htmlFor="lead-period">Período pretendido</Label>
                 <Input
                   id="lead-period"
@@ -249,10 +240,7 @@ export default function LeadNew() {
                   placeholder="Ex: 2025-07 ou Jul/2025 (flexível)"
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label htmlFor="lead-travelers">Número de viajantes</Label>
                 <Input
                   id="lead-travelers"
@@ -263,30 +251,31 @@ export default function LeadNew() {
                   placeholder="Ex: 2"
                 />
               </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="lead-notes">Observações</Label>
-              <Textarea
-                id="lead-notes"
-                rows={4}
-                value={form.notes}
-                onChange={(e) => setField("notes", e.target.value)}
-                placeholder="Preferências, restrições, contexto..."
-              />
+              <div className="space-y-1">
+                <Label htmlFor="lead-notes">Observações</Label>
+                <Textarea
+                  id="lead-notes"
+                  rows={2}
+                  value={form.notes}
+                  onChange={(e) => setField("notes", e.target.value)}
+                  placeholder="Preferências, restrições, contexto..."
+                  className="min-h-0 py-1.5"
+                />
+              </div>
             </div>
           </section>
 
           {/* Footer actions */}
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
             <Button
               variant="outline"
+              size="sm"
               onClick={() => navigate("/crm?tab=sales")}
               disabled={saving}
             >
               Cancelar
             </Button>
-            <Button onClick={handleSubmit} disabled={saving}>
+            <Button size="sm" onClick={handleSubmit} disabled={saving}>
               {saving ? "Criando..." : "Criar lead"}
             </Button>
           </div>
