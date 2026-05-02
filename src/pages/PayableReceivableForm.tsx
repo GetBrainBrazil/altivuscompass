@@ -246,7 +246,7 @@ export default function PayableReceivableForm() {
   const backTo = isReceivable ? "/finance/receivables" : "/finance/payables";
 
   return (
-    <div className="space-y-6 p-4 sm:p-8 max-w-[750px] mx-auto">
+    <div className="space-y-4 p-4 sm:p-6 max-w-[900px] mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate(backTo)}>
@@ -268,7 +268,7 @@ export default function PayableReceivableForm() {
         {/* DADOS PRINCIPAIS */}
         <Section title="Dados principais">
           <div className="space-y-3">
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label>Descrição da movimentação *</Label>
               <Input
                 value={form.description}
@@ -279,108 +279,90 @@ export default function PayableReceivableForm() {
               />
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-3">
+            <div className="grid sm:grid-cols-3 gap-3">
               {/* Cliente / Fornecedor */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label>{partyLabel}</Label>
-                <div className="flex gap-2">
-                  {isReceivable ? (
-                    <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
-                      <SelectTrigger><SelectValue placeholder="Selecione um cliente" /></SelectTrigger>
-                      <SelectContent>
-                        {clients.length === 0 && (
-                          <div className="px-3 py-2 text-xs text-muted-foreground">
-                            Nenhum cliente cadastrado.
-                          </div>
-                        )}
-                        {clients.map((c: any) => (
-                          <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Select value={form.supplier_id} onValueChange={(v) => setForm({ ...form, supplier_id: v })}>
-                      <SelectTrigger><SelectValue placeholder="Selecione um fornecedor" /></SelectTrigger>
-                      <SelectContent>
-                        {suppliers.length === 0 && (
-                          <div className="px-3 py-2 text-xs text-muted-foreground">
-                            Nenhum fornecedor cadastrado.
-                          </div>
-                        )}
-                        {suppliers.map((s: any) => (
-                          <SelectItem key={s.id} value={s.id}>{s.trade_name || s.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  <Button
-                    type="button" variant="outline" size="icon"
-                    onClick={() => window.open(isReceivable ? "/clients" : "/registrations?tab=suppliers", "_blank")}
-                    title={isReceivable ? "Cadastrar novo cliente" : "Cadastrar novo fornecedor"}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                {isReceivable && (
-                  <p className="text-[11px] text-muted-foreground">
-                    Apenas Clientes da base aparecem (não inclui Leads ou Prospects).
-                  </p>
+                {isReceivable ? (
+                  <Select value={form.client_id} onValueChange={(v) => {
+                    if (v === "__add__") { window.open("/clients", "_blank"); return; }
+                    setForm({ ...form, client_id: v });
+                  }}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__add__" className="text-primary font-medium">
+                        + Cadastrar novo cliente
+                      </SelectItem>
+                      {clients.length === 0 && (
+                        <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum cliente cadastrado.</div>
+                      )}
+                      {clients.map((c: any) => (
+                        <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Select value={form.supplier_id} onValueChange={(v) => {
+                    if (v === "__add__") { window.open("/registrations?tab=suppliers", "_blank"); return; }
+                    setForm({ ...form, supplier_id: v });
+                  }}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__add__" className="text-primary font-medium">
+                        + Cadastrar novo fornecedor
+                      </SelectItem>
+                      {suppliers.length === 0 && (
+                        <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum fornecedor cadastrado.</div>
+                      )}
+                      {suppliers.map((s: any) => (
+                        <SelectItem key={s.id} value={s.id}>{s.trade_name || s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 )}
               </div>
 
               {/* Categoria */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label>Categoria *</Label>
-                <div className="flex gap-2">
-                  <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>
-                      {tourismCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button" variant="outline" size="icon"
-                    onClick={() => window.open("/finance/registrations?tab=categories", "_blank")}
-                    title="Cadastrar nova categoria"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
+                <Select value={form.category} onValueChange={(v) => {
+                  if (v === "__add__") { window.open("/finance/registrations?tab=categories", "_blank"); return; }
+                  setForm({ ...form, category: v });
+                }}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__add__" className="text-primary font-medium">
+                      + Cadastrar nova categoria
+                    </SelectItem>
+                    {tourismCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Centro de Custo + Rateio */}
-              <div className="space-y-2 sm:col-span-2">
+              {/* Centro de Custo */}
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <Label>Centro de Custo</Label>
-                  <div className="flex items-center gap-2">
-                    <Layers className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">Rateio</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-muted-foreground">Rateio</span>
                     <Switch
                       checked={form.cost_center_split}
                       onCheckedChange={(v) => setForm({ ...form, cost_center_split: v })}
                     />
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Select value={form.cost_center} onValueChange={(v) => setForm({ ...form, cost_center: v })}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>
-                      {costCenters.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button" variant="outline" size="icon"
-                    onClick={() => window.open("/finance/registrations?tab=cost-centers", "_blank")}
-                    title="Cadastrar novo centro de custo"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                {form.cost_center_split && (
-                  <p className="text-[11px] text-muted-foreground">
-                    Rateio ativo: o valor poderá ser distribuído entre múltiplos centros de custo.
-                  </p>
-                )}
+                <Select value={form.cost_center} onValueChange={(v) => {
+                  if (v === "__add__") { window.open("/finance/registrations?tab=cost-centers", "_blank"); return; }
+                  setForm({ ...form, cost_center: v });
+                }}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__add__" className="text-primary font-medium">
+                      + Cadastrar centro de custo
+                    </SelectItem>
+                    {costCenters.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -388,18 +370,18 @@ export default function PayableReceivableForm() {
 
         {/* DATAS E CONDIÇÕES */}
         <Section title="Datas e condições">
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div className="space-y-2">
+          <div className="grid sm:grid-cols-4 gap-3">
+            <div className="space-y-1.5">
               <Label>Data de competência *</Label>
               <Input type="date" value={form.competence_date}
                 onChange={(e) => setForm({ ...form, competence_date: e.target.value })} />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label>Data de vencimento *</Label>
               <Input type="date" value={form.due_date}
                 onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label>Forma de pagamento</Label>
               <Select value={form.payment_method}
                 onValueChange={(v) => setForm({ ...form, payment_method: v })}>
@@ -409,7 +391,7 @@ export default function PayableReceivableForm() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label>Conta bancária</Label>
               <Select value={form.bank_account_id}
                 onValueChange={(v) => setForm({ ...form, bank_account_id: v })}>
@@ -628,7 +610,7 @@ function nextDate(start: string, interval: string, offset: number): string {
 
 function Card({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm divide-y divide-gray-100 [&_label]:text-xs [&_label]:font-medium [&_label]:text-slate-600 [&_label]:uppercase [&_label]:tracking-wide [&_input]:h-9 [&_input]:border-gray-200 [&_input]:text-sm [&_button[role=combobox]]:h-9 [&_button[role=combobox]]:border-gray-200 [&_button[role=combobox]]:text-sm">
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm divide-y divide-gray-100 [&_label]:text-xs [&_label]:font-normal [&_label]:text-slate-600 [&_input]:h-8 [&_input]:py-1 [&_input]:text-sm [&_input]:border-gray-200 [&_button[role=combobox]]:h-8 [&_button[role=combobox]]:py-1 [&_button[role=combobox]]:text-sm [&_button[role=combobox]]:border-gray-200">
       {children}
     </div>
   );
@@ -636,9 +618,9 @@ function Card({ children }: { children: React.ReactNode }) {
 
 function Section({ title, children }: { title?: string; children: React.ReactNode }) {
   return (
-    <div className="p-6 sm:p-8 space-y-4">
+    <div className="px-5 sm:px-6 py-4 space-y-3">
       {title && (
-        <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 mb-4">{title}</h3>
+        <h3 className="text-[11px] font-medium uppercase tracking-[0.1em] text-slate-400 mb-2">{title}</h3>
       )}
       {children}
     </div>
