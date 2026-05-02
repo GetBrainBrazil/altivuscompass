@@ -50,13 +50,36 @@ import { QuoteKanbanCard } from "@/components/quotes/QuoteKanbanCard";
 import { LeadNotesTab } from "@/components/crm/LeadNotesTab";
 import { LeadDocumentsTab } from "@/components/crm/LeadDocumentsTab";
 
-const FUNNEL_STAGES = [
-  { id: "new-leads", title: "Novos Leads" },
+// Fallback usado quando ainda não há colunas persistidas pelo Kanban (CRM).
+const DEFAULT_FUNNEL_STAGES: { id: string; title: string }[] = [
+  { id: "new-leads", title: "Novos Contatos" },
   { id: "qualifying", title: "Em Qualificação" },
   { id: "quote", title: "Cotação" },
   { id: "proposal-sent", title: "Proposta Enviada" },
   { id: "closed", title: "Fechado" },
 ];
+
+// Lê as colunas atuais do Kanban de Vendas a partir do localStorage.
+// Mantém a mesma chave usada em src/pages/CRM.tsx (SALES_STORAGE_KEY).
+// Filtra a coluna "Perdidos" (lost) por ser desfecho negativo, fora do progresso linear.
+const SALES_COLUMNS_STORAGE_KEY = "crm:columns:sales:v3";
+
+function readFunnelStages(): { id: string; title: string }[] {
+  if (typeof window === "undefined") return DEFAULT_FUNNEL_STAGES;
+  try {
+    const raw = localStorage.getItem(SALES_COLUMNS_STORAGE_KEY);
+    if (!raw) return DEFAULT_FUNNEL_STAGES;
+    const parsed = JSON.parse(raw) as Array<{ id: string; title: string }>;
+    if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_FUNNEL_STAGES;
+    const stages = parsed
+      .filter((c) => c && typeof c.id === "string" && typeof c.title === "string")
+      .filter((c) => c.id !== "lost")
+      .map((c) => ({ id: c.id, title: c.title }));
+    return stages.length > 0 ? stages : DEFAULT_FUNNEL_STAGES;
+  } catch {
+    return DEFAULT_FUNNEL_STAGES;
+  }
+}
 
 const TRIP_PROFILES = [
   { value: "economico", label: "Econômico" },
