@@ -245,8 +245,10 @@ export default function PayableReceivableForm() {
   const titleNoun = isReceivable ? "Conta a Receber" : "Conta a Pagar";
   const backTo = isReceivable ? "/finance/receivables" : "/finance/payables";
 
+  const inputCls = "h-9 border-gray-200 text-sm bg-white";
+
   return (
-    <div className="space-y-6 p-4 sm:p-6 max-w-5xl mx-auto">
+    <div className="space-y-6 p-4 sm:p-8 max-w-[750px] mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate(backTo)}>
