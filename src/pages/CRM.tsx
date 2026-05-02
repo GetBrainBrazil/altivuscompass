@@ -616,27 +616,6 @@ export default function CRM() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusParam]);
 
-  // ?moveTo=<columnId> — disparado pelo stepper na ficha do lead.
-  // Usa o mesmo fluxo do drag-and-drop (validações, modais), mas sem
-  // bloqueio de adjacência: permite movimentação retroativa.
-  const moveToParam = searchParams.get("moveTo");
-  const moveFromCardParam = searchParams.get("focus");
-  useEffect(() => {
-    if (!moveToParam || !moveFromCardParam) return;
-    if (tab !== "sales") setTabState("sales");
-    // Aguarda o card aparecer nas colunas (caso ainda esteja carregando)
-    const cardExists = (salesColumns ?? []).some((c) => c.cards.some((k) => k.id === moveFromCardParam));
-    if (!cardExists) return;
-    // Limpa o param antes de disparar para evitar re-execução
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      next.delete("moveTo");
-      return next;
-    }, { replace: true });
-    void requestMoveCard(moveFromCardParam, moveToParam);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [moveToParam, moveFromCardParam, salesColumns]);
-
   const SALES_STORAGE_KEY = "crm:columns:sales:v3";
   const OPS_STORAGE_KEY = "crm:columns:ops:v4";
   const LEGACY_KEYS = [
