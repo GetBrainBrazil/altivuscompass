@@ -569,9 +569,9 @@ function nextDate(start: string, interval: string, offset: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-function Card({ children }: { children: React.ReactNode }) {
+function FormBody({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm divide-y divide-gray-100 [&_label]:text-xs [&_label]:font-normal [&_label]:text-slate-600 [&_input]:h-8 [&_input]:py-1 [&_input]:text-sm [&_input]:border-gray-200 [&_button[role=combobox]]:h-8 [&_button[role=combobox]]:py-1 [&_button[role=combobox]]:text-sm [&_button[role=combobox]]:border-gray-200">
+    <div className="space-y-3 [&_label]:text-[11px] [&_label]:font-normal [&_label]:text-slate-500 [&_input]:h-7 [&_input]:py-1 [&_input]:px-2 [&_input]:text-xs [&_input]:border-gray-200 [&_button[role=combobox]]:h-7 [&_button[role=combobox]]:py-1 [&_button[role=combobox]]:px-2 [&_button[role=combobox]]:text-xs [&_button[role=combobox]]:border-gray-200">
       {children}
     </div>
   );
@@ -579,9 +579,12 @@ function Card({ children }: { children: React.ReactNode }) {
 
 function Section({ title, children }: { title?: string; children: React.ReactNode }) {
   return (
-    <div className="px-5 sm:px-6 py-4 space-y-3">
+    <div className="space-y-2">
       {title && (
-        <h3 className="text-[11px] font-medium uppercase tracking-[0.1em] text-slate-400 mb-2">{title}</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400 whitespace-nowrap">{title}</h3>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
       )}
       {children}
     </div>
