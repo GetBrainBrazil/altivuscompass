@@ -345,7 +345,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
           iconBg="bg-muted text-foreground"
         />
         <StatCard
-          label="Pagos"
+          label={paidCardLabel}
           value={brl(summary.pagos)}
           icon={<CheckCircle2 className="h-4 w-4" />}
           valueClass="text-success"
