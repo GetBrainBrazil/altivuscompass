@@ -57,7 +57,9 @@ function computeTotal(t: any): number {
   return Number(t.amount) || 0;
 }
 
-export default function PayablesReceivables() {
+type Mode = "all" | "payable" | "receivable";
+
+export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = {}) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const qc = useQueryClient();
