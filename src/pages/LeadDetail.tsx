@@ -50,13 +50,36 @@ import { QuoteKanbanCard } from "@/components/quotes/QuoteKanbanCard";
 import { LeadNotesTab } from "@/components/crm/LeadNotesTab";
 import { LeadDocumentsTab } from "@/components/crm/LeadDocumentsTab";
 
-const FUNNEL_STAGES = [
-  { id: "new-leads", title: "Novos Leads" },
+// Fallback usado quando ainda não há colunas persistidas pelo Kanban (CRM).
+const DEFAULT_FUNNEL_STAGES: { id: string; title: string }[] = [
+  { id: "new-leads", title: "Novos Contatos" },
   { id: "qualifying", title: "Em Qualificação" },
   { id: "quote", title: "Cotação" },
   { id: "proposal-sent", title: "Proposta Enviada" },
   { id: "closed", title: "Fechado" },
 ];
+
+// Lê as colunas atuais do Kanban de Vendas a partir do localStorage.
+// Mantém a mesma chave usada em src/pages/CRM.tsx (SALES_STORAGE_KEY).
+// Filtra a coluna "Perdidos" (lost) por ser desfecho negativo, fora do progresso linear.
+const SALES_COLUMNS_STORAGE_KEY = "crm:columns:sales:v3";
+
+function readFunnelStages(): { id: string; title: string }[] {
+  if (typeof window === "undefined") return DEFAULT_FUNNEL_STAGES;
+  try {
+    const raw = localStorage.getItem(SALES_COLUMNS_STORAGE_KEY);
+    if (!raw) return DEFAULT_FUNNEL_STAGES;
+    const parsed = JSON.parse(raw) as Array<{ id: string; title: string }>;
+    if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_FUNNEL_STAGES;
+    const stages = parsed
+      .filter((c) => c && typeof c.id === "string" && typeof c.title === "string")
+      .filter((c) => c.id !== "lost")
+      .map((c) => ({ id: c.id, title: c.title }));
+    return stages.length > 0 ? stages : DEFAULT_FUNNEL_STAGES;
+  } catch {
+    return DEFAULT_FUNNEL_STAGES;
+  }
+}
 
 const TRIP_PROFILES = [
   { value: "economico", label: "Econômico" },
@@ -480,9 +503,39 @@ export default function LeadDetail() {
     }
   };
 
+  const [funnelStages, setFunnelStages] = useState<{ id: string; title: string }[]>(
+    () => readFunnelStages(),
+  );
+
+  // Mantém o stepper sincronizado com o Kanban: ouve eventos do storage
+  // (mudanças vindas de outras abas) e faz polling leve a cada 1.5s para
+  // refletir alterações feitas na mesma aba (criar/renomear/reordenar/excluir
+  // colunas no Kanban). Comparação por JSON evita renders desnecessários.
+  useEffect(() => {
+    let lastSerialized = JSON.stringify(funnelStages);
+    const sync = () => {
+      const next = readFunnelStages();
+      const serialized = JSON.stringify(next);
+      if (serialized !== lastSerialized) {
+        lastSerialized = serialized;
+        setFunnelStages(next);
+      }
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === SALES_COLUMNS_STORAGE_KEY) sync();
+    };
+    window.addEventListener("storage", onStorage);
+    const interval = window.setInterval(sync, 1500);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.clearInterval(interval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const stageIndex = useMemo(
-    () => Math.max(0, FUNNEL_STAGES.findIndex((s) => s.id === stageId)),
-    [stageId]
+    () => Math.max(0, funnelStages.findIndex((s) => s.id === stageId)),
+    [stageId, funnelStages],
   );
 
   const appHeaderH = 56;
@@ -609,11 +662,11 @@ export default function LeadDetail() {
             <div className="px-6 lg:px-10 pb-3">
               <div className="rounded-xl px-2 sm:px-3 py-2 bg-background border border-border overflow-x-auto">
                 <div className="flex items-stretch w-full min-w-max">
-                  {FUNNEL_STAGES.map((stage, idx) => {
+                  {funnelStages.map((stage, idx) => {
                     const isActive = idx === stageIndex;
                     const isPast = idx < stageIndex;
                     const isFirst = idx === 0;
-                    const isLast = idx === FUNNEL_STAGES.length - 1;
+                    const isLast = idx === funnelStages.length - 1;
 
                     // Chevron clip-path: ponta à direita (exceto último) e recorte à esquerda (exceto primeiro)
                     const clipPath = !isFirst && !isLast
