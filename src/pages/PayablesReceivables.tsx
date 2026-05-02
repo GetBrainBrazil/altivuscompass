@@ -125,15 +125,17 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
 
   // ----- compute effective status per tx -----
   const enriched = useMemo(() => {
-    return transactions.map((t: any) => {
-      let status: TxStatus = (t.status as TxStatus) || "pending";
-      if (status === "pending" && t.due_date && t.due_date < todayStr) status = "overdue";
-      const partyName =
-        clientsMap[t.client_id] || suppliersMap[t.supplier_id] || t.party_name || "—";
-      const total = computeTotal(t);
-      return { ...t, _status: status, _party: partyName, _total: total };
-    });
-  }, [transactions, clientsMap, suppliersMap, todayStr]);
+    return transactions
+      .filter((t: any) => mode === "all" ? true : t.type === mode)
+      .map((t: any) => {
+        let status: TxStatus = (t.status as TxStatus) || "pending";
+        if (status === "pending" && t.due_date && t.due_date < todayStr) status = "overdue";
+        const partyName =
+          clientsMap[t.client_id] || suppliersMap[t.supplier_id] || t.party_name || "—";
+        const total = computeTotal(t);
+        return { ...t, _status: status, _party: partyName, _total: total };
+      });
+  }, [transactions, clientsMap, suppliersMap, todayStr, mode]);
 
   // ----- summary cards (period) -----
   const summary = useMemo(() => {
