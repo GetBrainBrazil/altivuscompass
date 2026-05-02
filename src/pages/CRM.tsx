@@ -1559,29 +1559,27 @@ export default function CRM() {
     );
   };
 
-  const handleDropOnColumn = async (targetColumnId: string, targetIndex?: number) => {
-    if (!draggedCardId) return;
-    const draggedId = draggedCardId;
-    setDraggedCardId(null);
-    setDraggedFromColumnId(null);
+  // Núcleo da movimentação entre colunas — usado tanto pelo drag-and-drop
+  // quanto pelo stepper na ficha do lead (LeadDetail). `enforceAdjacency`
+  // só vale para o drag-and-drop; cliques no stepper podem mover para
+  // qualquer etapa (inclusive retroativa).
+  const requestMoveCard = async (
+    cardId: string,
+    targetColumnId: string,
+    opts?: { enforceAdjacency?: boolean },
+  ): Promise<boolean> => {
+    const sourceColumn = columns.find((c) => c.cards.some((k) => k.id === cardId));
+    if (!sourceColumn) return false;
+    if (sourceColumn.id === targetColumnId) return false;
 
-    const sourceColumn = columns.find((c) => c.cards.some((k) => k.id === draggedId));
-    if (!sourceColumn) return;
-    // Same column: reorder (drag-to-prioritize)
-    if (sourceColumn.id === targetColumnId) {
-      if (typeof targetIndex === "number") {
-        reorderWithinColumn(sourceColumn.id, draggedId, targetIndex);
-      }
-      return;
-    }
-    // Block invalid (non-adjacent) cross-column moves silently
-    if (validTargetColumnIds && !validTargetColumnIds.has(targetColumnId)) {
+    if (opts?.enforceAdjacency && validTargetColumnIds && !validTargetColumnIds.has(targetColumnId)) {
       toast.warning("Movimento inválido: arraste para uma etapa adjacente.");
-      return;
+      return false;
     }
-    const card = sourceColumn.cards.find((c) => c.id === draggedId);
+
+    const card = sourceColumn.cards.find((c) => c.id === cardId);
     const targetColumn = columns.find((c) => c.id === targetColumnId);
-    if (!card || !targetColumn) return;
+    if (!card || !targetColumn) return false;
 
     const leadId = extractLeadId(card.id);
     const move: PendingMove = {
@@ -1599,7 +1597,7 @@ export default function CRM() {
       setAssignTargetColumn(targetColumnId);
       setSelectedResponsibleId("");
       setAssignOpen(true);
-      return;
+      return true;
     }
 
     // Caso especial: "Perdidos" → abre modal pedindo motivo da perda
@@ -1608,20 +1606,18 @@ export default function CRM() {
       setLostReason("Sem resposta");
       setLostDetails("");
       setLostOpen(true);
-      return;
+      return true;
     }
 
-    // Validações específicas só para o funil de vendas
     if (tab !== "sales") {
       performMove(move, false);
-      return;
+      return true;
     }
 
     setValidating(true);
     try {
       const issues = await validateMove(card, targetColumnId, leadId);
       if (issues.length === 0) {
-        // Caso especial: mover para "Fechado" → promove Lead em Cliente
         if (targetColumnId === "closed" && leadId) {
           setPromotionLeadId(leadId);
           setPromotionPendingMove(move);
@@ -1632,13 +1628,31 @@ export default function CRM() {
       } else {
         setPendingMove(move);
         setPendingIssues(issues);
-        // Pré-seleciona primeira cotação disponível (caso a issue ofereça envio)
         const sendIssue = issues.find((i) => i.sendQuoteOptions && i.sendQuoteOptions.length > 0);
         setSelectedQuoteToSend(sendIssue?.sendQuoteOptions?.[0]?.id ?? "");
       }
     } finally {
       setValidating(false);
     }
+    return true;
+  };
+
+  const handleDropOnColumn = async (targetColumnId: string, targetIndex?: number) => {
+    if (!draggedCardId) return;
+    const draggedId = draggedCardId;
+    setDraggedCardId(null);
+    setDraggedFromColumnId(null);
+
+    const sourceColumn = columns.find((c) => c.cards.some((k) => k.id === draggedId));
+    if (!sourceColumn) return;
+    // Same column: reorder (drag-to-prioritize)
+    if (sourceColumn.id === targetColumnId) {
+      if (typeof targetIndex === "number") {
+        reorderWithinColumn(sourceColumn.id, draggedId, targetIndex);
+      }
+      return;
+    }
+    await requestMoveCard(draggedId, targetColumnId, { enforceAdjacency: true });
   };
 
   // Após promoção bem-sucedida no modal: move o card para "Fechado",
