@@ -246,29 +246,24 @@ export default function PayableReceivableForm() {
   const backTo = isReceivable ? "/finance/receivables" : "/finance/payables";
 
   return (
-    <div className="space-y-4 p-4 sm:p-6 max-w-[900px] mx-auto">
+    <div className="space-y-3 px-8 py-4 w-full max-w-none">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate(backTo)}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl sm:text-3xl font-display font-semibold">
+          <h1 className="text-xl sm:text-2xl font-display font-semibold">
             {titleAction} {titleNoun}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {isReceivable
-              ? "Cadastre uma entrada com classificação, vinculação e parcelamento."
-              : "Cadastre uma despesa com classificação, vinculação e parcelamento."}
-          </p>
         </div>
       </div>
 
-      <Card>
+      <FormBody>
         {/* DADOS PRINCIPAIS */}
         <Section title="Dados principais">
-          <div className="space-y-3">
-            <div className="space-y-1.5">
+          <div className="grid grid-cols-12 gap-3">
+            <div className="space-y-1 col-span-12 md:col-span-7">
               <Label>Descrição da movimentação *</Label>
               <Input
                 value={form.description}
@@ -279,109 +274,90 @@ export default function PayableReceivableForm() {
               />
             </div>
 
-            <div className="grid sm:grid-cols-3 gap-3">
-              {/* Cliente / Fornecedor */}
-              <div className="space-y-1.5">
-                <Label>{partyLabel}</Label>
-                {isReceivable ? (
-                  <Select value={form.client_id} onValueChange={(v) => {
-                    if (v === "__add__") { window.open("/clients", "_blank"); return; }
-                    setForm({ ...form, client_id: v });
-                  }}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__add__" className="text-primary font-medium">
-                        + Cadastrar novo cliente
-                      </SelectItem>
-                      {clients.length === 0 && (
-                        <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum cliente cadastrado.</div>
-                      )}
-                      {clients.map((c: any) => (
-                        <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Select value={form.supplier_id} onValueChange={(v) => {
-                    if (v === "__add__") { window.open("/registrations?tab=suppliers", "_blank"); return; }
-                    setForm({ ...form, supplier_id: v });
-                  }}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__add__" className="text-primary font-medium">
-                        + Cadastrar novo fornecedor
-                      </SelectItem>
-                      {suppliers.length === 0 && (
-                        <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum fornecedor cadastrado.</div>
-                      )}
-                      {suppliers.map((s: any) => (
-                        <SelectItem key={s.id} value={s.id}>{s.trade_name || s.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-
-              {/* Categoria */}
-              <div className="space-y-1.5">
-                <Label>Categoria *</Label>
-                <Select value={form.category} onValueChange={(v) => {
-                  if (v === "__add__") { window.open("/finance/registrations?tab=categories", "_blank"); return; }
-                  setForm({ ...form, category: v });
+            <div className="space-y-1 col-span-12 md:col-span-5">
+              <Label>{partyLabel}</Label>
+              {isReceivable ? (
+                <Select value={form.client_id} onValueChange={(v) => {
+                  if (v === "__add__") { window.open("/clients", "_blank"); return; }
+                  setForm({ ...form, client_id: v });
                 }}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__add__" className="text-primary font-medium">
-                      + Cadastrar nova categoria
-                    </SelectItem>
-                    {tourismCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    <SelectItem value="__add__" className="text-primary font-medium">+ Cadastrar novo cliente</SelectItem>
+                    {clients.map((c: any) => (
+                      <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-              </div>
+              ) : (
+                <Select value={form.supplier_id} onValueChange={(v) => {
+                  if (v === "__add__") { window.open("/registrations?tab=suppliers", "_blank"); return; }
+                  setForm({ ...form, supplier_id: v });
+                }}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__add__" className="text-primary font-medium">+ Cadastrar novo fornecedor</SelectItem>
+                    {suppliers.map((s: any) => (
+                      <SelectItem key={s.id} value={s.id}>{s.trade_name || s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
 
-              {/* Centro de Custo */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label>Centro de Custo</Label>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-muted-foreground">Rateio</span>
-                    <Switch
-                      checked={form.cost_center_split}
-                      onCheckedChange={(v) => setForm({ ...form, cost_center_split: v })}
-                    />
-                  </div>
+            <div className="space-y-1 col-span-12 md:col-span-6">
+              <Label>Categoria *</Label>
+              <Select value={form.category} onValueChange={(v) => {
+                if (v === "__add__") { window.open("/finance/registrations?tab=categories", "_blank"); return; }
+                setForm({ ...form, category: v });
+              }}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__add__" className="text-primary font-medium">+ Cadastrar nova categoria</SelectItem>
+                  {tourismCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1 col-span-12 md:col-span-6">
+              <div className="flex items-center justify-between h-4">
+                <Label>Centro de Custo</Label>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-muted-foreground">Rateio</span>
+                  <Switch
+                    checked={form.cost_center_split}
+                    onCheckedChange={(v) => setForm({ ...form, cost_center_split: v })}
+                  />
                 </div>
-                <Select value={form.cost_center} onValueChange={(v) => {
-                  if (v === "__add__") { window.open("/finance/registrations?tab=cost-centers", "_blank"); return; }
-                  setForm({ ...form, cost_center: v });
-                }}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__add__" className="text-primary font-medium">
-                      + Cadastrar centro de custo
-                    </SelectItem>
-                    {costCenters.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
               </div>
+              <Select value={form.cost_center} onValueChange={(v) => {
+                if (v === "__add__") { window.open("/finance/registrations?tab=cost-centers", "_blank"); return; }
+                setForm({ ...form, cost_center: v });
+              }}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__add__" className="text-primary font-medium">+ Cadastrar centro de custo</SelectItem>
+                  {costCenters.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </Section>
 
         {/* DATAS E CONDIÇÕES */}
         <Section title="Datas e condições">
-          <div className="grid sm:grid-cols-4 gap-3">
-            <div className="space-y-1.5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="space-y-1">
               <Label>Data de competência *</Label>
               <Input type="date" value={form.competence_date}
                 onChange={(e) => setForm({ ...form, competence_date: e.target.value })} />
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <Label>Data de vencimento *</Label>
               <Input type="date" value={form.due_date}
                 onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <Label>Forma de pagamento</Label>
               <Select value={form.payment_method}
                 onValueChange={(v) => setForm({ ...form, payment_method: v })}>
@@ -391,7 +367,7 @@ export default function PayableReceivableForm() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <Label>Conta bancária</Label>
               <Select value={form.bank_account_id}
                 onValueChange={(v) => setForm({ ...form, bank_account_id: v })}>
@@ -408,8 +384,8 @@ export default function PayableReceivableForm() {
 
         {/* VALOR */}
         <Section title="Valor">
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
               <Label>Valor (R$) *</Label>
               <Input
                 type="number" step="0.01" min="0"
@@ -418,176 +394,161 @@ export default function PayableReceivableForm() {
                 placeholder="0,00"
               />
             </div>
-            <div className="space-y-2 flex flex-col justify-end">
+            <div className="space-y-1">
               <Label>Total</Label>
-              <div className="h-10 px-3 rounded-md border border-border bg-muted/30 flex items-center font-semibold">
+              <div className="h-7 px-2 rounded-md border border-gray-200 bg-muted/30 flex items-center text-xs font-semibold">
                 {brl(baseAmountNum)}
               </div>
             </div>
           </div>
-          <p className="text-[11px] text-muted-foreground">
-            Descontos, juros e multas serão lançados na baixa da conta, conforme o pagamento real.
-          </p>
         </Section>
 
-        {/* PARCELAR */}
+        {/* PARCELAR + REPETIR */}
         {!editingId && (
-          <Section title="Parcelar">
-            <div className="rounded-lg border border-border p-4 space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-primary" />
-                  <h4 className="font-semibold text-sm">Dividir em parcelas</h4>
+          <Section title="Parcelamento e recorrência">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* PARCELAR */}
+              <div className="rounded-md border border-gray-200 px-3 py-2 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <Layers className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-xs font-medium">Dividir em parcelas</span>
+                  </div>
+                  <Switch
+                    checked={form.installments_enabled}
+                    onCheckedChange={(v) => setForm({
+                      ...form,
+                      installments_enabled: v,
+                      recurrence_enabled: v ? false : form.recurrence_enabled,
+                    })}
+                  />
                 </div>
-                <Switch
-                  checked={form.installments_enabled}
-                  onCheckedChange={(v) => setForm({
-                    ...form,
-                    installments_enabled: v,
-                    recurrence_enabled: v ? false : form.recurrence_enabled,
-                  })}
-                />
+                {form.installments_enabled && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label>Parcelas</Label>
+                      <Input
+                        type="number" min={2} max={60}
+                        value={form.installments_count}
+                        onChange={(e) => setForm({ ...form, installments_count: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Intervalo</Label>
+                      <Select value={form.installments_interval}
+                        onValueChange={(v) => setForm({ ...form, installments_interval: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {installmentIntervals.map((r) => (
+                            <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
               </div>
-              <p className="text-xs text-muted-foreground">
-                O valor será dividido igualmente entre as parcelas, com vencimentos sequenciais.
-              </p>
 
-              {form.installments_enabled && (
-                <div className="grid sm:grid-cols-2 gap-3 pt-2">
-                  <div className="space-y-2">
-                    <Label>Número de parcelas</Label>
-                    <Input
-                      type="number" min={2} max={60}
-                      value={form.installments_count}
-                      onChange={(e) => setForm({ ...form, installments_count: e.target.value })}
-                    />
+              {/* REPETIR */}
+              <div className="rounded-md border border-gray-200 px-3 py-2 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <Repeat className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-xs font-medium">Conta recorrente</span>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Intervalo</Label>
-                    <Select value={form.installments_interval}
-                      onValueChange={(v) => setForm({ ...form, installments_interval: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {installmentIntervals.map((r) => (
-                          <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <Switch
+                    checked={form.recurrence_enabled}
+                    onCheckedChange={(v) => setForm({
+                      ...form,
+                      recurrence_enabled: v,
+                      installments_enabled: v ? false : form.installments_enabled,
+                    })}
+                  />
                 </div>
-              )}
+                {form.recurrence_enabled && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label>Periodicidade</Label>
+                      <Select value={form.recurrence_period}
+                        onValueChange={(v) => setForm({ ...form, recurrence_period: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {recurrencePeriods.map((r) => (
+                            <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Repetir até</Label>
+                      <Input type="date" value={form.recurrence_until}
+                        onChange={(e) => setForm({ ...form, recurrence_until: e.target.value })} />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </Section>
         )}
 
-        {/* REPETIR */}
-        {!editingId && (
-          <Section title="Repetir">
-            <div className="rounded-lg border border-border p-4 space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Repeat className="h-4 w-4 text-primary" />
-                  <h4 className="font-semibold text-sm">Conta recorrente</h4>
-                </div>
-                <Switch
-                  checked={form.recurrence_enabled}
-                  onCheckedChange={(v) => setForm({
-                    ...form,
-                    recurrence_enabled: v,
-                    installments_enabled: v ? false : form.installments_enabled,
-                  })}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Cria automaticamente novas movimentações no intervalo definido.
-              </p>
-
-              {form.recurrence_enabled && (
-                <div className="grid sm:grid-cols-2 gap-3 pt-2">
-                  <div className="space-y-2">
-                    <Label>Periodicidade</Label>
-                    <Select value={form.recurrence_period}
-                      onValueChange={(v) => setForm({ ...form, recurrence_period: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {recurrencePeriods.map((r) => (
-                          <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Repetir até (opcional)</Label>
-                    <Input type="date" value={form.recurrence_until}
-                      onChange={(e) => setForm({ ...form, recurrence_until: e.target.value })} />
-                  </div>
-                </div>
-              )}
-            </div>
-          </Section>
-        )}
-
-        {/* OBSERVAÇÕES INTERNAS */}
-        <Section title="Observações internas">
-          <Textarea value={form.observations}
-            onChange={(e) => setForm({ ...form, observations: e.target.value })}
-            placeholder="Notas visíveis apenas para a equipe interna"
-            rows={3} />
-        </Section>
-
-        {/* ANEXOS */}
-        <Section title="Anexos">
-          <label
-            htmlFor="pr-attachments"
-            className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted/20 px-4 py-8 cursor-pointer hover:bg-muted/40 transition-colors"
-          >
-            <Upload className="h-6 w-6 text-muted-foreground" />
-            <span className="text-sm font-medium">Clique para enviar arquivos</span>
-            <span className="text-xs text-muted-foreground">
-              Notas fiscais, comprovantes, boletos (PDF, JPG, PNG)
-            </span>
-            <input
-              id="pr-attachments"
-              type="file"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                const files = Array.from(e.target.files ?? []);
-                setAttachments((prev) => [...prev, ...files]);
-              }}
-            />
-          </label>
+        {/* OBS + ANEXOS */}
+        <Section title="Observações e anexos">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Textarea value={form.observations}
+              onChange={(e) => setForm({ ...form, observations: e.target.value })}
+              placeholder="Notas internas"
+              rows={3}
+              className="text-xs resize-none" />
+            <label
+              htmlFor="pr-attachments"
+              className="flex items-center justify-center gap-2 rounded-md border border-dashed border-gray-300 bg-muted/20 px-3 py-2 cursor-pointer hover:bg-muted/40 transition-colors text-xs"
+            >
+              <Upload className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Anexar arquivos</span>
+              <span className="text-muted-foreground">(PDF, JPG, PNG)</span>
+              <input
+                id="pr-attachments"
+                type="file"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files ?? []);
+                  setAttachments((prev) => [...prev, ...files]);
+                }}
+              />
+            </label>
+          </div>
 
           {attachments.length > 0 && (
-            <ul className="space-y-2 mt-3">
+            <ul className="space-y-1 mt-2">
               {attachments.map((f, i) => (
-                <li key={i} className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                <li key={i} className="flex items-center justify-between rounded-md border border-gray-200 px-2 py-1 text-xs">
                   <div className="flex items-center gap-2 min-w-0">
-                    <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                     <span className="truncate">{f.name}</span>
-                    <span className="text-xs text-muted-foreground shrink-0">
+                    <span className="text-[10px] text-muted-foreground shrink-0">
                       {(f.size / 1024).toFixed(0)} KB
                     </span>
                   </div>
                   <Button
-                    type="button" variant="ghost" size="icon"
+                    type="button" variant="ghost" size="icon" className="h-6 w-6"
                     onClick={() => setAttachments((prev) => prev.filter((_, idx) => idx !== i))}
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3.5 w-3.5" />
                   </Button>
                 </li>
               ))}
             </ul>
           )}
         </Section>
-      </Card>
+      </FormBody>
 
       {/* Actions */}
-      <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pb-6">
-        <Button variant="outline" onClick={() => navigate(backTo)}>
+      <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
+        <Button variant="outline" size="sm" onClick={() => navigate(backTo)}>
           Cancelar
         </Button>
-        <Button onClick={handleSubmit} disabled={saveMutation.isPending}>
+        <Button size="sm" onClick={handleSubmit} disabled={saveMutation.isPending}>
           {saveMutation.isPending ? "Salvando…" : "Salvar e Fechar"}
         </Button>
       </div>
@@ -608,9 +569,9 @@ function nextDate(start: string, interval: string, offset: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-function Card({ children }: { children: React.ReactNode }) {
+function FormBody({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm divide-y divide-gray-100 [&_label]:text-xs [&_label]:font-normal [&_label]:text-slate-600 [&_input]:h-8 [&_input]:py-1 [&_input]:text-sm [&_input]:border-gray-200 [&_button[role=combobox]]:h-8 [&_button[role=combobox]]:py-1 [&_button[role=combobox]]:text-sm [&_button[role=combobox]]:border-gray-200">
+    <div className="space-y-3 [&_label]:text-[11px] [&_label]:font-normal [&_label]:text-slate-500 [&_input]:h-7 [&_input]:py-1 [&_input]:px-2 [&_input]:text-xs [&_input]:border-gray-200 [&_button[role=combobox]]:h-7 [&_button[role=combobox]]:py-1 [&_button[role=combobox]]:px-2 [&_button[role=combobox]]:text-xs [&_button[role=combobox]]:border-gray-200">
       {children}
     </div>
   );
@@ -618,9 +579,12 @@ function Card({ children }: { children: React.ReactNode }) {
 
 function Section({ title, children }: { title?: string; children: React.ReactNode }) {
   return (
-    <div className="px-5 sm:px-6 py-4 space-y-3">
+    <div className="space-y-2">
       {title && (
-        <h3 className="text-[11px] font-medium uppercase tracking-[0.1em] text-slate-400 mb-2">{title}</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400 whitespace-nowrap">{title}</h3>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
       )}
       {children}
     </div>
