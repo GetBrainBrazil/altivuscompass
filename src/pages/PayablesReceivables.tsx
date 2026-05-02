@@ -423,9 +423,9 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
                   />
                 </th>
                 <SortableTh label="Vencimento" k="due_date" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
-                <SortableTh label="Pagamento" k="payment_date" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
+                <SortableTh label={paymentColLabel} k="payment_date" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
                 <SortableTh label="Descrição" k="description" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
-                <SortableTh label="Fornecedor/Cliente" k="party" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} icon={<User className="h-3.5 w-3.5" />} />
+                <SortableTh label={partyColLabel} k="party" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} icon={<User className="h-3.5 w-3.5" />} />
                 <SortableTh label="Categoria" k="category" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
                 <SortableTh label="Total" k="total" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
                 <SortableTh label="Status" k="status" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
