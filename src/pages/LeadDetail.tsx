@@ -686,16 +686,31 @@ export default function LeadDetail() {
                     );
 
                     const colorClasses = isActive
-                      ? "bg-primary text-primary-foreground font-semibold shadow-sm"
+                      ? "bg-primary text-primary-foreground font-semibold shadow-sm cursor-default"
                       : isPast
-                        ? "bg-primary/90 text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80";
+                        ? "bg-primary/90 text-primary-foreground hover:bg-primary cursor-pointer"
+                        : "bg-muted text-muted-foreground hover:bg-muted-foreground/15 hover:text-foreground cursor-pointer";
+
+                    const handleStageClick = () => {
+                      if (isActive || !id) return;
+                      // Reaproveita o fluxo do Kanban: navega para /crm com
+                      // ?focus=<cardId>&moveTo=<stageId>. CRM detecta o param,
+                      // dispara as mesmas validações/modais do drag-and-drop
+                      // (atribuição de responsável, motivo de perda, conversão
+                      // para Cliente etc.) e move o card simultaneamente.
+                      navigate(`/crm?tab=sales&focus=${encodeURIComponent(id)}&moveTo=${encodeURIComponent(stage.id)}`);
+                    };
 
                     return (
-                      <div
+                      <button
                         key={stage.id}
+                        type="button"
+                        onClick={handleStageClick}
+                        disabled={isActive}
+                        aria-current={isActive ? "step" : undefined}
+                        title={isActive ? `Etapa atual: ${stage.title}` : `Mover para: ${stage.title}`}
                         className={cn(
-                          "flex items-center justify-center gap-1.5 text-[11px] sm:text-xs py-2 transition-colors flex-1 min-w-[120px]",
+                          "flex items-center justify-center gap-1.5 text-[11px] sm:text-xs py-2 transition-colors flex-1 min-w-[120px] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                           chevronPadding,
                           colorClasses,
                           !isFirst && "-ml-3",
@@ -704,7 +719,7 @@ export default function LeadDetail() {
                       >
                         {isPast && <Check className="h-3 w-3 shrink-0" />}
                         <span className="whitespace-nowrap truncate">{stage.title}</span>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
