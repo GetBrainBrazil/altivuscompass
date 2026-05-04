@@ -3199,48 +3199,36 @@ export default function CRM() {
                 filterStatus === "all" ? allCards.length :
                 0;
               return (
-                <DropdownMenu>
-                  <TooltipProvider delayDuration={200}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            type="button"
-                            aria-label="Filtrar status"
-                            className={cn(
-                              "inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-xs font-medium border transition-colors duration-150",
-                              isActive
-                                ? "bg-primary text-primary-foreground border-primary"
-                                : "bg-card text-muted-foreground border-border hover:text-foreground hover:bg-muted",
-                            )}
-                          >
-                            <Archive className="w-[18px] h-[18px]" />
-                            {isActive && (
-                              <>
-                                <span className="text-[11px] font-semibold leading-none">{labelMap[filterStatus]}</span>
-                                {badgeCount > 0 && (
-                                  <span className="text-[11px] font-semibold leading-none opacity-80">({badgeCount})</span>
-                                )}
-                              </>
-                            )}
-                          </button>
-                        </DropdownMenuTrigger>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">Filtrar por status</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <DropdownMenuContent align="end" className="w-44">
-                    {(["active", "concluded", "stagnant", "archived", "all"] as const).map((opt) => (
-                      <DropdownMenuItem
-                        key={opt}
-                        onClick={() => setFilterStatus(opt)}
-                        className={cn("text-xs", filterStatus === opt && "font-semibold")}
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label="Ver arquivados"
+                        onClick={() => setFilterStatus(filterStatus === "archived" ? "active" : "archived")}
+                        className={cn(
+                          "inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-xs font-medium border transition-colors duration-150",
+                          filterStatus === "archived"
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-card text-muted-foreground border-border hover:text-foreground hover:bg-muted",
+                        )}
                       >
-                        {labelMap[opt]}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                        <Archive className="w-[18px] h-[18px]" />
+                        {filterStatus === "archived" && (
+                          <>
+                            <span className="text-[11px] font-semibold leading-none">Arquivados</span>
+                            {archivedCount > 0 && (
+                              <span className="text-[11px] font-semibold leading-none opacity-80">({archivedCount})</span>
+                            )}
+                          </>
+                        )}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      {filterStatus === "archived" ? "Voltar para ativos" : "Ver arquivados"}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               );
             })()}
 
