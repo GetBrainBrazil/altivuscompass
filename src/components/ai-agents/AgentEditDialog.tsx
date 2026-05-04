@@ -32,6 +32,13 @@ export interface Agent {
   tone?: string;
   icon?: string;
   description?: string;
+  config?: {
+    comunicacao?: any;
+    coleta?: any;
+    regras?: any;
+    integracoes?: any;
+    fluxos?: any;
+  };
 }
 
 interface AgentEditDialogProps {
