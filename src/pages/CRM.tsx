@@ -3389,6 +3389,9 @@ export default function CRM() {
             onCardArchive={handleCardArchive}
             onCardRenameClient={handleCardRenameClient}
             agentOptions={responsibleOptions}
+            sortKey={tableSortKey}
+            sortDir={tableSortDir}
+            onSortChange={(k, d) => { setTableSortKey(k); setTableSortDir(d); }}
           />
         )}
 
