@@ -404,27 +404,10 @@ export default function AIAgentEdit() {
         )}
 
         {activeSection === "comunicacao" && (
-        <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
-          <div className="px-8 py-5 border-b border-border/60">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-[hsl(var(--gold))]" />
-              Comunicação — Personalidade e Diretrizes
-            </h2>
-            <p className="text-xs text-muted-foreground mt-1">
-              Define o tom, missão e estilo de comunicação do agente.
-            </p>
-          </div>
-          <div className="p-8">
-            <Textarea
-              id="agent-personality"
-              value={form.personality}
-              onChange={(e) => setForm({ ...form, personality: e.target.value })}
-              rows={10}
-              placeholder={`Você é um consultor de viagens experiente da Altivus Turismo.\nSua missão é ajudar clientes a planejar viagens memoráveis...\n\n- Sempre se apresente pelo nome\n- Pergunte sobre preferências de viagem\n- Sugira destinos baseados no perfil`}
-              className="font-mono text-[13px] leading-relaxed resize-y min-h-[220px] bg-[hsl(220_15%_98%)]"
-            />
-          </div>
-        </section>
+          <ComunicacaoSection
+            initialPersonality={form.personality}
+            initialTone={form.tone}
+          />
         )}
 
         {activeSection === "regras" && (
