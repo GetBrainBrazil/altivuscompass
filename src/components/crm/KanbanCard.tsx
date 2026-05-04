@@ -391,8 +391,6 @@ export function KanbanCard({
         : card.isReturning
           ? "border-l-slate-300"
           : tempBorder[temperature];
-  // Lost menu actions are wired but visible only when callbacks are passed.
-  void onMarkLost; void onReactivateLost;
   const noAgent = !card.agent;
 
   return (
@@ -653,6 +651,30 @@ export function KanbanCard({
                       </DropdownMenuSubContent>
                     </DropdownMenuSub>
                   )}
+                  {(onMarkLost || onReactivateLost) && <DropdownMenuSeparator />}
+                  {isLost && onReactivateLost && (
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        onReactivateLost(card);
+                      }}
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 mr-2" />
+                      Reativar lead
+                    </DropdownMenuItem>
+                  )}
+                  {!isLost && onMarkLost && (
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        onMarkLost(card);
+                      }}
+                    >
+                      <Target className="w-3.5 h-3.5 mr-2" />
+                      Marcar como perdido
+                    </DropdownMenuItem>
+                  )}
                   {(onArchive || onUnarchive || onDelete) && <DropdownMenuSeparator />}
                   {onUnarchive ? (
                     <DropdownMenuItem
@@ -806,6 +828,15 @@ export function KanbanCard({
               <div className="flex items-center gap-1 flex-wrap min-w-0 flex-1">
                 {card.contactLevel && (
                   <ContactLevelBadge level={card.contactLevel} size="xs" className="shrink-0" />
+                )}
+                {isLost && (
+                  <span
+                    title={card.lostReason ? `Perdido — ${card.lostReason}` : "Lead perdido"}
+                    className="inline-flex items-center gap-0.5 rounded-full bg-destructive/10 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-destructive"
+                  >
+                    <Target className="w-2.5 h-2.5" />
+                    {card.lostReason ? `Perdido — ${card.lostReason}` : "Perdido"}
+                  </span>
                 )}
                 {cornerBadge}
                 {card.isRepurchase && (

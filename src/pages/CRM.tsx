@@ -87,18 +87,18 @@ const INITIAL_SALES_COLUMNS: KanbanColumn[] = [
   { id: "quote", title: "Cotação", cards: [] },
   { id: "proposal-sent", title: "Proposta Enviada", cards: [] },
   { id: "closed", title: "Fechado", cards: [] },
-  { id: "lost", title: "Perdidos", cards: [] },
 ];
 
 // Mapeamento bidirecional entre coluna do kanban (sales) e leads.status no banco.
 // Mantém persistência: ao mover, gravamos status; ao carregar, posicionamos no kanban.
+// "lost" não é mais uma coluna — é um estado (is_lost) que pode ser aplicado em
+// qualquer etapa. Leads perdidos permanecem na sua coluna de origem com badge.
 const SALES_COLUMN_TO_STATUS: Record<string, string> = {
   "new-leads": "new",
   "qualifying": "qualifying",
   "quote": "quote",
   "proposal-sent": "proposal_sent",
   "closed": "closed",
-  "lost": "lost",
 };
 const STATUS_TO_SALES_COLUMN: Record<string, string> = Object.entries(
   SALES_COLUMN_TO_STATUS,
@@ -303,6 +303,8 @@ function KanbanBoard({
   onCardViewConversation,
   onCardEdit,
   onCardArchive,
+  onCardMarkLost,
+  onCardReactivateLost,
   onCardRenameClient,
   agentOptions,
   focusCardId,
@@ -331,6 +333,8 @@ function KanbanBoard({
   onCardViewConversation?: (card: KanbanCardData) => void;
   onCardEdit?: (card: KanbanCardData) => void;
   onCardArchive?: (card: KanbanCardData) => void;
+  onCardMarkLost?: (card: KanbanCardData) => void;
+  onCardReactivateLost?: (card: KanbanCardData) => void;
   onCardRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
   agentOptions?: { user_id: string; full_name: string; avatar_url?: string | null }[];
   focusCardId?: string | null;
@@ -372,6 +376,8 @@ function KanbanBoard({
               onCardViewConversation={onCardViewConversation}
               onCardEdit={onCardEdit}
               onCardArchive={onCardArchive}
+              onCardMarkLost={onCardMarkLost}
+              onCardReactivateLost={onCardReactivateLost}
               onCardRenameClient={onCardRenameClient}
               agentOptions={agentOptions}
               focusCardId={focusCardId}
@@ -412,6 +418,8 @@ function KanbanColumnCard({
   onCardViewConversation,
   onCardEdit,
   onCardArchive,
+  onCardMarkLost,
+  onCardReactivateLost,
   onCardRenameClient,
   agentOptions,
   focusCardId,
@@ -441,6 +449,8 @@ function KanbanColumnCard({
   onCardViewConversation?: (card: KanbanCardData) => void;
   onCardEdit?: (card: KanbanCardData) => void;
   onCardArchive?: (card: KanbanCardData) => void;
+  onCardMarkLost?: (card: KanbanCardData) => void;
+  onCardReactivateLost?: (card: KanbanCardData) => void;
   onCardRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
   agentOptions?: { user_id: string; full_name: string; avatar_url?: string | null }[];
   focusCardId?: string | null;
@@ -643,6 +653,8 @@ function KanbanColumnCard({
                       onViewConversation={onCardViewConversation}
                       onEdit={onCardEdit}
                       onArchive={onCardArchive}
+                      onMarkLost={onCardMarkLost}
+                      onReactivateLost={onCardReactivateLost}
                       onRenameClient={onCardRenameClient}
                     />
                   </div>
@@ -801,14 +813,16 @@ export default function CRM() {
       const parsed = JSON.parse(raw) as KanbanColumn[];
       if (!Array.isArray(parsed) || parsed.length === 0) return fallback;
       // Sanitiza: remove cards que não vieram do banco (sem prefixo lead-/quote-/manual-)
-      const sanitized = parsed.map((col) => ({
-        ...col,
-        cards: col.cards.filter(
-          (c) => c.id.startsWith("lead-") || c.id.startsWith("quote-") || c.id.startsWith("manual-"),
-        ),
-      }));
-      // Garante que colunas obrigatórias do fallback existam (ex.: "Perdidos" foi
-      // adicionada depois — usuários antigos não têm esta coluna no localStorage).
+      // e remove a coluna legada "lost" — agora "Perdido" é estado, não coluna.
+      const sanitized = parsed
+        .filter((col) => col.id !== "lost")
+        .map((col) => ({
+          ...col,
+          cards: col.cards.filter(
+            (c) => c.id.startsWith("lead-") || c.id.startsWith("quote-") || c.id.startsWith("manual-"),
+          ),
+        }));
+      // Garante que colunas obrigatórias do fallback existam.
       const existingIds = new Set(sanitized.map((c) => c.id));
       fallback.forEach((fc) => {
         if (!existingIds.has(fc.id)) sanitized.push({ ...fc, cards: [] });
@@ -875,7 +889,7 @@ export default function CRM() {
     const fetchLeads = async () => {
       const { data, error } = await supabase
         .from("leads")
-        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, is_returning, returned_at, assigned_user_id, status")
+        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, is_returning, returned_at, assigned_user_id, status, is_lost, lost_at, lost_from_status, lost_reason")
         .is("converted_client_id", null)
         .or("archived.is.null,archived.eq.false")
         .order("created_at", { ascending: false })
@@ -933,7 +947,12 @@ export default function CRM() {
         const isFromWhatsApp = l.source === "whatsapp_ai" || l.source === "whatsapp";
         const isAI = isFromWhatsApp; // origem WhatsApp (com ou sem IA ativa) ganha o badge "IA"
         const assignedUser = l.assigned_user_id ? userById.get(l.assigned_user_id) : null;
-        statusByCardId.set(id, (l.status as string) || "new");
+        // Para leads perdidos: mantemos a coluna em que estavam quando foram
+        // marcados (lost_from_status). Caso ausente, recai no status atual.
+        const effectiveStatus = l.is_lost && l.lost_from_status
+          ? (l.lost_from_status as string)
+          : ((l.status as string) || "new");
+        statusByCardId.set(id, effectiveStatus);
         return {
           id,
           clientName: l.full_name,
@@ -961,6 +980,9 @@ export default function CRM() {
                 avatarUrl: assignedUser.avatarUrl ?? undefined,
               }
             : undefined,
+          isLost: !!l.is_lost,
+          lostAt: l.lost_at ?? undefined,
+          lostReason: l.lost_reason ?? undefined,
           tags: [
             l.travelers_count ? { label: `${l.travelers_count} viajante(s)`, tone: "blue" as const } : null,
             isFromWhatsApp ? { label: "WhatsApp", tone: "green" as const } : null,
@@ -1271,7 +1293,6 @@ export default function CRM() {
   };
 
   // Compute valid drop targets: same column (reorder) or adjacent ±1.
-  // The "lost" column is always a valid target in sales funnel.
   const validTargetColumnIds = useMemo(() => {
     if (!draggedFromColumnId) return null as Set<string> | null;
     const fromIdx = columns.findIndex((c) => c.id === draggedFromColumnId);
@@ -1280,9 +1301,8 @@ export default function CRM() {
     set.add(columns[fromIdx].id);
     if (fromIdx - 1 >= 0) set.add(columns[fromIdx - 1].id);
     if (fromIdx + 1 < columns.length) set.add(columns[fromIdx + 1].id);
-    if (tab === "sales") set.add("lost");
     return set;
-  }, [draggedFromColumnId, columns, tab]);
+  }, [draggedFromColumnId, columns]);
 
   // ─── Validation modal state ───────────────────────────────
   type PendingMove = {
@@ -1316,23 +1336,23 @@ export default function CRM() {
   const [selectedResponsibleId, setSelectedResponsibleId] = useState<string>("");
   // (página dedicada /crm/ops/new substitui o dialog antigo)
 
-  // Modal: motivo de perda (ao mover para "Perdidos")
+  // Modal: motivo de perda — agora aplicado in-place (sem mover de coluna).
   const [lostOpen, setLostOpen] = useState(false);
-  const [lostMove, setLostMove] = useState<PendingMove | null>(null);
+  const [lostTarget, setLostTarget] = useState<{ cardId: string; leadId: string | null; fromColumnId: string; fromTitle: string; clientName: string } | null>(null);
   const [lostReason, setLostReason] = useState<string>("Sem resposta");
   const [lostDetails, setLostDetails] = useState<string>("");
 
-  // Colapso de colunas (Perdidos colapsada por padrão)
+  // Colapso de colunas — sem coluna "lost" agora.
   const COLLAPSE_KEY = "crm:columns:collapsed:v1";
   const [collapsedCols, setCollapsedCols] = useState<Set<string>>(() => {
-    if (typeof window === "undefined") return new Set(["lost"]);
+    if (typeof window === "undefined") return new Set();
     try {
       const raw = localStorage.getItem(COLLAPSE_KEY);
-      if (!raw) return new Set(["lost"]);
+      if (!raw) return new Set();
       const parsed = JSON.parse(raw) as string[];
-      return new Set(Array.isArray(parsed) ? parsed : ["lost"]);
+      return new Set(Array.isArray(parsed) ? parsed.filter((id) => id !== "lost") : []);
     } catch {
-      return new Set(["lost"]);
+      return new Set();
     }
   });
   useEffect(() => {
@@ -1350,7 +1370,7 @@ export default function CRM() {
       return next;
     });
   };
-  const COLLAPSIBLE_COLUMN_IDS = useMemo(() => new Set(["lost"]), []);
+  const COLLAPSIBLE_COLUMN_IDS = useMemo(() => new Set<string>(), []);
 
   useEffect(() => {
     // carrega lista de responsáveis (usuários) do sistema
@@ -1542,9 +1562,9 @@ export default function CRM() {
     }
   };
 
-  // Confirma a perda: registra motivo no banco e move o card para "Perdidos"
+  // Confirma a perda: marca is_lost no banco, registra motivo e atualiza o card in-place.
   const confirmLost = async () => {
-    if (!lostMove) {
+    if (!lostTarget) {
       setLostOpen(false);
       return;
     }
@@ -1557,7 +1577,9 @@ export default function CRM() {
       toast.error("Descreva o motivo no campo de texto.");
       return;
     }
-    if (lostMove.leadId) {
+    const target = lostTarget;
+    const fromStatus = SALES_COLUMN_TO_STATUS[target.fromColumnId] ?? null;
+    if (target.leadId) {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         let userName = user?.email ?? null;
@@ -1569,23 +1591,130 @@ export default function CRM() {
             .maybeSingle();
           if (prof?.full_name) userName = prof.full_name;
         }
+        // Marca o lead como perdido (sem mudar status — fica na coluna atual).
+        const { error: updErr } = await (supabase as any)
+          .from("leads")
+          .update({
+            is_lost: true,
+            lost_at: new Date().toISOString(),
+            lost_from_status: fromStatus,
+            lost_reason: reason,
+          })
+          .eq("id", target.leadId);
+        if (updErr) {
+          console.error("[mark lost] update error:", updErr);
+          toast.error("Erro ao marcar como perdido.");
+          return;
+        }
+        // Registra histórico (lead_loss_reasons).
         await (supabase as any).from("lead_loss_reasons").insert({
-          lead_id: lostMove.leadId,
+          lead_id: target.leadId,
           reason,
           details: lostDetails.trim() || null,
           user_id: user?.id ?? null,
           user_name: userName,
         });
+        // Timeline do contato.
+        await (supabase as any).from("contact_events").insert({
+          lead_id: target.leadId,
+          event_type: "lead_lost",
+          title: "Lead marcado como perdido",
+          description: `Motivo: ${reason}${lostDetails.trim() ? ` — ${lostDetails.trim()}` : ""}`,
+          user_id: user?.id ?? null,
+          user_name: userName,
+          is_manual: true,
+        });
       } catch (err) {
-        console.error("[lead_loss_reasons] insert error:", err);
-        toast.error("Não foi possível registrar o motivo. O card será movido mesmo assim.");
+        console.error("[confirmLost] error:", err);
+        toast.error("Não foi possível registrar a perda.");
+        return;
       }
     }
-    performMove(lostMove, false);
+    // Atualiza o card in-place (sem mover de coluna).
+    setColumns((prev) =>
+      prev.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) =>
+          c.id === target.cardId
+            ? { ...c, isLost: true, lostReason: reason, lostAt: new Date().toISOString(), lostFromColumnId: target.fromColumnId }
+            : c,
+        ),
+      })),
+    );
+    toast.success(`"${target.clientName}" marcado como perdido.`);
     setLostOpen(false);
-    setLostMove(null);
+    setLostTarget(null);
     setLostReason("Sem resposta");
     setLostDetails("");
+  };
+
+  // Reativa um lead perdido — limpa is_lost e devolve o card ao funil ativo.
+  const handleReactivateLost = async (card: KanbanCardData) => {
+    const leadId = card.id.startsWith("lead-") ? card.id.slice(5) : null;
+    if (!leadId) {
+      toast.error("Card sem lead vinculado.");
+      return;
+    }
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      let userName = user?.email ?? null;
+      if (user?.id) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (prof?.full_name) userName = prof.full_name;
+      }
+      const { error } = await (supabase as any)
+        .from("leads")
+        .update({ is_lost: false, lost_at: null, lost_from_status: null, lost_reason: null })
+        .eq("id", leadId);
+      if (error) {
+        console.error("[reactivate] error:", error);
+        toast.error("Erro ao reativar lead.");
+        return;
+      }
+      await (supabase as any).from("contact_events").insert({
+        lead_id: leadId,
+        event_type: "lead_reactivated",
+        title: "Lead reativado",
+        description: null,
+        user_id: user?.id ?? null,
+        user_name: userName,
+        is_manual: true,
+      });
+      setColumns((prev) =>
+        prev.map((col) => ({
+          ...col,
+          cards: col.cards.map((c) =>
+            c.id === card.id
+              ? { ...c, isLost: false, lostReason: undefined, lostAt: undefined, lostFromColumnId: undefined }
+              : c,
+          ),
+        })),
+      );
+      toast.success(`"${card.clientName}" reativado.`);
+    } catch (err) {
+      console.error("[handleReactivateLost] error:", err);
+      toast.error("Erro ao reativar lead.");
+    }
+  };
+
+  const handleMarkLost = (card: KanbanCardData) => {
+    const sourceColumn = columns.find((c) => c.cards.some((k) => k.id === card.id));
+    if (!sourceColumn) return;
+    const leadId = card.id.startsWith("lead-") ? card.id.slice(5) : null;
+    setLostTarget({
+      cardId: card.id,
+      leadId,
+      fromColumnId: sourceColumn.id,
+      fromTitle: sourceColumn.title,
+      clientName: card.clientName,
+    });
+    setLostReason("Sem resposta");
+    setLostDetails("");
+    setLostOpen(true);
   };
 
   // Avalia restrições por coluna de destino. Devolve a lista de issues; vazia = pode mover.
@@ -1765,14 +1894,7 @@ export default function CRM() {
       return true;
     }
 
-    // Caso especial: "Perdidos" → abre modal pedindo motivo da perda
-    if (tab === "sales" && targetColumnId === "lost") {
-      setLostMove(move);
-      setLostReason("Sem resposta");
-      setLostDetails("");
-      setLostOpen(true);
-      return true;
-    }
+    // (Caso "Perdidos" como coluna foi removido — agora is_lost é estado, marcado pelo menu do card.)
 
     if (tab !== "sales") {
       performMove(move, false);
@@ -2201,6 +2323,8 @@ export default function CRM() {
   const [filterTemp, setFilterTemp] = useState<string>("all");
   const [filterLevel, setFilterLevel] = useState<string>("all");
   const [filterSource, setFilterSource] = useState<string>("all");
+  // Estado do lead (somente Vendas): "active" (padrão), "lost" ou "all".
+  const [filterState, setFilterState] = useState<"active" | "lost" | "all">("active");
   // Filtros específicos da aba Operações
   const [filterBoarding, setFilterBoarding] = useState<"all" | "7" | "15" | "30">("all");
   const [filterOpsStatus, setFilterOpsStatus] = useState<"all" | "normal" | "urgent" | "waiting">("all");
@@ -2233,8 +2357,9 @@ export default function CRM() {
   const activeLeadsByUser = useMemo(() => {
     const counts = new Map<string, number>();
     columns.forEach((c) => {
-      if (c.id === "lost" || c.id === "closed") return;
+      if (c.id === "closed") return;
       c.cards.forEach((k) => {
+        if (k.isLost) return;
         const id = k.agent?.id;
         if (id) counts.set(id, (counts.get(id) ?? 0) + 1);
       });
@@ -2286,6 +2411,9 @@ export default function CRM() {
         }
 
         if (tab === "sales") {
+          // Filtro de Estado: por padrão esconde leads perdidos.
+          if (filterState === "active" && card.isLost) return false;
+          if (filterState === "lost" && !card.isLost) return false;
           if (filterTag !== "all" && !card.tags?.some((t) => t.label === filterTag)) return false;
           if (filterTemp !== "all") {
             const t = card.temperature ?? "cold";
@@ -2323,13 +2451,15 @@ export default function CRM() {
         );
       }),
     }));
-  }, [columns, searchTerm, tab, filterAgent, filterTag, filterTemp, filterLevel, filterSource, filterBoarding, filterOpsStatus, filterDestination]);
+  }, [columns, searchTerm, tab, filterAgent, filterTag, filterTemp, filterLevel, filterSource, filterState, filterBoarding, filterOpsStatus, filterDestination]);
 
   // ─── KPIs ────────────────────────────────────────────────
   const allCards = useMemo(() => columns.flatMap((c) => c.cards), [columns]);
-  const totalLeads = allCards.length;
-  const aiLeads = allCards.filter((c) => c.isAILead).length;
-  const pipelineValue = allCards.reduce((sum, c) => sum + (c.estimatedValue || 0), 0);
+  // Métricas excluem cards perdidos e contadores de coluna no Kanban também (via filteredColumns).
+  const activeCards = useMemo(() => allCards.filter((c) => !c.isLost), [allCards]);
+  const totalLeads = activeCards.length;
+  const aiLeads = activeCards.filter((c) => c.isAILead).length;
+  const pipelineValue = activeCards.reduce((sum, c) => sum + (c.estimatedValue || 0), 0);
   const formatCurrency = (v: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
 
@@ -2341,7 +2471,7 @@ export default function CRM() {
     const startLast = now - 14 * day;
     let thisW = 0;
     let lastW = 0;
-    allCards.forEach((c) => {
+    activeCards.forEach((c) => {
       const ts = c.stageEnteredAt ? new Date(c.stageEnteredAt).getTime() : NaN;
       if (!Number.isFinite(ts)) return;
       if (ts >= startThis) thisW += 1;
@@ -2357,7 +2487,7 @@ export default function CRM() {
       positive = pct >= 0;
     }
     return { newThisWeek: thisW, weekDeltaPct: pct, weekDeltaPositive: positive };
-  }, [allCards]);
+  }, [activeCards]);
 
   // Métricas operacionais (aba Operações em Viagem)
   const opsMetrics = useMemo(() => {
@@ -2386,7 +2516,8 @@ export default function CRM() {
       (filterTag !== "all" ||
         filterTemp !== "all" ||
         filterLevel !== "all" ||
-        filterSource !== "all")) ||
+        filterSource !== "all" ||
+        filterState !== "active")) ||
     (tab === "ops" &&
       (filterBoarding !== "all" ||
         filterOpsStatus !== "all" ||
@@ -2627,6 +2758,31 @@ export default function CRM() {
           {tab === "sales" ? (
             <>
               <FilterChip
+                label="Estado"
+                value={
+                  filterState === "active"
+                    ? "Estado: Ativos"
+                    : filterState === "lost"
+                      ? "Estado: Perdidos"
+                      : "Estado: Todos"
+                }
+                active={filterState !== "active"}
+                onClear={() => setFilterState("active")}
+                width={200}
+              >
+                <SearchableList
+                  items={[
+                    { id: "active", label: "Ativos" },
+                    { id: "lost", label: "Perdidos" },
+                    { id: "all", label: "Todos" },
+                  ]}
+                  selected={filterState}
+                  onSelect={(v) => setFilterState(v as "active" | "lost" | "all")}
+                  placeholder="Buscar..."
+                />
+              </FilterChip>
+
+              <FilterChip
                 label="Temperatura"
                 value={
                   filterTemp === "all"
@@ -2809,6 +2965,7 @@ export default function CRM() {
                 setFilterTemp("all");
                 setFilterLevel("all");
                 setFilterSource("all");
+                setFilterState("active");
                 setFilterBoarding("all");
                 setFilterOpsStatus("all");
                 setFilterDestination("all");
@@ -2895,6 +3052,8 @@ export default function CRM() {
             onCardViewConversation={handleCardViewConversation}
             onCardEdit={handleCardEdit}
             onCardArchive={handleCardArchive}
+            onCardMarkLost={tab === "sales" ? handleMarkLost : undefined}
+            onCardReactivateLost={tab === "sales" ? handleReactivateLost : undefined}
             onCardRenameClient={handleCardRenameClient}
             agentOptions={responsibleOptions}
             focusCardId={focusCardId}
@@ -3301,13 +3460,13 @@ export default function CRM() {
         onPromoted={handlePromotionDone}
       />
 
-      {/* Motivo da perda — ao mover para "Perdidos" */}
+      {/* Motivo da perda — marca o lead como perdido sem mover de coluna */}
       <Dialog
         open={lostOpen}
         onOpenChange={(open) => {
           if (!open) {
             setLostOpen(false);
-            setLostMove(null);
+            setLostTarget(null);
           }
         }}
       >
@@ -3373,7 +3532,7 @@ export default function CRM() {
             <Button
               variant="outline"
               className="rounded-lg"
-              onClick={() => { setLostOpen(false); setLostMove(null); }}
+              onClick={() => { setLostOpen(false); setLostTarget(null); }}
             >
               Cancelar
             </Button>

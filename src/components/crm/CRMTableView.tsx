@@ -538,6 +538,7 @@ export function CRMTableView({
               </th>
               <HeaderCell label="Contato" sortKey="name" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
               <HeaderCell label="Etapa" sortKey="stage" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
+              <th className="text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider px-3 py-2">Estado</th>
               <HeaderCell label="Responsável" sortKey="agent" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
               <HeaderCell label="Temp." sortKey="temperature" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
               <HeaderCell label="Origem" sortKey="source" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
@@ -549,7 +550,7 @@ export function CRMTableView({
           <tbody>
             {sortedRows.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-3 py-12 text-center text-sm text-muted-foreground">
+                <td colSpan={10} className="px-3 py-12 text-center text-sm text-muted-foreground">
                   Nenhum contato encontrado com os filtros atuais.
                 </td>
               </tr>
@@ -627,6 +628,20 @@ export function CRMTableView({
                       >
                         {r.columnTitle}
                       </span>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      {r.isLost ? (
+                        <span
+                          className="inline-flex items-center px-2 py-0.5 rounded-full border text-[11px] font-medium whitespace-nowrap bg-destructive/10 text-destructive border-destructive/30"
+                          title={r.lostReason ? `Perdido — ${r.lostReason}` : "Perdido"}
+                        >
+                          Perdido
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full border text-[11px] font-medium whitespace-nowrap bg-emerald-50 text-emerald-700 border-emerald-200">
+                          Ativo
+                        </span>
+                      )}
                     </td>
                     <td className="px-3 py-2.5">
                       {r.agent?.name ? (
