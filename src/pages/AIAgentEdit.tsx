@@ -40,6 +40,7 @@ import { RegrasLimitesSection } from "@/components/ai-agents/RegrasLimitesSectio
 import { IntegracoesSection } from "@/components/ai-agents/IntegracoesSection";
 import { MetricasSection } from "@/components/ai-agents/MetricasSection";
 import { TestarAgenteSection } from "@/components/ai-agents/TestarAgenteSection";
+import { useWhatsAppProfile } from "@/hooks/useWhatsAppProfile";
 
 const STORAGE_KEY = "ai-agents-draft";
 const LIST_KEY = "ai-agents-list";
