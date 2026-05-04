@@ -2600,9 +2600,16 @@ export default function CRM() {
             if (card.isArchived) return false;
             if (!card.isStagnant) return false;
           }
-          // Filtro de Estado: por padrão esconde leads perdidos.
-          if (filterState === "active" && card.isLost) return false;
-          if (filterState === "lost" && !card.isLost) return false;
+          // Filtro de Estado (multi-select): "active" = nem perdido nem estagnado;
+          // "lost" = perdidos; "stagnant" = estagnados; "all" = qualquer um.
+          if (!filterState.includes("all")) {
+            const isActive = !card.isLost && !card.isStagnant;
+            const matches =
+              (filterState.includes("active") && isActive) ||
+              (filterState.includes("lost") && card.isLost) ||
+              (filterState.includes("stagnant") && card.isStagnant);
+            if (!matches) return false;
+          }
           if (filterTag !== "all" && !card.tags?.some((t) => t.label === filterTag)) return false;
           if (filterTemp !== "all") {
             const t = card.temperature ?? "cold";
