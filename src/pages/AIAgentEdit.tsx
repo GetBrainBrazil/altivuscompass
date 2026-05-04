@@ -36,6 +36,7 @@ import { ColetaDadosSection } from "@/components/ai-agents/ColetaDadosSection";
 import { RegrasLimitesSection } from "@/components/ai-agents/RegrasLimitesSection";
 import { IntegracoesSection } from "@/components/ai-agents/IntegracoesSection";
 import { MetricasSection } from "@/components/ai-agents/MetricasSection";
+import { TestarAgenteSection } from "@/components/ai-agents/TestarAgenteSection";
 
 const STORAGE_KEY = "ai-agents-draft";
 const LIST_KEY = "ai-agents-list";
