@@ -251,19 +251,20 @@ export default function AIAgentEdit() {
           >
             {SECTIONS.map((s) => {
               const isActive = activeSection === s.key;
+              const Icon = s.icon;
               return (
                 <button
                   key={s.key}
                   type="button"
                   onClick={() => setActiveSection(s.key)}
                   className={
-                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors text-left shrink-0 " +
+                    "flex items-center gap-[10px] px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors text-left shrink-0 " +
                     (isActive
                       ? "bg-[hsl(220_45%_15%)] text-white"
-                      : "text-gray-600 hover:bg-gray-100 bg-transparent")
+                      : "text-gray-500 hover:bg-gray-100 bg-transparent")
                   }
                 >
-                  <span className="text-base leading-none">{s.icon}</span>
+                  <Icon size={18} strokeWidth={2} className="shrink-0" />
                   <span className="font-medium">{s.label}</span>
                 </button>
               );
