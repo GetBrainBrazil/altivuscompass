@@ -30,6 +30,7 @@ import {
   ChevronDown,
   ChevronUp,
   Settings,
+  ClipboardCheck,
 } from "lucide-react";
 import { FilterChip, SearchableList } from "@/components/tasks/FilterChip";
 import { CRMTableView } from "@/components/crm/CRMTableView";
@@ -2745,11 +2746,11 @@ export default function CRM() {
                     ? "bg-primary text-primary-foreground"
                     : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted",
                 )}
-                aria-label="Operações em Viagem"
+                aria-label="Pós-Venda"
                 aria-pressed={tab === "ops"}
               >
-                <Plane className="w-4 h-4" />
-                Operações em Viagem
+                <ClipboardCheck className="w-4 h-4" />
+                Pós-Venda
               </button>
             </div>
           </div>
