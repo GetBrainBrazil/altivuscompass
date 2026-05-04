@@ -3212,6 +3212,13 @@ export default function CRM() {
                 setFilterBoarding("all");
                 setFilterOpsStatus("all");
                 setFilterDestination("all");
+                setTableSortKey(null);
+                setTableSortDir(null);
+                if (typeof window !== "undefined") {
+                  try {
+                    window.localStorage.removeItem(filtersStorageKey(tab));
+                  } catch { /* ignore */ }
+                }
               }}
             >
               <X className="w-3 h-3" /> Limpar
