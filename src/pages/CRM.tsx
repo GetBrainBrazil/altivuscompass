@@ -3079,6 +3079,7 @@ export default function CRM() {
                 setFilterSource("all");
                 setFilterState("active");
                 setFilterStatus("active");
+                setFilterBoarding("all");
                 setFilterOpsStatus("all");
                 setFilterDestination("all");
               }}
