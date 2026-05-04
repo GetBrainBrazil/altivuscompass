@@ -306,6 +306,7 @@ function KanbanBoard({
   onCardViewConversation,
   onCardEdit,
   onCardArchive,
+  onCardUnarchive,
   onCardMarkLost,
   onCardReactivateLost,
   onCardKeepActive,
