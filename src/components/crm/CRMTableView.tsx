@@ -424,16 +424,20 @@ export function CRMTableView({
   }, [rows, sortKey, sortDir]);
 
   const handleSort = (k: SortKey) => {
-    if (sortKey !== k) {
-      setSortKey(k);
-      setSortDir("asc");
-      return;
+    let nextKey: SortKey | null = k;
+    let nextDir: SortDir = "asc";
+    if (sortKey === k) {
+      if (sortDir === "asc") nextDir = "desc";
+      else if (sortDir === "desc") {
+        nextKey = null;
+        nextDir = null;
+      } else nextDir = "asc";
     }
-    if (sortDir === "asc") setSortDir("desc");
-    else if (sortDir === "desc") {
-      setSortKey(null);
-      setSortDir(null);
-    } else setSortDir("asc");
+    if (isControlled) onSortChange!(nextKey, nextDir);
+    else {
+      setSortKeyState(nextKey);
+      setSortDirState(nextDir);
+    }
   };
 
   const allSelected = sortedRows.length > 0 && sortedRows.every((r) => selectedIds.has(r.id));
