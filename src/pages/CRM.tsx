@@ -654,7 +654,12 @@ function KanbanColumnCard({
                     <KanbanCard
                       card={card}
                       onClick={onCardClick}
-                      stageBorderClass={dotColor.replace("bg-", "border-l-")}
+                      stageBorderClass={
+                        column.id === "closed"
+                          ? "border-l-[#4ADE80]"
+                          : dotColor.replace("bg-", "border-l-")
+                      }
+                      isWonStage={column.id === "closed"}
                       draggable
                       isDragging={draggedCardId === card.id}
                       onDragStart={(c) => onCardDragStart(c)}
