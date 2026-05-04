@@ -406,17 +406,21 @@ export default function AIAgentEdit() {
                 <Input
                   id="agent-name"
                   value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  onChange={(e) => {
+                    setForm({ ...form, name: e.target.value });
+                    if (e.target.value.trim()) setNameError(null);
+                  }}
                   placeholder="Ex: Atendente Principal"
-                  className="h-10"
+                  className={"h-10 " + (nameError ? "border-destructive focus-visible:ring-destructive" : "")}
                 />
+                {nameError && <p className="text-xs text-destructive">{nameError}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="agent-model" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Modelo de IA
                 </Label>
-                <Select value={form.model} onValueChange={(v) => setForm({ ...form, model: v })}>
-                  <SelectTrigger id="agent-model" className="h-10">
+                <Select value={form.model} onValueChange={(v) => { setForm({ ...form, model: v }); if (v) setModelError(null); }}>
+                  <SelectTrigger id="agent-model" className={"h-10 " + (modelError ? "border-destructive focus-visible:ring-destructive" : "")}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -427,6 +431,7 @@ export default function AIAgentEdit() {
                     ))}
                   </SelectContent>
                 </Select>
+                {modelError && <p className="text-xs text-destructive">{modelError}</p>}
               </div>
             </div>
 
