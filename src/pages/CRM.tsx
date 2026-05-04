@@ -2248,6 +2248,8 @@ export default function CRM() {
       const rows: ArchivedCard[] = (data as any[]).map((l) => {
         const isAI = l.source === "whatsapp_ai" || l.source === "whatsapp";
         const status = (l.status as string) || "new";
+        const columnId = STATUS_TO_SALES_COLUMN[status] || "new-leads";
+        const stageTitle = INITIAL_SALES_COLUMNS.find((c) => c.id === columnId)?.title;
         return {
           id: `lead-${l.id}`,
           clientName: l.full_name,
@@ -2266,8 +2268,10 @@ export default function CRM() {
           stageEnteredAt: l.created_at ?? new Date().toISOString(),
           temperature: (l.lead_temperature as LeadTemperature | null) ?? undefined,
           tags: [],
-          columnId: STATUS_TO_SALES_COLUMN[status] || "new-leads",
-          archivedAt: l.archived_at ?? null,
+          isArchived: true,
+          archivedAt: l.archived_at ?? undefined,
+          archivedFromStage: stageTitle,
+          columnId,
         } as ArchivedCard;
       });
       setArchivedCards(rows);
