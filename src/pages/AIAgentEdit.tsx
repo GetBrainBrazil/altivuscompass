@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import {
   AlertDialog,
