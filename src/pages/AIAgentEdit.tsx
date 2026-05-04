@@ -15,7 +15,9 @@ import { Switch } from "@/components/ui/switch";
 import {
   Sparkles, Shield, Bot, ArrowLeft, FlaskConical, Trash2,
   Headset, MessageCircle, Brain, Globe, Plane, Compass, Heart, Star, ShieldCheck, User, Sparkle, Map, Briefcase, Camera, Coffee, Palmtree,
+  GitBranch, ClipboardList, Plug, BarChart3,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import {
@@ -68,15 +70,15 @@ type SectionKey =
   | "metricas"
   | "testar";
 
-const SECTIONS: { key: SectionKey; icon: string; label: string }[] = [
-  { key: "identidade", icon: "🤖", label: "Identidade" },
-  { key: "fluxos", icon: "🎯", label: "Fluxos de Atendimento" },
-  { key: "comunicacao", icon: "💬", label: "Comunicação" },
-  { key: "coleta", icon: "📋", label: "Coleta de Dados" },
-  { key: "regras", icon: "⚡", label: "Regras e Limites" },
-  { key: "integracoes", icon: "🔗", label: "Integrações" },
-  { key: "metricas", icon: "📊", label: "Métricas" },
-  { key: "testar", icon: "🧪", label: "Testar Agente" },
+const SECTIONS: { key: SectionKey; icon: LucideIcon; label: string }[] = [
+  { key: "identidade", icon: Bot, label: "Identidade" },
+  { key: "fluxos", icon: GitBranch, label: "Fluxos de Atendimento" },
+  { key: "comunicacao", icon: MessageCircle, label: "Comunicação" },
+  { key: "coleta", icon: ClipboardList, label: "Coleta de Dados" },
+  { key: "regras", icon: ShieldCheck, label: "Regras e Limites" },
+  { key: "integracoes", icon: Plug, label: "Integrações" },
+  { key: "metricas", icon: BarChart3, label: "Métricas" },
+  { key: "testar", icon: FlaskConical, label: "Testar Agente" },
 ];
 
 const AGENT_ICONS: { key: string; Icon: React.ComponentType<{ className?: string }> }[] = [
@@ -249,19 +251,20 @@ export default function AIAgentEdit() {
           >
             {SECTIONS.map((s) => {
               const isActive = activeSection === s.key;
+              const Icon = s.icon;
               return (
                 <button
                   key={s.key}
                   type="button"
                   onClick={() => setActiveSection(s.key)}
                   className={
-                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors text-left shrink-0 " +
+                    "flex items-center gap-[10px] px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors text-left shrink-0 " +
                     (isActive
                       ? "bg-[hsl(220_45%_15%)] text-white"
-                      : "text-gray-600 hover:bg-gray-100 bg-transparent")
+                      : "text-gray-500 hover:bg-gray-100 bg-transparent")
                   }
                 >
-                  <span className="text-base leading-none">{s.icon}</span>
+                  <Icon size={18} strokeWidth={2} className="shrink-0" />
                   <span className="font-medium">{s.label}</span>
                 </button>
               );
