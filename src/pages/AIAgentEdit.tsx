@@ -232,24 +232,15 @@ export default function AIAgentEdit() {
       <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-md border-b border-border/60">
         <div className="max-w-[1100px] mx-auto px-8 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 shrink-0"
-              onClick={handleCancel}
-              aria-label="Voltar"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
             <div className="h-10 w-10 rounded-lg bg-[hsl(220_45%_15%)] flex items-center justify-center shrink-0">
               <Bot className="h-5 w-5 text-white" />
             </div>
             <div className="min-w-0">
               <h1 className="text-lg font-semibold tracking-tight truncate">
-                {isNew ? "Novo Agente IA" : form.name || "Agente sem nome"}
+                {form.name || "Agente sem nome"}
               </h1>
               <p className="text-xs text-muted-foreground">
-                {isNew ? "Configure o comportamento do novo agente" : "Edite as configurações do agente"}
+                Gerencie seu agente de inteligência artificial
               </p>
             </div>
           </div>
