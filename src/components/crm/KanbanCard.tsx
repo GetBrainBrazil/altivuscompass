@@ -829,6 +829,15 @@ export function KanbanCard({
                 {card.contactLevel && (
                   <ContactLevelBadge level={card.contactLevel} size="xs" className="shrink-0" />
                 )}
+                {isLost && (
+                  <span
+                    title={card.lostReason ? `Perdido — ${card.lostReason}` : "Lead perdido"}
+                    className="inline-flex items-center gap-0.5 rounded-full bg-destructive/10 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-destructive"
+                  >
+                    <Target className="w-2.5 h-2.5" />
+                    {card.lostReason ? `Perdido — ${card.lostReason}` : "Perdido"}
+                  </span>
+                )}
                 {cornerBadge}
                 {card.isRepurchase && (
                   <span
