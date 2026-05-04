@@ -2800,6 +2800,33 @@ export default function CRM() {
             />
           </div>
 
+          {tab === "sales" && (
+            <FilterChip
+              label="Status"
+              value={
+                filterStatus === "active"
+                  ? "Status: Ativos"
+                  : filterStatus === "archived"
+                    ? "Status: Arquivados"
+                    : "Status: Todos"
+              }
+              active={filterStatus !== "active"}
+              onClear={() => setFilterStatus("active")}
+              width={200}
+            >
+              <SearchableList
+                items={[
+                  { id: "active", label: "Ativos" },
+                  { id: "archived", label: "Arquivados" },
+                  { id: "all", label: "Todos" },
+                ]}
+                selected={filterStatus}
+                onSelect={(v) => setFilterStatus(v as "active" | "archived" | "all")}
+                placeholder="Buscar..."
+              />
+            </FilterChip>
+          )}
+
           <FilterChip
             label="Responsável"
             value={
