@@ -275,12 +275,6 @@ export default function AIAgentEdit() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {isDirty && (
-              <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                Alterações não salvas
-              </span>
-            )}
             <Button
               variant="outline"
               className="h-9 border-border/70 text-foreground hover:bg-muted"
