@@ -313,6 +313,7 @@ function KanbanBoard({
   onCardMarkLost,
   onCardReactivateLost,
   onCardKeepActive,
+  onCardViewPostSale,
   onCardRenameClient,
   agentOptions,
   focusCardId,
@@ -345,6 +346,7 @@ function KanbanBoard({
   onCardMarkLost?: (card: KanbanCardData) => void;
   onCardReactivateLost?: (card: KanbanCardData) => void;
   onCardKeepActive?: (card: KanbanCardData) => void;
+  onCardViewPostSale?: (card: KanbanCardData) => void;
   onCardRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
   agentOptions?: { user_id: string; full_name: string; avatar_url?: string | null }[];
   focusCardId?: string | null;
@@ -390,6 +392,7 @@ function KanbanBoard({
               onCardMarkLost={onCardMarkLost}
               onCardReactivateLost={onCardReactivateLost}
               onCardKeepActive={onCardKeepActive}
+              onCardViewPostSale={onCardViewPostSale}
               onCardRenameClient={onCardRenameClient}
               agentOptions={agentOptions}
               focusCardId={focusCardId}
@@ -434,6 +437,7 @@ function KanbanColumnCard({
   onCardMarkLost,
   onCardReactivateLost,
   onCardKeepActive,
+  onCardViewPostSale,
   onCardRenameClient,
   agentOptions,
   focusCardId,
@@ -467,6 +471,7 @@ function KanbanColumnCard({
   onCardMarkLost?: (card: KanbanCardData) => void;
   onCardReactivateLost?: (card: KanbanCardData) => void;
   onCardKeepActive?: (card: KanbanCardData) => void;
+  onCardViewPostSale?: (card: KanbanCardData) => void;
   onCardRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
   agentOptions?: { user_id: string; full_name: string; avatar_url?: string | null }[];
   focusCardId?: string | null;
@@ -662,7 +667,7 @@ function KanbanColumnCard({
                           : dotColor.replace("bg-", "border-l-")
                       }
                       isWonStage={column.id === "closed"}
-                      draggable
+                      draggable={column.id !== "closed"}
                       isDragging={draggedCardId === card.id}
                       onDragStart={(c) => onCardDragStart(c)}
                       onDragEnd={() => { onCardDragEnd(); setOverIndex(null); }}
@@ -678,6 +683,7 @@ function KanbanColumnCard({
                       onMarkLost={onCardMarkLost}
                       onReactivateLost={onCardReactivateLost}
                       onKeepActive={onCardKeepActive}
+                      onViewPostSale={onCardViewPostSale}
                       onRenameClient={onCardRenameClient}
                     />
                   </div>
@@ -797,14 +803,13 @@ export default function CRM() {
     }, { replace: true });
   };
 
-  // ?focus=lead-{id} — destaca e rola até o card no kanban de Vendas.
-  // Garante a aba "sales" e mantém o foco por alguns segundos.
+  // ?focus=lead-{id} — destaca e rola até o card no kanban da aba atual.
+  // Mantém o foco por alguns segundos sem sobrescrever a aba escolhida na URL.
   const focusParam = searchParams.get("focus");
   const [focusCardId, setFocusCardId] = useState<string | null>(focusParam || null);
   useEffect(() => {
     if (!focusParam) return;
     setFocusCardId(focusParam);
-    if (tab !== "sales") setTabState("sales");
     const t = window.setTimeout(() => {
       setFocusCardId(null);
       setSearchParams((prev) => {
@@ -2506,13 +2511,12 @@ export default function CRM() {
         if (tab === "sales") {
           const isClosedCol = col.id === "closed";
           // Status (arquivamento + concluídos):
-          // "active" → esconde arquivados E esconde a coluna Concluído.
+          // "active" → esconde apenas arquivados, mantendo Concluído visível como histórico.
           // "concluded" → mostra apenas cards na coluna Concluído (não arquivados).
           // "archived" → apenas arquivados.
           // "all" → mostra tudo.
           if (filterStatus === "active") {
             if (card.isArchived) return false;
-            if (isClosedCol) return false;
           } else if (filterStatus === "concluded") {
             if (card.isArchived) return false;
             if (!isClosedCol) return false;
@@ -2641,6 +2645,18 @@ export default function CRM() {
     }
     const params = stage ? `?stage=${encodeURIComponent(stage.id)}` : "";
     navigate(`/crm/lead/${card.id}${params}`);
+  };
+
+  const handleViewPostSale = (card: KanbanCardData) => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("crm:viewMode:ops", "kanban");
+    }
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", "ops");
+      next.set("focus", card.id);
+      return next;
+    }, { replace: false });
   };
 
   const openAddAt = (index: number | null) => {
@@ -3233,6 +3249,7 @@ export default function CRM() {
             onCardMarkLost={tab === "sales" ? handleMarkLost : undefined}
             onCardReactivateLost={tab === "sales" ? handleReactivateLost : undefined}
             onCardKeepActive={tab === "sales" ? handleKeepActive : undefined}
+            onCardViewPostSale={tab === "sales" ? handleViewPostSale : undefined}
             onCardRenameClient={handleCardRenameClient}
             agentOptions={responsibleOptions}
             focusCardId={focusCardId}
