@@ -131,25 +131,74 @@ export default function AIAgentEdit() {
   });
 
   const [activeSection, setActiveSection] = useState<SectionKey>("identidade");
-  const initialSnapshot = useMemo(() => JSON.stringify(form), []);
-  const isDirty = JSON.stringify(form) !== initialSnapshot;
+  const [savedSnapshot, setSavedSnapshot] = useState<string>(() => JSON.stringify(form));
+  const [saving, setSaving] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [modelError, setModelError] = useState<string | null>(null);
+  const isDirty = JSON.stringify(form) !== savedSnapshot;
 
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(form));
   }, [form]);
 
-  const handleSave = () => {
+  // Warn on browser navigation away with unsaved changes
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
+  const handleSave = async () => {
+    let hasError = false;
     if (!form.name.trim()) {
-      toast.error("Informe o nome do agente");
+      setNameError("Informe o nome do agente");
+      hasError = true;
+    } else {
+      setNameError(null);
+    }
+    if (!form.model) {
+      setModelError("Selecione um modelo de IA");
+      hasError = true;
+    } else {
+      setModelError(null);
+    }
+    if (hasError) {
+      setActiveSection("identidade");
+      setTimeout(() => {
+        const el = document.getElementById(!form.name.trim() ? "agent-name" : "agent-model");
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+        (el as HTMLInputElement | null)?.focus?.();
+      }, 50);
       return;
     }
-    sessionStorage.setItem(STORAGE_KEY + ":save", JSON.stringify(form));
-    toast.success(isNew ? "Agente criado com sucesso" : "Agente atualizado");
-    navigate("/ai-agents");
+
+    setSaving(true);
+    try {
+      // Persist full agent config to local "backend"
+      const list: Agent[] = JSON.parse(sessionStorage.getItem(LIST_KEY) || "[]");
+      const idx = list.findIndex((a) => a.id === form.id);
+      if (idx >= 0) list[idx] = form;
+      else list.push(form);
+      sessionStorage.setItem(LIST_KEY, JSON.stringify(list));
+      sessionStorage.setItem(STORAGE_KEY + ":save", JSON.stringify(form));
+      // Simulate async save
+      await new Promise((r) => setTimeout(r, 400));
+      setSavedSnapshot(JSON.stringify(form));
+      toast.success("Configurações salvas com sucesso", { position: "top-right", duration: 3000 });
+    } catch {
+      toast.error("Erro ao salvar configurações. Tente novamente.", { position: "top-right" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
-    if (isDirty && !confirm("Descartar alterações não salvas?")) return;
+    if (isDirty && !confirm("Você tem alterações não salvas. Deseja sair sem salvar?")) return;
     navigate("/ai-agents");
   };
 
@@ -234,9 +283,22 @@ export default function AIAgentEdit() {
             </Button>
             <Button
               onClick={handleSave}
-              className="h-9 bg-[hsl(220_45%_15%)] hover:bg-[hsl(220_45%_22%)] text-white"
+              disabled={saving}
+              className="relative h-9 bg-[hsl(220_45%_15%)] hover:bg-[hsl(220_45%_22%)] text-white"
             >
-              Salvar Configurações
+              {saving ? (
+                <>
+                  <span className="inline-block h-3.5 w-3.5 mr-2 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  Salvar Configurações
+                  {isDirty && (
+                    <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-amber-400 ring-2 ring-white" />
+                  )}
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -344,17 +406,21 @@ export default function AIAgentEdit() {
                 <Input
                   id="agent-name"
                   value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  onChange={(e) => {
+                    setForm({ ...form, name: e.target.value });
+                    if (e.target.value.trim()) setNameError(null);
+                  }}
                   placeholder="Ex: Atendente Principal"
-                  className="h-10"
+                  className={"h-10 " + (nameError ? "border-destructive focus-visible:ring-destructive" : "")}
                 />
+                {nameError && <p className="text-xs text-destructive">{nameError}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="agent-model" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Modelo de IA
                 </Label>
-                <Select value={form.model} onValueChange={(v) => setForm({ ...form, model: v })}>
-                  <SelectTrigger id="agent-model" className="h-10">
+                <Select value={form.model} onValueChange={(v) => { setForm({ ...form, model: v }); if (v) setModelError(null); }}>
+                  <SelectTrigger id="agent-model" className={"h-10 " + (modelError ? "border-destructive focus-visible:ring-destructive" : "")}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -365,6 +431,7 @@ export default function AIAgentEdit() {
                     ))}
                   </SelectContent>
                 </Select>
+                {modelError && <p className="text-xs text-destructive">{modelError}</p>}
               </div>
             </div>
 
