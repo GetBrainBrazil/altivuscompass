@@ -33,6 +33,8 @@ import type { Agent } from "@/components/ai-agents/AgentEditDialog";
 import { FluxosAtendimentoSection } from "@/components/ai-agents/FluxosAtendimentoSection";
 import { ComunicacaoSection } from "@/components/ai-agents/ComunicacaoSection";
 import { ColetaDadosSection } from "@/components/ai-agents/ColetaDadosSection";
+import { RegrasLimitesSection } from "@/components/ai-agents/RegrasLimitesSection";
+import { IntegracoesSection } from "@/components/ai-agents/IntegracoesSection";
 
 const STORAGE_KEY = "ai-agents-draft";
 const LIST_KEY = "ai-agents-list";
@@ -413,27 +415,7 @@ export default function AIAgentEdit() {
         )}
 
         {activeSection === "regras" && (
-        <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
-          <div className="px-8 py-5 border-b border-border/60">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-              <Shield className="h-4 w-4 text-destructive" />
-              Regras e Limites
-            </h2>
-            <p className="text-xs text-muted-foreground mt-1">
-              Restrições e limites que o agente nunca deve violar.
-            </p>
-          </div>
-          <div className="p-8">
-            <Textarea
-              id="agent-rules"
-              value={form.rules}
-              onChange={(e) => setForm({ ...form, rules: e.target.value })}
-              rows={10}
-              placeholder={`- Nunca prometa preços sem confirmar com um agente humano\n- Não compartilhe dados pessoais de outros clientes\n- Não invente informações sobre destinos\n- Sempre transfira para humano em caso de reclamação\n- Não responda perguntas fora do contexto de viagens`}
-              className="font-mono text-[13px] leading-relaxed resize-y min-h-[220px] bg-[hsl(220_15%_98%)]"
-            />
-          </div>
-        </section>
+          <RegrasLimitesSection initialRules={form.rules} />
         )}
 
         {activeSection === "testar" && (
@@ -464,8 +446,9 @@ export default function AIAgentEdit() {
 
         {activeSection === "coleta" && <ColetaDadosSection />}
 
-        {(activeSection === "integracoes" ||
-          activeSection === "metricas") && (
+        {activeSection === "integracoes" && <IntegracoesSection />}
+
+        {activeSection === "metricas" && (
           <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
             <div className="px-8 py-5 border-b border-border/60">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
