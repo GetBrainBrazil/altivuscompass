@@ -383,6 +383,7 @@ function KanbanBoard({
               onCardViewConversation={onCardViewConversation}
               onCardEdit={onCardEdit}
               onCardArchive={onCardArchive}
+              onCardUnarchive={onCardUnarchive}
               onCardMarkLost={onCardMarkLost}
               onCardReactivateLost={onCardReactivateLost}
               onCardKeepActive={onCardKeepActive}
