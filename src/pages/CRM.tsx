@@ -2474,7 +2474,7 @@ export default function CRM() {
   const filterState = current.filterState;
   const setFilterState = (v: "active" | "lost" | "all") => updateCurrent({ filterState: v });
   const filterStatus = current.filterStatus;
-  const setFilterStatus = (v: "active" | "concluded" | "archived" | "all") => updateCurrent({ filterStatus: v });
+  const setFilterStatus = (v: "active" | "concluded" | "archived" | "stagnant" | "all") => updateCurrent({ filterStatus: v });
   const filterBoarding = current.filterBoarding;
   const setFilterBoarding = (v: "all" | "7" | "15" | "30") => updateCurrent({ filterBoarding: v });
   const filterOpsStatus = current.filterOpsStatus;
