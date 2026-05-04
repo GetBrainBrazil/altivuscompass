@@ -2263,6 +2263,18 @@ export default function CRM() {
       return;
     }
     setArchivedCards((prev) => prev.filter((c) => c.id !== card.id));
+    setSalesColumns((prev) =>
+      prev.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) => (c.id === card.id ? { ...c, isArchived: false } : c)),
+      })),
+    );
+    setOpsColumns((prev) =>
+      prev.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) => (c.id === card.id ? { ...c, isArchived: false } : c)),
+      })),
+    );
     setLeadsRefreshTick((t) => t + 1);
     toast.success("Card desarquivado.");
   };
