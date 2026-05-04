@@ -690,6 +690,17 @@ export function KanbanCard({
                       Marcar como perdido
                     </DropdownMenuItem>
                   )}
+                  {!isLost && isStagnant && onKeepActive && (
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        onKeepActive(card);
+                      }}
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 mr-2 text-amber-600" />
+                      Manter ativo
+                    </DropdownMenuItem>
+                  )}
                   {(onArchive || onUnarchive || onDelete) && <DropdownMenuSeparator />}
                   {onUnarchive ? (
                     <DropdownMenuItem
