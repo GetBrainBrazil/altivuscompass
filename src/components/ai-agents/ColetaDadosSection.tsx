@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -29,14 +29,42 @@ const initialFields: FieldItem[] = [
 const groupLabel =
   "text-xs font-semibold uppercase tracking-wider text-muted-foreground";
 
-export function ColetaDadosSection() {
-  const [fields, setFields] = useState<FieldItem[]>(initialFields);
-  const [moment, setMoment] = useState<string>("flow");
-  const [validateEmail, setValidateEmail] = useState(true);
-  const [validatePhone, setValidatePhone] = useState(true);
-  const [confirmBeforeSave, setConfirmBeforeSave] = useState(false);
-  const [saveCRM, setSaveCRM] = useState(true);
-  const [saveServiceCenter, setSaveServiceCenter] = useState(true);
+export interface ColetaDadosValue {
+  fields: FieldItem[];
+  moment: string;
+  validate_email: boolean;
+  validate_phone: boolean;
+  confirm_before_save: boolean;
+  save_crm: boolean;
+  save_service_center: boolean;
+}
+
+interface Props {
+  value?: Partial<ColetaDadosValue>;
+  onChange?: (v: ColetaDadosValue) => void;
+}
+
+export function ColetaDadosSection({ value, onChange }: Props = {}) {
+  const [fields, setFields] = useState<FieldItem[]>(value?.fields ?? initialFields);
+  const [moment, setMoment] = useState<string>(value?.moment ?? "flow");
+  const [validateEmail, setValidateEmail] = useState(value?.validate_email ?? true);
+  const [validatePhone, setValidatePhone] = useState(value?.validate_phone ?? true);
+  const [confirmBeforeSave, setConfirmBeforeSave] = useState(value?.confirm_before_save ?? false);
+  const [saveCRM, setSaveCRM] = useState(value?.save_crm ?? true);
+  const [saveServiceCenter, setSaveServiceCenter] = useState(value?.save_service_center ?? true);
+
+  useEffect(() => {
+    onChange?.({
+      fields,
+      moment,
+      validate_email: validateEmail,
+      validate_phone: validatePhone,
+      confirm_before_save: confirmBeforeSave,
+      save_crm: saveCRM,
+      save_service_center: saveServiceCenter,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fields, moment, validateEmail, validatePhone, confirmBeforeSave, saveCRM, saveServiceCenter]);
 
   const updateField = (id: string, patch: Partial<FieldItem>) =>
     setFields(fields.map((f) => (f.id === id ? { ...f, ...patch } : f)));
