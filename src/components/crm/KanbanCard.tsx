@@ -27,6 +27,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -877,12 +878,21 @@ export function KanbanCard({
                   </span>
                 )}
                 {isLost && (
-                  <span
-                    title={card.lostReason || "Lead perdido"}
-                    className="inline-flex items-center rounded-full bg-red-50 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-red-600"
-                  >
-                    Perdido
-                  </span>
+                  <TooltipProvider delayDuration={150}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex items-center rounded-full bg-red-50 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-red-600 cursor-help">
+                          Perdido
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="top"
+                        className="max-w-[200px] rounded-lg bg-[#1B2A4A] text-white border-0 px-2.5 py-1.5 text-xs"
+                      >
+                        {card.lostReason || "Lead perdido"}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
                 {!isLost && isStagnant && (
                   <span
