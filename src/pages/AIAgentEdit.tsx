@@ -115,19 +115,33 @@ const emptyAgent = (): Agent => ({
   description: "",
 });
 
+const DEFAULT_AGENT: Agent = {
+  id: "1",
+  name: "Atendente Principal",
+  model: "google/gemini-2.5-flash",
+  active: true,
+  tone: "amigavel",
+  icon: "bot",
+  description: "",
+  personality:
+    "Você é o atendente principal da Altivus Turismo. Recepcione clientes com cordialidade e identifique rapidamente o tipo de demanda.",
+  rules:
+    "- Nunca compartilhe preços sem validação\n- Transfira para humano em reclamações\n- Não responda fora do escopo de viagens",
+};
+
 export default function AIAgentEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const isNew = !id || id === "new";
+  const isNew = false;
 
   const [form, setForm] = useState<Agent>(() => {
-    if (isNew) return emptyAgent();
     try {
       const list: Agent[] = JSON.parse(sessionStorage.getItem(LIST_KEY) || "[]");
-      const found = list.find((a) => a.id === id);
-      if (found) return { personality: "", rules: "", tone: "amigavel", icon: "bot", description: "", ...found };
+      const found = id ? list.find((a) => a.id === id) : list[0];
+      const base = found ?? list[0] ?? DEFAULT_AGENT;
+      return { personality: "", rules: "", tone: "amigavel", icon: "bot", description: "", ...base };
     } catch {}
-    return { ...emptyAgent(), id: id! };
+    return DEFAULT_AGENT;
   });
 
   const [activeSection, setActiveSection] = useState<SectionKey>("identidade");
