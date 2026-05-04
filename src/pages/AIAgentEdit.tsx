@@ -30,6 +30,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import type { Agent } from "@/components/ai-agents/AgentEditDialog";
+import { FluxosAtendimentoSection } from "@/components/ai-agents/FluxosAtendimentoSection";
 
 const STORAGE_KEY = "ai-agents-draft";
 const LIST_KEY = "ai-agents-list";
