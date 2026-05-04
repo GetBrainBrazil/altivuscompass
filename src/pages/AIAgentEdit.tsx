@@ -212,8 +212,12 @@ export default function AIAgentEdit() {
   };
 
   const handleCancel = () => {
-    if (isDirty && !confirm("Você tem alterações não salvas. Deseja sair sem salvar?")) return;
-    navigate("/ai-agents");
+    if (!isDirty) return;
+    if (!confirm("Descartar alterações não salvas?")) return;
+    try {
+      const snap = JSON.parse(savedSnapshot) as Agent;
+      setForm(snap);
+    } catch {}
   };
 
   const handleDelete = () => {
