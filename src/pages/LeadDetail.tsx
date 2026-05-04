@@ -694,6 +694,39 @@ export default function LeadDetail() {
         </div>
       </header>
 
+      {/* Banner — lead marcado como perdido */}
+      {lostState.isLost && (
+        <div className="border-b border-destructive/30 bg-destructive/10">
+          <div className="px-6 lg:px-10 py-3 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-start gap-2.5 min-w-0">
+              <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-destructive">
+                  Lead marcado como perdido
+                  {lostState.reason ? <span className="font-normal"> — Motivo: {lostState.reason}</span> : null}
+                </div>
+                {lostState.at && (
+                  <div className="text-[11px] text-destructive/80">
+                    em {new Date(lostState.at).toLocaleString("pt-BR")}
+                  </div>
+                )}
+              </div>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleReactivateLead}
+              disabled={reactivating}
+              className="border-destructive/40 text-destructive hover:bg-destructive/15 hover:text-destructive"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              {reactivating ? "Reativando..." : "Reativar lead"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+
       {/* Grid de duas colunas: conteúdo + painel lateral */}
       <div className="grid grid-cols-1 lg:grid-cols-[68fr_32fr] items-start flex-1 min-h-0">
         <div className="flex flex-col min-w-0">
