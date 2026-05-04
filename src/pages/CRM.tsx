@@ -3417,7 +3417,7 @@ export default function CRM() {
         onOpenChange={(open) => {
           if (!open) {
             setLostOpen(false);
-            setLostMove(null);
+            setLostTarget(null);
           }
         }}
       >
@@ -3483,7 +3483,7 @@ export default function CRM() {
             <Button
               variant="outline"
               className="rounded-lg"
-              onClick={() => { setLostOpen(false); setLostMove(null); }}
+              onClick={() => { setLostOpen(false); setLostTarget(null); }}
             >
               Cancelar
             </Button>
