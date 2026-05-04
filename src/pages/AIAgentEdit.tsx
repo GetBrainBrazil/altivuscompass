@@ -36,6 +36,7 @@ import { ColetaDadosSection } from "@/components/ai-agents/ColetaDadosSection";
 import { RegrasLimitesSection } from "@/components/ai-agents/RegrasLimitesSection";
 import { IntegracoesSection } from "@/components/ai-agents/IntegracoesSection";
 import { MetricasSection } from "@/components/ai-agents/MetricasSection";
+import { TestarAgenteSection } from "@/components/ai-agents/TestarAgenteSection";
 
 const STORAGE_KEY = "ai-agents-draft";
 const LIST_KEY = "ai-agents-list";
@@ -419,29 +420,7 @@ export default function AIAgentEdit() {
           <RegrasLimitesSection initialRules={form.rules} />
         )}
 
-        {activeSection === "testar" && (
-        <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
-          <div className="px-8 py-5 border-b border-border/60">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-              <FlaskConical className="h-4 w-4" />
-              Testar Agente
-            </h2>
-            <p className="text-xs text-muted-foreground mt-1">
-              Simule uma conversa para validar personalidade e regras antes de ativar.
-            </p>
-          </div>
-          <div className="p-8">
-            <Button
-              variant="outline"
-              className="h-9"
-              onClick={() => toast.info("Modo de teste em breve")}
-            >
-              <FlaskConical className="h-4 w-4 mr-2" />
-              Iniciar teste
-            </Button>
-          </div>
-        </section>
-        )}
+        {activeSection === "testar" && <TestarAgenteSection />}
 
         {activeSection === "fluxos" && <FluxosAtendimentoSection />}
 
