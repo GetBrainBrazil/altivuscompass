@@ -123,19 +123,25 @@ export function ComunicacaoSection({
           <div className="flex flex-wrap gap-3">
             {TONES.map((t) => {
               const selected = tone === t.id;
+              const Icon = t.icon;
               return (
                 <button
                   key={t.id}
                   type="button"
                   onClick={() => setTone(t.id)}
                   className={cn(
-                    "w-[180px] text-left rounded-lg p-3 transition-all",
+                    "w-[180px] min-h-[140px] text-left rounded-lg p-3 transition-all flex flex-col",
                     selected
-                      ? "border-2 border-[hsl(220_45%_15%)] bg-[hsl(220_45%_15%)]/5"
+                      ? "border-2 border-[#1B2A4A] bg-[rgba(27,42,74,0.03)]"
                       : "border border-gray-200 hover:border-gray-300 bg-white"
                   )}
                 >
-                  <div className="text-2xl mb-1.5 leading-none">{t.emoji}</div>
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center mb-2"
+                    style={{ backgroundColor: t.iconBg }}
+                  >
+                    <Icon size={18} style={{ color: t.iconColor }} strokeWidth={2} />
+                  </div>
                   <div className="text-sm font-semibold text-foreground leading-tight">
                     {t.name}
                   </div>
