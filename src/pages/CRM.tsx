@@ -68,6 +68,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { KanbanCard, type KanbanCardData, type LeadTemperature } from "@/components/crm/KanbanCard";
+import { CrmStagnationSettingsDialog } from "@/components/crm/CrmStagnationSettingsDialog";
 import { KanbanCardSkeleton } from "@/components/ui/loading-skeletons";
 import { ClientPromotionDialog } from "@/components/crm/ClientPromotionDialog";
 import { PENDING_OPS_CARD_KEY } from "@/pages/OpsNew";
