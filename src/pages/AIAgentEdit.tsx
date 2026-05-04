@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -145,11 +146,34 @@ export default function AIAgentEdit() {
   });
 
   const [activeSection, setActiveSection] = useState<SectionKey>("identidade");
-  const [savedSnapshot, setSavedSnapshot] = useState<string>(() => JSON.stringify(form));
+
+  // Normalize values so null/undefined/"" and null/[] are treated equivalently
+  const normalize = (val: unknown): unknown => {
+    if (val === null || val === undefined || val === "") return null;
+    if (Array.isArray(val)) {
+      const arr = val.map(normalize);
+      return arr.length === 0 ? null : arr;
+    }
+    if (typeof val === "object") {
+      const out: Record<string, unknown> = {};
+      const obj = val as Record<string, unknown>;
+      Object.keys(obj)
+        .sort()
+        .forEach((k) => {
+          const n = normalize(obj[k]);
+          if (n !== null) out[k] = n;
+        });
+      return Object.keys(out).length === 0 ? null : out;
+    }
+    return val;
+  };
+  const serialize = (v: Agent) => JSON.stringify(normalize(structuredClone(v)));
+
+  const [savedSnapshot, setSavedSnapshot] = useState<string>(() => serialize(form));
   const [saving, setSaving] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
   const [modelError, setModelError] = useState<string | null>(null);
-  const isDirty = JSON.stringify(form) !== savedSnapshot;
+  const isDirty = serialize(form) !== savedSnapshot;
 
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(form));
@@ -202,7 +226,7 @@ export default function AIAgentEdit() {
       sessionStorage.setItem(STORAGE_KEY + ":save", JSON.stringify(form));
       // Simulate async save
       await new Promise((r) => setTimeout(r, 400));
-      setSavedSnapshot(JSON.stringify(form));
+      setSavedSnapshot(serialize(form));
       toast.success("Configurações salvas com sucesso", { position: "top-right", duration: 3000 });
     } catch {
       toast.error("Erro ao salvar configurações. Tente novamente.", { position: "top-right" });
@@ -227,7 +251,7 @@ export default function AIAgentEdit() {
       sessionStorage.setItem(LIST_KEY, JSON.stringify(next));
       const replacement = next[0] ?? DEFAULT_AGENT;
       setForm({ personality: "", rules: "", tone: "amigavel", icon: "bot", description: "", ...replacement });
-      setSavedSnapshot(JSON.stringify(replacement));
+      setSavedSnapshot(serialize(replacement as Agent));
     } catch {}
     toast.success(`Agente "${form.name || "sem nome"}" excluído`);
   };
@@ -251,12 +275,6 @@ export default function AIAgentEdit() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {isDirty && (
-              <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                Alterações não salvas
-              </span>
-            )}
             <Button
               variant="outline"
               className="h-9 border-border/70 text-foreground hover:bg-muted"
@@ -300,25 +318,37 @@ export default function AIAgentEdit() {
             <Button variant="outline" onClick={handleCancel} className="h-9">
               Cancelar
             </Button>
-            <Button
-              onClick={handleSave}
-              disabled={saving}
-              className="relative h-9 bg-[hsl(220_45%_15%)] hover:bg-[hsl(220_45%_22%)] text-white"
-            >
-              {saving ? (
-                <>
-                  <span className="inline-block h-3.5 w-3.5 mr-2 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-                  Salvando...
-                </>
-              ) : (
-                <>
-                  Salvar Configurações
-                  {isDirty && (
-                    <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-amber-400 ring-2 ring-white" />
-                  )}
-                </>
-              )}
-            </Button>
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="relative h-9 bg-[hsl(220_45%_15%)] hover:bg-[hsl(220_45%_22%)] text-white"
+                  >
+                    {saving ? (
+                      <>
+                        <span className="inline-block h-3.5 w-3.5 mr-2 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        Salvar Configurações
+                        {isDirty && (
+                          <span
+                            className="absolute -top-1 -right-1 rounded-full ring-2 ring-white"
+                            style={{ width: 8, height: 8, backgroundColor: "#F59E0B" }}
+                          />
+                        )}
+                      </>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                {isDirty && !saving && (
+                  <TooltipContent side="bottom">Há alterações não salvas</TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </div>
