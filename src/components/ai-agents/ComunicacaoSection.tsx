@@ -6,35 +6,53 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import { Smile, Briefcase, Sparkles, GraduationCap, Pencil, type LucideIcon } from "lucide-react";
 
-const TONES = [
+const TONES: {
+  id: string;
+  icon: LucideIcon;
+  iconBg: string;
+  iconColor: string;
+  name: string;
+  example: string;
+}[] = [
   {
     id: "amigavel",
-    emoji: "😊",
+    icon: Smile,
+    iconBg: "#EFF6FF",
+    iconColor: "#3B82F6",
     name: "Amigável e acolhedor",
     example: "Oi! Que bom falar com você! Como posso ajudar?",
   },
   {
     id: "profissional",
-    emoji: "👔",
+    icon: Briefcase,
+    iconBg: "#F1F5F9",
+    iconColor: "#475569",
     name: "Profissional e cordial",
     example: "Olá, boas-vindas à Altivus Turismo. Como posso auxiliá-lo?",
   },
   {
     id: "entusiasmado",
-    emoji: "✨",
+    icon: Sparkles,
+    iconBg: "#FFFBEB",
+    iconColor: "#F59E0B",
     name: "Entusiasmado e inspirador",
     example: "Olá! Pronto para a viagem dos sonhos? 🌍",
   },
   {
     id: "consultivo",
-    emoji: "🤝",
+    icon: GraduationCap,
+    iconBg: "#ECFDF5",
+    iconColor: "#059669",
     name: "Consultivo e especialista",
     example: "Sou especialista em viagens e vou encontrar a melhor opção.",
   },
   {
     id: "personalizado",
-    emoji: "✏️",
+    icon: Pencil,
+    iconBg: "#FAF5FF",
+    iconColor: "#A855F7",
     name: "Personalizado",
     example: "Defina seu próprio tom de voz.",
   },
