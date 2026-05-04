@@ -127,6 +127,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       newData: { event: logoutEvent, email: user?.email },
     });
     hasLoggedLoginRef.current = false;
+    try {
+      localStorage.removeItem("crm_filters_funil_vendas");
+      localStorage.removeItem("crm_filters_pos_venda");
+      localStorage.removeItem("crm:viewMode:sales");
+      localStorage.removeItem("crm:viewMode:ops");
+    } catch { /* ignore */ }
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
