@@ -183,8 +183,38 @@ export default function AIAgentEdit() {
         </div>
       </div>
 
-      <div className="max-w-[1100px] mx-auto px-8 py-10 space-y-8">
-        {/* Identidade */}
+      <div className="max-w-[1200px] mx-auto px-8 py-10 flex flex-col md:flex-row gap-8">
+        {/* Left nav */}
+        <aside className="md:w-[240px] md:shrink-0">
+          <nav
+            className="md:sticky md:top-24 flex md:flex-col gap-2 overflow-x-auto md:overflow-visible -mx-2 px-2 md:mx-0 md:px-0"
+            aria-label="Seções do agente"
+          >
+            {SECTIONS.map((s) => {
+              const isActive = activeSection === s.key;
+              return (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => setActiveSection(s.key)}
+                  className={
+                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors text-left shrink-0 " +
+                    (isActive
+                      ? "bg-[hsl(220_45%_15%)] text-white"
+                      : "text-gray-600 hover:bg-gray-100 bg-transparent")
+                  }
+                >
+                  <span className="text-base leading-none">{s.icon}</span>
+                  <span className="font-medium">{s.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
+
+        {/* Content panel */}
+        <div className="flex-1 min-w-0 space-y-8">
+        {activeSection === "identidade" && (
         <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
           <div className="px-8 py-5 border-b border-border/60">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
