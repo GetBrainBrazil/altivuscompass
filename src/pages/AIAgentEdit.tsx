@@ -226,7 +226,7 @@ export default function AIAgentEdit() {
       sessionStorage.setItem(STORAGE_KEY + ":save", JSON.stringify(form));
       // Simulate async save
       await new Promise((r) => setTimeout(r, 400));
-      setSavedSnapshot(JSON.stringify(form));
+      setSavedSnapshot(serialize(form));
       toast.success("Configurações salvas com sucesso", { position: "top-right", duration: 3000 });
     } catch {
       toast.error("Erro ao salvar configurações. Tente novamente.", { position: "top-right" });
