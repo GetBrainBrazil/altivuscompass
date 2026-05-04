@@ -3095,6 +3095,7 @@ export default function CRM() {
             onCardArchive={handleCardArchive}
             onCardMarkLost={tab === "sales" ? handleMarkLost : undefined}
             onCardReactivateLost={tab === "sales" ? handleReactivateLost : undefined}
+            onCardKeepActive={tab === "sales" ? handleKeepActive : undefined}
             onCardRenameClient={handleCardRenameClient}
             agentOptions={responsibleOptions}
             focusCardId={focusCardId}
