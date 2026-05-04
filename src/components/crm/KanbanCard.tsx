@@ -288,6 +288,8 @@ export function KanbanCard({
   onReactivateLost?: (card: KanbanCardData) => void;
   /** Cancela arquivamento pendente / remove badge estagnado. */
   onKeepActive?: (card: KanbanCardData) => void;
+  /** Card está na etapa final "Concluído" — recebe destaque verde de sucesso. */
+  isWonStage?: boolean;
 }) {
   const value = formatBRL(card.estimatedValue);
   const alert = card.alert;
