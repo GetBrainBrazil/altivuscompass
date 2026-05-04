@@ -12,7 +12,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Sparkles, Shield, Bot, ArrowLeft, FlaskConical, Trash2 } from "lucide-react";
+import {
+  Sparkles, Shield, Bot, ArrowLeft, FlaskConical, Trash2,
+  Headset, MessageCircle, Brain, Globe, Plane, Compass, Heart, Star, ShieldCheck, User, Sparkle, Map, Briefcase, Camera, Coffee, Palmtree,
+} from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import {
   AlertDialog,
