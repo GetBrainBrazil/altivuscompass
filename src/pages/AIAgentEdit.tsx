@@ -449,21 +449,7 @@ export default function AIAgentEdit() {
 
         {activeSection === "integracoes" && <IntegracoesSection />}
 
-        {activeSection === "metricas" && (
-          <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
-            <div className="px-8 py-5 border-b border-border/60">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                {SECTIONS.find((s) => s.key === activeSection)?.label}
-              </h2>
-              <p className="text-xs text-muted-foreground mt-1">
-                Em breve — esta seção será configurada nos próximos passos.
-              </p>
-            </div>
-            <div className="p-8 text-sm text-muted-foreground">
-              Conteúdo em breve.
-            </div>
-          </section>
-        )}
+        {activeSection === "metricas" && <MetricasSection />}
         </div>
       </div>
     </div>
