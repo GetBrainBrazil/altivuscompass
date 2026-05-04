@@ -251,6 +251,14 @@ export default function AIAgentEdit() {
                 Alterações não salvas
               </span>
             )}
+            <Button
+              variant="outline"
+              className="h-9 border-border/70 text-foreground hover:bg-muted"
+              onClick={() => navigate("/whatsapp-connection")}
+            >
+              <MessageCircle className="h-4 w-4 sm:mr-2 text-[hsl(142_70%_40%)]" />
+              <span className="hidden sm:inline">Conexão WhatsApp</span>
+            </Button>
             {!isNew && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
