@@ -1814,9 +1814,14 @@ export type Database = {
           flexible_dates_description: string | null
           full_name: string
           id: string
+          is_lost: boolean
           is_returning: boolean
           last_contact_at: string | null
           lead_temperature: string | null
+          lost_at: string | null
+          lost_details: string | null
+          lost_from_status: string | null
+          lost_reason: string | null
           phone: string | null
           preferences: string | null
           returned_at: string | null
@@ -1845,9 +1850,14 @@ export type Database = {
           flexible_dates_description?: string | null
           full_name: string
           id?: string
+          is_lost?: boolean
           is_returning?: boolean
           last_contact_at?: string | null
           lead_temperature?: string | null
+          lost_at?: string | null
+          lost_details?: string | null
+          lost_from_status?: string | null
+          lost_reason?: string | null
           phone?: string | null
           preferences?: string | null
           returned_at?: string | null
@@ -1876,9 +1886,14 @@ export type Database = {
           flexible_dates_description?: string | null
           full_name?: string
           id?: string
+          is_lost?: boolean
           is_returning?: boolean
           last_contact_at?: string | null
           lead_temperature?: string | null
+          lost_at?: string | null
+          lost_details?: string | null
+          lost_from_status?: string | null
+          lost_reason?: string | null
           phone?: string | null
           preferences?: string | null
           returned_at?: string | null
