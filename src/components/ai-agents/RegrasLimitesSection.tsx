@@ -15,72 +15,55 @@ interface ToggleRow {
 const groupLabel =
   "text-xs font-semibold uppercase tracking-wider text-muted-foreground";
 
-interface RegrasLimitesSectionProps {
-  initialRules?: string;
+export interface RegrasLimitesValue {
+  security: ToggleRow[];
+  escalation: ToggleRow[];
+  max_messages: number;
+  timeout_minutes: number;
+  timeout_message: string;
+  custom_rules: string;
 }
 
-export function RegrasLimitesSection({ initialRules = "" }: RegrasLimitesSectionProps) {
-  const [security, setSecurity] = useState<ToggleRow[]>([
-    {
-      key: "no-prices",
-      label: "Nunca compartilhar preços sem validação de um humano",
-      description: "O agente nunca confirma valores diretamente ao cliente.",
-      enabled: true,
-    },
-    {
-      key: "no-confirm",
-      label: "Nunca confirmar reservas ou pagamentos",
-      description: "Reservas e pagamentos sempre passam por um humano.",
-      enabled: true,
-    },
-    {
-      key: "no-offtopic",
-      label: "Não responder sobre assuntos fora do escopo",
-      description: "Mantém a conversa focada em viagens e serviços da agência.",
-      enabled: true,
-    },
-    {
-      key: "no-other-clients",
-      label: "Não compartilhar dados de outros clientes",
-      description: "Protege a privacidade das demais conversas.",
-      enabled: true,
-    },
-    {
-      key: "no-invent",
-      label: "Nunca inventar informações sobre destinos ou serviços",
-      description: "Quando não souber, deve dizer que vai consultar a equipe.",
-      enabled: true,
-    },
-  ]);
+interface RegrasLimitesSectionProps {
+  initialRules?: string;
+  value?: Partial<RegrasLimitesValue>;
+  onChange?: (v: RegrasLimitesValue) => void;
+}
 
-  const [escalation, setEscalation] = useState<ToggleRow[]>([
-    {
-      key: "complaints",
-      label: "Transferir para humano em reclamações",
-      enabled: true,
-    },
-    {
-      key: "no-resolution",
-      label: "Transferir após X mensagens sem resolução",
-      enabled: true,
-      inlineNumber: 10,
-    },
-    {
-      key: "explicit",
-      label: "Transferir se cliente pedir explicitamente",
-      enabled: true,
-    },
-    {
-      key: "notify-urgent",
-      label: "Notificar gestor em situações de urgência",
-      enabled: true,
-    },
-  ]);
+const defaultSecurity: ToggleRow[] = [
+  { key: "no-prices", label: "Nunca compartilhar preços sem validação de um humano", description: "O agente nunca confirma valores diretamente ao cliente.", enabled: true },
+  { key: "no-confirm", label: "Nunca confirmar reservas ou pagamentos", description: "Reservas e pagamentos sempre passam por um humano.", enabled: true },
+  { key: "no-offtopic", label: "Não responder sobre assuntos fora do escopo", description: "Mantém a conversa focada em viagens e serviços da agência.", enabled: true },
+  { key: "no-other-clients", label: "Não compartilhar dados de outros clientes", description: "Protege a privacidade das demais conversas.", enabled: true },
+  { key: "no-invent", label: "Nunca inventar informações sobre destinos ou serviços", description: "Quando não souber, deve dizer que vai consultar a equipe.", enabled: true },
+];
 
-  const [maxMessages, setMaxMessages] = useState(20);
-  const [timeoutMinutes, setTimeoutMinutes] = useState(30);
-  const [timeoutMsg, setTimeoutMsg] = useState("");
-  const [customRules, setCustomRules] = useState(initialRules);
+const defaultEscalation: ToggleRow[] = [
+  { key: "complaints", label: "Transferir para humano em reclamações", enabled: true },
+  { key: "no-resolution", label: "Transferir após X mensagens sem resolução", enabled: true, inlineNumber: 10 },
+  { key: "explicit", label: "Transferir se cliente pedir explicitamente", enabled: true },
+  { key: "notify-urgent", label: "Notificar gestor em situações de urgência", enabled: true },
+];
+
+export function RegrasLimitesSection({ initialRules = "", value, onChange }: RegrasLimitesSectionProps) {
+  const [security, setSecurity] = useState<ToggleRow[]>(value?.security ?? defaultSecurity);
+  const [escalation, setEscalation] = useState<ToggleRow[]>(value?.escalation ?? defaultEscalation);
+  const [maxMessages, setMaxMessages] = useState(value?.max_messages ?? 20);
+  const [timeoutMinutes, setTimeoutMinutes] = useState(value?.timeout_minutes ?? 30);
+  const [timeoutMsg, setTimeoutMsg] = useState(value?.timeout_message ?? "");
+  const [customRules, setCustomRules] = useState(value?.custom_rules ?? initialRules);
+
+  useEffect(() => {
+    onChange?.({
+      security,
+      escalation,
+      max_messages: maxMessages,
+      timeout_minutes: timeoutMinutes,
+      timeout_message: timeoutMsg,
+      custom_rules: customRules,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [security, escalation, maxMessages, timeoutMinutes, timeoutMsg, customRules]);
 
   const updateRow = (
     list: ToggleRow[],
