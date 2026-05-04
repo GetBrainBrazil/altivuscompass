@@ -121,6 +121,167 @@ const STAGE_DOT_COLORS = [
   "bg-primary",
 ];
 
+// ─── Área de Arquivados (Funil de Vendas) ─────────────────────────────────
+function ArchivedSection({
+  cards,
+  columns,
+  expanded,
+  onToggle,
+  search,
+  onSearchChange,
+  dateFilter,
+  onDateFilterChange,
+  onCardClick,
+  onUnarchive,
+  onCardEdit,
+  onCardViewConversation,
+}: {
+  cards: Array<KanbanCardData & { columnId: string; archivedAt: string | null }>;
+  columns: KanbanColumn[];
+  expanded: boolean;
+  onToggle: () => void;
+  search: string;
+  onSearchChange: (v: string) => void;
+  dateFilter: "all" | "7" | "30" | "90";
+  onDateFilterChange: (v: "all" | "7" | "30" | "90") => void;
+  onCardClick: (card: KanbanCardData) => void;
+  onUnarchive: (card: KanbanCardData) => void;
+  onCardEdit?: (card: KanbanCardData) => void;
+  onCardViewConversation?: (card: KanbanCardData) => void;
+}) {
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const now = Date.now();
+    const day = 24 * 60 * 60 * 1000;
+    const limitDays = dateFilter === "all" ? null : Number(dateFilter);
+    return cards.filter((c) => {
+      if (q) {
+        const hay = `${c.clientName ?? ""} ${c.destination ?? ""} ${c.phone ?? ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (limitDays !== null) {
+        if (!c.archivedAt) return false;
+        const ts = new Date(c.archivedAt).getTime();
+        if (!Number.isFinite(ts)) return false;
+        if ((now - ts) / day > limitDays) return false;
+      }
+      return true;
+    });
+  }, [cards, search, dateFilter]);
+
+  const totalCount = cards.length;
+  const filteredColumns = useMemo(
+    () =>
+      columns.map((col) => ({
+        ...col,
+        cards: filtered.filter((c) => c.columnId === col.id),
+      })),
+    [columns, filtered],
+  );
+
+  return (
+    <div className="border-t border-border/60 bg-muted/20">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-muted/40 transition-colors"
+        aria-expanded={expanded}
+      >
+        <span className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <Archive className="w-4 h-4" />
+          Arquivados ({totalCount})
+        </span>
+        {expanded ? (
+          <ChevronUp className="w-4 h-4 text-muted-foreground" />
+        ) : (
+          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+        )}
+      </button>
+
+      {expanded && (
+        <div className="border-t border-border/60 bg-background animate-fade-in">
+          <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 border-b border-border/60">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+              <Input
+                value={search}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder="Buscar por nome..."
+                className="h-8 w-64 pl-8 text-xs"
+              />
+            </div>
+            <Select value={dateFilter} onValueChange={(v) => onDateFilterChange(v as "all" | "7" | "30" | "90")}>
+              <SelectTrigger className="h-8 w-44 text-xs">
+                <SelectValue placeholder="Arquivado em..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Qualquer data</SelectItem>
+                <SelectItem value="7">Últimos 7 dias</SelectItem>
+                <SelectItem value="30">Últimos 30 dias</SelectItem>
+                <SelectItem value="90">Últimos 90 dias</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="ml-auto text-[11px] text-muted-foreground">
+              {filtered.length} de {totalCount} card(s)
+            </span>
+          </div>
+
+          {filtered.length === 0 ? (
+            <div className="px-4 py-10 text-center text-sm text-muted-foreground">
+              Nenhum card arquivado encontrado.
+            </div>
+          ) : (
+            <div className="overflow-x-auto scrollbar-elegant max-h-[55vh]">
+              <div className="flex gap-1.5 px-3 py-3 min-w-max items-start">
+                {filteredColumns.map((col, idx) => (
+                  <div
+                    key={col.id}
+                    className="w-[280px] shrink-0 rounded-md border border-border/60 bg-card/40 flex flex-col"
+                  >
+                    <div className="flex items-center gap-2 px-3 py-2 border-b border-border/60">
+                      <span
+                        className={cn(
+                          "inline-block w-2 h-2 rounded-full",
+                          STAGE_DOT_COLORS[idx % STAGE_DOT_COLORS.length],
+                        )}
+                      />
+                      <span className="text-xs font-medium text-muted-foreground truncate">
+                        {col.title}
+                      </span>
+                      <span className="ml-auto text-[10px] tabular-nums text-muted-foreground/70">
+                        {col.cards.length}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-1.5 p-2">
+                      {col.cards.length === 0 ? (
+                        <div className="text-[11px] text-muted-foreground/60 italic px-1 py-2">
+                          —
+                        </div>
+                      ) : (
+                        col.cards.map((c) => (
+                          <KanbanCard
+                            key={c.id}
+                            card={c}
+                            archivedAppearance
+                            onClick={onCardClick}
+                            onUnarchive={onUnarchive}
+                            onEdit={onCardEdit}
+                            onViewConversation={onCardViewConversation}
+                          />
+                        ))
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function KanbanBoard({
   columns,
   onCardClick,
