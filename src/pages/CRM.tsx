@@ -2479,8 +2479,10 @@ export default function CRM() {
   const setFilterLevel = (v: string) => updateCurrent({ filterLevel: v });
   const filterSource = current.filterSource;
   const setFilterSource = (v: string) => updateCurrent({ filterSource: v });
-  const filterState = current.filterState;
-  const setFilterState = (v: "active" | "lost" | "all") => updateCurrent({ filterState: v });
+  const filterState: string[] = Array.isArray(current.filterState)
+    ? current.filterState
+    : (current.filterState ? [current.filterState as unknown as string] : ["active"]);
+  const setFilterState = (v: string[]) => updateCurrent({ filterState: v.length ? v : ["active"] });
   const filterStatus = current.filterStatus;
   const setFilterStatus = (v: "active" | "concluded" | "archived" | "stagnant" | "all") => updateCurrent({ filterStatus: v });
   const filterBoarding = current.filterBoarding;
