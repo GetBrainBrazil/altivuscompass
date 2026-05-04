@@ -274,54 +274,116 @@ export default function AIAgentEdit() {
               Como este agente é identificado e qual modelo de IA o alimenta.
             </p>
           </div>
-          <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="agent-name" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Nome do Agente
-              </Label>
-              <Input
-                id="agent-name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Ex: Atendente Principal"
-                className="h-10"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="agent-model" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Modelo de IA
-              </Label>
-              <Select value={form.model} onValueChange={(v) => setForm({ ...form, model: v })}>
-                <SelectTrigger id="agent-model" className="h-10">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {MODELS.map((m) => (
-                    <SelectItem key={m.value} value={m.value}>
-                      {m.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="p-8 space-y-6">
+            {/* Avatar */}
+            <div className="flex items-start gap-5">
+              {(() => {
+                const IconComp = getAgentIcon(form.icon);
+                return (
+                  <div className="h-16 w-16 rounded-full bg-[hsl(220_45%_15%)] flex items-center justify-center shrink-0">
+                    <IconComp className="h-7 w-7 text-white" />
+                  </div>
+                );
+              })()}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Ícone do Agente
+                </Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-9">
+                      Alterar ícone
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[320px] p-3" align="start">
+                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">
+                      Escolha um ícone
+                    </p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {AGENT_ICONS.map(({ key, Icon }) => {
+                        const selected = (form.icon ?? "bot") === key;
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => setForm({ ...form, icon: key })}
+                            className={
+                              "h-12 w-12 rounded-full flex items-center justify-center transition-all " +
+                              (selected
+                                ? "bg-[hsl(220_45%_15%)] text-white ring-2 ring-[hsl(220_45%_15%)] ring-offset-2"
+                                : "bg-muted text-muted-foreground hover:bg-muted/70")
+                            }
+                            aria-label={key}
+                          >
+                            <Icon className="h-5 w-5" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="agent-tone" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Tom de Voz
-              </Label>
-              <Select value={form.tone} onValueChange={(v) => setForm({ ...form, tone: v })}>
-                <SelectTrigger id="agent-tone" className="h-10">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TONES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Nome + Modelo */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="agent-name" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Nome do Agente
+                </Label>
+                <Input
+                  id="agent-name"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="Ex: Atendente Principal"
+                  className="h-10"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="agent-model" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Modelo de IA
+                </Label>
+                <Select value={form.model} onValueChange={(v) => setForm({ ...form, model: v })}>
+                  <SelectTrigger id="agent-model" className="h-10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MODELS.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>
+                        {m.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
+            {/* Descrição interna */}
+            <div className="space-y-2">
+              <Label htmlFor="agent-description" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Descrição interna
+              </Label>
+              <div className="relative">
+                <Input
+                  id="agent-description"
+                  value={form.description ?? ""}
+                  onChange={(e) =>
+                    setForm({ ...form, description: e.target.value.slice(0, 120) })
+                  }
+                  placeholder="Ex: Atendente principal para triagem e qualificação de leads"
+                  maxLength={120}
+                  className="h-10 pr-16"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground tabular-nums">
+                  {(form.description ?? "").length}/120
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Resumo do propósito deste agente. Visível apenas para a equipe.
+              </p>
+            </div>
+
+            {/* Status */}
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Status
@@ -332,7 +394,7 @@ export default function AIAgentEdit() {
                   onCheckedChange={(c) => setForm({ ...form, active: c })}
                 />
                 <span className="text-sm text-foreground">
-                  {form.active ? "Ativo — atendendo conversas" : "Inativo — pausado"}
+                  {form.active ? "Ativo — atendendo conversas" : "Inativo"}
                 </span>
               </div>
             </div>
