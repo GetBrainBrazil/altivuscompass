@@ -11,6 +11,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import type { Agent } from "@/components/ai-agents/AgentEditDialog";
 
 type Role = "agent" | "user";
 interface Msg {
@@ -20,178 +23,320 @@ interface Msg {
   ts: Date;
 }
 
-type FlowKey = "cotacao" | "suporte" | "indeciso" | "none";
+type FlowKey = "nova_cotacao" | "suporte" | "prospect_indeciso" | "nao_identificado";
 const FLOW_LABELS: Record<FlowKey, { label: string; dot: string }> = {
-  cotacao: { label: "Nova Cotação", dot: "🟢" },
+  nova_cotacao: { label: "Nova Cotação", dot: "🟢" },
   suporte: { label: "Suporte", dot: "🔴" },
-  indeciso: { label: "Prospect Indeciso", dot: "🟡" },
-  none: { label: "Não identificado", dot: "⚪" },
+  prospect_indeciso: { label: "Prospect Indeciso", dot: "🟡" },
+  nao_identificado: { label: "Não identificado", dot: "⚪" },
 };
 
-type Sentiment = "pos" | "neu" | "neg";
+type Sentiment = "positivo" | "neutro" | "negativo";
 const SENT_LABELS: Record<Sentiment, { emoji: string; label: string }> = {
-  pos: { emoji: "😊", label: "Positivo" },
-  neu: { emoji: "😐", label: "Neutro" },
-  neg: { emoji: "😤", label: "Negativo" },
+  positivo: { emoji: "😊", label: "Positivo" },
+  neutro: { emoji: "😐", label: "Neutro" },
+  negativo: { emoji: "😤", label: "Negativo" },
 };
 
-const PERSONAS: { value: string; label: string; firstMsg?: string; flow?: FlowKey }[] = [
+const PERSONAS: { value: string; label: string; firstMsg?: string }[] = [
   { value: "livre", label: "Conversa livre" },
   {
     value: "lead",
     label: "Lead novo — quer cotação para Paris",
-    firstMsg: "Olá! Gostaria de uma cotação de viagem para Paris em julho, para 2 pessoas.",
-    flow: "cotacao",
+    firstMsg: "Oi, quero fazer uma cotação para uma viagem para Paris",
   },
   {
     value: "suporte",
     label: "Cliente com problema — voo cancelado",
-    firstMsg: "Meu voo foi cancelado e preciso de ajuda urgente!",
-    flow: "suporte",
+    firstMsg: "Oi, estou com um problema urgente, meu voo foi cancelado e preciso de ajuda",
   },
   {
     value: "indeciso",
     label: "Prospect indeciso — não sabe para onde ir",
-    firstMsg: "Oi, queria viajar mas não sei para onde. Pode me ajudar?",
-    flow: "indeciso",
+    firstMsg: "Olá, estou pensando em viajar mas não sei para onde, podem me ajudar?",
   },
 ];
 
 const fmtTime = (d: Date) =>
   d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
-const detectFlow = (text: string): FlowKey => {
-  const t = text.toLowerCase();
-  if (/(cota[çc][aã]o|or[çc]amento|viagem para|pre[çc]o|pacote)/.test(t)) return "cotacao";
-  if (/(problema|cancelad|reclama|n[aã]o consigo|urgente|ajuda)/.test(t)) return "suporte";
-  if (/(n[aã]o sei|indeciso|sugest|talvez|pensando)/.test(t)) return "indeciso";
-  return "none";
+const TONE_DESCRIPTIONS: Record<string, string> = {
+  amigavel: "Use linguagem calorosa, próxima e acolhedora. Seja empático e gentil.",
+  formal: "Use linguagem formal, cordial e profissional. Trate o cliente com respeito e elegância.",
+  consultivo: "Aja como um consultor especialista. Faça perguntas estratégicas e demonstre conhecimento profundo sobre viagens.",
+  direto: "Seja direto, claro e objetivo. Evite rodeios e vá ao ponto rapidamente.",
+  entusiasmado: "Seja entusiasmado, inspirador e motivador. Transmita paixão por viagens.",
 };
 
-const detectSentiment = (text: string): Sentiment => {
-  const t = text.toLowerCase();
-  if (/(p[ée]ssimo|raiva|absurd|horr[íi]vel|cancelad|problema|urgente|reclama)/.test(t)) return "neg";
-  if (/([óo]timo|adorei|maravilh|obrigad|feliz|perfeito|legal)/.test(t)) return "pos";
-  return "neu";
-};
+function buildSystemPrompt(agent: Agent): string {
+  const c: any = agent.config || {};
+  const com = c.comunicacao || {};
+  const col = c.coleta || {};
+  const reg = c.regras || {};
+  const flx = c.fluxos || {};
 
-const extractData = (text: string, current: Record<string, string>) => {
-  const next = { ...current };
-  const emailMatch = text.match(/[\w.+-]+@[\w-]+\.[\w.-]+/);
-  if (emailMatch && !next.email) next.email = emailMatch[0];
-  const nameMatch = text.match(/(?:meu nome [ée]|sou o|sou a|me chamo)\s+([A-Z][a-zà-ú]+(?:\s+[A-Z][a-zà-ú]+)?)/i);
-  if (nameMatch && !next.nome) next.nome = nameMatch[1];
-  const dest = text.match(/\b(Paris|Roma|Londres|Nova York|T[óo]quio|Lisboa|Madrid|Bali|Cancun|Dubai|Orlando|Buenos Aires)\b/i);
-  if (dest && !next.destino) next.destino = dest[1];
-  const period = text.match(/\b(janeiro|fevereiro|mar[çc]o|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\b/i);
-  if (period && !next.periodo) next.periodo = period[1];
-  const pax = text.match(/(\d+)\s*(pessoa|pessoas|adultos?|viajantes?|pax)/i);
-  if (pax && !next.viajantes) next.viajantes = pax[1];
-  return next;
-};
+  const presentationName = com.presentation_name || agent.name || "Atendente Virtual";
+  const toneKey = agent.tone || "amigavel";
+  const toneDesc = TONE_DESCRIPTIONS[toneKey] || TONE_DESCRIPTIONS.amigavel;
+  const customTone = com.custom_tone ? `\nDiretrizes extras: ${com.custom_tone}` : "";
 
-const generateAgentReply = (flow: FlowKey, data: Record<string, string>): { text: string; nextAction: string; rules: string[] } => {
-  const rules: string[] = [];
-  if (flow === "cotacao") {
-    if (!data.destino) return { text: "Que ótimo! Para começarmos sua cotação, qual destino você tem em mente?", nextAction: "Perguntar destino", rules };
-    if (!data.periodo) return { text: `Perfeito, ${data.destino}! Em qual período você pretende viajar?`, nextAction: "Solicitar período", rules };
-    if (!data.viajantes) return { text: "Quantas pessoas vão viajar?", nextAction: "Solicitar nº de viajantes", rules };
-    if (!data.nome) return { text: "Para finalizar, poderia me informar seu nome completo?", nextAction: "Coletar nome", rules };
-    if (!data.email) return { text: "E qual o melhor e-mail para envio da proposta?", nextAction: "Coletar e-mail", rules };
-    rules.push("Não compartilhar preços");
-    return { text: "Ótimo! Já tenho todas as informações. Vou encaminhar para um consultor preparar sua proposta personalizada. 😊", nextAction: "Encaminhar para CRM", rules };
+  const languages: string[] = Array.isArray(com.languages) && com.languages.length > 0
+    ? com.languages
+    : ["Português"];
+  const autoDetect = !!com.auto_detect_language;
+  const useEmojis = com.use_emojis !== false;
+  const maxLen = com.max_message_length || 600;
+
+  const enabledList = (arr: any[], key = "label") =>
+    Array.isArray(arr) ? arr.filter((x) => x?.enabled !== false).map((x) => x?.[key] || x).filter(Boolean) : [];
+
+  const requiredFields = enabledList(col.required_fields);
+  const collectionTiming = col.collection_timing || "Durante a conversa, de forma natural";
+
+  const securityRules = enabledList(reg.security_rules);
+  const escalationRules = enabledList(reg.escalation_rules);
+  const maxMessages = reg.max_messages || 20;
+  const timeoutMin = reg.timeout_minutes || 5;
+  const timeoutMsg = reg.timeout_message || "Você ainda está aí? Posso continuar te ajudando?";
+  const customRules = agent.rules || reg.custom_rules || "";
+
+  const flowCotacao = flx.cotacao || {};
+  const flowSuporte = flx.suporte || {};
+  const flowProspect = flx.prospect || {};
+
+  const cotacaoQuestions = enabledList(flowCotacao.questions);
+  const suporteCategories = enabledList(flowSuporte.categories);
+  const suporteData = enabledList(flowSuporte.data_to_collect);
+  const prospectQuestions = enabledList(flowProspect.questions);
+
+  return `Você é ${presentationName}, atendente virtual da Altivus Turismo.
+
+## TOM DE VOZ
+${toneDesc}${customTone}
+${agent.personality ? `\nPersonalidade: ${agent.personality}` : ""}
+
+## IDIOMAS
+Responda em: ${languages.join(", ")}.${autoDetect ? " Detecte o idioma do cliente e responda no mesmo idioma." : ""}
+
+## EMOJIS
+${useEmojis ? "Use emojis moderadamente nas respostas." : "NÃO use emojis."}
+
+## TAMANHO DE RESPOSTA
+Mantenha respostas com no máximo ${maxLen} caracteres.
+
+## FLUXOS DE ATENDIMENTO
+Identifique o tipo de atendimento na primeira mensagem do cliente e siga o fluxo apropriado.
+
+### Fluxo 1: Nova Cotação ${flowCotacao.active === false ? "(INATIVO)" : "(ATIVO)"}
+Objetivo: Coletar informações da viagem e encaminhar para cotação.
+Perguntas obrigatórias (uma por vez, naturalmente):
+${cotacaoQuestions.length ? cotacaoQuestions.map((q) => `- ${q}`).join("\n") : "- Destino\n- Período\n- Número de viajantes\n- Nome\n- E-mail"}
+Ao concluir: ${flowCotacao.completion_action || "encaminhar para um consultor humano"}.
+${flowCotacao.closing_message ? `Mensagem de encerramento: "${flowCotacao.closing_message}"` : ""}
+
+### Fluxo 2: Suporte / Problema ${flowSuporte.active === false ? "(INATIVO)" : "(ATIVO)"}
+Objetivo: Identificar o problema e escalar rapidamente para humano.
+${suporteCategories.length ? `Categorias: ${suporteCategories.join(", ")}.` : ""}
+${suporteData.length ? `Informações a coletar: ${suporteData.join(", ")}.` : ""}
+SLA: ${flowSuporte.sla || 15} minutos.
+${flowSuporte.welcome_message ? `Acolhimento: "${flowSuporte.welcome_message}"` : ""}
+
+### Fluxo 3: Prospect Indeciso ${flowProspect.active === false ? "(INATIVO)" : "(ATIVO)"}
+Objetivo: Engajar e ajudar a decidir.
+Estratégia: ${flowProspect.strategy || "Fazer perguntas qualificadoras sobre preferências de viagem"}.
+${prospectQuestions.length ? `Perguntas exploratórias:\n${prospectQuestions.map((q) => `- ${q}`).join("\n")}` : ""}
+
+## COLETA DE DADOS
+${requiredFields.length ? `Dados obrigatórios: ${requiredFields.join(", ")}.` : "Colete: nome, e-mail, destino, período e viajantes."}
+Momento: ${collectionTiming}.
+${col.validate_email ? "Valide o formato do e-mail quando coletado." : ""}
+${col.validate_phone ? "Valide o formato do telefone quando coletado." : ""}
+${col.confirm_data ? "Antes de encerrar, confirme todos os dados coletados com o cliente." : ""}
+
+## REGRAS (NUNCA VIOLE)
+${securityRules.length ? securityRules.map((r) => `- ${r}`).join("\n") : "- Nunca prometa preços sem confirmar com humano\n- Não invente informações\n- Não compartilhe dados de outros clientes"}
+
+## REGRAS DE ESCALONAMENTO
+${escalationRules.length ? escalationRules.map((r) => `- ${r}`).join("\n") : "- Reclamações → humano imediato\n- Problemas urgentes → humano imediato"}
+
+## LIMITES
+- Máximo ${maxMessages} mensagens por conversa antes de sugerir humano.
+- Se o cliente ficar inativo por ${timeoutMin} minutos, envie: "${timeoutMsg}"
+
+${customRules ? `## REGRAS PERSONALIZADAS\n${customRules}\n` : ""}
+
+## INSTRUÇÕES DE DEBUG (OBRIGATÓRIO)
+Ao final de CADA resposta, inclua um bloco JSON entre tags <debug></debug> com EXATAMENTE este formato:
+<debug>{"detected_flow":"nova_cotacao|suporte|prospect_indeciso|nao_identificado","collected_data":{"nome":"","email":"","destino":"","periodo":"","viajantes":""},"next_action":"descrição curta","applied_rules":["regra 1"],"sentiment":"positivo|neutro|negativo"}</debug>
+O bloco <debug> NÃO será mostrado ao cliente. Preencha collected_data com tudo que você já coletou na conversa (string vazia se não coletado).`;
+}
+
+interface DebugInfo {
+  detected_flow: FlowKey;
+  collected_data: Record<string, string>;
+  next_action: string;
+  applied_rules: string[];
+  sentiment: Sentiment;
+}
+
+function parseAgentResponse(raw: string): { visible: string; debug: DebugInfo | null } {
+  const match = raw.match(/<debug>([\s\S]*?)<\/debug>/i);
+  let debug: DebugInfo | null = null;
+  if (match) {
+    try {
+      const parsed = JSON.parse(match[1].trim());
+      debug = {
+        detected_flow: (parsed.detected_flow as FlowKey) || "nao_identificado",
+        collected_data: parsed.collected_data || {},
+        next_action: parsed.next_action || "",
+        applied_rules: Array.isArray(parsed.applied_rules) ? parsed.applied_rules : [],
+        sentiment: (parsed.sentiment as Sentiment) || "neutro",
+      };
+    } catch {
+      // ignore
+    }
   }
-  if (flow === "suporte") {
-    rules.push("Não confirmar reservas");
-    return { text: "Sinto muito pelo ocorrido. Vou transferir você imediatamente para nossa equipe de suporte humano que poderá resolver isso. Um momento, por favor.", nextAction: "Transferir para humano", rules };
-  }
-  if (flow === "indeciso") {
-    return { text: "Sem problemas! Posso te ajudar a descobrir o destino ideal. Você prefere praia, cidade, natureza ou aventura?", nextAction: "Qualificar preferências", rules };
-  }
-  return { text: "Olá! Como posso te ajudar hoje? 😊", nextAction: "Aguardar mensagem", rules };
-};
+  const visible = raw.replace(/<debug>[\s\S]*?<\/debug>/gi, "").trim();
+  return { visible, debug };
+}
 
-export function TestarAgenteSection() {
+interface Props {
+  agent: Agent;
+}
+
+export function TestarAgenteSection({ agent }: Props) {
   const [persona, setPersona] = useState("livre");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
-  const [flow, setFlow] = useState<FlowKey>("none");
-  const [sentiment, setSentiment] = useState<Sentiment>("neu");
+  const [flow, setFlow] = useState<FlowKey>("nao_identificado");
+  const [sentiment, setSentiment] = useState<Sentiment>("neutro");
   const [data, setData] = useState<Record<string, string>>({});
   const [nextAction, setNextAction] = useState("Aguardar mensagem");
   const [rulesApplied, setRulesApplied] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const initialized = useRef(false);
 
-  // Welcome message on first load
+  const welcomeMessage = useMemo(() => {
+    const w = agent.config?.comunicacao?.welcome_message;
+    return (w && String(w).trim()) || "Olá! Como posso te ajudar hoje?";
+  }, [agent.config?.comunicacao?.welcome_message]);
+
+  const systemPrompt = useMemo(() => buildSystemPrompt(agent), [agent]);
+
+  // initialize / reset on welcome change
   useEffect(() => {
-    if (initialized.current) return;
-    initialized.current = true;
-    setTimeout(() => {
-      setMessages([{
-        id: crypto.randomUUID(),
-        role: "agent",
-        text: "Olá! 👋 Bem-vindo(a). Sou o atendente virtual. Como posso te ajudar hoje?",
-        ts: new Date(),
-      }]);
-    }, 200);
-  }, []);
+    setMessages([{
+      id: crypto.randomUUID(),
+      role: "agent",
+      text: welcomeMessage,
+      ts: new Date(),
+    }]);
+    setFlow("nao_identificado");
+    setSentiment("neutro");
+    setData({});
+    setNextAction("Aguardar mensagem");
+    setRulesApplied([]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [welcomeMessage]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, typing]);
 
-  const sendMessage = (text: string) => {
+  const callAI = async (history: Msg[]) => {
+    const apiMessages = history.map((m) => ({
+      role: m.role === "agent" ? "assistant" : "user",
+      content: m.text,
+    }));
+
+    const { data: resp, error } = await supabase.functions.invoke("test-agent-chat", {
+      body: {
+        system_prompt: systemPrompt,
+        messages: apiMessages,
+        model: agent.model,
+      },
+    });
+
+    if (error) throw error;
+    if ((resp as any)?.error) throw new Error((resp as any).error);
+    return (resp as any)?.content || "";
+  };
+
+  const sendMessage = async (text: string) => {
     const trimmed = text.trim();
-    if (!trimmed) return;
+    if (!trimmed || typing) return;
     const userMsg: Msg = { id: crypto.randomUUID(), role: "user", text: trimmed, ts: new Date() };
-    setMessages((m) => [...m, userMsg]);
+    const newHistory = [...messages, userMsg];
+    setMessages(newHistory);
     setInput("");
-
-    const newFlow = flow === "none" ? detectFlow(trimmed) : flow;
-    setFlow(newFlow);
-    setSentiment(detectSentiment(trimmed));
-    const newData = extractData(trimmed, data);
-    setData(newData);
-
     setTyping(true);
-    setTimeout(() => {
-      const reply = generateAgentReply(newFlow, newData);
-      setNextAction(reply.nextAction);
-      if (reply.rules.length) {
-        setRulesApplied((r) => Array.from(new Set([...r, ...reply.rules])));
+
+    try {
+      const raw = await callAI(newHistory);
+      const { visible, debug } = parseAgentResponse(raw);
+
+      setMessages((m) => [
+        ...m,
+        { id: crypto.randomUUID(), role: "agent", text: visible || "(sem resposta)", ts: new Date() },
+      ]);
+
+      if (debug) {
+        setFlow(debug.detected_flow);
+        setSentiment(debug.sentiment);
+        setNextAction(debug.next_action || "—");
+        if (debug.applied_rules.length) {
+          setRulesApplied((r) => Array.from(new Set([...r, ...debug.applied_rules])));
+        }
+        setData((prev) => {
+          const next = { ...prev };
+          for (const [k, v] of Object.entries(debug.collected_data || {})) {
+            if (v && String(v).trim()) next[k] = String(v);
+          }
+          return next;
+        });
       }
-      setMessages((m) => [...m, { id: crypto.randomUUID(), role: "agent", text: reply.text, ts: new Date() }]);
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e?.message || "Erro ao chamar o agente IA");
+    } finally {
       setTyping(false);
-    }, 1200 + Math.random() * 600);
+    }
   };
 
   const handlePersonaChange = (v: string) => {
     setPersona(v);
     const p = PERSONAS.find((x) => x.value === v);
+    // reset conversation
+    setMessages([{
+      id: crypto.randomUUID(),
+      role: "agent",
+      text: welcomeMessage,
+      ts: new Date(),
+    }]);
+    setFlow("nao_identificado");
+    setSentiment("neutro");
+    setData({});
+    setNextAction("Aguardar mensagem");
+    setRulesApplied([]);
+
     if (p?.firstMsg) {
-      setInput(p.firstMsg);
+      // auto-send after a tick so UI shows welcome first
+      setTimeout(() => sendMessage(p.firstMsg!), 400);
     }
   };
 
   const handleReset = () => {
-    setMessages([]);
-    setFlow("none");
-    setSentiment("neu");
+    setMessages([{
+      id: crypto.randomUUID(),
+      role: "agent",
+      text: welcomeMessage,
+      ts: new Date(),
+    }]);
+    setFlow("nao_identificado");
+    setSentiment("neutro");
     setData({});
     setNextAction("Aguardar mensagem");
     setRulesApplied([]);
-    initialized.current = false;
-    setTimeout(() => {
-      initialized.current = true;
-      setMessages([{
-        id: crypto.randomUUID(),
-        role: "agent",
-        text: "Olá! 👋 Bem-vindo(a). Sou o atendente virtual. Como posso te ajudar hoje?",
-        ts: new Date(),
-      }]);
-    }, 100);
   };
 
   const handleExport = () => {
@@ -226,7 +371,7 @@ export function TestarAgenteSection() {
             Testar Agente
           </h2>
           <p className="text-xs text-muted-foreground mt-1">
-            Simule uma conversa para validar personalidade e regras antes de ativar.
+            Simule uma conversa real com a IA usando a configuração salva.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -257,7 +402,7 @@ export function TestarAgenteSection() {
                 <Bot className="h-5 w-5" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold truncate">Agente IA</div>
+                <div className="text-sm font-semibold truncate">{agent.config?.comunicacao?.presentation_name || agent.name || "Agente IA"}</div>
                 <div className="text-[11px] flex items-center gap-1.5 opacity-90">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                   Online
@@ -308,6 +453,7 @@ export function TestarAgenteSection() {
               {typing && (
                 <div className="flex justify-start">
                   <div className="bg-white rounded-lg rounded-tl-none px-3 py-2.5 shadow-sm flex items-center gap-1">
+                    <span className="text-[11px] text-gray-500 mr-1">digitando</span>
                     <span className="h-1.5 w-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
                     <span className="h-1.5 w-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
                     <span className="h-1.5 w-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
@@ -329,10 +475,12 @@ export function TestarAgenteSection() {
                 }}
                 placeholder="Digite uma mensagem..."
                 className="h-10 bg-white border-gray-200"
+                disabled={typing}
               />
               <Button
                 size="icon"
                 onClick={() => sendMessage(input)}
+                disabled={typing}
                 className="h-10 w-10 shrink-0 bg-[hsl(220_45%_15%)] hover:bg-[hsl(220_45%_22%)] text-white"
                 aria-label="Enviar"
               >

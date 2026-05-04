@@ -549,7 +549,7 @@ export default function AIAgentEdit() {
           />
         )}
 
-        {activeSection === "testar" && <TestarAgenteSection />}
+        {activeSection === "testar" && <TestarAgenteSection agent={form} />}
 
         {activeSection === "fluxos" && (
           <FluxosAtendimentoSection
