@@ -3091,32 +3091,62 @@ export default function CRM() {
           <div className="ml-auto flex items-center gap-2">
             {tab === "sales" && (() => {
               const archivedCount = allCards.filter((c) => c.isArchived).length;
-              const isActive = filterStatus === "archived";
+              const concludedCount = columns.find((c) => c.id === "closed")?.cards.filter((c) => !c.isArchived).length ?? 0;
+              const isActive = filterStatus !== "active";
+              const labelMap: Record<typeof filterStatus, string> = {
+                active: "Ativos",
+                concluded: "Concluídos",
+                archived: "Arquivados",
+                all: "Todos",
+              } as const;
+              const badgeCount =
+                filterStatus === "archived" ? archivedCount :
+                filterStatus === "concluded" ? concludedCount :
+                filterStatus === "all" ? allCards.length :
+                0;
               return (
-                <TooltipProvider delayDuration={200}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        onClick={() => setFilterStatus(isActive ? "active" : "archived")}
-                        aria-pressed={isActive}
-                        aria-label="Ver arquivados"
-                        className={cn(
-                          "inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-xs font-medium border transition-colors duration-150",
-                          isActive
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-card text-muted-foreground border-border hover:text-foreground hover:bg-muted",
-                        )}
+                <DropdownMenu>
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            aria-label="Filtrar status"
+                            className={cn(
+                              "inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-xs font-medium border transition-colors duration-150",
+                              isActive
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-card text-muted-foreground border-border hover:text-foreground hover:bg-muted",
+                            )}
+                          >
+                            <Archive className="w-[18px] h-[18px]" />
+                            {isActive && (
+                              <>
+                                <span className="text-[11px] font-semibold leading-none">{labelMap[filterStatus]}</span>
+                                {badgeCount > 0 && (
+                                  <span className="text-[11px] font-semibold leading-none opacity-80">({badgeCount})</span>
+                                )}
+                              </>
+                            )}
+                          </button>
+                        </DropdownMenuTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">Filtrar por status</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <DropdownMenuContent align="end" className="w-44">
+                    {(["active", "concluded", "archived", "all"] as const).map((opt) => (
+                      <DropdownMenuItem
+                        key={opt}
+                        onClick={() => setFilterStatus(opt)}
+                        className={cn("text-xs", filterStatus === opt && "font-semibold")}
                       >
-                        <Archive className="w-[18px] h-[18px]" />
-                        {isActive && (
-                          <span className="text-[11px] font-semibold leading-none">{archivedCount}</span>
-                        )}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">Ver arquivados</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                        {labelMap[opt]}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               );
             })()}
 
