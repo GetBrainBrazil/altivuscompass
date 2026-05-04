@@ -6,35 +6,53 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import { Smile, Briefcase, Sparkles, GraduationCap, Pencil, type LucideIcon } from "lucide-react";
 
-const TONES = [
+const TONES: {
+  id: string;
+  icon: LucideIcon;
+  iconBg: string;
+  iconColor: string;
+  name: string;
+  example: string;
+}[] = [
   {
     id: "amigavel",
-    emoji: "😊",
+    icon: Smile,
+    iconBg: "#EFF6FF",
+    iconColor: "#3B82F6",
     name: "Amigável e acolhedor",
     example: "Oi! Que bom falar com você! Como posso ajudar?",
   },
   {
     id: "profissional",
-    emoji: "👔",
+    icon: Briefcase,
+    iconBg: "#F1F5F9",
+    iconColor: "#475569",
     name: "Profissional e cordial",
     example: "Olá, boas-vindas à Altivus Turismo. Como posso auxiliá-lo?",
   },
   {
     id: "entusiasmado",
-    emoji: "✨",
+    icon: Sparkles,
+    iconBg: "#FFFBEB",
+    iconColor: "#F59E0B",
     name: "Entusiasmado e inspirador",
     example: "Olá! Pronto para a viagem dos sonhos? 🌍",
   },
   {
     id: "consultivo",
-    emoji: "🤝",
+    icon: GraduationCap,
+    iconBg: "#ECFDF5",
+    iconColor: "#059669",
     name: "Consultivo e especialista",
     example: "Sou especialista em viagens e vou encontrar a melhor opção.",
   },
   {
     id: "personalizado",
-    emoji: "✏️",
+    icon: Pencil,
+    iconBg: "#FAF5FF",
+    iconColor: "#A855F7",
     name: "Personalizado",
     example: "Defina seu próprio tom de voz.",
   },
@@ -105,19 +123,25 @@ export function ComunicacaoSection({
           <div className="flex flex-wrap gap-3">
             {TONES.map((t) => {
               const selected = tone === t.id;
+              const Icon = t.icon;
               return (
                 <button
                   key={t.id}
                   type="button"
                   onClick={() => setTone(t.id)}
                   className={cn(
-                    "w-[180px] text-left rounded-lg p-3 transition-all",
+                    "w-[180px] min-h-[140px] text-left rounded-lg p-3 transition-all flex flex-col",
                     selected
-                      ? "border-2 border-[hsl(220_45%_15%)] bg-[hsl(220_45%_15%)]/5"
+                      ? "border-2 border-[#1B2A4A] bg-[rgba(27,42,74,0.03)]"
                       : "border border-gray-200 hover:border-gray-300 bg-white"
                   )}
                 >
-                  <div className="text-2xl mb-1.5 leading-none">{t.emoji}</div>
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center mb-2"
+                    style={{ backgroundColor: t.iconBg }}
+                  >
+                    <Icon size={18} style={{ color: t.iconColor }} strokeWidth={2} />
+                  </div>
                   <div className="text-sm font-semibold text-foreground leading-tight">
                     {t.name}
                   </div>
