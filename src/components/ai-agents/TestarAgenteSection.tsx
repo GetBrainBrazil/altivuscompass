@@ -206,6 +206,11 @@ interface Props {
 }
 
 export function TestarAgenteSection({ agent }: Props) {
+  const wa = useWhatsAppProfile();
+  const useWAPhoto =
+    (agent.avatarSource ?? (wa.connected && wa.photoUrl ? "whatsapp" : "custom")) === "whatsapp" &&
+    wa.connected &&
+    !!wa.photoUrl;
   const [persona, setPersona] = useState("livre");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
