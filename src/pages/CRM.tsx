@@ -1711,7 +1711,38 @@ export default function CRM() {
     }
   };
 
-  const handleMarkLost = (card: KanbanCardData) => {
+  const handleKeepActive = async (card: KanbanCardData) => {
+    const leadId = card.id.startsWith("lead-") ? card.id.slice(5) : null;
+    if (!leadId) return;
+    try {
+      const { error } = await supabase
+        .from("leads")
+        .update({
+          is_stagnant: false,
+          stagnant_since: null,
+          archive_pending_at: null,
+          last_interaction_at: new Date().toISOString(),
+        } as any)
+        .eq("id", leadId);
+      if (error) throw error;
+      setSalesColumns((prev) =>
+        prev.map((col) => ({
+          ...col,
+          cards: col.cards.map((c) =>
+            c.id === card.id
+              ? { ...c, isStagnant: false, stagnantSince: undefined, archivePendingAt: undefined, lastInteractionAt: new Date().toISOString() }
+              : c,
+          ),
+        })),
+      );
+      toast.success(`"${card.clientName}" mantido ativo.`);
+    } catch (err) {
+      console.error("[handleKeepActive] error:", err);
+      toast.error("Erro ao manter ativo.");
+    }
+  };
+
+
     const sourceColumn = columns.find((c) => c.cards.some((k) => k.id === card.id));
     if (!sourceColumn) return;
     const leadId = card.id.startsWith("lead-") ? card.id.slice(5) : null;
