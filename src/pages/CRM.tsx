@@ -653,6 +653,8 @@ function KanbanColumnCard({
                       onViewConversation={onCardViewConversation}
                       onEdit={onCardEdit}
                       onArchive={onCardArchive}
+                      onMarkLost={onCardMarkLost}
+                      onReactivateLost={onCardReactivateLost}
                       onRenameClient={onCardRenameClient}
                     />
                   </div>
