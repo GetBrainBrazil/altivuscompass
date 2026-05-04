@@ -398,54 +398,7 @@ export default function AIAgentEdit() {
           </div>
           <div className="p-8 space-y-6">
             {/* Avatar */}
-            <div className="flex items-start gap-5">
-              {(() => {
-                const IconComp = getAgentIcon(form.icon);
-                return (
-                  <div className="h-16 w-16 rounded-full bg-[hsl(220_45%_15%)] flex items-center justify-center shrink-0">
-                    <IconComp className="h-7 w-7 text-white" />
-                  </div>
-                );
-              })()}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Ícone do Agente
-                </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-9">
-                      Alterar ícone
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[320px] p-3" align="start">
-                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">
-                      Escolha um ícone
-                    </p>
-                    <div className="grid grid-cols-4 gap-2">
-                      {AGENT_ICONS.map(({ key, Icon }) => {
-                        const selected = (form.icon ?? "bot") === key;
-                        return (
-                          <button
-                            key={key}
-                            type="button"
-                            onClick={() => setForm({ ...form, icon: key })}
-                            className={
-                              "h-12 w-12 rounded-full flex items-center justify-center transition-all " +
-                              (selected
-                                ? "bg-[hsl(220_45%_15%)] text-white ring-2 ring-[hsl(220_45%_15%)] ring-offset-2"
-                                : "bg-muted text-muted-foreground hover:bg-muted/70")
-                            }
-                            aria-label={key}
-                          >
-                            <Icon className="h-5 w-5" />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
+            <AvatarIdentitySection form={form} setForm={setForm} />
 
             {/* Nome + Modelo */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
