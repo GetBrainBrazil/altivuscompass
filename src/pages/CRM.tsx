@@ -2512,13 +2512,12 @@ export default function CRM() {
         if (tab === "sales") {
           const isClosedCol = col.id === "closed";
           // Status (arquivamento + concluídos):
-          // "active" → esconde arquivados E esconde a coluna Concluído.
+          // "active" → esconde apenas arquivados, mantendo Concluído visível como histórico.
           // "concluded" → mostra apenas cards na coluna Concluído (não arquivados).
           // "archived" → apenas arquivados.
           // "all" → mostra tudo.
           if (filterStatus === "active") {
             if (card.isArchived) return false;
-            if (isClosedCol) return false;
           } else if (filterStatus === "concluded") {
             if (card.isArchived) return false;
             if (!isClosedCol) return false;
@@ -2647,6 +2646,16 @@ export default function CRM() {
     }
     const params = stage ? `?stage=${encodeURIComponent(stage.id)}` : "";
     navigate(`/crm/lead/${card.id}${params}`);
+  };
+
+  const handleViewPostSale = (card: KanbanCardData) => {
+    handleViewModeChange("kanban");
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", "ops");
+      next.set("focus", card.id);
+      return next;
+    }, { replace: false });
   };
 
   const openAddAt = (index: number | null) => {
