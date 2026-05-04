@@ -221,9 +221,11 @@ export default function AIAgentEdit() {
       const list: Agent[] = JSON.parse(sessionStorage.getItem(LIST_KEY) || "[]");
       const next = list.filter((a) => a.id !== form.id);
       sessionStorage.setItem(LIST_KEY, JSON.stringify(next));
+      const replacement = next[0] ?? DEFAULT_AGENT;
+      setForm({ personality: "", rules: "", tone: "amigavel", icon: "bot", description: "", ...replacement });
+      setSavedSnapshot(JSON.stringify(replacement));
     } catch {}
     toast.success(`Agente "${form.name || "sem nome"}" excluído`);
-    navigate("/ai-agents");
   };
 
   return (
