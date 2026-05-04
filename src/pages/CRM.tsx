@@ -305,6 +305,7 @@ function KanbanBoard({
   onCardArchive,
   onCardMarkLost,
   onCardReactivateLost,
+  onCardKeepActive,
   onCardRenameClient,
   agentOptions,
   focusCardId,
@@ -335,6 +336,7 @@ function KanbanBoard({
   onCardArchive?: (card: KanbanCardData) => void;
   onCardMarkLost?: (card: KanbanCardData) => void;
   onCardReactivateLost?: (card: KanbanCardData) => void;
+  onCardKeepActive?: (card: KanbanCardData) => void;
   onCardRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
   agentOptions?: { user_id: string; full_name: string; avatar_url?: string | null }[];
   focusCardId?: string | null;
