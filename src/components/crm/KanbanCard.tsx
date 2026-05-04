@@ -391,8 +391,6 @@ export function KanbanCard({
         : card.isReturning
           ? "border-l-slate-300"
           : tempBorder[temperature];
-  // Lost menu actions are wired but visible only when callbacks are passed.
-  void onMarkLost; void onReactivateLost;
   const noAgent = !card.agent;
 
   return (
@@ -652,6 +650,30 @@ export function KanbanCard({
                         </DropdownMenuItem>
                       </DropdownMenuSubContent>
                     </DropdownMenuSub>
+                  )}
+                  {(onMarkLost || onReactivateLost) && <DropdownMenuSeparator />}
+                  {isLost && onReactivateLost && (
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        onReactivateLost(card);
+                      }}
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 mr-2" />
+                      Reativar lead
+                    </DropdownMenuItem>
+                  )}
+                  {!isLost && onMarkLost && (
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        onMarkLost(card);
+                      }}
+                    >
+                      <Target className="w-3.5 h-3.5 mr-2" />
+                      Marcar como perdido
+                    </DropdownMenuItem>
                   )}
                   {(onArchive || onUnarchive || onDelete) && <DropdownMenuSeparator />}
                   {onUnarchive ? (
