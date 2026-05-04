@@ -403,15 +403,17 @@ export function KanbanCard({
   };
   const leftBorder = isLost
     ? "border-l-destructive"
-    : isStagnant
-      ? "border-l-amber-400"
-      : alert?.tone === "destructive"
-        ? "border-l-destructive/60"
-        : card.isRepurchase
-          ? "border-l-amber-200"
-          : card.isReturning
-            ? "border-l-slate-300"
-            : tempBorder[temperature];
+    : isWonStage
+      ? "border-l-[#4ADE80]"
+      : isStagnant
+        ? "border-l-amber-400"
+        : alert?.tone === "destructive"
+          ? "border-l-destructive/60"
+          : card.isRepurchase
+            ? "border-l-amber-200"
+            : card.isReturning
+              ? "border-l-slate-300"
+              : tempBorder[temperature];
   const noAgent = !card.agent;
 
   return (
