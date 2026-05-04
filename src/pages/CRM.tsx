@@ -898,11 +898,10 @@ export default function CRM() {
     const fetchLeads = async () => {
       const { data, error } = await supabase
         .from("leads")
-        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, is_returning, returned_at, assigned_user_id, status, is_lost, lost_at, lost_from_status, lost_reason, last_interaction_at, is_stagnant, stagnant_since, archive_pending_at")
+        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, is_returning, returned_at, assigned_user_id, status, is_lost, lost_at, lost_from_status, lost_reason, last_interaction_at, is_stagnant, stagnant_since, archive_pending_at, archived, archived_at")
         .is("converted_client_id", null)
-        .or("archived.is.null,archived.eq.false")
         .order("created_at", { ascending: false })
-        .limit(100);
+        .limit(200);
       if (error || cancelled || !data) {
         if (!cancelled) setIsLoadingLeads(false);
         return;
