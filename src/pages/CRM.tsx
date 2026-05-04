@@ -352,8 +352,8 @@ function KanbanBoard({
   onToggleColumnCollapse?: (columnId: string) => void;
 }) {
   return (
-    <div className="flex-1 min-h-0 mt-3 pb-4 overflow-x-auto overflow-y-hidden scrollbar-elegant [transform:scaleY(-1)]">
-      <div className="flex gap-1.5 px-3 py-2 min-w-max h-full items-stretch [transform:scaleY(-1)]">
+    <div className="flex-1 min-h-0 mt-3 pb-2 overflow-x-auto overflow-y-hidden scrollbar-elegant">
+      <div className="flex gap-1.5 px-3 py-2 min-w-max h-full items-stretch">
         {columns.map((col, idx) => {
           const isValidTarget =
             !!draggedCardId &&
