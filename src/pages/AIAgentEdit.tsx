@@ -288,19 +288,18 @@ export default function AIAgentEdit() {
             </div>
           </div>
         </section>
+        )}
 
-        {/* Personalidade */}
+        {activeSection === "comunicacao" && (
         <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
-          <div className="px-8 py-5 border-b border-border/60 flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-[hsl(var(--gold))]" />
-                Personalidade e Diretrizes
-              </h2>
-              <p className="text-xs text-muted-foreground mt-1">
-                Define o tom, missão e estilo de comunicação do agente.
-              </p>
-            </div>
+          <div className="px-8 py-5 border-b border-border/60">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-[hsl(var(--gold))]" />
+              Comunicação — Personalidade e Diretrizes
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Define o tom, missão e estilo de comunicação do agente.
+            </p>
           </div>
           <div className="p-8">
             <Textarea
@@ -308,29 +307,23 @@ export default function AIAgentEdit() {
               value={form.personality}
               onChange={(e) => setForm({ ...form, personality: e.target.value })}
               rows={10}
-              placeholder={`Você é um consultor de viagens experiente da Altivus Turismo.
-Sua missão é ajudar clientes a planejar viagens memoráveis...
-
-- Sempre se apresente pelo nome
-- Pergunte sobre preferências de viagem
-- Sugira destinos baseados no perfil`}
+              placeholder={`Você é um consultor de viagens experiente da Altivus Turismo.\nSua missão é ajudar clientes a planejar viagens memoráveis...\n\n- Sempre se apresente pelo nome\n- Pergunte sobre preferências de viagem\n- Sugira destinos baseados no perfil`}
               className="font-mono text-[13px] leading-relaxed resize-y min-h-[220px] bg-[hsl(220_15%_98%)]"
             />
           </div>
         </section>
+        )}
 
-        {/* Regras */}
+        {activeSection === "regras" && (
         <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
-          <div className="px-8 py-5 border-b border-border/60 flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                <Shield className="h-4 w-4 text-destructive" />
-                Regras de Conversa
-              </h2>
-              <p className="text-xs text-muted-foreground mt-1">
-                Restrições e limites que o agente nunca deve violar.
-              </p>
-            </div>
+          <div className="px-8 py-5 border-b border-border/60">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <Shield className="h-4 w-4 text-destructive" />
+              Regras e Limites
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Restrições e limites que o agente nunca deve violar.
+            </p>
           </div>
           <div className="p-8">
             <Textarea
@@ -338,37 +331,55 @@ Sua missão é ajudar clientes a planejar viagens memoráveis...
               value={form.rules}
               onChange={(e) => setForm({ ...form, rules: e.target.value })}
               rows={10}
-              placeholder={`- Nunca prometa preços sem confirmar com um agente humano
-- Não compartilhe dados pessoais de outros clientes
-- Não invente informações sobre destinos
-- Sempre transfira para humano em caso de reclamação
-- Não responda perguntas fora do contexto de viagens`}
+              placeholder={`- Nunca prometa preços sem confirmar com um agente humano\n- Não compartilhe dados pessoais de outros clientes\n- Não invente informações sobre destinos\n- Sempre transfira para humano em caso de reclamação\n- Não responda perguntas fora do contexto de viagens`}
               className="font-mono text-[13px] leading-relaxed resize-y min-h-[220px] bg-[hsl(220_15%_98%)]"
             />
           </div>
         </section>
+        )}
 
-        {/* Test action */}
-        <div className="flex items-center justify-between bg-white rounded-xl border border-dashed border-border/60 px-6 py-5">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-md bg-muted flex items-center justify-center">
-              <FlaskConical className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="text-sm font-medium">Testar agente</p>
-              <p className="text-xs text-muted-foreground">
-                Simule uma conversa para validar personalidade e regras antes de ativar.
+        {activeSection === "testar" && (
+        <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
+          <div className="px-8 py-5 border-b border-border/60">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <FlaskConical className="h-4 w-4" />
+              Testar Agente
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Simule uma conversa para validar personalidade e regras antes de ativar.
+            </p>
+          </div>
+          <div className="p-8">
+            <Button
+              variant="outline"
+              className="h-9"
+              onClick={() => toast.info("Modo de teste em breve")}
+            >
+              <FlaskConical className="h-4 w-4 mr-2" />
+              Iniciar teste
+            </Button>
+          </div>
+        </section>
+        )}
+
+        {(activeSection === "fluxos" ||
+          activeSection === "coleta" ||
+          activeSection === "integracoes" ||
+          activeSection === "metricas") && (
+          <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
+            <div className="px-8 py-5 border-b border-border/60">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                {SECTIONS.find((s) => s.key === activeSection)?.label}
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Em breve — esta seção será configurada nos próximos passos.
               </p>
             </div>
-          </div>
-          <Button
-            variant="outline"
-            className="h-9"
-            onClick={() => toast.info("Modo de teste em breve")}
-          >
-            <FlaskConical className="h-4 w-4 mr-2" />
-            Iniciar teste
-          </Button>
+            <div className="p-8 text-sm text-muted-foreground">
+              Conteúdo em breve.
+            </div>
+          </section>
+        )}
         </div>
       </div>
     </div>
