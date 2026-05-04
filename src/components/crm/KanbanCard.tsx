@@ -224,6 +224,8 @@ export function KanbanCard({
   onViewConversation,
   onEdit,
   onArchive,
+  onUnarchive,
+  archivedAppearance = false,
   onRenameClient,
 }: {
   card: KanbanCardData;
