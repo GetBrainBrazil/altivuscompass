@@ -2755,6 +2755,23 @@ export default function CRM() {
             agentOptions={responsibleOptions}
           />
         )}
+
+        {tab === "sales" && (
+          <ArchivedSection
+            cards={archivedCards}
+            columns={salesColumns}
+            expanded={archivedExpanded}
+            onToggle={() => setArchivedExpanded((v) => !v)}
+            search={archivedSearch}
+            onSearchChange={setArchivedSearch}
+            dateFilter={archivedDateFilter}
+            onDateFilterChange={setArchivedDateFilter}
+            onCardClick={handleCardClick}
+            onUnarchive={handleCardUnarchive}
+            onCardEdit={handleCardEdit}
+            onCardViewConversation={handleCardViewConversation}
+          />
+        )}
       </main>
 
 
