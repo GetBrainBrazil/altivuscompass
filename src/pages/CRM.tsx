@@ -2475,7 +2475,7 @@ export default function CRM() {
       positive = pct >= 0;
     }
     return { newThisWeek: thisW, weekDeltaPct: pct, weekDeltaPositive: positive };
-  }, [allCards]);
+  }, [activeCards]);
 
   // Métricas operacionais (aba Operações em Viagem)
   const opsMetrics = useMemo(() => {
