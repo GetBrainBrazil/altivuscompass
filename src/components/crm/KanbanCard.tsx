@@ -380,13 +380,15 @@ export function KanbanCard({
     warm: "border-l-amber-200",
     cold: "border-l-slate-300",
   };
-  const leftBorder = alert?.tone === "destructive"
-    ? "border-l-destructive/60"
-    : card.isRepurchase
-      ? "border-l-amber-200"
-      : card.isReturning
-        ? "border-l-slate-300"
-        : tempBorder[temperature];
+  const leftBorder = isLost
+    ? "border-l-destructive"
+    : alert?.tone === "destructive"
+      ? "border-l-destructive/60"
+      : card.isRepurchase
+        ? "border-l-amber-200"
+        : card.isReturning
+          ? "border-l-slate-300"
+          : tempBorder[temperature];
   const noAgent = !card.agent;
 
   return (
