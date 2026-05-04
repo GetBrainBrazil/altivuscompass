@@ -94,6 +94,7 @@ export default function AIAgentEdit() {
   });
 
   const [activeSection, setActiveSection] = useState<SectionKey>("identidade");
+  const initialSnapshot = useMemo(() => JSON.stringify(form), []);
   const isDirty = JSON.stringify(form) !== initialSnapshot;
 
   useEffect(() => {
