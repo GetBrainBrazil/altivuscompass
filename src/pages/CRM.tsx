@@ -3031,35 +3031,6 @@ export default function CRM() {
               </FilterChip>
 
               <FilterChip
-                label="Temperatura"
-                value={
-                  filterTemp === "all"
-                    ? "Temperatura"
-                    : `Temp.: ${
-                        { hot: "Quente", warm: "Morno", cold: "Frio", undefined: "Não definida" }[
-                          filterTemp as "hot" | "warm" | "cold" | "undefined"
-                        ] ?? filterTemp
-                      }`
-                }
-                active={filterTemp !== "all"}
-                onClear={() => setFilterTemp("all")}
-                width={200}
-              >
-                <SearchableList
-                  items={[
-                    { id: "all", label: "Todas temperaturas" },
-                    { id: "hot", label: "Quente" },
-                    { id: "warm", label: "Morno" },
-                    { id: "cold", label: "Frio" },
-                    { id: "undefined", label: "Não definida" },
-                  ]}
-                  selected={filterTemp}
-                  onSelect={setFilterTemp}
-                  placeholder="Buscar..."
-                />
-              </FilterChip>
-
-              <FilterChip
                 label="Nível"
                 value={
                   filterLevel === "all"
