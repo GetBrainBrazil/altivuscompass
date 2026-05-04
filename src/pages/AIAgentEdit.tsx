@@ -251,7 +251,7 @@ export default function AIAgentEdit() {
       sessionStorage.setItem(LIST_KEY, JSON.stringify(next));
       const replacement = next[0] ?? DEFAULT_AGENT;
       setForm({ personality: "", rules: "", tone: "amigavel", icon: "bot", description: "", ...replacement });
-      setSavedSnapshot(JSON.stringify(replacement));
+      setSavedSnapshot(serialize(replacement as Agent));
     } catch {}
     toast.success(`Agente "${form.name || "sem nome"}" excluído`);
   };
