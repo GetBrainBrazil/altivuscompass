@@ -2713,7 +2713,7 @@ export default function CRM() {
         filterTemp !== "all" ||
         filterLevel !== "all" ||
         filterSource !== "all" ||
-        filterState !== "active" ||
+        !(filterState.length === 1 && filterState[0] === "active") ||
         filterStatus !== "active")) ||
     (tab === "ops" &&
       (filterBoarding !== "all" ||
