@@ -106,7 +106,9 @@ const SALES_COLUMN_TO_STATUS: Record<string, string> = {
 };
 const STATUS_TO_SALES_COLUMN: Record<string, string> = Object.entries(
   SALES_COLUMN_TO_STATUS,
-).reduce((acc, [col, st]) => ({ ...acc, [st]: col }), {});
+).reduce((acc, [col, st]) => ({ ...acc, [st]: col }), {} as Record<string, string>);
+// Após promoção a Cliente, o status passa a "converted" — mantém o card no Concluído.
+STATUS_TO_SALES_COLUMN["converted"] = "closed";
 
 const INITIAL_OPS_COLUMNS: KanbanColumn[] = [
   { id: "pre-trip", title: "Pré-Viagem", cards: [] },
