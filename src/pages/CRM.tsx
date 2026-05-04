@@ -660,6 +660,7 @@ function KanbanColumnCard({
                       onArchive={onCardArchive}
                       onMarkLost={onCardMarkLost}
                       onReactivateLost={onCardReactivateLost}
+                      onKeepActive={onCardKeepActive}
                       onRenameClient={onCardRenameClient}
                     />
                   </div>
