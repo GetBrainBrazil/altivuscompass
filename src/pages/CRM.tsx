@@ -2415,7 +2415,7 @@ export default function CRM() {
     filterLevel: string;
     filterSource: string;
     filterState: "active" | "lost" | "all";
-    filterStatus: "active" | "concluded" | "archived" | "all";
+    filterStatus: "active" | "concluded" | "archived" | "stagnant" | "all";
     filterBoarding: "all" | "7" | "15" | "30";
     filterOpsStatus: "all" | "normal" | "urgent" | "waiting";
     filterDestination: string;
