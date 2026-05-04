@@ -3175,16 +3175,19 @@ export default function CRM() {
             {tab === "sales" && (() => {
               const archivedCount = allCards.filter((c) => c.isArchived).length;
               const concludedCount = columns.find((c) => c.id === "closed")?.cards.filter((c) => !c.isArchived).length ?? 0;
+              const stagnantCount = allCards.filter((c) => !c.isArchived && c.isStagnant).length;
               const isActive = filterStatus !== "active";
               const labelMap = {
                 active: "Ativos",
                 concluded: "Concluídos",
+                stagnant: "Estagnados",
                 archived: "Arquivados",
                 all: "Todos",
               } as const;
               const badgeCount =
                 filterStatus === "archived" ? archivedCount :
                 filterStatus === "concluded" ? concludedCount :
+                filterStatus === "stagnant" ? stagnantCount :
                 filterStatus === "all" ? allCards.length :
                 0;
               return (
