@@ -1550,9 +1550,9 @@ export default function CRM() {
     }
   };
 
-  // Confirma a perda: registra motivo no banco e move o card para "Perdidos"
+  // Confirma a perda: marca is_lost no banco, registra motivo e atualiza o card in-place.
   const confirmLost = async () => {
-    if (!lostMove) {
+    if (!lostTarget) {
       setLostOpen(false);
       return;
     }
@@ -1565,7 +1565,9 @@ export default function CRM() {
       toast.error("Descreva o motivo no campo de texto.");
       return;
     }
-    if (lostMove.leadId) {
+    const target = lostTarget;
+    const fromStatus = SALES_COLUMN_TO_STATUS[target.fromColumnId] ?? null;
+    if (target.leadId) {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         let userName = user?.email ?? null;
@@ -1577,23 +1579,130 @@ export default function CRM() {
             .maybeSingle();
           if (prof?.full_name) userName = prof.full_name;
         }
+        // Marca o lead como perdido (sem mudar status — fica na coluna atual).
+        const { error: updErr } = await (supabase as any)
+          .from("leads")
+          .update({
+            is_lost: true,
+            lost_at: new Date().toISOString(),
+            lost_from_status: fromStatus,
+            lost_reason: reason,
+          })
+          .eq("id", target.leadId);
+        if (updErr) {
+          console.error("[mark lost] update error:", updErr);
+          toast.error("Erro ao marcar como perdido.");
+          return;
+        }
+        // Registra histórico (lead_loss_reasons).
         await (supabase as any).from("lead_loss_reasons").insert({
-          lead_id: lostMove.leadId,
+          lead_id: target.leadId,
           reason,
           details: lostDetails.trim() || null,
           user_id: user?.id ?? null,
           user_name: userName,
         });
+        // Timeline do contato.
+        await (supabase as any).from("contact_events").insert({
+          lead_id: target.leadId,
+          event_type: "lead_lost",
+          title: "Lead marcado como perdido",
+          description: `Motivo: ${reason}${lostDetails.trim() ? ` — ${lostDetails.trim()}` : ""}`,
+          user_id: user?.id ?? null,
+          user_name: userName,
+          is_manual: true,
+        });
       } catch (err) {
-        console.error("[lead_loss_reasons] insert error:", err);
-        toast.error("Não foi possível registrar o motivo. O card será movido mesmo assim.");
+        console.error("[confirmLost] error:", err);
+        toast.error("Não foi possível registrar a perda.");
+        return;
       }
     }
-    performMove(lostMove, false);
+    // Atualiza o card in-place (sem mover de coluna).
+    setColumns((prev) =>
+      prev.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) =>
+          c.id === target.cardId
+            ? { ...c, isLost: true, lostReason: reason, lostAt: new Date().toISOString(), lostFromColumnId: target.fromColumnId }
+            : c,
+        ),
+      })),
+    );
+    toast.success(`"${target.clientName}" marcado como perdido.`);
     setLostOpen(false);
-    setLostMove(null);
+    setLostTarget(null);
     setLostReason("Sem resposta");
     setLostDetails("");
+  };
+
+  // Reativa um lead perdido — limpa is_lost e devolve o card ao funil ativo.
+  const handleReactivateLost = async (card: KanbanCardData) => {
+    const leadId = card.id.startsWith("lead-") ? card.id.slice(5) : null;
+    if (!leadId) {
+      toast.error("Card sem lead vinculado.");
+      return;
+    }
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      let userName = user?.email ?? null;
+      if (user?.id) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (prof?.full_name) userName = prof.full_name;
+      }
+      const { error } = await (supabase as any)
+        .from("leads")
+        .update({ is_lost: false, lost_at: null, lost_from_status: null, lost_reason: null })
+        .eq("id", leadId);
+      if (error) {
+        console.error("[reactivate] error:", error);
+        toast.error("Erro ao reativar lead.");
+        return;
+      }
+      await (supabase as any).from("contact_events").insert({
+        lead_id: leadId,
+        event_type: "lead_reactivated",
+        title: "Lead reativado",
+        description: null,
+        user_id: user?.id ?? null,
+        user_name: userName,
+        is_manual: true,
+      });
+      setColumns((prev) =>
+        prev.map((col) => ({
+          ...col,
+          cards: col.cards.map((c) =>
+            c.id === card.id
+              ? { ...c, isLost: false, lostReason: undefined, lostAt: undefined, lostFromColumnId: undefined }
+              : c,
+          ),
+        })),
+      );
+      toast.success(`"${card.clientName}" reativado.`);
+    } catch (err) {
+      console.error("[handleReactivateLost] error:", err);
+      toast.error("Erro ao reativar lead.");
+    }
+  };
+
+  const handleMarkLost = (card: KanbanCardData) => {
+    const sourceColumn = columns.find((c) => c.cards.some((k) => k.id === card.id));
+    if (!sourceColumn) return;
+    const leadId = card.id.startsWith("lead-") ? card.id.slice(5) : null;
+    setLostTarget({
+      cardId: card.id,
+      leadId,
+      fromColumnId: sourceColumn.id,
+      fromTitle: sourceColumn.title,
+      clientName: card.clientName,
+    });
+    setLostReason("Sem resposta");
+    setLostDetails("");
+    setLostOpen(true);
   };
 
   // Avalia restrições por coluna de destino. Devolve a lista de issues; vazia = pode mover.
