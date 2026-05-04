@@ -72,6 +72,28 @@ const SECTIONS: { key: SectionKey; icon: string; label: string }[] = [
   { key: "testar", icon: "🧪", label: "Testar Agente" },
 ];
 
+const AGENT_ICONS: { key: string; Icon: React.ComponentType<{ className?: string }> }[] = [
+  { key: "bot", Icon: Bot },
+  { key: "headset", Icon: Headset },
+  { key: "message", Icon: MessageCircle },
+  { key: "sparkle", Icon: Sparkle },
+  { key: "brain", Icon: Brain },
+  { key: "globe", Icon: Globe },
+  { key: "plane", Icon: Plane },
+  { key: "compass", Icon: Compass },
+  { key: "heart", Icon: Heart },
+  { key: "star", Icon: Star },
+  { key: "shield", Icon: ShieldCheck },
+  { key: "user", Icon: User },
+  { key: "map", Icon: Map },
+  { key: "briefcase", Icon: Briefcase },
+  { key: "camera", Icon: Camera },
+  { key: "palmtree", Icon: Palmtree },
+];
+
+const getAgentIcon = (key?: string) =>
+  AGENT_ICONS.find((i) => i.key === key)?.Icon ?? Bot;
+
 const emptyAgent = (): Agent => ({
   id: crypto.randomUUID(),
   name: "",
