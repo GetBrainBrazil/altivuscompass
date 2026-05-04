@@ -538,6 +538,7 @@ export function CRMTableView({
               </th>
               <HeaderCell label="Contato" sortKey="name" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
               <HeaderCell label="Etapa" sortKey="stage" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
+              <th className="text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider px-3 py-2">Estado</th>
               <HeaderCell label="Responsável" sortKey="agent" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
               <HeaderCell label="Temp." sortKey="temperature" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
               <HeaderCell label="Origem" sortKey="source" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
