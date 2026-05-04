@@ -2422,7 +2422,7 @@ export default function CRM() {
     filterTemp: string;
     filterLevel: string;
     filterSource: string;
-    filterState: "active" | "lost" | "all";
+    filterState: string[];
     filterStatus: "active" | "concluded" | "archived" | "stagnant" | "all";
     filterBoarding: "all" | "7" | "15" | "30";
     filterOpsStatus: "all" | "normal" | "urgent" | "waiting";
