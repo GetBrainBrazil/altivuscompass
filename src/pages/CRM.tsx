@@ -831,10 +831,13 @@ export default function CRM() {
       if (!Array.isArray(parsed) || parsed.length === 0) return fallback;
       // Sanitiza: remove cards que não vieram do banco (sem prefixo lead-/quote-/manual-)
       // e remove a coluna legada "lost" — agora "Perdido" é estado, não coluna.
+      const fallbackById = new Map(fallback.map((c) => [c.id, c]));
       const sanitized = parsed
         .filter((col) => col.id !== "lost")
         .map((col) => ({
           ...col,
+          // Força o título atual do fallback para colunas conhecidas (renomeações de produto).
+          title: fallbackById.get(col.id)?.title ?? col.title,
           cards: col.cards.filter(
             (c) => c.id.startsWith("lead-") || c.id.startsWith("quote-") || c.id.startsWith("manual-"),
           ),
