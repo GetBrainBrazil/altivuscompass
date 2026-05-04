@@ -2405,39 +2405,152 @@ export default function CRM() {
   };
 
 
-  // ─── Toolbar state (search + filters) ─────────────────────
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterAgent, setFilterAgent] = useState<string>("all");
-  const [filterTag, setFilterTag] = useState<string>("all");
-  const [filterTemp, setFilterTemp] = useState<string>("all");
-  const [filterLevel, setFilterLevel] = useState<string>("all");
-  const [filterSource, setFilterSource] = useState<string>("all");
-  // Estado do lead (somente Vendas): "active" (padrão), "lost" ou "all".
-  const [filterState, setFilterState] = useState<"active" | "lost" | "all">("active");
-  // Status de arquivamento (somente Vendas): "active" (padrão), "archived" ou "all".
-  const [filterStatus, setFilterStatus] = useState<"active" | "concluded" | "archived" | "all">("active");
-  // Filtros específicos da aba Operações
-  const [filterBoarding, setFilterBoarding] = useState<"all" | "7" | "15" | "30">("all");
-  const [filterOpsStatus, setFilterOpsStatus] = useState<"all" | "normal" | "urgent" | "waiting">("all");
-  const [filterDestination, setFilterDestination] = useState<string>("all");
+  // ─── Toolbar state (search + filters) — persistido por aba ─────
+  const filtersStorageKey = (t: "sales" | "ops") =>
+    t === "sales" ? "crm_filters_funil_vendas" : "crm_filters_pos_venda";
 
-  // View mode (kanban | table) — persistido em localStorage
-  const viewModeKey = `crm:viewMode:${tab}`;
-  const [viewMode, setViewMode] = useState<"kanban" | "table">(() => {
-    if (typeof window === "undefined") return "kanban";
-    const saved = window.localStorage.getItem(`crm:viewMode:${tab}`);
-    return saved === "table" ? "table" : "kanban";
-  });
+  type PersistedFilters = {
+    searchTerm: string;
+    filterAgent: string;
+    filterTag: string;
+    filterTemp: string;
+    filterLevel: string;
+    filterSource: string;
+    filterState: "active" | "lost" | "all";
+    filterStatus: "active" | "concluded" | "archived" | "all";
+    filterBoarding: "all" | "7" | "15" | "30";
+    filterOpsStatus: "all" | "normal" | "urgent" | "waiting";
+    filterDestination: string;
+    viewMode: "kanban" | "table";
+    sortKey: string | null;
+    sortDir: "asc" | "desc" | null;
+  };
+
+  const defaultFilters: PersistedFilters = {
+    searchTerm: "",
+    filterAgent: "all",
+    filterTag: "all",
+    filterTemp: "all",
+    filterLevel: "all",
+    filterSource: "all",
+    filterState: "active",
+    filterStatus: "active",
+    filterBoarding: "all",
+    filterOpsStatus: "all",
+    filterDestination: "all",
+    viewMode: "kanban",
+    sortKey: null,
+    sortDir: null,
+  };
+
+  const loadPersistedFilters = (t: "sales" | "ops"): PersistedFilters => {
+    if (typeof window === "undefined") return defaultFilters;
+    try {
+      const raw = window.localStorage.getItem(filtersStorageKey(t));
+      if (!raw) {
+        // back-compat: viewMode previously stored under crm:viewMode:<tab>
+        const legacyVM = window.localStorage.getItem(`crm:viewMode:${t}`);
+        return {
+          ...defaultFilters,
+          viewMode: legacyVM === "table" ? "table" : "kanban",
+        };
+      }
+      const parsed = JSON.parse(raw);
+      return { ...defaultFilters, ...(parsed && typeof parsed === "object" ? parsed : {}) };
+    } catch {
+      return defaultFilters;
+    }
+  };
+
+  const initialFilters = useMemo(() => loadPersistedFilters(initialTab), []);
+
+  const [searchTerm, setSearchTerm] = useState(initialFilters.searchTerm);
+  const [filterAgent, setFilterAgent] = useState<string>(initialFilters.filterAgent);
+  const [filterTag, setFilterTag] = useState<string>(initialFilters.filterTag);
+  const [filterTemp, setFilterTemp] = useState<string>(initialFilters.filterTemp);
+  const [filterLevel, setFilterLevel] = useState<string>(initialFilters.filterLevel);
+  const [filterSource, setFilterSource] = useState<string>(initialFilters.filterSource);
+  const [filterState, setFilterState] = useState<"active" | "lost" | "all">(initialFilters.filterState);
+  const [filterStatus, setFilterStatus] = useState<"active" | "concluded" | "archived" | "all">(initialFilters.filterStatus);
+  const [filterBoarding, setFilterBoarding] = useState<"all" | "7" | "15" | "30">(initialFilters.filterBoarding);
+  const [filterOpsStatus, setFilterOpsStatus] = useState<"all" | "normal" | "urgent" | "waiting">(initialFilters.filterOpsStatus);
+  const [filterDestination, setFilterDestination] = useState<string>(initialFilters.filterDestination);
+
+  // View mode (kanban | table) — persistido junto aos filtros
+  const [viewMode, setViewMode] = useState<"kanban" | "table">(initialFilters.viewMode);
+
+  // Sort (Tabela) — persistido junto aos filtros
+  const [tableSortKey, setTableSortKey] = useState<string | null>(initialFilters.sortKey);
+  const [tableSortDir, setTableSortDir] = useState<"asc" | "desc" | null>(initialFilters.sortDir);
+
+  // Reidrata estados ao trocar de aba (cada aba tem filtros independentes)
+  const lastLoadedTabRef = useRef<"sales" | "ops">(initialTab);
+  useEffect(() => {
+    if (lastLoadedTabRef.current === tab) return;
+    lastLoadedTabRef.current = tab;
+    const next = loadPersistedFilters(tab);
+    setSearchTerm(next.searchTerm);
+    setFilterAgent(next.filterAgent);
+    setFilterTag(next.filterTag);
+    setFilterTemp(next.filterTemp);
+    setFilterLevel(next.filterLevel);
+    setFilterSource(next.filterSource);
+    setFilterState(next.filterState);
+    setFilterStatus(next.filterStatus);
+    setFilterBoarding(next.filterBoarding);
+    setFilterOpsStatus(next.filterOpsStatus);
+    setFilterDestination(next.filterDestination);
+    setViewMode(next.viewMode);
+    setTableSortKey(next.sortKey);
+    setTableSortDir(next.sortDir);
+  }, [tab]);
+
+  // Salva filtros sempre que mudam (para a aba ativa)
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const saved = window.localStorage.getItem(viewModeKey);
-    setViewMode(saved === "table" ? "table" : "kanban");
-  }, [viewModeKey]);
+    const payload: PersistedFilters = {
+      searchTerm,
+      filterAgent,
+      filterTag,
+      filterTemp,
+      filterLevel,
+      filterSource,
+      filterState,
+      filterStatus,
+      filterBoarding,
+      filterOpsStatus,
+      filterDestination,
+      viewMode,
+      sortKey: tableSortKey,
+      sortDir: tableSortDir,
+    };
+    try {
+      window.localStorage.setItem(filtersStorageKey(tab), JSON.stringify(payload));
+      // back-compat: mantém viewMode em chave separada (usada em handleViewPostSale)
+      window.localStorage.setItem(`crm:viewMode:${tab}`, viewMode);
+    } catch {
+      /* ignore quota errors */
+    }
+  }, [
+    tab,
+    searchTerm,
+    filterAgent,
+    filterTag,
+    filterTemp,
+    filterLevel,
+    filterSource,
+    filterState,
+    filterStatus,
+    filterBoarding,
+    filterOpsStatus,
+    filterDestination,
+    viewMode,
+    tableSortKey,
+    tableSortDir,
+  ]);
+
   const handleViewModeChange = (mode: "kanban" | "table") => {
     setViewMode(mode);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(viewModeKey, mode);
-    }
   };
 
 
