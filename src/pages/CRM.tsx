@@ -67,6 +67,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { KanbanCard, type KanbanCardData, type LeadTemperature } from "@/components/crm/KanbanCard";
 import { CrmStagnationSettingsDialog } from "@/components/crm/CrmStagnationSettingsDialog";
@@ -305,6 +306,7 @@ function KanbanBoard({
   onCardViewConversation,
   onCardEdit,
   onCardArchive,
+  onCardUnarchive,
   onCardMarkLost,
   onCardReactivateLost,
   onCardKeepActive,
@@ -336,6 +338,7 @@ function KanbanBoard({
   onCardViewConversation?: (card: KanbanCardData) => void;
   onCardEdit?: (card: KanbanCardData) => void;
   onCardArchive?: (card: KanbanCardData) => void;
+  onCardUnarchive?: (card: KanbanCardData) => void;
   onCardMarkLost?: (card: KanbanCardData) => void;
   onCardReactivateLost?: (card: KanbanCardData) => void;
   onCardKeepActive?: (card: KanbanCardData) => void;
@@ -380,6 +383,7 @@ function KanbanBoard({
               onCardViewConversation={onCardViewConversation}
               onCardEdit={onCardEdit}
               onCardArchive={onCardArchive}
+              onCardUnarchive={onCardUnarchive}
               onCardMarkLost={onCardMarkLost}
               onCardReactivateLost={onCardReactivateLost}
               onCardKeepActive={onCardKeepActive}
@@ -423,6 +427,7 @@ function KanbanColumnCard({
   onCardViewConversation,
   onCardEdit,
   onCardArchive,
+  onCardUnarchive,
   onCardMarkLost,
   onCardReactivateLost,
   onCardKeepActive,
@@ -455,6 +460,7 @@ function KanbanColumnCard({
   onCardViewConversation?: (card: KanbanCardData) => void;
   onCardEdit?: (card: KanbanCardData) => void;
   onCardArchive?: (card: KanbanCardData) => void;
+  onCardUnarchive?: (card: KanbanCardData) => void;
   onCardMarkLost?: (card: KanbanCardData) => void;
   onCardReactivateLost?: (card: KanbanCardData) => void;
   onCardKeepActive?: (card: KanbanCardData) => void;
@@ -660,6 +666,7 @@ function KanbanColumnCard({
                       onViewConversation={onCardViewConversation}
                       onEdit={onCardEdit}
                       onArchive={onCardArchive}
+                      onUnarchive={onCardUnarchive}
                       onMarkLost={onCardMarkLost}
                       onReactivateLost={onCardReactivateLost}
                       onKeepActive={onCardKeepActive}
@@ -898,11 +905,10 @@ export default function CRM() {
     const fetchLeads = async () => {
       const { data, error } = await supabase
         .from("leads")
-        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, is_returning, returned_at, assigned_user_id, status, is_lost, lost_at, lost_from_status, lost_reason, last_interaction_at, is_stagnant, stagnant_since, archive_pending_at")
+        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, is_returning, returned_at, assigned_user_id, status, is_lost, lost_at, lost_from_status, lost_reason, last_interaction_at, is_stagnant, stagnant_since, archive_pending_at, archived, archived_at")
         .is("converted_client_id", null)
-        .or("archived.is.null,archived.eq.false")
         .order("created_at", { ascending: false })
-        .limit(100);
+        .limit(200);
       if (error || cancelled || !data) {
         if (!cancelled) setIsLoadingLeads(false);
         return;
@@ -996,6 +1002,7 @@ export default function CRM() {
           stagnantSince: l.stagnant_since ?? undefined,
           lastInteractionAt: l.last_interaction_at ?? undefined,
           archivePendingAt: l.archive_pending_at ?? undefined,
+          isArchived: !!l.archived,
           tags: [
             l.travelers_count ? { label: `${l.travelers_count} viajante(s)`, tone: "blue" as const } : null,
             isFromWhatsApp ? { label: "WhatsApp", tone: "green" as const } : null,
@@ -2181,11 +2188,20 @@ export default function CRM() {
       return;
     }
     const cardId = archiveTarget.id;
-    setSalesColumns((prev) => prev.map((col) => ({ ...col, cards: col.cards.filter((c) => c.id !== cardId) })));
-    setOpsColumns((prev) => prev.map((col) => ({ ...col, cards: col.cards.filter((c) => c.id !== cardId) })));
+    setSalesColumns((prev) =>
+      prev.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) => (c.id === cardId ? { ...c, isArchived: true } : c)),
+      })),
+    );
+    setOpsColumns((prev) =>
+      prev.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) => (c.id === cardId ? { ...c, isArchived: true } : c)),
+      })),
+    );
     toast.success("Card arquivado.");
     setArchiveTarget(null);
-    // Recarrega a lista de arquivados
     setArchivedRefreshTick((t) => t + 1);
   };
 
@@ -2253,6 +2269,18 @@ export default function CRM() {
       return;
     }
     setArchivedCards((prev) => prev.filter((c) => c.id !== card.id));
+    setSalesColumns((prev) =>
+      prev.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) => (c.id === card.id ? { ...c, isArchived: false } : c)),
+      })),
+    );
+    setOpsColumns((prev) =>
+      prev.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) => (c.id === card.id ? { ...c, isArchived: false } : c)),
+      })),
+    );
     setLeadsRefreshTick((t) => t + 1);
     toast.success("Card desarquivado.");
   };
@@ -2369,6 +2397,8 @@ export default function CRM() {
   const [filterSource, setFilterSource] = useState<string>("all");
   // Estado do lead (somente Vendas): "active" (padrão), "lost" ou "all".
   const [filterState, setFilterState] = useState<"active" | "lost" | "all">("active");
+  // Status de arquivamento (somente Vendas): "active" (padrão), "archived" ou "all".
+  const [filterStatus, setFilterStatus] = useState<"active" | "archived" | "all">("active");
   // Filtros específicos da aba Operações
   const [filterBoarding, setFilterBoarding] = useState<"all" | "7" | "15" | "30">("all");
   const [filterOpsStatus, setFilterOpsStatus] = useState<"all" | "normal" | "urgent" | "waiting">("all");
@@ -2455,6 +2485,9 @@ export default function CRM() {
         }
 
         if (tab === "sales") {
+          // Status (arquivamento): "active" esconde arquivados; "archived" só arquivados; "all" ambos.
+          if (filterStatus === "active" && card.isArchived) return false;
+          if (filterStatus === "archived" && !card.isArchived) return false;
           // Filtro de Estado: por padrão esconde leads perdidos.
           if (filterState === "active" && card.isLost) return false;
           if (filterState === "lost" && !card.isLost) return false;
@@ -2495,12 +2528,12 @@ export default function CRM() {
         );
       }),
     }));
-  }, [columns, searchTerm, tab, filterAgent, filterTag, filterTemp, filterLevel, filterSource, filterState, filterBoarding, filterOpsStatus, filterDestination]);
+  }, [columns, searchTerm, tab, filterAgent, filterTag, filterTemp, filterLevel, filterSource, filterState, filterStatus, filterBoarding, filterOpsStatus, filterDestination]);
 
   // ─── KPIs ────────────────────────────────────────────────
   const allCards = useMemo(() => columns.flatMap((c) => c.cards), [columns]);
-  // Métricas excluem cards perdidos e contadores de coluna no Kanban também (via filteredColumns).
-  const activeCards = useMemo(() => allCards.filter((c) => !c.isLost), [allCards]);
+  // Métricas excluem cards perdidos e arquivados; contadores de coluna no Kanban também (via filteredColumns).
+  const activeCards = useMemo(() => allCards.filter((c) => !c.isLost && !c.isArchived), [allCards]);
   const totalLeads = activeCards.length;
   const aiLeads = activeCards.filter((c) => c.isAILead).length;
   const pipelineValue = activeCards.reduce((sum, c) => sum + (c.estimatedValue || 0), 0);
@@ -2660,9 +2693,28 @@ export default function CRM() {
           {/* Linha 1: Título à esquerda, seletor Funil/Operações à direita */}
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="min-w-0">
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-                CRM
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                  CRM
+                </h1>
+                {tab === "sales" && (
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={() => setStagnationSettingsOpen(true)}
+                          aria-label="Configurações do funil"
+                          className="inline-flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground/70 hover:text-foreground transition-colors duration-200"
+                        >
+                          <Settings className="w-5 h-5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">Configurações do funil</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
               <p className="text-sm text-muted-foreground mt-0.5">
                 Acompanhe leads, qualificações e operações em viagem em um só lugar.
               </p>
@@ -2699,17 +2751,6 @@ export default function CRM() {
                 <Plane className="w-4 h-4" />
                 Operações em Viagem
               </button>
-              {tab === "sales" && (
-                <button
-                  type="button"
-                  onClick={() => setStagnationSettingsOpen(true)}
-                  className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  title="Configurações de estagnação e arquivamento"
-                >
-                  <Settings className="w-3.5 h-3.5" />
-                  Automação
-                </button>
-              )}
             </div>
           </div>
           <CrmStagnationSettingsDialog open={stagnationSettingsOpen} onOpenChange={setStagnationSettingsOpen} />
@@ -2785,6 +2826,33 @@ export default function CRM() {
               className="pl-8 h-8 text-xs rounded-full"
             />
           </div>
+
+          {tab === "sales" && (
+            <FilterChip
+              label="Status"
+              value={
+                filterStatus === "active"
+                  ? "Status: Ativos"
+                  : filterStatus === "archived"
+                    ? "Status: Arquivados"
+                    : "Status: Todos"
+              }
+              active={filterStatus !== "active"}
+              onClear={() => setFilterStatus("active")}
+              width={200}
+            >
+              <SearchableList
+                items={[
+                  { id: "active", label: "Ativos" },
+                  { id: "archived", label: "Arquivados" },
+                  { id: "all", label: "Todos" },
+                ]}
+                selected={filterStatus}
+                onSelect={(v) => setFilterStatus(v as "active" | "archived" | "all")}
+                placeholder="Buscar..."
+              />
+            </FilterChip>
+          )}
 
           <FilterChip
             label="Responsável"
@@ -3108,6 +3176,7 @@ export default function CRM() {
             onCardViewConversation={handleCardViewConversation}
             onCardEdit={handleCardEdit}
             onCardArchive={handleCardArchive}
+            onCardUnarchive={handleCardUnarchive}
             onCardMarkLost={tab === "sales" ? handleMarkLost : undefined}
             onCardReactivateLost={tab === "sales" ? handleReactivateLost : undefined}
             onCardKeepActive={tab === "sales" ? handleKeepActive : undefined}
@@ -3133,22 +3202,6 @@ export default function CRM() {
           />
         )}
 
-        {tab === "sales" && (
-          <ArchivedSection
-            cards={archivedCards}
-            columns={salesColumns}
-            expanded={archivedExpanded}
-            onToggle={() => setArchivedExpanded((v) => !v)}
-            search={archivedSearch}
-            onSearchChange={setArchivedSearch}
-            dateFilter={archivedDateFilter}
-            onDateFilterChange={setArchivedDateFilter}
-            onCardClick={handleCardClick}
-            onUnarchive={handleCardUnarchive}
-            onCardEdit={handleCardEdit}
-            onCardViewConversation={handleCardViewConversation}
-          />
-        )}
       </main>
 
 

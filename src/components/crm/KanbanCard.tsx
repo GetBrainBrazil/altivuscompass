@@ -114,6 +114,8 @@ export type KanbanCardData = {
   lastInteractionAt?: string;
   /** Data ISO em que foi enviado o aviso de "será arquivado em 24h". */
   archivePendingAt?: string;
+  /** Lead arquivado — card recebe visual opaco e badge "Arquivado". */
+  isArchived?: boolean;
 };
 
 const TAG_TONE_CLASSES: Record<KanbanTagTone, string> = {
@@ -462,7 +464,7 @@ export function KanbanCard({
           "border-amber-300/70 ring-1 ring-amber-200/60 bg-gradient-to-br from-amber-50/40 to-transparent",
         card.isReturning && !card.isRepurchase &&
           "border-sky-300/70 ring-1 ring-sky-200/60 bg-gradient-to-br from-sky-50/40 to-transparent",
-        archivedAppearance && "opacity-60 grayscale-[0.4] hover:opacity-80",
+        (archivedAppearance || card.isArchived) && "opacity-60 grayscale-[0.4] hover:opacity-80",
         isLost && "opacity-70 bg-destructive/[0.03] hover:opacity-90",
       )}
     >
@@ -702,7 +704,7 @@ export function KanbanCard({
                     </DropdownMenuItem>
                   )}
                   {(onArchive || onUnarchive || onDelete) && <DropdownMenuSeparator />}
-                  {onUnarchive ? (
+                  {card.isArchived && onUnarchive ? (
                     <DropdownMenuItem
                       onSelect={(e) => {
                         e.preventDefault();
@@ -712,7 +714,7 @@ export function KanbanCard({
                       <ArchiveRestore className="w-3.5 h-3.5 mr-2" />
                       Desarquivar
                     </DropdownMenuItem>
-                  ) : onArchive ? (
+                  ) : !card.isArchived && onArchive ? (
                     <DropdownMenuItem
                       onSelect={(e) => {
                         e.preventDefault();
@@ -721,6 +723,16 @@ export function KanbanCard({
                     >
                       <Archive className="w-3.5 h-3.5 mr-2" />
                       Arquivar
+                    </DropdownMenuItem>
+                  ) : onUnarchive ? (
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        onUnarchive(card);
+                      }}
+                    >
+                      <ArchiveRestore className="w-3.5 h-3.5 mr-2" />
+                      Desarquivar
                     </DropdownMenuItem>
                   ) : null}
                   {onDelete && (
@@ -854,6 +866,15 @@ export function KanbanCard({
               <div className="flex items-center gap-1 flex-wrap min-w-0 flex-1">
                 {card.contactLevel && (
                   <ContactLevelBadge level={card.contactLevel} size="xs" className="shrink-0" />
+                )}
+                {card.isArchived && (
+                  <span
+                    title="Card arquivado"
+                    className="inline-flex items-center gap-0.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-slate-600"
+                  >
+                    <Archive className="w-2.5 h-2.5" />
+                    Arquivado
+                  </span>
                 )}
                 {isLost && (
                   <span
