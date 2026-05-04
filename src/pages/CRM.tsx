@@ -32,7 +32,7 @@ import {
   Settings,
   ClipboardCheck,
 } from "lucide-react";
-import { FilterChip, SearchableList } from "@/components/tasks/FilterChip";
+import { FilterChip, SearchableList, MultiSearchableList } from "@/components/tasks/FilterChip";
 import { CRMTableView } from "@/components/crm/CRMTableView";
 import { useUserPreference } from "@/hooks/useUserPreference";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -2422,7 +2422,7 @@ export default function CRM() {
     filterTemp: string;
     filterLevel: string;
     filterSource: string;
-    filterState: "active" | "lost" | "all";
+    filterState: string[];
     filterStatus: "active" | "concluded" | "archived" | "stagnant" | "all";
     filterBoarding: "all" | "7" | "15" | "30";
     filterOpsStatus: "all" | "normal" | "urgent" | "waiting";
@@ -2440,7 +2440,7 @@ export default function CRM() {
     filterTemp: "all",
     filterLevel: "all",
     filterSource: "all",
-    filterState: "active",
+    filterState: ["active"],
     filterStatus: "active",
     filterBoarding: "all",
     filterOpsStatus: "all",
@@ -2479,8 +2479,10 @@ export default function CRM() {
   const setFilterLevel = (v: string) => updateCurrent({ filterLevel: v });
   const filterSource = current.filterSource;
   const setFilterSource = (v: string) => updateCurrent({ filterSource: v });
-  const filterState = current.filterState;
-  const setFilterState = (v: "active" | "lost" | "all") => updateCurrent({ filterState: v });
+  const filterState: string[] = Array.isArray(current.filterState)
+    ? current.filterState
+    : (current.filterState ? [current.filterState as unknown as string] : ["active"]);
+  const setFilterState = (v: string[]) => updateCurrent({ filterState: v.length ? v : ["active"] });
   const filterStatus = current.filterStatus;
   const setFilterStatus = (v: "active" | "concluded" | "archived" | "stagnant" | "all") => updateCurrent({ filterStatus: v });
   const filterBoarding = current.filterBoarding;
@@ -2598,9 +2600,16 @@ export default function CRM() {
             if (card.isArchived) return false;
             if (!card.isStagnant) return false;
           }
-          // Filtro de Estado: por padrão esconde leads perdidos.
-          if (filterState === "active" && card.isLost) return false;
-          if (filterState === "lost" && !card.isLost) return false;
+          // Filtro de Estado (multi-select): "active" = nem perdido nem estagnado;
+          // "lost" = perdidos; "stagnant" = estagnados; "all" = qualquer um.
+          if (!filterState.includes("all")) {
+            const isActive = !card.isLost && !card.isStagnant;
+            const matches =
+              (filterState.includes("active") && isActive) ||
+              (filterState.includes("lost") && card.isLost) ||
+              (filterState.includes("stagnant") && card.isStagnant);
+            if (!matches) return false;
+          }
           if (filterTag !== "all" && !card.tags?.some((t) => t.label === filterTag)) return false;
           if (filterTemp !== "all") {
             const t = card.temperature ?? "cold";
@@ -2704,7 +2713,7 @@ export default function CRM() {
         filterTemp !== "all" ||
         filterLevel !== "all" ||
         filterSource !== "all" ||
-        filterState !== "active" ||
+        !(filterState.length === 1 && filterState[0] === "active") ||
         filterStatus !== "active")) ||
     (tab === "ops" &&
       (filterBoarding !== "all" ||
@@ -2988,25 +2997,35 @@ export default function CRM() {
             <>
               <FilterChip
                 label="Estado"
-                value={
-                  filterState === "active"
-                    ? "Estado: Ativos"
-                    : filterState === "lost"
-                      ? "Estado: Perdidos"
-                      : "Estado: Todos"
-                }
-                active={filterState !== "active"}
-                onClear={() => setFilterState("active")}
-                width={200}
+                value={(() => {
+                  const labels: Record<string, string> = {
+                    active: "Ativos",
+                    lost: "Perdidos",
+                    stagnant: "Estagnados",
+                    all: "Todos",
+                  };
+                  if (filterState.includes("all")) return "Estado: Todos";
+                  if (filterState.length === 1) return `Estado: ${labels[filterState[0]] ?? filterState[0]}`;
+                  return `Estado: ${filterState.length} selecionados`;
+                })()}
+                active={!(filterState.length === 1 && filterState[0] === "active")}
+                onClear={() => setFilterState(["active"])}
+                width={220}
               >
-                <SearchableList
+                <MultiSearchableList
                   items={[
                     { id: "active", label: "Ativos" },
                     { id: "lost", label: "Perdidos" },
+                    { id: "stagnant", label: "Estagnados" },
                     { id: "all", label: "Todos" },
                   ]}
                   selected={filterState}
-                  onSelect={(v) => setFilterState(v as "active" | "lost" | "all")}
+                  onChange={(ids) => {
+                    // "all" é exclusivo: se marcado, remove os outros; se outro for marcado, remove "all".
+                    const last = ids[ids.length - 1];
+                    if (last === "all") setFilterState(["all"]);
+                    else setFilterState(ids.filter((i) => i !== "all"));
+                  }}
                   placeholder="Buscar..."
                 />
               </FilterChip>

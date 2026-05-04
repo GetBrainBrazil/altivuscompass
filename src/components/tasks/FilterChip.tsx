@@ -102,3 +102,62 @@ export function SearchableList({ items, selected, onSelect, placeholder = "Busca
     </div>
   );
 }
+
+interface MultiSearchableListProps {
+  items: { id: string; label: string }[];
+  selected: string[];
+  onChange: (ids: string[]) => void;
+  placeholder?: string;
+}
+
+export function MultiSearchableList({ items, selected, onChange, placeholder = "Buscar..." }: MultiSearchableListProps) {
+  const [q, setQ] = useState("");
+  const filtered = q.trim()
+    ? items.filter((i) => i.label.toLowerCase().includes(q.toLowerCase()))
+    : items;
+  const toggle = (id: string) => {
+    onChange(selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id]);
+  };
+  return (
+    <div className="flex flex-col">
+      <div className="relative p-2 border-b border-border">
+        <Search size={13} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          autoFocus
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder={placeholder}
+          className="h-8 pl-7 text-xs"
+        />
+      </div>
+      <div className="max-h-64 overflow-y-auto py-1">
+        {filtered.length === 0 ? (
+          <div className="px-3 py-4 text-xs text-muted-foreground text-center">Nenhum resultado</div>
+        ) : (
+          filtered.map((item) => {
+            const isSel = selected.includes(item.id);
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => toggle(item.id)}
+                className={cn(
+                  "w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-muted/60 transition-colors",
+                  isSel && "text-primary font-medium",
+                )}
+              >
+                <span className={cn(
+                  "shrink-0 h-3.5 w-3.5 rounded-sm border flex items-center justify-center",
+                  isSel ? "border-primary bg-primary text-primary-foreground" : "border-border",
+                )}>
+                  {isSel && <Check size={10} />}
+                </span>
+                <span className="truncate">{item.label}</span>
+              </button>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
