@@ -2698,8 +2698,20 @@ export default function CRM() {
                 <Plane className="w-4 h-4" />
                 Operações em Viagem
               </button>
+              {tab === "sales" && (
+                <button
+                  type="button"
+                  onClick={() => setStagnationSettingsOpen(true)}
+                  className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  title="Configurações de estagnação e arquivamento"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  Automação
+                </button>
+              )}
             </div>
           </div>
+          <CrmStagnationSettingsDialog open={stagnationSettingsOpen} onOpenChange={setStagnationSettingsOpen} />
 
           {/* Linha 2: mini cards de métricas em grid de 3, largura total */}
           <div key={tab} className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 animate-fade-in">
