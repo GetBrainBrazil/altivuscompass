@@ -2406,17 +2406,24 @@ export default function CRM() {
   const [filterDestination, setFilterDestination] = useState<string>("all");
 
   // View mode (kanban | table) — persistido em localStorage
+  const viewModeKey = `crm:viewMode:${tab}`;
   const [viewMode, setViewMode] = useState<"kanban" | "table">(() => {
     if (typeof window === "undefined") return "kanban";
-    const saved = window.localStorage.getItem("crm:viewMode");
+    const saved = window.localStorage.getItem(`crm:viewMode:${tab}`);
     return saved === "table" ? "table" : "kanban";
   });
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = window.localStorage.getItem(viewModeKey);
+    setViewMode(saved === "table" ? "table" : "kanban");
+  }, [viewModeKey]);
   const handleViewModeChange = (mode: "kanban" | "table") => {
     setViewMode(mode);
     if (typeof window !== "undefined") {
-      window.localStorage.setItem("crm:viewMode", mode);
+      window.localStorage.setItem(viewModeKey, mode);
     }
   };
+
 
   const agentOptions = useMemo(() => {
     // Lista de consultores cadastrados na plataforma + nomes que já aparecem
