@@ -1882,14 +1882,7 @@ export default function CRM() {
       return true;
     }
 
-    // Caso especial: "Perdidos" → abre modal pedindo motivo da perda
-    if (tab === "sales" && targetColumnId === "lost") {
-      setLostMove(move);
-      setLostReason("Sem resposta");
-      setLostDetails("");
-      setLostOpen(true);
-      return true;
-    }
+    // (Caso "Perdidos" como coluna foi removido — agora is_lost é estado, marcado pelo menu do card.)
 
     if (tab !== "sales") {
       performMove(move, false);
