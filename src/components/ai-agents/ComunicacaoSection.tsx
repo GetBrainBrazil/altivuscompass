@@ -86,39 +86,82 @@ const DAYS = [
 ];
 
 interface ComunicacaoSectionProps {
+  value?: Partial<ComunicacaoValue>;
+  onChange?: (v: ComunicacaoValue) => void;
   initialPersonality?: string;
   initialTone?: string;
 }
 
+const defaultValue = (
+  initialPersonality = "",
+  initialTone = "amigavel"
+): ComunicacaoValue => {
+  const startsCustom = !!initialPersonality && !TONES.some((t) => t.id === initialTone);
+  return {
+    tone: startsCustom ? "personalizado" : initialTone || "amigavel",
+    custom_tone_text: initialPersonality,
+    presentation_name: "",
+    languages: { pt: true, en: false, es: false },
+    auto_detect_language: false,
+    use_emojis: true,
+    max_message_length: 300,
+    welcome_message: "",
+    transfer_message: "",
+    after_hours_enabled: false,
+    after_hours_message: "",
+    business_hours_start: "09:00",
+    business_hours_end: "18:00",
+    business_days: Object.fromEntries(DAYS.map((d) => [d.key, d.weekday])),
+  };
+};
+
 export function ComunicacaoSection({
+  value,
+  onChange,
   initialPersonality = "",
   initialTone = "amigavel",
 }: ComunicacaoSectionProps) {
-  const startsCustom = !!initialPersonality && !TONES.some((t) => t.id === initialTone);
-  const [tone, setTone] = useState<string>(
-    startsCustom ? "personalizado" : initialTone || "amigavel"
-  );
-  const [customTone, setCustomTone] = useState<string>(initialPersonality);
+  const [state, setState] = useState<ComunicacaoValue>(() => ({
+    ...defaultValue(initialPersonality, initialTone),
+    ...(value || {}),
+  }));
 
-  const [displayName, setDisplayName] = useState("");
-  const [languages, setLanguages] = useState<Record<string, boolean>>({
-    pt: true,
-    en: false,
-    es: false,
-  });
-  const [autoDetectLang, setAutoDetectLang] = useState(false);
-  const [useEmojis, setUseEmojis] = useState(true);
-  const [maxLength, setMaxLength] = useState(300);
+  const update = <K extends keyof ComunicacaoValue>(key: K, val: ComunicacaoValue[K]) => {
+    setState((prev) => {
+      const next = { ...prev, [key]: val };
+      onChange?.(next);
+      return next;
+    });
+  };
 
-  const [welcomeMsg, setWelcomeMsg] = useState("");
-  const [holdMsg, setHoldMsg] = useState("");
-  const [offHoursEnabled, setOffHoursEnabled] = useState(false);
-  const [offHoursMsg, setOffHoursMsg] = useState("");
-  const [startTime, setStartTime] = useState("09:00");
-  const [endTime, setEndTime] = useState("18:00");
-  const [activeDays, setActiveDays] = useState<Record<string, boolean>>(
-    Object.fromEntries(DAYS.map((d) => [d.key, d.weekday]))
-  );
+  const tone = state.tone;
+  const setTone = (v: string) => update("tone", v);
+  const customTone = state.custom_tone_text;
+  const setCustomTone = (v: string) => update("custom_tone_text", v);
+  const displayName = state.presentation_name;
+  const setDisplayName = (v: string) => update("presentation_name", v);
+  const languages = state.languages;
+  const setLanguages = (v: Record<string, boolean>) => update("languages", v);
+  const autoDetectLang = state.auto_detect_language;
+  const setAutoDetectLang = (v: boolean) => update("auto_detect_language", v);
+  const useEmojis = state.use_emojis;
+  const setUseEmojis = (v: boolean) => update("use_emojis", v);
+  const maxLength = state.max_message_length;
+  const setMaxLength = (v: number) => update("max_message_length", v);
+  const welcomeMsg = state.welcome_message;
+  const setWelcomeMsg = (v: string) => update("welcome_message", v);
+  const holdMsg = state.transfer_message;
+  const setHoldMsg = (v: string) => update("transfer_message", v);
+  const offHoursEnabled = state.after_hours_enabled;
+  const setOffHoursEnabled = (v: boolean) => update("after_hours_enabled", v);
+  const offHoursMsg = state.after_hours_message;
+  const setOffHoursMsg = (v: string) => update("after_hours_message", v);
+  const startTime = state.business_hours_start;
+  const setStartTime = (v: string) => update("business_hours_start", v);
+  const endTime = state.business_hours_end;
+  const setEndTime = (v: string) => update("business_hours_end", v);
+  const activeDays = state.business_days;
+  const setActiveDays = (v: Record<string, boolean>) => update("business_days", v);
 
   return (
     <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
