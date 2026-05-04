@@ -882,15 +882,38 @@ export function KanbanCard({
                 {card.contactLevel && (
                   <ContactLevelBadge level={card.contactLevel} size="xs" className="shrink-0" />
                 )}
-                {card.isArchived && (
-                  <span
-                    title="Card arquivado"
-                    className="inline-flex items-center gap-0.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-slate-600"
-                  >
-                    <Archive className="w-2.5 h-2.5" />
-                    Arquivado
-                  </span>
-                )}
+                {card.isArchived && (() => {
+                  const archivedDate = card.archivedAt
+                    ? new Date(card.archivedAt).toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })
+                    : null;
+                  const tooltipText = [
+                    card.archivedFromStage ? `Arquivado em: ${card.archivedFromStage}` : null,
+                    archivedDate ? `Data: ${archivedDate}` : null,
+                  ].filter(Boolean).join(" • ");
+                  return (
+                    <TooltipProvider delayDuration={150}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span
+                            className="inline-flex items-center gap-0.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-slate-600 cursor-help"
+                          >
+                            <Archive className="w-2.5 h-2.5" />
+                            {archivedDate ? `Arquivado ${archivedDate}` : "Arquivado"}
+                          </span>
+                        </TooltipTrigger>
+                        {tooltipText && (
+                          <TooltipContent side="top" className="text-xs">
+                            {tooltipText}
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                  );
+                })()}
                 {isWonStage && !isLost && (
                   <>
                     <span
