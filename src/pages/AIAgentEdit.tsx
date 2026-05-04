@@ -70,15 +70,15 @@ type SectionKey =
   | "metricas"
   | "testar";
 
-const SECTIONS: { key: SectionKey; icon: string; label: string }[] = [
-  { key: "identidade", icon: "🤖", label: "Identidade" },
-  { key: "fluxos", icon: "🎯", label: "Fluxos de Atendimento" },
-  { key: "comunicacao", icon: "💬", label: "Comunicação" },
-  { key: "coleta", icon: "📋", label: "Coleta de Dados" },
-  { key: "regras", icon: "⚡", label: "Regras e Limites" },
-  { key: "integracoes", icon: "🔗", label: "Integrações" },
-  { key: "metricas", icon: "📊", label: "Métricas" },
-  { key: "testar", icon: "🧪", label: "Testar Agente" },
+const SECTIONS: { key: SectionKey; icon: LucideIcon; label: string }[] = [
+  { key: "identidade", icon: Bot, label: "Identidade" },
+  { key: "fluxos", icon: GitBranch, label: "Fluxos de Atendimento" },
+  { key: "comunicacao", icon: MessageCircle, label: "Comunicação" },
+  { key: "coleta", icon: ClipboardList, label: "Coleta de Dados" },
+  { key: "regras", icon: ShieldCheck, label: "Regras e Limites" },
+  { key: "integracoes", icon: Plug, label: "Integrações" },
+  { key: "metricas", icon: BarChart3, label: "Métricas" },
+  { key: "testar", icon: FlaskConical, label: "Testar Agente" },
 ];
 
 const AGENT_ICONS: { key: string; Icon: React.ComponentType<{ className?: string }> }[] = [
