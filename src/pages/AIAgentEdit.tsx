@@ -318,25 +318,37 @@ export default function AIAgentEdit() {
             <Button variant="outline" onClick={handleCancel} className="h-9">
               Cancelar
             </Button>
-            <Button
-              onClick={handleSave}
-              disabled={saving}
-              className="relative h-9 bg-[hsl(220_45%_15%)] hover:bg-[hsl(220_45%_22%)] text-white"
-            >
-              {saving ? (
-                <>
-                  <span className="inline-block h-3.5 w-3.5 mr-2 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-                  Salvando...
-                </>
-              ) : (
-                <>
-                  Salvar Configurações
-                  {isDirty && (
-                    <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-amber-400 ring-2 ring-white" />
-                  )}
-                </>
-              )}
-            </Button>
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="relative h-9 bg-[hsl(220_45%_15%)] hover:bg-[hsl(220_45%_22%)] text-white"
+                  >
+                    {saving ? (
+                      <>
+                        <span className="inline-block h-3.5 w-3.5 mr-2 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        Salvar Configurações
+                        {isDirty && (
+                          <span
+                            className="absolute -top-1 -right-1 rounded-full ring-2 ring-white"
+                            style={{ width: 8, height: 8, backgroundColor: "#F59E0B" }}
+                          />
+                        )}
+                      </>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                {isDirty && !saving && (
+                  <TooltipContent side="bottom">Há alterações não salvas</TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </div>
