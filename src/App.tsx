@@ -40,7 +40,7 @@ import LeadDetail from "./pages/LeadDetail";
 import LeadNew from "./pages/LeadNew";
 import LeadConvert from "./pages/LeadConvert";
 import OpsNew from "./pages/OpsNew";
-import AIAgents from "./pages/AIAgents";
+
 import AIAgentEdit from "./pages/AIAgentEdit";
 import WhatsAppConnection from "./pages/WhatsAppConnection";
 import NotFound from "./pages/NotFound";
