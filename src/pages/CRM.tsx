@@ -29,6 +29,7 @@ import {
   ArchiveRestore,
   ChevronDown,
   ChevronUp,
+  Settings,
 } from "lucide-react";
 import { FilterChip, SearchableList } from "@/components/tasks/FilterChip";
 import { CRMTableView } from "@/components/crm/CRMTableView";
@@ -68,6 +69,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { KanbanCard, type KanbanCardData, type LeadTemperature } from "@/components/crm/KanbanCard";
+import { CrmStagnationSettingsDialog } from "@/components/crm/CrmStagnationSettingsDialog";
 import { KanbanCardSkeleton } from "@/components/ui/loading-skeletons";
 import { ClientPromotionDialog } from "@/components/crm/ClientPromotionDialog";
 import { PENDING_OPS_CARD_KEY } from "@/pages/OpsNew";
@@ -305,6 +307,7 @@ function KanbanBoard({
   onCardArchive,
   onCardMarkLost,
   onCardReactivateLost,
+  onCardKeepActive,
   onCardRenameClient,
   agentOptions,
   focusCardId,
@@ -335,6 +338,7 @@ function KanbanBoard({
   onCardArchive?: (card: KanbanCardData) => void;
   onCardMarkLost?: (card: KanbanCardData) => void;
   onCardReactivateLost?: (card: KanbanCardData) => void;
+  onCardKeepActive?: (card: KanbanCardData) => void;
   onCardRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
   agentOptions?: { user_id: string; full_name: string; avatar_url?: string | null }[];
   focusCardId?: string | null;
@@ -378,6 +382,7 @@ function KanbanBoard({
               onCardArchive={onCardArchive}
               onCardMarkLost={onCardMarkLost}
               onCardReactivateLost={onCardReactivateLost}
+              onCardKeepActive={onCardKeepActive}
               onCardRenameClient={onCardRenameClient}
               agentOptions={agentOptions}
               focusCardId={focusCardId}
@@ -420,6 +425,7 @@ function KanbanColumnCard({
   onCardArchive,
   onCardMarkLost,
   onCardReactivateLost,
+  onCardKeepActive,
   onCardRenameClient,
   agentOptions,
   focusCardId,
@@ -451,6 +457,7 @@ function KanbanColumnCard({
   onCardArchive?: (card: KanbanCardData) => void;
   onCardMarkLost?: (card: KanbanCardData) => void;
   onCardReactivateLost?: (card: KanbanCardData) => void;
+  onCardKeepActive?: (card: KanbanCardData) => void;
   onCardRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
   agentOptions?: { user_id: string; full_name: string; avatar_url?: string | null }[];
   focusCardId?: string | null;
@@ -655,6 +662,7 @@ function KanbanColumnCard({
                       onArchive={onCardArchive}
                       onMarkLost={onCardMarkLost}
                       onReactivateLost={onCardReactivateLost}
+                      onKeepActive={onCardKeepActive}
                       onRenameClient={onCardRenameClient}
                     />
                   </div>
@@ -757,6 +765,7 @@ export default function CRM() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get("tab") === "ops" ? "ops" : "sales";
   const [tab, setTabState] = useState<"sales" | "ops">(initialTab);
+  const [stagnationSettingsOpen, setStagnationSettingsOpen] = useState(false);
 
   useEffect(() => {
     const urlTab = searchParams.get("tab") === "ops" ? "ops" : "sales";
@@ -889,7 +898,7 @@ export default function CRM() {
     const fetchLeads = async () => {
       const { data, error } = await supabase
         .from("leads")
-        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, is_returning, returned_at, assigned_user_id, status, is_lost, lost_at, lost_from_status, lost_reason")
+        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, is_returning, returned_at, assigned_user_id, status, is_lost, lost_at, lost_from_status, lost_reason, last_interaction_at, is_stagnant, stagnant_since, archive_pending_at")
         .is("converted_client_id", null)
         .or("archived.is.null,archived.eq.false")
         .order("created_at", { ascending: false })
@@ -983,6 +992,10 @@ export default function CRM() {
           isLost: !!l.is_lost,
           lostAt: l.lost_at ?? undefined,
           lostReason: l.lost_reason ?? undefined,
+          isStagnant: !!l.is_stagnant,
+          stagnantSince: l.stagnant_since ?? undefined,
+          lastInteractionAt: l.last_interaction_at ?? undefined,
+          archivePendingAt: l.archive_pending_at ?? undefined,
           tags: [
             l.travelers_count ? { label: `${l.travelers_count} viajante(s)`, tone: "blue" as const } : null,
             isFromWhatsApp ? { label: "WhatsApp", tone: "green" as const } : null,
@@ -1698,6 +1711,37 @@ export default function CRM() {
     } catch (err) {
       console.error("[handleReactivateLost] error:", err);
       toast.error("Erro ao reativar lead.");
+    }
+  };
+
+  const handleKeepActive = async (card: KanbanCardData) => {
+    const leadId = card.id.startsWith("lead-") ? card.id.slice(5) : null;
+    if (!leadId) return;
+    try {
+      const { error } = await supabase
+        .from("leads")
+        .update({
+          is_stagnant: false,
+          stagnant_since: null,
+          archive_pending_at: null,
+          last_interaction_at: new Date().toISOString(),
+        } as any)
+        .eq("id", leadId);
+      if (error) throw error;
+      setSalesColumns((prev) =>
+        prev.map((col) => ({
+          ...col,
+          cards: col.cards.map((c) =>
+            c.id === card.id
+              ? { ...c, isStagnant: false, stagnantSince: undefined, archivePendingAt: undefined, lastInteractionAt: new Date().toISOString() }
+              : c,
+          ),
+        })),
+      );
+      toast.success(`"${card.clientName}" mantido ativo.`);
+    } catch (err) {
+      console.error("[handleKeepActive] error:", err);
+      toast.error("Erro ao manter ativo.");
     }
   };
 
@@ -2655,8 +2699,20 @@ export default function CRM() {
                 <Plane className="w-4 h-4" />
                 Operações em Viagem
               </button>
+              {tab === "sales" && (
+                <button
+                  type="button"
+                  onClick={() => setStagnationSettingsOpen(true)}
+                  className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  title="Configurações de estagnação e arquivamento"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  Automação
+                </button>
+              )}
             </div>
           </div>
+          <CrmStagnationSettingsDialog open={stagnationSettingsOpen} onOpenChange={setStagnationSettingsOpen} />
 
           {/* Linha 2: mini cards de métricas em grid de 3, largura total */}
           <div key={tab} className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 animate-fade-in">
@@ -3054,6 +3110,7 @@ export default function CRM() {
             onCardArchive={handleCardArchive}
             onCardMarkLost={tab === "sales" ? handleMarkLost : undefined}
             onCardReactivateLost={tab === "sales" ? handleReactivateLost : undefined}
+            onCardKeepActive={tab === "sales" ? handleKeepActive : undefined}
             onCardRenameClient={handleCardRenameClient}
             agentOptions={responsibleOptions}
             focusCardId={focusCardId}

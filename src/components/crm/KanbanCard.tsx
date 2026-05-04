@@ -106,6 +106,14 @@ export type KanbanCardData = {
   lostAt?: string;
   /** ID da coluna de origem da perda (para reativação). */
   lostFromColumnId?: string;
+  /** Marcado pelo job diário como "estagnado" (sem interação por X dias). */
+  isStagnant?: boolean;
+  /** Data ISO em que o card entrou no estado estagnado. */
+  stagnantSince?: string;
+  /** Data ISO da última interação registrada (mensagem, nota, edição, mudança de etapa). */
+  lastInteractionAt?: string;
+  /** Data ISO em que foi enviado o aviso de "será arquivado em 24h". */
+  archivePendingAt?: string;
 };
 
 const TAG_TONE_CLASSES: Record<KanbanTagTone, string> = {
@@ -239,6 +247,7 @@ export function KanbanCard({
   onRenameClient,
   onMarkLost,
   onReactivateLost,
+  onKeepActive,
 }: {
   card: KanbanCardData;
   onClick?: (card: KanbanCardData) => void;
@@ -273,16 +282,20 @@ export function KanbanCard({
   onMarkLost?: (card: KanbanCardData) => void;
   /** Reativar lead perdido — remove o estado "Perdido" e devolve à etapa de origem. */
   onReactivateLost?: (card: KanbanCardData) => void;
+  /** Cancela arquivamento pendente / remove badge estagnado. */
+  onKeepActive?: (card: KanbanCardData) => void;
 }) {
   const value = formatBRL(card.estimatedValue);
   const alert = card.alert;
   const temperature: LeadTemperature = card.temperature ?? "cold";
   const stageDays = daysSince(card.stageEnteredAt);
   const lastContactDays = daysSince(card.lastContactAt);
+  const inactiveDays = daysSince(card.lastInteractionAt);
   const daysToTravel = daysUntil(card.travelDateISO);
   const isBoardingSoon = daysToTravel !== null && daysToTravel >= 0 && daysToTravel <= 30;
   const nameIsPhone = isPhoneLikeName(card.clientName);
   const isLost = !!card.isLost;
+  const isStagnant = !!card.isStagnant;
   const isIncomplete =
     !card.destination && !card.travelDate && !card.agent && !card.estimatedValue && !card.phone;
 
@@ -384,13 +397,15 @@ export function KanbanCard({
   };
   const leftBorder = isLost
     ? "border-l-destructive"
-    : alert?.tone === "destructive"
-      ? "border-l-destructive/60"
-      : card.isRepurchase
-        ? "border-l-amber-200"
-        : card.isReturning
-          ? "border-l-slate-300"
-          : tempBorder[temperature];
+    : isStagnant
+      ? "border-l-amber-400"
+      : alert?.tone === "destructive"
+        ? "border-l-destructive/60"
+        : card.isRepurchase
+          ? "border-l-amber-200"
+          : card.isReturning
+            ? "border-l-slate-300"
+            : tempBorder[temperature];
   const noAgent = !card.agent;
 
   return (
@@ -675,6 +690,17 @@ export function KanbanCard({
                       Marcar como perdido
                     </DropdownMenuItem>
                   )}
+                  {!isLost && isStagnant && onKeepActive && (
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        onKeepActive(card);
+                      }}
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 mr-2 text-amber-600" />
+                      Manter ativo
+                    </DropdownMenuItem>
+                  )}
                   {(onArchive || onUnarchive || onDelete) && <DropdownMenuSeparator />}
                   {onUnarchive ? (
                     <DropdownMenuItem
@@ -836,6 +862,26 @@ export function KanbanCard({
                   >
                     <Target className="w-2.5 h-2.5" />
                     {card.lostReason ? `Perdido — ${card.lostReason}` : "Perdido"}
+                  </span>
+                )}
+                {!isLost && isStagnant && (
+                  <span
+                    title={
+                      card.archivePendingAt
+                        ? "Será arquivado automaticamente em 24h por inatividade"
+                        : `Sem atividade há ${inactiveDays ?? 0} dias`
+                    }
+                    className={cn(
+                      "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide",
+                      card.archivePendingAt
+                        ? "bg-destructive/15 text-destructive"
+                        : "bg-amber-100 text-amber-700",
+                    )}
+                  >
+                    <AlertTriangle className="w-2.5 h-2.5" />
+                    {card.archivePendingAt
+                      ? "Arquivar em 24h"
+                      : `Estagnado · ${inactiveDays ?? 0}d`}
                   </span>
                 )}
                 {cornerBadge}

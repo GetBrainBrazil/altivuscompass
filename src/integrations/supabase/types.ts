@@ -19,6 +19,8 @@ export type Database = {
           address: string | null
           ai_globally_paused: boolean
           ai_prompt: string | null
+          auto_archive_days: number
+          auto_archive_enabled: boolean
           cnpj: string | null
           created_at: string
           email: string | null
@@ -27,6 +29,7 @@ export type Database = {
           logo_url: string | null
           name: string
           phone: string | null
+          stagnation_days: number
           updated_at: string
           website: string | null
         }
@@ -34,6 +37,8 @@ export type Database = {
           address?: string | null
           ai_globally_paused?: boolean
           ai_prompt?: string | null
+          auto_archive_days?: number
+          auto_archive_enabled?: boolean
           cnpj?: string | null
           created_at?: string
           email?: string | null
@@ -42,6 +47,7 @@ export type Database = {
           logo_url?: string | null
           name?: string
           phone?: string | null
+          stagnation_days?: number
           updated_at?: string
           website?: string | null
         }
@@ -49,6 +55,8 @@ export type Database = {
           address?: string | null
           ai_globally_paused?: boolean
           ai_prompt?: string | null
+          auto_archive_days?: number
+          auto_archive_enabled?: boolean
           cnpj?: string | null
           created_at?: string
           email?: string | null
@@ -57,6 +65,7 @@ export type Database = {
           logo_url?: string | null
           name?: string
           phone?: string | null
+          stagnation_days?: number
           updated_at?: string
           website?: string | null
         }
@@ -1800,6 +1809,7 @@ export type Database = {
         Row: {
           ai_collected_data: Json | null
           ai_summary: string | null
+          archive_pending_at: string | null
           archived: boolean
           archived_at: string | null
           assigned_user_id: string | null
@@ -1816,7 +1826,9 @@ export type Database = {
           id: string
           is_lost: boolean
           is_returning: boolean
+          is_stagnant: boolean
           last_contact_at: string | null
+          last_interaction_at: string
           lead_temperature: string | null
           lost_at: string | null
           lost_details: string | null
@@ -1826,6 +1838,7 @@ export type Database = {
           preferences: string | null
           returned_at: string | null
           source: string | null
+          stagnant_since: string | null
           status: string
           travel_date_end: string | null
           travel_date_start: string | null
@@ -1836,6 +1849,7 @@ export type Database = {
         Insert: {
           ai_collected_data?: Json | null
           ai_summary?: string | null
+          archive_pending_at?: string | null
           archived?: boolean
           archived_at?: string | null
           assigned_user_id?: string | null
@@ -1852,7 +1866,9 @@ export type Database = {
           id?: string
           is_lost?: boolean
           is_returning?: boolean
+          is_stagnant?: boolean
           last_contact_at?: string | null
+          last_interaction_at?: string
           lead_temperature?: string | null
           lost_at?: string | null
           lost_details?: string | null
@@ -1862,6 +1878,7 @@ export type Database = {
           preferences?: string | null
           returned_at?: string | null
           source?: string | null
+          stagnant_since?: string | null
           status?: string
           travel_date_end?: string | null
           travel_date_start?: string | null
@@ -1872,6 +1889,7 @@ export type Database = {
         Update: {
           ai_collected_data?: Json | null
           ai_summary?: string | null
+          archive_pending_at?: string | null
           archived?: boolean
           archived_at?: string | null
           assigned_user_id?: string | null
@@ -1888,7 +1906,9 @@ export type Database = {
           id?: string
           is_lost?: boolean
           is_returning?: boolean
+          is_stagnant?: boolean
           last_contact_at?: string | null
+          last_interaction_at?: string
           lead_temperature?: string | null
           lost_at?: string | null
           lost_details?: string | null
@@ -1898,6 +1918,7 @@ export type Database = {
           preferences?: string | null
           returned_at?: string | null
           source?: string | null
+          stagnant_since?: string | null
           status?: string
           travel_date_end?: string | null
           travel_date_start?: string | null
@@ -3558,6 +3579,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      touch_lead_interaction: { Args: { _lead_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "manager" | "sales_agent" | "operations"
