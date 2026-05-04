@@ -247,6 +247,7 @@ export function KanbanCard({
   onRenameClient,
   onMarkLost,
   onReactivateLost,
+  onKeepActive,
 }: {
   card: KanbanCardData;
   onClick?: (card: KanbanCardData) => void;
@@ -281,12 +282,15 @@ export function KanbanCard({
   onMarkLost?: (card: KanbanCardData) => void;
   /** Reativar lead perdido — remove o estado "Perdido" e devolve à etapa de origem. */
   onReactivateLost?: (card: KanbanCardData) => void;
+  /** Cancela arquivamento pendente / remove badge estagnado. */
+  onKeepActive?: (card: KanbanCardData) => void;
 }) {
   const value = formatBRL(card.estimatedValue);
   const alert = card.alert;
   const temperature: LeadTemperature = card.temperature ?? "cold";
   const stageDays = daysSince(card.stageEnteredAt);
   const lastContactDays = daysSince(card.lastContactAt);
+  const inactiveDays = daysSince(card.lastInteractionAt);
   const daysToTravel = daysUntil(card.travelDateISO);
   const isBoardingSoon = daysToTravel !== null && daysToTravel >= 0 && daysToTravel <= 30;
   const nameIsPhone = isPhoneLikeName(card.clientName);
