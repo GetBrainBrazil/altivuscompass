@@ -131,25 +131,74 @@ export default function AIAgentEdit() {
   });
 
   const [activeSection, setActiveSection] = useState<SectionKey>("identidade");
-  const initialSnapshot = useMemo(() => JSON.stringify(form), []);
-  const isDirty = JSON.stringify(form) !== initialSnapshot;
+  const [savedSnapshot, setSavedSnapshot] = useState<string>(() => JSON.stringify(form));
+  const [saving, setSaving] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [modelError, setModelError] = useState<string | null>(null);
+  const isDirty = JSON.stringify(form) !== savedSnapshot;
 
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(form));
   }, [form]);
 
-  const handleSave = () => {
+  // Warn on browser navigation away with unsaved changes
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
+  const handleSave = async () => {
+    let hasError = false;
     if (!form.name.trim()) {
-      toast.error("Informe o nome do agente");
+      setNameError("Informe o nome do agente");
+      hasError = true;
+    } else {
+      setNameError(null);
+    }
+    if (!form.model) {
+      setModelError("Selecione um modelo de IA");
+      hasError = true;
+    } else {
+      setModelError(null);
+    }
+    if (hasError) {
+      setActiveSection("identidade");
+      setTimeout(() => {
+        const el = document.getElementById(!form.name.trim() ? "agent-name" : "agent-model");
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+        (el as HTMLInputElement | null)?.focus?.();
+      }, 50);
       return;
     }
-    sessionStorage.setItem(STORAGE_KEY + ":save", JSON.stringify(form));
-    toast.success(isNew ? "Agente criado com sucesso" : "Agente atualizado");
-    navigate("/ai-agents");
+
+    setSaving(true);
+    try {
+      // Persist full agent config to local "backend"
+      const list: Agent[] = JSON.parse(sessionStorage.getItem(LIST_KEY) || "[]");
+      const idx = list.findIndex((a) => a.id === form.id);
+      if (idx >= 0) list[idx] = form;
+      else list.push(form);
+      sessionStorage.setItem(LIST_KEY, JSON.stringify(list));
+      sessionStorage.setItem(STORAGE_KEY + ":save", JSON.stringify(form));
+      // Simulate async save
+      await new Promise((r) => setTimeout(r, 400));
+      setSavedSnapshot(JSON.stringify(form));
+      toast.success("Configurações salvas com sucesso", { position: "top-right", duration: 3000 });
+    } catch {
+      toast.error("Erro ao salvar configurações. Tente novamente.", { position: "top-right" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
-    if (isDirty && !confirm("Descartar alterações não salvas?")) return;
+    if (isDirty && !confirm("Você tem alterações não salvas. Deseja sair sem salvar?")) return;
     navigate("/ai-agents");
   };
 
