@@ -884,13 +884,32 @@ export function KanbanCard({
                   </span>
                 )}
                 {isWonStage && !isLost && (
-                  <span
-                    title="Etapa Concluído"
-                    className="inline-flex items-center gap-0.5 rounded-full bg-[#F0FDF4] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-[#15803D]"
-                  >
-                    <CheckCircle2 className="w-2.5 h-2.5" />
-                    Concluído
-                  </span>
+                  <>
+                    <span
+                      title="Etapa Concluído"
+                      className="inline-flex items-center gap-0.5 rounded-full bg-[#F0FDF4] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-[#15803D]"
+                    >
+                      <CheckCircle2 className="w-2.5 h-2.5" />
+                      Concluído
+                    </span>
+                    {card.contactLevel === "cliente" && (
+                      <TooltipProvider delayDuration={150}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span
+                              className="inline-flex items-center gap-0.5 rounded-full bg-[#EFF6FF] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-[#1D4ED8] cursor-help"
+                            >
+                              <Plane className="w-2.5 h-2.5" />
+                              Pós-Venda
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="text-xs">
+                            Enviado para Pós-Venda
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </>
                 )}
                 {isLost && (
                   <TooltipProvider delayDuration={150}>

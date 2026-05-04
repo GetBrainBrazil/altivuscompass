@@ -106,7 +106,9 @@ const SALES_COLUMN_TO_STATUS: Record<string, string> = {
 };
 const STATUS_TO_SALES_COLUMN: Record<string, string> = Object.entries(
   SALES_COLUMN_TO_STATUS,
-).reduce((acc, [col, st]) => ({ ...acc, [st]: col }), {});
+).reduce((acc, [col, st]) => ({ ...acc, [st]: col }), {} as Record<string, string>);
+// Após promoção a Cliente, o status passa a "converted" — mantém o card no Concluído.
+STATUS_TO_SALES_COLUMN["converted"] = "closed";
 
 const INITIAL_OPS_COLUMNS: KanbanColumn[] = [
   { id: "pre-trip", title: "Pré-Viagem", cards: [] },
@@ -912,12 +914,13 @@ export default function CRM() {
   useEffect(() => {
     let cancelled = false;
     const fetchLeads = async () => {
+      // Inclui leads já convertidos a Cliente para que continuem visíveis
+      // como histórico na coluna "Concluído" do funil de vendas.
       const { data, error } = await supabase
         .from("leads")
-        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, is_returning, returned_at, assigned_user_id, status, is_lost, lost_at, lost_from_status, lost_reason, last_interaction_at, is_stagnant, stagnant_since, archive_pending_at, archived, archived_at")
-        .is("converted_client_id", null)
+        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, is_returning, returned_at, assigned_user_id, status, is_lost, lost_at, lost_from_status, lost_reason, last_interaction_at, is_stagnant, stagnant_since, archive_pending_at, archived, archived_at, converted_client_id")
         .order("created_at", { ascending: false })
-        .limit(200);
+        .limit(400);
       if (error || cancelled || !data) {
         if (!cancelled) setIsLoadingLeads(false);
         return;
@@ -2407,7 +2410,7 @@ export default function CRM() {
   // Estado do lead (somente Vendas): "active" (padrão), "lost" ou "all".
   const [filterState, setFilterState] = useState<"active" | "lost" | "all">("active");
   // Status de arquivamento (somente Vendas): "active" (padrão), "archived" ou "all".
-  const [filterStatus, setFilterStatus] = useState<"active" | "archived" | "all">("active");
+  const [filterStatus, setFilterStatus] = useState<"active" | "concluded" | "archived" | "all">("active");
   // Filtros específicos da aba Operações
   const [filterBoarding, setFilterBoarding] = useState<"all" | "7" | "15" | "30">("all");
   const [filterOpsStatus, setFilterOpsStatus] = useState<"all" | "normal" | "urgent" | "waiting">("all");
@@ -2501,9 +2504,21 @@ export default function CRM() {
         }
 
         if (tab === "sales") {
-          // Status (arquivamento): "active" esconde arquivados; "archived" só arquivados; "all" ambos.
-          if (filterStatus === "active" && card.isArchived) return false;
-          if (filterStatus === "archived" && !card.isArchived) return false;
+          const isClosedCol = col.id === "closed";
+          // Status (arquivamento + concluídos):
+          // "active" → esconde arquivados E esconde a coluna Concluído.
+          // "concluded" → mostra apenas cards na coluna Concluído (não arquivados).
+          // "archived" → apenas arquivados.
+          // "all" → mostra tudo.
+          if (filterStatus === "active") {
+            if (card.isArchived) return false;
+            if (isClosedCol) return false;
+          } else if (filterStatus === "concluded") {
+            if (card.isArchived) return false;
+            if (!isClosedCol) return false;
+          } else if (filterStatus === "archived") {
+            if (!card.isArchived) return false;
+          }
           // Filtro de Estado: por padrão esconde leads perdidos.
           if (filterState === "active" && card.isLost) return false;
           if (filterState === "lost" && !card.isLost) return false;
@@ -2610,7 +2625,8 @@ export default function CRM() {
         filterTemp !== "all" ||
         filterLevel !== "all" ||
         filterSource !== "all" ||
-        filterState !== "active")) ||
+        filterState !== "active" ||
+        filterStatus !== "active")) ||
     (tab === "ops" &&
       (filterBoarding !== "all" ||
         filterOpsStatus !== "all" ||
@@ -3063,6 +3079,7 @@ export default function CRM() {
                 setFilterLevel("all");
                 setFilterSource("all");
                 setFilterState("active");
+                setFilterStatus("active");
                 setFilterBoarding("all");
                 setFilterOpsStatus("all");
                 setFilterDestination("all");
@@ -3076,32 +3093,62 @@ export default function CRM() {
           <div className="ml-auto flex items-center gap-2">
             {tab === "sales" && (() => {
               const archivedCount = allCards.filter((c) => c.isArchived).length;
-              const isActive = filterStatus === "archived";
+              const concludedCount = columns.find((c) => c.id === "closed")?.cards.filter((c) => !c.isArchived).length ?? 0;
+              const isActive = filterStatus !== "active";
+              const labelMap = {
+                active: "Ativos",
+                concluded: "Concluídos",
+                archived: "Arquivados",
+                all: "Todos",
+              } as const;
+              const badgeCount =
+                filterStatus === "archived" ? archivedCount :
+                filterStatus === "concluded" ? concludedCount :
+                filterStatus === "all" ? allCards.length :
+                0;
               return (
-                <TooltipProvider delayDuration={200}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        onClick={() => setFilterStatus(isActive ? "active" : "archived")}
-                        aria-pressed={isActive}
-                        aria-label="Ver arquivados"
-                        className={cn(
-                          "inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-xs font-medium border transition-colors duration-150",
-                          isActive
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-card text-muted-foreground border-border hover:text-foreground hover:bg-muted",
-                        )}
+                <DropdownMenu>
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            aria-label="Filtrar status"
+                            className={cn(
+                              "inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-xs font-medium border transition-colors duration-150",
+                              isActive
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-card text-muted-foreground border-border hover:text-foreground hover:bg-muted",
+                            )}
+                          >
+                            <Archive className="w-[18px] h-[18px]" />
+                            {isActive && (
+                              <>
+                                <span className="text-[11px] font-semibold leading-none">{labelMap[filterStatus]}</span>
+                                {badgeCount > 0 && (
+                                  <span className="text-[11px] font-semibold leading-none opacity-80">({badgeCount})</span>
+                                )}
+                              </>
+                            )}
+                          </button>
+                        </DropdownMenuTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">Filtrar por status</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <DropdownMenuContent align="end" className="w-44">
+                    {(["active", "concluded", "archived", "all"] as const).map((opt) => (
+                      <DropdownMenuItem
+                        key={opt}
+                        onClick={() => setFilterStatus(opt)}
+                        className={cn("text-xs", filterStatus === opt && "font-semibold")}
                       >
-                        <Archive className="w-[18px] h-[18px]" />
-                        {isActive && (
-                          <span className="text-[11px] font-semibold leading-none">{archivedCount}</span>
-                        )}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">Ver arquivados</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                        {labelMap[opt]}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               );
             })()}
 
