@@ -30,6 +30,8 @@ export interface Agent {
   personality?: string;
   rules?: string;
   tone?: string;
+  icon?: string;
+  description?: string;
 }
 
 interface AgentEditDialogProps {
