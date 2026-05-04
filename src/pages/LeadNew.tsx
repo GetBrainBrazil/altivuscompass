@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Check as CheckIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,8 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { IntlPhoneInput } from "@/components/ui/intl-phone-input";
+import { COUNTRY_CODES } from "@/lib/phone-masks";
+import { isValidEmail } from "@/lib/validators";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 const SOURCE_OPTIONS = [
   { value: "whatsapp", label: "WhatsApp" },
@@ -26,9 +30,11 @@ const SOURCE_OPTIONS = [
   { value: "other", label: "Outro" },
 ];
 
+const NOTES_MAX = 500;
+
 const initialForm = {
   full_name: "",
-  phone: "",
+  phone: "", // stored as "+<dial><digits>"
   email: "",
   source: "whatsapp",
   destination: "",
@@ -37,13 +43,73 @@ const initialForm = {
   notes: "",
 };
 
+function phoneDigitsForDial(stored: string): { dial: string; digits: string } {
+  const raw = (stored || "").replace(/\D/g, "");
+  const sorted = [...COUNTRY_CODES].sort(
+    (a, b) => b.dial.length - a.dial.length,
+  );
+  for (const c of sorted) {
+    const d = c.dial.replace("+", "");
+    if (raw.startsWith(d)) return { dial: c.dial, digits: raw.slice(d.length) };
+  }
+  return { dial: "+55", digits: raw };
+}
+
+function validatePhone(stored: string): string | null {
+  const { dial, digits } = phoneDigitsForDial(stored);
+  if (!digits) return "Telefone é obrigatório.";
+  if (dial === "+55") {
+    if (digits.length !== 10 && digits.length !== 11)
+      return "Número de telefone inválido";
+  } else {
+    if (digits.length < 6 || digits.length > 15)
+      return "Número de telefone inválido";
+  }
+  return null;
+}
+
 export default function LeadNew() {
   const navigate = useNavigate();
   const [form, setForm] = useState(initialForm);
   const [saving, setSaving] = useState(false);
 
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [emailDebounced, setEmailDebounced] = useState("");
+
+  const nameRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLDivElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+
   const setField = <K extends keyof typeof initialForm>(k: K, v: string) =>
     setForm((f) => ({ ...f, [k]: v }));
+
+  // Debounce email
+  useEffect(() => {
+    const t = setTimeout(() => setEmailDebounced(form.email), 500);
+    return () => clearTimeout(t);
+  }, [form.email]);
+
+  const nameError = useMemo(() => {
+    const n = form.full_name.trim();
+    if (!n) return "Nome é obrigatório.";
+    if (n.length < 2) return "Mínimo de 2 caracteres.";
+    return null;
+  }, [form.full_name]);
+
+  const phoneError = useMemo(() => validatePhone(form.phone), [form.phone]);
+
+  const emailLiveError = useMemo(() => {
+    if (!emailDebounced.trim()) return null;
+    return isValidEmail(emailDebounced) ? null : "E-mail inválido";
+  }, [emailDebounced]);
+
+  const emailSubmitError = useMemo(() => {
+    if (!form.email.trim()) return null;
+    return isValidEmail(form.email) ? null : "E-mail inválido";
+  }, [form.email]);
+
+  const showEmailValid =
+    !!form.email.trim() && !emailLiveError && isValidEmail(form.email);
 
   const willBeLead =
     !!form.destination.trim() &&
@@ -51,16 +117,26 @@ export default function LeadNew() {
     !!form.travelers_count.trim();
 
   const handleSubmit = async () => {
-    const name = form.full_name.trim();
-    const phone = form.phone.trim();
-    if (!name) {
-      toast.error("Informe o nome completo.");
+    setTouched({ full_name: true, phone: true, email: true });
+
+    if (nameError) {
+      nameRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      nameRef.current?.focus();
+      toast.error(nameError);
       return;
     }
-    if (!phone) {
-      toast.error("Telefone é obrigatório.");
+    if (phoneError) {
+      phoneRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      toast.error(phoneError);
       return;
     }
+    if (emailSubmitError) {
+      emailRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      emailRef.current?.focus();
+      toast.error(emailSubmitError);
+      return;
+    }
+
     setSaving(true);
     try {
       let travel_date_start: string | null = null;
@@ -84,8 +160,8 @@ export default function LeadNew() {
         : null;
 
       const payload: any = {
-        full_name: name,
-        phone,
+        full_name: form.full_name.trim(),
+        phone: form.phone.trim(),
         email: form.email.trim() || null,
         source: form.source,
         status: "new",
@@ -113,6 +189,10 @@ export default function LeadNew() {
       setSaving(false);
     }
   };
+
+  const showNameError = touched.full_name && nameError;
+  const showPhoneError = touched.phone && phoneError;
+  const showEmailError = emailLiveError; // live, regardless of touched
 
   return (
     <div className="min-h-[calc(100vh-0px)] bg-slate-50 dark:bg-slate-950">
@@ -166,30 +246,69 @@ export default function LeadNew() {
                 <Label htmlFor="lead-name">Nome completo *</Label>
                 <Input
                   id="lead-name"
+                  ref={nameRef}
                   value={form.full_name}
                   onChange={(e) => setField("full_name", e.target.value)}
+                  onBlur={() => setTouched((t) => ({ ...t, full_name: true }))}
                   placeholder="Ex: Ana Souza"
                   autoFocus
+                  className={cn(
+                    "transition-colors duration-150",
+                    showNameError && "border-red-500 focus-visible:ring-red-500",
+                  )}
                 />
+                {showNameError && (
+                  <p className="text-[12px] text-red-500 mt-1">{nameError}</p>
+                )}
               </div>
               <div className="space-y-1">
                 <Label htmlFor="lead-phone">Telefone *</Label>
-                <Input
-                  id="lead-phone"
-                  value={form.phone}
-                  onChange={(e) => setField("phone", e.target.value)}
-                  placeholder="(11) 99999-0000"
-                />
+                <div ref={phoneRef}>
+                  <IntlPhoneInput
+                    id="lead-phone"
+                    value={form.phone}
+                    onChange={(v) => setField("phone", v)}
+                    onBlur={() => setTouched((t) => ({ ...t, phone: true }))}
+                    className={cn(
+                      "h-8 transition-colors duration-150",
+                      showPhoneError &&
+                        "border-red-500 focus-within:ring-red-500",
+                    )}
+                  />
+                </div>
+                {showPhoneError && (
+                  <p className="text-[12px] text-red-500 mt-1">{phoneError}</p>
+                )}
               </div>
               <div className="space-y-1">
                 <Label htmlFor="lead-email">E-mail</Label>
-                <Input
-                  id="lead-email"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setField("email", e.target.value)}
-                  placeholder="opcional"
-                />
+                <div className="relative">
+                  <Input
+                    id="lead-email"
+                    ref={emailRef}
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setField("email", e.target.value)}
+                    onBlur={() => setTouched((t) => ({ ...t, email: true }))}
+                    placeholder="opcional"
+                    className={cn(
+                      "transition-colors duration-150 pr-8",
+                      showEmailError &&
+                        "border-red-500 focus-visible:ring-red-500",
+                    )}
+                  />
+                  {showEmailValid && (
+                    <CheckIcon
+                      className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500 pointer-events-none"
+                      aria-label="E-mail válido"
+                    />
+                  )}
+                </div>
+                {showEmailError && (
+                  <p className="text-[12px] text-red-500 mt-1">
+                    {emailLiveError}
+                  </p>
+                )}
               </div>
               <div className="space-y-1">
                 <Label htmlFor="lead-source">Origem do lead</Label>
@@ -251,16 +370,22 @@ export default function LeadNew() {
                   placeholder="Ex: 2"
                 />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1 col-span-2">
                 <Label htmlFor="lead-notes">Observações</Label>
-                <Textarea
-                  id="lead-notes"
-                  rows={2}
-                  value={form.notes}
-                  onChange={(e) => setField("notes", e.target.value)}
-                  placeholder="Preferências, restrições, contexto..."
-                  className="min-h-0 py-1.5"
-                />
+                <div className="relative">
+                  <Textarea
+                    id="lead-notes"
+                    value={form.notes}
+                    maxLength={NOTES_MAX}
+                    onChange={(e) => setField("notes", e.target.value)}
+                    placeholder="Preferências, restrições, contexto..."
+                    style={{ resize: "vertical" }}
+                    className="min-h-[120px] py-2 pr-2 pb-6"
+                  />
+                  <span className="pointer-events-none absolute bottom-1.5 right-2 text-[10px] text-gray-400">
+                    {form.notes.length} / {NOTES_MAX}
+                  </span>
+                </div>
               </div>
             </div>
           </section>
