@@ -968,6 +968,9 @@ export default function CRM() {
                 avatarUrl: assignedUser.avatarUrl ?? undefined,
               }
             : undefined,
+          isLost: !!l.is_lost,
+          lostAt: l.lost_at ?? undefined,
+          lostReason: l.lost_reason ?? undefined,
           tags: [
             l.travelers_count ? { label: `${l.travelers_count} viajante(s)`, tone: "blue" as const } : null,
             isFromWhatsApp ? { label: "WhatsApp", tone: "green" as const } : null,
