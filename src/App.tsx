@@ -100,9 +100,9 @@ const App = () => (
             <Route path="/crm/ops/new" element={<ProtectedRoute><AppLayout><OpsNew /></AppLayout></ProtectedRoute>} />
             <Route path="/crm/lead/:id" element={<ProtectedRoute><AppLayout><LeadDetail /></AppLayout></ProtectedRoute>} />
             <Route path="/crm/lead/:id/convert" element={<ProtectedRoute><AppLayout><LeadConvert /></AppLayout></ProtectedRoute>} />
-            <Route path="/ai-agents" element={<ProtectedRoute><AppLayout><AIAgents /></AppLayout></ProtectedRoute>} />
-            <Route path="/ai-agents/new" element={<ProtectedRoute><AppLayout><AIAgentEdit /></AppLayout></ProtectedRoute>} />
-            <Route path="/ai-agents/:id" element={<ProtectedRoute><AppLayout><AIAgentEdit /></AppLayout></ProtectedRoute>} />
+            <Route path="/ai-agents" element={<ProtectedRoute><AppLayout><AIAgentEdit /></AppLayout></ProtectedRoute>} />
+            <Route path="/ai-agents/new" element={<Navigate to="/ai-agents" replace />} />
+            <Route path="/ai-agents/:id" element={<Navigate to="/ai-agents" replace />} />
             <Route path="/whatsapp-connection" element={<ProtectedRoute><AppLayout><WhatsAppConnection /></AppLayout></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
