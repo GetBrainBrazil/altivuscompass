@@ -30,6 +30,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import type { Agent } from "@/components/ai-agents/AgentEditDialog";
+import { FluxosAtendimentoSection } from "@/components/ai-agents/FluxosAtendimentoSection";
 
 const STORAGE_KEY = "ai-agents-draft";
 const LIST_KEY = "ai-agents-list";
@@ -474,8 +475,9 @@ export default function AIAgentEdit() {
         </section>
         )}
 
-        {(activeSection === "fluxos" ||
-          activeSection === "coleta" ||
+        {activeSection === "fluxos" && <FluxosAtendimentoSection />}
+
+        {(activeSection === "coleta" ||
           activeSection === "integracoes" ||
           activeSection === "metricas") && (
           <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
