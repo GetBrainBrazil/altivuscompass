@@ -341,6 +341,12 @@ export default function LeadDetail() {
       // para exibi-la como "Observação importada" no novo sistema de notas.
       setLegacyPreferences((prev) => prev ?? (data.preferences ?? null));
 
+      setLostState({
+        isLost: !!(data as any).is_lost,
+        reason: (data as any).lost_reason ?? null,
+        at: (data as any).lost_at ?? null,
+      });
+
       // Snapshot dos dados extraídos pela IA (origem WhatsApp)
       const collected = ((data as any).ai_collected_data ?? {}) as Record<string, any>;
       const { whatsapp_sender_name: _ignored, ...extras } = collected;
