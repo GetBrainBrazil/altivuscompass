@@ -146,11 +146,34 @@ export default function AIAgentEdit() {
   });
 
   const [activeSection, setActiveSection] = useState<SectionKey>("identidade");
-  const [savedSnapshot, setSavedSnapshot] = useState<string>(() => JSON.stringify(form));
+
+  // Normalize values so null/undefined/"" and null/[] are treated equivalently
+  const normalize = (val: unknown): unknown => {
+    if (val === null || val === undefined || val === "") return null;
+    if (Array.isArray(val)) {
+      const arr = val.map(normalize);
+      return arr.length === 0 ? null : arr;
+    }
+    if (typeof val === "object") {
+      const out: Record<string, unknown> = {};
+      const obj = val as Record<string, unknown>;
+      Object.keys(obj)
+        .sort()
+        .forEach((k) => {
+          const n = normalize(obj[k]);
+          if (n !== null) out[k] = n;
+        });
+      return Object.keys(out).length === 0 ? null : out;
+    }
+    return val;
+  };
+  const serialize = (v: Agent) => JSON.stringify(normalize(structuredClone(v)));
+
+  const [savedSnapshot, setSavedSnapshot] = useState<string>(() => serialize(form));
   const [saving, setSaving] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
   const [modelError, setModelError] = useState<string | null>(null);
-  const isDirty = JSON.stringify(form) !== savedSnapshot;
+  const isDirty = serialize(form) !== savedSnapshot;
 
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(form));
