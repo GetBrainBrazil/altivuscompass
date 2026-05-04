@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,6 +7,23 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { Smile, Briefcase, Sparkles, GraduationCap, Pencil, type LucideIcon } from "lucide-react";
+
+export interface ComunicacaoValue {
+  tone: string;
+  custom_tone_text: string;
+  presentation_name: string;
+  languages: Record<string, boolean>;
+  auto_detect_language: boolean;
+  use_emojis: boolean;
+  max_message_length: number;
+  welcome_message: string;
+  transfer_message: string;
+  after_hours_enabled: boolean;
+  after_hours_message: string;
+  business_hours_start: string;
+  business_hours_end: string;
+  business_days: Record<string, boolean>;
+}
 
 const TONES: {
   id: string;
