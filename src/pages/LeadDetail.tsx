@@ -553,6 +553,49 @@ export default function LeadDetail() {
 
   const isClient = contactLevel === "cliente";
 
+  const handleReactivateLead = async () => {
+    if (!leadId || reactivating) return;
+    setReactivating(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      let userName = user?.email ?? null;
+      if (user?.id) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (prof?.full_name) userName = prof.full_name;
+      }
+      const { error } = await (supabase as any)
+        .from("leads")
+        .update({ is_lost: false, lost_at: null, lost_from_status: null, lost_reason: null })
+        .eq("id", leadId);
+      if (error) {
+        console.error("[reactivate-banner] error:", error);
+        toast.error("Erro ao reativar lead.");
+        return;
+      }
+      await (supabase as any).from("contact_events").insert({
+        lead_id: leadId,
+        event_type: "lead_reactivated",
+        title: "Lead reativado",
+        description: null,
+        user_id: user?.id ?? null,
+        user_name: userName,
+        is_manual: true,
+      });
+      setLostState({ isLost: false, reason: null, at: null });
+      toast.success("Lead reativado.");
+    } catch (err) {
+      console.error("[handleReactivateLead] error:", err);
+      toast.error("Erro ao reativar lead.");
+    } finally {
+      setReactivating(false);
+    }
+  };
+
+
   return (
     <div className="flex flex-col min-h-[calc(100vh-0px)] bg-slate-50 dark:bg-slate-950">
       {/* Cabeçalho principal — largura total */}
