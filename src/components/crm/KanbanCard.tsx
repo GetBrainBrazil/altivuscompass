@@ -631,8 +631,18 @@ export function KanbanCard({
                       </DropdownMenuSubContent>
                     </DropdownMenuSub>
                   )}
-                  {(onArchive || onDelete) && <DropdownMenuSeparator />}
-                  {onArchive && (
+                  {(onArchive || onUnarchive || onDelete) && <DropdownMenuSeparator />}
+                  {onUnarchive ? (
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        onUnarchive(card);
+                      }}
+                    >
+                      <ArchiveRestore className="w-3.5 h-3.5 mr-2" />
+                      Desarquivar
+                    </DropdownMenuItem>
+                  ) : onArchive ? (
                     <DropdownMenuItem
                       onSelect={(e) => {
                         e.preventDefault();
@@ -642,7 +652,7 @@ export function KanbanCard({
                       <Archive className="w-3.5 h-3.5 mr-2" />
                       Arquivar
                     </DropdownMenuItem>
-                  )}
+                  ) : null}
                   {onDelete && (
                     <DropdownMenuItem
                       className="text-destructive focus:text-destructive"
