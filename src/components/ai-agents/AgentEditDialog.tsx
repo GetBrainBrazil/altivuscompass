@@ -32,6 +32,7 @@ export interface Agent {
   tone?: string;
   icon?: string;
   description?: string;
+  avatarSource?: "whatsapp" | "custom";
   config?: {
     comunicacao?: any;
     coleta?: any;
