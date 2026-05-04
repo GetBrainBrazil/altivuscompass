@@ -58,7 +58,7 @@ const DEFAULT_FUNNEL_STAGES: { id: string; title: string }[] = [
   { id: "qualifying", title: "Em Qualificação" },
   { id: "quote", title: "Cotação" },
   { id: "proposal-sent", title: "Proposta Enviada" },
-  { id: "closed", title: "Fechado" },
+  { id: "closed", title: "Concluído" },
 ];
 
 // Lê as colunas atuais do Kanban de Vendas a partir do localStorage.
