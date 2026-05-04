@@ -764,6 +764,7 @@ export default function CRM() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get("tab") === "ops" ? "ops" : "sales";
   const [tab, setTabState] = useState<"sales" | "ops">(initialTab);
+  const [stagnationSettingsOpen, setStagnationSettingsOpen] = useState(false);
 
   useEffect(() => {
     const urlTab = searchParams.get("tab") === "ops" ? "ops" : "sales";
