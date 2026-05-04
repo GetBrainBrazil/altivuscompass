@@ -251,6 +251,7 @@ export function KanbanCard({
   onMarkLost,
   onReactivateLost,
   onKeepActive,
+  isWonStage = false,
 }: {
   card: KanbanCardData;
   onClick?: (card: KanbanCardData) => void;
