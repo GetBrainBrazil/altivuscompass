@@ -102,6 +102,8 @@ const emptyAgent = (): Agent => ({
   personality: "",
   rules: "",
   tone: "amigavel",
+  icon: "bot",
+  description: "",
 });
 
 export default function AIAgentEdit() {
