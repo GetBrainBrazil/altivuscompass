@@ -90,7 +90,7 @@ const INITIAL_SALES_COLUMNS: KanbanColumn[] = [
   { id: "qualifying", title: "Em Qualificação", cards: [] },
   { id: "quote", title: "Cotação", cards: [] },
   { id: "proposal-sent", title: "Proposta Enviada", cards: [] },
-  { id: "closed", title: "Fechado", cards: [] },
+  { id: "closed", title: "Concluído", cards: [] },
 ];
 
 // Mapeamento bidirecional entre coluna do kanban (sales) e leads.status no banco.
