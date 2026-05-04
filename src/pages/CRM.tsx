@@ -303,6 +303,8 @@ function KanbanBoard({
   onCardViewConversation,
   onCardEdit,
   onCardArchive,
+  onCardMarkLost,
+  onCardReactivateLost,
   onCardRenameClient,
   agentOptions,
   focusCardId,
@@ -331,6 +333,8 @@ function KanbanBoard({
   onCardViewConversation?: (card: KanbanCardData) => void;
   onCardEdit?: (card: KanbanCardData) => void;
   onCardArchive?: (card: KanbanCardData) => void;
+  onCardMarkLost?: (card: KanbanCardData) => void;
+  onCardReactivateLost?: (card: KanbanCardData) => void;
   onCardRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
   agentOptions?: { user_id: string; full_name: string; avatar_url?: string | null }[];
   focusCardId?: string | null;
@@ -372,6 +376,8 @@ function KanbanBoard({
               onCardViewConversation={onCardViewConversation}
               onCardEdit={onCardEdit}
               onCardArchive={onCardArchive}
+              onCardMarkLost={onCardMarkLost}
+              onCardReactivateLost={onCardReactivateLost}
               onCardRenameClient={onCardRenameClient}
               agentOptions={agentOptions}
               focusCardId={focusCardId}
@@ -412,6 +418,8 @@ function KanbanColumnCard({
   onCardViewConversation,
   onCardEdit,
   onCardArchive,
+  onCardMarkLost,
+  onCardReactivateLost,
   onCardRenameClient,
   agentOptions,
   focusCardId,
@@ -441,6 +449,8 @@ function KanbanColumnCard({
   onCardViewConversation?: (card: KanbanCardData) => void;
   onCardEdit?: (card: KanbanCardData) => void;
   onCardArchive?: (card: KanbanCardData) => void;
+  onCardMarkLost?: (card: KanbanCardData) => void;
+  onCardReactivateLost?: (card: KanbanCardData) => void;
   onCardRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
   agentOptions?: { user_id: string; full_name: string; avatar_url?: string | null }[];
   focusCardId?: string | null;
