@@ -339,9 +339,23 @@ export function CRMTableView({
   onCardArchive,
   onCardRenameClient,
   agentOptions,
+  sortKey: sortKeyProp,
+  sortDir: sortDirProp,
+  onSortChange,
 }: CRMTableViewProps) {
-  const [sortKey, setSortKey] = useState<SortKey | null>(null);
-  const [sortDir, setSortDir] = useState<SortDir>(null);
+  const [sortKeyState, setSortKeyState] = useState<SortKey | null>(null);
+  const [sortDirState, setSortDirState] = useState<SortDir>(null);
+  const isControlled = sortKeyProp !== undefined && sortDirProp !== undefined && !!onSortChange;
+  const sortKey = (isControlled ? (sortKeyProp as SortKey | null) : sortKeyState);
+  const sortDir = (isControlled ? (sortDirProp as SortDir) : sortDirState);
+  const setSortKey = (k: SortKey | null) => {
+    if (isControlled) onSortChange!(k, sortDir);
+    else setSortKeyState(k);
+  };
+  const setSortDir = (d: SortDir) => {
+    if (isControlled) onSortChange!(sortKey, d);
+    else setSortDirState(d);
+  };
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingNameId, setEditingNameId] = useState<string | null>(null);
   const [savingNameId, setSavingNameId] = useState<string | null>(null);
