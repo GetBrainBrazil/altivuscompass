@@ -246,7 +246,7 @@ function ArchivedSection({
                       <span
                         className={cn(
                           "inline-block w-2 h-2 rounded-full",
-                          STAGE_DOT_COLORS[idx % STAGE_DOT_COLORS.length],
+                          col.id === "closed" ? "bg-[#22C55E]" : STAGE_DOT_COLORS[idx % STAGE_DOT_COLORS.length],
                         )}
                       />
                       <span className="text-xs font-medium text-muted-foreground truncate">
