@@ -505,7 +505,7 @@ function KanbanColumnCard({
           className={cn(
             "w-2 h-2 rounded-full shrink-0",
             isCollapsed ? "" : "mt-1.5",
-            dotColor,
+            column.id === "closed" ? "bg-[#22C55E]" : dotColor,
           )}
         />
         <span
