@@ -803,14 +803,13 @@ export default function CRM() {
     }, { replace: true });
   };
 
-  // ?focus=lead-{id} — destaca e rola até o card no kanban de Vendas.
-  // Garante a aba "sales" e mantém o foco por alguns segundos.
+  // ?focus=lead-{id} — destaca e rola até o card no kanban da aba atual.
+  // Mantém o foco por alguns segundos sem sobrescrever a aba escolhida na URL.
   const focusParam = searchParams.get("focus");
   const [focusCardId, setFocusCardId] = useState<string | null>(focusParam || null);
   useEffect(() => {
     if (!focusParam) return;
     setFocusCardId(focusParam);
-    if (tab !== "sales") setTabState("sales");
     const t = window.setTimeout(() => {
       setFocusCardId(null);
       setSearchParams((prev) => {
@@ -2649,7 +2648,9 @@ export default function CRM() {
   };
 
   const handleViewPostSale = (card: KanbanCardData) => {
-    handleViewModeChange("kanban");
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("crm:viewMode:ops", "kanban");
+    }
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       next.set("tab", "ops");
