@@ -1281,7 +1281,6 @@ export default function CRM() {
   };
 
   // Compute valid drop targets: same column (reorder) or adjacent ±1.
-  // The "lost" column is always a valid target in sales funnel.
   const validTargetColumnIds = useMemo(() => {
     if (!draggedFromColumnId) return null as Set<string> | null;
     const fromIdx = columns.findIndex((c) => c.id === draggedFromColumnId);
@@ -1290,9 +1289,8 @@ export default function CRM() {
     set.add(columns[fromIdx].id);
     if (fromIdx - 1 >= 0) set.add(columns[fromIdx - 1].id);
     if (fromIdx + 1 < columns.length) set.add(columns[fromIdx + 1].id);
-    if (tab === "sales") set.add("lost");
     return set;
-  }, [draggedFromColumnId, columns, tab]);
+  }, [draggedFromColumnId, columns]);
 
   // ─── Validation modal state ───────────────────────────────
   type PendingMove = {
