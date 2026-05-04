@@ -40,6 +40,7 @@ import { RegrasLimitesSection } from "@/components/ai-agents/RegrasLimitesSectio
 import { IntegracoesSection } from "@/components/ai-agents/IntegracoesSection";
 import { MetricasSection } from "@/components/ai-agents/MetricasSection";
 import { TestarAgenteSection } from "@/components/ai-agents/TestarAgenteSection";
+import { useWhatsAppProfile } from "@/hooks/useWhatsAppProfile";
 
 const STORAGE_KEY = "ai-agents-draft";
 const LIST_KEY = "ai-agents-list";
@@ -397,54 +398,7 @@ export default function AIAgentEdit() {
           </div>
           <div className="p-8 space-y-6">
             {/* Avatar */}
-            <div className="flex items-start gap-5">
-              {(() => {
-                const IconComp = getAgentIcon(form.icon);
-                return (
-                  <div className="h-16 w-16 rounded-full bg-[hsl(220_45%_15%)] flex items-center justify-center shrink-0">
-                    <IconComp className="h-7 w-7 text-white" />
-                  </div>
-                );
-              })()}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Ícone do Agente
-                </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-9">
-                      Alterar ícone
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[320px] p-3" align="start">
-                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">
-                      Escolha um ícone
-                    </p>
-                    <div className="grid grid-cols-4 gap-2">
-                      {AGENT_ICONS.map(({ key, Icon }) => {
-                        const selected = (form.icon ?? "bot") === key;
-                        return (
-                          <button
-                            key={key}
-                            type="button"
-                            onClick={() => setForm({ ...form, icon: key })}
-                            className={
-                              "h-12 w-12 rounded-full flex items-center justify-center transition-all " +
-                              (selected
-                                ? "bg-[hsl(220_45%_15%)] text-white ring-2 ring-[hsl(220_45%_15%)] ring-offset-2"
-                                : "bg-muted text-muted-foreground hover:bg-muted/70")
-                            }
-                            aria-label={key}
-                          >
-                            <Icon className="h-5 w-5" />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
+            <AvatarIdentitySection form={form} setForm={setForm} />
 
             {/* Nome + Modelo */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -584,3 +538,137 @@ export default function AIAgentEdit() {
     </div>
   );
 }
+
+function AvatarIdentitySection({
+  form,
+  setForm,
+}: {
+  form: Agent;
+  setForm: (a: Agent) => void;
+}) {
+  const wa = useWhatsAppProfile();
+  const source: "whatsapp" | "custom" =
+    form.avatarSource ?? (wa.connected && wa.photoUrl ? "whatsapp" : "custom");
+  const IconComp = getAgentIcon(form.icon);
+  const showWAPhoto = source === "whatsapp" && wa.connected && !!wa.photoUrl;
+
+  return (
+    <div className="flex items-start gap-5">
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="relative shrink-0">
+              <div className="h-16 w-16 rounded-full bg-[hsl(220_45%_15%)] flex items-center justify-center overflow-hidden">
+                {showWAPhoto ? (
+                  <img
+                    src={wa.photoUrl!}
+                    alt="Foto do WhatsApp"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <IconComp className="h-7 w-7 text-white" />
+                )}
+              </div>
+              {showWAPhoto && (
+                <span
+                  className="absolute -bottom-0.5 -right-0.5 h-[18px] w-[18px] rounded-full bg-[#25D366] ring-2 ring-white flex items-center justify-center"
+                  aria-label="Foto do WhatsApp"
+                >
+                  <MessageCircle className="h-2.5 w-2.5 text-white" />
+                </span>
+              )}
+              <span
+                className={
+                  "absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full ring-2 ring-white " +
+                  (wa.connected ? "bg-emerald-500" : "bg-red-500")
+                }
+              />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            {wa.loading
+              ? "Verificando WhatsApp..."
+              : wa.connected
+              ? "WhatsApp conectado"
+              : "WhatsApp não conectado"}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <div className="flex-1 space-y-3">
+        <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Avatar do Agente
+        </Label>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <button
+            type="button"
+            disabled={!wa.connected}
+            onClick={() => setForm({ ...form, avatarSource: "whatsapp" })}
+            className={
+              "flex-1 px-3 py-2 rounded-lg border text-sm text-left transition-colors " +
+              (source === "whatsapp"
+                ? "border-[hsl(220_45%_15%)] bg-[hsl(220_45%_15%)]/5"
+                : "border-border hover:bg-muted") +
+              (!wa.connected ? " opacity-50 cursor-not-allowed" : "")
+            }
+          >
+            📱 Usar foto do WhatsApp
+          </button>
+          <button
+            type="button"
+            onClick={() => setForm({ ...form, avatarSource: "custom" })}
+            className={
+              "flex-1 px-3 py-2 rounded-lg border text-sm text-left transition-colors " +
+              (source === "custom"
+                ? "border-[hsl(220_45%_15%)] bg-[hsl(220_45%_15%)]/5"
+                : "border-border hover:bg-muted")
+            }
+          >
+            🎨 Usar ícone personalizado
+          </button>
+        </div>
+
+        {source === "whatsapp" && wa.formattedPhone && (
+          <p className="text-xs text-muted-foreground">{wa.formattedPhone}</p>
+        )}
+
+        {source === "custom" && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9">
+                Alterar ícone
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[320px] p-3" align="start">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">
+                Escolha um ícone
+              </p>
+              <div className="grid grid-cols-4 gap-2">
+                {AGENT_ICONS.map(({ key, Icon }) => {
+                  const selected = (form.icon ?? "bot") === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setForm({ ...form, icon: key })}
+                      className={
+                        "h-12 w-12 rounded-full flex items-center justify-center transition-all " +
+                        (selected
+                          ? "bg-[hsl(220_45%_15%)] text-white ring-2 ring-[hsl(220_45%_15%)] ring-offset-2"
+                          : "bg-muted text-muted-foreground hover:bg-muted/70")
+                      }
+                      aria-label={key}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </button>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
+      </div>
+    </div>
+  );
+}
+

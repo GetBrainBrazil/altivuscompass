@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Agent } from "@/components/ai-agents/AgentEditDialog";
+import { useWhatsAppProfile } from "@/hooks/useWhatsAppProfile";
 
 type Role = "agent" | "user";
 interface Msg {
@@ -205,6 +206,11 @@ interface Props {
 }
 
 export function TestarAgenteSection({ agent }: Props) {
+  const wa = useWhatsAppProfile();
+  const useWAPhoto =
+    (agent.avatarSource ?? (wa.connected && wa.photoUrl ? "whatsapp" : "custom")) === "whatsapp" &&
+    wa.connected &&
+    !!wa.photoUrl;
   const [persona, setPersona] = useState("livre");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -398,8 +404,12 @@ export function TestarAgenteSection({ agent }: Props) {
           <div className="lg:col-span-3 flex flex-col rounded-xl overflow-hidden border border-gray-200 shadow-sm bg-white">
             {/* WhatsApp header */}
             <div className="bg-[#075E54] text-white px-4 py-3 flex items-center gap-3">
-              <div className="h-9 w-9 rounded-full bg-white/15 flex items-center justify-center shrink-0">
-                <Bot className="h-5 w-5" />
+              <div className="h-9 w-9 rounded-full bg-white/15 flex items-center justify-center shrink-0 overflow-hidden">
+                {useWAPhoto ? (
+                  <img src={wa.photoUrl!} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <Bot className="h-5 w-5" />
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold truncate">{agent.config?.comunicacao?.presentation_name || agent.name || "Agente IA"}</div>
