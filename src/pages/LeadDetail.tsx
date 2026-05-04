@@ -215,6 +215,8 @@ export default function LeadDetail() {
   const quotesCount = leadQuotes.length;
   const [waPanelOpen, setWaPanelOpen] = useState(false);
   const [legacyPreferences, setLegacyPreferences] = useState<string | null>(null);
+  const [lostState, setLostState] = useState<{ isLost: boolean; reason: string | null; at: string | null }>({ isLost: false, reason: null, at: null });
+  const [reactivating, setReactivating] = useState(false);
   const [aiData, setAiData] = useState<{
     ai_summary: string | null;
     destination: string | null;
