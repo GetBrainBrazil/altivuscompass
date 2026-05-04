@@ -114,6 +114,8 @@ export type KanbanCardData = {
   lastInteractionAt?: string;
   /** Data ISO em que foi enviado o aviso de "será arquivado em 24h". */
   archivePendingAt?: string;
+  /** Lead arquivado — card recebe visual opaco e badge "Arquivado". */
+  isArchived?: boolean;
 };
 
 const TAG_TONE_CLASSES: Record<KanbanTagTone, string> = {
