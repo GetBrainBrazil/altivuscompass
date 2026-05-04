@@ -2928,6 +2928,14 @@ export default function CRM() {
 
       {/* Toolbar (gestão acima do Kanban) */}
       <section className="px-6 pt-2 pb-2 bg-background border-b border-border">
+        {prefsLoading && (
+          <div className="flex items-center gap-2 mb-2" aria-hidden>
+            <div className="h-8 w-[200px] rounded-full bg-muted animate-pulse" />
+            <div className="h-8 w-24 rounded-full bg-muted animate-pulse" />
+            <div className="h-8 w-24 rounded-full bg-muted animate-pulse" />
+            <div className="h-8 w-24 rounded-full bg-muted animate-pulse" />
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative flex-1 min-w-[200px] max-w-[320px]">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
