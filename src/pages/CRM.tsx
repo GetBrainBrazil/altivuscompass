@@ -29,6 +29,7 @@ import {
   ArchiveRestore,
   ChevronDown,
   ChevronUp,
+  Settings,
 } from "lucide-react";
 import { FilterChip, SearchableList } from "@/components/tasks/FilterChip";
 import { CRMTableView } from "@/components/crm/CRMTableView";
