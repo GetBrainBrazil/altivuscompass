@@ -2666,9 +2666,28 @@ export default function CRM() {
           {/* Linha 1: Título à esquerda, seletor Funil/Operações à direita */}
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="min-w-0">
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-                CRM
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                  CRM
+                </h1>
+                {tab === "sales" && (
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={() => setStagnationSettingsOpen(true)}
+                          aria-label="Configurações do funil"
+                          className="inline-flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground/70 hover:text-foreground transition-colors duration-200"
+                        >
+                          <Settings className="w-5 h-5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">Configurações do funil</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
               <p className="text-sm text-muted-foreground mt-0.5">
                 Acompanhe leads, qualificações e operações em viagem em um só lugar.
               </p>
@@ -2705,17 +2724,6 @@ export default function CRM() {
                 <Plane className="w-4 h-4" />
                 Operações em Viagem
               </button>
-              {tab === "sales" && (
-                <button
-                  type="button"
-                  onClick={() => setStagnationSettingsOpen(true)}
-                  className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  title="Configurações de estagnação e arquivamento"
-                >
-                  <Settings className="w-3.5 h-3.5" />
-                  Automação
-                </button>
-              )}
             </div>
           </div>
           <CrmStagnationSettingsDialog open={stagnationSettingsOpen} onOpenChange={setStagnationSettingsOpen} />
