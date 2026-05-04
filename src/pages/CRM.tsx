@@ -87,18 +87,18 @@ const INITIAL_SALES_COLUMNS: KanbanColumn[] = [
   { id: "quote", title: "Cotação", cards: [] },
   { id: "proposal-sent", title: "Proposta Enviada", cards: [] },
   { id: "closed", title: "Fechado", cards: [] },
-  { id: "lost", title: "Perdidos", cards: [] },
 ];
 
 // Mapeamento bidirecional entre coluna do kanban (sales) e leads.status no banco.
 // Mantém persistência: ao mover, gravamos status; ao carregar, posicionamos no kanban.
+// "lost" não é mais uma coluna — é um estado (is_lost) que pode ser aplicado em
+// qualquer etapa. Leads perdidos permanecem na sua coluna de origem com badge.
 const SALES_COLUMN_TO_STATUS: Record<string, string> = {
   "new-leads": "new",
   "qualifying": "qualifying",
   "quote": "quote",
   "proposal-sent": "proposal_sent",
   "closed": "closed",
-  "lost": "lost",
 };
 const STATUS_TO_SALES_COLUMN: Record<string, string> = Object.entries(
   SALES_COLUMN_TO_STATUS,
