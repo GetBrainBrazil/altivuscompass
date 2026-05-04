@@ -46,6 +46,9 @@ interface CRMTableViewProps {
   onCardArchive?: (card: KanbanCardData) => void;
   onCardRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
   agentOptions: { user_id: string; full_name: string; avatar_url?: string | null }[];
+  sortKey?: string | null;
+  sortDir?: "asc" | "desc" | null;
+  onSortChange?: (key: string | null, dir: "asc" | "desc" | null) => void;
 }
 
 type SortKey =
@@ -336,9 +339,23 @@ export function CRMTableView({
   onCardArchive,
   onCardRenameClient,
   agentOptions,
+  sortKey: sortKeyProp,
+  sortDir: sortDirProp,
+  onSortChange,
 }: CRMTableViewProps) {
-  const [sortKey, setSortKey] = useState<SortKey | null>(null);
-  const [sortDir, setSortDir] = useState<SortDir>(null);
+  const [sortKeyState, setSortKeyState] = useState<SortKey | null>(null);
+  const [sortDirState, setSortDirState] = useState<SortDir>(null);
+  const isControlled = sortKeyProp !== undefined && sortDirProp !== undefined && !!onSortChange;
+  const sortKey = (isControlled ? (sortKeyProp as SortKey | null) : sortKeyState);
+  const sortDir = (isControlled ? (sortDirProp as SortDir) : sortDirState);
+  const setSortKey = (k: SortKey | null) => {
+    if (isControlled) onSortChange!(k, sortDir);
+    else setSortKeyState(k);
+  };
+  const setSortDir = (d: SortDir) => {
+    if (isControlled) onSortChange!(sortKey, d);
+    else setSortDirState(d);
+  };
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingNameId, setEditingNameId] = useState<string | null>(null);
   const [savingNameId, setSavingNameId] = useState<string | null>(null);
@@ -407,16 +424,20 @@ export function CRMTableView({
   }, [rows, sortKey, sortDir]);
 
   const handleSort = (k: SortKey) => {
-    if (sortKey !== k) {
-      setSortKey(k);
-      setSortDir("asc");
-      return;
+    let nextKey: SortKey | null = k;
+    let nextDir: SortDir = "asc";
+    if (sortKey === k) {
+      if (sortDir === "asc") nextDir = "desc";
+      else if (sortDir === "desc") {
+        nextKey = null;
+        nextDir = null;
+      } else nextDir = "asc";
     }
-    if (sortDir === "asc") setSortDir("desc");
-    else if (sortDir === "desc") {
-      setSortKey(null);
-      setSortDir(null);
-    } else setSortDir("asc");
+    if (isControlled) onSortChange!(nextKey, nextDir);
+    else {
+      setSortKeyState(nextKey);
+      setSortDirState(nextDir);
+    }
   };
 
   const allSelected = sortedRows.length > 0 && sortedRows.every((r) => selectedIds.has(r.id));
