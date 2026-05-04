@@ -460,6 +460,7 @@ function KanbanColumnCard({
   onCardViewConversation?: (card: KanbanCardData) => void;
   onCardEdit?: (card: KanbanCardData) => void;
   onCardArchive?: (card: KanbanCardData) => void;
+  onCardUnarchive?: (card: KanbanCardData) => void;
   onCardMarkLost?: (card: KanbanCardData) => void;
   onCardReactivateLost?: (card: KanbanCardData) => void;
   onCardKeepActive?: (card: KanbanCardData) => void;
