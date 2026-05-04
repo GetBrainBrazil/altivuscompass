@@ -295,6 +295,7 @@ export function KanbanCard({
   const isBoardingSoon = daysToTravel !== null && daysToTravel >= 0 && daysToTravel <= 30;
   const nameIsPhone = isPhoneLikeName(card.clientName);
   const isLost = !!card.isLost;
+  const isStagnant = !!card.isStagnant;
   const isIncomplete =
     !card.destination && !card.travelDate && !card.agent && !card.estimatedValue && !card.phone;
 
