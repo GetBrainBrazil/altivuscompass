@@ -3176,6 +3176,7 @@ export default function CRM() {
             onCardViewConversation={handleCardViewConversation}
             onCardEdit={handleCardEdit}
             onCardArchive={handleCardArchive}
+            onCardUnarchive={handleCardUnarchive}
             onCardMarkLost={tab === "sales" ? handleMarkLost : undefined}
             onCardReactivateLost={tab === "sales" ? handleReactivateLost : undefined}
             onCardKeepActive={tab === "sales" ? handleKeepActive : undefined}
