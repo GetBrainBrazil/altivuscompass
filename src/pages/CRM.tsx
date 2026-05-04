@@ -935,7 +935,12 @@ export default function CRM() {
         const isFromWhatsApp = l.source === "whatsapp_ai" || l.source === "whatsapp";
         const isAI = isFromWhatsApp; // origem WhatsApp (com ou sem IA ativa) ganha o badge "IA"
         const assignedUser = l.assigned_user_id ? userById.get(l.assigned_user_id) : null;
-        statusByCardId.set(id, (l.status as string) || "new");
+        // Para leads perdidos: mantemos a coluna em que estavam quando foram
+        // marcados (lost_from_status). Caso ausente, recai no status atual.
+        const effectiveStatus = l.is_lost && l.lost_from_status
+          ? (l.lost_from_status as string)
+          : ((l.status as string) || "new");
+        statusByCardId.set(id, effectiveStatus);
         return {
           id,
           clientName: l.full_name,
