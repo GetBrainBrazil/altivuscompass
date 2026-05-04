@@ -21,6 +21,8 @@ import {
   Phone,
   MapPin,
   Calendar,
+  Target,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -96,6 +98,14 @@ export type KanbanCardData = {
   isRepurchase?: boolean;
   /** Contato antigo que voltou após >30 dias sem interação. */
   isReturning?: boolean;
+  /** Lead marcado como perdido. Card recebe visual diferenciado e badge "Perdido". */
+  isLost?: boolean;
+  /** Motivo da perda (ex: "Preço acima do orçamento"). */
+  lostReason?: string;
+  /** Data ISO em que o lead foi marcado como perdido. */
+  lostAt?: string;
+  /** ID da coluna de origem da perda (para reativação). */
+  lostFromColumnId?: string;
 };
 
 const TAG_TONE_CLASSES: Record<KanbanTagTone, string> = {
@@ -227,6 +237,8 @@ export function KanbanCard({
   onUnarchive,
   archivedAppearance = false,
   onRenameClient,
+  onMarkLost,
+  onReactivateLost,
 }: {
   card: KanbanCardData;
   onClick?: (card: KanbanCardData) => void;
@@ -257,6 +269,10 @@ export function KanbanCard({
   archivedAppearance?: boolean;
   /** Renomear o contato inline (quando o nome ainda é apenas um telefone). */
   onRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
+  /** Marcar lead como perdido — abre modal de motivo. */
+  onMarkLost?: (card: KanbanCardData) => void;
+  /** Reativar lead perdido — remove o estado "Perdido" e devolve à etapa de origem. */
+  onReactivateLost?: (card: KanbanCardData) => void;
 }) {
   const value = formatBRL(card.estimatedValue);
   const alert = card.alert;
@@ -266,6 +282,7 @@ export function KanbanCard({
   const daysToTravel = daysUntil(card.travelDateISO);
   const isBoardingSoon = daysToTravel !== null && daysToTravel >= 0 && daysToTravel <= 30;
   const nameIsPhone = isPhoneLikeName(card.clientName);
+  const isLost = !!card.isLost;
   const isIncomplete =
     !card.destination && !card.travelDate && !card.agent && !card.estimatedValue && !card.phone;
 
@@ -365,13 +382,17 @@ export function KanbanCard({
     warm: "border-l-amber-200",
     cold: "border-l-slate-300",
   };
-  const leftBorder = alert?.tone === "destructive"
-    ? "border-l-destructive/60"
-    : card.isRepurchase
-      ? "border-l-amber-200"
-      : card.isReturning
-        ? "border-l-slate-300"
-        : tempBorder[temperature];
+  const leftBorder = isLost
+    ? "border-l-destructive"
+    : alert?.tone === "destructive"
+      ? "border-l-destructive/60"
+      : card.isRepurchase
+        ? "border-l-amber-200"
+        : card.isReturning
+          ? "border-l-slate-300"
+          : tempBorder[temperature];
+  // Lost menu actions are wired but visible only when callbacks are passed.
+  void onMarkLost; void onReactivateLost;
   const noAgent = !card.agent;
 
   return (
@@ -429,6 +450,7 @@ export function KanbanCard({
         card.isReturning && !card.isRepurchase &&
           "border-sky-300/70 ring-1 ring-sky-200/60 bg-gradient-to-br from-sky-50/40 to-transparent",
         archivedAppearance && "opacity-60 grayscale-[0.4] hover:opacity-80",
+        isLost && "opacity-70 bg-destructive/[0.03] hover:opacity-90",
       )}
     >
       <div className="p-4">
