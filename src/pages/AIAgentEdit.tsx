@@ -93,7 +93,7 @@ export default function AIAgentEdit() {
     return { ...emptyAgent(), id: id! };
   });
 
-  const initialSnapshot = useMemo(() => JSON.stringify(form), []);
+  const [activeSection, setActiveSection] = useState<SectionKey>("identidade");
   const isDirty = JSON.stringify(form) !== initialSnapshot;
 
   useEffect(() => {
