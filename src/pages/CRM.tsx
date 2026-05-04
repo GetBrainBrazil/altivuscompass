@@ -2459,7 +2459,7 @@ export default function CRM() {
     const startLast = now - 14 * day;
     let thisW = 0;
     let lastW = 0;
-    allCards.forEach((c) => {
+    activeCards.forEach((c) => {
       const ts = c.stageEnteredAt ? new Date(c.stageEnteredAt).getTime() : NaN;
       if (!Number.isFinite(ts)) return;
       if (ts >= startThis) thisW += 1;
