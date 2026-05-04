@@ -235,6 +235,8 @@ export function KanbanCard({
   onUnarchive,
   archivedAppearance = false,
   onRenameClient,
+  onMarkLost,
+  onReactivateLost,
 }: {
   card: KanbanCardData;
   onClick?: (card: KanbanCardData) => void;
@@ -265,6 +267,10 @@ export function KanbanCard({
   archivedAppearance?: boolean;
   /** Renomear o contato inline (quando o nome ainda é apenas um telefone). */
   onRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
+  /** Marcar lead como perdido — abre modal de motivo. */
+  onMarkLost?: (card: KanbanCardData) => void;
+  /** Reativar lead perdido — remove o estado "Perdido" e devolve à etapa de origem. */
+  onReactivateLost?: (card: KanbanCardData) => void;
 }) {
   const value = formatBRL(card.estimatedValue);
   const alert = card.alert;
@@ -274,6 +280,7 @@ export function KanbanCard({
   const daysToTravel = daysUntil(card.travelDateISO);
   const isBoardingSoon = daysToTravel !== null && daysToTravel >= 0 && daysToTravel <= 30;
   const nameIsPhone = isPhoneLikeName(card.clientName);
+  const isLost = !!card.isLost;
   const isIncomplete =
     !card.destination && !card.travelDate && !card.agent && !card.estimatedValue && !card.phone;
 
