@@ -90,7 +90,7 @@ const INITIAL_SALES_COLUMNS: KanbanColumn[] = [
   { id: "qualifying", title: "Em Qualificação", cards: [] },
   { id: "quote", title: "Cotação", cards: [] },
   { id: "proposal-sent", title: "Proposta Enviada", cards: [] },
-  { id: "closed", title: "Fechado", cards: [] },
+  { id: "closed", title: "Concluído", cards: [] },
 ];
 
 // Mapeamento bidirecional entre coluna do kanban (sales) e leads.status no banco.
@@ -246,7 +246,7 @@ function ArchivedSection({
                       <span
                         className={cn(
                           "inline-block w-2 h-2 rounded-full",
-                          STAGE_DOT_COLORS[idx % STAGE_DOT_COLORS.length],
+                          col.id === "closed" ? "bg-[#22C55E]" : STAGE_DOT_COLORS[idx % STAGE_DOT_COLORS.length],
                         )}
                       />
                       <span className="text-xs font-medium text-muted-foreground truncate">
@@ -505,7 +505,7 @@ function KanbanColumnCard({
           className={cn(
             "w-2 h-2 rounded-full shrink-0",
             isCollapsed ? "" : "mt-1.5",
-            dotColor,
+            column.id === "closed" ? "bg-[#22C55E]" : dotColor,
           )}
         />
         <span
@@ -654,7 +654,12 @@ function KanbanColumnCard({
                     <KanbanCard
                       card={card}
                       onClick={onCardClick}
-                      stageBorderClass={dotColor.replace("bg-", "border-l-")}
+                      stageBorderClass={
+                        column.id === "closed"
+                          ? "border-l-[#4ADE80]"
+                          : dotColor.replace("bg-", "border-l-")
+                      }
+                      isWonStage={column.id === "closed"}
                       draggable
                       isDragging={draggedCardId === card.id}
                       onDragStart={(c) => onCardDragStart(c)}
@@ -831,10 +836,13 @@ export default function CRM() {
       if (!Array.isArray(parsed) || parsed.length === 0) return fallback;
       // Sanitiza: remove cards que não vieram do banco (sem prefixo lead-/quote-/manual-)
       // e remove a coluna legada "lost" — agora "Perdido" é estado, não coluna.
+      const fallbackById = new Map(fallback.map((c) => [c.id, c]));
       const sanitized = parsed
         .filter((col) => col.id !== "lost")
         .map((col) => ({
           ...col,
+          // Força o título atual do fallback para colunas conhecidas (renomeações de produto).
+          title: fallbackById.get(col.id)?.title ?? col.title,
           cards: col.cards.filter(
             (c) => c.id.startsWith("lead-") || c.id.startsWith("quote-") || c.id.startsWith("manual-"),
           ),

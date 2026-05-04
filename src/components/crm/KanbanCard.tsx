@@ -251,6 +251,7 @@ export function KanbanCard({
   onMarkLost,
   onReactivateLost,
   onKeepActive,
+  isWonStage = false,
 }: {
   card: KanbanCardData;
   onClick?: (card: KanbanCardData) => void;
@@ -287,6 +288,8 @@ export function KanbanCard({
   onReactivateLost?: (card: KanbanCardData) => void;
   /** Cancela arquivamento pendente / remove badge estagnado. */
   onKeepActive?: (card: KanbanCardData) => void;
+  /** Card está na etapa final "Concluído" — recebe destaque verde de sucesso. */
+  isWonStage?: boolean;
 }) {
   const value = formatBRL(card.estimatedValue);
   const alert = card.alert;
@@ -400,15 +403,17 @@ export function KanbanCard({
   };
   const leftBorder = isLost
     ? "border-l-destructive"
-    : isStagnant
-      ? "border-l-amber-400"
-      : alert?.tone === "destructive"
-        ? "border-l-destructive/60"
-        : card.isRepurchase
-          ? "border-l-amber-200"
-          : card.isReturning
-            ? "border-l-slate-300"
-            : tempBorder[temperature];
+    : isWonStage
+      ? "border-l-[#4ADE80]"
+      : isStagnant
+        ? "border-l-amber-400"
+        : alert?.tone === "destructive"
+          ? "border-l-destructive/60"
+          : card.isRepurchase
+            ? "border-l-amber-200"
+            : card.isReturning
+              ? "border-l-slate-300"
+              : tempBorder[temperature];
   const noAgent = !card.agent;
 
   return (
@@ -467,6 +472,7 @@ export function KanbanCard({
           "border-sky-300/70 ring-1 ring-sky-200/60 bg-gradient-to-br from-sky-50/40 to-transparent",
         (archivedAppearance || card.isArchived) && "opacity-60 grayscale-[0.4] hover:opacity-80",
         isLost && "opacity-90 border-l-red-400 hover:opacity-100 bg-[rgba(220,38,38,0.04)]",
+        isWonStage && !isLost && "bg-[rgba(34,197,94,0.06)]",
       )}
     >
       <div className="p-4">
@@ -875,6 +881,15 @@ export function KanbanCard({
                   >
                     <Archive className="w-2.5 h-2.5" />
                     Arquivado
+                  </span>
+                )}
+                {isWonStage && !isLost && (
+                  <span
+                    title="Etapa Concluído"
+                    className="inline-flex items-center gap-0.5 rounded-full bg-[#F0FDF4] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-[#15803D]"
+                  >
+                    <CheckCircle2 className="w-2.5 h-2.5" />
+                    Concluído
                   </span>
                 )}
                 {isLost && (
