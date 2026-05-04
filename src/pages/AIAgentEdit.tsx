@@ -32,6 +32,7 @@ import {
 import type { Agent } from "@/components/ai-agents/AgentEditDialog";
 import { FluxosAtendimentoSection } from "@/components/ai-agents/FluxosAtendimentoSection";
 import { ComunicacaoSection } from "@/components/ai-agents/ComunicacaoSection";
+import { ColetaDadosSection } from "@/components/ai-agents/ColetaDadosSection";
 
 const STORAGE_KEY = "ai-agents-draft";
 const LIST_KEY = "ai-agents-list";
