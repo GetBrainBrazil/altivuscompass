@@ -3064,36 +3064,69 @@ export default function CRM() {
             </Button>
           )}
 
-          {/* View toggle */}
-          <div className="ml-auto flex items-center gap-1 rounded-full border border-border bg-card p-0.5">
-            <button
-              type="button"
-              onClick={() => handleViewModeChange("kanban")}
-              className={cn(
-                "inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-xs font-medium transition-colors",
-                viewMode === "kanban"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted",
-              )}
-              aria-label="Visualização em Kanban"
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              Kanban
-            </button>
-            <button
-              type="button"
-              onClick={() => handleViewModeChange("table")}
-              className={cn(
-                "inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-xs font-medium transition-colors",
-                viewMode === "table"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted",
-              )}
-              aria-label="Visualização em Tabela"
-            >
-              <Rows3 className="w-3.5 h-3.5" />
-              Tabela
-            </button>
+          {/* Archive toggle + View toggle */}
+          <div className="ml-auto flex items-center gap-2">
+            {tab === "sales" && (() => {
+              const archivedCount = allCards.filter((c) => c.isArchived).length;
+              const isActive = filterStatus === "archived";
+              return (
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() => setFilterStatus(isActive ? "active" : "archived")}
+                        aria-pressed={isActive}
+                        aria-label="Ver arquivados"
+                        className={cn(
+                          "inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-xs font-medium border transition-colors duration-150",
+                          isActive
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-card text-muted-foreground border-border hover:text-foreground hover:bg-muted",
+                        )}
+                      >
+                        <Archive className="w-[18px] h-[18px]" />
+                        {isActive && (
+                          <span className="text-[11px] font-semibold leading-none">{archivedCount}</span>
+                        )}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">Ver arquivados</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              );
+            })()}
+
+            <div className="flex items-center gap-1 rounded-full border border-border bg-card p-0.5">
+              <button
+                type="button"
+                onClick={() => handleViewModeChange("kanban")}
+                className={cn(
+                  "inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-xs font-medium transition-colors",
+                  viewMode === "kanban"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted",
+                )}
+                aria-label="Visualização em Kanban"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                Kanban
+              </button>
+              <button
+                type="button"
+                onClick={() => handleViewModeChange("table")}
+                className={cn(
+                  "inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-xs font-medium transition-colors",
+                  viewMode === "table"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted",
+                )}
+                aria-label="Visualização em Tabela"
+              >
+                <Rows3 className="w-3.5 h-3.5" />
+                Tabela
+              </button>
+            </div>
           </div>
 
           {tab === "sales" && (
