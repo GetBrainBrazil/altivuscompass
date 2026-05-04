@@ -313,6 +313,7 @@ function KanbanBoard({
   onCardMarkLost,
   onCardReactivateLost,
   onCardKeepActive,
+  onCardViewPostSale,
   onCardRenameClient,
   agentOptions,
   focusCardId,
@@ -345,6 +346,7 @@ function KanbanBoard({
   onCardMarkLost?: (card: KanbanCardData) => void;
   onCardReactivateLost?: (card: KanbanCardData) => void;
   onCardKeepActive?: (card: KanbanCardData) => void;
+  onCardViewPostSale?: (card: KanbanCardData) => void;
   onCardRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
   agentOptions?: { user_id: string; full_name: string; avatar_url?: string | null }[];
   focusCardId?: string | null;
@@ -390,6 +392,7 @@ function KanbanBoard({
               onCardMarkLost={onCardMarkLost}
               onCardReactivateLost={onCardReactivateLost}
               onCardKeepActive={onCardKeepActive}
+              onCardViewPostSale={onCardViewPostSale}
               onCardRenameClient={onCardRenameClient}
               agentOptions={agentOptions}
               focusCardId={focusCardId}
@@ -434,6 +437,7 @@ function KanbanColumnCard({
   onCardMarkLost,
   onCardReactivateLost,
   onCardKeepActive,
+  onCardViewPostSale,
   onCardRenameClient,
   agentOptions,
   focusCardId,
@@ -467,6 +471,7 @@ function KanbanColumnCard({
   onCardMarkLost?: (card: KanbanCardData) => void;
   onCardReactivateLost?: (card: KanbanCardData) => void;
   onCardKeepActive?: (card: KanbanCardData) => void;
+  onCardViewPostSale?: (card: KanbanCardData) => void;
   onCardRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
   agentOptions?: { user_id: string; full_name: string; avatar_url?: string | null }[];
   focusCardId?: string | null;
@@ -662,7 +667,7 @@ function KanbanColumnCard({
                           : dotColor.replace("bg-", "border-l-")
                       }
                       isWonStage={column.id === "closed"}
-                      draggable
+                      draggable={column.id !== "closed"}
                       isDragging={draggedCardId === card.id}
                       onDragStart={(c) => onCardDragStart(c)}
                       onDragEnd={() => { onCardDragEnd(); setOverIndex(null); }}
@@ -678,6 +683,7 @@ function KanbanColumnCard({
                       onMarkLost={onCardMarkLost}
                       onReactivateLost={onCardReactivateLost}
                       onKeepActive={onCardKeepActive}
+                      onViewPostSale={onCardViewPostSale}
                       onRenameClient={onCardRenameClient}
                     />
                   </div>
