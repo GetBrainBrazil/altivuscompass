@@ -15,7 +15,9 @@ import { Switch } from "@/components/ui/switch";
 import {
   Sparkles, Shield, Bot, ArrowLeft, FlaskConical, Trash2,
   Headset, MessageCircle, Brain, Globe, Plane, Compass, Heart, Star, ShieldCheck, User, Sparkle, Map, Briefcase, Camera, Coffee, Palmtree,
+  GitBranch, ClipboardList, Plug, BarChart3,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import {
