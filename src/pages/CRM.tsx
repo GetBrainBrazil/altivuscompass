@@ -2415,7 +2415,7 @@ export default function CRM() {
     filterLevel: string;
     filterSource: string;
     filterState: "active" | "lost" | "all";
-    filterStatus: "active" | "concluded" | "archived" | "all";
+    filterStatus: "active" | "concluded" | "archived" | "stagnant" | "all";
     filterBoarding: "all" | "7" | "15" | "30";
     filterOpsStatus: "all" | "normal" | "urgent" | "waiting";
     filterDestination: string;
@@ -2474,7 +2474,7 @@ export default function CRM() {
   const filterState = current.filterState;
   const setFilterState = (v: "active" | "lost" | "all") => updateCurrent({ filterState: v });
   const filterStatus = current.filterStatus;
-  const setFilterStatus = (v: "active" | "concluded" | "archived" | "all") => updateCurrent({ filterStatus: v });
+  const setFilterStatus = (v: "active" | "concluded" | "archived" | "stagnant" | "all") => updateCurrent({ filterStatus: v });
   const filterBoarding = current.filterBoarding;
   const setFilterBoarding = (v: "all" | "7" | "15" | "30") => updateCurrent({ filterBoarding: v });
   const filterOpsStatus = current.filterOpsStatus;
@@ -2586,6 +2586,9 @@ export default function CRM() {
             if (!isClosedCol) return false;
           } else if (filterStatus === "archived") {
             if (!card.isArchived) return false;
+          } else if (filterStatus === "stagnant") {
+            if (card.isArchived) return false;
+            if (!card.isStagnant) return false;
           }
           // Filtro de Estado: por padrão esconde leads perdidos.
           if (filterState === "active" && card.isLost) return false;
@@ -3172,16 +3175,19 @@ export default function CRM() {
             {tab === "sales" && (() => {
               const archivedCount = allCards.filter((c) => c.isArchived).length;
               const concludedCount = columns.find((c) => c.id === "closed")?.cards.filter((c) => !c.isArchived).length ?? 0;
+              const stagnantCount = allCards.filter((c) => !c.isArchived && c.isStagnant).length;
               const isActive = filterStatus !== "active";
               const labelMap = {
                 active: "Ativos",
                 concluded: "Concluídos",
+                stagnant: "Estagnados",
                 archived: "Arquivados",
                 all: "Todos",
               } as const;
               const badgeCount =
                 filterStatus === "archived" ? archivedCount :
                 filterStatus === "concluded" ? concludedCount :
+                filterStatus === "stagnant" ? stagnantCount :
                 filterStatus === "all" ? allCards.length :
                 0;
               return (
@@ -3216,7 +3222,7 @@ export default function CRM() {
                     </Tooltip>
                   </TooltipProvider>
                   <DropdownMenuContent align="end" className="w-44">
-                    {(["active", "concluded", "archived", "all"] as const).map((opt) => (
+                    {(["active", "concluded", "stagnant", "archived", "all"] as const).map((opt) => (
                       <DropdownMenuItem
                         key={opt}
                         onClick={() => setFilterStatus(opt)}
