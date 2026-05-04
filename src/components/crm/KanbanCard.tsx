@@ -3,6 +3,7 @@ import {
   Sparkles,
   AlertTriangle,
   CheckCircle2,
+  ExternalLink,
   UserPlus,
   Flame,
   Plane,
@@ -252,6 +253,7 @@ export function KanbanCard({
   onReactivateLost,
   onKeepActive,
   isWonStage = false,
+  onViewPostSale,
 }: {
   card: KanbanCardData;
   onClick?: (card: KanbanCardData) => void;
@@ -290,6 +292,8 @@ export function KanbanCard({
   onKeepActive?: (card: KanbanCardData) => void;
   /** Card está na etapa final "Concluído" — recebe destaque verde de sucesso. */
   isWonStage?: boolean;
+  /** Abre o espelho correspondente no funil de Pós-Venda. */
+  onViewPostSale?: (card: KanbanCardData) => void;
 }) {
   const value = formatBRL(card.estimatedValue);
   const alert = card.alert;
@@ -905,6 +909,28 @@ export function KanbanCard({
                           </TooltipTrigger>
                           <TooltipContent side="top" className="text-xs">
                             Enviado para Pós-Venda
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                    {card.contactLevel === "cliente" && onViewPostSale && (
+                      <TooltipProvider delayDuration={150}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              aria-label="Ver no Pós-Venda"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onViewPostSale(card);
+                              }}
+                              className="inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="text-xs">
+                            Ver no Pós-Venda
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
