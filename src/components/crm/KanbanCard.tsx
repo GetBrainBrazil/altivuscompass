@@ -118,6 +118,10 @@ export type KanbanCardData = {
   archivePendingAt?: string;
   /** Lead arquivado — card recebe visual opaco e badge "Arquivado". */
   isArchived?: boolean;
+  /** Data ISO em que o card foi arquivado. */
+  archivedAt?: string;
+  /** Nome legível da etapa em que o card estava ao ser arquivado. */
+  archivedFromStage?: string;
 };
 
 const TAG_TONE_CLASSES: Record<KanbanTagTone, string> = {
