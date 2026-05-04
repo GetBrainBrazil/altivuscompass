@@ -312,7 +312,7 @@ export default function LeadDetail() {
     (async () => {
       const { data } = await supabase
         .from("leads")
-        .select("phone, full_name, email, source, destination, travel_date_start, travel_date_end, flexible_dates, flexible_dates_description, budget_estimate, travelers_count, preferences, trip_profile, assigned_user_id, lead_temperature, ai_summary, ai_collected_data")
+        .select("phone, full_name, email, source, destination, travel_date_start, travel_date_end, flexible_dates, flexible_dates_description, budget_estimate, travelers_count, preferences, trip_profile, assigned_user_id, lead_temperature, ai_summary, ai_collected_data, is_lost, lost_reason, lost_at")
         .eq("id", leadId)
         .maybeSingle();
       if (cancelled || !data) return;
