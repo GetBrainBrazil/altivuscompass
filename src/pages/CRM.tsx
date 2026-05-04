@@ -427,6 +427,7 @@ function KanbanColumnCard({
   onCardViewConversation,
   onCardEdit,
   onCardArchive,
+  onCardUnarchive,
   onCardMarkLost,
   onCardReactivateLost,
   onCardKeepActive,
