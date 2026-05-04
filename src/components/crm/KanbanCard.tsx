@@ -853,6 +853,26 @@ export function KanbanCard({
                     {card.lostReason ? `Perdido — ${card.lostReason}` : "Perdido"}
                   </span>
                 )}
+                {!isLost && isStagnant && (
+                  <span
+                    title={
+                      card.archivePendingAt
+                        ? "Será arquivado automaticamente em 24h por inatividade"
+                        : `Sem atividade há ${inactiveDays ?? 0} dias`
+                    }
+                    className={cn(
+                      "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide",
+                      card.archivePendingAt
+                        ? "bg-destructive/15 text-destructive"
+                        : "bg-amber-100 text-amber-700",
+                    )}
+                  >
+                    <AlertTriangle className="w-2.5 h-2.5" />
+                    {card.archivePendingAt
+                      ? "Arquivar em 24h"
+                      : `Estagnado · ${inactiveDays ?? 0}d`}
+                  </span>
+                )}
                 {cornerBadge}
                 {card.isRepurchase && (
                   <span
