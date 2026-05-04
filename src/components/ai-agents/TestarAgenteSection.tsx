@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Agent } from "@/components/ai-agents/AgentEditDialog";
+import { useWhatsAppProfile } from "@/hooks/useWhatsAppProfile";
 
 type Role = "agent" | "user";
 interface Msg {
