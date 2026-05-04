@@ -1742,7 +1742,7 @@ export default function CRM() {
     }
   };
 
-
+  const handleMarkLost = (card: KanbanCardData) => {
     const sourceColumn = columns.find((c) => c.cards.some((k) => k.id === card.id));
     if (!sourceColumn) return;
     const leadId = card.id.startsWith("lead-") ? card.id.slice(5) : null;
