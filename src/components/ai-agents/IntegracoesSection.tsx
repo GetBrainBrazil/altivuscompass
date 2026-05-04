@@ -1,4 +1,4 @@
-import { useRef, useState, DragEvent } from "react";
+import { useEffect, useRef, useState, DragEvent } from "react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -34,24 +34,54 @@ const formatSize = (bytes: number) => {
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
-export function IntegracoesSection() {
+export interface IntegracoesValue {
+  create_leads: boolean;
+  funnel: string;
+  stage: string;
+  draft_quote: boolean;
+  notify_email: boolean;
+  notify_whatsapp: boolean;
+  owner: string;
+  files: KBFile[];
+}
+
+interface Props {
+  value?: Partial<IntegracoesValue>;
+  onChange?: (v: IntegracoesValue) => void;
+}
+
+export function IntegracoesSection({ value, onChange }: Props = {}) {
   // CRM
-  const [createLeads, setCreateLeads] = useState(true);
-  const [funnel, setFunnel] = useState(FUNNELS[0]);
-  const [stage, setStage] = useState(STAGES[0]);
+  const [createLeads, setCreateLeads] = useState(value?.create_leads ?? true);
+  const [funnel, setFunnel] = useState(value?.funnel ?? FUNNELS[0]);
+  const [stage, setStage] = useState(value?.stage ?? STAGES[0]);
 
   // Cotações
-  const [draftQuote, setDraftQuote] = useState(false);
+  const [draftQuote, setDraftQuote] = useState(value?.draft_quote ?? false);
 
   // Notificações
-  const [notifyEmail, setNotifyEmail] = useState(true);
-  const [notifyWA, setNotifyWA] = useState(false);
-  const [owner, setOwner] = useState(TEAM[0]);
+  const [notifyEmail, setNotifyEmail] = useState(value?.notify_email ?? true);
+  const [notifyWA, setNotifyWA] = useState(value?.notify_whatsapp ?? false);
+  const [owner, setOwner] = useState(value?.owner ?? TEAM[0]);
 
   // Base de Conhecimento
-  const [files, setFiles] = useState<KBFile[]>([]);
+  const [files, setFiles] = useState<KBFile[]>(value?.files ?? []);
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    onChange?.({
+      create_leads: createLeads,
+      funnel,
+      stage,
+      draft_quote: draftQuote,
+      notify_email: notifyEmail,
+      notify_whatsapp: notifyWA,
+      owner,
+      files,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [createLeads, funnel, stage, draftQuote, notifyEmail, notifyWA, owner, files]);
 
   const addFiles = (list: FileList | null) => {
     if (!list) return;

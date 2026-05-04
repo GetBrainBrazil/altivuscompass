@@ -483,20 +483,51 @@ export default function AIAgentEdit() {
           <ComunicacaoSection
             initialPersonality={form.personality}
             initialTone={form.tone}
+            value={form.config?.comunicacao}
+            onChange={(v) =>
+              setForm((f) => ({ ...f, config: { ...(f.config || {}), comunicacao: v } }))
+            }
           />
         )}
 
         {activeSection === "regras" && (
-          <RegrasLimitesSection initialRules={form.rules} />
+          <RegrasLimitesSection
+            initialRules={form.rules}
+            value={form.config?.regras}
+            onChange={(v) =>
+              setForm((f) => ({ ...f, config: { ...(f.config || {}), regras: v } }))
+            }
+          />
         )}
 
         {activeSection === "testar" && <TestarAgenteSection />}
 
-        {activeSection === "fluxos" && <FluxosAtendimentoSection />}
+        {activeSection === "fluxos" && (
+          <FluxosAtendimentoSection
+            value={form.config?.fluxos}
+            onChange={(v) =>
+              setForm((f) => ({ ...f, config: { ...(f.config || {}), fluxos: v } }))
+            }
+          />
+        )}
 
-        {activeSection === "coleta" && <ColetaDadosSection />}
+        {activeSection === "coleta" && (
+          <ColetaDadosSection
+            value={form.config?.coleta}
+            onChange={(v) =>
+              setForm((f) => ({ ...f, config: { ...(f.config || {}), coleta: v } }))
+            }
+          />
+        )}
 
-        {activeSection === "integracoes" && <IntegracoesSection />}
+        {activeSection === "integracoes" && (
+          <IntegracoesSection
+            value={form.config?.integracoes}
+            onChange={(v) =>
+              setForm((f) => ({ ...f, config: { ...(f.config || {}), integracoes: v } }))
+            }
+          />
+        )}
 
         {activeSection === "metricas" && <MetricasSection />}
         </div>

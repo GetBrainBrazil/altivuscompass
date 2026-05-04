@@ -1,4 +1,4 @@
-import { useState, KeyboardEvent } from "react";
+import { useEffect, useState, KeyboardEvent } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -123,14 +123,27 @@ const TEAM = [
   "Não atribuir",
 ];
 
-export function FluxosAtendimentoSection() {
-  const [detection, setDetection] = useState<DetectionMethod>("ai");
-  const [keywords, setKeywords] = useState<string[]>([
+export interface FluxosValue {
+  detection: DetectionMethod;
+  keywords: string[];
+  quote: QuoteFlow;
+  support: SupportFlow;
+  prospect: ProspectFlow;
+}
+
+interface Props {
+  value?: Partial<FluxosValue>;
+  onChange?: (v: FluxosValue) => void;
+}
+
+export function FluxosAtendimentoSection({ value, onChange }: Props = {}) {
+  const [detection, setDetection] = useState<DetectionMethod>(value?.detection ?? "ai");
+  const [keywords, setKeywords] = useState<string[]>(value?.keywords ?? [
     "urgente", "emergência", "cancelado", "problema", "ajuda", "socorro",
   ]);
   const [keywordDraft, setKeywordDraft] = useState("");
 
-  const [quote, setQuote] = useState<QuoteFlow>({
+  const [quote, setQuote] = useState<QuoteFlow>(value?.quote ?? {
     active: true,
     expanded: false,
     priority: "normal",
@@ -140,7 +153,7 @@ export function FluxosAtendimentoSection() {
     closingMessage: "",
   });
 
-  const [support, setSupport] = useState<SupportFlow>({
+  const [support, setSupport] = useState<SupportFlow>(value?.support ?? {
     active: true,
     expanded: false,
     priority: "urgente",
@@ -152,7 +165,7 @@ export function FluxosAtendimentoSection() {
     closingMessage: "",
   });
 
-  const [prospect, setProspect] = useState<ProspectFlow>({
+  const [prospect, setProspect] = useState<ProspectFlow>(value?.prospect ?? {
     active: true,
     expanded: false,
     priority: "normal",
@@ -162,6 +175,11 @@ export function FluxosAtendimentoSection() {
     maxMinutes: 15,
     closingMessage: "",
   });
+
+  useEffect(() => {
+    onChange?.({ detection, keywords, quote, support, prospect });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detection, keywords, quote, support, prospect]);
 
   const addKeyword = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" || e.key === ",") {
