@@ -857,6 +857,15 @@ export function KanbanCard({
                 {card.contactLevel && (
                   <ContactLevelBadge level={card.contactLevel} size="xs" className="shrink-0" />
                 )}
+                {card.isArchived && (
+                  <span
+                    title="Card arquivado"
+                    className="inline-flex items-center gap-0.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-slate-600"
+                  >
+                    <Archive className="w-2.5 h-2.5" />
+                    Arquivado
+                  </span>
+                )}
                 {isLost && (
                   <span
                     title={card.lostReason ? `Perdido — ${card.lostReason}` : "Lead perdido"}
