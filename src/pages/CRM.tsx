@@ -2997,25 +2997,35 @@ export default function CRM() {
             <>
               <FilterChip
                 label="Estado"
-                value={
-                  filterState === "active"
-                    ? "Estado: Ativos"
-                    : filterState === "lost"
-                      ? "Estado: Perdidos"
-                      : "Estado: Todos"
-                }
-                active={filterState !== "active"}
-                onClear={() => setFilterState("active")}
-                width={200}
+                value={(() => {
+                  const labels: Record<string, string> = {
+                    active: "Ativos",
+                    lost: "Perdidos",
+                    stagnant: "Estagnados",
+                    all: "Todos",
+                  };
+                  if (filterState.includes("all")) return "Estado: Todos";
+                  if (filterState.length === 1) return `Estado: ${labels[filterState[0]] ?? filterState[0]}`;
+                  return `Estado: ${filterState.length} selecionados`;
+                })()}
+                active={!(filterState.length === 1 && filterState[0] === "active")}
+                onClear={() => setFilterState(["active"])}
+                width={220}
               >
-                <SearchableList
+                <MultiSearchableList
                   items={[
                     { id: "active", label: "Ativos" },
                     { id: "lost", label: "Perdidos" },
+                    { id: "stagnant", label: "Estagnados" },
                     { id: "all", label: "Todos" },
                   ]}
                   selected={filterState}
-                  onSelect={(v) => setFilterState(v as "active" | "lost" | "all")}
+                  onChange={(ids) => {
+                    // "all" é exclusivo: se marcado, remove os outros; se outro for marcado, remove "all".
+                    const last = ids[ids.length - 1];
+                    if (last === "all") setFilterState(["all"]);
+                    else setFilterState(ids.filter((i) => i !== "all"));
+                  }}
                   placeholder="Buscar..."
                 />
               </FilterChip>
