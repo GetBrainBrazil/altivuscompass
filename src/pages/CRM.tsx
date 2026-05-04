@@ -3248,6 +3248,7 @@ export default function CRM() {
             onCardMarkLost={tab === "sales" ? handleMarkLost : undefined}
             onCardReactivateLost={tab === "sales" ? handleReactivateLost : undefined}
             onCardKeepActive={tab === "sales" ? handleKeepActive : undefined}
+            onCardViewPostSale={tab === "sales" ? handleViewPostSale : undefined}
             onCardRenameClient={handleCardRenameClient}
             agentOptions={responsibleOptions}
             focusCardId={focusCardId}
