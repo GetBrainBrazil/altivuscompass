@@ -391,6 +391,8 @@ export function KanbanCard({
         : card.isReturning
           ? "border-l-slate-300"
           : tempBorder[temperature];
+  // Lost menu actions are wired but visible only when callbacks are passed.
+  void onMarkLost; void onReactivateLost;
   const noAgent = !card.agent;
 
   return (
