@@ -2504,8 +2504,8 @@ export default function CRM() {
 
   // ─── KPIs ────────────────────────────────────────────────
   const allCards = useMemo(() => columns.flatMap((c) => c.cards), [columns]);
-  // Métricas excluem cards perdidos e contadores de coluna no Kanban também (via filteredColumns).
-  const activeCards = useMemo(() => allCards.filter((c) => !c.isLost), [allCards]);
+  // Métricas excluem cards perdidos e arquivados; contadores de coluna no Kanban também (via filteredColumns).
+  const activeCards = useMemo(() => allCards.filter((c) => !c.isLost && !c.isArchived), [allCards]);
   const totalLeads = activeCards.length;
   const aiLeads = activeCards.filter((c) => c.isAILead).length;
   const pipelineValue = activeCards.reduce((sum, c) => sum + (c.estimatedValue || 0), 0);
