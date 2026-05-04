@@ -2758,6 +2758,31 @@ export default function CRM() {
           {tab === "sales" ? (
             <>
               <FilterChip
+                label="Estado"
+                value={
+                  filterState === "active"
+                    ? "Estado: Ativos"
+                    : filterState === "lost"
+                      ? "Estado: Perdidos"
+                      : "Estado: Todos"
+                }
+                active={filterState !== "active"}
+                onClear={() => setFilterState("active")}
+                width={200}
+              >
+                <SearchableList
+                  items={[
+                    { id: "active", label: "Ativos" },
+                    { id: "lost", label: "Perdidos" },
+                    { id: "all", label: "Todos" },
+                  ]}
+                  selected={filterState}
+                  onSelect={(v) => setFilterState(v as "active" | "lost" | "all")}
+                  placeholder="Buscar..."
+                />
+              </FilterChip>
+
+              <FilterChip
                 label="Temperatura"
                 value={
                   filterTemp === "all"
