@@ -2504,9 +2504,21 @@ export default function CRM() {
         }
 
         if (tab === "sales") {
-          // Status (arquivamento): "active" esconde arquivados; "archived" só arquivados; "all" ambos.
-          if (filterStatus === "active" && card.isArchived) return false;
-          if (filterStatus === "archived" && !card.isArchived) return false;
+          const isClosedCol = col.id === "closed";
+          // Status (arquivamento + concluídos):
+          // "active" → esconde arquivados E esconde a coluna Concluído.
+          // "concluded" → mostra apenas cards na coluna Concluído (não arquivados).
+          // "archived" → apenas arquivados.
+          // "all" → mostra tudo.
+          if (filterStatus === "active") {
+            if (card.isArchived) return false;
+            if (isClosedCol) return false;
+          } else if (filterStatus === "concluded") {
+            if (card.isArchived) return false;
+            if (!isClosedCol) return false;
+          } else if (filterStatus === "archived") {
+            if (!card.isArchived) return false;
+          }
           // Filtro de Estado: por padrão esconde leads perdidos.
           if (filterState === "active" && card.isLost) return false;
           if (filterState === "lost" && !card.isLost) return false;
