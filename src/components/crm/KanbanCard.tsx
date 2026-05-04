@@ -428,6 +428,7 @@ export function KanbanCard({
           "border-amber-300/70 ring-1 ring-amber-200/60 bg-gradient-to-br from-amber-50/40 to-transparent",
         card.isReturning && !card.isRepurchase &&
           "border-sky-300/70 ring-1 ring-sky-200/60 bg-gradient-to-br from-sky-50/40 to-transparent",
+        archivedAppearance && "opacity-60 grayscale-[0.4] hover:opacity-80",
       )}
     >
       <div className="p-4">
