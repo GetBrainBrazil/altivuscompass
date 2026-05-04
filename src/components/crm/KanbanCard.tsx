@@ -96,6 +96,14 @@ export type KanbanCardData = {
   isRepurchase?: boolean;
   /** Contato antigo que voltou após >30 dias sem interação. */
   isReturning?: boolean;
+  /** Lead marcado como perdido. Card recebe visual diferenciado e badge "Perdido". */
+  isLost?: boolean;
+  /** Motivo da perda (ex: "Preço acima do orçamento"). */
+  lostReason?: string;
+  /** Data ISO em que o lead foi marcado como perdido. */
+  lostAt?: string;
+  /** ID da coluna de origem da perda (para reativação). */
+  lostFromColumnId?: string;
 };
 
 const TAG_TONE_CLASSES: Record<KanbanTagTone, string> = {
