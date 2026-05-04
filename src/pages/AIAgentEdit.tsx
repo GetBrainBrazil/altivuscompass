@@ -47,6 +47,27 @@ const TONES = [
   { value: "entusiasmado", label: "Entusiasmado e inspirador" },
 ];
 
+type SectionKey =
+  | "identidade"
+  | "fluxos"
+  | "comunicacao"
+  | "coleta"
+  | "regras"
+  | "integracoes"
+  | "metricas"
+  | "testar";
+
+const SECTIONS: { key: SectionKey; icon: string; label: string }[] = [
+  { key: "identidade", icon: "🤖", label: "Identidade" },
+  { key: "fluxos", icon: "🎯", label: "Fluxos de Atendimento" },
+  { key: "comunicacao", icon: "💬", label: "Comunicação" },
+  { key: "coleta", icon: "📋", label: "Coleta de Dados" },
+  { key: "regras", icon: "⚡", label: "Regras e Limites" },
+  { key: "integracoes", icon: "🔗", label: "Integrações" },
+  { key: "metricas", icon: "📊", label: "Métricas" },
+  { key: "testar", icon: "🧪", label: "Testar Agente" },
+];
+
 const emptyAgent = (): Agent => ({
   id: crypto.randomUUID(),
   name: "",
@@ -72,6 +93,7 @@ export default function AIAgentEdit() {
     return { ...emptyAgent(), id: id! };
   });
 
+  const [activeSection, setActiveSection] = useState<SectionKey>("identidade");
   const initialSnapshot = useMemo(() => JSON.stringify(form), []);
   const isDirty = JSON.stringify(form) !== initialSnapshot;
 
@@ -183,8 +205,38 @@ export default function AIAgentEdit() {
         </div>
       </div>
 
-      <div className="max-w-[1100px] mx-auto px-8 py-10 space-y-8">
-        {/* Identidade */}
+      <div className="max-w-[1200px] mx-auto px-8 py-10 flex flex-col md:flex-row gap-8">
+        {/* Left nav */}
+        <aside className="md:w-[240px] md:shrink-0">
+          <nav
+            className="md:sticky md:top-24 flex md:flex-col gap-2 overflow-x-auto md:overflow-visible -mx-2 px-2 md:mx-0 md:px-0"
+            aria-label="Seções do agente"
+          >
+            {SECTIONS.map((s) => {
+              const isActive = activeSection === s.key;
+              return (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => setActiveSection(s.key)}
+                  className={
+                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors text-left shrink-0 " +
+                    (isActive
+                      ? "bg-[hsl(220_45%_15%)] text-white"
+                      : "text-gray-600 hover:bg-gray-100 bg-transparent")
+                  }
+                >
+                  <span className="text-base leading-none">{s.icon}</span>
+                  <span className="font-medium">{s.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
+
+        {/* Content panel */}
+        <div className="flex-1 min-w-0 space-y-8">
+        {activeSection === "identidade" && (
         <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
           <div className="px-8 py-5 border-b border-border/60">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
@@ -258,19 +310,18 @@ export default function AIAgentEdit() {
             </div>
           </div>
         </section>
+        )}
 
-        {/* Personalidade */}
+        {activeSection === "comunicacao" && (
         <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
-          <div className="px-8 py-5 border-b border-border/60 flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-[hsl(var(--gold))]" />
-                Personalidade e Diretrizes
-              </h2>
-              <p className="text-xs text-muted-foreground mt-1">
-                Define o tom, missão e estilo de comunicação do agente.
-              </p>
-            </div>
+          <div className="px-8 py-5 border-b border-border/60">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-[hsl(var(--gold))]" />
+              Comunicação — Personalidade e Diretrizes
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Define o tom, missão e estilo de comunicação do agente.
+            </p>
           </div>
           <div className="p-8">
             <Textarea
@@ -278,29 +329,23 @@ export default function AIAgentEdit() {
               value={form.personality}
               onChange={(e) => setForm({ ...form, personality: e.target.value })}
               rows={10}
-              placeholder={`Você é um consultor de viagens experiente da Altivus Turismo.
-Sua missão é ajudar clientes a planejar viagens memoráveis...
-
-- Sempre se apresente pelo nome
-- Pergunte sobre preferências de viagem
-- Sugira destinos baseados no perfil`}
+              placeholder={`Você é um consultor de viagens experiente da Altivus Turismo.\nSua missão é ajudar clientes a planejar viagens memoráveis...\n\n- Sempre se apresente pelo nome\n- Pergunte sobre preferências de viagem\n- Sugira destinos baseados no perfil`}
               className="font-mono text-[13px] leading-relaxed resize-y min-h-[220px] bg-[hsl(220_15%_98%)]"
             />
           </div>
         </section>
+        )}
 
-        {/* Regras */}
+        {activeSection === "regras" && (
         <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
-          <div className="px-8 py-5 border-b border-border/60 flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                <Shield className="h-4 w-4 text-destructive" />
-                Regras de Conversa
-              </h2>
-              <p className="text-xs text-muted-foreground mt-1">
-                Restrições e limites que o agente nunca deve violar.
-              </p>
-            </div>
+          <div className="px-8 py-5 border-b border-border/60">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <Shield className="h-4 w-4 text-destructive" />
+              Regras e Limites
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Restrições e limites que o agente nunca deve violar.
+            </p>
           </div>
           <div className="p-8">
             <Textarea
@@ -308,37 +353,55 @@ Sua missão é ajudar clientes a planejar viagens memoráveis...
               value={form.rules}
               onChange={(e) => setForm({ ...form, rules: e.target.value })}
               rows={10}
-              placeholder={`- Nunca prometa preços sem confirmar com um agente humano
-- Não compartilhe dados pessoais de outros clientes
-- Não invente informações sobre destinos
-- Sempre transfira para humano em caso de reclamação
-- Não responda perguntas fora do contexto de viagens`}
+              placeholder={`- Nunca prometa preços sem confirmar com um agente humano\n- Não compartilhe dados pessoais de outros clientes\n- Não invente informações sobre destinos\n- Sempre transfira para humano em caso de reclamação\n- Não responda perguntas fora do contexto de viagens`}
               className="font-mono text-[13px] leading-relaxed resize-y min-h-[220px] bg-[hsl(220_15%_98%)]"
             />
           </div>
         </section>
+        )}
 
-        {/* Test action */}
-        <div className="flex items-center justify-between bg-white rounded-xl border border-dashed border-border/60 px-6 py-5">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-md bg-muted flex items-center justify-center">
-              <FlaskConical className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="text-sm font-medium">Testar agente</p>
-              <p className="text-xs text-muted-foreground">
-                Simule uma conversa para validar personalidade e regras antes de ativar.
+        {activeSection === "testar" && (
+        <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
+          <div className="px-8 py-5 border-b border-border/60">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <FlaskConical className="h-4 w-4" />
+              Testar Agente
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Simule uma conversa para validar personalidade e regras antes de ativar.
+            </p>
+          </div>
+          <div className="p-8">
+            <Button
+              variant="outline"
+              className="h-9"
+              onClick={() => toast.info("Modo de teste em breve")}
+            >
+              <FlaskConical className="h-4 w-4 mr-2" />
+              Iniciar teste
+            </Button>
+          </div>
+        </section>
+        )}
+
+        {(activeSection === "fluxos" ||
+          activeSection === "coleta" ||
+          activeSection === "integracoes" ||
+          activeSection === "metricas") && (
+          <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
+            <div className="px-8 py-5 border-b border-border/60">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                {SECTIONS.find((s) => s.key === activeSection)?.label}
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Em breve — esta seção será configurada nos próximos passos.
               </p>
             </div>
-          </div>
-          <Button
-            variant="outline"
-            className="h-9"
-            onClick={() => toast.info("Modo de teste em breve")}
-          >
-            <FlaskConical className="h-4 w-4 mr-2" />
-            Iniciar teste
-          </Button>
+            <div className="p-8 text-sm text-muted-foreground">
+              Conteúdo em breve.
+            </div>
+          </section>
+        )}
         </div>
       </div>
     </div>
