@@ -2343,8 +2343,9 @@ export default function CRM() {
   const activeLeadsByUser = useMemo(() => {
     const counts = new Map<string, number>();
     columns.forEach((c) => {
-      if (c.id === "lost" || c.id === "closed") return;
+      if (c.id === "closed") return;
       c.cards.forEach((k) => {
+        if (k.isLost) return;
         const id = k.agent?.id;
         if (id) counts.set(id, (counts.get(id) ?? 0) + 1);
       });
