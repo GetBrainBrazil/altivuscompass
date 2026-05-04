@@ -3095,7 +3095,7 @@ export default function CRM() {
               const archivedCount = allCards.filter((c) => c.isArchived).length;
               const concludedCount = columns.find((c) => c.id === "closed")?.cards.filter((c) => !c.isArchived).length ?? 0;
               const isActive = filterStatus !== "active";
-              const labelMap: Record<typeof filterStatus, string> = {
+              const labelMap = {
                 active: "Ativos",
                 concluded: "Concluídos",
                 archived: "Arquivados",
