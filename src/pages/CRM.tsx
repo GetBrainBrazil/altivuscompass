@@ -2993,23 +2993,6 @@ export default function CRM() {
                 />
               </FilterChip>
 
-              <FilterChip
-                label="Tags"
-                value={filterTag === "all" ? "Tags" : `Tag: ${filterTag}`}
-                active={filterTag !== "all"}
-                onClear={() => setFilterTag("all")}
-                width={240}
-              >
-                <SearchableList
-                  items={[
-                    { id: "all", label: "Todas as tags" },
-                    ...tagOptions.map((t) => ({ id: t, label: t })),
-                  ]}
-                  selected={filterTag}
-                  onSelect={setFilterTag}
-                  placeholder="Buscar tag..."
-                />
-              </FilterChip>
             </>
           ) : (
             <>
