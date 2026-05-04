@@ -106,6 +106,14 @@ export type KanbanCardData = {
   lostAt?: string;
   /** ID da coluna de origem da perda (para reativação). */
   lostFromColumnId?: string;
+  /** Marcado pelo job diário como "estagnado" (sem interação por X dias). */
+  isStagnant?: boolean;
+  /** Data ISO em que o card entrou no estado estagnado. */
+  stagnantSince?: string;
+  /** Data ISO da última interação registrada (mensagem, nota, edição, mudança de etapa). */
+  lastInteractionAt?: string;
+  /** Data ISO em que foi enviado o aviso de "será arquivado em 24h". */
+  archivePendingAt?: string;
 };
 
 const TAG_TONE_CLASSES: Record<KanbanTagTone, string> = {
