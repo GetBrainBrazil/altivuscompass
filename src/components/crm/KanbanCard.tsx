@@ -508,7 +508,7 @@ export function KanbanCard({
             </div>
           )}
           <div className="shrink-0 flex items-start gap-1" onClick={(e) => e.stopPropagation()}>
-            {(onDelete || onAssignAgent || onCreateQuote || onViewConversation || onEdit || onArchive || onTemperatureChange) && (
+            {(onDelete || onAssignAgent || onCreateQuote || onViewConversation || onEdit || onArchive || onUnarchive || onTemperatureChange) && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
