@@ -1854,6 +1854,76 @@ export default function CRM() {
     setOpsColumns((prev) => prev.map((col) => ({ ...col, cards: col.cards.filter((c) => c.id !== cardId) })));
     toast.success("Card arquivado.");
     setArchiveTarget(null);
+    // Recarrega a lista de arquivados
+    setArchivedRefreshTick((t) => t + 1);
+  };
+
+  // ─── Área "Arquivados" (apenas aba Funil de Vendas) ───────────────────────
+  type ArchivedCard = KanbanCardData & { columnId: string; archivedAt: string | null };
+  const [archivedCards, setArchivedCards] = useState<ArchivedCard[]>([]);
+  const [archivedExpanded, setArchivedExpanded] = useState(false);
+  const [archivedSearch, setArchivedSearch] = useState("");
+  const [archivedDateFilter, setArchivedDateFilter] = useState<"all" | "7" | "30" | "90">("all");
+  const [archivedRefreshTick, setArchivedRefreshTick] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("id, full_name, phone, source, destination, travel_date_start, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, archived_at, status, assigned_user_id, lead_temperature")
+        .eq("archived", true)
+        .order("archived_at", { ascending: false })
+        .limit(500);
+      if (cancelled || error || !data) return;
+      const rows: ArchivedCard[] = (data as any[]).map((l) => {
+        const isAI = l.source === "whatsapp_ai" || l.source === "whatsapp";
+        const status = (l.status as string) || "new";
+        return {
+          id: `lead-${l.id}`,
+          clientName: l.full_name,
+          phone: l.phone ?? undefined,
+          destination: l.destination ?? undefined,
+          travelDate: l.travel_date_start
+            ? new Date(l.travel_date_start).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })
+            : (l.flexible_dates_description ?? undefined),
+          travelDateISO: l.travel_date_start ?? undefined,
+          travelersCount: l.travelers_count ?? undefined,
+          estimatedValue: l.budget_estimate ? Number(l.budget_estimate) : undefined,
+          isAILead: isAI,
+          isManualLead: !isAI,
+          aiSummary: l.ai_summary ?? undefined,
+          source: l.source ?? undefined,
+          stageEnteredAt: l.created_at ?? new Date().toISOString(),
+          temperature: (l.lead_temperature as LeadTemperature | null) ?? undefined,
+          tags: [],
+          columnId: STATUS_TO_SALES_COLUMN[status] || "new-leads",
+          archivedAt: l.archived_at ?? null,
+        } as ArchivedCard;
+      });
+      setArchivedCards(rows);
+    };
+    void load();
+  }, [archivedRefreshTick, leadsRefreshTick]);
+
+  const handleCardUnarchive = async (card: KanbanCardData) => {
+    const leadId = extractLeadId(card.id);
+    if (!leadId) {
+      toast.error("Card sem lead vinculado.");
+      return;
+    }
+    const { error } = await supabase
+      .from("leads")
+      .update({ archived: false, archived_at: null } as any)
+      .eq("id", leadId);
+    if (error) {
+      console.error("[CRM] unarchive error:", error);
+      toast.error("Não foi possível desarquivar.");
+      return;
+    }
+    setArchivedCards((prev) => prev.filter((c) => c.id !== card.id));
+    setLeadsRefreshTick((t) => t + 1);
+    toast.success("Card desarquivado.");
   };
 
   // Renomear o contato inline no card. Atualiza leads.full_name (trigger
