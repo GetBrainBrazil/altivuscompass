@@ -2500,7 +2500,7 @@ export default function CRM() {
         );
       }),
     }));
-  }, [columns, searchTerm, tab, filterAgent, filterTag, filterTemp, filterLevel, filterSource, filterState, filterBoarding, filterOpsStatus, filterDestination]);
+  }, [columns, searchTerm, tab, filterAgent, filterTag, filterTemp, filterLevel, filterSource, filterState, filterStatus, filterBoarding, filterOpsStatus, filterDestination]);
 
   // ─── KPIs ────────────────────────────────────────────────
   const allCards = useMemo(() => columns.flatMap((c) => c.cards), [columns]);
