@@ -2399,6 +2399,9 @@ export default function CRM() {
         }
 
         if (tab === "sales") {
+          // Filtro de Estado: por padrão esconde leads perdidos.
+          if (filterState === "active" && card.isLost) return false;
+          if (filterState === "lost" && !card.isLost) return false;
           if (filterTag !== "all" && !card.tags?.some((t) => t.label === filterTag)) return false;
           if (filterTemp !== "all") {
             const t = card.temperature ?? "cold";
