@@ -46,6 +46,9 @@ interface CRMTableViewProps {
   onCardArchive?: (card: KanbanCardData) => void;
   onCardRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
   agentOptions: { user_id: string; full_name: string; avatar_url?: string | null }[];
+  sortKey?: string | null;
+  sortDir?: "asc" | "desc" | null;
+  onSortChange?: (key: string | null, dir: "asc" | "desc" | null) => void;
 }
 
 type SortKey =
