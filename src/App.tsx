@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/AppLayout";
@@ -40,7 +40,7 @@ import LeadDetail from "./pages/LeadDetail";
 import LeadNew from "./pages/LeadNew";
 import LeadConvert from "./pages/LeadConvert";
 import OpsNew from "./pages/OpsNew";
-import AIAgents from "./pages/AIAgents";
+
 import AIAgentEdit from "./pages/AIAgentEdit";
 import WhatsAppConnection from "./pages/WhatsAppConnection";
 import NotFound from "./pages/NotFound";
@@ -100,9 +100,9 @@ const App = () => (
             <Route path="/crm/ops/new" element={<ProtectedRoute><AppLayout><OpsNew /></AppLayout></ProtectedRoute>} />
             <Route path="/crm/lead/:id" element={<ProtectedRoute><AppLayout><LeadDetail /></AppLayout></ProtectedRoute>} />
             <Route path="/crm/lead/:id/convert" element={<ProtectedRoute><AppLayout><LeadConvert /></AppLayout></ProtectedRoute>} />
-            <Route path="/ai-agents" element={<ProtectedRoute><AppLayout><AIAgents /></AppLayout></ProtectedRoute>} />
-            <Route path="/ai-agents/new" element={<ProtectedRoute><AppLayout><AIAgentEdit /></AppLayout></ProtectedRoute>} />
-            <Route path="/ai-agents/:id" element={<ProtectedRoute><AppLayout><AIAgentEdit /></AppLayout></ProtectedRoute>} />
+            <Route path="/ai-agents" element={<ProtectedRoute><AppLayout><AIAgentEdit /></AppLayout></ProtectedRoute>} />
+            <Route path="/ai-agents/new" element={<Navigate to="/ai-agents" replace />} />
+            <Route path="/ai-agents/:id" element={<Navigate to="/ai-agents" replace />} />
             <Route path="/whatsapp-connection" element={<ProtectedRoute><AppLayout><WhatsAppConnection /></AppLayout></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -115,19 +115,33 @@ const emptyAgent = (): Agent => ({
   description: "",
 });
 
+const DEFAULT_AGENT: Agent = {
+  id: "1",
+  name: "Atendente Principal",
+  model: "google/gemini-2.5-flash",
+  active: true,
+  tone: "amigavel",
+  icon: "bot",
+  description: "",
+  personality:
+    "Você é o atendente principal da Altivus Turismo. Recepcione clientes com cordialidade e identifique rapidamente o tipo de demanda.",
+  rules:
+    "- Nunca compartilhe preços sem validação\n- Transfira para humano em reclamações\n- Não responda fora do escopo de viagens",
+};
+
 export default function AIAgentEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const isNew = !id || id === "new";
+  const isNew = false;
 
   const [form, setForm] = useState<Agent>(() => {
-    if (isNew) return emptyAgent();
     try {
       const list: Agent[] = JSON.parse(sessionStorage.getItem(LIST_KEY) || "[]");
-      const found = list.find((a) => a.id === id);
-      if (found) return { personality: "", rules: "", tone: "amigavel", icon: "bot", description: "", ...found };
+      const found = id ? list.find((a) => a.id === id) : list[0];
+      const base = found ?? list[0] ?? DEFAULT_AGENT;
+      return { personality: "", rules: "", tone: "amigavel", icon: "bot", description: "", ...base };
     } catch {}
-    return { ...emptyAgent(), id: id! };
+    return DEFAULT_AGENT;
   });
 
   const [activeSection, setActiveSection] = useState<SectionKey>("identidade");
@@ -198,8 +212,12 @@ export default function AIAgentEdit() {
   };
 
   const handleCancel = () => {
-    if (isDirty && !confirm("Você tem alterações não salvas. Deseja sair sem salvar?")) return;
-    navigate("/ai-agents");
+    if (!isDirty) return;
+    if (!confirm("Descartar alterações não salvas?")) return;
+    try {
+      const snap = JSON.parse(savedSnapshot) as Agent;
+      setForm(snap);
+    } catch {}
   };
 
   const handleDelete = () => {
@@ -207,9 +225,11 @@ export default function AIAgentEdit() {
       const list: Agent[] = JSON.parse(sessionStorage.getItem(LIST_KEY) || "[]");
       const next = list.filter((a) => a.id !== form.id);
       sessionStorage.setItem(LIST_KEY, JSON.stringify(next));
+      const replacement = next[0] ?? DEFAULT_AGENT;
+      setForm({ personality: "", rules: "", tone: "amigavel", icon: "bot", description: "", ...replacement });
+      setSavedSnapshot(JSON.stringify(replacement));
     } catch {}
     toast.success(`Agente "${form.name || "sem nome"}" excluído`);
-    navigate("/ai-agents");
   };
 
   return (
@@ -218,24 +238,15 @@ export default function AIAgentEdit() {
       <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-md border-b border-border/60">
         <div className="max-w-[1100px] mx-auto px-8 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 shrink-0"
-              onClick={handleCancel}
-              aria-label="Voltar"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
             <div className="h-10 w-10 rounded-lg bg-[hsl(220_45%_15%)] flex items-center justify-center shrink-0">
               <Bot className="h-5 w-5 text-white" />
             </div>
             <div className="min-w-0">
               <h1 className="text-lg font-semibold tracking-tight truncate">
-                {isNew ? "Novo Agente IA" : form.name || "Agente sem nome"}
+                {form.name || "Agente sem nome"}
               </h1>
               <p className="text-xs text-muted-foreground">
-                {isNew ? "Configure o comportamento do novo agente" : "Edite as configurações do agente"}
+                Gerencie seu agente de inteligência artificial
               </p>
             </div>
           </div>
@@ -246,6 +257,14 @@ export default function AIAgentEdit() {
                 Alterações não salvas
               </span>
             )}
+            <Button
+              variant="outline"
+              className="h-9 border-border/70 text-foreground hover:bg-muted"
+              onClick={() => navigate("/whatsapp-connection")}
+            >
+              <MessageCircle className="h-4 w-4 sm:mr-2 text-[hsl(142_70%_40%)]" />
+              <span className="hidden sm:inline">Conexão WhatsApp</span>
+            </Button>
             {!isNew && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
