@@ -3222,7 +3222,7 @@ export default function CRM() {
                     </Tooltip>
                   </TooltipProvider>
                   <DropdownMenuContent align="end" className="w-44">
-                    {(["active", "concluded", "archived", "all"] as const).map((opt) => (
+                    {(["active", "concluded", "stagnant", "archived", "all"] as const).map((opt) => (
                       <DropdownMenuItem
                         key={opt}
                         onClick={() => setFilterStatus(opt)}
