@@ -25,6 +25,10 @@ import {
   Info,
   FilePlus,
   FileText,
+  Archive,
+  ArchiveRestore,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { FilterChip, SearchableList } from "@/components/tasks/FilterChip";
 import { CRMTableView } from "@/components/crm/CRMTableView";
