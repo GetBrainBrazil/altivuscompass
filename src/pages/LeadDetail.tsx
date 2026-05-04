@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
+  AlertTriangle,
+  RotateCcw,
   ArrowLeft,
   Bot,
   Check,
@@ -215,6 +217,8 @@ export default function LeadDetail() {
   const quotesCount = leadQuotes.length;
   const [waPanelOpen, setWaPanelOpen] = useState(false);
   const [legacyPreferences, setLegacyPreferences] = useState<string | null>(null);
+  const [lostState, setLostState] = useState<{ isLost: boolean; reason: string | null; at: string | null }>({ isLost: false, reason: null, at: null });
+  const [reactivating, setReactivating] = useState(false);
   const [aiData, setAiData] = useState<{
     ai_summary: string | null;
     destination: string | null;
@@ -310,7 +314,7 @@ export default function LeadDetail() {
     (async () => {
       const { data } = await supabase
         .from("leads")
-        .select("phone, full_name, email, source, destination, travel_date_start, travel_date_end, flexible_dates, flexible_dates_description, budget_estimate, travelers_count, preferences, trip_profile, assigned_user_id, lead_temperature, ai_summary, ai_collected_data")
+        .select("phone, full_name, email, source, destination, travel_date_start, travel_date_end, flexible_dates, flexible_dates_description, budget_estimate, travelers_count, preferences, trip_profile, assigned_user_id, lead_temperature, ai_summary, ai_collected_data, is_lost, lost_reason, lost_at")
         .eq("id", leadId)
         .maybeSingle();
       if (cancelled || !data) return;
@@ -338,6 +342,12 @@ export default function LeadDetail() {
       // Captura observação legada (campo `preferences` antigo) só uma vez,
       // para exibi-la como "Observação importada" no novo sistema de notas.
       setLegacyPreferences((prev) => prev ?? (data.preferences ?? null));
+
+      setLostState({
+        isLost: !!(data as any).is_lost,
+        reason: (data as any).lost_reason ?? null,
+        at: (data as any).lost_at ?? null,
+      });
 
       // Snapshot dos dados extraídos pela IA (origem WhatsApp)
       const collected = ((data as any).ai_collected_data ?? {}) as Record<string, any>;
@@ -543,6 +553,49 @@ export default function LeadDetail() {
 
   const isClient = contactLevel === "cliente";
 
+  const handleReactivateLead = async () => {
+    if (!leadId || reactivating) return;
+    setReactivating(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      let userName = user?.email ?? null;
+      if (user?.id) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (prof?.full_name) userName = prof.full_name;
+      }
+      const { error } = await (supabase as any)
+        .from("leads")
+        .update({ is_lost: false, lost_at: null, lost_from_status: null, lost_reason: null })
+        .eq("id", leadId);
+      if (error) {
+        console.error("[reactivate-banner] error:", error);
+        toast.error("Erro ao reativar lead.");
+        return;
+      }
+      await (supabase as any).from("contact_events").insert({
+        lead_id: leadId,
+        event_type: "lead_reactivated",
+        title: "Lead reativado",
+        description: null,
+        user_id: user?.id ?? null,
+        user_name: userName,
+        is_manual: true,
+      });
+      setLostState({ isLost: false, reason: null, at: null });
+      toast.success("Lead reativado.");
+    } catch (err) {
+      console.error("[handleReactivateLead] error:", err);
+      toast.error("Erro ao reativar lead.");
+    } finally {
+      setReactivating(false);
+    }
+  };
+
+
   return (
     <div className="flex flex-col min-h-[calc(100vh-0px)] bg-slate-50 dark:bg-slate-950">
       {/* Cabeçalho principal — largura total */}
@@ -640,6 +693,39 @@ export default function LeadDetail() {
           </div>
         </div>
       </header>
+
+      {/* Banner — lead marcado como perdido */}
+      {lostState.isLost && (
+        <div className="border-b border-destructive/30 bg-destructive/10">
+          <div className="px-6 lg:px-10 py-3 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-start gap-2.5 min-w-0">
+              <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-destructive">
+                  Lead marcado como perdido
+                  {lostState.reason ? <span className="font-normal"> — Motivo: {lostState.reason}</span> : null}
+                </div>
+                {lostState.at && (
+                  <div className="text-[11px] text-destructive/80">
+                    em {new Date(lostState.at).toLocaleString("pt-BR")}
+                  </div>
+                )}
+              </div>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleReactivateLead}
+              disabled={reactivating}
+              className="border-destructive/40 text-destructive hover:bg-destructive/15 hover:text-destructive"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              {reactivating ? "Reativando..." : "Reativar lead"}
+            </Button>
+          </div>
+        </div>
+      )}
+
 
       {/* Grid de duas colunas: conteúdo + painel lateral */}
       <div className="grid grid-cols-1 lg:grid-cols-[68fr_32fr] items-start flex-1 min-h-0">
