@@ -446,6 +446,7 @@ export function KanbanCard({
         card.isReturning && !card.isRepurchase &&
           "border-sky-300/70 ring-1 ring-sky-200/60 bg-gradient-to-br from-sky-50/40 to-transparent",
         archivedAppearance && "opacity-60 grayscale-[0.4] hover:opacity-80",
+        isLost && "opacity-70 bg-destructive/[0.03] hover:opacity-90",
       )}
     >
       <div className="p-4">
