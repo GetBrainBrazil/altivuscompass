@@ -35,6 +35,7 @@ import { ComunicacaoSection } from "@/components/ai-agents/ComunicacaoSection";
 import { ColetaDadosSection } from "@/components/ai-agents/ColetaDadosSection";
 import { RegrasLimitesSection } from "@/components/ai-agents/RegrasLimitesSection";
 import { IntegracoesSection } from "@/components/ai-agents/IntegracoesSection";
+import { MetricasSection } from "@/components/ai-agents/MetricasSection";
 
 const STORAGE_KEY = "ai-agents-draft";
 const LIST_KEY = "ai-agents-list";
@@ -448,21 +449,7 @@ export default function AIAgentEdit() {
 
         {activeSection === "integracoes" && <IntegracoesSection />}
 
-        {activeSection === "metricas" && (
-          <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
-            <div className="px-8 py-5 border-b border-border/60">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                {SECTIONS.find((s) => s.key === activeSection)?.label}
-              </h2>
-              <p className="text-xs text-muted-foreground mt-1">
-                Em breve — esta seção será configurada nos próximos passos.
-              </p>
-            </div>
-            <div className="p-8 text-sm text-muted-foreground">
-              Conteúdo em breve.
-            </div>
-          </section>
-        )}
+        {activeSection === "metricas" && <MetricasSection />}
         </div>
       </div>
     </div>
