@@ -116,7 +116,7 @@ export default function AIAgentEdit() {
     try {
       const list: Agent[] = JSON.parse(sessionStorage.getItem(LIST_KEY) || "[]");
       const found = list.find((a) => a.id === id);
-      if (found) return { personality: "", rules: "", tone: "amigavel", ...found };
+      if (found) return { personality: "", rules: "", tone: "amigavel", icon: "bot", description: "", ...found };
     } catch {}
     return { ...emptyAgent(), id: id! };
   });
