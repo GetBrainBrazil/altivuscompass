@@ -465,7 +465,7 @@ export function KanbanCard({
         card.isReturning && !card.isRepurchase &&
           "border-sky-300/70 ring-1 ring-sky-200/60 bg-gradient-to-br from-sky-50/40 to-transparent",
         (archivedAppearance || card.isArchived) && "opacity-60 grayscale-[0.4] hover:opacity-80",
-        isLost && "opacity-70 bg-destructive/[0.03] hover:opacity-90",
+        isLost && "opacity-[0.85] border-l-red-400 hover:opacity-100",
       )}
     >
       <div className="p-4">
@@ -878,11 +878,10 @@ export function KanbanCard({
                 )}
                 {isLost && (
                   <span
-                    title={card.lostReason ? `Perdido — ${card.lostReason}` : "Lead perdido"}
-                    className="inline-flex items-center gap-0.5 rounded-full bg-destructive/10 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-destructive"
+                    title={card.lostReason || "Lead perdido"}
+                    className="inline-flex items-center rounded-full bg-red-50 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-red-600"
                   >
-                    <Target className="w-2.5 h-2.5" />
-                    {card.lostReason ? `Perdido — ${card.lostReason}` : "Perdido"}
+                    Perdido
                   </span>
                 )}
                 {!isLost && isStagnant && (
