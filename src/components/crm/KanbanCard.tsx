@@ -251,6 +251,10 @@ export function KanbanCard({
   onEdit?: (card: KanbanCardData) => void;
   /** Arquivar o card (mover para área oculta). */
   onArchive?: (card: KanbanCardData) => void;
+  /** Desarquivar (somente para cards na área de arquivados). Quando definido, o item "Arquivar" é substituído por "Desarquivar". */
+  onUnarchive?: (card: KanbanCardData) => void;
+  /** Aplica visual opaco/cinza ao card (usado em cards arquivados). */
+  archivedAppearance?: boolean;
   /** Renomear o contato inline (quando o nome ainda é apenas um telefone). */
   onRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
 }) {
