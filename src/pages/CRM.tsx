@@ -2405,11 +2405,8 @@ export default function CRM() {
   };
 
 
-  // ─── Toolbar state (search + filters) — persistido por aba ─────
-  const filtersStorageKey = (t: "sales" | "ops") =>
-    t === "sales" ? "crm_filters_funil_vendas" : "crm_filters_pos_venda";
-
-  type PersistedFilters = {
+  // ─── Toolbar state (search + filters) — persistido por usuário (backend) ─────
+  type TabFilters = {
     searchTerm: string;
     filterAgent: string;
     filterTag: string;
@@ -2425,8 +2422,9 @@ export default function CRM() {
     sortKey: string | null;
     sortDir: "asc" | "desc" | null;
   };
+  type CrmFiltersPref = { funil_vendas: TabFilters; pos_venda: TabFilters };
 
-  const defaultFilters: PersistedFilters = {
+  const defaultTabFilters: TabFilters = {
     searchTerm: "",
     filterAgent: "all",
     filterTag: "all",
@@ -2442,115 +2440,67 @@ export default function CRM() {
     sortKey: null,
     sortDir: null,
   };
-
-  const loadPersistedFilters = (t: "sales" | "ops"): PersistedFilters => {
-    if (typeof window === "undefined") return defaultFilters;
-    try {
-      const raw = window.localStorage.getItem(filtersStorageKey(t));
-      if (!raw) {
-        // back-compat: viewMode previously stored under crm:viewMode:<tab>
-        const legacyVM = window.localStorage.getItem(`crm:viewMode:${t}`);
-        return {
-          ...defaultFilters,
-          viewMode: legacyVM === "table" ? "table" : "kanban",
-        };
-      }
-      const parsed = JSON.parse(raw);
-      return { ...defaultFilters, ...(parsed && typeof parsed === "object" ? parsed : {}) };
-    } catch {
-      return defaultFilters;
-    }
+  const defaultCrmFilters: CrmFiltersPref = {
+    funil_vendas: defaultTabFilters,
+    pos_venda: defaultTabFilters,
   };
 
-  const initialFilters = useMemo(() => loadPersistedFilters(initialTab), []);
+  const tabKey = (t: "sales" | "ops") => (t === "sales" ? "funil_vendas" : "pos_venda") as keyof CrmFiltersPref;
+  const { value: crmPrefs, setValue: setCrmPrefs, loading: prefsLoading, reset: resetCrmPrefs } =
+    useUserPreference<CrmFiltersPref>("crm_filters", defaultCrmFilters);
 
-  const [searchTerm, setSearchTerm] = useState(initialFilters.searchTerm);
-  const [filterAgent, setFilterAgent] = useState<string>(initialFilters.filterAgent);
-  const [filterTag, setFilterTag] = useState<string>(initialFilters.filterTag);
-  const [filterTemp, setFilterTemp] = useState<string>(initialFilters.filterTemp);
-  const [filterLevel, setFilterLevel] = useState<string>(initialFilters.filterLevel);
-  const [filterSource, setFilterSource] = useState<string>(initialFilters.filterSource);
-  const [filterState, setFilterState] = useState<"active" | "lost" | "all">(initialFilters.filterState);
-  const [filterStatus, setFilterStatus] = useState<"active" | "concluded" | "archived" | "all">(initialFilters.filterStatus);
-  const [filterBoarding, setFilterBoarding] = useState<"all" | "7" | "15" | "30">(initialFilters.filterBoarding);
-  const [filterOpsStatus, setFilterOpsStatus] = useState<"all" | "normal" | "urgent" | "waiting">(initialFilters.filterOpsStatus);
-  const [filterDestination, setFilterDestination] = useState<string>(initialFilters.filterDestination);
+  const current = crmPrefs[tabKey(tab)] ?? defaultTabFilters;
 
-  // View mode (kanban | table) — persistido junto aos filtros
-  const [viewMode, setViewMode] = useState<"kanban" | "table">(initialFilters.viewMode);
+  const updateCurrent = (patch: Partial<TabFilters>) => {
+    setCrmPrefs({
+      ...crmPrefs,
+      [tabKey(tab)]: { ...defaultTabFilters, ...current, ...patch },
+    });
+  };
 
-  // Sort (Tabela) — persistido junto aos filtros
-  const [tableSortKey, setTableSortKey] = useState<string | null>(initialFilters.sortKey);
-  const [tableSortDir, setTableSortDir] = useState<"asc" | "desc" | null>(initialFilters.sortDir);
+  const searchTerm = current.searchTerm;
+  const setSearchTerm = (v: string) => updateCurrent({ searchTerm: v });
+  const filterAgent = current.filterAgent;
+  const setFilterAgent = (v: string) => updateCurrent({ filterAgent: v });
+  const filterTag = current.filterTag;
+  const setFilterTag = (v: string) => updateCurrent({ filterTag: v });
+  const filterTemp = current.filterTemp;
+  const setFilterTemp = (v: string) => updateCurrent({ filterTemp: v });
+  const filterLevel = current.filterLevel;
+  const setFilterLevel = (v: string) => updateCurrent({ filterLevel: v });
+  const filterSource = current.filterSource;
+  const setFilterSource = (v: string) => updateCurrent({ filterSource: v });
+  const filterState = current.filterState;
+  const setFilterState = (v: "active" | "lost" | "all") => updateCurrent({ filterState: v });
+  const filterStatus = current.filterStatus;
+  const setFilterStatus = (v: "active" | "concluded" | "archived" | "all") => updateCurrent({ filterStatus: v });
+  const filterBoarding = current.filterBoarding;
+  const setFilterBoarding = (v: "all" | "7" | "15" | "30") => updateCurrent({ filterBoarding: v });
+  const filterOpsStatus = current.filterOpsStatus;
+  const setFilterOpsStatus = (v: "all" | "normal" | "urgent" | "waiting") => updateCurrent({ filterOpsStatus: v });
+  const filterDestination = current.filterDestination;
+  const setFilterDestination = (v: string) => updateCurrent({ filterDestination: v });
+  const viewMode = current.viewMode;
+  const tableSortKey = current.sortKey;
+  const tableSortDir = current.sortDir;
+  const setTableSortKey = (v: string | null) => updateCurrent({ sortKey: v });
+  const setTableSortDir = (v: "asc" | "desc" | null) => updateCurrent({ sortDir: v });
 
-  // Reidrata estados ao trocar de aba (cada aba tem filtros independentes)
-  const lastLoadedTabRef = useRef<"sales" | "ops">(initialTab);
-  useEffect(() => {
-    if (lastLoadedTabRef.current === tab) return;
-    lastLoadedTabRef.current = tab;
-    const next = loadPersistedFilters(tab);
-    setSearchTerm(next.searchTerm);
-    setFilterAgent(next.filterAgent);
-    setFilterTag(next.filterTag);
-    setFilterTemp(next.filterTemp);
-    setFilterLevel(next.filterLevel);
-    setFilterSource(next.filterSource);
-    setFilterState(next.filterState);
-    setFilterStatus(next.filterStatus);
-    setFilterBoarding(next.filterBoarding);
-    setFilterOpsStatus(next.filterOpsStatus);
-    setFilterDestination(next.filterDestination);
-    setViewMode(next.viewMode);
-    setTableSortKey(next.sortKey);
-    setTableSortDir(next.sortDir);
-  }, [tab]);
-
-  // Salva filtros sempre que mudam (para a aba ativa)
+  // Mantém back-compat para handleViewPostSale (lê crm:viewMode:ops)
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const payload: PersistedFilters = {
-      searchTerm,
-      filterAgent,
-      filterTag,
-      filterTemp,
-      filterLevel,
-      filterSource,
-      filterState,
-      filterStatus,
-      filterBoarding,
-      filterOpsStatus,
-      filterDestination,
-      viewMode,
-      sortKey: tableSortKey,
-      sortDir: tableSortDir,
-    };
-    try {
-      window.localStorage.setItem(filtersStorageKey(tab), JSON.stringify(payload));
-      // back-compat: mantém viewMode em chave separada (usada em handleViewPostSale)
-      window.localStorage.setItem(`crm:viewMode:${tab}`, viewMode);
-    } catch {
-      /* ignore quota errors */
-    }
-  }, [
-    tab,
-    searchTerm,
-    filterAgent,
-    filterTag,
-    filterTemp,
-    filterLevel,
-    filterSource,
-    filterState,
-    filterStatus,
-    filterBoarding,
-    filterOpsStatus,
-    filterDestination,
-    viewMode,
-    tableSortKey,
-    tableSortDir,
-  ]);
+    try { window.localStorage.setItem(`crm:viewMode:${tab}`, viewMode); } catch { /* ignore */ }
+  }, [tab, viewMode]);
 
   const handleViewModeChange = (mode: "kanban" | "table") => {
-    setViewMode(mode);
+    updateCurrent({ viewMode: mode });
+  };
+
+  const resetCurrentTabFilters = () => {
+    setCrmPrefs({
+      ...crmPrefs,
+      [tabKey(tab)]: defaultTabFilters,
+    });
   };
 
 
