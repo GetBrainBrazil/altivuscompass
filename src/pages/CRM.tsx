@@ -3152,24 +3152,7 @@ export default function CRM() {
               size="sm"
               className="h-8 px-2 gap-1 text-xs"
               onClick={() => {
-                setSearchTerm("");
-                setFilterAgent("all");
-                setFilterTag("all");
-                setFilterTemp("all");
-                setFilterLevel("all");
-                setFilterSource("all");
-                setFilterState("active");
-                setFilterStatus("active");
-                setFilterBoarding("all");
-                setFilterOpsStatus("all");
-                setFilterDestination("all");
-                setTableSortKey(null);
-                setTableSortDir(null);
-                if (typeof window !== "undefined") {
-                  try {
-                    window.localStorage.removeItem(filtersStorageKey(tab));
-                  } catch { /* ignore */ }
-                }
+                resetCurrentTabFilters();
               }}
             >
               <X className="w-3 h-3" /> Limpar
