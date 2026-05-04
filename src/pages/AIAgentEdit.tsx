@@ -47,6 +47,27 @@ const TONES = [
   { value: "entusiasmado", label: "Entusiasmado e inspirador" },
 ];
 
+type SectionKey =
+  | "identidade"
+  | "fluxos"
+  | "comunicacao"
+  | "coleta"
+  | "regras"
+  | "integracoes"
+  | "metricas"
+  | "testar";
+
+const SECTIONS: { key: SectionKey; icon: string; label: string }[] = [
+  { key: "identidade", icon: "🤖", label: "Identidade" },
+  { key: "fluxos", icon: "🎯", label: "Fluxos de Atendimento" },
+  { key: "comunicacao", icon: "💬", label: "Comunicação" },
+  { key: "coleta", icon: "📋", label: "Coleta de Dados" },
+  { key: "regras", icon: "⚡", label: "Regras e Limites" },
+  { key: "integracoes", icon: "🔗", label: "Integrações" },
+  { key: "metricas", icon: "📊", label: "Métricas" },
+  { key: "testar", icon: "🧪", label: "Testar Agente" },
+];
+
 const emptyAgent = (): Agent => ({
   id: crypto.randomUUID(),
   name: "",
