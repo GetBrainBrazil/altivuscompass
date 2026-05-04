@@ -2182,11 +2182,20 @@ export default function CRM() {
       return;
     }
     const cardId = archiveTarget.id;
-    setSalesColumns((prev) => prev.map((col) => ({ ...col, cards: col.cards.filter((c) => c.id !== cardId) })));
-    setOpsColumns((prev) => prev.map((col) => ({ ...col, cards: col.cards.filter((c) => c.id !== cardId) })));
+    setSalesColumns((prev) =>
+      prev.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) => (c.id === cardId ? { ...c, isArchived: true } : c)),
+      })),
+    );
+    setOpsColumns((prev) =>
+      prev.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) => (c.id === cardId ? { ...c, isArchived: true } : c)),
+      })),
+    );
     toast.success("Card arquivado.");
     setArchiveTarget(null);
-    // Recarrega a lista de arquivados
     setArchivedRefreshTick((t) => t + 1);
   };
 
