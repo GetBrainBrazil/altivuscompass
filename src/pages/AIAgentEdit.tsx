@@ -444,8 +444,9 @@ export default function AIAgentEdit() {
 
         {activeSection === "coleta" && <ColetaDadosSection />}
 
-        {(activeSection === "integracoes" ||
-          activeSection === "metricas") && (
+        {activeSection === "integracoes" && <IntegracoesSection />}
+
+        {activeSection === "metricas" && (
           <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
             <div className="px-8 py-5 border-b border-border/60">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
