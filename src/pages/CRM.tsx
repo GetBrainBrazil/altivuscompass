@@ -2625,7 +2625,8 @@ export default function CRM() {
         filterTemp !== "all" ||
         filterLevel !== "all" ||
         filterSource !== "all" ||
-        filterState !== "active")) ||
+        filterState !== "active" ||
+        filterStatus !== "active")) ||
     (tab === "ops" &&
       (filterBoarding !== "all" ||
         filterOpsStatus !== "all" ||
