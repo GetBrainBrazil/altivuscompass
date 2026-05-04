@@ -912,12 +912,13 @@ export default function CRM() {
   useEffect(() => {
     let cancelled = false;
     const fetchLeads = async () => {
+      // Inclui leads já convertidos a Cliente para que continuem visíveis
+      // como histórico na coluna "Concluído" do funil de vendas.
       const { data, error } = await supabase
         .from("leads")
-        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, is_returning, returned_at, assigned_user_id, status, is_lost, lost_at, lost_from_status, lost_reason, last_interaction_at, is_stagnant, stagnant_since, archive_pending_at, archived, archived_at")
-        .is("converted_client_id", null)
+        .select("id, full_name, phone, source, destination, travel_date_start, travel_date_end, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, is_returning, returned_at, assigned_user_id, status, is_lost, lost_at, lost_from_status, lost_reason, last_interaction_at, is_stagnant, stagnant_since, archive_pending_at, archived, archived_at, converted_client_id")
         .order("created_at", { ascending: false })
-        .limit(200);
+        .limit(400);
       if (error || cancelled || !data) {
         if (!cancelled) setIsLoadingLeads(false);
         return;
