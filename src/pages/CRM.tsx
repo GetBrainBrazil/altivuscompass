@@ -1324,23 +1324,23 @@ export default function CRM() {
   const [selectedResponsibleId, setSelectedResponsibleId] = useState<string>("");
   // (página dedicada /crm/ops/new substitui o dialog antigo)
 
-  // Modal: motivo de perda (ao mover para "Perdidos")
+  // Modal: motivo de perda — agora aplicado in-place (sem mover de coluna).
   const [lostOpen, setLostOpen] = useState(false);
-  const [lostMove, setLostMove] = useState<PendingMove | null>(null);
+  const [lostTarget, setLostTarget] = useState<{ cardId: string; leadId: string | null; fromColumnId: string; fromTitle: string; clientName: string } | null>(null);
   const [lostReason, setLostReason] = useState<string>("Sem resposta");
   const [lostDetails, setLostDetails] = useState<string>("");
 
-  // Colapso de colunas (Perdidos colapsada por padrão)
+  // Colapso de colunas — sem coluna "lost" agora.
   const COLLAPSE_KEY = "crm:columns:collapsed:v1";
   const [collapsedCols, setCollapsedCols] = useState<Set<string>>(() => {
-    if (typeof window === "undefined") return new Set(["lost"]);
+    if (typeof window === "undefined") return new Set();
     try {
       const raw = localStorage.getItem(COLLAPSE_KEY);
-      if (!raw) return new Set(["lost"]);
+      if (!raw) return new Set();
       const parsed = JSON.parse(raw) as string[];
-      return new Set(Array.isArray(parsed) ? parsed : ["lost"]);
+      return new Set(Array.isArray(parsed) ? parsed.filter((id) => id !== "lost") : []);
     } catch {
-      return new Set(["lost"]);
+      return new Set();
     }
   });
   useEffect(() => {
@@ -1358,7 +1358,7 @@ export default function CRM() {
       return next;
     });
   };
-  const COLLAPSIBLE_COLUMN_IDS = useMemo(() => new Set(["lost"]), []);
+  const COLLAPSIBLE_COLUMN_IDS = useMemo(() => new Set<string>(), []);
 
   useEffect(() => {
     // carrega lista de responsáveis (usuários) do sistema
