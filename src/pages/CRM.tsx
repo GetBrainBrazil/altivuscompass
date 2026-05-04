@@ -2586,6 +2586,9 @@ export default function CRM() {
             if (!isClosedCol) return false;
           } else if (filterStatus === "archived") {
             if (!card.isArchived) return false;
+          } else if (filterStatus === "stagnant") {
+            if (card.isArchived) return false;
+            if (!card.isStagnant) return false;
           }
           // Filtro de Estado: por padrão esconde leads perdidos.
           if (filterState === "active" && card.isLost) return false;
