@@ -25,6 +25,10 @@ import {
   Info,
   FilePlus,
   FileText,
+  Archive,
+  ArchiveRestore,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { FilterChip, SearchableList } from "@/components/tasks/FilterChip";
 import { CRMTableView } from "@/components/crm/CRMTableView";
@@ -116,6 +120,167 @@ const STAGE_DOT_COLORS = [
   "bg-slate-400",
   "bg-primary",
 ];
+
+// ─── Área de Arquivados (Funil de Vendas) ─────────────────────────────────
+function ArchivedSection({
+  cards,
+  columns,
+  expanded,
+  onToggle,
+  search,
+  onSearchChange,
+  dateFilter,
+  onDateFilterChange,
+  onCardClick,
+  onUnarchive,
+  onCardEdit,
+  onCardViewConversation,
+}: {
+  cards: Array<KanbanCardData & { columnId: string; archivedAt: string | null }>;
+  columns: KanbanColumn[];
+  expanded: boolean;
+  onToggle: () => void;
+  search: string;
+  onSearchChange: (v: string) => void;
+  dateFilter: "all" | "7" | "30" | "90";
+  onDateFilterChange: (v: "all" | "7" | "30" | "90") => void;
+  onCardClick: (card: KanbanCardData) => void;
+  onUnarchive: (card: KanbanCardData) => void;
+  onCardEdit?: (card: KanbanCardData) => void;
+  onCardViewConversation?: (card: KanbanCardData) => void;
+}) {
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const now = Date.now();
+    const day = 24 * 60 * 60 * 1000;
+    const limitDays = dateFilter === "all" ? null : Number(dateFilter);
+    return cards.filter((c) => {
+      if (q) {
+        const hay = `${c.clientName ?? ""} ${c.destination ?? ""} ${c.phone ?? ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (limitDays !== null) {
+        if (!c.archivedAt) return false;
+        const ts = new Date(c.archivedAt).getTime();
+        if (!Number.isFinite(ts)) return false;
+        if ((now - ts) / day > limitDays) return false;
+      }
+      return true;
+    });
+  }, [cards, search, dateFilter]);
+
+  const totalCount = cards.length;
+  const filteredColumns = useMemo(
+    () =>
+      columns.map((col) => ({
+        ...col,
+        cards: filtered.filter((c) => c.columnId === col.id),
+      })),
+    [columns, filtered],
+  );
+
+  return (
+    <div className="border-t border-border/60 bg-muted/20">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-muted/40 transition-colors"
+        aria-expanded={expanded}
+      >
+        <span className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <Archive className="w-4 h-4" />
+          Arquivados ({totalCount})
+        </span>
+        {expanded ? (
+          <ChevronUp className="w-4 h-4 text-muted-foreground" />
+        ) : (
+          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+        )}
+      </button>
+
+      {expanded && (
+        <div className="border-t border-border/60 bg-background animate-fade-in">
+          <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 border-b border-border/60">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+              <Input
+                value={search}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder="Buscar por nome..."
+                className="h-8 w-64 pl-8 text-xs"
+              />
+            </div>
+            <Select value={dateFilter} onValueChange={(v) => onDateFilterChange(v as "all" | "7" | "30" | "90")}>
+              <SelectTrigger className="h-8 w-44 text-xs">
+                <SelectValue placeholder="Arquivado em..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Qualquer data</SelectItem>
+                <SelectItem value="7">Últimos 7 dias</SelectItem>
+                <SelectItem value="30">Últimos 30 dias</SelectItem>
+                <SelectItem value="90">Últimos 90 dias</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="ml-auto text-[11px] text-muted-foreground">
+              {filtered.length} de {totalCount} card(s)
+            </span>
+          </div>
+
+          {filtered.length === 0 ? (
+            <div className="px-4 py-10 text-center text-sm text-muted-foreground">
+              Nenhum card arquivado encontrado.
+            </div>
+          ) : (
+            <div className="overflow-x-auto scrollbar-elegant max-h-[55vh]">
+              <div className="flex gap-1.5 px-3 py-3 min-w-max items-start">
+                {filteredColumns.map((col, idx) => (
+                  <div
+                    key={col.id}
+                    className="w-[280px] shrink-0 rounded-md border border-border/60 bg-card/40 flex flex-col"
+                  >
+                    <div className="flex items-center gap-2 px-3 py-2 border-b border-border/60">
+                      <span
+                        className={cn(
+                          "inline-block w-2 h-2 rounded-full",
+                          STAGE_DOT_COLORS[idx % STAGE_DOT_COLORS.length],
+                        )}
+                      />
+                      <span className="text-xs font-medium text-muted-foreground truncate">
+                        {col.title}
+                      </span>
+                      <span className="ml-auto text-[10px] tabular-nums text-muted-foreground/70">
+                        {col.cards.length}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-1.5 p-2">
+                      {col.cards.length === 0 ? (
+                        <div className="text-[11px] text-muted-foreground/60 italic px-1 py-2">
+                          —
+                        </div>
+                      ) : (
+                        col.cards.map((c) => (
+                          <KanbanCard
+                            key={c.id}
+                            card={c}
+                            archivedAppearance
+                            onClick={onCardClick}
+                            onUnarchive={onUnarchive}
+                            onEdit={onCardEdit}
+                            onViewConversation={onCardViewConversation}
+                          />
+                        ))
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function KanbanBoard({
   columns,
@@ -1854,6 +2019,76 @@ export default function CRM() {
     setOpsColumns((prev) => prev.map((col) => ({ ...col, cards: col.cards.filter((c) => c.id !== cardId) })));
     toast.success("Card arquivado.");
     setArchiveTarget(null);
+    // Recarrega a lista de arquivados
+    setArchivedRefreshTick((t) => t + 1);
+  };
+
+  // ─── Área "Arquivados" (apenas aba Funil de Vendas) ───────────────────────
+  type ArchivedCard = KanbanCardData & { columnId: string; archivedAt: string | null };
+  const [archivedCards, setArchivedCards] = useState<ArchivedCard[]>([]);
+  const [archivedExpanded, setArchivedExpanded] = useState(false);
+  const [archivedSearch, setArchivedSearch] = useState("");
+  const [archivedDateFilter, setArchivedDateFilter] = useState<"all" | "7" | "30" | "90">("all");
+  const [archivedRefreshTick, setArchivedRefreshTick] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("id, full_name, phone, source, destination, travel_date_start, flexible_dates_description, travelers_count, budget_estimate, ai_summary, created_at, archived_at, status, assigned_user_id, lead_temperature")
+        .eq("archived", true)
+        .order("archived_at", { ascending: false })
+        .limit(500);
+      if (cancelled || error || !data) return;
+      const rows: ArchivedCard[] = (data as any[]).map((l) => {
+        const isAI = l.source === "whatsapp_ai" || l.source === "whatsapp";
+        const status = (l.status as string) || "new";
+        return {
+          id: `lead-${l.id}`,
+          clientName: l.full_name,
+          phone: l.phone ?? undefined,
+          destination: l.destination ?? undefined,
+          travelDate: l.travel_date_start
+            ? new Date(l.travel_date_start).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })
+            : (l.flexible_dates_description ?? undefined),
+          travelDateISO: l.travel_date_start ?? undefined,
+          travelersCount: l.travelers_count ?? undefined,
+          estimatedValue: l.budget_estimate ? Number(l.budget_estimate) : undefined,
+          isAILead: isAI,
+          isManualLead: !isAI,
+          aiSummary: l.ai_summary ?? undefined,
+          source: l.source ?? undefined,
+          stageEnteredAt: l.created_at ?? new Date().toISOString(),
+          temperature: (l.lead_temperature as LeadTemperature | null) ?? undefined,
+          tags: [],
+          columnId: STATUS_TO_SALES_COLUMN[status] || "new-leads",
+          archivedAt: l.archived_at ?? null,
+        } as ArchivedCard;
+      });
+      setArchivedCards(rows);
+    };
+    void load();
+  }, [archivedRefreshTick, leadsRefreshTick]);
+
+  const handleCardUnarchive = async (card: KanbanCardData) => {
+    const leadId = extractLeadId(card.id);
+    if (!leadId) {
+      toast.error("Card sem lead vinculado.");
+      return;
+    }
+    const { error } = await supabase
+      .from("leads")
+      .update({ archived: false, archived_at: null } as any)
+      .eq("id", leadId);
+    if (error) {
+      console.error("[CRM] unarchive error:", error);
+      toast.error("Não foi possível desarquivar.");
+      return;
+    }
+    setArchivedCards((prev) => prev.filter((c) => c.id !== card.id));
+    setLeadsRefreshTick((t) => t + 1);
+    toast.success("Card desarquivado.");
   };
 
   // Renomear o contato inline no card. Atualiza leads.full_name (trigger
@@ -2679,6 +2914,23 @@ export default function CRM() {
             onCardArchive={handleCardArchive}
             onCardRenameClient={handleCardRenameClient}
             agentOptions={responsibleOptions}
+          />
+        )}
+
+        {tab === "sales" && (
+          <ArchivedSection
+            cards={archivedCards}
+            columns={salesColumns}
+            expanded={archivedExpanded}
+            onToggle={() => setArchivedExpanded((v) => !v)}
+            search={archivedSearch}
+            onSearchChange={setArchivedSearch}
+            dateFilter={archivedDateFilter}
+            onDateFilterChange={setArchivedDateFilter}
+            onCardClick={handleCardClick}
+            onUnarchive={handleCardUnarchive}
+            onCardEdit={handleCardEdit}
+            onCardViewConversation={handleCardViewConversation}
           />
         )}
       </main>

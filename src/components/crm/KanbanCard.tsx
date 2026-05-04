@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Pencil,
   Archive,
+  ArchiveRestore,
   Thermometer,
   User,
   Check,
@@ -223,6 +224,8 @@ export function KanbanCard({
   onViewConversation,
   onEdit,
   onArchive,
+  onUnarchive,
+  archivedAppearance = false,
   onRenameClient,
 }: {
   card: KanbanCardData;
@@ -248,6 +251,10 @@ export function KanbanCard({
   onEdit?: (card: KanbanCardData) => void;
   /** Arquivar o card (mover para área oculta). */
   onArchive?: (card: KanbanCardData) => void;
+  /** Desarquivar (somente para cards na área de arquivados). Quando definido, o item "Arquivar" é substituído por "Desarquivar". */
+  onUnarchive?: (card: KanbanCardData) => void;
+  /** Aplica visual opaco/cinza ao card (usado em cards arquivados). */
+  archivedAppearance?: boolean;
   /** Renomear o contato inline (quando o nome ainda é apenas um telefone). */
   onRenameClient?: (card: KanbanCardData, newName: string) => Promise<void> | void;
 }) {
@@ -421,6 +428,7 @@ export function KanbanCard({
           "border-amber-300/70 ring-1 ring-amber-200/60 bg-gradient-to-br from-amber-50/40 to-transparent",
         card.isReturning && !card.isRepurchase &&
           "border-sky-300/70 ring-1 ring-sky-200/60 bg-gradient-to-br from-sky-50/40 to-transparent",
+        archivedAppearance && "opacity-60 grayscale-[0.4] hover:opacity-80",
       )}
     >
       <div className="p-4">
@@ -500,7 +508,7 @@ export function KanbanCard({
             </div>
           )}
           <div className="shrink-0 flex items-start gap-1" onClick={(e) => e.stopPropagation()}>
-            {(onDelete || onAssignAgent || onCreateQuote || onViewConversation || onEdit || onArchive || onTemperatureChange) && (
+            {(onDelete || onAssignAgent || onCreateQuote || onViewConversation || onEdit || onArchive || onUnarchive || onTemperatureChange) && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -623,8 +631,18 @@ export function KanbanCard({
                       </DropdownMenuSubContent>
                     </DropdownMenuSub>
                   )}
-                  {(onArchive || onDelete) && <DropdownMenuSeparator />}
-                  {onArchive && (
+                  {(onArchive || onUnarchive || onDelete) && <DropdownMenuSeparator />}
+                  {onUnarchive ? (
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        onUnarchive(card);
+                      }}
+                    >
+                      <ArchiveRestore className="w-3.5 h-3.5 mr-2" />
+                      Desarquivar
+                    </DropdownMenuItem>
+                  ) : onArchive ? (
                     <DropdownMenuItem
                       onSelect={(e) => {
                         e.preventDefault();
@@ -634,7 +652,7 @@ export function KanbanCard({
                       <Archive className="w-3.5 h-3.5 mr-2" />
                       Arquivar
                     </DropdownMenuItem>
-                  )}
+                  ) : null}
                   {onDelete && (
                     <DropdownMenuItem
                       className="text-destructive focus:text-destructive"
