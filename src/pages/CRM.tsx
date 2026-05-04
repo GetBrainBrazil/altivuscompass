@@ -1021,6 +1021,10 @@ export default function CRM() {
           lastInteractionAt: l.last_interaction_at ?? undefined,
           archivePendingAt: l.archive_pending_at ?? undefined,
           isArchived: !!l.archived,
+          archivedAt: l.archived_at ?? undefined,
+          archivedFromStage: l.archived
+            ? (INITIAL_SALES_COLUMNS.find((c) => c.id === (STATUS_TO_SALES_COLUMN[effectiveStatus] || "new-leads"))?.title ?? undefined)
+            : undefined,
           tags: [
             l.travelers_count ? { label: `${l.travelers_count} viajante(s)`, tone: "blue" as const } : null,
             isFromWhatsApp ? { label: "WhatsApp", tone: "green" as const } : null,
