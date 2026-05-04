@@ -2965,6 +2965,7 @@ export default function CRM() {
                 setFilterTemp("all");
                 setFilterLevel("all");
                 setFilterSource("all");
+                setFilterState("active");
                 setFilterBoarding("all");
                 setFilterOpsStatus("all");
                 setFilterDestination("all");
