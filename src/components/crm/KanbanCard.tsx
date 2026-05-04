@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Pencil,
   Archive,
+  ArchiveRestore,
   Thermometer,
   User,
   Check,
