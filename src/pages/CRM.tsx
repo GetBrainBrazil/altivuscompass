@@ -3411,7 +3411,7 @@ export default function CRM() {
         onPromoted={handlePromotionDone}
       />
 
-      {/* Motivo da perda — ao mover para "Perdidos" */}
+      {/* Motivo da perda — marca o lead como perdido sem mover de coluna */}
       <Dialog
         open={lostOpen}
         onOpenChange={(open) => {
