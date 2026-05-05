@@ -651,6 +651,8 @@ export default function AIAgentEdit() {
 
         {activeSection === "metricas" && <MetricasSection />}
         </div>
+        )}
+        </div>
       </div>
 
       <AlertDialog
