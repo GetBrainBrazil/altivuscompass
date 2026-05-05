@@ -526,10 +526,10 @@ export default function AIAgentEdit() {
         </div>
       </div>
 
-      <div className="max-w-[1200px] mx-auto px-8 py-8 space-y-6">
+      <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-6">
         {/* Top horizontal nav */}
         <nav
-          className="sticky top-[140px] z-20 bg-muted/40 border border-border/60 rounded-lg p-1 flex gap-0.5 overflow-x-auto"
+          className="sticky top-[140px] z-20 bg-muted/40 border border-border/60 rounded-lg p-1 flex items-stretch gap-0.5 w-full"
           aria-label="Seções do agente"
         >
           {SECTIONS.map((s) => {
@@ -540,20 +540,21 @@ export default function AIAgentEdit() {
                 key={s.key}
                 type="button"
                 onClick={() => setActiveSection(s.key)}
+                title={s.label}
                 className={
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs whitespace-nowrap transition-colors shrink-0 " +
+                  "flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md text-[12px] leading-tight whitespace-nowrap transition-colors " +
                   (isActive
                     ? "bg-white text-[hsl(220_45%_15%)] shadow-sm font-medium"
                     : "text-muted-foreground hover:bg-white/60")
                 }
               >
-                <Icon size={14} strokeWidth={2} className="shrink-0" />
-                <span>{s.label}</span>
+                <Icon size={13} strokeWidth={2} className="shrink-0" />
+                <span className="truncate">{s.label}</span>
               </button>
             );
           })}
 
-          <div className="w-px bg-border mx-1 self-stretch" />
+          <div className="w-px bg-border mx-0.5 self-stretch" />
 
           {(() => {
             const isActive = activeSection === "whatsapp";
@@ -561,18 +562,19 @@ export default function AIAgentEdit() {
               <button
                 type="button"
                 onClick={() => setActiveSection("whatsapp")}
+                title="Conexão WhatsApp"
                 className={
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs whitespace-nowrap transition-colors shrink-0 " +
+                  "flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md text-[12px] leading-tight whitespace-nowrap transition-colors " +
                   (isActive
                     ? "bg-white text-[hsl(220_45%_15%)] shadow-sm font-medium"
                     : "text-muted-foreground hover:bg-white/60")
                 }
               >
-                <Smartphone size={14} strokeWidth={2} className="shrink-0" />
-                <span>Conexão WhatsApp</span>
+                <Smartphone size={13} strokeWidth={2} className="shrink-0" />
+                <span className="truncate">WhatsApp</span>
                 <span
                   className={
-                    "ml-0.5 inline-block h-1.5 w-1.5 rounded-full shrink-0 " +
+                    "inline-block h-1.5 w-1.5 rounded-full shrink-0 " +
                     (wa.loading
                       ? "bg-gray-300"
                       : wa.connected
