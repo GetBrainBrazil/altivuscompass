@@ -402,7 +402,7 @@ export function TestarAgenteSection({ agent }: Props) {
       <div className="p-4 sm:p-6">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 min-h-[600px]">
           {/* LEFT: Chat */}
-          <div className="lg:col-span-3 flex flex-col rounded-xl overflow-hidden border border-gray-200 shadow-sm bg-white">
+          <div className="lg:col-span-3 flex flex-col rounded-xl overflow-hidden border border-gray-200 dark:border-[#2A2D3A] shadow-sm bg-white dark:bg-[#0F1117]">
             {/* WhatsApp header */}
             <div className="bg-[#075E54] text-white px-4 py-3 flex items-center gap-3">
               <div className="h-9 w-9 rounded-full bg-white/15 flex items-center justify-center shrink-0 overflow-hidden">
