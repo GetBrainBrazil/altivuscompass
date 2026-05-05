@@ -225,12 +225,16 @@ export function AppSidebar() {
                                   <Link
                                     to={sub.url}
                                     className={cn(
-                                      "block w-full px-2.5 py-1.5 rounded-md text-[12px] font-body tracking-[0.01em] leading-snug transition-all duration-200",
+                                      "flex items-center gap-2 w-full px-2.5 py-1.5 rounded-md text-[12px] font-body tracking-[0.01em] leading-snug transition-all duration-200",
                                       "text-sidebar-foreground/65 hover:bg-white/[0.04] hover:text-white",
                                       isSubActive && "bg-white/[0.06] text-white font-medium hover:bg-white/[0.08]"
                                     )}
                                   >
-                                    {sub.title}
+                                    {sub.url === "/changelog" && <Newspaper size={14} className="shrink-0" />}
+                                    <span className="flex-1">{sub.title}</span>
+                                    {sub.url === "/changelog" && changelogUnseen && (
+                                      <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-label="Novas atualizações" />
+                                    )}
                                   </Link>
                                 </li>
                               );
