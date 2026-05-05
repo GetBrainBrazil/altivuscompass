@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Agent } from "@/components/ai-agents/AgentEditDialog";
 import { useWhatsAppProfile } from "@/hooks/useWhatsAppProfile";
+import { useTheme } from "@/contexts/ThemeContext";
 
 type Role = "agent" | "user";
 interface Msg {
