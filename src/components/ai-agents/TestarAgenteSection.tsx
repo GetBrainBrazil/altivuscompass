@@ -505,21 +505,30 @@ export function TestarAgenteSection({ agent }: Props) {
           </div>
 
           {/* RIGHT: Debug */}
-          <div className="lg:col-span-2 rounded-xl border border-gray-200 bg-gray-50 p-4 overflow-y-auto" style={{ maxHeight: 600 }}>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">
+          <div className="lg:col-span-2 rounded-xl border border-gray-200 dark:border-[#2A2D3A] bg-gray-50 dark:bg-[#161923] p-4 overflow-y-auto" style={{ maxHeight: 600 }}>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
               Debug em tempo real
             </h3>
 
             <div className="space-y-5 font-mono text-[12px]">
               {/* Fluxo */}
               <div>
-                <div className="text-[11px] uppercase tracking-wider text-gray-500 font-sans font-semibold mb-1.5">
+                <div className="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-sans font-semibold mb-1.5">
                   Fluxo detectado
                 </div>
                 {(() => {
                   const F = FLOW_LABELS[flow];
+                  const isUnknown = flow === "nao_identificado";
                   return (
-                    <Badge variant="outline" className="bg-white gap-1.5 pl-1">
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "bg-white gap-1.5 pl-1",
+                        isDark && (isUnknown
+                          ? "dark:bg-[#2A2D3A] dark:text-gray-300 dark:border-[#3A3D4A]"
+                          : "dark:bg-[#1E2130] dark:text-gray-200 dark:border-[#2A2D3A]")
+                      )}
+                    >
                       <span className={cn("inline-flex items-center justify-center h-5 w-5 rounded-full", F.bg)}>
                         <F.Icon className={cn("h-3.5 w-3.5", F.color)} />
                       </span>
@@ -531,23 +540,23 @@ export function TestarAgenteSection({ agent }: Props) {
 
               {/* Dados */}
               <div>
-                <div className="text-[11px] uppercase tracking-wider text-gray-500 font-sans font-semibold mb-1.5">
+                <div className="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-sans font-semibold mb-1.5">
                   Dados coletados
                 </div>
-                <div className="bg-white rounded-md border border-gray-200 divide-y divide-gray-100">
+                <div className="bg-white dark:bg-[#1E2130] rounded-md border border-gray-200 dark:border-[#2A2D3A] divide-y divide-gray-100 dark:divide-[#2A2D3A]">
                   {dataFields.map((f) => {
                     const val = data[f.key];
                     return (
                       <div key={f.key} className="flex items-center justify-between px-3 py-1.5">
-                        <span className="text-gray-600 font-sans text-[12px]">{f.label}</span>
-                        <span className={cn("flex items-center gap-1.5", val ? "text-[hsl(220_45%_15%)]" : "text-gray-400")}>
+                        <span className="text-gray-600 dark:text-gray-300 font-sans text-[12px]">{f.label}</span>
+                        <span className={cn("flex items-center gap-1.5", val ? "text-[hsl(220_45%_15%)] dark:text-gray-100" : "text-gray-400 dark:text-gray-600")}>
                           {val ? (
                             <>
                               <Check className="h-3.5 w-3.5 text-green-500" />
                               {val}
                             </>
                           ) : (
-                            <Minus className="h-3.5 w-3.5 text-gray-300" />
+                            <Minus className="h-3.5 w-3.5 text-gray-300 dark:text-gray-600" />
                           )}
                         </span>
                       </div>
@@ -558,25 +567,25 @@ export function TestarAgenteSection({ agent }: Props) {
 
               {/* Próxima ação */}
               <div>
-                <div className="text-[11px] uppercase tracking-wider text-gray-500 font-sans font-semibold mb-1.5">
+                <div className="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-sans font-semibold mb-1.5">
                   Próxima ação
                 </div>
-                <div className="bg-white rounded-md border border-gray-200 px-3 py-2 text-[hsl(220_45%_15%)]">
+                <div className="bg-white dark:bg-[#1E2130] rounded-md border border-gray-200 dark:border-[#2A2D3A] px-3 py-2 text-[hsl(220_45%_15%)] dark:text-gray-200">
                   {nextAction}
                 </div>
               </div>
 
               {/* Regras aplicadas */}
               <div>
-                <div className="text-[11px] uppercase tracking-wider text-gray-500 font-sans font-semibold mb-1.5">
+                <div className="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-sans font-semibold mb-1.5">
                   Regras aplicadas
                 </div>
                 {rulesApplied.length === 0 ? (
-                  <div className="text-gray-400">Nenhuma regra acionada</div>
+                  <div className="text-gray-400 dark:text-gray-500">Nenhuma regra acionada</div>
                 ) : (
                   <div className="flex flex-wrap gap-1.5">
                     {rulesApplied.map((r) => (
-                      <Badge key={r} variant="outline" className="bg-white text-[11px] font-sans gap-1">
+                      <Badge key={r} variant="outline" className="bg-white dark:bg-[#1E2130] dark:text-gray-200 dark:border-[#2A2D3A] text-[11px] font-sans gap-1">
                         <ShieldAlert className="h-3.5 w-3.5 text-gray-400" />
                         {r}
                       </Badge>
@@ -587,17 +596,17 @@ export function TestarAgenteSection({ agent }: Props) {
 
               {/* Sentimento */}
               <div>
-                <div className="text-[11px] uppercase tracking-wider text-gray-500 font-sans font-semibold mb-1.5">
+                <div className="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-sans font-semibold mb-1.5">
                   Sentimento do cliente
                 </div>
                 {(() => {
                   const S = SENT_LABELS[sentiment];
                   return (
-                    <div className="bg-white rounded-md border border-gray-200 px-3 py-2 flex items-center gap-2">
+                    <div className="bg-white dark:bg-[#1E2130] rounded-md border border-gray-200 dark:border-[#2A2D3A] px-3 py-2 flex items-center gap-2">
                       <span className={cn("inline-flex items-center justify-center h-6 w-6 rounded-full", S.bg)}>
                         <S.Icon className={cn("h-4 w-4", S.color)} />
                       </span>
-                      <span className="text-[hsl(220_45%_15%)] font-sans">{S.label}</span>
+                      <span className="text-[hsl(220_45%_15%)] dark:text-gray-300 font-sans">{S.label}</span>
                     </div>
                   );
                 })()}
