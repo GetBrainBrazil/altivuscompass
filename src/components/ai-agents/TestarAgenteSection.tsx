@@ -454,12 +454,12 @@ export function TestarAgenteSection({ agent }: Props) {
                     className={cn(
                       "max-w-[78%] px-3 py-2 rounded-lg shadow-sm relative text-sm",
                       m.role === "user"
-                        ? "bg-[#DCF8C6] text-gray-900 rounded-tr-none"
-                        : "bg-white text-gray-900 rounded-tl-none"
+                        ? "bg-[#DCF8C6] dark:bg-[#1A3A2A] text-gray-900 dark:text-gray-100 rounded-tr-none"
+                        : "bg-white dark:bg-[#1E2130] text-gray-900 dark:text-gray-200 rounded-tl-none"
                     )}
                   >
                     <div className="whitespace-pre-wrap break-words pr-10">{m.text}</div>
-                    <div className="text-[10px] text-gray-500 absolute right-2 bottom-1 tabular-nums">
+                    <div className={cn("text-[10px] absolute right-2 bottom-1 tabular-nums", m.role === "user" ? "text-gray-500 dark:text-gray-400" : "text-gray-500")}>
                       {fmtTime(m.ts)}
                     </div>
                   </div>
