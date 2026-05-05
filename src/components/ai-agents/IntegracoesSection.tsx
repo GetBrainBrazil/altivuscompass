@@ -392,11 +392,6 @@ export function IntegracoesSection({ value, onChange }: Props = {}) {
                 label="Todos recebem"
                 desc="Notifica todos os membros selecionados para aquele fluxo simultaneamente; o primeiro que responder assume."
               />
-              <RadioOption
-                value="availability"
-                label="Por disponibilidade"
-                desc="Envia para o primeiro membro marcado como Online; se nenhum estiver online, envia para todos."
-              />
             </RadioGroup>
           </div>
 
