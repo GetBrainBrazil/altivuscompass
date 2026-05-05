@@ -155,6 +155,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             )}
 
             <div className="ml-auto flex items-center gap-2 sm:gap-3">
+              <ThemeToggle />
               <NotificationBell />
               <button className="p-2 rounded-lg hover:bg-muted transition-colors">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
