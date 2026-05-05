@@ -260,7 +260,7 @@ export default function AIAgentEdit() {
   return (
     <div className="min-h-screen bg-[hsl(220_15%_97%)]">
       {/* Sticky header */}
-      <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-border/60">
+      <div className="sticky top-0 z-50 bg-white border-b border-border/60 shadow-sm">
         <div className="max-w-[1100px] mx-auto px-8 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
             <div className="h-10 w-10 rounded-lg bg-[hsl(220_45%_15%)] flex items-center justify-center shrink-0">
@@ -358,7 +358,7 @@ export default function AIAgentEdit() {
         {/* Left nav */}
         <aside className="md:w-[240px] md:shrink-0">
           <nav
-            className="md:sticky md:top-20 md:z-40 md:max-h-[calc(100vh-90px)] md:overflow-y-auto flex md:flex-col gap-2 overflow-x-auto md:overflow-x-visible -mx-2 px-2 md:mx-0 md:px-0"
+            className="md:sticky md:top-20 md:z-30 md:max-h-[calc(100vh-90px)] md:overflow-y-auto flex md:flex-col gap-2 overflow-x-auto md:overflow-x-visible -mx-2 px-2 md:mx-0 md:px-0"
             aria-label="Seções do agente"
           >
             {SECTIONS.map((s) => {
