@@ -385,3 +385,31 @@ export function AppLayout({ children }: AppLayoutProps) {
     </SidebarProvider>
   );
 }
+
+function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark";
+  return (
+    <TT delayDuration={300}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={isDark ? "Modo claro" : "Modo escuro"}
+            className={`h-9 w-9 rounded-lg flex items-center justify-center transition-colors duration-300 ${
+              isDark ? "hover:bg-gray-800" : "hover:bg-gray-100"
+            }`}
+          >
+            {isDark ? (
+              <Sun size={18} className="text-amber-400" />
+            ) : (
+              <Moon size={18} className="text-gray-500" />
+            )}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>{isDark ? "Modo claro" : "Modo escuro"}</TooltipContent>
+      </Tooltip>
+    </TT>
+  );
+}
