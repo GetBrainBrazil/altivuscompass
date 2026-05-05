@@ -41,6 +41,7 @@ import { IntegracoesSection } from "@/components/ai-agents/IntegracoesSection";
 import { MetricasSection } from "@/components/ai-agents/MetricasSection";
 import { TestarAgenteSection } from "@/components/ai-agents/TestarAgenteSection";
 import { useWhatsAppProfile } from "@/hooks/useWhatsAppProfile";
+import { supabase } from "@/integrations/supabase/client";
 
 const STORAGE_KEY = "ai-agents-draft";
 const LIST_KEY = "ai-agents-list";
