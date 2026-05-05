@@ -595,6 +595,53 @@ export default function AIAgentEdit() {
         {activeSection === "metricas" && <MetricasSection />}
         </div>
       </div>
+
+      <AlertDialog
+        open={pendingStatus !== null}
+        onOpenChange={(open) => { if (!open) setPendingStatus(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              {pendingStatus ? (
+                <CheckCircle className="h-5 w-5 text-green-600" />
+              ) : (
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+              )}
+              {pendingStatus ? "Ativar Agente IA" : "Desativar Agente IA"}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  {pendingStatus
+                    ? "Ao ativar o agente, a IA começará a responder automaticamente todas as mensagens recebidas no WhatsApp usando as configurações salvas."
+                    : "Ao desativar o agente, a IA deixará de responder mensagens no WhatsApp. Apenas atendentes humanos poderão responder na Central de Atendimento."}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {pendingStatus
+                    ? "Certifique-se de que as configurações estão corretas antes de ativar."
+                    : "Mensagens recebidas continuarão sendo registradas."}
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={statusSaving}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmStatusChange(); }}
+              disabled={statusSaving}
+              className={
+                pendingStatus
+                  ? "bg-green-600 hover:bg-green-700 text-white"
+                  : "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+              }
+            >
+              {statusSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {pendingStatus ? "Ativar Agente" : "Desativar Agente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
