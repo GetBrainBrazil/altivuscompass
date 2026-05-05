@@ -149,6 +149,44 @@ export default function AIAgentEdit() {
   });
 
   const [activeSection, setActiveSection] = useState<SectionKey>("identidade");
+  const [revealedSections, setRevealedSections] = useState<Set<SectionKey>>(() => new Set());
+  const wa = useWhatsAppProfile();
+
+  // Reveal logic per section. Identidade also waits for WA photo to load (or 3s timeout).
+  useEffect(() => {
+    if (revealedSections.has(activeSection)) return;
+
+    let cancelled = false;
+    const reveal = () => {
+      if (cancelled) return;
+      setRevealedSections((prev) => {
+        if (prev.has(activeSection)) return prev;
+        const next = new Set(prev);
+        next.add(activeSection);
+        return next;
+      });
+    };
+
+    if (activeSection === "identidade") {
+      if (wa.loading) return; // wait for next effect run when wa resolves
+      if (wa.connected && wa.photoUrl) {
+        const img = new Image();
+        const timeout = window.setTimeout(reveal, 3000);
+        img.onload = () => { window.clearTimeout(timeout); reveal(); };
+        img.onerror = () => { window.clearTimeout(timeout); reveal(); };
+        img.src = wa.photoUrl;
+        return () => { cancelled = true; window.clearTimeout(timeout); };
+      }
+      // No photo to wait for
+      const t = window.setTimeout(reveal, 150);
+      return () => { cancelled = true; window.clearTimeout(t); };
+    }
+
+    const t = window.setTimeout(reveal, 250);
+    return () => { cancelled = true; window.clearTimeout(t); };
+  }, [activeSection, wa.loading, wa.connected, wa.photoUrl, revealedSections]);
+
+  const isSectionReady = revealedSections.has(activeSection);
 
   // Normalize values so null/undefined/"" and null/[] are treated equivalently
   const normalize = (val: unknown): unknown => {
