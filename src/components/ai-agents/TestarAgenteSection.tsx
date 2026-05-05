@@ -547,14 +547,8 @@ export function TestarAgenteSection({ agent }: Props) {
   };
 
   const dataFields = useMemo(
-    () => [
-      { key: "nome", label: "Nome" },
-      { key: "email", label: "E-mail" },
-      { key: "destino", label: "Destino" },
-      { key: "periodo", label: "Período" },
-      { key: "viajantes", label: "Viajantes" },
-    ],
-    []
+    () => getEnabledColetaFields(agent),
+    [agent]
   );
 
   return (
