@@ -209,6 +209,8 @@ interface Props {
 
 export function TestarAgenteSection({ agent }: Props) {
   const wa = useWhatsAppProfile();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const useWAPhoto =
     (agent.avatarSource ?? (wa.connected && wa.photoUrl ? "whatsapp" : "custom")) === "whatsapp" &&
     wa.connected &&
