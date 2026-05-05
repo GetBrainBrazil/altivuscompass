@@ -79,7 +79,7 @@ const TONE_DESCRIPTIONS: Record<string, string> = {
   entusiasmado: "Seja entusiasmado, inspirador e motivador. Transmita paixão por viagens.",
 };
 
-function buildSystemPrompt(agent: Agent): string {
+function buildSystemPrompt(agent: Agent, clientContextBlock?: string): string {
   const c: any = agent.config || {};
   const com = c.comunicacao || {};
   const col = c.coleta || {};
