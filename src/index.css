@@ -471,29 +471,48 @@
 .dark :where(.border-slate-200):not(.public-quote *) {
   border-color: hsl(var(--border)) !important;
 }
-.dark :where(.text-gray-900):not(.public-quote *) { color: hsl(220 13% 93%) !important; }
-.dark :where(.text-gray-800):not(.public-quote *) { color: hsl(220 13% 90%) !important; }
-.dark :where(.text-gray-700):not(.public-quote *) { color: hsl(220 13% 85%) !important; }
-.dark :where(.text-gray-600):not(.public-quote *) { color: hsl(220 9% 72%) !important; }
-.dark :where(.text-gray-500):not(.public-quote *) { color: hsl(220 9% 62%) !important; }
-.dark :where(.text-gray-400):not(.public-quote *) { color: hsl(220 9% 55%) !important; }
+.dark :where(.text-gray-900):not(.public-quote *) { color: hsl(220 13% 95%) !important; }
+.dark :where(.text-gray-800):not(.public-quote *) { color: hsl(220 13% 93%) !important; }
+.dark :where(.text-gray-700):not(.public-quote *) { color: hsl(220 13% 88%) !important; }
+.dark :where(.text-gray-600):not(.public-quote *) { color: hsl(220 13% 82%) !important; }
+.dark :where(.text-gray-500):not(.public-quote *) { color: hsl(220 9% 68%) !important; }
+.dark :where(.text-gray-400):not(.public-quote *) { color: hsl(220 9% 60%) !important; }
+.dark :where(.text-black):not(.public-quote *) { color: hsl(220 13% 95%) !important; }
+.dark :where(.text-slate-900):not(.public-quote *) { color: hsl(220 13% 95%) !important; }
+.dark :where(.text-slate-800):not(.public-quote *) { color: hsl(220 13% 93%) !important; }
+.dark :where(.text-slate-700):not(.public-quote *) { color: hsl(220 13% 88%) !important; }
+.dark :where(.text-slate-600):not(.public-quote *) { color: hsl(220 13% 82%) !important; }
 
 /* Light tinted accents → dark tinted accents */
 .dark :where(.bg-blue-50):not(.public-quote *)   { background-color: hsl(217 91% 60% / 0.10) !important; }
 .dark :where(.bg-blue-50\/50):not(.public-quote *) { background-color: hsl(217 91% 60% / 0.08) !important; }
 .dark :where(.border-blue-200):not(.public-quote *) { border-color: hsl(217 91% 60% / 0.30) !important; }
+.dark :where(.text-blue-600):not(.public-quote *),
 .dark :where(.text-blue-700):not(.public-quote *),
+.dark :where(.text-blue-800):not(.public-quote *),
 .dark :where(.text-blue-900):not(.public-quote *) { color: hsl(217 91% 75%) !important; }
 
 .dark :where(.bg-amber-50):not(.public-quote *)  { background-color: hsl(38 90% 55% / 0.10) !important; }
 .dark :where(.border-amber-200):not(.public-quote *) { border-color: hsl(38 90% 55% / 0.30) !important; }
+.dark :where(.text-amber-600):not(.public-quote *),
 .dark :where(.text-amber-700):not(.public-quote *),
+.dark :where(.text-amber-800):not(.public-quote *),
 .dark :where(.text-amber-900):not(.public-quote *) { color: hsl(38 90% 70%) !important; }
 
 .dark :where(.bg-green-50):not(.public-quote *)  { background-color: hsl(142 70% 45% / 0.10) !important; }
 .dark :where(.border-green-200):not(.public-quote *) { border-color: hsl(142 70% 45% / 0.30) !important; }
+.dark :where(.text-green-600):not(.public-quote *),
 .dark :where(.text-green-700):not(.public-quote *),
-.dark :where(.text-green-800):not(.public-quote *) { color: hsl(142 70% 65%) !important; }
+.dark :where(.text-green-800):not(.public-quote *),
+.dark :where(.text-green-900):not(.public-quote *),
+.dark :where(.text-emerald-600):not(.public-quote *),
+.dark :where(.text-emerald-700):not(.public-quote *),
+.dark :where(.text-emerald-800):not(.public-quote *) { color: hsl(142 70% 70%) !important; }
+
+.dark :where(.text-red-600):not(.public-quote *),
+.dark :where(.text-red-700):not(.public-quote *),
+.dark :where(.text-red-800):not(.public-quote *),
+.dark :where(.text-red-900):not(.public-quote *) { color: hsl(0 78% 75%) !important; }
 
 .dark :where(.bg-rose-50\/50):not(.public-quote *),
 .dark :where(.bg-rose-50):not(.public-quote *) { background-color: hsl(0 78% 60% / 0.10) !important; }

@@ -533,7 +533,7 @@ export default function AIAgentEdit() {
       <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-6">
         {/* Top horizontal nav */}
         <nav
-          className="sticky top-[140px] z-20 bg-[hsl(220_15%_96%)] border border-border/60 rounded-lg p-1 flex items-stretch gap-0.5 w-full shadow-sm"
+          className="sticky top-[140px] z-20 bg-muted dark:bg-card border border-border/60 rounded-lg p-1 flex items-stretch gap-0.5 w-full shadow-sm"
           aria-label="Seções do agente"
         >
           {SECTIONS.map((s) => {
@@ -548,8 +548,8 @@ export default function AIAgentEdit() {
                 className={
                   "flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md text-[12px] leading-tight whitespace-nowrap transition-colors " +
                   (isActive
-                    ? "bg-white text-[hsl(220_45%_15%)] shadow-sm font-medium"
-                    : "text-muted-foreground hover:bg-white/60")
+                    ? "bg-white dark:bg-[hsl(217_91%_60%)] text-[hsl(220_45%_15%)] dark:text-white shadow-sm font-medium"
+                    : "text-muted-foreground dark:text-gray-300 hover:bg-white/60 dark:hover:bg-white/5 dark:hover:text-white")
                 }
               >
                 <Icon size={13} strokeWidth={2} className="shrink-0" />
@@ -570,8 +570,8 @@ export default function AIAgentEdit() {
                 className={
                   "flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md text-[12px] leading-tight whitespace-nowrap transition-colors " +
                   (isActive
-                    ? "bg-white text-[hsl(220_45%_15%)] shadow-sm font-medium"
-                    : "text-muted-foreground hover:bg-white/60")
+                    ? "bg-white dark:bg-[hsl(217_91%_60%)] text-[hsl(220_45%_15%)] dark:text-white shadow-sm font-medium"
+                    : "text-muted-foreground dark:text-gray-300 hover:bg-white/60 dark:hover:bg-white/5 dark:hover:text-white")
                 }
               >
                 <Smartphone size={13} strokeWidth={2} className="shrink-0" />
