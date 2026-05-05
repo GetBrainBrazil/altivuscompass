@@ -579,10 +579,17 @@ export function TestarAgenteSection({ agent }: Props) {
                 <div className="text-[11px] uppercase tracking-wider text-gray-500 font-sans font-semibold mb-1.5">
                   Sentimento do cliente
                 </div>
-                <div className="bg-white rounded-md border border-gray-200 px-3 py-2 flex items-center gap-2">
-                  <span className="text-lg">{SENT_LABELS[sentiment].emoji}</span>
-                  <span className="text-[hsl(220_45%_15%)] font-sans">{SENT_LABELS[sentiment].label}</span>
-                </div>
+                {(() => {
+                  const S = SENT_LABELS[sentiment];
+                  return (
+                    <div className="bg-white rounded-md border border-gray-200 px-3 py-2 flex items-center gap-2">
+                      <span className={cn("inline-flex items-center justify-center h-6 w-6 rounded-full", S.bg)}>
+                        <S.Icon className={cn("h-4 w-4", S.color)} />
+                      </span>
+                      <span className="text-[hsl(220_45%_15%)] font-sans">{S.label}</span>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
