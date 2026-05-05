@@ -909,51 +909,15 @@ function AvatarIdentitySection({
         </Tooltip>
       </TooltipProvider>
 
-      <div className="flex-1 flex items-center justify-between gap-3">
-        <div>
-          <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Avatar do Agente
-          </Label>
-          <p className="text-sm text-foreground mt-1">
-            {showWAPhoto
-              ? wa.formattedPhone || "Foto do WhatsApp"
-              : "Ícone personalizado"}
-          </p>
-        </div>
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9">
-              Alterar ícone
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[320px] p-3" align="end">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">
-              Escolha um ícone
-            </p>
-            <div className="grid grid-cols-4 gap-2">
-              {AGENT_ICONS.map(({ key, Icon }) => {
-                const selected = (form.icon ?? "bot") === key;
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setForm({ ...form, icon: key, avatarSource: "custom" })}
-                    className={
-                      "h-12 w-12 rounded-full flex items-center justify-center transition-all " +
-                      (selected
-                        ? "bg-[hsl(220_45%_15%)] text-white ring-2 ring-[hsl(220_45%_15%)] ring-offset-2"
-                        : "bg-muted text-muted-foreground hover:bg-muted/70")
-                    }
-                    aria-label={key}
-                  >
-                    <Icon className="h-5 w-5" />
-                  </button>
-                );
-              })}
-            </div>
-          </PopoverContent>
-        </Popover>
+      <div className="flex-1">
+        <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Avatar do Agente
+        </Label>
+        <p className="text-sm text-foreground mt-1">
+          {showWAPhoto
+            ? wa.formattedPhone || "Foto do WhatsApp"
+            : "Ícone padrão"}
+        </p>
       </div>
     </div>
   );
