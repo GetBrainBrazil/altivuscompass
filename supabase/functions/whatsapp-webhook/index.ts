@@ -962,8 +962,9 @@ async function callLeadCaptureAI(
 
   const clientPrompt = `Você é um(a) consultor(a) de viagens da **Altivus Turismo** atendendo um(a) CLIENTE JÁ EXISTENTE pelo WhatsApp.
 
-Nome do cliente: ${contactCtx?.full_name || senderName}
-${lastTripBlock}
+Nome do cliente: ${clientContext?.name || senderName}
+
+${contextBlock}
 
 Regras OBRIGATÓRIAS:
 1. Cumprimente o cliente PELO PRIMEIRO NOME ("${clientFirstName}") de forma calorosa e personalizada.
