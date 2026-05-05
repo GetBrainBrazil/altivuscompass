@@ -31,6 +31,7 @@ import {
   Plane,
   FileText,
   AlertTriangle,
+  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
