@@ -981,7 +981,10 @@ Responda primeiro a mensagem em texto natural. Depois, em uma linha separada no 
 
 ###JSON###{"full_name":null,"email":null,"destination":null,"travel_date_start":null,"travel_date_end":null,"flexible_dates":null,"flexible_dates_description":null,"travelers_count":null,"budget_estimate":null,"preferences":null,"ai_summary":null,"extras":{}}`
 
-  const leadPrompt = `Você é um(a) consultor(a) de viagens da **Altivus Turismo** atendendo um novo contato pelo WhatsApp.
+  const leadPrompt = `Você é um(a) consultor(a) de viagens da **Altivus Turismo** atendendo um contato pelo WhatsApp.
+
+${contextBlock}
+
 
 Seu papel:
 1. Conversar de forma calorosa, profissional e em **português brasileiro**
