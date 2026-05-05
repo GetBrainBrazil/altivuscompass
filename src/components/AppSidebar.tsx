@@ -19,7 +19,8 @@ import {
 import { NavLink } from "@/components/NavLink";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronRight, Settings } from "lucide-react";
+import { ChevronRight, Settings, Newspaper } from "lucide-react";
+import { useChangelogUnseen } from "@/hooks/useChangelogUnseen";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -37,6 +38,7 @@ const navItems: NavItem[] = [
     icon: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>,
     subItems: [
       { title: "Tarefas", url: "/tasks" },
+      { title: "Atualizações", url: "/changelog" },
     ],
   },
   {
