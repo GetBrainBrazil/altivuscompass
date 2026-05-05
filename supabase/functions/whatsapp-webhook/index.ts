@@ -859,6 +859,35 @@ async function handleLeadCapture(
     if (updErr) console.error('Lead update error:', updErr)
   }
 
+  // Persist newly collected structured data on the wa_conversation for memory
+  try {
+    const newCollected: Record<string, any> = {}
+    const fields = ['destination', 'travel_date_start', 'travel_date_end', 'travelers_count', 'budget_estimate', 'preferences', 'email', 'full_name']
+    for (const f of fields) {
+      const v = ai.extracted?.[f]
+      if (v !== null && v !== undefined && v !== '') newCollected[f] = v
+    }
+    if (ai.extracted?.extras && typeof ai.extracted.extras === 'object') {
+      Object.assign(newCollected, ai.extracted.extras)
+    }
+    if (Object.keys(newCollected).length > 0) {
+      const { data: convoRow } = await supabase
+        .from('wa_conversations')
+        .select('id, collected_data')
+        .eq('phone', phone)
+        .maybeSingle()
+      if (convoRow?.id) {
+        await supabase
+          .from('wa_conversations')
+          .update({
+            collected_data: { ...(convoRow.collected_data || {}), ...newCollected },
+          })
+          .eq('id', convoRow.id)
+      }
+    }
+  } catch (e) {
+    console.error('[collected_data persist] error:', e)
+  }
   sessionState.messages = [...(sessionState.messages || []), { role: 'assistant', content: ai.reply }]
 
   await supabase.from('whatsapp_sessions').update({
