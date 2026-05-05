@@ -437,9 +437,10 @@ export function TestarAgenteSection({ agent }: Props) {
               ref={scrollRef}
               className="flex-1 overflow-y-auto px-4 py-4 space-y-2"
               style={{
-                background: "#ECE5DD",
-                backgroundImage:
-                  "radial-gradient(circle at 20% 10%, rgba(255,255,255,0.4) 0, transparent 40%)",
+                background: isDark ? "#0F1117" : "#ECE5DD",
+                backgroundImage: isDark
+                  ? "none"
+                  : "radial-gradient(circle at 20% 10%, rgba(255,255,255,0.4) 0, transparent 40%)",
                 minHeight: 380,
                 maxHeight: 520,
               }}
