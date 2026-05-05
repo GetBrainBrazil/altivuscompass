@@ -512,10 +512,17 @@ export function TestarAgenteSection({ agent }: Props) {
                 <div className="text-[11px] uppercase tracking-wider text-gray-500 font-sans font-semibold mb-1.5">
                   Fluxo detectado
                 </div>
-                <Badge variant="outline" className="bg-white">
-                  <span className="mr-1">{FLOW_LABELS[flow].dot}</span>
-                  {FLOW_LABELS[flow].label}
-                </Badge>
+                {(() => {
+                  const F = FLOW_LABELS[flow];
+                  return (
+                    <Badge variant="outline" className="bg-white gap-1.5 pl-1">
+                      <span className={cn("inline-flex items-center justify-center h-5 w-5 rounded-full", F.bg)}>
+                        <F.Icon className={cn("h-3.5 w-3.5", F.color)} />
+                      </span>
+                      {F.label}
+                    </Badge>
+                  );
+                })()}
               </div>
 
               {/* Dados */}
