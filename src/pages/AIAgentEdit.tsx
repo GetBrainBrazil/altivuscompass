@@ -533,7 +533,7 @@ export default function AIAgentEdit() {
       <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-6">
         {/* Top horizontal nav */}
         <nav
-          className="sticky top-[140px] z-20 bg-muted dark:bg-card border border-border/60 rounded-lg p-1 flex items-stretch gap-0.5 w-full shadow-sm"
+          className="sticky top-[140px] z-20 bg-muted dark:bg-[#161923] border border-border/60 dark:border-[#2A2D3A] rounded-lg p-1 flex items-stretch gap-0.5 w-full shadow-sm"
           aria-label="Seções do agente"
         >
           {SECTIONS.map((s) => {
