@@ -79,6 +79,35 @@ const TONE_DESCRIPTIONS: Record<string, string> = {
   entusiasmado: "Seja entusiasmado, inspirador e motivador. Transmita paixão por viagens.",
 };
 
+const slugifyKey = (s: string) =>
+  String(s)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 32) || "campo";
+
+function getEnabledColetaFields(agent: Agent): { key: string; label: string; helper?: string }[] {
+  const fields = (agent.config as any)?.coleta?.fields;
+  if (!Array.isArray(fields) || fields.length === 0) {
+    return [
+      { key: "nome", label: "Nome" },
+      { key: "telefone", label: "Telefone", helper: "Já disponível pelo WhatsApp" },
+      { key: "destino", label: "Destino" },
+      { key: "periodo", label: "Período" },
+      { key: "viajantes", label: "Viajantes" },
+    ];
+  }
+  return fields
+    .filter((f: any) => f && f.enabled !== false && f.label)
+    .map((f: any) => ({
+      key: f.key || slugifyKey(f.label),
+      label: f.label,
+      helper: f.helper,
+    }));
+}
+
 function buildSystemPrompt(agent: Agent, clientContextBlock?: string): string {
   const c: any = agent.config || {};
   const com = c.comunicacao || {};
@@ -101,8 +130,8 @@ function buildSystemPrompt(agent: Agent, clientContextBlock?: string): string {
   const enabledList = (arr: any[], key = "label") =>
     Array.isArray(arr) ? arr.filter((x) => x?.enabled !== false).map((x) => x?.[key] || x).filter(Boolean) : [];
 
-  const requiredFields = enabledList(col.required_fields);
-  const collectionTiming = col.collection_timing || "Durante a conversa, de forma natural";
+  const enabledFields = getEnabledColetaFields(agent);
+  const collectionTiming = col.collection_timing || col.moment || "Durante a conversa, de forma natural";
 
   const securityRules = enabledList(reg.security_rules);
   const escalationRules = enabledList(reg.escalation_rules);
@@ -119,6 +148,20 @@ function buildSystemPrompt(agent: Agent, clientContextBlock?: string): string {
   const suporteCategories = enabledList(flowSuporte.categories);
   const suporteData = enabledList(flowSuporte.data_to_collect);
   const prospectQuestions = enabledList(flowProspect.questions);
+
+  const debugSchemaEntries = enabledFields.map((f) => `"${f.key}":""`).join(",");
+
+  const priorityKeys = ["nome", "destino", "periodo", "viajantes", "tipo_viagem", "orcamento"];
+  const ordered = [
+    ...(priorityKeys
+      .map((k) => enabledFields.find((f) => f.key === k))
+      .filter(Boolean) as { key: string; label: string; helper?: string }[]),
+    ...enabledFields.filter((f) => !priorityKeys.includes(f.key)),
+  ];
+
+  const collectionLines = ordered
+    .map((f, i) => `${i + 1}. ${f.label}${f.helper ? ` — ${f.helper}` : ""}`)
+    .join("\n");
 
   return `Você é ${presentationName}, atendente virtual da Altivus Turismo.
 ${clientContextBlock ? `\n${clientContextBlock}\n` : ""}
@@ -141,7 +184,7 @@ Identifique o tipo de atendimento na primeira mensagem do cliente e siga o fluxo
 ### Fluxo 1: Nova Cotação ${flowCotacao.active === false ? "(INATIVO)" : "(ATIVO)"}
 Objetivo: Coletar informações da viagem e encaminhar para cotação.
 Perguntas obrigatórias (uma por vez, naturalmente):
-${cotacaoQuestions.length ? cotacaoQuestions.map((q) => `- ${q}`).join("\n") : "- Destino\n- Período\n- Número de viajantes\n- Nome\n- E-mail"}
+${cotacaoQuestions.length ? cotacaoQuestions.map((q) => `- ${q}`).join("\n") : "- Destino\n- Período\n- Número de viajantes\n- Nome\n- Tipo de viagem"}
 Ao concluir: ${flowCotacao.completion_action || "encaminhar para um consultor humano"}.
 ${flowCotacao.closing_message ? `Mensagem de encerramento: "${flowCotacao.closing_message}"` : ""}
 
@@ -158,11 +201,15 @@ Estratégia: ${flowProspect.strategy || "Fazer perguntas qualificadoras sobre pr
 ${prospectQuestions.length ? `Perguntas exploratórias:\n${prospectQuestions.map((q) => `- ${q}`).join("\n")}` : ""}
 
 ## COLETA DE DADOS
-${requiredFields.length ? `Dados obrigatórios: ${requiredFields.join(", ")}.` : "Colete: nome, e-mail, destino, período e viajantes."}
-Momento: ${collectionTiming}.
+Colete os campos abaixo de forma NATURAL ao longo da conversa, na ordem de prioridade indicada. NUNCA peça tudo de uma vez — faça apenas 1 ou 2 perguntas por mensagem, conversacionalmente.
+
+Ordem de prioridade:
+${collectionLines}
+
+Momento da coleta: ${collectionTiming}.
 ${col.validate_email ? "Valide o formato do e-mail quando coletado." : ""}
 ${col.validate_phone ? "Valide o formato do telefone quando coletado." : ""}
-${col.confirm_data ? "Antes de encerrar, confirme todos os dados coletados com o cliente." : ""}
+${col.confirm_before_save || col.confirm_data ? "Antes de encerrar, confirme todos os dados coletados com o cliente." : ""}
 
 ## REGRAS (NUNCA VIOLE)
 ${securityRules.length ? securityRules.map((r) => `- ${r}`).join("\n") : "- Nunca prometa preços sem confirmar com humano\n- Não invente informações\n- Não compartilhe dados de outros clientes"}
@@ -178,7 +225,7 @@ ${customRules ? `## REGRAS PERSONALIZADAS\n${customRules}\n` : ""}
 
 ## INSTRUÇÕES DE DEBUG (OBRIGATÓRIO)
 Ao final de CADA resposta, inclua um bloco JSON entre tags <debug></debug> com EXATAMENTE este formato:
-<debug>{"detected_flow":"nova_cotacao|suporte|prospect_indeciso|nao_identificado","collected_data":{"nome":"","email":"","destino":"","periodo":"","viajantes":""},"next_action":"descrição curta","applied_rules":["regra 1"],"sentiment":"positivo|neutro|negativo"}</debug>
+<debug>{"detected_flow":"nova_cotacao|suporte|prospect_indeciso|nao_identificado","collected_data":{${debugSchemaEntries}},"next_action":"descrição curta","applied_rules":["regra 1"],"sentiment":"positivo|neutro|negativo"}</debug>
 O bloco <debug> NÃO será mostrado ao cliente. Preencha collected_data com tudo que você já coletou na conversa (string vazia se não coletado).`;
 }
 
@@ -500,14 +547,8 @@ export function TestarAgenteSection({ agent }: Props) {
   };
 
   const dataFields = useMemo(
-    () => [
-      { key: "nome", label: "Nome" },
-      { key: "email", label: "E-mail" },
-      { key: "destino", label: "Destino" },
-      { key: "periodo", label: "Período" },
-      { key: "viajantes", label: "Viajantes" },
-    ],
-    []
+    () => getEnabledColetaFields(agent),
+    [agent]
   );
 
   return (
@@ -694,6 +735,7 @@ export function TestarAgenteSection({ agent }: Props) {
                 <div className="bg-white dark:bg-[#1E2130] rounded-md border border-gray-200 dark:border-[#2A2D3A] divide-y divide-gray-100 dark:divide-[#2A2D3A]">
                   {dataFields.map((f) => {
                     const val = data[f.key];
+                    const isPhoneAuto = f.key === "telefone" && !val;
                     return (
                       <div key={f.key} className="flex items-center justify-between px-3 py-1.5">
                         <span className="text-gray-600 dark:text-gray-300 font-sans text-[12px]">{f.label}</span>
@@ -703,6 +745,8 @@ export function TestarAgenteSection({ agent }: Props) {
                               <Check className="h-3.5 w-3.5 text-green-500" />
                               {val}
                             </>
+                          ) : isPhoneAuto ? (
+                            <span className="italic text-[11px]">auto via WhatsApp</span>
                           ) : (
                             <Minus className="h-3.5 w-3.5 text-gray-300 dark:text-gray-600" />
                           )}

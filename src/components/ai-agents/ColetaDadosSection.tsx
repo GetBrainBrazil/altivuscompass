@@ -9,6 +9,7 @@ import { Plus, X } from "lucide-react";
 
 interface FieldItem {
   id: string;
+  key?: string;
   label: string;
   enabled: boolean;
   helper?: string;
@@ -18,12 +19,22 @@ interface FieldItem {
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 const initialFields: FieldItem[] = [
-  { id: uid(), label: "Nome completo", enabled: true },
-  { id: uid(), label: "Telefone", enabled: true, helper: "Já disponível pelo WhatsApp" },
-  { id: uid(), label: "E-mail", enabled: true },
-  { id: uid(), label: "CPF", enabled: false },
-  { id: uid(), label: "Data de nascimento", enabled: false },
-  { id: uid(), label: "Cidade/Estado", enabled: false },
+  { id: uid(), key: "nome", label: "Nome completo", enabled: true },
+  { id: uid(), key: "telefone", label: "Telefone", enabled: true, helper: "Já disponível pelo WhatsApp" },
+  { id: uid(), key: "destino", label: "Destino desejado", enabled: true, helper: "Para onde o cliente quer viajar" },
+  { id: uid(), key: "periodo", label: "Data/período da viagem", enabled: true, helper: "Quando pretende viajar (datas específicas ou mês/ano)" },
+  { id: uid(), key: "viajantes", label: "Número de viajantes", enabled: true, helper: "Quantos adultos e crianças" },
+  { id: uid(), key: "tipo_viagem", label: "Tipo de viagem", enabled: true, helper: "Lazer, negócios, lua de mel, família, aventura" },
+  { id: uid(), key: "orcamento", label: "Orçamento estimado", enabled: true, helper: "Faixa de orçamento por pessoa ou total" },
+  { id: uid(), key: "aereo", label: "Precisa de aéreo?", enabled: true, helper: "Se o cliente precisa de passagem aérea" },
+  { id: uid(), key: "hospedagem", label: "Preferência de hospedagem", enabled: true, helper: "Hotel, resort, pousada, airbnb" },
+  { id: uid(), key: "transfer", label: "Precisa de transfer?", enabled: true, helper: "Transporte aeroporto-hotel ou entre cidades" },
+  { id: uid(), key: "seguro", label: "Precisa de seguro viagem?", enabled: true, helper: "Seguro saúde e bagagem" },
+  { id: uid(), key: "observacoes", label: "Observações/preferências", enabled: true, helper: "Restrições alimentares, acessibilidade, pedidos especiais" },
+  { id: uid(), key: "email", label: "E-mail", enabled: false },
+  { id: uid(), key: "cpf", label: "CPF", enabled: false },
+  { id: uid(), key: "nascimento", label: "Data de nascimento", enabled: false },
+  { id: uid(), key: "cidade_estado", label: "Cidade/Estado", enabled: false },
 ];
 
 const groupLabel =
