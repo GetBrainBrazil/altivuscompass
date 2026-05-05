@@ -42,7 +42,7 @@ const SENT_LABELS: Record<Sentiment, { Icon: LucideIcon; label: string; bg: stri
 };
 
 const PERSONAS: { value: string; label: string; firstMsg?: string }[] = [
-  { value: "livre", label: "Conversa livre" },
+  { value: "livre", label: "Conversa livre (contato novo)" },
   {
     value: "lead",
     label: "Lead novo — quer cotação para Paris",
@@ -59,6 +59,14 @@ const PERSONAS: { value: string; label: string; firstMsg?: string }[] = [
     firstMsg: "Olá, estou pensando em viajar mas não sei para onde, podem me ajudar?",
   },
 ];
+
+interface ExistingContact {
+  id: string;
+  full_name: string;
+  phone: string | null;
+  level: string;
+  contextLabel: string;
+}
 
 const fmtTime = (d: Date) =>
   d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
