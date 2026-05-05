@@ -468,13 +468,31 @@ export default function AIAgentEdit() {
               <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Status
               </Label>
-              <div className="h-10 flex items-center gap-3 px-3 rounded-md border border-input bg-background">
+              <div
+                className="h-10 flex items-center gap-3 px-3 rounded-md border border-input transition-colors"
+                style={{
+                  backgroundColor: form.active
+                    ? "rgba(34, 197, 94, 0.05)"
+                    : "rgba(239, 68, 68, 0.05)",
+                }}
+              >
                 <Switch
                   checked={form.active}
-                  onCheckedChange={(c) => setForm({ ...form, active: c })}
+                  disabled={statusSaving}
+                  onCheckedChange={(c) => setPendingStatus(c)}
                 />
+                {statusSaving ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                ) : form.active ? (
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+                  </span>
+                ) : (
+                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" />
+                )}
                 <span className="text-sm text-foreground">
-                  {form.active ? "Ativo — atendendo conversas" : "Inativo"}
+                  {form.active ? "Ativo — atendendo conversas" : "Inativo — IA desativada"}
                 </span>
               </div>
             </div>
