@@ -42,7 +42,7 @@ const SENT_LABELS: Record<Sentiment, { Icon: LucideIcon; label: string; bg: stri
 };
 
 const PERSONAS: { value: string; label: string; firstMsg?: string }[] = [
-  { value: "livre", label: "Conversa livre" },
+  { value: "livre", label: "Conversa livre (contato novo)" },
   {
     value: "lead",
     label: "Lead novo — quer cotação para Paris",
@@ -60,6 +60,14 @@ const PERSONAS: { value: string; label: string; firstMsg?: string }[] = [
   },
 ];
 
+interface ExistingContact {
+  id: string;
+  full_name: string;
+  phone: string | null;
+  level: string;
+  contextLabel: string;
+}
+
 const fmtTime = (d: Date) =>
   d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
@@ -71,7 +79,7 @@ const TONE_DESCRIPTIONS: Record<string, string> = {
   entusiasmado: "Seja entusiasmado, inspirador e motivador. Transmita paixão por viagens.",
 };
 
-function buildSystemPrompt(agent: Agent): string {
+function buildSystemPrompt(agent: Agent, clientContextBlock?: string): string {
   const c: any = agent.config || {};
   const com = c.comunicacao || {};
   const col = c.coleta || {};
@@ -113,7 +121,7 @@ function buildSystemPrompt(agent: Agent): string {
   const prospectQuestions = enabledList(flowProspect.questions);
 
   return `Você é ${presentationName}, atendente virtual da Altivus Turismo.
-
+${clientContextBlock ? `\n${clientContextBlock}\n` : ""}
 ## TOM DE VOZ
 ${toneDesc}${customTone}
 ${agent.personality ? `\nPersonalidade: ${agent.personality}` : ""}
@@ -216,6 +224,10 @@ export function TestarAgenteSection({ agent }: Props) {
     wa.connected &&
     !!wa.photoUrl;
   const [persona, setPersona] = useState("livre");
+  const [existingContacts, setExistingContacts] = useState<ExistingContact[]>([]);
+  const [selectedContactId, setSelectedContactId] = useState<string>("none");
+  const [contactContextBlock, setContactContextBlock] = useState<string>("");
+  const [loadingContext, setLoadingContext] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
@@ -231,7 +243,33 @@ export function TestarAgenteSection({ agent }: Props) {
     return (w && String(w).trim()) || "Olá! Como posso te ajudar hoje?";
   }, [agent.config?.comunicacao?.welcome_message]);
 
-  const systemPrompt = useMemo(() => buildSystemPrompt(agent), [agent]);
+  const systemPrompt = useMemo(
+    () => buildSystemPrompt(agent, contactContextBlock || undefined),
+    [agent, contactContextBlock],
+  );
+
+  // Load list of existing contacts to allow simulating as a returning client
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: rows } = await supabase
+        .from("contacts")
+        .select("id, full_name, phone, level")
+        .order("updated_at", { ascending: false })
+        .limit(40);
+      if (cancelled || !rows) return;
+      setExistingContacts(
+        rows.map((r: any) => ({
+          id: r.id,
+          full_name: r.full_name,
+          phone: r.phone,
+          level: r.level,
+          contextLabel: `${r.full_name}${r.level ? ` · ${r.level}` : ""}`,
+        })),
+      );
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // initialize / reset on welcome change
   useEffect(() => {
@@ -349,6 +387,105 @@ export function TestarAgenteSection({ agent }: Props) {
     setRulesApplied([]);
   };
 
+  const handleSelectExistingContact = async (contactId: string) => {
+    setSelectedContactId(contactId);
+    if (contactId === "none") {
+      setContactContextBlock("");
+      handleReset();
+      return;
+    }
+    setLoadingContext(true);
+    try {
+      const contact = existingContacts.find((c) => c.id === contactId);
+      if (!contact) return;
+
+      // Load last conversations & quotes for the contact (mirrors webhook logic, lite version)
+      const phone = contact.phone || "";
+      let convos: any[] = [];
+      if (phone) {
+        const { data } = await supabase
+          .from("wa_conversations")
+          .select("status, summary, collected_data, last_message_at, last_message_text")
+          .eq("phone", phone)
+          .order("last_message_at", { ascending: false, nullsFirst: false })
+          .limit(5);
+        convos = data || [];
+      }
+      const { data: quoteData } = await (supabase as any)
+        .from("quotes")
+        .select("title, destination, stage, conclusion_type, total_value, travel_date_start, travel_date_end")
+        .eq("contact_id", contact.id)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      const quotes: any[] = quoteData || [];
+      const merged: Record<string, any> = {};
+      for (const c of [...convos].reverse()) {
+        if (c?.collected_data && typeof c.collected_data === "object") Object.assign(merged, c.collected_data);
+      }
+      const lastAt = convos[0]?.last_message_at;
+      const days = lastAt ? Math.max(0, Math.floor((Date.now() - new Date(lastAt).getTime()) / 86400000)) : null;
+
+      const lines: string[] = [
+        "## CONTEXTO DO CLIENTE",
+        "Este é um contato CONHECIDO. Trate-o pelo nome e demonstre continuidade.",
+        `- Nome: ${contact.full_name}`,
+        `- Tipo: ${contact.level || "—"}`,
+      ];
+      if (days !== null) lines.push(`- Última interação: há ${days} dia(s)`);
+      if (convos.length) {
+        lines.push("", "### Conversas anteriores");
+        for (const c of convos.slice(0, 3)) {
+          const d = c.last_message_at ? new Date(c.last_message_at).toISOString().split("T")[0] : "—";
+          const s = c.summary || c.last_message_text;
+          lines.push(`- ${d} — status: ${c.status || "—"}${s ? ` — ${String(s).slice(0, 220)}` : ""}`);
+        }
+      }
+      if (quotes.length) {
+        lines.push("", "### Cotações");
+        for (const q of quotes) {
+          const v = q.total_value ? `BRL ${q.total_value}` : "";
+          lines.push(`- ${q.destination || q.title || "—"} — ${q.conclusion_type || q.stage || "—"}${v ? ` — ${v}` : ""}`);
+        }
+      }
+      if (Object.keys(merged).length) {
+        lines.push("", "### Dados já coletados anteriormente");
+        for (const [k, v] of Object.entries(merged)) {
+          if (v == null || v === "") continue;
+          lines.push(`- ${k}: ${typeof v === "object" ? JSON.stringify(v) : v}`);
+        }
+      }
+      lines.push(
+        "",
+        "### INSTRUÇÕES IMPORTANTES",
+        "- NÃO peça informações que você já tem",
+        "- Mencione naturalmente que vocês já conversaram, se aplicável",
+        "- Adapte o tom: cliente conhecido ≠ prospect novo",
+      );
+      setContactContextBlock(lines.join("\n"));
+
+      // Reset chat with contextual welcome
+      setMessages([
+        {
+          id: crypto.randomUUID(),
+          role: "agent",
+          text: welcomeMessage,
+          ts: new Date(),
+        },
+      ]);
+      setFlow("nao_identificado");
+      setSentiment("neutro");
+      setData(merged as Record<string, string>);
+      setNextAction("Aguardar mensagem");
+      setRulesApplied([]);
+      toast.success(`Simulando como ${contact.full_name}`);
+    } catch (e: any) {
+      console.error(e);
+      toast.error("Falha ao carregar contexto do contato");
+    } finally {
+      setLoadingContext(false);
+    }
+  };
+
   const handleExport = () => {
     const text = messages
       .map((m) => `[${fmtTime(m.ts)}] ${m.role === "agent" ? "Agente" : "Cliente"}: ${m.text}`)
@@ -385,9 +522,20 @@ export function TestarAgenteSection({ agent }: Props) {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <Select value={selectedContactId} onValueChange={handleSelectExistingContact} disabled={loadingContext}>
+            <SelectTrigger className="h-9 w-full sm:w-[260px]">
+              <SelectValue placeholder="Simular como contato existente…" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">— Contato novo (sem contexto) —</SelectItem>
+              {existingContacts.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.contextLabel}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={persona} onValueChange={handlePersonaChange}>
-            <SelectTrigger className="h-9 w-full sm:w-[280px]">
-              <SelectValue placeholder="Simular como…" />
+            <SelectTrigger className="h-9 w-full sm:w-[260px]">
+              <SelectValue placeholder="Cenário de teste…" />
             </SelectTrigger>
             <SelectContent>
               {PERSONAS.map((p) => (
