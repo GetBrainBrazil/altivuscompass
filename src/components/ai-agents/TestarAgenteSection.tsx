@@ -26,18 +26,18 @@ interface Msg {
 }
 
 type FlowKey = "nova_cotacao" | "suporte" | "prospect_indeciso" | "nao_identificado";
-const FLOW_LABELS: Record<FlowKey, { label: string; dot: string }> = {
-  nova_cotacao: { label: "Nova Cotação", dot: "🟢" },
-  suporte: { label: "Suporte", dot: "🔴" },
-  prospect_indeciso: { label: "Prospect Indeciso", dot: "🟡" },
-  nao_identificado: { label: "Não identificado", dot: "⚪" },
+const FLOW_LABELS: Record<FlowKey, { label: string; Icon: LucideIcon; bg: string; color: string }> = {
+  nova_cotacao: { label: "Nova Cotação", Icon: Plane, bg: "bg-green-50", color: "text-green-600" },
+  suporte: { label: "Suporte", Icon: LifeBuoy, bg: "bg-red-50", color: "text-red-600" },
+  prospect_indeciso: { label: "Prospect Indeciso", Icon: HelpCircle, bg: "bg-amber-50", color: "text-amber-600" },
+  nao_identificado: { label: "Não identificado", Icon: CircleDashed, bg: "bg-gray-100", color: "text-gray-500" },
 };
 
 type Sentiment = "positivo" | "neutro" | "negativo";
-const SENT_LABELS: Record<Sentiment, { emoji: string; label: string }> = {
-  positivo: { emoji: "😊", label: "Positivo" },
-  neutro: { emoji: "😐", label: "Neutro" },
-  negativo: { emoji: "😤", label: "Negativo" },
+const SENT_LABELS: Record<Sentiment, { Icon: LucideIcon; label: string; bg: string; color: string }> = {
+  positivo: { Icon: SmilePlus, label: "Positivo", bg: "bg-green-50", color: "text-green-600" },
+  neutro: { Icon: Minus, label: "Neutro", bg: "bg-gray-100", color: "text-gray-500" },
+  negativo: { Icon: Frown, label: "Negativo", bg: "bg-red-50", color: "text-red-600" },
 };
 
 const PERSONAS: { value: string; label: string; firstMsg?: string }[] = [
