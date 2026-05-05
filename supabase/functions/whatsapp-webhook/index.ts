@@ -291,6 +291,23 @@ Deno.serve(async (req) => {
       console.error('Erro checando status humano:', e)
     }
 
+    // ===== Status operacional do agente IA (toggle Ativo/Inativo) =====
+    try {
+      const { data: agentStatus } = await supabase
+        .from('ai_agent_status')
+        .select('active')
+        .eq('agent_id', '1')
+        .maybeSingle()
+      if (agentStatus && agentStatus.active === false) {
+        console.log(`[whatsapp-webhook] Agente IA inativo — apenas registrando mensagem de ${phone}.`)
+        return new Response(JSON.stringify({ status: 'agent_inactive' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+    } catch (e) {
+      console.error('Erro checando status do agente:', e)
+    }
+
     // Check for #pago command
     const isPagoCommand = isTextMsg && messageText.trim().toLowerCase() === '#pago'
     const isCancelarCommand = isTextMsg && ['#cancelar', '#cancela', '#sair'].includes(messageText.trim().toLowerCase())

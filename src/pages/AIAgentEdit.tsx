@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Sparkles, Shield, Bot, ArrowLeft, FlaskConical, Trash2,
   Headset, MessageCircle, Brain, Globe, Plane, Compass, Heart, Star, ShieldCheck, User, Sparkle, Map, Briefcase, Camera, Coffee, Palmtree,
-  GitBranch, ClipboardList, Plug, BarChart3,
+  GitBranch, ClipboardList, Plug, BarChart3, Loader2, AlertTriangle, CheckCircle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -41,6 +41,7 @@ import { IntegracoesSection } from "@/components/ai-agents/IntegracoesSection";
 import { MetricasSection } from "@/components/ai-agents/MetricasSection";
 import { TestarAgenteSection } from "@/components/ai-agents/TestarAgenteSection";
 import { useWhatsAppProfile } from "@/hooks/useWhatsAppProfile";
+import { supabase } from "@/integrations/supabase/client";
 
 const STORAGE_KEY = "ai-agents-draft";
 const LIST_KEY = "ai-agents-list";
@@ -175,6 +176,47 @@ export default function AIAgentEdit() {
   const [nameError, setNameError] = useState<string | null>(null);
   const [modelError, setModelError] = useState<string | null>(null);
   const isDirty = serialize(form) !== savedSnapshot;
+
+  // Operational status toggle (saves immediately, independent of "Salvar")
+  const [statusSaving, setStatusSaving] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<boolean | null>(null);
+
+  // Load current operational status from DB on mount
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("ai_agent_status" as any)
+        .select("active")
+        .eq("agent_id", form.id)
+        .maybeSingle();
+      if (!cancelled && data && typeof (data as any).active === "boolean") {
+        setForm((f) => ({ ...f, active: (data as any).active }));
+        setSavedSnapshot((prev) => prev); // don't mark dirty
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const confirmStatusChange = async () => {
+    if (pendingStatus === null) return;
+    const next = pendingStatus;
+    setStatusSaving(true);
+    const { error } = await supabase
+      .from("ai_agent_status" as any)
+      .upsert({ agent_id: form.id, active: next, updated_at: new Date().toISOString() }, { onConflict: "agent_id" });
+    setStatusSaving(false);
+    if (error) {
+      toast.error("Erro ao alterar status. Tente novamente.");
+      setPendingStatus(null);
+      return;
+    }
+    setForm((f) => ({ ...f, active: next }));
+    if (next) toast.success("Agente ativado com sucesso");
+    else toast("Agente desativado");
+    setPendingStatus(null);
+  };
 
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(form));
@@ -468,13 +510,31 @@ export default function AIAgentEdit() {
               <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Status
               </Label>
-              <div className="h-10 flex items-center gap-3 px-3 rounded-md border border-input bg-background">
+              <div
+                className="h-10 flex items-center gap-3 px-3 rounded-md border border-input transition-colors"
+                style={{
+                  backgroundColor: form.active
+                    ? "rgba(34, 197, 94, 0.05)"
+                    : "rgba(239, 68, 68, 0.05)",
+                }}
+              >
                 <Switch
                   checked={form.active}
-                  onCheckedChange={(c) => setForm({ ...form, active: c })}
+                  disabled={statusSaving}
+                  onCheckedChange={(c) => setPendingStatus(c)}
                 />
+                {statusSaving ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                ) : form.active ? (
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+                  </span>
+                ) : (
+                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" />
+                )}
                 <span className="text-sm text-foreground">
-                  {form.active ? "Ativo — atendendo conversas" : "Inativo"}
+                  {form.active ? "Ativo — atendendo conversas" : "Inativo — IA desativada"}
                 </span>
               </div>
             </div>
@@ -535,6 +595,53 @@ export default function AIAgentEdit() {
         {activeSection === "metricas" && <MetricasSection />}
         </div>
       </div>
+
+      <AlertDialog
+        open={pendingStatus !== null}
+        onOpenChange={(open) => { if (!open) setPendingStatus(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              {pendingStatus ? (
+                <CheckCircle className="h-5 w-5 text-green-600" />
+              ) : (
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+              )}
+              {pendingStatus ? "Ativar Agente IA" : "Desativar Agente IA"}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  {pendingStatus
+                    ? "Ao ativar o agente, a IA começará a responder automaticamente todas as mensagens recebidas no WhatsApp usando as configurações salvas."
+                    : "Ao desativar o agente, a IA deixará de responder mensagens no WhatsApp. Apenas atendentes humanos poderão responder na Central de Atendimento."}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {pendingStatus
+                    ? "Certifique-se de que as configurações estão corretas antes de ativar."
+                    : "Mensagens recebidas continuarão sendo registradas."}
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={statusSaving}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmStatusChange(); }}
+              disabled={statusSaving}
+              className={
+                pendingStatus
+                  ? "bg-green-600 hover:bg-green-700 text-white"
+                  : "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+              }
+            >
+              {statusSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {pendingStatus ? "Ativar Agente" : "Desativar Agente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
