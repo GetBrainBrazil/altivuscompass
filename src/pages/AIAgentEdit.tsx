@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -221,6 +221,22 @@ export default function AIAgentEdit() {
   const [modelError, setModelError] = useState<string | null>(null);
   const isDirty = serialize(form) !== savedSnapshot;
 
+  // Sub-sections call onChange on mount with their default values, which would
+  // mark the form as dirty even when the user did nothing. Treat the first
+  // emission per config key as a baseline (update both form and savedSnapshot).
+  const seededConfigKeys = useRef<Set<string>>(new Set());
+  const updateConfig = (key: string, v: unknown) => {
+    setForm((f) => {
+      const nextForm = { ...f, config: { ...(f.config || {}), [key]: v } } as Agent;
+      if (!seededConfigKeys.current.has(key)) {
+        seededConfigKeys.current.add(key);
+        // Rebase saved snapshot so this initial emission isn't counted as a change
+        setSavedSnapshot(serialize(nextForm));
+      }
+      return nextForm;
+    });
+  };
+
   // Operational status toggle (saves immediately, independent of "Salvar")
   const [statusSaving, setStatusSaving] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<boolean | null>(null);
@@ -235,8 +251,11 @@ export default function AIAgentEdit() {
         .eq("agent_id", form.id)
         .maybeSingle();
       if (!cancelled && data && typeof (data as any).active === "boolean") {
-        setForm((f) => ({ ...f, active: (data as any).active }));
-        setSavedSnapshot((prev) => prev); // don't mark dirty
+        setForm((f) => {
+          const updated = { ...f, active: (data as any).active };
+          setSavedSnapshot(serialize(updated));
+          return updated;
+        });
       }
     })();
     return () => { cancelled = true; };
@@ -709,9 +728,7 @@ export default function AIAgentEdit() {
             initialPersonality={form.personality}
             initialTone={form.tone}
             value={form.config?.comunicacao}
-            onChange={(v) =>
-              setForm((f) => ({ ...f, config: { ...(f.config || {}), comunicacao: v } }))
-            }
+            onChange={(v) => updateConfig("comunicacao", v)}
           />
         )}
 
@@ -719,9 +736,7 @@ export default function AIAgentEdit() {
           <RegrasLimitesSection
             initialRules={form.rules}
             value={form.config?.regras}
-            onChange={(v) =>
-              setForm((f) => ({ ...f, config: { ...(f.config || {}), regras: v } }))
-            }
+            onChange={(v) => updateConfig("regras", v)}
           />
         )}
 
@@ -730,27 +745,21 @@ export default function AIAgentEdit() {
         {activeSection === "fluxos" && (
           <FluxosAtendimentoSection
             value={form.config?.fluxos}
-            onChange={(v) =>
-              setForm((f) => ({ ...f, config: { ...(f.config || {}), fluxos: v } }))
-            }
+            onChange={(v) => updateConfig("fluxos", v)}
           />
         )}
 
         {activeSection === "coleta" && (
           <ColetaDadosSection
             value={form.config?.coleta}
-            onChange={(v) =>
-              setForm((f) => ({ ...f, config: { ...(f.config || {}), coleta: v } }))
-            }
+            onChange={(v) => updateConfig("coleta", v)}
           />
         )}
 
         {activeSection === "integracoes" && (
           <IntegracoesSection
             value={form.config?.integracoes}
-            onChange={(v) =>
-              setForm((f) => ({ ...f, config: { ...(f.config || {}), integracoes: v } }))
-            }
+            onChange={(v) => updateConfig("integracoes", v)}
           />
         )}
 
