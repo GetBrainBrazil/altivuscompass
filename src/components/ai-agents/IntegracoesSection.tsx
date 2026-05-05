@@ -196,7 +196,7 @@ export function IntegracoesSection({ value, onChange }: Props = {}) {
         const existingIds = new Set(prev.map((m) => m.user_id));
         const additions = list
           .filter((u) => !existingIds.has(u.user_id))
-          .map((u) => ({ user_id: u.user_id, available: false, online: false }));
+          .map((u) => ({ user_id: u.user_id, available: false }));
         return additions.length ? [...prev, ...additions] : prev;
       });
     })();
