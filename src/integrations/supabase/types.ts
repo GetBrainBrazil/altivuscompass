@@ -2091,6 +2091,45 @@ export type Database = {
           },
         ]
       }
+      platform_changelog: {
+        Row: {
+          category: Database["public"]["Enums"]["changelog_category"]
+          created_at: string
+          created_by: string | null
+          date: string
+          description: string
+          id: string
+          module: string
+          title: string
+          updated_at: string
+          version: string | null
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["changelog_category"]
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          description: string
+          id?: string
+          module?: string
+          title: string
+          updated_at?: string
+          version?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["changelog_category"]
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          description?: string
+          id?: string
+          module?: string
+          title?: string
+          updated_at?: string
+          version?: string | null
+        }
+        Relationships: []
+      }
       product_categories: {
         Row: {
           created_at: string
@@ -3631,6 +3670,11 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "manager" | "sales_agent" | "operations"
+      changelog_category:
+        | "nova_funcionalidade"
+        | "melhoria"
+        | "correcao"
+        | "remocao"
       contact_level: "prospect" | "lead" | "cliente"
       contract_type:
         | "clt"
@@ -3785,6 +3829,12 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "manager", "sales_agent", "operations"],
+      changelog_category: [
+        "nova_funcionalidade",
+        "melhoria",
+        "correcao",
+        "remocao",
+      ],
       contact_level: ["prospect", "lead", "cliente"],
       contract_type: [
         "clt",
