@@ -2,24 +2,26 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   ArrowLeft,
   MessageCircle,
-  Smartphone,
-  Link2,
-  ScanLine,
   RefreshCw,
-  ShieldCheck,
-  Wifi,
-  Phone,
-  PowerOff,
   Loader2,
-  BatteryMedium,
+  Copy,
+  Check,
+  Unplug,
+  MessageSquare,
+  Clock,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type StatusResponse = {
   connected: boolean;
@@ -52,7 +54,6 @@ async function fetchQrCode(): Promise<string | null> {
     body: { action: "qr-code" },
   });
   if (error) throw error;
-  // Z-API returns { value: "data:image/png;base64,..." } or { value: "<base64>" }
   if (!data?.value) return null;
   const v: string = data.value;
   return v.startsWith("data:") ? v : `data:image/png;base64,${v}`;
@@ -73,7 +74,6 @@ export default function WhatsAppConnection() {
 
   const isConnected = status?.connected === true;
 
-  // Load QR when disconnected
   useEffect(() => {
     if (!status) return;
     if (isConnected) {
@@ -132,65 +132,32 @@ export default function WhatsAppConnection() {
     }
   };
 
-  const statusConfig = isLoading
-    ? {
-        label: "Verificando...",
-        className: "bg-muted text-muted-foreground border-border",
-        dot: "bg-muted-foreground",
-      }
-    : isConnected
-    ? {
-        label: "Conectado",
-        className: "bg-emerald-100 text-emerald-700 border-emerald-200",
-        dot: "bg-emerald-500",
-      }
-    : {
-        label: "Desconectado",
-        className: "bg-destructive/10 text-destructive border-destructive/20",
-        dot: "bg-destructive",
-      };
-
   return (
     <div className="min-h-screen bg-[hsl(220_15%_97%)]">
       <div className="max-w-[1200px] mx-auto px-8 py-10">
         {/* Header */}
-        <header className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9"
-              onClick={() => navigate("/ai-agents")}
-              aria-label="Voltar"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div className="flex items-center gap-3">
-              <div className="h-11 w-11 rounded-xl bg-[hsl(142_70%_95%)] flex items-center justify-center">
-                <MessageCircle className="h-5 w-5 text-[hsl(142_70%_40%)]" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-                  Conexão WhatsApp
-                </h1>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  Conecte seu número para começar a atender pelos agentes IA
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <Badge
-            variant="outline"
-            className={`${statusConfig.className} font-medium px-3 py-1.5 gap-1.5`}
+        <header className="flex items-center gap-4 mb-10">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => navigate("/ai-agents")}
+            aria-label="Voltar"
           >
-            <span className={`h-1.5 w-1.5 rounded-full ${statusConfig.dot}`} />
-            {statusConfig.label}
-          </Badge>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              Conexão WhatsApp
+            </h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Conecte seu número para começar a atender pelos agentes IA
+            </p>
+          </div>
         </header>
 
         {/* Main card */}
-        <div className="bg-white rounded-2xl border border-border/60 shadow-sm overflow-hidden">
+        <div className="max-w-[600px] mx-auto bg-white rounded-xl border border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-8">
           {isLoading || !status ? (
             <LoadingView />
           ) : isConnected ? (
@@ -215,38 +182,20 @@ export default function WhatsAppConnection() {
 
 function LoadingView() {
   return (
-    <div
-      className="p-10 flex flex-col items-center text-center animate-in fade-in duration-500"
-      role="status"
-      aria-live="polite"
-      aria-busy="true"
-    >
-      <div className="relative h-16 w-16 mb-5">
-        <div className="absolute inset-0 rounded-full bg-[hsl(142_70%_95%)]" />
-        <div className="absolute inset-0 rounded-full border-2 border-[hsl(142_70%_40%)]/30 border-t-[hsl(142_70%_40%)] animate-spin" />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Wifi className="h-7 w-7 text-[hsl(142_70%_40%)]" />
+    <div className="space-y-5" role="status" aria-busy="true">
+      <div className="flex items-center gap-4">
+        <Skeleton className="h-[72px] w-[72px] rounded-full" />
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-5 w-24 rounded-full" />
         </div>
       </div>
-
-      <h2 className="text-xl font-semibold text-foreground">
-        Verificando conexão
-      </h2>
-      <p className="text-sm text-muted-foreground mt-1.5 max-w-sm">
-        Aguarde um instante enquanto consultamos o status do seu WhatsApp.
-      </p>
-
-      <div className="mt-8 w-full max-w-md space-y-3">
-        <Skeleton className="h-10 w-2/3 mx-auto rounded-full" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4">
-          <Skeleton className="h-16 rounded-lg" />
-          <Skeleton className="h-16 rounded-lg" />
-          <Skeleton className="h-16 rounded-lg" />
-          <Skeleton className="h-16 rounded-lg" />
-        </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Skeleton className="h-12 rounded-md" />
+        <Skeleton className="h-12 rounded-md" />
       </div>
-
-      <span className="sr-only">Carregando status da conexão WhatsApp</span>
+      <Skeleton className="h-8 w-full" />
     </div>
   );
 }
@@ -263,94 +212,150 @@ function ConnectedView({
   loading: boolean;
 }) {
   const { device, instanceId } = status;
+  const [copied, setCopied] = useState(false);
+
+  const copyInstanceId = async () => {
+    try {
+      await navigator.clipboard.writeText(instanceId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Não foi possível copiar");
+    }
+  };
+
+  const truncatedId =
+    instanceId.length > 14
+      ? `${instanceId.slice(0, 8)}…${instanceId.slice(-4)}`
+      : instanceId;
+
   return (
-    <div className="p-10 flex flex-col items-center text-center">
-      <div className="h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center mb-5">
-        <Wifi className="h-8 w-8 text-emerald-600" />
-      </div>
-      <h2 className="text-xl font-semibold text-foreground">
-        Instância Conectada e Ativa
-      </h2>
-      <p className="text-sm text-muted-foreground mt-1.5">
-        O WhatsApp está conectado e pronto para receber mensagens.
-      </p>
-
-      {device.formattedPhone && (
-        <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-muted px-4 py-2 text-sm font-medium text-foreground">
-          <Phone className="h-4 w-4 text-muted-foreground" />
-          {device.formattedPhone}
-        </div>
-      )}
-
-      <div className="mt-3 inline-flex items-center gap-2 text-xs text-emerald-600">
-        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-        Online
-      </div>
-
-      {/* Device details */}
-      <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-2xl">
-        <DetailCard label="ID da Instância" value={instanceId.slice(0, 12) + "..."} />
-        {device.name && <DetailCard label="Nome" value={device.name} />}
-        {device.platform && <DetailCard label="Plataforma" value={device.platform} />}
-        {device.battery !== null && (
-          <DetailCard
-            label="Bateria"
-            value={`${device.battery}%`}
-            icon={<BatteryMedium className="h-3.5 w-3.5" />}
+    <div className="space-y-5">
+      {/* Top: avatar + identity */}
+      <div className="flex items-center gap-4">
+        {device.imgUrl ? (
+          <img
+            src={device.imgUrl}
+            alt={device.name ?? "Perfil WhatsApp"}
+            className="h-[72px] w-[72px] rounded-full object-cover ring-[3px] ring-emerald-500"
           />
+        ) : (
+          <div className="h-[72px] w-[72px] rounded-full bg-emerald-50 ring-[3px] ring-emerald-500 flex items-center justify-center">
+            <MessageCircle className="h-8 w-8 text-emerald-600" />
+          </div>
         )}
+        <div className="flex-1 min-w-0">
+          <div className="text-[18px] font-semibold text-foreground truncate">
+            {device.name ?? "WhatsApp Conectado"}
+          </div>
+          {device.formattedPhone && (
+            <div className="text-sm text-gray-500 mt-0.5">
+              {device.formattedPhone}
+            </div>
+          )}
+          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            </span>
+            Conectado
+          </div>
+        </div>
       </div>
 
-      <div className="mt-8 flex items-center gap-3">
-        <Button
-          variant="outline"
-          size="sm"
+      {/* Info pills */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <InfoPill label="ID da Instância">
+          <span className="font-mono text-[13px] text-gray-700 truncate">
+            {truncatedId}
+          </span>
+          <TooltipProvider>
+            <Tooltip open={copied ? true : undefined}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={copyInstanceId}
+                  className="ml-1 p-1 rounded hover:bg-gray-200 text-gray-500"
+                  aria-label="Copiar ID"
+                >
+                  {copied ? (
+                    <Check className="h-3.5 w-3.5 text-emerald-600" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{copied ? "Copiado!" : "Copiar"}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </InfoPill>
+        <InfoPill label="Nome da Instância">
+          <span className="text-[13px] text-gray-700 truncate">
+            {device.name ?? "—"}
+          </span>
+        </InfoPill>
+      </div>
+
+      {/* Stats row */}
+      <div className="flex items-center gap-3 text-[12px] text-gray-500 pt-1">
+        <div className="flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          <span>Online</span>
+        </div>
+        <span className="h-3 w-px bg-gray-200" />
+        <div className="flex items-center gap-1.5">
+          <MessageSquare className="h-3.5 w-3.5" />
+          <span>Mensagens hoje: —</span>
+        </div>
+        <span className="h-3 w-px bg-gray-200" />
+        <div className="flex items-center gap-1.5">
+          <Clock className="h-3.5 w-3.5" />
+          <span>Última: —</span>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+        <button
+          type="button"
           onClick={onRestart}
           disabled={loading}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2 text-[13px] font-medium text-gray-600 hover:border-gray-400 hover:bg-gray-50 disabled:opacity-50 transition-colors"
         >
           {loading ? (
-            <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
-            <RefreshCw className="h-3.5 w-3.5 mr-2" />
+            <RefreshCw className="h-3.5 w-3.5" />
           )}
-          Reiniciar
-        </Button>
-        <Button
-          variant="destructive"
-          size="sm"
+          Reiniciar Conexão
+        </button>
+        <button
+          type="button"
           onClick={onDisconnect}
           disabled={loading}
+          className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[13px] font-medium text-red-500 hover:bg-red-50 disabled:opacity-50 transition-colors"
         >
-          {loading ? (
-            <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
-          ) : (
-            <PowerOff className="h-3.5 w-3.5 mr-2" />
-          )}
+          <Unplug className="h-3.5 w-3.5" />
           Desconectar
-        </Button>
+        </button>
       </div>
     </div>
   );
 }
 
-function DetailCard({
+function InfoPill({
   label,
-  value,
-  icon,
+  children,
 }: {
   label: string;
-  value: string;
-  icon?: React.ReactNode;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-border/60 bg-[hsl(220_15%_98.5%)] p-3 text-left">
-      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+    <div className="rounded-md bg-gray-50 px-3 py-2">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
         {label}
-      </p>
-      <p className="text-sm font-medium text-foreground mt-1 flex items-center gap-1.5 truncate">
-        {icon}
-        {value}
-      </p>
+      </div>
+      <div className="mt-1 flex items-center gap-1">{children}</div>
     </div>
   );
 }
@@ -365,98 +370,49 @@ function DisconnectedView({
   onRefreshQr: () => void;
 }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
-      <div className="p-10 border-b md:border-b-0 md:border-r border-border/60">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-6">
-          Como conectar
-        </h3>
-        <ol className="space-y-6">
-          <li className="flex gap-4">
-            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-muted flex items-center justify-center font-semibold text-foreground">
-              1
-            </div>
-            <div className="pt-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <Smartphone className="h-4 w-4 text-muted-foreground" />
-                Abra o WhatsApp no celular
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Use o aparelho onde sua conta está ativa
-              </p>
-            </div>
-          </li>
-          <li className="flex gap-4">
-            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-muted flex items-center justify-center font-semibold text-foreground">
-              2
-            </div>
-            <div className="pt-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <Link2 className="h-4 w-4 text-muted-foreground" />
-                Toque em Aparelhos Conectados
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Acesse pelo menu de configurações
-              </p>
-            </div>
-          </li>
-          <li className="flex gap-4">
-            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-muted flex items-center justify-center font-semibold text-foreground">
-              3
-            </div>
-            <div className="pt-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <ScanLine className="h-4 w-4 text-muted-foreground" />
-                Aponte a câmera para o QR Code
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                A conexão será estabelecida automaticamente
-              </p>
-            </div>
-          </li>
-        </ol>
-
-        <div className="mt-8 flex items-start gap-3 rounded-lg bg-[hsl(220_15%_97%)] border border-border/60 p-4">
-          <ShieldCheck className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Suas mensagens são criptografadas de ponta a ponta. A Altivus não
-            armazena suas conversas pessoais.
-          </p>
-        </div>
+    <div className="flex flex-col items-center text-center space-y-5">
+      <div className="h-20 w-20 rounded-full bg-gray-100 flex items-center justify-center">
+        <MessageCircle className="h-9 w-9 text-gray-400" />
+      </div>
+      <div>
+        <h2 className="text-base font-semibold text-gray-600">
+          Nenhum WhatsApp conectado
+        </h2>
+        <p className="text-sm text-gray-400 mt-1">
+          Escaneie o QR Code para conectar seu número
+        </p>
       </div>
 
-      <div className="p-10 flex flex-col items-center justify-center bg-[hsl(220_15%_98.5%)]">
-        <div className="relative aspect-square w-full max-w-[320px] rounded-2xl border border-border/60 bg-white p-5 shadow-sm flex items-center justify-center">
-          {qrLoading && !qrCode ? (
-            <Loader2 className="h-10 w-10 text-muted-foreground animate-spin" />
-          ) : qrCode ? (
-            <img src={qrCode} alt="QR Code Z-API" className="h-full w-full" />
-          ) : (
-            <div className="text-center text-sm text-muted-foreground px-6">
-              Não foi possível carregar o QR Code. Tente atualizar.
-            </div>
-          )}
-        </div>
-
-        <div className="mt-5 text-center">
-          <p className="text-xs text-muted-foreground">
-            O QR Code é renovado automaticamente a cada 20s
-          </p>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mt-2 text-foreground hover:bg-muted"
-            onClick={onRefreshQr}
-            disabled={qrLoading}
-          >
-            {qrLoading ? (
-              <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
-            ) : (
-              <RefreshCw className="h-3.5 w-3.5 mr-2" />
-            )}
-            Atualizar QR Code
-          </Button>
-        </div>
+      <div className="h-[200px] w-[200px] rounded-lg border border-gray-200 bg-white p-3 shadow-sm flex items-center justify-center">
+        {qrLoading && !qrCode ? (
+          <Loader2 className="h-8 w-8 text-gray-400 animate-spin" />
+        ) : qrCode ? (
+          <img src={qrCode} alt="QR Code WhatsApp" className="h-full w-full" />
+        ) : (
+          <span className="text-xs text-gray-400 px-4">
+            QR Code indisponível
+          </span>
+        )}
       </div>
+
+      <div className="flex items-center gap-2 text-xs text-gray-500">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        Aguardando conexão...
+      </div>
+
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onRefreshQr}
+        disabled={qrLoading}
+      >
+        {qrLoading ? (
+          <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+        ) : (
+          <RefreshCw className="h-3.5 w-3.5 mr-2" />
+        )}
+        Gerar novo QR Code
+      </Button>
     </div>
   );
 }
