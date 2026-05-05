@@ -42,7 +42,7 @@ import LeadConvert from "./pages/LeadConvert";
 import OpsNew from "./pages/OpsNew";
 
 import AIAgentEdit from "./pages/AIAgentEdit";
-import WhatsAppConnection from "./pages/WhatsAppConnection";
+
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -103,7 +103,7 @@ const App = () => (
             <Route path="/ai-agents" element={<ProtectedRoute><AppLayout><AIAgentEdit /></AppLayout></ProtectedRoute>} />
             <Route path="/ai-agents/new" element={<Navigate to="/ai-agents" replace />} />
             <Route path="/ai-agents/:id" element={<Navigate to="/ai-agents" replace />} />
-            <Route path="/whatsapp-connection" element={<ProtectedRoute><AppLayout><WhatsAppConnection /></AppLayout></ProtectedRoute>} />
+            <Route path="/whatsapp-connection" element={<Navigate to="/ai-agents?section=whatsapp" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

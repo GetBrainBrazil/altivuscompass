@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Sparkles, Shield, Bot, ArrowLeft, FlaskConical, Trash2,
   Headset, MessageCircle, Brain, Globe, Plane, Compass, Heart, Star, ShieldCheck, User, Sparkle, Map, Briefcase, Camera, Coffee, Palmtree,
-  GitBranch, ClipboardList, Plug, BarChart3, Loader2, AlertTriangle, CheckCircle, Power,
+  GitBranch, ClipboardList, Plug, BarChart3, Loader2, AlertTriangle, CheckCircle, Power, Smartphone,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -43,6 +43,7 @@ import { TestarAgenteSection } from "@/components/ai-agents/TestarAgenteSection"
 import { useWhatsAppProfile } from "@/hooks/useWhatsAppProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { SectionSkeleton } from "@/components/ai-agents/AIAgentSkeletons";
+import WhatsAppConnectionPanel from "@/components/ai-agents/WhatsAppConnectionPanel";
 
 const STORAGE_KEY = "ai-agents-draft";
 const LIST_KEY = "ai-agents-list";
@@ -72,7 +73,8 @@ type SectionKey =
   | "regras"
   | "integracoes"
   | "metricas"
-  | "testar";
+  | "testar"
+  | "whatsapp";
 
 const SECTIONS: { key: SectionKey; icon: LucideIcon; label: string }[] = [
   { key: "identidade", icon: Bot, label: "Identidade" },
@@ -148,7 +150,10 @@ export default function AIAgentEdit() {
     return DEFAULT_AGENT;
   });
 
-  const [activeSection, setActiveSection] = useState<SectionKey>("identidade");
+  const [searchParams] = useSearchParams();
+  const initialSection: SectionKey =
+    searchParams.get("section") === "whatsapp" ? "whatsapp" : "identidade";
+  const [activeSection, setActiveSection] = useState<SectionKey>(initialSection);
   const [revealedSections, setRevealedSections] = useState<Set<SectionKey>>(() => new Set());
   const wa = useWhatsAppProfile();
 
@@ -357,14 +362,6 @@ export default function AIAgentEdit() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <Button
-              variant="outline"
-              className="h-9 border-border/70 text-foreground hover:bg-muted"
-              onClick={() => navigate("/whatsapp-connection")}
-            >
-              <MessageCircle className="h-4 w-4 sm:mr-2 text-[hsl(142_70%_40%)]" />
-              <span className="hidden sm:inline">Conexão WhatsApp</span>
-            </Button>
             {!isNew && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -462,6 +459,39 @@ export default function AIAgentEdit() {
                 </button>
               );
             })}
+
+            {/* Divider separating configuration from infrastructure */}
+            <div className="hidden md:block h-px bg-gray-200 my-1" />
+
+            {(() => {
+              const isActive = activeSection === "whatsapp";
+              return (
+                <button
+                  type="button"
+                  onClick={() => setActiveSection("whatsapp")}
+                  className={
+                    "flex items-center gap-[10px] px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors text-left shrink-0 " +
+                    (isActive
+                      ? "bg-[hsl(220_45%_15%)] text-white"
+                      : "text-gray-500 hover:bg-gray-100 bg-transparent")
+                  }
+                >
+                  <Smartphone size={18} strokeWidth={2} className="shrink-0" />
+                  <span className="font-medium flex-1">Conexão WhatsApp</span>
+                  <span
+                    className={
+                      "ml-1 inline-block h-1.5 w-1.5 rounded-full shrink-0 " +
+                      (wa.loading
+                        ? "bg-gray-300"
+                        : wa.connected
+                        ? "bg-emerald-500"
+                        : "bg-red-500")
+                    }
+                    aria-label={wa.connected ? "WhatsApp conectado" : "WhatsApp desconectado"}
+                  />
+                </button>
+              );
+            })()}
           </nav>
         </aside>
 
@@ -650,6 +680,8 @@ export default function AIAgentEdit() {
         )}
 
         {activeSection === "metricas" && <MetricasSection />}
+
+        {activeSection === "whatsapp" && <WhatsAppConnectionPanel />}
         </div>
         )}
         </div>

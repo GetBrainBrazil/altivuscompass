@@ -6,7 +6,8 @@ type SectionKey =
   | "regras"
   | "integracoes"
   | "metricas"
-  | "testar";
+  | "testar"
+  | "whatsapp";
 
 const Bar = ({ className = "", style }: { className?: string; style?: React.CSSProperties }) => (
   <div className={`skeleton-shimmer ${className}`} style={style} />
