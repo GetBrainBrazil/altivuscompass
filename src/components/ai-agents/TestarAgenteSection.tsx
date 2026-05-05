@@ -121,7 +121,7 @@ function buildSystemPrompt(agent: Agent, clientContextBlock?: string): string {
   const prospectQuestions = enabledList(flowProspect.questions);
 
   return `Você é ${presentationName}, atendente virtual da Altivus Turismo.
-
+${clientContextBlock ? `\n${clientContextBlock}\n` : ""}
 ## TOM DE VOZ
 ${toneDesc}${customTone}
 ${agent.personality ? `\nPersonalidade: ${agent.personality}` : ""}
