@@ -712,9 +712,7 @@ export default function AIAgentEdit() {
             initialPersonality={form.personality}
             initialTone={form.tone}
             value={form.config?.comunicacao}
-            onChange={(v) =>
-              setForm((f) => ({ ...f, config: { ...(f.config || {}), comunicacao: v } }))
-            }
+            onChange={(v) => updateConfig("comunicacao", v)}
           />
         )}
 
@@ -722,9 +720,7 @@ export default function AIAgentEdit() {
           <RegrasLimitesSection
             initialRules={form.rules}
             value={form.config?.regras}
-            onChange={(v) =>
-              setForm((f) => ({ ...f, config: { ...(f.config || {}), regras: v } }))
-            }
+            onChange={(v) => updateConfig("regras", v)}
           />
         )}
 
@@ -733,27 +729,21 @@ export default function AIAgentEdit() {
         {activeSection === "fluxos" && (
           <FluxosAtendimentoSection
             value={form.config?.fluxos}
-            onChange={(v) =>
-              setForm((f) => ({ ...f, config: { ...(f.config || {}), fluxos: v } }))
-            }
+            onChange={(v) => updateConfig("fluxos", v)}
           />
         )}
 
         {activeSection === "coleta" && (
           <ColetaDadosSection
             value={form.config?.coleta}
-            onChange={(v) =>
-              setForm((f) => ({ ...f, config: { ...(f.config || {}), coleta: v } }))
-            }
+            onChange={(v) => updateConfig("coleta", v)}
           />
         )}
 
         {activeSection === "integracoes" && (
           <IntegracoesSection
             value={form.config?.integracoes}
-            onChange={(v) =>
-              setForm((f) => ({ ...f, config: { ...(f.config || {}), integracoes: v } }))
-            }
+            onChange={(v) => updateConfig("integracoes", v)}
           />
         )}
 
