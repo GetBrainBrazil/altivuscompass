@@ -60,25 +60,62 @@
   }
 
   .dark {
-    --background: 220 55% 8%;
-    --foreground: 220 15% 90%;
-    --card: 220 50% 12%;
-    --card-foreground: 220 15% 90%;
-    --popover: 220 50% 12%;
-    --popover-foreground: 220 15% 90%;
-    --primary: 38 60% 55%;
-    --primary-foreground: 220 55% 12%;
-    --secondary: 220 45% 18%;
-    --secondary-foreground: 220 15% 90%;
-    --muted: 220 40% 16%;
-    --muted-foreground: 220 10% 55%;
-    --accent: 38 60% 55%;
-    --accent-foreground: 220 55% 12%;
-    --destructive: 0 65% 55%;
+    --background: 230 16% 8%;
+    --foreground: 220 13% 91%;
+    --card: 228 22% 14%;
+    --card-foreground: 220 13% 91%;
+    --popover: 228 22% 14%;
+    --popover-foreground: 220 13% 91%;
+    --primary: 220 45% 30%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 230 21% 16%;
+    --secondary-foreground: 220 13% 91%;
+    --muted: 228 18% 13%;
+    --muted-foreground: 220 9% 65%;
+    --accent: 38 90% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 75% 65%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 35% 20%;
-    --input: 220 35% 20%;
-    --ring: 38 60% 55%;
+    --border: 228 16% 20%;
+    --input: 228 16% 20%;
+    --ring: 217 91% 60%;
+
+    --sidebar-background: 225 27% 7%;
+    --sidebar-foreground: 220 15% 80%;
+    --sidebar-primary: 38 90% 60%;
+    --sidebar-primary-foreground: 225 27% 7%;
+    --sidebar-accent: 228 22% 16%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 228 16% 18%;
+    --sidebar-ring: 38 90% 60%;
+
+    --navy: 220 45% 30%;
+    --navy-light: 220 40% 40%;
+    --cream: 220 13% 91%;
+    --success: 142 70% 55%;
+    --warning: 38 90% 60%;
+  }
+
+  html.dark,
+  .dark body {
+    color-scheme: dark;
+  }
+
+  .dark body,
+  .dark [class*="bg-card"],
+  .dark [class*="bg-background"],
+  .dark [class*="bg-muted"],
+  .dark [class*="bg-popover"],
+  .dark [class*="bg-secondary"],
+  .dark header,
+  .dark aside,
+  .dark button,
+  .dark input,
+  .dark textarea,
+  .dark select,
+  .dark [role="dialog"],
+  .dark [role="menu"] {
+    transition: background-color 300ms ease, color 300ms ease, border-color 300ms ease;
   }
 }
 
