@@ -43,6 +43,7 @@ import { TestarAgenteSection } from "@/components/ai-agents/TestarAgenteSection"
 import { useWhatsAppProfile } from "@/hooks/useWhatsAppProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { SectionSkeleton } from "@/components/ai-agents/AIAgentSkeletons";
+import WhatsAppConnectionPanel from "@/components/ai-agents/WhatsAppConnectionPanel";
 
 const STORAGE_KEY = "ai-agents-draft";
 const LIST_KEY = "ai-agents-list";
