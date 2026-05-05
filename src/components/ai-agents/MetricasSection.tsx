@@ -40,9 +40,11 @@ interface Metrics {
     id: string;
     date: string;
     contact: string;
+    phone: string;
     flow: Flow;
     status: ConvStatus;
     durationMin: number;
+    messageCount: number;
   }>;
 }
 
