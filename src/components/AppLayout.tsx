@@ -12,9 +12,11 @@ import { ROLE_LABELS } from "@/lib/permissions";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Moon, Sun } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NotificationBell } from "@/components/NotificationBell";
+import { useTheme } from "@/contexts/ThemeContext";
+import { Tooltip, TooltipContent, TooltipProvider as TT, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -153,6 +155,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             )}
 
             <div className="ml-auto flex items-center gap-2 sm:gap-3">
+              <ThemeToggle />
               <NotificationBell />
               <button className="p-2 rounded-lg hover:bg-muted transition-colors">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
@@ -380,5 +383,33 @@ export function AppLayout({ children }: AppLayoutProps) {
         </Dialog>
       )}
     </SidebarProvider>
+  );
+}
+
+function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark";
+  return (
+    <TT delayDuration={300}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={isDark ? "Modo claro" : "Modo escuro"}
+            className={`h-9 w-9 rounded-lg flex items-center justify-center transition-colors duration-300 ${
+              isDark ? "hover:bg-gray-800" : "hover:bg-gray-100"
+            }`}
+          >
+            {isDark ? (
+              <Sun size={18} className="text-amber-400" />
+            ) : (
+              <Moon size={18} className="text-gray-500" />
+            )}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>{isDark ? "Modo claro" : "Modo escuro"}</TooltipContent>
+      </Tooltip>
+    </TT>
   );
 }
