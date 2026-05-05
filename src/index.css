@@ -528,3 +528,12 @@
   background-color: hsl(var(--card)) !important;
 }
 
+/* Refined dark inputs / selects / textareas — slightly lighter than card so values pop */
+.dark :where(input, textarea, select, [role="combobox"], button[role="combobox"]):not(.public-quote *):not([data-state="checked"]):not([role="switch"]) {
+  background-color: #1E2130;
+  border-color: #2A2D3A;
+}
+.dark :where(input, textarea):not(.public-quote *)::placeholder {
+  color: hsl(220 9% 50%);
+}
+
