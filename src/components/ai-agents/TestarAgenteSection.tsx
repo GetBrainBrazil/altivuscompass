@@ -416,7 +416,7 @@ export function TestarAgenteSection({ agent }: Props) {
                 <div className="text-sm font-semibold truncate">{agent.config?.comunicacao?.presentation_name || agent.name || "Agente IA"}</div>
                 <div className="text-[11px] flex items-center gap-1.5 opacity-90">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  Online
+                  <span className="dark:text-green-400">Online</span>
                 </div>
               </div>
               <button
