@@ -442,19 +442,19 @@ export default function AIAgentEdit() {
   };
 
   return (
-    <div className="min-h-screen bg-[hsl(220_15%_97%)]">
+    <div className="min-h-screen bg-[hsl(220_15%_97%)] dark:bg-[#0F1117]">
       {/* Sticky header */}
-      <div className="sticky top-14 z-40 bg-white border-b border-border/60 shadow-sm">
+      <div className="sticky top-14 z-40 bg-white dark:bg-[#161923] border-b border-border/60 dark:border-[#2A2D3A] shadow-sm">
         <div className="max-w-[1100px] mx-auto px-8 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
-            <div className="h-10 w-10 rounded-lg bg-[hsl(220_45%_15%)] flex items-center justify-center shrink-0">
-              <Bot className="h-5 w-5 text-white" />
+            <div className="h-10 w-10 rounded-lg bg-[hsl(220_45%_15%)] dark:bg-[#2A3F6B] flex items-center justify-center shrink-0">
+              <Bot className="h-5 w-5 text-white dark:text-gray-100" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-lg font-semibold tracking-tight truncate">
+              <h1 className="text-lg font-semibold tracking-tight truncate dark:text-gray-100">
                 {form.name || "Agente sem nome"}
               </h1>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground dark:text-gray-500">
                 Gerencie seu agente de inteligência artificial
               </p>
             </div>
@@ -465,7 +465,7 @@ export default function AIAgentEdit() {
                 <AlertDialogTrigger asChild>
                   <Button
                     variant="outline"
-                    className="h-9 text-destructive hover:text-destructive hover:bg-destructive/5 border-destructive/30"
+                    className="h-9 text-destructive dark:text-red-400 hover:text-destructive hover:bg-destructive/5 border-destructive/30 dark:border-[#3A3D4A]"
                   >
                     <Trash2 className="h-4 w-4 sm:mr-2" />
                     <span className="hidden sm:inline">Excluir</span>
@@ -492,7 +492,7 @@ export default function AIAgentEdit() {
                 </AlertDialogContent>
               </AlertDialog>
             )}
-            <Button variant="outline" onClick={handleCancel} className="h-9">
+            <Button variant="outline" onClick={handleCancel} className="h-9 dark:text-gray-400 dark:border-[#3A3D4A] dark:hover:bg-white/5">
               Cancelar
             </Button>
             <TooltipProvider delayDuration={200}>
@@ -501,7 +501,7 @@ export default function AIAgentEdit() {
                   <Button
                     onClick={handleSave}
                     disabled={saving}
-                    className="relative h-9 bg-[hsl(220_45%_15%)] hover:bg-[hsl(220_45%_22%)] text-white"
+                    className="relative h-9 bg-[hsl(220_45%_15%)] hover:bg-[hsl(220_45%_22%)] text-white dark:bg-[#2A3F6B] dark:hover:bg-[#34497A] dark:text-gray-100"
                   >
                     {saving ? (
                       <>
@@ -533,7 +533,7 @@ export default function AIAgentEdit() {
       <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-6">
         {/* Top horizontal nav */}
         <nav
-          className="sticky top-[140px] z-20 bg-muted dark:bg-card border border-border/60 rounded-lg p-1 flex items-stretch gap-0.5 w-full shadow-sm"
+          className="sticky top-[140px] z-20 bg-muted dark:bg-[#161923] border border-border/60 dark:border-[#2A2D3A] rounded-lg p-1 flex items-stretch gap-0.5 w-full shadow-sm"
           aria-label="Seções do agente"
         >
           {SECTIONS.map((s) => {
@@ -548,8 +548,8 @@ export default function AIAgentEdit() {
                 className={
                   "flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md text-[12px] leading-tight whitespace-nowrap transition-colors " +
                   (isActive
-                    ? "bg-white dark:bg-[hsl(217_91%_60%)] text-[hsl(220_45%_15%)] dark:text-white shadow-sm font-medium"
-                    : "text-muted-foreground dark:text-gray-300 hover:bg-white/60 dark:hover:bg-white/5 dark:hover:text-white")
+                    ? "bg-white dark:bg-transparent dark:border-b-2 dark:border-gray-100 dark:rounded-none text-[hsl(220_45%_15%)] dark:text-gray-100 shadow-sm dark:shadow-none font-medium"
+                    : "text-muted-foreground dark:text-gray-500 hover:bg-white/60 dark:hover:bg-white/5 dark:hover:text-gray-300")
                 }
               >
                 <Icon size={13} strokeWidth={2} className="shrink-0" />
@@ -570,8 +570,8 @@ export default function AIAgentEdit() {
                 className={
                   "flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md text-[12px] leading-tight whitespace-nowrap transition-colors " +
                   (isActive
-                    ? "bg-white dark:bg-[hsl(217_91%_60%)] text-[hsl(220_45%_15%)] dark:text-white shadow-sm font-medium"
-                    : "text-muted-foreground dark:text-gray-300 hover:bg-white/60 dark:hover:bg-white/5 dark:hover:text-white")
+                    ? "bg-white dark:bg-transparent dark:border-b-2 dark:border-gray-100 dark:rounded-none text-[hsl(220_45%_15%)] dark:text-gray-100 shadow-sm dark:shadow-none font-medium"
+                    : "text-muted-foreground dark:text-gray-500 hover:bg-white/60 dark:hover:bg-white/5 dark:hover:text-gray-300")
                 }
               >
                 <Smartphone size={13} strokeWidth={2} className="shrink-0" />
@@ -598,12 +598,12 @@ export default function AIAgentEdit() {
         {isSectionReady && (
         <div className="animate-fade-in">
         {activeSection === "identidade" && (
-        <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
-          <div className="px-8 py-5 border-b border-border/60">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+        <section className="bg-white dark:bg-[#161923] rounded-xl border border-border/60 dark:border-[#2A2D3A] shadow-sm overflow-hidden">
+          <div className="px-8 py-5 border-b border-border/60 dark:border-[#2A2D3A]">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground dark:text-gray-400">
               Identidade
             </h2>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground dark:text-gray-500 mt-1">
               Como este agente é identificado e qual modelo de IA o alimenta.
             </p>
           </div>
