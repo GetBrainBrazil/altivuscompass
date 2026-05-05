@@ -802,33 +802,57 @@ export default function ServiceCenter() {
   const [sidePanelTab, setSidePanelTab] = useState<"summary" | "crm">("summary");
   const [newMsgOpen, setNewMsgOpen] = useState(false);
 
-  // ===== Pausa global da IA (modo dev) =====
-  const { data: agencySettings } = useQuery({
-    queryKey: ["agency-settings-ai-pause"],
+  // ===== Status do Agente IA (fonte da verdade: ai_agent_status.active) =====
+  const AGENT_ID = "1";
+  const { data: agentStatus } = useQuery({
+    queryKey: ["ai-agent-status", AGENT_ID],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("agency_settings")
-        .select("id, ai_globally_paused")
-        .limit(1)
+      const { data } = await (supabase as any)
+        .from("ai_agent_status")
+        .select("active")
+        .eq("agent_id", AGENT_ID)
         .maybeSingle();
-      return data;
+      return data as { active: boolean } | null;
     },
+    refetchInterval: 30000,
   });
-  const aiGloballyPaused = agencySettings?.ai_globally_paused === true;
+  const agentActive = agentStatus?.active !== false; // default true
+  const aiGloballyPaused = !agentActive;
 
-  const toggleGlobalAi = async () => {
-    if (!agencySettings?.id) return;
-    const next = !aiGloballyPaused;
-    const { error } = await supabase
-      .from("agency_settings")
-      .update({ ai_globally_paused: next })
-      .eq("id", agencySettings.id);
+  // Realtime: escuta mudanças de ai_agent_status feitas em outras telas
+  useEffect(() => {
+    const channel = supabase
+      .channel("ai_agent_status_sc")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "ai_agent_status", filter: `agent_id=eq.${AGENT_ID}` },
+        () => qc.invalidateQueries({ queryKey: ["ai-agent-status", AGENT_ID] }),
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [qc]);
+
+  const [pendingAgentToggle, setPendingAgentToggle] = useState<boolean | null>(null);
+  const [agentToggleSaving, setAgentToggleSaving] = useState(false);
+
+  const confirmAgentToggle = async () => {
+    if (pendingAgentToggle === null) return;
+    const next = pendingAgentToggle;
+    setAgentToggleSaving(true);
+    const { error } = await (supabase as any)
+      .from("ai_agent_status")
+      .upsert(
+        { agent_id: AGENT_ID, active: next, updated_at: new Date().toISOString() },
+        { onConflict: "agent_id" },
+      );
+    setAgentToggleSaving(false);
     if (error) {
       toast.error("Falha ao atualizar: " + error.message);
       return;
     }
-    toast.success(next ? "IA pausada para todos os números." : "IA reativada globalmente.");
-    qc.invalidateQueries({ queryKey: ["agency-settings-ai-pause"] });
+    toast.success(next ? "Agente ativado com sucesso" : "Agente desativado");
+    qc.invalidateQueries({ queryKey: ["ai-agent-status", AGENT_ID] });
+    setPendingAgentToggle(null);
   };
 
   // ===== Carrega conversas reais do WhatsApp (Z-API) =====
