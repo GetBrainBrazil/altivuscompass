@@ -539,9 +539,6 @@ export function MetricasSection() {
           })()}
         </div>
 
-        {updatedAt && (
-          <p className="text-[11px] text-gray-400 text-right">Atualizado {formatRelative(updatedAt)}</p>
-        )}
       </div>
 
       <ConversationDrawer
