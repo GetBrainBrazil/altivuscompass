@@ -358,7 +358,7 @@ export default function AIAgentEdit() {
         {/* Left nav */}
         <aside className="md:w-[240px] md:shrink-0">
           <nav
-            className="md:sticky md:top-20 md:z-40 md:max-h-[calc(100vh-90px)] md:overflow-y-auto flex md:flex-col gap-2 overflow-x-auto md:overflow-x-visible -mx-2 px-2 md:mx-0 md:px-0"
+            className="md:sticky md:top-20 md:z-30 md:max-h-[calc(100vh-90px)] md:overflow-y-auto flex md:flex-col gap-2 overflow-x-auto md:overflow-x-visible -mx-2 px-2 md:mx-0 md:px-0"
             aria-label="Seções do agente"
           >
             {SECTIONS.map((s) => {
