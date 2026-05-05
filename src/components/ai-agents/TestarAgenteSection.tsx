@@ -537,8 +537,14 @@ export function TestarAgenteSection({ agent }: Props) {
                       <div key={f.key} className="flex items-center justify-between px-3 py-1.5">
                         <span className="text-gray-600 font-sans text-[12px]">{f.label}</span>
                         <span className={cn("flex items-center gap-1.5", val ? "text-[hsl(220_45%_15%)]" : "text-gray-400")}>
-                          {val && <Check className="h-3 w-3 text-emerald-600" />}
-                          {val || "—"}
+                          {val ? (
+                            <>
+                              <Check className="h-3.5 w-3.5 text-green-500" />
+                              {val}
+                            </>
+                          ) : (
+                            <Minus className="h-3.5 w-3.5 text-gray-300" />
+                          )}
                         </span>
                       </div>
                     );
