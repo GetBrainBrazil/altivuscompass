@@ -526,71 +526,68 @@ export default function AIAgentEdit() {
         </div>
       </div>
 
-      <div className="max-w-[1200px] mx-auto px-8 py-10 flex flex-col md:flex-row gap-8">
-        {/* Left nav */}
-        <aside className="md:w-[240px] md:shrink-0">
-          <nav
-            className="md:sticky md:top-[180px] md:z-20 md:max-h-[calc(100vh-200px)] md:overflow-y-auto flex md:flex-col gap-2 overflow-x-auto md:overflow-x-visible -mx-2 px-2 md:mx-0 md:px-0"
-            aria-label="Seções do agente"
-          >
-            {SECTIONS.map((s) => {
-              const isActive = activeSection === s.key;
-              const Icon = s.icon;
-              return (
-                <button
-                  key={s.key}
-                  type="button"
-                  onClick={() => setActiveSection(s.key)}
-                  className={
-                    "flex items-center gap-[10px] px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors text-left shrink-0 " +
-                    (isActive
-                      ? "bg-[hsl(220_45%_15%)] text-white"
-                      : "text-gray-500 hover:bg-gray-100 bg-transparent")
-                  }
-                >
-                  <Icon size={18} strokeWidth={2} className="shrink-0" />
-                  <span className="font-medium">{s.label}</span>
-                </button>
-              );
-            })}
+      <div className="max-w-[1200px] mx-auto px-8 py-8 space-y-6">
+        {/* Top horizontal nav */}
+        <nav
+          className="sticky top-[140px] z-20 bg-muted/40 border border-border/60 rounded-lg p-1 flex gap-0.5 overflow-x-auto"
+          aria-label="Seções do agente"
+        >
+          {SECTIONS.map((s) => {
+            const isActive = activeSection === s.key;
+            const Icon = s.icon;
+            return (
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => setActiveSection(s.key)}
+                className={
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs whitespace-nowrap transition-colors shrink-0 " +
+                  (isActive
+                    ? "bg-white text-[hsl(220_45%_15%)] shadow-sm font-medium"
+                    : "text-muted-foreground hover:bg-white/60")
+                }
+              >
+                <Icon size={14} strokeWidth={2} className="shrink-0" />
+                <span>{s.label}</span>
+              </button>
+            );
+          })}
 
-            {/* Divider separating configuration from infrastructure */}
-            <div className="hidden md:block h-px bg-gray-200 my-1" />
+          <div className="w-px bg-border mx-1 self-stretch" />
 
-            {(() => {
-              const isActive = activeSection === "whatsapp";
-              return (
-                <button
-                  type="button"
-                  onClick={() => setActiveSection("whatsapp")}
+          {(() => {
+            const isActive = activeSection === "whatsapp";
+            return (
+              <button
+                type="button"
+                onClick={() => setActiveSection("whatsapp")}
+                className={
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs whitespace-nowrap transition-colors shrink-0 " +
+                  (isActive
+                    ? "bg-white text-[hsl(220_45%_15%)] shadow-sm font-medium"
+                    : "text-muted-foreground hover:bg-white/60")
+                }
+              >
+                <Smartphone size={14} strokeWidth={2} className="shrink-0" />
+                <span>Conexão WhatsApp</span>
+                <span
                   className={
-                    "flex items-center gap-[10px] px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors text-left shrink-0 " +
-                    (isActive
-                      ? "bg-[hsl(220_45%_15%)] text-white"
-                      : "text-gray-500 hover:bg-gray-100 bg-transparent")
+                    "ml-0.5 inline-block h-1.5 w-1.5 rounded-full shrink-0 " +
+                    (wa.loading
+                      ? "bg-gray-300"
+                      : wa.connected
+                      ? "bg-emerald-500"
+                      : "bg-red-500")
                   }
-                >
-                  <Smartphone size={18} strokeWidth={2} className="shrink-0" />
-                  <span className="font-medium flex-1">Conexão WhatsApp</span>
-                  <span
-                    className={
-                      "ml-1 inline-block h-1.5 w-1.5 rounded-full shrink-0 " +
-                      (wa.loading
-                        ? "bg-gray-300"
-                        : wa.connected
-                        ? "bg-emerald-500"
-                        : "bg-red-500")
-                    }
-                    aria-label={wa.connected ? "WhatsApp conectado" : "WhatsApp desconectado"}
-                  />
-                </button>
-              );
-            })()}
-          </nav>
-        </aside>
+                  aria-label={wa.connected ? "WhatsApp conectado" : "WhatsApp desconectado"}
+                />
+              </button>
+            );
+          })()}
+        </nav>
 
         {/* Content panel */}
-        <div className="flex-1 min-w-0 space-y-8">
+        <div className="min-w-0 space-y-8">
         {!isSectionReady && <SectionSkeleton section={activeSection} />}
         {isSectionReady && (
         <div className="animate-fade-in">
