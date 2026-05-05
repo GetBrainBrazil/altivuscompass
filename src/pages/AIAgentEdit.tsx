@@ -278,6 +278,81 @@ export default function AIAgentEdit() {
     return () => window.removeEventListener("beforeunload", handler);
   }, [isDirty]);
 
+  // Pending navigation due to unsaved changes
+  const [pendingNav, setPendingNav] = useState<{ type: "href"; to: string } | { type: "pop" } | null>(null);
+
+  // Intercept link clicks anywhere in the app while dirty
+  useEffect(() => {
+    if (!isDirty) return;
+    const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented) return;
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      const anchor = target?.closest?.("a") as HTMLAnchorElement | null;
+      if (!anchor) return;
+      const href = anchor.getAttribute("href");
+      if (!href || href.startsWith("#") || anchor.target === "_blank") return;
+      if (anchor.hasAttribute("download")) return;
+      // Only intercept internal SPA navigations
+      const url = new URL(anchor.href, window.location.href);
+      if (url.origin !== window.location.origin) return;
+      const dest = url.pathname + url.search + url.hash;
+      const current = window.location.pathname + window.location.search + window.location.hash;
+      if (dest === current) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setPendingNav({ type: "href", to: dest });
+    };
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, [isDirty]);
+
+  // Intercept browser back/forward while dirty
+  useEffect(() => {
+    if (!isDirty) return;
+    // Push a sentinel state so popstate can be caught
+    window.history.pushState({ __unsavedSentinel: true }, "");
+    const onPop = (_e: PopStateEvent) => {
+      // Re-push so we stay on this page until user decides
+      window.history.pushState({ __unsavedSentinel: true }, "");
+      setPendingNav({ type: "pop" });
+    };
+    window.addEventListener("popstate", onPop);
+    return () => {
+      window.removeEventListener("popstate", onPop);
+    };
+  }, [isDirty]);
+
+  const performNav = (nav: typeof pendingNav) => {
+    if (!nav) return;
+    if (nav.type === "href") navigate(nav.to);
+    else navigate(-1);
+  };
+
+  const handleDiscardAndLeave = () => {
+    const nav = pendingNav;
+    try {
+      const snap = JSON.parse(savedSnapshot) as Agent;
+      setForm(snap);
+    } catch {}
+    setPendingNav(null);
+    // Defer to allow isDirty to recompute
+    setTimeout(() => performNav(nav), 0);
+  };
+
+  const handleSaveAndLeave = async () => {
+    if (!form.name.trim() || !form.model) {
+      toast.error("Preencha os campos obrigatórios antes de salvar");
+      setPendingNav(null);
+      setActiveSection("identidade");
+      return;
+    }
+    const nav = pendingNav;
+    setPendingNav(null);
+    await handleSave();
+    setTimeout(() => performNav(nav), 50);
+  };
+
   const handleSave = async () => {
     let hasError = false;
     if (!form.name.trim()) {
