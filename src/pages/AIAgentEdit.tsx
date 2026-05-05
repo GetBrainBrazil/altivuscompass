@@ -260,7 +260,7 @@ export default function AIAgentEdit() {
   return (
     <div className="min-h-screen bg-[hsl(220_15%_97%)]">
       {/* Sticky header */}
-      <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-md border-b border-border/60">
+      <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-border/60">
         <div className="max-w-[1100px] mx-auto px-8 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
             <div className="h-10 w-10 rounded-lg bg-[hsl(220_45%_15%)] flex items-center justify-center shrink-0">
