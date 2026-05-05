@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { RefreshCw, Send, Download, Check, Bot } from "lucide-react";
+import { RefreshCw, Send, Download, Check, Bot, Plane, LifeBuoy, HelpCircle, CircleDashed, SmilePlus, Minus, Frown, ShieldAlert } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -25,18 +26,18 @@ interface Msg {
 }
 
 type FlowKey = "nova_cotacao" | "suporte" | "prospect_indeciso" | "nao_identificado";
-const FLOW_LABELS: Record<FlowKey, { label: string; dot: string }> = {
-  nova_cotacao: { label: "Nova Cotação", dot: "🟢" },
-  suporte: { label: "Suporte", dot: "🔴" },
-  prospect_indeciso: { label: "Prospect Indeciso", dot: "🟡" },
-  nao_identificado: { label: "Não identificado", dot: "⚪" },
+const FLOW_LABELS: Record<FlowKey, { label: string; Icon: LucideIcon; bg: string; color: string }> = {
+  nova_cotacao: { label: "Nova Cotação", Icon: Plane, bg: "bg-green-50", color: "text-green-600" },
+  suporte: { label: "Suporte", Icon: LifeBuoy, bg: "bg-red-50", color: "text-red-600" },
+  prospect_indeciso: { label: "Prospect Indeciso", Icon: HelpCircle, bg: "bg-amber-50", color: "text-amber-600" },
+  nao_identificado: { label: "Não identificado", Icon: CircleDashed, bg: "bg-gray-100", color: "text-gray-500" },
 };
 
 type Sentiment = "positivo" | "neutro" | "negativo";
-const SENT_LABELS: Record<Sentiment, { emoji: string; label: string }> = {
-  positivo: { emoji: "😊", label: "Positivo" },
-  neutro: { emoji: "😐", label: "Neutro" },
-  negativo: { emoji: "😤", label: "Negativo" },
+const SENT_LABELS: Record<Sentiment, { Icon: LucideIcon; label: string; bg: string; color: string }> = {
+  positivo: { Icon: SmilePlus, label: "Positivo", bg: "bg-green-50", color: "text-green-600" },
+  neutro: { Icon: Minus, label: "Neutro", bg: "bg-gray-100", color: "text-gray-500" },
+  negativo: { Icon: Frown, label: "Negativo", bg: "bg-red-50", color: "text-red-600" },
 };
 
 const PERSONAS: { value: string; label: string; firstMsg?: string }[] = [
@@ -511,10 +512,17 @@ export function TestarAgenteSection({ agent }: Props) {
                 <div className="text-[11px] uppercase tracking-wider text-gray-500 font-sans font-semibold mb-1.5">
                   Fluxo detectado
                 </div>
-                <Badge variant="outline" className="bg-white">
-                  <span className="mr-1">{FLOW_LABELS[flow].dot}</span>
-                  {FLOW_LABELS[flow].label}
-                </Badge>
+                {(() => {
+                  const F = FLOW_LABELS[flow];
+                  return (
+                    <Badge variant="outline" className="bg-white gap-1.5 pl-1">
+                      <span className={cn("inline-flex items-center justify-center h-5 w-5 rounded-full", F.bg)}>
+                        <F.Icon className={cn("h-3.5 w-3.5", F.color)} />
+                      </span>
+                      {F.label}
+                    </Badge>
+                  );
+                })()}
               </div>
 
               {/* Dados */}
@@ -529,8 +537,14 @@ export function TestarAgenteSection({ agent }: Props) {
                       <div key={f.key} className="flex items-center justify-between px-3 py-1.5">
                         <span className="text-gray-600 font-sans text-[12px]">{f.label}</span>
                         <span className={cn("flex items-center gap-1.5", val ? "text-[hsl(220_45%_15%)]" : "text-gray-400")}>
-                          {val && <Check className="h-3 w-3 text-emerald-600" />}
-                          {val || "—"}
+                          {val ? (
+                            <>
+                              <Check className="h-3.5 w-3.5 text-green-500" />
+                              {val}
+                            </>
+                          ) : (
+                            <Minus className="h-3.5 w-3.5 text-gray-300" />
+                          )}
                         </span>
                       </div>
                     );
@@ -558,7 +572,8 @@ export function TestarAgenteSection({ agent }: Props) {
                 ) : (
                   <div className="flex flex-wrap gap-1.5">
                     {rulesApplied.map((r) => (
-                      <Badge key={r} variant="outline" className="bg-white text-[11px] font-sans">
+                      <Badge key={r} variant="outline" className="bg-white text-[11px] font-sans gap-1">
+                        <ShieldAlert className="h-3.5 w-3.5 text-gray-400" />
                         {r}
                       </Badge>
                     ))}
@@ -571,10 +586,17 @@ export function TestarAgenteSection({ agent }: Props) {
                 <div className="text-[11px] uppercase tracking-wider text-gray-500 font-sans font-semibold mb-1.5">
                   Sentimento do cliente
                 </div>
-                <div className="bg-white rounded-md border border-gray-200 px-3 py-2 flex items-center gap-2">
-                  <span className="text-lg">{SENT_LABELS[sentiment].emoji}</span>
-                  <span className="text-[hsl(220_45%_15%)] font-sans">{SENT_LABELS[sentiment].label}</span>
-                </div>
+                {(() => {
+                  const S = SENT_LABELS[sentiment];
+                  return (
+                    <div className="bg-white rounded-md border border-gray-200 px-3 py-2 flex items-center gap-2">
+                      <span className={cn("inline-flex items-center justify-center h-6 w-6 rounded-full", S.bg)}>
+                        <S.Icon className={cn("h-4 w-4", S.color)} />
+                      </span>
+                      <span className="text-[hsl(220_45%_15%)] font-sans">{S.label}</span>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
