@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Sparkles, Shield, Bot, ArrowLeft, FlaskConical, Trash2,
   Headset, MessageCircle, Brain, Globe, Plane, Compass, Heart, Star, ShieldCheck, User, Sparkle, Map, Briefcase, Camera, Coffee, Palmtree,
-  GitBranch, ClipboardList, Plug, BarChart3, Loader2, AlertTriangle, CheckCircle,
+  GitBranch, ClipboardList, Plug, BarChart3, Loader2, AlertTriangle, CheckCircle, Power,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -505,38 +505,53 @@ export default function AIAgentEdit() {
               </p>
             </div>
 
-            {/* Status */}
-            <div className="space-y-2">
-              <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Status
-              </Label>
-              <div
-                className="h-10 flex items-center gap-3 px-3 rounded-md border border-input transition-colors"
-                style={{
-                  backgroundColor: form.active
-                    ? "rgba(34, 197, 94, 0.05)"
-                    : "rgba(239, 68, 68, 0.05)",
-                }}
-              >
-                <Switch
-                  checked={form.active}
-                  disabled={statusSaving}
-                  onCheckedChange={(c) => setPendingStatus(c)}
-                />
-                {statusSaving ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-                ) : form.active ? (
-                  <span className="relative flex h-2.5 w-2.5">
+            {/* Status Card — operational live switch */}
+            <div
+              className={
+                "mt-6 flex items-center justify-between gap-4 rounded-lg p-4 border " +
+                (form.active
+                  ? "bg-white border-border border-l-4 border-l-green-500 shadow-[0_0_0_1px_rgba(34,197,94,0.1)]"
+                  : "bg-gray-50 border-border border-l-4 border-l-gray-300")
+              }
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                {form.active ? (
+                  <span className="relative flex h-2 w-2 shrink-0">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
                   </span>
                 ) : (
-                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" />
+                  <span className="inline-block h-2 w-2 rounded-full bg-gray-400 shrink-0" />
                 )}
-                <span className="text-sm text-foreground">
-                  {form.active ? "Ativo — atendendo conversas" : "Inativo — IA desativada"}
-                </span>
+                <div className="min-w-0">
+                  <div className={"text-sm font-semibold " + (form.active ? "text-green-700" : "text-gray-600")}>
+                    {form.active ? "Agente Ativo" : "Agente Inativo"}
+                  </div>
+                  <div className={"text-[13px] " + (form.active ? "text-gray-500" : "text-gray-400")}>
+                    {form.active
+                      ? "A IA está respondendo mensagens no WhatsApp em tempo real"
+                      : "A IA não está respondendo mensagens. Apenas atendentes humanos podem responder."}
+                  </div>
+                </div>
               </div>
+              <button
+                type="button"
+                disabled={statusSaving}
+                onClick={() => setPendingStatus(!form.active)}
+                className={
+                  "shrink-0 inline-flex items-center gap-2 text-[13px] font-medium rounded-full px-4 py-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed " +
+                  (form.active
+                    ? "bg-white border border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+                    : "bg-green-500 text-white border border-green-500 hover:bg-green-600 hover:border-green-600")
+                }
+              >
+                {statusSaving ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Power className="h-3.5 w-3.5" />
+                )}
+                {form.active ? "Desativar Agente" : "Ativar Agente"}
+              </button>
             </div>
           </div>
         </section>
