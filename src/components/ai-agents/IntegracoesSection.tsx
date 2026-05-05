@@ -315,7 +315,6 @@ export function IntegracoesSection({ value, onChange }: Props = {}) {
               {users.map((u) => {
                 const cfg = teamMembers.find((m) => m.user_id === u.user_id);
                 const available = cfg?.available ?? false;
-                const online = cfg?.online ?? false;
                 return (
                   <div
                     key={u.user_id}
@@ -328,29 +327,11 @@ export function IntegracoesSection({ value, onChange }: Props = {}) {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-foreground truncate">{u.full_name}</span>
-                        <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                          <span
-                            className={cn(
-                              "h-1.5 w-1.5 rounded-full",
-                              online ? "bg-green-500" : "bg-gray-300"
-                            )}
-                          />
-                          {online ? "Online" : "Offline"}
-                        </span>
-                      </div>
+                      <div className="text-sm font-medium text-foreground truncate">{u.full_name}</div>
                       <div className="text-xs text-muted-foreground truncate">
                         {u.role || "Membro"} · {u.phone || "Sem telefone"}
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => updateMember(u.user_id, { online: !online })}
-                      className="text-[11px] text-muted-foreground hover:text-foreground px-2 py-1 rounded border border-gray-200"
-                    >
-                      {online ? "Marcar offline" : "Marcar online"}
-                    </button>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground hidden md:inline">Disponível</span>
                       <Switch
