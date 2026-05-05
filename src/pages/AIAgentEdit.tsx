@@ -275,7 +275,11 @@ export default function AIAgentEdit() {
       setPendingStatus(null);
       return;
     }
-    setForm((f) => ({ ...f, active: next }));
+    setForm((f) => {
+      const updated = { ...f, active: next };
+      setSavedSnapshot(serialize(updated));
+      return updated;
+    });
     if (next) toast.success("Agente ativado com sucesso");
     else toast("Agente desativado");
     setPendingStatus(null);
