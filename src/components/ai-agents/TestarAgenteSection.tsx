@@ -412,12 +412,10 @@ export function TestarAgenteSection({ agent }: Props) {
           : Promise.resolve({ data: [] as any[] }),
         supabase
           .from("quotes")
-          .select("title, destination, stage, conclusion_type, total_value, currency, travel_date_start, travel_date_end")
-          .or(`contact_id.eq.${contact.id}`)
+          .select("title, destination, stage, conclusion_type, total_value, travel_date_start, travel_date_end")
+          .eq("contact_id", contact.id)
           .order("created_at", { ascending: false })
-          .limit(5)
-          .then((r) => r)
-          .catch(() => ({ data: [] as any[] })),
+          .limit(5),
       ]);
 
       const convos = (convRes as any)?.data || [];
