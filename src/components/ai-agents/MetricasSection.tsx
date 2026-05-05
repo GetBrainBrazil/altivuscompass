@@ -485,18 +485,11 @@ export function MetricasSection() {
                 </div>
 
                 {!isEmpty && !loading && (
-                  <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
+                  <div className="mt-3 flex flex-col items-center gap-2">
                     <div className="text-[13px] text-gray-500">
                       Mostrando {start + 1}-{Math.min(start + pageSize, total)} de {total} conversas
                     </div>
-                    <div className="flex items-center gap-2">
-                      <select
-                        value={pageSize}
-                        onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-                        className="h-8 text-[12px] border border-gray-200 rounded-md px-2 bg-white text-gray-600"
-                      >
-                        {[10, 25, 50].map((s) => <option key={s} value={s}>{s} por página</option>)}
-                      </select>
+                    <div className="flex items-center gap-2 flex-wrap justify-center">
                       <button
                         onClick={() => safePage > 1 && goTo(safePage - 1)}
                         disabled={safePage === 1}
@@ -529,6 +522,16 @@ export function MetricasSection() {
                         Próximo
                       </button>
                     </div>
+                    <select
+                      value={pageSize}
+                      onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                      className="h-8 text-[12px] border border-gray-200 rounded-md px-2 bg-white text-gray-600"
+                    >
+                      {[10, 25, 50].map((s) => <option key={s} value={s}>{s} por página</option>)}
+                    </select>
+                    {updatedAt && (
+                      <p className="text-[11px] text-gray-600">Atualizado {formatRelative(updatedAt)}</p>
+                    )}
                   </div>
                 )}
               </>
