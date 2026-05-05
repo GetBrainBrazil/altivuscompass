@@ -467,8 +467,8 @@ export function TestarAgenteSection({ agent }: Props) {
               ))}
               {typing && (
                 <div className="flex justify-start">
-                  <div className="bg-white rounded-lg rounded-tl-none px-3 py-2.5 shadow-sm flex items-center gap-1">
-                    <span className="text-[11px] text-gray-500 mr-1">digitando</span>
+                  <div className="bg-white dark:bg-[#1E2130] rounded-lg rounded-tl-none px-3 py-2.5 shadow-sm flex items-center gap-1">
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400 mr-1">digitando</span>
                     <span className="h-1.5 w-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
                     <span className="h-1.5 w-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
                     <span className="h-1.5 w-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
