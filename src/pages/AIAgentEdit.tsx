@@ -598,12 +598,12 @@ export default function AIAgentEdit() {
         {isSectionReady && (
         <div className="animate-fade-in">
         {activeSection === "identidade" && (
-        <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
-          <div className="px-8 py-5 border-b border-border/60">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+        <section className="bg-white dark:bg-[#161923] rounded-xl border border-border/60 dark:border-[#2A2D3A] shadow-sm overflow-hidden">
+          <div className="px-8 py-5 border-b border-border/60 dark:border-[#2A2D3A]">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground dark:text-gray-400">
               Identidade
             </h2>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground dark:text-gray-500 mt-1">
               Como este agente é identificado e qual modelo de IA o alimenta.
             </p>
           </div>
