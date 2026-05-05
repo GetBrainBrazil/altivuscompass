@@ -572,7 +572,8 @@ export function TestarAgenteSection({ agent }: Props) {
                 ) : (
                   <div className="flex flex-wrap gap-1.5">
                     {rulesApplied.map((r) => (
-                      <Badge key={r} variant="outline" className="bg-white text-[11px] font-sans">
+                      <Badge key={r} variant="outline" className="bg-white text-[11px] font-sans gap-1">
+                        <ShieldAlert className="h-3.5 w-3.5 text-gray-400" />
                         {r}
                       </Badge>
                     ))}
