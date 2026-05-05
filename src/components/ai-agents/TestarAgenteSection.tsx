@@ -478,7 +478,7 @@ export function TestarAgenteSection({ agent }: Props) {
             </div>
 
             {/* Input */}
-            <div className="px-3 py-2.5 bg-[#F0F0F0] border-t border-gray-200 flex items-center gap-2">
+            <div className="px-3 py-2.5 bg-[#F0F0F0] dark:bg-[#161923] border-t border-gray-200 dark:border-[#2A2D3A] flex items-center gap-2">
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -489,14 +489,14 @@ export function TestarAgenteSection({ agent }: Props) {
                   }
                 }}
                 placeholder="Digite uma mensagem..."
-                className="h-10 bg-white border-gray-200"
+                className="h-10 bg-white dark:bg-[#1E2130] border-gray-200 dark:border-[#2A2D3A] dark:text-gray-200 dark:placeholder:text-gray-500"
                 disabled={typing}
               />
               <Button
                 size="icon"
                 onClick={() => sendMessage(input)}
                 disabled={typing}
-                className="h-10 w-10 shrink-0 bg-[hsl(220_45%_15%)] hover:bg-[hsl(220_45%_22%)] text-white"
+                className="h-10 w-10 shrink-0 bg-[hsl(220_45%_15%)] hover:bg-[hsl(220_45%_22%)] dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
                 aria-label="Enviar"
               >
                 <Send className="h-4 w-4" />
