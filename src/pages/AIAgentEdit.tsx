@@ -677,6 +677,8 @@ export default function AIAgentEdit() {
         )}
 
         {activeSection === "metricas" && <MetricasSection />}
+
+        {activeSection === "whatsapp" && <WhatsAppConnectionPanel />}
         </div>
         )}
         </div>
