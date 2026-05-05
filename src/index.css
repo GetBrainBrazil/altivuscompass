@@ -445,3 +445,67 @@
   background-color: hsl(228 12% 28%) !important;
 }
 
+/* ===== Dark mode overrides for hardcoded Tailwind colors =====
+   Many legacy components use bg-white/bg-gray-* directly. Remap them in dark
+   mode so they blend with the dark theme without touching every file.
+   Scoped to .dark and excludes public-quote (forced light) and email/PDF surfaces. */
+.dark :where(.bg-white):not(.public-quote *) {
+  background-color: hsl(var(--card)) !important;
+}
+.dark :where(.bg-white\/80):not(.public-quote *),
+.dark :where(.bg-white\/90):not(.public-quote *) {
+  background-color: hsl(var(--card) / 0.85) !important;
+}
+.dark :where(.bg-gray-50):not(.public-quote *),
+.dark :where(.bg-gray-50\/80):not(.public-quote *),
+.dark :where(.bg-gray-100):not(.public-quote *) {
+  background-color: hsl(228 18% 16%) !important;
+}
+.dark :where(.bg-slate-50):not(.public-quote *),
+.dark :where(.bg-slate-100):not(.public-quote *) {
+  background-color: hsl(228 18% 14%) !important;
+}
+.dark :where(.border-gray-100):not(.public-quote *),
+.dark :where(.border-gray-200):not(.public-quote *),
+.dark :where(.border-gray-300):not(.public-quote *),
+.dark :where(.border-slate-200):not(.public-quote *) {
+  border-color: hsl(var(--border)) !important;
+}
+.dark :where(.text-gray-900):not(.public-quote *) { color: hsl(220 13% 93%) !important; }
+.dark :where(.text-gray-800):not(.public-quote *) { color: hsl(220 13% 90%) !important; }
+.dark :where(.text-gray-700):not(.public-quote *) { color: hsl(220 13% 85%) !important; }
+.dark :where(.text-gray-600):not(.public-quote *) { color: hsl(220 9% 72%) !important; }
+.dark :where(.text-gray-500):not(.public-quote *) { color: hsl(220 9% 62%) !important; }
+.dark :where(.text-gray-400):not(.public-quote *) { color: hsl(220 9% 55%) !important; }
+
+/* Light tinted accents → dark tinted accents */
+.dark :where(.bg-blue-50):not(.public-quote *)   { background-color: hsl(217 91% 60% / 0.10) !important; }
+.dark :where(.bg-blue-50\/50):not(.public-quote *) { background-color: hsl(217 91% 60% / 0.08) !important; }
+.dark :where(.border-blue-200):not(.public-quote *) { border-color: hsl(217 91% 60% / 0.30) !important; }
+.dark :where(.text-blue-700):not(.public-quote *),
+.dark :where(.text-blue-900):not(.public-quote *) { color: hsl(217 91% 75%) !important; }
+
+.dark :where(.bg-amber-50):not(.public-quote *)  { background-color: hsl(38 90% 55% / 0.10) !important; }
+.dark :where(.border-amber-200):not(.public-quote *) { border-color: hsl(38 90% 55% / 0.30) !important; }
+.dark :where(.text-amber-700):not(.public-quote *),
+.dark :where(.text-amber-900):not(.public-quote *) { color: hsl(38 90% 70%) !important; }
+
+.dark :where(.bg-green-50):not(.public-quote *)  { background-color: hsl(142 70% 45% / 0.10) !important; }
+.dark :where(.border-green-200):not(.public-quote *) { border-color: hsl(142 70% 45% / 0.30) !important; }
+.dark :where(.text-green-700):not(.public-quote *),
+.dark :where(.text-green-800):not(.public-quote *) { color: hsl(142 70% 65%) !important; }
+
+.dark :where(.bg-rose-50\/50):not(.public-quote *),
+.dark :where(.bg-rose-50):not(.public-quote *) { background-color: hsl(0 78% 60% / 0.10) !important; }
+.dark :where(.border-rose-200):not(.public-quote *) { border-color: hsl(0 78% 60% / 0.30) !important; }
+.dark :where(.text-rose-900):not(.public-quote *) { color: hsl(0 78% 75%) !important; }
+
+/* Hover variants commonly used */
+.dark :where(.hover\:bg-gray-50:hover):not(.public-quote *),
+.dark :where(.hover\:bg-gray-100:hover):not(.public-quote *) {
+  background-color: hsl(228 18% 18%) !important;
+}
+.dark :where(.hover\:bg-white:hover):not(.public-quote *) {
+  background-color: hsl(var(--card)) !important;
+}
+
