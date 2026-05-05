@@ -387,7 +387,108 @@ export function TestarAgenteSection({ agent }: Props) {
     setRulesApplied([]);
   };
 
-  const handleExport = () => {
+  const handleSelectExistingContact = async (contactId: string) => {
+    setSelectedContactId(contactId);
+    if (contactId === "none") {
+      setContactContextBlock("");
+      handleReset();
+      return;
+    }
+    setLoadingContext(true);
+    try {
+      const contact = existingContacts.find((c) => c.id === contactId);
+      if (!contact) return;
+
+      // Load lead, last conversations & quotes for the contact (mirrors webhook logic, lite version)
+      const phone = contact.phone || "";
+      const [convRes, quoteRes] = await Promise.all([
+        phone
+          ? supabase
+              .from("wa_conversations")
+              .select("status, summary, collected_data, last_message_at, last_message_text")
+              .eq("phone", phone)
+              .order("last_message_at", { ascending: false, nullsFirst: false })
+              .limit(5)
+          : Promise.resolve({ data: [] as any[] }),
+        supabase
+          .from("quotes")
+          .select("title, destination, stage, conclusion_type, total_value, currency, travel_date_start, travel_date_end")
+          .or(`contact_id.eq.${contact.id}`)
+          .order("created_at", { ascending: false })
+          .limit(5)
+          .then((r) => r)
+          .catch(() => ({ data: [] as any[] })),
+      ]);
+
+      const convos = (convRes as any)?.data || [];
+      const quotes = (quoteRes as any)?.data || [];
+      const merged: Record<string, any> = {};
+      for (const c of [...convos].reverse()) {
+        if (c?.collected_data && typeof c.collected_data === "object") Object.assign(merged, c.collected_data);
+      }
+      const lastAt = convos[0]?.last_message_at;
+      const days = lastAt ? Math.max(0, Math.floor((Date.now() - new Date(lastAt).getTime()) / 86400000)) : null;
+
+      const lines: string[] = [
+        "## CONTEXTO DO CLIENTE",
+        "Este é um contato CONHECIDO. Trate-o pelo nome e demonstre continuidade.",
+        `- Nome: ${contact.full_name}`,
+        `- Tipo: ${contact.level || "—"}`,
+      ];
+      if (days !== null) lines.push(`- Última interação: há ${days} dia(s)`);
+      if (convos.length) {
+        lines.push("", "### Conversas anteriores");
+        for (const c of convos.slice(0, 3)) {
+          const d = c.last_message_at ? new Date(c.last_message_at).toISOString().split("T")[0] : "—";
+          const s = c.summary || c.last_message_text;
+          lines.push(`- ${d} — status: ${c.status || "—"}${s ? ` — ${String(s).slice(0, 220)}` : ""}`);
+        }
+      }
+      if (quotes.length) {
+        lines.push("", "### Cotações");
+        for (const q of quotes) {
+          const v = q.total_value ? `${q.currency || "BRL"} ${q.total_value}` : "";
+          lines.push(`- ${q.destination || q.title || "—"} — ${q.conclusion_type || q.stage || "—"}${v ? ` — ${v}` : ""}`);
+        }
+      }
+      if (Object.keys(merged).length) {
+        lines.push("", "### Dados já coletados anteriormente");
+        for (const [k, v] of Object.entries(merged)) {
+          if (v == null || v === "") continue;
+          lines.push(`- ${k}: ${typeof v === "object" ? JSON.stringify(v) : v}`);
+        }
+      }
+      lines.push(
+        "",
+        "### INSTRUÇÕES IMPORTANTES",
+        "- NÃO peça informações que você já tem",
+        "- Mencione naturalmente que vocês já conversaram, se aplicável",
+        "- Adapte o tom: cliente conhecido ≠ prospect novo",
+      );
+      setContactContextBlock(lines.join("\n"));
+
+      // Reset chat with contextual welcome
+      setMessages([
+        {
+          id: crypto.randomUUID(),
+          role: "agent",
+          text: welcomeMessage,
+          ts: new Date(),
+        },
+      ]);
+      setFlow("nao_identificado");
+      setSentiment("neutro");
+      setData(merged as Record<string, string>);
+      setNextAction("Aguardar mensagem");
+      setRulesApplied([]);
+      toast.success(`Simulando como ${contact.full_name}`);
+    } catch (e: any) {
+      console.error(e);
+      toast.error("Falha ao carregar contexto do contato");
+    } finally {
+      setLoadingContext(false);
+    }
+  };
     const text = messages
       .map((m) => `[${fmtTime(m.ts)}] ${m.role === "agent" ? "Agente" : "Cliente"}: ${m.text}`)
       .join("\n");
