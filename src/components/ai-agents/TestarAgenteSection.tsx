@@ -224,6 +224,10 @@ export function TestarAgenteSection({ agent }: Props) {
     wa.connected &&
     !!wa.photoUrl;
   const [persona, setPersona] = useState("livre");
+  const [existingContacts, setExistingContacts] = useState<ExistingContact[]>([]);
+  const [selectedContactId, setSelectedContactId] = useState<string>("none");
+  const [contactContextBlock, setContactContextBlock] = useState<string>("");
+  const [loadingContext, setLoadingContext] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
@@ -239,7 +243,33 @@ export function TestarAgenteSection({ agent }: Props) {
     return (w && String(w).trim()) || "Olá! Como posso te ajudar hoje?";
   }, [agent.config?.comunicacao?.welcome_message]);
 
-  const systemPrompt = useMemo(() => buildSystemPrompt(agent), [agent]);
+  const systemPrompt = useMemo(
+    () => buildSystemPrompt(agent, contactContextBlock || undefined),
+    [agent, contactContextBlock],
+  );
+
+  // Load list of existing contacts to allow simulating as a returning client
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: rows } = await supabase
+        .from("contacts")
+        .select("id, full_name, phone, level")
+        .order("updated_at", { ascending: false })
+        .limit(40);
+      if (cancelled || !rows) return;
+      setExistingContacts(
+        rows.map((r: any) => ({
+          id: r.id,
+          full_name: r.full_name,
+          phone: r.phone,
+          level: r.level,
+          contextLabel: `${r.full_name}${r.level ? ` · ${r.level}` : ""}`,
+        })),
+      );
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // initialize / reset on welcome change
   useEffect(() => {
