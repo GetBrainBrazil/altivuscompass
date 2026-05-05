@@ -37,6 +37,9 @@ export default function System() {
           <TabsTrigger value="permissions" className="font-body">Permissões</TabsTrigger>
           <TabsTrigger value="agency" className="font-body">Agência</TabsTrigger>
           <TabsTrigger value="logs" className="font-body">Logs</TabsTrigger>
+          <TabsTrigger value="changelog" className="font-body gap-1.5">
+            <ScrollText size={14} /> Atualizações
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="users" className="mt-4">
           <UserManagement embedded />
@@ -49,6 +52,9 @@ export default function System() {
         </TabsContent>
         <TabsContent value="logs" className="mt-4">
           <AuditLogsTab />
+        </TabsContent>
+        <TabsContent value="changelog" className="mt-4">
+          <ChangelogTab />
         </TabsContent>
       </Tabs>
     </div>
