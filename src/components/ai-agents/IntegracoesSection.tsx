@@ -253,13 +253,16 @@ export function IntegracoesSection({ value, onChange }: Props = {}) {
     addFiles(e.dataTransfer.files);
   };
 
-  const renderPreview = () =>
-    template
-      .replaceAll("{nome_cliente}", "Maria Silva")
-      .replaceAll("{telefone_cliente}", "+55 11 98765-4321")
-      .replaceAll("{fluxo_detectado}", "Nova Cotação")
-      .replaceAll("{resumo_conversa}", "Cliente quer cotação para Paris em julho, 2 adultos.")
-      .replaceAll("{dados_coletados}", "- Destino: Paris\n- Período: Julho/2026\n- Pax: 2 adultos");
+  const renderPreview = () => {
+    const vars: Record<string, string> = {
+      nome_cliente: "Maria Silva",
+      telefone_cliente: "+55 11 98765-4321",
+      fluxo_detectado: "Nova Cotação",
+      resumo_conversa: "Cliente quer cotação para Paris em julho, 2 adultos.",
+      dados_coletados: "- Destino: Paris\n- Período: Julho/2026\n- Pax: 2 adultos",
+    };
+    return template.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
+  };
 
   return (
     <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
