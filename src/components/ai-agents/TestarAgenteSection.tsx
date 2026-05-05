@@ -422,7 +422,7 @@ export function TestarAgenteSection({ agent }: Props) {
               <button
                 type="button"
                 onClick={handleReset}
-                className="text-white/90 hover:text-white inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded hover:bg-white/10"
+                className="text-white/90 dark:text-gray-300 hover:text-white inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded hover:bg-white/10"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
                 Resetar
