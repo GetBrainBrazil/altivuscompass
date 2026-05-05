@@ -1008,7 +1008,7 @@ Hoje é ${today}.
 **FORMATO DE RESPOSTA OBRIGATÓRIO**:
 Responda primeiro a mensagem em texto natural. Depois, em uma linha separada no FINAL, retorne EXATAMENTE este bloco JSON (use null para campos não mencionados nesta mensagem):
 
-###JSON###{"full_name":null,"email":null,"destination":null,"travel_date_start":null,"travel_date_end":null,"flexible_dates":null,"flexible_dates_description":null,"travelers_count":null,"budget_estimate":null,"preferences":null,"ai_summary":null,"extras":{}}`
+###JSON###{"full_name":null,"email":null,"destination":null,"travel_date_start":null,"travel_date_end":null,"flexible_dates":null,"flexible_dates_description":null,"travelers_count":null,"budget_estimate":null,"preferences":null,"ai_summary":null,"extras":{},"escalate_to_human":false,"escalation_reason":null}`
 
   const leadPrompt = `Você é um(a) consultor(a) de viagens da **Altivus Turismo** atendendo um contato pelo WhatsApp.
 
