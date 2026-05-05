@@ -522,9 +522,20 @@ export function TestarAgenteSection({ agent }: Props) {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <Select value={selectedContactId} onValueChange={handleSelectExistingContact} disabled={loadingContext}>
+            <SelectTrigger className="h-9 w-full sm:w-[260px]">
+              <SelectValue placeholder="Simular como contato existente…" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">— Contato novo (sem contexto) —</SelectItem>
+              {existingContacts.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.contextLabel}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={persona} onValueChange={handlePersonaChange}>
-            <SelectTrigger className="h-9 w-full sm:w-[280px]">
-              <SelectValue placeholder="Simular como…" />
+            <SelectTrigger className="h-9 w-full sm:w-[260px]">
+              <SelectValue placeholder="Cenário de teste…" />
             </SelectTrigger>
             <SelectContent>
               {PERSONAS.map((p) => (
