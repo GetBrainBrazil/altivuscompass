@@ -735,6 +735,7 @@ export function TestarAgenteSection({ agent }: Props) {
                 <div className="bg-white dark:bg-[#1E2130] rounded-md border border-gray-200 dark:border-[#2A2D3A] divide-y divide-gray-100 dark:divide-[#2A2D3A]">
                   {dataFields.map((f) => {
                     const val = data[f.key];
+                    const isPhoneAuto = f.key === "telefone" && !val;
                     return (
                       <div key={f.key} className="flex items-center justify-between px-3 py-1.5">
                         <span className="text-gray-600 dark:text-gray-300 font-sans text-[12px]">{f.label}</span>
@@ -744,6 +745,8 @@ export function TestarAgenteSection({ agent }: Props) {
                               <Check className="h-3.5 w-3.5 text-green-500" />
                               {val}
                             </>
+                          ) : isPhoneAuto ? (
+                            <span className="italic text-[11px]">auto via WhatsApp</span>
                           ) : (
                             <Minus className="h-3.5 w-3.5 text-gray-300 dark:text-gray-600" />
                           )}
