@@ -30,6 +30,7 @@ import Sales from "./pages/Sales";
 import MyProfile from "./pages/MyProfile";
 import System from "./pages/System";
 import Tasks from "./pages/Tasks";
+import Changelog from "./pages/Changelog";
 import TaskDetail from "./pages/TaskDetail";
 import PublicQuote from "./pages/PublicQuote";
 import Itineraries from "./pages/Itineraries";
@@ -69,6 +70,7 @@ const App = () => (
             <Route path="/tasks" element={<ProtectedRoute><AppLayout><Tasks /></AppLayout></ProtectedRoute>} />
             <Route path="/tasks/new" element={<ProtectedRoute><AppLayout><TaskDetail /></AppLayout></ProtectedRoute>} />
             <Route path="/tasks/:id" element={<ProtectedRoute><AppLayout><TaskDetail /></AppLayout></ProtectedRoute>} />
+            <Route path="/changelog" element={<ProtectedRoute><AppLayout><Changelog /></AppLayout></ProtectedRoute>} />
             <Route path="/contacts" element={<ProtectedRoute><AppLayout><Contacts /></AppLayout></ProtectedRoute>} />
             <Route path="/contacts/:id/promote" element={<ProtectedRoute><AppLayout><PromoteContact /></AppLayout></ProtectedRoute>} />
             <Route path="/clients" element={<ProtectedRoute><AppLayout><Clients /></AppLayout></ProtectedRoute>} />

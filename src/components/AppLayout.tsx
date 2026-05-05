@@ -1,5 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast as sonnerToast } from "sonner";
+import { useChangelogUnseen } from "@/hooks/useChangelogUnseen";
 import { useToast } from "@/hooks/use-toast";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -71,6 +73,22 @@ export function AppLayout({ children }: AppLayoutProps) {
   }, [session, signOut, toast, navigate]);
 
   useInactivityLogout(handleInactivityLogout);
+
+  // "What's new" toast — shown once per user per latest changelog entry.
+  const { hasUnseen, latest } = useChangelogUnseen();
+  useEffect(() => {
+    if (!user || !hasUnseen || !latest) return;
+    const key = `changelog_toast_shown:${user.id}:${latest.id}`;
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, "1");
+    sonnerToast(`🆕 Nova atualização: ${latest.title}`, {
+      duration: 8000,
+      action: {
+        label: "Ver detalhes",
+        onClick: () => navigate("/changelog"),
+      },
+    });
+  }, [user, hasUnseen, latest, navigate]);
 
   const { data: usersWithRoles = [] } = useQuery({
     queryKey: ["impersonate-users-list"],
