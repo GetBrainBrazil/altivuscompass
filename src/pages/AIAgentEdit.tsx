@@ -235,8 +235,11 @@ export default function AIAgentEdit() {
         .eq("agent_id", form.id)
         .maybeSingle();
       if (!cancelled && data && typeof (data as any).active === "boolean") {
-        setForm((f) => ({ ...f, active: (data as any).active }));
-        setSavedSnapshot((prev) => prev); // don't mark dirty
+        setForm((f) => {
+          const updated = { ...f, active: (data as any).active };
+          setSavedSnapshot(serialize(updated));
+          return updated;
+        });
       }
     })();
     return () => { cancelled = true; };
