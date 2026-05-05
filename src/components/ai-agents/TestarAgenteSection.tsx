@@ -489,6 +489,8 @@ export function TestarAgenteSection({ agent }: Props) {
       setLoadingContext(false);
     }
   };
+
+  const handleExport = () => {
     const text = messages
       .map((m) => `[${fmtTime(m.ts)}] ${m.role === "agent" ? "Agente" : "Cliente"}: ${m.text}`)
       .join("\n");
