@@ -941,7 +941,7 @@ async function callLeadCaptureAI(
   sessionState: any,
   currentLead: any,
   senderName: string,
-  contactCtx: any = null,
+  clientContext: any = null,
 ) {
   const today = new Date().toISOString().split('T')[0]
   const knownData = {
@@ -956,11 +956,9 @@ async function callLeadCaptureAI(
     preferences: currentLead?.preferences || null,
   }
 
-  const isExistingClient = contactCtx?.level === 'cliente'
-  const clientFirstName = (contactCtx?.full_name || '').split(' ')[0] || ''
-  const lastTripBlock = contactCtx?.last_trip
-    ? `Última viagem realizada com a Altivus: ${contactCtx.last_trip.destination} em ${contactCtx.last_trip.date}.`
-    : 'Sem viagens anteriores registradas.'
+  const isExistingClient = clientContext?.client_type === 'cliente'
+  const clientFirstName = (clientContext?.name || '').split(' ')[0] || ''
+  const contextBlock = buildClientContextBlock(clientContext)
 
   const clientPrompt = `Você é um(a) consultor(a) de viagens da **Altivus Turismo** atendendo um(a) CLIENTE JÁ EXISTENTE pelo WhatsApp.
 
