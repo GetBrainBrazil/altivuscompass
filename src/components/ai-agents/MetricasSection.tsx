@@ -167,13 +167,28 @@ export function MetricasSection() {
       if (c.lead_id) leads++;
     }
 
-    const recent = current.slice(0, 20).map((c) => ({
+    const recentRows = current.slice(0, 100);
+    const ids = recentRows.map((c) => c.id);
+    const counts: Record<string, number> = {};
+    if (ids.length) {
+      const { data: msgs } = await supabase
+        .from("wa_messages")
+        .select("conversation_id")
+        .in("conversation_id", ids);
+      for (const m of (msgs || []) as { conversation_id: string }[]) {
+        counts[m.conversation_id] = (counts[m.conversation_id] || 0) + 1;
+      }
+    }
+
+    const recent = recentRows.map((c) => ({
       id: c.id,
       date: c.created_at,
       contact: c.contact_name || c.phone,
+      phone: c.phone,
       flow: inferFlow(c.last_message_text),
       status: inferStatus(c),
       durationMin: durationMin(c),
+      messageCount: counts[c.id] || 0,
     }));
 
     setMetrics({
