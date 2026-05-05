@@ -118,6 +118,28 @@ function formatRelative(d: Date): string {
   return `há ${h}h`;
 }
 
+function formatDuration(min: number): { text: string; muted: boolean } {
+  if (min <= 0) return { text: "< 1 min", muted: true };
+  if (min < 60) return { text: `${min} min`, muted: false };
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return { text: m ? `${h}h ${m}min` : `${h}h`, muted: false };
+}
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+const STATUS_ICON: Record<ConvStatus, typeof CheckCircle> = {
+  resolvido_ia: CheckCircle,
+  transferido_humano: ArrowRight,
+  abandonado: XCircle,
+  em_andamento: Clock,
+};
+
 export function MetricasSection() {
   const [period, setPeriod] = useState<Period>("30d");
   const [metrics, setMetrics] = useState<Metrics | null>(null);
@@ -125,6 +147,19 @@ export function MetricasSection() {
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [, setTick] = useState(0);
   const [openConvId, setOpenConvId] = useState<string | null>(null);
+  const [page, setPage] = useState<number>(() => {
+    const v = Number(localStorage.getItem("metricas:page"));
+    return v > 0 ? v : 1;
+  });
+  const [pageSize, setPageSize] = useState<number>(() => {
+    const v = Number(localStorage.getItem("metricas:pageSize"));
+    return [10, 25, 50].includes(v) ? v : 10;
+  });
+  const [pageLoading, setPageLoading] = useState(false);
+  const tableRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { localStorage.setItem("metricas:page", String(page)); }, [page]);
+  useEffect(() => { localStorage.setItem("metricas:pageSize", String(pageSize)); }, [pageSize]);
 
   const fetchMetrics = useCallback(async () => {
     const days = PERIOD_DAYS[period];
