@@ -399,27 +399,29 @@ export function TestarAgenteSection({ agent }: Props) {
       const contact = existingContacts.find((c) => c.id === contactId);
       if (!contact) return;
 
-      // Load lead, last conversations & quotes for the contact (mirrors webhook logic, lite version)
+      // Load last conversations & quotes for the contact (mirrors webhook logic, lite version)
       const phone = contact.phone || "";
-      const [convRes, quoteRes] = await Promise.all([
-        phone
-          ? supabase
-              .from("wa_conversations")
-              .select("status, summary, collected_data, last_message_at, last_message_text")
-              .eq("phone", phone)
-              .order("last_message_at", { ascending: false, nullsFirst: false })
-              .limit(5)
-          : Promise.resolve({ data: [] as any[] }),
-        supabase
-          .from("quotes")
-          .select("title, destination, stage, conclusion_type, total_value, travel_date_start, travel_date_end")
-          .eq("contact_id", contact.id)
-          .order("created_at", { ascending: false })
-          .limit(5),
-      ]);
-
-      const convos = (convRes as any)?.data || [];
-      const quotes = (quoteRes as any)?.data || [];
+      let convos: any[] = [];
+      if (phone) {
+        const { data } = await supabase
+          .from("wa_conversations")
+          .select("status, summary, collected_data, last_message_at, last_message_text")
+          .eq("phone", phone)
+          .order("last_message_at", { ascending: false, nullsFirst: false })
+          .limit(5);
+        convos = data || [];
+      }
+      const { data: quoteData } = await supabase
+        .from("quotes")
+        .select("title, destination, stage, conclusion_type, total_value, travel_date_start, travel_date_end")
+        .eq("contact_id", contact.id)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      const quotes = quoteData || [];
+      const merged: Record<string, any> = {};
+      for (const c of [...convos].reverse()) {
+        if (c?.collected_data && typeof c.collected_data === "object") Object.assign(merged, c.collected_data);
+      }
       const merged: Record<string, any> = {};
       for (const c of [...convos].reverse()) {
         if (c?.collected_data && typeof c.collected_data === "object") Object.assign(merged, c.collected_data);
