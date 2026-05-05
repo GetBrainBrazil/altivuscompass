@@ -456,6 +456,39 @@ export default function AIAgentEdit() {
                 </button>
               );
             })}
+
+            {/* Divider separating configuration from infrastructure */}
+            <div className="hidden md:block h-px bg-gray-200 my-1" />
+
+            {(() => {
+              const isActive = activeSection === "whatsapp";
+              return (
+                <button
+                  type="button"
+                  onClick={() => setActiveSection("whatsapp")}
+                  className={
+                    "flex items-center gap-[10px] px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors text-left shrink-0 " +
+                    (isActive
+                      ? "bg-[hsl(220_45%_15%)] text-white"
+                      : "text-gray-500 hover:bg-gray-100 bg-transparent")
+                  }
+                >
+                  <Smartphone size={18} strokeWidth={2} className="shrink-0" />
+                  <span className="font-medium flex-1">Conexão WhatsApp</span>
+                  <span
+                    className={
+                      "ml-1 inline-block h-1.5 w-1.5 rounded-full shrink-0 " +
+                      (wa.loading
+                        ? "bg-gray-300"
+                        : wa.connected
+                        ? "bg-emerald-500"
+                        : "bg-red-500")
+                    }
+                    aria-label={wa.connected ? "WhatsApp conectado" : "WhatsApp desconectado"}
+                  />
+                </button>
+              );
+            })()}
           </nav>
         </aside>
 
