@@ -84,6 +84,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const { userRole } = useAuth();
   const location = useLocation();
+  const { hasUnseen: changelogUnseen } = useChangelogUnseen();
 
   const visibleItems = navItems.filter((item) => canAccess(userRole, item.url));
 
