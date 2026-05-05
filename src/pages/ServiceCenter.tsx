@@ -1141,39 +1141,97 @@ export default function ServiceCenter() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden bg-background">
-      {/* ===== Banner global de status da IA ===== */}
+      {/* ===== Banner global de status da IA (sincronizado com Agentes IA) ===== */}
       <div
         className={cn(
-          "flex items-center justify-between gap-3 px-4 py-2 border-b text-xs",
-          aiGloballyPaused
-            ? "bg-slate-800 border-slate-700 text-slate-100"
-            : "bg-emerald-50 border-emerald-200 text-emerald-900",
+          "flex items-center justify-between gap-3 px-4 py-2 border-b",
+          agentActive
+            ? "bg-green-50 border-green-200"
+            : "bg-amber-50 border-amber-200",
         )}
       >
         <div className="flex items-center gap-2 min-w-0">
-          {aiGloballyPaused ? (
-            <Info className="h-3.5 w-3.5 shrink-0 text-slate-300" />
+          {agentActive ? (
+            <span className="inline-block w-2 h-2 rounded-full shrink-0 bg-green-500 animate-pulse" />
           ) : (
-            <span className="inline-block w-2 h-2 rounded-full shrink-0 bg-emerald-500 animate-pulse" />
+            <AlertCircle className="h-4 w-4 shrink-0 text-amber-500" />
           )}
-          <span className="font-medium">
-            {aiGloballyPaused
-              ? "Modo manual — respostas automáticas desativadas"
-              : "IA ativa — respondendo automaticamente todos os números (exceto conversas assumidas)."}
+          <span
+            className={cn(
+              "font-medium text-[13px]",
+              agentActive ? "text-green-700" : "text-amber-700",
+            )}
+          >
+            {agentActive
+              ? "IA ativa — respondendo automaticamente"
+              : "Modo manual — respostas automáticas desativadas"}
           </span>
         </div>
-        <Button
-          size="sm"
-          variant={aiGloballyPaused ? "default" : "outline"}
-          onClick={toggleGlobalAi}
-          className={cn(
-            "h-7 text-[11px] shrink-0",
-            aiGloballyPaused && "bg-emerald-600 text-white hover:bg-emerald-700",
-          )}
-        >
-          {aiGloballyPaused ? "Ativar IA" : "Pausar IA"}
-        </Button>
+        {agentActive ? (
+          <button
+            type="button"
+            onClick={() => setPendingAgentToggle(false)}
+            className="h-7 px-3 text-[12px] rounded-md border border-gray-300 text-gray-600 hover:bg-white transition-colors"
+          >
+            Desativar IA
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setPendingAgentToggle(true)}
+            className="h-7 px-3 text-[12px] rounded-md bg-green-500 hover:bg-green-600 text-white font-medium transition-colors"
+          >
+            Ativar IA
+          </button>
+        )}
       </div>
+
+      <AlertDialog
+        open={pendingAgentToggle !== null}
+        onOpenChange={(open) => { if (!open) setPendingAgentToggle(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              {pendingAgentToggle ? (
+                <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
+              ) : (
+                <AlertCircle className="h-5 w-5 text-amber-500" />
+              )}
+              {pendingAgentToggle ? "Ativar Agente IA" : "Desativar Agente IA"}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  {pendingAgentToggle
+                    ? "Ao ativar o agente, a IA começará a responder automaticamente todas as mensagens recebidas no WhatsApp usando as configurações salvas."
+                    : "Ao desativar o agente, a IA deixará de responder mensagens no WhatsApp. Apenas atendentes humanos poderão responder na Central de Atendimento."}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {pendingAgentToggle
+                    ? "Certifique-se de que as configurações estão corretas antes de ativar."
+                    : "Mensagens recebidas continuarão sendo registradas."}
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={agentToggleSaving}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmAgentToggle(); }}
+              disabled={agentToggleSaving}
+              className={cn(
+                pendingAgentToggle
+                  ? "bg-green-600 hover:bg-green-700 text-white"
+                  : "bg-destructive hover:bg-destructive/90 text-destructive-foreground",
+              )}
+            >
+              {pendingAgentToggle ? "Ativar Agente" : "Desativar Agente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       <div className="flex flex-1 overflow-hidden">
       {/* ===== Left column: conversation list ===== */}
