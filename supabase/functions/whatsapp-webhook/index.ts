@@ -888,6 +888,38 @@ async function handleLeadCapture(
   } catch (e) {
     console.error('[collected_data persist] error:', e)
   }
+
+  // ===== HANDOFF: a IA detectou que precisa de atendimento humano =====
+  const shouldEscalate = ai.extracted?.escalate_to_human === true
+  if (shouldEscalate) {
+    const reason = (ai.extracted?.escalation_reason || 'sinal de handoff detectado pela IA').toString().slice(0, 200)
+    try {
+      // 1) Garantir que o contato esteja como 'lead' (ou superior). Trigger anti-regressão protege 'cliente'.
+      const { data: contactRow } = await supabase
+        .from('contacts')
+        .select('id, level')
+        .or(`lead_id.eq.${leadId},phone.eq.${phone}`)
+        .maybeSingle()
+      if (contactRow?.id && contactRow.level === 'prospect') {
+        await supabase
+          .from('contacts')
+          .update({ level: 'lead', promoted_to_lead_at: new Date().toISOString() })
+          .eq('id', contactRow.id)
+        console.log(`[handoff] contato ${contactRow.id} promovido prospect→lead. motivo: ${reason}`)
+      }
+
+      // 2) Mudar wa_conversations.status para 'human' (o trigger DB notifica admins/managers)
+      await supabase
+        .from('wa_conversations')
+        .update({ status: 'human' })
+        .eq('phone', phone)
+
+      console.log(`[handoff] conversa ${phone} escalada para humano. motivo: ${reason}`)
+    } catch (e) {
+      console.error('[handoff] erro ao escalar:', e)
+    }
+  }
+
   sessionState.messages = [...(sessionState.messages || []), { role: 'assistant', content: ai.reply }]
 
   await supabase.from('whatsapp_sessions').update({
@@ -898,7 +930,7 @@ async function handleLeadCapture(
 
   await sendZapiText(zapiInstanceId, zapiToken, zapiSecurityToken, phone, ai.reply)
 
-  return { status: 'lead_capture_processed', lead_id: leadId }
+  return { status: shouldEscalate ? 'lead_capture_handoff' : 'lead_capture_processed', lead_id: leadId }
 }
 
 function buildLeadUpdates(extracted: any, current: any): Record<string, any> {
