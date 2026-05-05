@@ -465,7 +465,7 @@ export default function AIAgentEdit() {
                 <AlertDialogTrigger asChild>
                   <Button
                     variant="outline"
-                    className="h-9 text-destructive hover:text-destructive hover:bg-destructive/5 border-destructive/30"
+                    className="h-9 text-destructive dark:text-red-400 hover:text-destructive hover:bg-destructive/5 border-destructive/30 dark:border-[#3A3D4A]"
                   >
                     <Trash2 className="h-4 w-4 sm:mr-2" />
                     <span className="hidden sm:inline">Excluir</span>
