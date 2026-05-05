@@ -221,6 +221,22 @@ export default function AIAgentEdit() {
   const [modelError, setModelError] = useState<string | null>(null);
   const isDirty = serialize(form) !== savedSnapshot;
 
+  // Sub-sections call onChange on mount with their default values, which would
+  // mark the form as dirty even when the user did nothing. Treat the first
+  // emission per config key as a baseline (update both form and savedSnapshot).
+  const seededConfigKeys = useRef<Set<string>>(new Set());
+  const updateConfig = (key: string, v: unknown) => {
+    setForm((f) => {
+      const nextForm = { ...f, config: { ...(f.config || {}), [key]: v } } as Agent;
+      if (!seededConfigKeys.current.has(key)) {
+        seededConfigKeys.current.add(key);
+        // Rebase saved snapshot so this initial emission isn't counted as a change
+        setSavedSnapshot(serialize(nextForm));
+      }
+      return nextForm;
+    });
+  };
+
   // Operational status toggle (saves immediately, independent of "Salvar")
   const [statusSaving, setStatusSaving] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<boolean | null>(null);
