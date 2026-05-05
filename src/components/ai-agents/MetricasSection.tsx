@@ -369,54 +369,171 @@ export function MetricasSection() {
           </div>
         </div>
 
-        <div>
+        <div ref={tableRef}>
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
             Últimas conversas
           </h3>
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 px-4 py-2.5">Data</th>
-                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 px-4 py-2.5">Contato</th>
-                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 px-4 py-2.5">Fluxo</th>
-                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 px-4 py-2.5">Status</th>
-                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 px-4 py-2.5">Duração</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan={5} className="text-center text-sm text-gray-500 py-10">Carregando…</td></tr>
-                ) : !metrics?.recent.length ? (
-                  <tr><td colSpan={5} className="text-center text-sm text-gray-500 py-10">Nenhuma conversa registrada ainda.</td></tr>
-                ) : (
-                  metrics.recent.map((r) => (
-                    <tr
-                      key={r.id}
-                      className="border-b border-gray-100 last:border-0 hover:bg-gray-50 cursor-pointer"
-                      onClick={() => setOpenConvId(r.id)}
-                    >
-                      <td className="px-4 py-3 text-gray-700 tabular-nums">
-                        {new Date(r.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
-                      </td>
-                      <td className="px-4 py-3 text-foreground">{r.contact}</td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex text-[11px] font-medium px-2 py-0.5 rounded border ${FLOW_BADGE[r.flow]}`}>
-                          {FLOW_LABEL[r.flow]}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex text-[11px] font-medium px-2 py-0.5 rounded border ${STATUS_BADGE[r.status]}`}>
-                          {STATUS_LABEL[r.status]}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-gray-700 tabular-nums">{r.durationMin} min</td>
-                    </tr>
-                  ))
+          {(() => {
+            const all = metrics?.recent ?? [];
+            const total = all.length;
+            const pageCount = Math.max(1, Math.ceil(total / pageSize));
+            const safePage = Math.min(page, pageCount);
+            const start = (safePage - 1) * pageSize;
+            const rows = all.slice(start, start + pageSize);
+            const isEmpty = !loading && total === 0;
+
+            const goTo = (p: number) => {
+              setPageLoading(true);
+              setPage(p);
+              tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+              setTimeout(() => setPageLoading(false), 200);
+            };
+
+            const buildPages = (): (number | "…")[] => {
+              if (pageCount <= 5) return Array.from({ length: pageCount }, (_, i) => i + 1);
+              const arr: (number | "…")[] = [1];
+              const startP = Math.max(2, safePage - 1);
+              const endP = Math.min(pageCount - 1, safePage + 1);
+              if (startP > 2) arr.push("…");
+              for (let i = startP; i <= endP; i++) arr.push(i);
+              if (endP < pageCount - 1) arr.push("…");
+              arr.push(pageCount);
+              return arr;
+            };
+
+            return (
+              <>
+                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                  {isEmpty ? (
+                    <div className="flex flex-col items-center justify-center text-center py-[60px] px-4">
+                      <MessageSquare className="h-12 w-12 text-gray-300 mb-3" />
+                      <p className="text-base text-gray-400">Nenhuma conversa registrada ainda</p>
+                      <p className="text-[13px] text-gray-400 mt-1">As conversas aparecerão aqui quando o agente começar a atender.</p>
+                    </div>
+                  ) : (
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50">
+                        <tr className="border-b border-gray-200">
+                          {["Data","Contato","Fluxo","Status","Duração","Mensagens"].map((h) => (
+                            <th key={h} className="text-left text-[11px] font-semibold uppercase text-gray-500 px-4 py-3" style={{ letterSpacing: "0.05em" }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className={pageLoading ? "opacity-60 transition-opacity" : "transition-opacity"}>
+                        {loading ? (
+                          <tr><td colSpan={6} className="text-center text-sm text-gray-500 py-10">Carregando…</td></tr>
+                        ) : (
+                          rows.map((r) => {
+                            const d = new Date(r.date);
+                            const dateStr = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" });
+                            const timeStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+                            const dur = formatDuration(r.durationMin);
+                            const StatusIcon = STATUS_ICON[r.status];
+                            const hasName = r.contact && r.contact !== r.phone;
+                            return (
+                              <tr
+                                key={r.id}
+                                className="border-b border-gray-100 last:border-0 hover:bg-gray-50 active:bg-gray-100 cursor-pointer transition-colors duration-150"
+                                onClick={() => setOpenConvId(r.id)}
+                              >
+                                <td className="px-4 py-[14px] tabular-nums">
+                                  <div className="text-[14px] text-gray-700">{dateStr}</div>
+                                  <div className="text-[12px] text-gray-400">{timeStr}</div>
+                                </td>
+                                <td className="px-4 py-[14px]">
+                                  <div className="flex items-center gap-2.5">
+                                    <div className="h-7 w-7 rounded-full bg-gray-100 text-gray-600 text-[11px] font-semibold flex items-center justify-center shrink-0">
+                                      {initials(r.contact)}
+                                    </div>
+                                    <div className="min-w-0">
+                                      {hasName ? (
+                                        <>
+                                          <div className="text-[14px] font-semibold text-gray-800 truncate">{r.contact}</div>
+                                          <div className="text-[12px] text-gray-400 truncate">{r.phone}</div>
+                                        </>
+                                      ) : (
+                                        <div className="text-[14px] text-gray-800 truncate">{r.phone}</div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-[14px]">
+                                  <span className={`inline-flex items-center text-[12px] font-medium px-2.5 py-0.5 rounded-full border ${FLOW_BADGE[r.flow]}`}>
+                                    {FLOW_LABEL[r.flow]}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-[14px]">
+                                  <span className={`inline-flex items-center gap-1 text-[12px] font-medium px-2.5 py-0.5 rounded-full border ${STATUS_BADGE[r.status]}`}>
+                                    <StatusIcon className="h-3 w-3" />
+                                    {STATUS_LABEL[r.status]}
+                                  </span>
+                                </td>
+                                <td className={`px-4 py-[14px] tabular-nums ${dur.muted ? "text-gray-400" : "text-gray-700"}`}>{dur.text}</td>
+                                <td className="px-4 py-[14px]">
+                                  <span className="inline-flex items-center gap-1 text-[12px] text-gray-500 tabular-nums">
+                                    <MessageSquare className="h-3 w-3" />
+                                    {r.messageCount}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+
+                {!isEmpty && !loading && (
+                  <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
+                    <div className="text-[13px] text-gray-500">
+                      Mostrando {start + 1}-{Math.min(start + pageSize, total)} de {total} conversas
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={pageSize}
+                        onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                        className="h-8 text-[12px] border border-gray-200 rounded-md px-2 bg-white text-gray-600"
+                      >
+                        {[10, 25, 50].map((s) => <option key={s} value={s}>{s} por página</option>)}
+                      </select>
+                      <button
+                        onClick={() => safePage > 1 && goTo(safePage - 1)}
+                        disabled={safePage === 1}
+                        className={`text-[13px] px-2 h-8 rounded-md ${safePage === 1 ? "text-gray-300 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
+                      >
+                        Anterior
+                      </button>
+                      {buildPages().map((p, i) =>
+                        p === "…" ? (
+                          <span key={`e${i}`} className="text-[13px] text-gray-400 px-1">…</span>
+                        ) : (
+                          <button
+                            key={p}
+                            onClick={() => goTo(p)}
+                            className={`h-8 w-8 text-[13px] rounded-md tabular-nums ${
+                              p === safePage
+                                ? "bg-[#1B2A4A] text-white"
+                                : "text-gray-600 hover:bg-gray-100"
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        )
+                      )}
+                      <button
+                        onClick={() => safePage < pageCount && goTo(safePage + 1)}
+                        disabled={safePage === pageCount}
+                        className={`text-[13px] px-2 h-8 rounded-md ${safePage === pageCount ? "text-gray-300 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
+                      >
+                        Próximo
+                      </button>
+                    </div>
+                  </div>
                 )}
-              </tbody>
-            </table>
-          </div>
+              </>
+            );
+          })()}
         </div>
 
         {updatedAt && (
