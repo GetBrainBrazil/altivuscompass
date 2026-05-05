@@ -863,13 +863,11 @@ function AvatarIdentitySection({
   setForm: (a: Agent) => void;
 }) {
   const wa = useWhatsAppProfile();
-  const source: "whatsapp" | "custom" =
-    form.avatarSource ?? (wa.connected && wa.photoUrl ? "whatsapp" : "custom");
+  const showWAPhoto = wa.connected && !!wa.photoUrl && form.avatarSource !== "custom";
   const IconComp = getAgentIcon(form.icon);
-  const showWAPhoto = source === "whatsapp" && wa.connected && !!wa.photoUrl;
 
   return (
-    <div className="flex items-start gap-5">
+    <div className="flex items-center gap-5">
       <TooltipProvider delayDuration={200}>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -911,78 +909,51 @@ function AvatarIdentitySection({
         </Tooltip>
       </TooltipProvider>
 
-      <div className="flex-1 space-y-3">
-        <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Avatar do Agente
-        </Label>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <button
-            type="button"
-            disabled={!wa.connected}
-            onClick={() => setForm({ ...form, avatarSource: "whatsapp" })}
-            className={
-              "flex-1 px-3 py-2 rounded-lg border text-sm text-left transition-colors " +
-              (source === "whatsapp"
-                ? "border-[hsl(220_45%_15%)] bg-[hsl(220_45%_15%)]/5"
-                : "border-border hover:bg-muted") +
-              (!wa.connected ? " opacity-50 cursor-not-allowed" : "")
-            }
-          >
-            📱 Usar foto do WhatsApp
-          </button>
-          <button
-            type="button"
-            onClick={() => setForm({ ...form, avatarSource: "custom" })}
-            className={
-              "flex-1 px-3 py-2 rounded-lg border text-sm text-left transition-colors " +
-              (source === "custom"
-                ? "border-[hsl(220_45%_15%)] bg-[hsl(220_45%_15%)]/5"
-                : "border-border hover:bg-muted")
-            }
-          >
-            🎨 Usar ícone personalizado
-          </button>
+      <div className="flex-1 flex items-center justify-between gap-3">
+        <div>
+          <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Avatar do Agente
+          </Label>
+          <p className="text-sm text-foreground mt-1">
+            {showWAPhoto
+              ? wa.formattedPhone || "Foto do WhatsApp"
+              : "Ícone personalizado"}
+          </p>
         </div>
 
-        {source === "whatsapp" && wa.formattedPhone && (
-          <p className="text-xs text-muted-foreground">{wa.formattedPhone}</p>
-        )}
-
-        {source === "custom" && (
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9">
-                Alterar ícone
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[320px] p-3" align="start">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">
-                Escolha um ícone
-              </p>
-              <div className="grid grid-cols-4 gap-2">
-                {AGENT_ICONS.map(({ key, Icon }) => {
-                  const selected = (form.icon ?? "bot") === key;
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => setForm({ ...form, icon: key })}
-                      className={
-                        "h-12 w-12 rounded-full flex items-center justify-center transition-all " +
-                        (selected
-                          ? "bg-[hsl(220_45%_15%)] text-white ring-2 ring-[hsl(220_45%_15%)] ring-offset-2"
-                          : "bg-muted text-muted-foreground hover:bg-muted/70")
-                      }
-                      aria-label={key}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </button>
-                  );
-                })}
-              </div>
-            </PopoverContent>
-          </Popover>
-        )}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="h-9">
+              Alterar ícone
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[320px] p-3" align="end">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">
+              Escolha um ícone
+            </p>
+            <div className="grid grid-cols-4 gap-2">
+              {AGENT_ICONS.map(({ key, Icon }) => {
+                const selected = (form.icon ?? "bot") === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setForm({ ...form, icon: key, avatarSource: "custom" })}
+                    className={
+                      "h-12 w-12 rounded-full flex items-center justify-center transition-all " +
+                      (selected
+                        ? "bg-[hsl(220_45%_15%)] text-white ring-2 ring-[hsl(220_45%_15%)] ring-offset-2"
+                        : "bg-muted text-muted-foreground hover:bg-muted/70")
+                    }
+                    aria-label={key}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </button>
+                );
+              })}
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
     </div>
   );
