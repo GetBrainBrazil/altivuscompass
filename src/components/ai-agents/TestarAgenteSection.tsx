@@ -411,17 +411,13 @@ export function TestarAgenteSection({ agent }: Props) {
           .limit(5);
         convos = data || [];
       }
-      const { data: quoteData } = await supabase
+      const { data: quoteData } = await (supabase as any)
         .from("quotes")
         .select("title, destination, stage, conclusion_type, total_value, travel_date_start, travel_date_end")
         .eq("contact_id", contact.id)
         .order("created_at", { ascending: false })
         .limit(5);
-      const quotes = quoteData || [];
-      const merged: Record<string, any> = {};
-      for (const c of [...convos].reverse()) {
-        if (c?.collected_data && typeof c.collected_data === "object") Object.assign(merged, c.collected_data);
-      }
+      const quotes: any[] = quoteData || [];
       const merged: Record<string, any> = {};
       for (const c of [...convos].reverse()) {
         if (c?.collected_data && typeof c.collected_data === "object") Object.assign(merged, c.collected_data);
