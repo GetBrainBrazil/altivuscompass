@@ -1,12 +1,13 @@
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ScrollText } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import UserManagement from "./UserManagement";
 import Permissions from "./Permissions";
 import AuditLogsTab from "@/components/system/AuditLogsTab";
 import AgencySettingsTab from "@/components/system/AgencySettingsTab";
+import ChangelogTab from "@/components/system/ChangelogTab";
 
 export default function System() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -36,6 +37,9 @@ export default function System() {
           <TabsTrigger value="permissions" className="font-body">Permissões</TabsTrigger>
           <TabsTrigger value="agency" className="font-body">Agência</TabsTrigger>
           <TabsTrigger value="logs" className="font-body">Logs</TabsTrigger>
+          <TabsTrigger value="changelog" className="font-body gap-1.5">
+            <ScrollText size={14} /> Atualizações
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="users" className="mt-4">
           <UserManagement embedded />
@@ -48,6 +52,9 @@ export default function System() {
         </TabsContent>
         <TabsContent value="logs" className="mt-4">
           <AuditLogsTab />
+        </TabsContent>
+        <TabsContent value="changelog" className="mt-4">
+          <ChangelogTab />
         </TabsContent>
       </Tabs>
     </div>
