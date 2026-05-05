@@ -1227,3 +1227,222 @@ async function ensureContactForPhone(
     display_name: contactRow?.full_name || createdName,
   }
 }
+
+/**
+ * Builds a CLIENT CONTEXT object aggregating CRM, conversations and quotations
+ * for the phone number, used to inject continuity into the AI system prompt.
+ */
+async function buildClientContext(
+  supabase: any,
+  args: { phone: string; matchedContact: any; leadRow: any },
+): Promise<any> {
+  const { phone, matchedContact, leadRow } = args
+  const phoneDigits = (phone || '').replace(/\D/g, '')
+  const tail = phoneDigits.slice(-9)
+
+  const ctx: any = {
+    is_known: !!matchedContact,
+    client_type: matchedContact?.level || (leadRow ? 'lead' : 'unknown'),
+    name: matchedContact?.full_name || leadRow?.full_name || null,
+    phone,
+    email: leadRow?.email || null,
+    crm_stage: leadRow?.status || null,
+    tags: [],
+    previous_conversations: [],
+    quotations: [],
+    active_trips: [],
+    support_history: [],
+    collected_data: {},
+    last_interaction: null,
+    days_since_last_contact: null,
+  }
+
+  // Previous wa_conversations (excluding current)
+  try {
+    const { data: prevConvos } = await supabase
+      .from('wa_conversations')
+      .select('id, status, summary, collected_data, last_message_at, last_message_text, updated_at')
+      .eq('phone', phone)
+      .order('last_message_at', { ascending: false, nullsFirst: false })
+      .limit(5)
+    if (prevConvos && prevConvos.length > 0) {
+      ctx.previous_conversations = prevConvos.map((c: any) => ({
+        date: c.last_message_at,
+        status: c.status,
+        summary: c.summary || c.last_message_text || null,
+      }))
+      // Merge collected_data from the most recent prior conversation
+      const merged: Record<string, any> = {}
+      for (const c of [...prevConvos].reverse()) {
+        if (c.collected_data && typeof c.collected_data === 'object') {
+          Object.assign(merged, c.collected_data)
+        }
+      }
+      ctx.collected_data = merged
+      ctx.last_interaction = prevConvos[0].last_message_at
+      if (prevConvos[0].last_message_at) {
+        const diffMs = Date.now() - new Date(prevConvos[0].last_message_at).getTime()
+        ctx.days_since_last_contact = Math.max(0, Math.floor(diffMs / 86400000))
+      }
+    }
+  } catch (e) {
+    console.error('[buildClientContext] previous conversations error:', e)
+  }
+
+  // Quotations (lead_id and/or client_id)
+  try {
+    const orFilters: string[] = []
+    if (matchedContact?.lead_id) orFilters.push(`lead_id.eq.${matchedContact.lead_id}`)
+    if (matchedContact?.client_id) orFilters.push(`client_id.eq.${matchedContact.client_id}`)
+    if (leadRow?.id) orFilters.push(`lead_id.eq.${leadRow.id}`)
+    if (orFilters.length > 0) {
+      const { data: quotes } = await supabase
+        .from('quotes')
+        .select('id, title, destination, stage, conclusion_type, total_value, currency, travel_date_start, travel_date_end, created_at')
+        .or(orFilters.join(','))
+        .order('created_at', { ascending: false })
+        .limit(5)
+      if (quotes && quotes.length > 0) {
+        ctx.quotations = quotes.map((q: any) => ({
+          id: q.id,
+          title: q.title,
+          destination: q.destination,
+          status: q.conclusion_type || q.stage,
+          value: q.total_value,
+          currency: q.currency,
+          travel_start: q.travel_date_start,
+          travel_end: q.travel_date_end,
+          created_at: q.created_at,
+        }))
+        // Active trip = quote with travel dates surrounding today and stage confirmed/won
+        const todayIso = new Date().toISOString().split('T')[0]
+        ctx.active_trips = quotes
+          .filter((q: any) =>
+            q.stage === 'confirmed' &&
+            q.travel_date_start && q.travel_date_end &&
+            q.travel_date_start <= todayIso && q.travel_date_end >= todayIso
+          )
+          .map((q: any) => ({
+            destination: q.destination || q.title,
+            start_date: q.travel_date_start,
+            end_date: q.travel_date_end,
+            status: 'em_andamento',
+          }))
+      }
+    }
+  } catch (e) {
+    console.error('[buildClientContext] quotes error:', e)
+  }
+
+  return ctx
+}
+
+function buildClientContextBlock(ctx: any): string {
+  if (!ctx) return ''
+  if (!ctx.is_known) {
+    return `## CONTEXTO DO CLIENTE
+Este é um contato NOVO. Nunca conversou com a Altivus antes.
+Siga o fluxo padrão de identificação e coleta de dados.`
+  }
+
+  const lines: string[] = ['## CONTEXTO DO CLIENTE',
+    'Este é um contato CONHECIDO. Trate-o pelo nome e demonstre continuidade.',
+    `- Nome: ${ctx.name || '—'}`,
+    `- Tipo: ${ctx.client_type || 'desconhecido'}`,
+  ]
+  if (ctx.crm_stage) lines.push(`- Etapa no CRM: ${ctx.crm_stage}`)
+  if (ctx.email) lines.push(`- E-mail: ${ctx.email}`)
+  if (ctx.days_since_last_contact !== null) {
+    lines.push(`- Última interação: há ${ctx.days_since_last_contact} dia(s)`)
+  }
+
+  if (ctx.previous_conversations?.length > 0) {
+    lines.push('', '### Conversas anteriores')
+    for (const c of ctx.previous_conversations.slice(0, 3)) {
+      const d = c.date ? new Date(c.date).toISOString().split('T')[0] : '—'
+      lines.push(`- ${d} — status: ${c.status || '—'}${c.summary ? ` — ${String(c.summary).slice(0, 220)}` : ''}`)
+    }
+  }
+
+  if (ctx.quotations?.length > 0) {
+    lines.push('', '### Cotações')
+    for (const q of ctx.quotations.slice(0, 5)) {
+      const val = q.value ? `${q.currency || 'BRL'} ${q.value}` : ''
+      lines.push(`- ${q.destination || q.title || '—'} — ${q.status || '—'}${val ? ` — ${val}` : ''}`)
+    }
+  } else {
+    lines.push('', '### Cotações', 'Nenhuma cotação registrada.')
+  }
+
+  if (ctx.collected_data && Object.keys(ctx.collected_data).length > 0) {
+    lines.push('', '### Dados já coletados anteriormente')
+    for (const [k, v] of Object.entries(ctx.collected_data)) {
+      if (v === null || v === undefined || v === '') continue
+      lines.push(`- ${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`)
+    }
+  }
+
+  if (ctx.active_trips?.length > 0) {
+    lines.push('', '### Viagens ativas')
+    for (const t of ctx.active_trips) {
+      lines.push(`- ${t.destination}: ${t.start_date} a ${t.end_date} — ${t.status}`)
+    }
+  }
+
+  lines.push(
+    '',
+    '### INSTRUÇÕES IMPORTANTES',
+    '- NÃO peça informações que você já tem (nome, destino, período, etc.)',
+    '- Se o cliente retorna após uma conversa abandonada, mencione naturalmente que vocês já conversaram',
+    '- Se há cotação pendente, pergunte se quer dar continuidade',
+    '- Se há viagem ativa, priorize verificar se precisa de suporte',
+    '- Adapte o tom: cliente que já comprou ≠ prospect novo',
+  )
+  return lines.join('\n')
+}
+
+/**
+ * Tracks conversation resumption on wa_conversations: marks last_resumed_at,
+ * resumed_from_status and days_inactive_on_resume when a contact returns
+ * after an abandoned/resolved status. Also stores the client_context_snapshot.
+ */
+async function trackConversationResumption(
+  supabase: any,
+  phone: string,
+  clientContext: any,
+): Promise<void> {
+  try {
+    const { data: convo } = await supabase
+      .from('wa_conversations')
+      .select('id, status, last_message_at, client_context_snapshot')
+      .eq('phone', phone)
+      .maybeSingle()
+    if (!convo) return
+
+    const updates: Record<string, any> = {}
+
+    // Snapshot the client context only on first message of a fresh conversation
+    if (!convo.client_context_snapshot) {
+      updates.client_context_snapshot = clientContext
+    }
+
+    // If previous status was abandoned/resolved, mark a resumption
+    if (convo.status === 'abandoned' || convo.status === 'resolved') {
+      updates.status = 'ai'
+      updates.last_resumed_at = new Date().toISOString()
+      updates.resumed_from_status = convo.status
+      if (convo.last_message_at) {
+        const days = Math.floor(
+          (Date.now() - new Date(convo.last_message_at).getTime()) / 86400000,
+        )
+        updates.days_inactive_on_resume = days
+      }
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await supabase.from('wa_conversations').update(updates).eq('id', convo.id)
+    }
+  } catch (e) {
+    console.error('[trackConversationResumption] error:', e)
+  }
+}
