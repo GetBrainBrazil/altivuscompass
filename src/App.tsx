@@ -110,6 +110,7 @@ const App = () => (
             <Route path="/whatsapp-connection" element={<Navigate to="/ai-agents?section=whatsapp" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </ThemeProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
