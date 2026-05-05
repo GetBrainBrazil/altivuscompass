@@ -808,6 +808,40 @@ export default function AIAgentEdit() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog
+        open={pendingNav !== null}
+        onOpenChange={(open) => { if (!open) setPendingNav(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Alterações não salvas
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Você fez mudanças nas configurações do agente que ainda não foram salvas.
+              Deseja salvar antes de sair ou descartar as alterações?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel>Continuar editando</AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={handleDiscardAndLeave}
+              className="text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/5"
+            >
+              Descartar alterações
+            </Button>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleSaveAndLeave(); }}
+              className="bg-[hsl(220_45%_15%)] hover:bg-[hsl(220_45%_22%)] text-white"
+            >
+              Salvar e sair
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
