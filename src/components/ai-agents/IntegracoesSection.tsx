@@ -60,7 +60,6 @@ type FallbackMode = "wait_message" | "notify_manager" | "both";
 export interface TeamMemberConfig {
   user_id: string;
   available: boolean;
-  online: boolean;
 }
 
 export interface IntegracoesValue {
