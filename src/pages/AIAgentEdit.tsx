@@ -278,6 +278,81 @@ export default function AIAgentEdit() {
     return () => window.removeEventListener("beforeunload", handler);
   }, [isDirty]);
 
+  // Pending navigation due to unsaved changes
+  const [pendingNav, setPendingNav] = useState<{ type: "href"; to: string } | { type: "pop" } | null>(null);
+
+  // Intercept link clicks anywhere in the app while dirty
+  useEffect(() => {
+    if (!isDirty) return;
+    const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented) return;
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      const anchor = target?.closest?.("a") as HTMLAnchorElement | null;
+      if (!anchor) return;
+      const href = anchor.getAttribute("href");
+      if (!href || href.startsWith("#") || anchor.target === "_blank") return;
+      if (anchor.hasAttribute("download")) return;
+      // Only intercept internal SPA navigations
+      const url = new URL(anchor.href, window.location.href);
+      if (url.origin !== window.location.origin) return;
+      const dest = url.pathname + url.search + url.hash;
+      const current = window.location.pathname + window.location.search + window.location.hash;
+      if (dest === current) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setPendingNav({ type: "href", to: dest });
+    };
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, [isDirty]);
+
+  // Intercept browser back/forward while dirty
+  useEffect(() => {
+    if (!isDirty) return;
+    // Push a sentinel state so popstate can be caught
+    window.history.pushState({ __unsavedSentinel: true }, "");
+    const onPop = (_e: PopStateEvent) => {
+      // Re-push so we stay on this page until user decides
+      window.history.pushState({ __unsavedSentinel: true }, "");
+      setPendingNav({ type: "pop" });
+    };
+    window.addEventListener("popstate", onPop);
+    return () => {
+      window.removeEventListener("popstate", onPop);
+    };
+  }, [isDirty]);
+
+  const performNav = (nav: typeof pendingNav) => {
+    if (!nav) return;
+    if (nav.type === "href") navigate(nav.to);
+    else navigate(-1);
+  };
+
+  const handleDiscardAndLeave = () => {
+    const nav = pendingNav;
+    try {
+      const snap = JSON.parse(savedSnapshot) as Agent;
+      setForm(snap);
+    } catch {}
+    setPendingNav(null);
+    // Defer to allow isDirty to recompute
+    setTimeout(() => performNav(nav), 0);
+  };
+
+  const handleSaveAndLeave = async () => {
+    if (!form.name.trim() || !form.model) {
+      toast.error("Preencha os campos obrigatórios antes de salvar");
+      setPendingNav(null);
+      setActiveSection("identidade");
+      return;
+    }
+    const nav = pendingNav;
+    setPendingNav(null);
+    await handleSave();
+    setTimeout(() => performNav(nav), 50);
+  };
+
   const handleSave = async () => {
     let hasError = false;
     if (!form.name.trim()) {
@@ -729,6 +804,40 @@ export default function AIAgentEdit() {
             >
               {statusSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {pendingStatus ? "Ativar Agente" : "Desativar Agente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={pendingNav !== null}
+        onOpenChange={(open) => { if (!open) setPendingNav(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Alterações não salvas
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Você fez mudanças nas configurações do agente que ainda não foram salvas.
+              Deseja salvar antes de sair ou descartar as alterações?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel>Continuar editando</AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={handleDiscardAndLeave}
+              className="text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/5"
+            >
+              Descartar alterações
+            </Button>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleSaveAndLeave(); }}
+              className="bg-[hsl(220_45%_15%)] hover:bg-[hsl(220_45%_22%)] text-white"
+            >
+              Salvar e sair
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
