@@ -548,8 +548,8 @@ export default function AIAgentEdit() {
                 className={
                   "flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md text-[12px] leading-tight whitespace-nowrap transition-colors " +
                   (isActive
-                    ? "bg-white dark:bg-[hsl(217_91%_60%)] text-[hsl(220_45%_15%)] dark:text-white shadow-sm font-medium"
-                    : "text-muted-foreground dark:text-gray-300 hover:bg-white/60 dark:hover:bg-white/5 dark:hover:text-white")
+                    ? "bg-white dark:bg-transparent dark:border-b-2 dark:border-gray-100 dark:rounded-none text-[hsl(220_45%_15%)] dark:text-gray-100 shadow-sm dark:shadow-none font-medium"
+                    : "text-muted-foreground dark:text-gray-500 hover:bg-white/60 dark:hover:bg-white/5 dark:hover:text-gray-300")
                 }
               >
                 <Icon size={13} strokeWidth={2} className="shrink-0" />
