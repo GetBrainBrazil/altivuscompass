@@ -1,12 +1,13 @@
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ScrollText } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import UserManagement from "./UserManagement";
 import Permissions from "./Permissions";
 import AuditLogsTab from "@/components/system/AuditLogsTab";
 import AgencySettingsTab from "@/components/system/AgencySettingsTab";
+import ChangelogTab from "@/components/system/ChangelogTab";
 
 export default function System() {
   const [searchParams, setSearchParams] = useSearchParams();
