@@ -73,7 +73,8 @@ type SectionKey =
   | "regras"
   | "integracoes"
   | "metricas"
-  | "testar";
+  | "testar"
+  | "whatsapp";
 
 const SECTIONS: { key: SectionKey; icon: LucideIcon; label: string }[] = [
   { key: "identidade", icon: Bot, label: "Identidade" },
