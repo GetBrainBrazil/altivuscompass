@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
-import { MessageSquare, CheckCircle, Clock, UserPlus, ArrowUp, ArrowDown, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { MessageSquare, CheckCircle, Clock, UserPlus, ArrowUp, ArrowDown, X, ArrowRight, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
