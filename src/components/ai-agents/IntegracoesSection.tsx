@@ -54,7 +54,7 @@ const formatSize = (bytes: number) => {
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 type FlowKey = "nova_cotacao" | "suporte" | "prospect_indeciso";
-type DistributionMethod = "round_robin" | "all" | "availability";
+type DistributionMethod = "round_robin" | "all";
 type FallbackMode = "wait_message" | "notify_manager" | "both";
 
 export interface TeamMemberConfig {
