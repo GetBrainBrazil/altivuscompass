@@ -467,6 +467,9 @@ export default function AIAgentEdit() {
 
         {/* Content panel */}
         <div className="flex-1 min-w-0 space-y-8">
+        {!isSectionReady && <SectionSkeleton section={activeSection} />}
+        {isSectionReady && (
+        <div className="animate-fade-in">
         {activeSection === "identidade" && (
         <section className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
           <div className="px-8 py-5 border-b border-border/60">
