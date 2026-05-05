@@ -442,19 +442,19 @@ export default function AIAgentEdit() {
   };
 
   return (
-    <div className="min-h-screen bg-[hsl(220_15%_97%)]">
+    <div className="min-h-screen bg-[hsl(220_15%_97%)] dark:bg-[#0F1117]">
       {/* Sticky header */}
-      <div className="sticky top-14 z-40 bg-white border-b border-border/60 shadow-sm">
+      <div className="sticky top-14 z-40 bg-white dark:bg-[#161923] border-b border-border/60 dark:border-[#2A2D3A] shadow-sm">
         <div className="max-w-[1100px] mx-auto px-8 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
-            <div className="h-10 w-10 rounded-lg bg-[hsl(220_45%_15%)] flex items-center justify-center shrink-0">
-              <Bot className="h-5 w-5 text-white" />
+            <div className="h-10 w-10 rounded-lg bg-[hsl(220_45%_15%)] dark:bg-[#2A3F6B] flex items-center justify-center shrink-0">
+              <Bot className="h-5 w-5 text-white dark:text-gray-100" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-lg font-semibold tracking-tight truncate">
+              <h1 className="text-lg font-semibold tracking-tight truncate dark:text-gray-100">
                 {form.name || "Agente sem nome"}
               </h1>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground dark:text-gray-500">
                 Gerencie seu agente de inteligência artificial
               </p>
             </div>
