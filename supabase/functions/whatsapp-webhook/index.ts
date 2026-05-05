@@ -888,6 +888,38 @@ async function handleLeadCapture(
   } catch (e) {
     console.error('[collected_data persist] error:', e)
   }
+
+  // ===== HANDOFF: a IA detectou que precisa de atendimento humano =====
+  const shouldEscalate = ai.extracted?.escalate_to_human === true
+  if (shouldEscalate) {
+    const reason = (ai.extracted?.escalation_reason || 'sinal de handoff detectado pela IA').toString().slice(0, 200)
+    try {
+      // 1) Garantir que o contato esteja como 'lead' (ou superior). Trigger anti-regressão protege 'cliente'.
+      const { data: contactRow } = await supabase
+        .from('contacts')
+        .select('id, level')
+        .or(`lead_id.eq.${leadId},phone.eq.${phone}`)
+        .maybeSingle()
+      if (contactRow?.id && contactRow.level === 'prospect') {
+        await supabase
+          .from('contacts')
+          .update({ level: 'lead', promoted_to_lead_at: new Date().toISOString() })
+          .eq('id', contactRow.id)
+        console.log(`[handoff] contato ${contactRow.id} promovido prospect→lead. motivo: ${reason}`)
+      }
+
+      // 2) Mudar wa_conversations.status para 'human' (o trigger DB notifica admins/managers)
+      await supabase
+        .from('wa_conversations')
+        .update({ status: 'human' })
+        .eq('phone', phone)
+
+      console.log(`[handoff] conversa ${phone} escalada para humano. motivo: ${reason}`)
+    } catch (e) {
+      console.error('[handoff] erro ao escalar:', e)
+    }
+  }
+
   sessionState.messages = [...(sessionState.messages || []), { role: 'assistant', content: ai.reply }]
 
   await supabase.from('whatsapp_sessions').update({
@@ -898,7 +930,7 @@ async function handleLeadCapture(
 
   await sendZapiText(zapiInstanceId, zapiToken, zapiSecurityToken, phone, ai.reply)
 
-  return { status: 'lead_capture_processed', lead_id: leadId }
+  return { status: shouldEscalate ? 'lead_capture_handoff' : 'lead_capture_processed', lead_id: leadId }
 }
 
 function buildLeadUpdates(extracted: any, current: any): Record<string, any> {
@@ -1008,7 +1040,7 @@ Hoje é ${today}.
 **FORMATO DE RESPOSTA OBRIGATÓRIO**:
 Responda primeiro a mensagem em texto natural. Depois, em uma linha separada no FINAL, retorne EXATAMENTE este bloco JSON (use null para campos não mencionados nesta mensagem):
 
-###JSON###{"full_name":null,"email":null,"destination":null,"travel_date_start":null,"travel_date_end":null,"flexible_dates":null,"flexible_dates_description":null,"travelers_count":null,"budget_estimate":null,"preferences":null,"ai_summary":null,"extras":{}}`
+###JSON###{"full_name":null,"email":null,"destination":null,"travel_date_start":null,"travel_date_end":null,"flexible_dates":null,"flexible_dates_description":null,"travelers_count":null,"budget_estimate":null,"preferences":null,"ai_summary":null,"extras":{},"escalate_to_human":false,"escalation_reason":null}`
 
   const leadPrompt = `Você é um(a) consultor(a) de viagens da **Altivus Turismo** atendendo um contato pelo WhatsApp.
 
@@ -1023,6 +1055,13 @@ Seu papel:
 5. Use emojis com moderação (✈️ 🏝️ 🗺️)
 6. Mantenha as respostas curtas (máximo 3-4 linhas)
 7. Quando tiver dados suficientes (destino + datas + viajantes), avise que um consultor humano dará continuidade com uma cotação personalizada
+8. **HANDOFF (escalate_to_human=true)**: defina como `true` SEMPRE que detectar que o contato precisa de atendimento humano AGORA — mesmo que ainda não tenha coletado todos os dados. Sinais claros:
+   - Pedido explícito ("quero falar com atendente", "consultor humano", "alguém pode me ajudar")
+   - Reclamações, urgência, problema com viagem em andamento, suporte pós-venda
+   - Pergunta complexa fora do escopo de qualificação inicial (visto, documentação específica, problema com fornecedor)
+   - Demonstração clara de intenção de compra com pelo menos destino definido (ex: "quero fechar agora", "manda a proposta")
+   - Frustração ou repetição (a IA não conseguiu avançar em 2-3 tentativas)
+   Quando escalate_to_human=true, sua mensagem deve ser curta tranquilizando o cliente que um consultor humano dará continuidade em instantes. Preencha "escalation_reason" com 1 frase curta explicando o motivo (ex: "pediu atendente", "intenção clara de compra", "suporte pós-venda").
 
 Informações que você precisa coletar:
 - Nome completo (se diferente do que veio no WhatsApp)
@@ -1041,7 +1080,7 @@ ${JSON.stringify(knownData, null, 2)}
 Responda primeiro a mensagem em texto natural para o usuário.
 Depois, em uma linha separada no FINAL, retorne EXATAMENTE este bloco JSON com os dados extraídos APENAS desta última mensagem do usuário (use null para campos não mencionados):
 
-###JSON###{"full_name":null,"email":null,"destination":null,"travel_date_start":null,"travel_date_end":null,"flexible_dates":null,"flexible_dates_description":null,"travelers_count":null,"budget_estimate":null,"preferences":null,"ai_summary":null,"extras":{}}
+###JSON###{"full_name":null,"email":null,"destination":null,"travel_date_start":null,"travel_date_end":null,"flexible_dates":null,"flexible_dates_description":null,"travelers_count":null,"budget_estimate":null,"preferences":null,"ai_summary":null,"extras":{},"escalate_to_human":false,"escalation_reason":null}
 
 Regras do JSON:
 - "travel_date_start" e "travel_date_end" devem ser strings no formato "YYYY-MM-DD" ou null
@@ -1051,6 +1090,7 @@ Regras do JSON:
 - "preferences" é um texto curto resumindo preferências mencionadas NESTA mensagem (não repita o que já foi coletado)
 - "ai_summary" é um resumo geral atualizado da viagem (1-2 frases) — só preencha quando tiver mudanças significativas
 - "extras" pode conter qualquer dado extra estruturado relevante (ex: {"motivo":"lua de mel","com_criancas":true})
+- "escalate_to_human" é true APENAS quando há sinal claro de necessidade de handoff (veja regra 8)
 - O JSON deve ser válido e na ÚLTIMA linha da resposta`
 
   const systemPrompt = isExistingClient ? clientPrompt : leadPrompt
