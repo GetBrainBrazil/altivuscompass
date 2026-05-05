@@ -177,6 +177,47 @@ export default function AIAgentEdit() {
   const [modelError, setModelError] = useState<string | null>(null);
   const isDirty = serialize(form) !== savedSnapshot;
 
+  // Operational status toggle (saves immediately, independent of "Salvar")
+  const [statusSaving, setStatusSaving] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<boolean | null>(null);
+
+  // Load current operational status from DB on mount
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("ai_agent_status" as any)
+        .select("active")
+        .eq("agent_id", form.id)
+        .maybeSingle();
+      if (!cancelled && data && typeof (data as any).active === "boolean") {
+        setForm((f) => ({ ...f, active: (data as any).active }));
+        setSavedSnapshot((prev) => prev); // don't mark dirty
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const confirmStatusChange = async () => {
+    if (pendingStatus === null) return;
+    const next = pendingStatus;
+    setStatusSaving(true);
+    const { error } = await supabase
+      .from("ai_agent_status" as any)
+      .upsert({ agent_id: form.id, active: next, updated_at: new Date().toISOString() }, { onConflict: "agent_id" });
+    setStatusSaving(false);
+    if (error) {
+      toast.error("Erro ao alterar status. Tente novamente.");
+      setPendingStatus(null);
+      return;
+    }
+    setForm((f) => ({ ...f, active: next }));
+    if (next) toast.success("Agente ativado com sucesso");
+    else toast("Agente desativado");
+    setPendingStatus(null);
+  };
+
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(form));
   }, [form]);
