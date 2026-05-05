@@ -3426,50 +3426,68 @@ export type Database = {
       }
       wa_conversations: {
         Row: {
+          client_context_snapshot: Json | null
           client_id: string | null
+          collected_data: Json
           contact_id: string | null
           contact_name: string | null
           created_at: string
+          days_inactive_on_resume: number | null
           id: string
           is_group: boolean
           last_message_at: string | null
           last_message_from: string | null
           last_message_text: string | null
+          last_resumed_at: string | null
           lead_id: string | null
           phone: string
+          resumed_from_status: string | null
           status: string
+          summary: string | null
           unread_count: number
           updated_at: string
         }
         Insert: {
+          client_context_snapshot?: Json | null
           client_id?: string | null
+          collected_data?: Json
           contact_id?: string | null
           contact_name?: string | null
           created_at?: string
+          days_inactive_on_resume?: number | null
           id?: string
           is_group?: boolean
           last_message_at?: string | null
           last_message_from?: string | null
           last_message_text?: string | null
+          last_resumed_at?: string | null
           lead_id?: string | null
           phone: string
+          resumed_from_status?: string | null
           status?: string
+          summary?: string | null
           unread_count?: number
           updated_at?: string
         }
         Update: {
+          client_context_snapshot?: Json | null
           client_id?: string | null
+          collected_data?: Json
           contact_id?: string | null
           contact_name?: string | null
           created_at?: string
+          days_inactive_on_resume?: number | null
           id?: string
           is_group?: boolean
           last_message_at?: string | null
           last_message_from?: string | null
           last_message_text?: string | null
+          last_resumed_at?: string | null
           lead_id?: string | null
           phone?: string
+          resumed_from_status?: string | null
           status?: string
+          summary?: string | null
           unread_count?: number
           updated_at?: string
         }
