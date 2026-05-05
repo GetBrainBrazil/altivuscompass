@@ -71,6 +71,27 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_agent_status: {
+        Row: {
+          active: boolean
+          agent_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          agent_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          agent_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       airlines: {
         Row: {
           country: string | null
