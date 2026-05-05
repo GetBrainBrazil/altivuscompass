@@ -42,7 +42,7 @@ import LeadConvert from "./pages/LeadConvert";
 import OpsNew from "./pages/OpsNew";
 
 import AIAgentEdit from "./pages/AIAgentEdit";
-import WhatsAppConnection from "./pages/WhatsAppConnection";
+
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
