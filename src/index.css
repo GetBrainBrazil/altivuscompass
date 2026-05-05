@@ -487,11 +487,6 @@
 .dark :where(.bg-blue-50):not(.public-quote *)   { background-color: hsl(217 91% 60% / 0.10) !important; }
 .dark :where(.bg-blue-50\/50):not(.public-quote *) { background-color: hsl(217 91% 60% / 0.08) !important; }
 .dark :where(.border-blue-200):not(.public-quote *) { border-color: hsl(217 91% 60% / 0.30) !important; }
-.dark :where(.text-blue-700):not(.public-quote *),
-.dark :where(.text-blue-900):not(.public-quote *) { color: hsl(217 91% 75%) !important; }
-
-.dark :where(.bg-amber-50):not(.public-quote *)  { background-color: hsl(38 90% 55% / 0.10) !important; }
-.dark :where(.border-amber-200):not(.public-quote *) { border-color: hsl(38 90% 55% / 0.30) !important; }
 .dark :where(.text-blue-600):not(.public-quote *),
 .dark :where(.text-blue-700):not(.public-quote *),
 .dark :where(.text-blue-800):not(.public-quote *),
