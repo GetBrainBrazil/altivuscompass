@@ -492,7 +492,7 @@ export default function AIAgentEdit() {
                 </AlertDialogContent>
               </AlertDialog>
             )}
-            <Button variant="outline" onClick={handleCancel} className="h-9">
+            <Button variant="outline" onClick={handleCancel} className="h-9 dark:text-gray-400 dark:border-[#3A3D4A] dark:hover:bg-white/5">
               Cancelar
             </Button>
             <TooltipProvider delayDuration={200}>
@@ -501,7 +501,7 @@ export default function AIAgentEdit() {
                   <Button
                     onClick={handleSave}
                     disabled={saving}
-                    className="relative h-9 bg-[hsl(220_45%_15%)] hover:bg-[hsl(220_45%_22%)] text-white"
+                    className="relative h-9 bg-[hsl(220_45%_15%)] hover:bg-[hsl(220_45%_22%)] text-white dark:bg-[#2A3F6B] dark:hover:bg-[#34497A] dark:text-gray-100"
                   >
                     {saving ? (
                       <>
