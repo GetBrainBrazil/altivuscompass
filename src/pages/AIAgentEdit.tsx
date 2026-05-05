@@ -150,7 +150,10 @@ export default function AIAgentEdit() {
     return DEFAULT_AGENT;
   });
 
-  const [activeSection, setActiveSection] = useState<SectionKey>("identidade");
+  const [searchParams] = useSearchParams();
+  const initialSection: SectionKey =
+    searchParams.get("section") === "whatsapp" ? "whatsapp" : "identidade";
+  const [activeSection, setActiveSection] = useState<SectionKey>(initialSection);
   const [revealedSections, setRevealedSections] = useState<Set<SectionKey>>(() => new Set());
   const wa = useWhatsAppProfile();
 
