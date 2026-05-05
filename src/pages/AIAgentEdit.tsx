@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Sparkles, Shield, Bot, ArrowLeft, FlaskConical, Trash2,
   Headset, MessageCircle, Brain, Globe, Plane, Compass, Heart, Star, ShieldCheck, User, Sparkle, Map, Briefcase, Camera, Coffee, Palmtree,
-  GitBranch, ClipboardList, Plug, BarChart3, Loader2, AlertTriangle, CheckCircle, Power, Smartphone,
+  GitBranch, ClipboardList, Plug, BarChart3, Loader2, AlertTriangle, AlertCircle, Check, CheckCircle, Power, Smartphone,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -817,39 +817,59 @@ export default function AIAgentEdit() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog
-        open={pendingNav !== null}
-        onOpenChange={(open) => { if (!open) setPendingNav(null); }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
+      {pendingNav !== null && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-[4px] animate-in fade-in-0 duration-200"
+          onClick={() => setPendingNav(null)}
+          onKeyDown={(e) => { if (e.key === "Escape") setPendingNav(null); }}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+          ref={(el) => el?.focus()}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-[420px] bg-white rounded-[12px] p-7 animate-in fade-in-0 zoom-in-95 duration-200"
+            style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}
+          >
+            <div className="flex justify-center">
+              <div className="flex items-center justify-center w-14 h-14 rounded-full bg-[#FFFBEB]">
+                <AlertCircle className="text-[#F59E0B]" size={40} strokeWidth={2} />
+              </div>
+            </div>
+            <h2 className="mt-4 text-center text-[18px] font-semibold text-gray-900">
               Alterações não salvas
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Você fez mudanças nas configurações do agente que ainda não foram salvas.
-              Deseja salvar antes de sair ou descartar as alterações?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel>Continuar editando</AlertDialogCancel>
-            <Button
-              variant="outline"
-              onClick={handleDiscardAndLeave}
-              className="text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/5"
-            >
-              Descartar alterações
-            </Button>
-            <AlertDialogAction
-              onClick={(e) => { e.preventDefault(); handleSaveAndLeave(); }}
-              className="bg-[hsl(220_45%_15%)] hover:bg-[hsl(220_45%_22%)] text-white"
-            >
-              Salvar e sair
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </h2>
+            <p className="mt-2 text-center text-[14px] text-gray-500">
+              Você tem mudanças que ainda não foram salvas. O que deseja fazer?
+            </p>
+            <div className="mt-6 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleSaveAndLeave}
+                className="w-full h-[42px] rounded-lg bg-[#1B2A4A] hover:bg-[#243558] text-white font-semibold text-sm flex items-center justify-center gap-2 transition-colors duration-150"
+              >
+                <Check size={16} />
+                Salvar e sair
+              </button>
+              <button
+                type="button"
+                onClick={handleDiscardAndLeave}
+                className="w-full h-[42px] rounded-lg bg-transparent border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-600 text-sm transition-colors duration-150"
+              >
+                Descartar alterações
+              </button>
+              <button
+                type="button"
+                onClick={() => setPendingNav(null)}
+                className="w-full h-9 bg-transparent text-gray-400 hover:text-gray-600 text-[13px] transition-colors duration-150"
+              >
+                Continuar editando
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
