@@ -443,7 +443,7 @@ export function TestarAgenteSection({ agent }: Props) {
       if (quotes.length) {
         lines.push("", "### Cotações");
         for (const q of quotes) {
-          const v = q.total_value ? `${q.currency || "BRL"} ${q.total_value}` : "";
+          const v = q.total_value ? `BRL ${q.total_value}` : "";
           lines.push(`- ${q.destination || q.title || "—"} — ${q.conclusion_type || q.stage || "—"}${v ? ` — ${v}` : ""}`);
         }
       }
