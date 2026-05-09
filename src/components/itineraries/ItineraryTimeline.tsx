@@ -310,6 +310,16 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
                       )}
                     </div>
                     {act.description && <p className="text-xs text-muted-foreground mt-1">{act.description}</p>}
+                    {(() => {
+                      const codes = [...extractReservations(act.description), ...extractReservations(act.notes)];
+                      const unique = Array.from(new Set(codes));
+                      if (unique.length === 0) return null;
+                      return (
+                        <div className="flex flex-wrap gap-1.5">
+                          {unique.map((c) => <ReservationBadge key={c} code={c} />)}
+                        </div>
+                      );
+                    })()}
                     {act.address && (
                       <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                         <MapPin className="h-3 w-3" />
