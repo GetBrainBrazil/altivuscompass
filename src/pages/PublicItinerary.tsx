@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar, Plane, Map as MapIcon, EyeOff, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { printPdfFromUrl } from "@/lib/print-pdf";
 
 export default function PublicItinerary() {
   const { token } = useParams<{ token: string }>();
