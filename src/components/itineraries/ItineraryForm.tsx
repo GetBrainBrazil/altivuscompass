@@ -48,6 +48,10 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
 
   const [publicEditable, setPublicEditable] = useState(false);
   const [publicToken, setPublicToken] = useState<string | null>(null);
+  const [baseline, setBaseline] = useState<string>("");
+
+  const currentSnapshot = JSON.stringify({ form, summary, publicEditable });
+  const isDirty = currentSnapshot !== baseline;
 
   const persistenceKey = `itinerary-${currentId || "new"}`;
   const setFormCallback = useCallback((data: typeof form) => setForm(data), []);
