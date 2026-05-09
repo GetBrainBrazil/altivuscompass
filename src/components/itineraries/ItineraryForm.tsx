@@ -121,6 +121,33 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
       setSummary(itinerary.summary || "");
       setPublicEditable(itinerary.public_editable || false);
       setPublicToken(itinerary.public_token || null);
+      setBaseline(JSON.stringify({
+        form: {
+          title: itinerary.title || "",
+          destination: itinerary.destination || "",
+          traveler_profile: itinerary.traveler_profile || "",
+          travel_date_start: itinerary.travel_date_start || "",
+          travel_date_end: itinerary.travel_date_end || "",
+          main_bases: itinerary.main_bases || "",
+          base_file: itinerary.base_file || "",
+          notes: itinerary.notes || "",
+          client_id: itinerary.client_id || "",
+          arrival_datetime: itinerary.arrival_datetime ? new Date(itinerary.arrival_datetime).toISOString().slice(0, 16) : "",
+          departure_datetime: itinerary.departure_datetime ? new Date(itinerary.departure_datetime).toISOString().slice(0, 16) : "",
+          arrival_airport_id: itinerary.arrival_airport_id || "",
+          departure_airport_id: itinerary.departure_airport_id || "",
+          traveler_type: itinerary.traveler_type || "",
+          trip_style: itinerary.trip_style || "",
+          wake_time: itinerary.wake_time || "08:00",
+          sleep_time: itinerary.sleep_time || "22:00",
+          desired_places: itinerary.desired_places || [],
+          defined_hotels: itinerary.defined_hotels || [],
+          preferred_hotels: itinerary.preferred_hotels || [],
+          quote_id: itinerary.quote_id || "",
+        },
+        summary: itinerary.summary || "",
+        publicEditable: itinerary.public_editable || false,
+      }));
     }
   }, [itinerary]);
 
