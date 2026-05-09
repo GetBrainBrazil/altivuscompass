@@ -36,6 +36,7 @@ import TaskDetail from "./pages/TaskDetail";
 import PublicQuote from "./pages/PublicQuote";
 import Itineraries from "./pages/Itineraries";
 import PublicItinerary from "./pages/PublicItinerary";
+import PublicItineraryPDF from "./pages/PublicItineraryPDF";
 import ServiceCenter from "./pages/ServiceCenter";
 import CRM from "./pages/CRM";
 import LeadDetail from "./pages/LeadDetail";
@@ -67,6 +68,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/quote/:id" element={<PublicQuote />} />
             <Route path="/roteiro/:token" element={<PublicItinerary />} />
+            <Route path="/roteiro/:token/pdf" element={<PublicItineraryPDF />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/" element={<ProtectedRoute><AppLayout><Dashboard /></AppLayout></ProtectedRoute>} />
             <Route path="/tasks" element={<ProtectedRoute><AppLayout><Tasks /></AppLayout></ProtectedRoute>} />

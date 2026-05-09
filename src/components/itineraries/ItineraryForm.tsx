@@ -214,7 +214,7 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
               <Copy className="h-3 w-3" /> Link
             </Button>
             <Button variant="outline" size="sm" asChild className="gap-1 h-7 text-xs">
-              <a href={`${publicUrl}?pdf=1`} target="_blank" rel="noopener">
+              <a href={`${publicUrl}/pdf`} target="_blank" rel="noopener">
                 <FileDown className="h-3 w-3" /> PDF
               </a>
             </Button>
