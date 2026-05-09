@@ -12,10 +12,19 @@ import { Button } from "@/components/ui/button";
 
 export default function PublicItinerary() {
   const { token } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
   const [mobileMapVisible, setMobileMapVisible] = useState(true);
+
+  // Auto-open print dialog when ?pdf=1
+  useEffect(() => {
+    if (searchParams.get("pdf") === "1") {
+      const t = setTimeout(() => window.print(), 1200);
+      return () => clearTimeout(t);
+    }
+  }, [searchParams]);
 
   const { data: itinerary, isLoading, error } = useQuery({
     queryKey: ["public-itinerary", token],
