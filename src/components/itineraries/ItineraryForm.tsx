@@ -18,6 +18,7 @@ import ItineraryHotelsTab from "./ItineraryHotelsTab";
 import ItineraryRestaurantsTab from "./ItineraryRestaurantsTab";
 import ItineraryActivitiesTab from "./ItineraryActivitiesTab";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
+import { printPdfFromUrl } from "@/lib/print-pdf";
 
 interface Props {
   itineraryId: string | null;
