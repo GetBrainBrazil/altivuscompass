@@ -62,22 +62,32 @@ export default function PublicItinerary() {
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
-      <div className="bg-primary text-primary-foreground py-4 px-6 shrink-0">
-        <div className="max-w-full mx-auto">
-          <p className="text-xs opacity-80 mb-0.5">Roteiro de Viagem · Altivus Turismo</p>
-          <h1 className="text-xl font-bold">{itinerary.title}</h1>
-          <div className="flex flex-wrap gap-4 mt-2 text-xs opacity-90">
-            {itinerary.travel_date_start && (
-              <div className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                {format(new Date(itinerary.travel_date_start + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}
-                {itinerary.travel_date_end && ` a ${format(new Date(itinerary.travel_date_end + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}`}
-              </div>
-            )}
-            {itinerary.arrival_airport && (
-              <div className="flex items-center gap-1"><Plane className="h-3 w-3" />{(itinerary.arrival_airport as any).iata_code} — {(itinerary.arrival_airport as any).city}</div>
-            )}
+      <div className="bg-primary text-primary-foreground py-4 px-6 shrink-0 print:hidden">
+        <div className="max-w-full mx-auto flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs opacity-80 mb-0.5">Roteiro de Viagem · Altivus Turismo</p>
+            <h1 className="text-xl font-bold">{itinerary.title}</h1>
+            <div className="flex flex-wrap gap-4 mt-2 text-xs opacity-90">
+              {itinerary.travel_date_start && (
+                <div className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {format(new Date(itinerary.travel_date_start + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}
+                  {itinerary.travel_date_end && ` a ${format(new Date(itinerary.travel_date_end + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}`}
+                </div>
+              )}
+              {itinerary.arrival_airport && (
+                <div className="flex items-center gap-1"><Plane className="h-3 w-3" />{(itinerary.arrival_airport as any).iata_code} — {(itinerary.arrival_airport as any).city}</div>
+              )}
+            </div>
           </div>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => window.print()}
+            className="gap-1 shrink-0"
+          >
+            <Download className="h-4 w-4" /> Baixar PDF
+          </Button>
         </div>
       </div>
 
