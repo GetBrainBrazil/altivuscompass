@@ -83,7 +83,14 @@ REGRAS OBRIGATÓRIAS DE TRANSPORTE:
 - Quando o deslocamento é entre dois AEROPORTOS ou entre cidades distantes (>200km), o transport_mode DEVE ser "aviao".
 - Quando o destino ou origem é um aeroporto e o outro ponto fica na mesma cidade/região, use "uber", "taxi" ou "transfer".
 - Para deslocamentos curtos (<3km) em áreas urbanas com calçadas, prefira "a_pe".
-- NUNCA coloque "uber" ou "taxi" entre dois aeroportos de cidades diferentes.`;
+- NUNCA coloque "uber" ou "taxi" entre dois aeroportos de cidades diferentes.
+
+REGRAS DE ALUGUEL DE CARRO:
+- Analise CUIDADOSAMENTE o descritivo da viagem, observações, atividades cadastradas e roteiro existente em busca de menções a aluguel/locação de carro (palavras como "aluguel", "locação", "locadora", "carro alugado", "rent a car", "Localiza", "Movida", "Hertz", "Avis", "Unidas", reservas de locadora, retirada/devolução de veículo).
+- Se houver período com carro alugado (entre a retirada e a devolução), use SEMPRE transport_mode "carro" (ou similar) para todos os deslocamentos dentro desse período. NÃO sugira "uber", "taxi" nem "transfer" enquanto o cliente estiver com o carro alugado, exceto se houver justificativa clara (ex: ida a um restaurante onde haverá consumo de álcool, área de pedágio/zona restrita sem estacionamento, balsa apenas para pedestres). Quando usar outro modal nesse período, EXPLIQUE o motivo no transport_notes.
+- Para cada destino visitado de carro durante o período de aluguel, recomende um ESTACIONAMENTO próximo (nome, endereço aproximado e custo médio se possível) no campo transport_notes ou notes da atividade.
+- Considere o tempo necessário para retirar o carro na locadora (use uma atividade/parada específica de retirada) e para devolvê-lo antes do voo de saída (com folga adequada).
+- Fora do período de aluguel, siga as regras normais de transporte.`;
 
     let userPrompt = "";
 
