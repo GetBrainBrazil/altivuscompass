@@ -18,6 +18,7 @@ import ItineraryHotelsTab from "./ItineraryHotelsTab";
 import ItineraryRestaurantsTab from "./ItineraryRestaurantsTab";
 import ItineraryActivitiesTab from "./ItineraryActivitiesTab";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
+import { printPdfFromUrl } from "@/lib/print-pdf";
 
 interface Props {
   itineraryId: string | null;
@@ -213,10 +214,13 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
             <Button variant="outline" size="sm" onClick={copyPublicUrl} className="gap-1 h-7 text-xs">
               <Copy className="h-3 w-3" /> Link
             </Button>
-            <Button variant="outline" size="sm" asChild className="gap-1 h-7 text-xs">
-              <a href={`${publicUrl}/pdf`} target="_blank" rel="noopener">
-                <FileDown className="h-3 w-3" /> PDF
-              </a>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => printPdfFromUrl(`${publicUrl}/pdf`)}
+              className="gap-1 h-7 text-xs"
+            >
+              <FileDown className="h-3 w-3" /> PDF
             </Button>
             <Button variant="ghost" size="sm" className="h-7" asChild>
               <a href={publicUrl} target="_blank" rel="noopener"><ExternalLink className="h-3 w-3" /></a>
