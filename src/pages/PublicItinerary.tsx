@@ -92,14 +92,14 @@ export default function PublicItinerary() {
       </div>
 
       {/* Split content */}
-      <div className={`flex-1 flex min-h-0 ${isMobile ? "flex-col" : "flex-row"}`}>
+      <div className={`flex-1 flex min-h-0 ${isMobile ? "flex-col" : "flex-row"} print:block print:h-auto print:overflow-visible`}>
         {/* Timeline */}
-        <div className={`overflow-y-auto p-4 ${isMobile ? "flex-1 border-b" : "w-1/2 border-r"}`}>
+        <div className={`overflow-y-auto p-4 ${isMobile ? "flex-1 border-b" : "w-1/2 border-r"} print:w-full print:border-0 print:overflow-visible`}>
           <ItineraryTimeline
             itineraryId={itinerary.id}
             selectedDayId={selectedDayId}
             onSelectDay={setSelectedDayId}
-            readOnly={!itinerary.public_editable}
+            readOnly={true}
             selectedActivityId={selectedActivityId}
             onSelectActivity={setSelectedActivityId}
             summary={itinerary.summary}
@@ -108,7 +108,7 @@ export default function PublicItinerary() {
 
         {/* Map */}
         {(!isMobile || mobileMapVisible) && (
-          <div className={isMobile ? "h-[45vh] shrink-0 relative" : "w-1/2"}>
+          <div className={`${isMobile ? "h-[45vh] shrink-0 relative" : "w-1/2"} print:hidden`}>
             {isMobile && (
               <Button
                 size="sm"
@@ -134,7 +134,7 @@ export default function PublicItinerary() {
         {isMobile && !mobileMapVisible && (
           <Button
             onClick={() => setMobileMapVisible(true)}
-            className="fixed bottom-4 right-4 z-20 shadow-lg rounded-full h-12 px-4"
+            className="fixed bottom-4 right-4 z-20 shadow-lg rounded-full h-12 px-4 print:hidden"
           >
             <MapIcon className="h-4 w-4 mr-2" /> Mostrar mapa
           </Button>
