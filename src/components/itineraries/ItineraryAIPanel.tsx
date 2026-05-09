@@ -55,6 +55,10 @@ const normalizePrompt = (prompt?: string | null) => {
     missingRules.push("15. Em voos, trens, barcos ou deslocamentos entre cidades/terminais, crie sempre cards separados para origem e destino. Exemplo: aeroporto CDG deve ser um card e aeroporto de Nice outro card; o voo fica apenas no conector de transporte entre eles");
   }
 
+  if (!/ALUGUEL DE CARRO|carro alugado|locadora/i.test(trimmedPrompt)) {
+    missingRules.push("16. ALUGUEL DE CARRO: Identifique no descritivo, observações, atividades e roteiro qualquer menção a aluguel/locação de carro (locadora, carro alugado, retirada/devolução de veículo, reservas de locadora). Durante o período em que o cliente está com o carro alugado (entre retirada e devolução), use o próprio carro como modal de transporte para todos os deslocamentos. NÃO indique uber, taxi ou transfer nesse período, salvo justificativa clara (consumo de álcool, zona restrita, balsa só para pedestres etc.) — sempre explicando o motivo em transport_notes. Para cada destino visitado de carro, recomende um estacionamento próximo (nome, endereço e custo médio quando possível) em transport_notes ou notes. Inclua a parada de retirada do carro na locadora e reserve tempo suficiente para devolução antes do voo de saída");
+  }
+
   return missingRules.length > 0 ? `${trimmedPrompt}\n${missingRules.join("\n")}` : trimmedPrompt;
 };
 
