@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,6 +51,16 @@ export default function PublicItineraryPDF() {
     },
     enabled: !!itinerary?.id,
   });
+
+  // Auto-trigger print as soon as content is ready (route is PDF-only)
+  const printedRef = useRef(false);
+  useEffect(() => {
+    if (!printedRef.current && itinerary && days.length > 0) {
+      printedRef.current = true;
+      const t = setTimeout(() => window.print(), 600);
+      return () => clearTimeout(t);
+    }
+  }, [itinerary, days]);
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center"><p>Carregando roteiro...</p></div>;
