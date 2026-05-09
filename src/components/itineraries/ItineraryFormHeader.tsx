@@ -179,37 +179,24 @@ export default function ItineraryFormHeader({ form, setForm, clients, quotes, ai
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
         <div>
-          <Label className="text-xs">Cotação</Label>
-          <Popover open={quoteOpen} onOpenChange={setQuoteOpen}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" role="combobox" className="w-full justify-between font-normal h-auto min-h-[32px] text-sm whitespace-normal text-left py-1 leading-tight">
-                {form.quote_id ? formatQuoteLabel(quotes.find((q: any) => q.id === form.quote_id) || {}) : "Nenhuma"}
-                <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[320px] p-0">
-              <Command>
-                <CommandInput placeholder="Buscar cotação..." />
-                <CommandList>
-                  <CommandEmpty>Nenhuma cotação encontrada</CommandEmpty>
-                  <CommandGroup>
-                    <CommandItem onSelect={() => { setForm({ ...form, quote_id: "" }); setQuoteOpen(false); }}>
-                      <Check className={cn("mr-2 h-3 w-3", !form.quote_id ? "opacity-100" : "opacity-0")} />
-                      Nenhuma
-                    </CommandItem>
-                    {quotes.map((q: any) => (
-                      <CommandItem key={q.id} onSelect={() => { setForm({ ...form, quote_id: q.id }); setQuoteOpen(false); }}>
-                        <Check className={cn("mr-2 h-3 w-3", form.quote_id === q.id ? "opacity-100" : "opacity-0")} />
-                        {formatQuoteLabel(q)}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          <Label className="text-xs">Cliente {hasQuote && <span className="text-muted-foreground">(da cotação)</span>}</Label>
+          {hasQuote ? (
+            <Input className="h-8 text-sm" value={effectiveClientName} disabled />
+          ) : (
+            <ClientCombobox value={form.client_id} onChange={(v) => setForm({ ...form, client_id: v })} clients={clients} />
+          )}
+        </div>
+        <div>
+          <Label className="text-xs">Destino {hasQuote && <span className="text-muted-foreground">(da cotação)</span>}</Label>
+          <Input
+            className="h-8 text-sm"
+            value={effectiveDestination}
+            disabled={hasQuote}
+            onChange={(e) => setForm({ ...form, destination: e.target.value })}
+            placeholder="Ex: França, Itália..."
+          />
         </div>
       </div>
 
