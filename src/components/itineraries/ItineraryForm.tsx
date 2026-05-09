@@ -233,7 +233,7 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 flex-wrap">
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={onClose}>Cancelar</Button>
-          <Button size="sm" onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : currentId ? "Salvar" : "Criar Roteiro"}</Button>
+          <Button size="sm" onClick={handleSave} disabled={saving || (!!currentId && !isDirty)}>{saving ? "Salvando..." : currentId ? "Salvar" : "Criar Roteiro"}</Button>
           {onDelete && (
             <Button variant="destructive" size="sm" onClick={onDelete} className="gap-1">
               <Trash2 className="h-3 w-3" /> Excluir
