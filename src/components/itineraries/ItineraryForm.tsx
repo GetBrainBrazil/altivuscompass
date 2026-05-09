@@ -211,6 +211,14 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
 
         {currentId && publicUrl && (
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" asChild>
+              <a href={publicUrl} target="_blank" rel="noopener">
+                <ExternalLink className="h-3 w-3" /> Abrir roteiro
+              </a>
+            </Button>
+            <Button variant="outline" size="sm" onClick={copyPublicUrl} className="gap-1 h-7 text-xs">
+              <Copy className="h-3 w-3" /> Copiar link
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -218,14 +226,6 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
               className="gap-1 h-7 text-xs"
             >
               <FileDown className="h-3 w-3" /> Download PDF
-            </Button>
-            <Button variant="outline" size="sm" onClick={copyPublicUrl} className="gap-1 h-7 text-xs">
-              <Copy className="h-3 w-3" /> Copiar link
-            </Button>
-            <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" asChild>
-              <a href={publicUrl} target="_blank" rel="noopener">
-                <ExternalLink className="h-3 w-3" /> Abrir roteiro
-              </a>
             </Button>
           </div>
         )}
