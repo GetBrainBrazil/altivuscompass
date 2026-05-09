@@ -67,6 +67,41 @@ interface Props {
   airports: Airport[];
 }
 
+function ClientCombobox({ value, onChange, clients, disabled }: { value: string; onChange: (v: string) => void; clients: any[]; disabled?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const selected = clients.find(c => c.id === value);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" role="combobox" disabled={disabled} className="w-full justify-between font-normal h-8 text-sm">
+          {selected ? selected.full_name : "Selecione cliente..."}
+          <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[320px] p-0">
+        <Command>
+          <CommandInput placeholder="Buscar cliente..." />
+          <CommandList>
+            <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
+            <CommandGroup>
+              <CommandItem onSelect={() => { onChange(""); setOpen(false); }}>
+                <Check className={cn("mr-2 h-3 w-3", !value ? "opacity-100" : "opacity-0")} />
+                Nenhum
+              </CommandItem>
+              {clients.map((c: any) => (
+                <CommandItem key={c.id} value={c.full_name} onSelect={() => { onChange(c.id); setOpen(false); }}>
+                  <Check className={cn("mr-2 h-3 w-3", value === c.id ? "opacity-100" : "opacity-0")} />
+                  {c.full_name}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function AirportCombobox({ value, onChange, airports, label }: { value: string; onChange: (v: string) => void; airports: Airport[]; label: string }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -120,8 +155,14 @@ function AirportCombobox({ value, onChange, airports, label }: { value: string; 
   );
 }
 
-export default function ItineraryFormHeader({ form, setForm, quotes, airports }: Props) {
+export default function ItineraryFormHeader({ form, setForm, clients, quotes, airports }: Props) {
   const [quoteOpen, setQuoteOpen] = useState(false);
+  const selectedQuote: any = form.quote_id ? quotes.find((q: any) => q.id === form.quote_id) : null;
+  const hasQuote = !!selectedQuote;
+  const effectiveDestination = hasQuote ? (selectedQuote.destination || "") : form.destination;
+  const effectiveClientName = hasQuote
+    ? (selectedQuote.clients?.full_name || "—")
+    : (clients.find((c: any) => c.id === form.client_id)?.full_name || "");
 
   return (
     <div className="space-y-2 min-w-0">
@@ -135,6 +176,27 @@ export default function ItineraryFormHeader({ form, setForm, quotes, airports }:
         <div className="w-full md:w-[190px] shrink-0">
           <Label className="text-xs">Data/Hora Chegada</Label>
           <Input className="h-8 text-sm" type="datetime-local" value={form.arrival_datetime} onChange={(e) => setForm({ ...form, arrival_datetime: e.target.value })} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
+        <div>
+          <Label className="text-xs">Cliente {hasQuote && <span className="text-muted-foreground">(da cotação)</span>}</Label>
+          {hasQuote ? (
+            <Input className="h-8 text-sm" value={effectiveClientName} disabled />
+          ) : (
+            <ClientCombobox value={form.client_id} onChange={(v) => setForm({ ...form, client_id: v })} clients={clients} />
+          )}
+        </div>
+        <div>
+          <Label className="text-xs">Destino {hasQuote && <span className="text-muted-foreground">(da cotação)</span>}</Label>
+          <Input
+            className="h-8 text-sm"
+            value={effectiveDestination}
+            disabled={hasQuote}
+            onChange={(e) => setForm({ ...form, destination: e.target.value })}
+            placeholder="Ex: França, Itália..."
+          />
         </div>
       </div>
 
