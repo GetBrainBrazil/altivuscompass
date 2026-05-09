@@ -67,6 +67,41 @@ interface Props {
   airports: Airport[];
 }
 
+function ClientCombobox({ value, onChange, clients, disabled }: { value: string; onChange: (v: string) => void; clients: any[]; disabled?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const selected = clients.find(c => c.id === value);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" role="combobox" disabled={disabled} className="w-full justify-between font-normal h-8 text-sm">
+          {selected ? selected.full_name : "Selecione cliente..."}
+          <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[320px] p-0">
+        <Command>
+          <CommandInput placeholder="Buscar cliente..." />
+          <CommandList>
+            <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
+            <CommandGroup>
+              <CommandItem onSelect={() => { onChange(""); setOpen(false); }}>
+                <Check className={cn("mr-2 h-3 w-3", !value ? "opacity-100" : "opacity-0")} />
+                Nenhum
+              </CommandItem>
+              {clients.map((c: any) => (
+                <CommandItem key={c.id} value={c.full_name} onSelect={() => { onChange(c.id); setOpen(false); }}>
+                  <Check className={cn("mr-2 h-3 w-3", value === c.id ? "opacity-100" : "opacity-0")} />
+                  {c.full_name}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function AirportCombobox({ value, onChange, airports, label }: { value: string; onChange: (v: string) => void; airports: Airport[]; label: string }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
