@@ -2,7 +2,43 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, MapPin, Clock, Car, Train, Ship, Plane, Footprints, Bus, Pencil, ExternalLink } from "lucide-react";
+import { Trash2, MapPin, Clock, Car, Train, Ship, Plane, Footprints, Bus, Pencil, ExternalLink, Ticket, Copy, Check } from "lucide-react";
+import { notify } from "@/lib/notify";
+
+// Extracts reservation/booking codes from text (e.g. "Reserva 731378040", "Localizador ABC123", "Booking #XYZ-987")
+function extractReservations(text: string | null | undefined): string[] {
+  if (!text) return [];
+  const re = /(?:reserva(?:\s+n[º°.]?)?|reservation|localizador|booking|conf(?:irmação)?|c[oó]digo)\s*[#:nº°.\-]*\s*([A-Z0-9][A-Z0-9\-]{4,})/gi;
+  const out: string[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m[1] && !out.includes(m[1])) out.push(m[1]);
+  }
+  return out;
+}
+
+function ReservationBadge({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(code).then(() => {
+          setCopied(true);
+          notify.success("Código copiado", { description: code });
+          setTimeout(() => setCopied(false), 1500);
+        });
+      }}
+      className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200 text-[11px] font-mono font-semibold hover:bg-amber-200 dark:hover:bg-amber-900/60 transition-colors"
+      title="Clique para copiar"
+    >
+      <Ticket className="h-3 w-3" />
+      <span>Reserva: {code}</span>
+      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3 opacity-60" />}
+    </button>
+  );
+}
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -274,6 +310,16 @@ export default function ItineraryTimeline({ itineraryId, selectedDayId, onSelect
                       )}
                     </div>
                     {act.description && <p className="text-xs text-muted-foreground mt-1">{act.description}</p>}
+                    {(() => {
+                      const codes = [...extractReservations(act.description), ...extractReservations(act.notes)];
+                      const unique = Array.from(new Set(codes));
+                      if (unique.length === 0) return null;
+                      return (
+                        <div className="flex flex-wrap gap-1.5">
+                          {unique.map((c) => <ReservationBadge key={c} code={c} />)}
+                        </div>
+                      );
+                    })()}
                     {act.address && (
                       <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                         <MapPin className="h-3 w-3" />
