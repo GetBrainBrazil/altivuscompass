@@ -210,12 +210,13 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
 
         {currentId && publicUrl && (
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              <Switch checked={publicEditable} onCheckedChange={togglePublic} />
-              <Label className="text-xs">Cliente edita</Label>
-            </div>
             <Button variant="outline" size="sm" onClick={copyPublicUrl} className="gap-1 h-7 text-xs">
               <Copy className="h-3 w-3" /> Link
+            </Button>
+            <Button variant="outline" size="sm" asChild className="gap-1 h-7 text-xs">
+              <a href={`${publicUrl}?pdf=1`} target="_blank" rel="noopener">
+                <FileDown className="h-3 w-3" /> PDF
+              </a>
             </Button>
             <Button variant="ghost" size="sm" className="h-7" asChild>
               <a href={publicUrl} target="_blank" rel="noopener"><ExternalLink className="h-3 w-3" /></a>
