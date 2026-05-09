@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Copy, ExternalLink, Trash2 } from "lucide-react";
+import { Copy, ExternalLink, Trash2, FileDown } from "lucide-react";
 import ItineraryFormHeader from "./ItineraryFormHeader";
 import ItineraryAIPanel from "./ItineraryAIPanel";
 import ItineraryChatPanel from "./ItineraryChatPanel";
