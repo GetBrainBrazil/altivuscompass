@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +7,7 @@ import ItineraryTimeline from "@/components/itineraries/ItineraryTimeline";
 import ItineraryMapView from "@/components/itineraries/ItineraryMapView";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, Plane, Map as MapIcon, EyeOff } from "lucide-react";
+import { Calendar, Plane, Map as MapIcon, EyeOff, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function PublicItinerary() {
