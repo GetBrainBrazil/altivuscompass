@@ -199,6 +199,7 @@ export default function ItineraryForm({ itineraryId, onClose, onDelete }: Props)
         toast({ title: "Roteiro criado! Use a IA para gerar o fluxo diário." });
         clearPersistence();
       }
+      setBaseline(currentSnapshot);
       queryClient.invalidateQueries({ queryKey: ["itineraries"] });
       queryClient.invalidateQueries({ queryKey: ["itinerary", currentId] });
     } catch (e: any) {
