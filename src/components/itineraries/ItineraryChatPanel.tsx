@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { MessageCircleQuestion, Send, Loader2, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   role: "user" | "assistant";
@@ -39,13 +40,17 @@ export default function ItineraryChatPanel({ itineraryId }: Props) {
     let assistantContent = "";
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error("Sessão expirada. Faça login novamente.");
       const resp = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-itinerary`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${accessToken}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
           body: JSON.stringify({
             itinerary_id: itineraryId,
