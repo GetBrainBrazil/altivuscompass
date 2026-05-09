@@ -77,7 +77,7 @@ export default function PublicItinerary() {
           <Button
             size="sm"
             variant="secondary"
-            onClick={() => window.open(`/roteiro/${token}/pdf`, "_blank")}
+            onClick={() => printPdfFromUrl(`/roteiro/${token}/pdf`)}
             className="gap-1 shrink-0"
           >
             <Download className="h-4 w-4" /> Baixar PDF
