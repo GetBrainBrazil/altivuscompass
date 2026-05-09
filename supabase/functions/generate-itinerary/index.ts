@@ -291,6 +291,29 @@ Gere o roteiro completo com todos os dias. Cada dia deve iniciar no hotel e term
       await supabase.from("itinerary_days").delete().eq("itinerary_id", itinerary_id);
     }
 
+    // Resolve real coordinates/address via Google Places (avoids AI hallucinated lat/lng)
+    const mapsKey = Deno.env.get("GOOGLE_MAPS_API_KEY") || "";
+    const placeCache = new Map<string, { lat: number; lng: number; address: string } | null>();
+    async function resolvePlace(name: string, address: string | null, city: string | null) {
+      if (!mapsKey) return null;
+      const query = [name, address, city].filter(Boolean).join(", ");
+      if (!query) return null;
+      if (placeCache.has(query)) return placeCache.get(query)!;
+      try {
+        const url = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(query)}&inputtype=textquery&fields=formatted_address,geometry,name&key=${mapsKey}`;
+        const res = await fetch(url);
+        const json = await res.json();
+        const c = json?.candidates?.[0];
+        if (c?.geometry?.location) {
+          const out = { lat: c.geometry.location.lat, lng: c.geometry.location.lng, address: c.formatted_address || address || "" };
+          placeCache.set(query, out);
+          return out;
+        }
+      } catch (e) { console.warn("place lookup failed", query, e); }
+      placeCache.set(query, null);
+      return null;
+    }
+
     for (let i = 0; i < (parsed.days || []).length; i++) {
       const day = parsed.days[i];
       const { data: newDay, error: dayErr } = await supabase.from("itinerary_days").insert({
@@ -304,6 +327,7 @@ Gere o roteiro completo com todos os dias. Cada dia deve iniciar no hotel e term
 
       for (let j = 0; j < (day.activities || []).length; j++) {
         const act = day.activities[j];
+        const resolved = await resolvePlace(act.activity_name, act.address, day.city);
         await supabase.from("itinerary_day_activities").insert({
           itinerary_day_id: newDay.id,
           sort_order: j,
@@ -312,9 +336,9 @@ Gere o roteiro completo com todos os dias. Cada dia deve iniciar no hotel e term
           activity_type: act.activity_type || "attraction",
           start_time: act.start_time || null,
           end_time: act.end_time || null,
-          latitude: act.latitude || null,
-          longitude: act.longitude || null,
-          address: act.address || null,
+          latitude: resolved?.lat ?? act.latitude ?? null,
+          longitude: resolved?.lng ?? act.longitude ?? null,
+          address: resolved?.address || act.address || null,
           transport_mode: act.transport_mode || null,
           transport_departure_time: act.transport_departure_time || null,
           transport_arrival_time: act.transport_arrival_time || null,
