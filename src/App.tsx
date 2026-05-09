@@ -36,6 +36,7 @@ import TaskDetail from "./pages/TaskDetail";
 import PublicQuote from "./pages/PublicQuote";
 import Itineraries from "./pages/Itineraries";
 import PublicItinerary from "./pages/PublicItinerary";
+import PublicItineraryPDF from "./pages/PublicItineraryPDF";
 import ServiceCenter from "./pages/ServiceCenter";
 import CRM from "./pages/CRM";
 import LeadDetail from "./pages/LeadDetail";
