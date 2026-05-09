@@ -95,6 +95,10 @@ export default function ItineraryMapView({ itineraryId, selectedDayId, selectedA
               position: window.google.maps.ControlPosition.TOP_RIGHT,
               mapTypeIds: ["roadmap", "satellite", "hybrid"],
             },
+            zoomControl: true,
+            zoomControlOptions: {
+              position: window.google.maps.ControlPosition.RIGHT_CENTER,
+            },
             streetViewControl: false, fullscreenControl: true,
           });
         }
