@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,15 +7,24 @@ import ItineraryTimeline from "@/components/itineraries/ItineraryTimeline";
 import ItineraryMapView from "@/components/itineraries/ItineraryMapView";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, Plane, Map as MapIcon, EyeOff } from "lucide-react";
+import { Calendar, Plane, Map as MapIcon, EyeOff, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function PublicItinerary() {
   const { token } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
   const [mobileMapVisible, setMobileMapVisible] = useState(true);
+
+  // Auto-open print dialog when ?pdf=1
+  useEffect(() => {
+    if (searchParams.get("pdf") === "1") {
+      const t = setTimeout(() => window.print(), 1200);
+      return () => clearTimeout(t);
+    }
+  }, [searchParams]);
 
   const { data: itinerary, isLoading, error } = useQuery({
     queryKey: ["public-itinerary", token],
@@ -53,34 +62,44 @@ export default function PublicItinerary() {
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
-      <div className="bg-primary text-primary-foreground py-4 px-6 shrink-0">
-        <div className="max-w-full mx-auto">
-          <p className="text-xs opacity-80 mb-0.5">Roteiro de Viagem · Altivus Turismo</p>
-          <h1 className="text-xl font-bold">{itinerary.title}</h1>
-          <div className="flex flex-wrap gap-4 mt-2 text-xs opacity-90">
-            {itinerary.travel_date_start && (
-              <div className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                {format(new Date(itinerary.travel_date_start + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}
-                {itinerary.travel_date_end && ` a ${format(new Date(itinerary.travel_date_end + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}`}
-              </div>
-            )}
-            {itinerary.arrival_airport && (
-              <div className="flex items-center gap-1"><Plane className="h-3 w-3" />{(itinerary.arrival_airport as any).iata_code} — {(itinerary.arrival_airport as any).city}</div>
-            )}
+      <div className="bg-primary text-primary-foreground py-4 px-6 shrink-0 print:hidden">
+        <div className="max-w-full mx-auto flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs opacity-80 mb-0.5">Roteiro de Viagem · Altivus Turismo</p>
+            <h1 className="text-xl font-bold">{itinerary.title}</h1>
+            <div className="flex flex-wrap gap-4 mt-2 text-xs opacity-90">
+              {itinerary.travel_date_start && (
+                <div className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {format(new Date(itinerary.travel_date_start + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}
+                  {itinerary.travel_date_end && ` a ${format(new Date(itinerary.travel_date_end + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}`}
+                </div>
+              )}
+              {itinerary.arrival_airport && (
+                <div className="flex items-center gap-1"><Plane className="h-3 w-3" />{(itinerary.arrival_airport as any).iata_code} — {(itinerary.arrival_airport as any).city}</div>
+              )}
+            </div>
           </div>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => window.print()}
+            className="gap-1 shrink-0"
+          >
+            <Download className="h-4 w-4" /> Baixar PDF
+          </Button>
         </div>
       </div>
 
       {/* Split content */}
-      <div className={`flex-1 flex min-h-0 ${isMobile ? "flex-col" : "flex-row"}`}>
+      <div className={`flex-1 flex min-h-0 ${isMobile ? "flex-col" : "flex-row"} print:block print:h-auto print:overflow-visible`}>
         {/* Timeline */}
-        <div className={`overflow-y-auto p-4 ${isMobile ? "flex-1 border-b" : "w-1/2 border-r"}`}>
+        <div className={`overflow-y-auto p-4 ${isMobile ? "flex-1 border-b" : "w-1/2 border-r"} print:w-full print:border-0 print:overflow-visible`}>
           <ItineraryTimeline
             itineraryId={itinerary.id}
             selectedDayId={selectedDayId}
             onSelectDay={setSelectedDayId}
-            readOnly={!itinerary.public_editable}
+            readOnly={true}
             selectedActivityId={selectedActivityId}
             onSelectActivity={setSelectedActivityId}
             summary={itinerary.summary}
@@ -89,7 +108,7 @@ export default function PublicItinerary() {
 
         {/* Map */}
         {(!isMobile || mobileMapVisible) && (
-          <div className={isMobile ? "h-[45vh] shrink-0 relative" : "w-1/2"}>
+          <div className={`${isMobile ? "h-[45vh] shrink-0 relative" : "w-1/2"} print:hidden`}>
             {isMobile && (
               <Button
                 size="sm"
@@ -115,7 +134,7 @@ export default function PublicItinerary() {
         {isMobile && !mobileMapVisible && (
           <Button
             onClick={() => setMobileMapVisible(true)}
-            className="fixed bottom-4 right-4 z-20 shadow-lg rounded-full h-12 px-4"
+            className="fixed bottom-4 right-4 z-20 shadow-lg rounded-full h-12 px-4 print:hidden"
           >
             <MapIcon className="h-4 w-4 mr-2" /> Mostrar mapa
           </Button>
