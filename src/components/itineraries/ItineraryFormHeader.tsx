@@ -155,8 +155,14 @@ function AirportCombobox({ value, onChange, airports, label }: { value: string; 
   );
 }
 
-export default function ItineraryFormHeader({ form, setForm, quotes, airports }: Props) {
+export default function ItineraryFormHeader({ form, setForm, clients, quotes, airports }: Props) {
   const [quoteOpen, setQuoteOpen] = useState(false);
+  const selectedQuote: any = form.quote_id ? quotes.find((q: any) => q.id === form.quote_id) : null;
+  const hasQuote = !!selectedQuote;
+  const effectiveDestination = hasQuote ? (selectedQuote.destination || "") : form.destination;
+  const effectiveClientName = hasQuote
+    ? (selectedQuote.clients?.full_name || "—")
+    : (clients.find((c: any) => c.id === form.client_id)?.full_name || "");
 
   return (
     <div className="space-y-2 min-w-0">
@@ -170,6 +176,40 @@ export default function ItineraryFormHeader({ form, setForm, quotes, airports }:
         <div className="w-full md:w-[190px] shrink-0">
           <Label className="text-xs">Data/Hora Chegada</Label>
           <Input className="h-8 text-sm" type="datetime-local" value={form.arrival_datetime} onChange={(e) => setForm({ ...form, arrival_datetime: e.target.value })} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+        <div>
+          <Label className="text-xs">Cotação</Label>
+          <Popover open={quoteOpen} onOpenChange={setQuoteOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" role="combobox" className="w-full justify-between font-normal h-auto min-h-[32px] text-sm whitespace-normal text-left py-1 leading-tight">
+                {form.quote_id ? formatQuoteLabel(quotes.find((q: any) => q.id === form.quote_id) || {}) : "Nenhuma"}
+                <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[320px] p-0">
+              <Command>
+                <CommandInput placeholder="Buscar cotação..." />
+                <CommandList>
+                  <CommandEmpty>Nenhuma cotação encontrada</CommandEmpty>
+                  <CommandGroup>
+                    <CommandItem onSelect={() => { setForm({ ...form, quote_id: "" }); setQuoteOpen(false); }}>
+                      <Check className={cn("mr-2 h-3 w-3", !form.quote_id ? "opacity-100" : "opacity-0")} />
+                      Nenhuma
+                    </CommandItem>
+                    {quotes.map((q: any) => (
+                      <CommandItem key={q.id} onSelect={() => { setForm({ ...form, quote_id: q.id }); setQuoteOpen(false); }}>
+                        <Check className={cn("mr-2 h-3 w-3", form.quote_id === q.id ? "opacity-100" : "opacity-0")} />
+                        {formatQuoteLabel(q)}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
