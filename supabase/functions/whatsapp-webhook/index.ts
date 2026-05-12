@@ -495,6 +495,75 @@ Deno.serve(async (req) => {
 
 // --- Helper functions ---
 
+async function fetchAgentConfig(supabase: any): Promise<{ config: any } | null> {
+  try {
+    const { data } = await supabase
+      .from('ai_agents')
+      .select('config')
+      .eq('id', '1')
+      .maybeSingle()
+    return data || null
+  } catch (e) {
+    console.error('[fetchAgentConfig] error:', e)
+    return null
+  }
+}
+
+function parseMenuChoice(text: string | null | undefined): number | null {
+  if (!text) return null
+  const m = String(text).trim().match(/^([1-5])\b/)
+  if (m) return Number(m[1])
+  const m2 = String(text).match(/\b([1-5])\b/)
+  return m2 ? Number(m2[1]) : null
+}
+
+async function escalateConversation(
+  supabase: any,
+  zapiInstanceId: string,
+  zapiToken: string,
+  zapiSecurityToken: string,
+  phone: string,
+  leadId: string | null,
+  sessionId: string,
+  sessionState: any,
+  replyMsg: string,
+  reason: string,
+) {
+  try {
+    if (leadId) {
+      const { data: contactRow } = await supabase
+        .from('contacts')
+        .select('id, level')
+        .or(`lead_id.eq.${leadId},phone.eq.${phone}`)
+        .maybeSingle()
+      if (contactRow?.id && contactRow.level === 'prospect') {
+        await supabase
+          .from('contacts')
+          .update({ level: 'lead', promoted_to_lead_at: new Date().toISOString() })
+          .eq('id', contactRow.id)
+      }
+    }
+    await supabase
+      .from('wa_conversations')
+      .update({ status: 'human' })
+      .eq('phone', phone)
+  } catch (e) {
+    console.error('[escalateConversation] erro ao escalar:', e)
+  }
+  await sendZapiText(zapiInstanceId, zapiToken, zapiSecurityToken, phone, replyMsg)
+  sessionState.messages = [...(sessionState.messages || []), { role: 'assistant', content: replyMsg }]
+  try {
+    await supabase.from('whatsapp_sessions').update({
+      state: sessionState,
+      lead_id: leadId,
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    }).eq('id', sessionId)
+  } catch (e) {
+    console.error('[escalateConversation] erro ao salvar sessão:', e)
+  }
+  console.log(`[handoff] conversa ${phone} escalada. motivo: ${reason}`)
+}
+
 async function sendZapiText(instanceId: string, token: string, securityToken: string, phone: string, message: string) {
   const cleanPhone = phone.replace(/\D/g, '')
   const url = `${ZAPI_BASE_URL}/instances/${instanceId}/token/${token}/send-text`
