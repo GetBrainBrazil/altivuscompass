@@ -820,6 +820,12 @@ async function handleLeadCapture(
 
   const sessionState = (leadSession?.state as any) || { messages: [] }
 
+  // ===== Carrega config do agente (Detecção de Fluxo + palavras-chave de urgência) =====
+  const agentConfig = await fetchAgentConfig(supabase)
+  const fluxos: any = agentConfig?.config?.fluxos || {}
+  const detectionMode: 'ai' | 'ask' | 'menu' = fluxos.detection || 'ai'
+  const urgencyKeywords: string[] = Array.isArray(fluxos.keywords) ? fluxos.keywords : []
+
   // Append user message to history
   if (isTextMsg && messageText) {
     sessionState.messages = [...(sessionState.messages || []), { role: 'user', content: messageText }]
