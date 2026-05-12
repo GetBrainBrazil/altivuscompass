@@ -285,10 +285,36 @@ export function TestarAgenteSection({ agent }: Props) {
   const [rulesApplied, setRulesApplied] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const detectionMode: "ai" | "ask" | "menu" =
+    ((agent.config as any)?.fluxos?.detection as any) || "ai";
+  const urgencyKeywords: string[] = Array.isArray((agent.config as any)?.fluxos?.keywords)
+    ? (agent.config as any).fluxos.keywords
+    : [];
+
+  const MENU_TEXT =
+    "Olá! 👋 Para te direcionar mais rápido, escolha uma opção respondendo apenas com o número:\n\n" +
+    "1 - Nova Cotação\n" +
+    "2 - Preciso de informações da minha viagem já contratada\n" +
+    "3 - Estou em viagem e preciso de suporte\n" +
+    "4 - Solicitações e informações de pós venda\n" +
+    "5 - Falar com um Atendente";
+
+  const ASK_TEXT =
+    "Olá! 👋 Para eu te direcionar melhor, me conta rapidinho: você quer uma **nova cotação**, precisa de **suporte com uma viagem em andamento**, está com uma **dúvida pós-venda**, ou prefere **falar com um atendente humano**?";
+
   const welcomeMessage = useMemo(() => {
+    if (detectionMode === "menu") return MENU_TEXT;
+    if (detectionMode === "ask") return ASK_TEXT;
     const w = agent.config?.comunicacao?.welcome_message;
     return (w && String(w).trim()) || "Olá! Como posso te ajudar hoje?";
-  }, [agent.config?.comunicacao?.welcome_message]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agent.config?.comunicacao?.welcome_message, detectionMode]);
+
+  const [awaitingMenuChoice, setAwaitingMenuChoice] = useState<boolean>(detectionMode === "menu");
+
+  useEffect(() => {
+    setAwaitingMenuChoice(detectionMode === "menu");
+  }, [detectionMode]);
 
   const systemPrompt = useMemo(
     () => buildSystemPrompt(agent, contactContextBlock || undefined),
