@@ -262,6 +262,39 @@ export default function AIAgentEdit() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Load full agent config from DB on mount (single source of truth for webhook/IA)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("ai_agents" as any)
+        .select("*")
+        .eq("id", form.id)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      const row = data as any;
+      const config = (row.config || {}) as Record<string, unknown>;
+      setForm((f) => {
+        const merged: Agent = {
+          ...f,
+          name: row.name ?? f.name,
+          model: row.model ?? f.model,
+          personality: row.personality ?? f.personality,
+          rules: row.rules ?? f.rules,
+          tone: row.tone ?? f.tone,
+          icon: row.icon ?? f.icon,
+          description: row.description ?? f.description,
+          config: { ...(f.config || {}), ...config },
+        } as Agent;
+        setSavedSnapshot(serialize(merged));
+        seededConfigKeys.current = new Set(Object.keys(config));
+        return merged;
+      });
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const confirmStatusChange = async () => {
     if (pendingStatus === null) return;
     const next = pendingStatus;
@@ -402,18 +435,34 @@ export default function AIAgentEdit() {
 
     setSaving(true);
     try {
-      // Persist full agent config to local "backend"
+      // 1) Persist to DB (source of truth used by the WhatsApp webhook)
+      const { error: upsertErr } = await supabase
+        .from("ai_agents" as any)
+        .upsert({
+          id: form.id,
+          name: form.name,
+          model: form.model,
+          personality: form.personality ?? null,
+          rules: form.rules ?? null,
+          tone: form.tone ?? null,
+          icon: form.icon ?? null,
+          description: form.description ?? null,
+          config: form.config ?? {},
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "id" });
+      if (upsertErr) throw upsertErr;
+
+      // 2) Mirror to sessionStorage for fast UI reload
       const list: Agent[] = JSON.parse(sessionStorage.getItem(LIST_KEY) || "[]");
       const idx = list.findIndex((a) => a.id === form.id);
       if (idx >= 0) list[idx] = form;
       else list.push(form);
       sessionStorage.setItem(LIST_KEY, JSON.stringify(list));
       sessionStorage.setItem(STORAGE_KEY + ":save", JSON.stringify(form));
-      // Simulate async save
-      await new Promise((r) => setTimeout(r, 400));
       setSavedSnapshot(serialize(form));
       toast.success("Configurações salvas com sucesso", { position: "top-right", duration: 3000 });
-    } catch {
+    } catch (err) {
+      console.error("[ai_agents] save error:", err);
       toast.error("Erro ao salvar configurações. Tente novamente.", { position: "top-right" });
     } finally {
       setSaving(false);

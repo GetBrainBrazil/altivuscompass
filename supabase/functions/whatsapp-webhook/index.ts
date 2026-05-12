@@ -495,6 +495,75 @@ Deno.serve(async (req) => {
 
 // --- Helper functions ---
 
+async function fetchAgentConfig(supabase: any): Promise<{ config: any } | null> {
+  try {
+    const { data } = await supabase
+      .from('ai_agents')
+      .select('config')
+      .eq('id', '1')
+      .maybeSingle()
+    return data || null
+  } catch (e) {
+    console.error('[fetchAgentConfig] error:', e)
+    return null
+  }
+}
+
+function parseMenuChoice(text: string | null | undefined): number | null {
+  if (!text) return null
+  const m = String(text).trim().match(/^([1-5])\b/)
+  if (m) return Number(m[1])
+  const m2 = String(text).match(/\b([1-5])\b/)
+  return m2 ? Number(m2[1]) : null
+}
+
+async function escalateConversation(
+  supabase: any,
+  zapiInstanceId: string,
+  zapiToken: string,
+  zapiSecurityToken: string,
+  phone: string,
+  leadId: string | null,
+  sessionId: string,
+  sessionState: any,
+  replyMsg: string,
+  reason: string,
+) {
+  try {
+    if (leadId) {
+      const { data: contactRow } = await supabase
+        .from('contacts')
+        .select('id, level')
+        .or(`lead_id.eq.${leadId},phone.eq.${phone}`)
+        .maybeSingle()
+      if (contactRow?.id && contactRow.level === 'prospect') {
+        await supabase
+          .from('contacts')
+          .update({ level: 'lead', promoted_to_lead_at: new Date().toISOString() })
+          .eq('id', contactRow.id)
+      }
+    }
+    await supabase
+      .from('wa_conversations')
+      .update({ status: 'human' })
+      .eq('phone', phone)
+  } catch (e) {
+    console.error('[escalateConversation] erro ao escalar:', e)
+  }
+  await sendZapiText(zapiInstanceId, zapiToken, zapiSecurityToken, phone, replyMsg)
+  sessionState.messages = [...(sessionState.messages || []), { role: 'assistant', content: replyMsg }]
+  try {
+    await supabase.from('whatsapp_sessions').update({
+      state: sessionState,
+      lead_id: leadId,
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    }).eq('id', sessionId)
+  } catch (e) {
+    console.error('[escalateConversation] erro ao salvar sessão:', e)
+  }
+  console.log(`[handoff] conversa ${phone} escalada. motivo: ${reason}`)
+}
+
 async function sendZapiText(instanceId: string, token: string, securityToken: string, phone: string, message: string) {
   const cleanPhone = phone.replace(/\D/g, '')
   const url = `${ZAPI_BASE_URL}/instances/${instanceId}/token/${token}/send-text`
@@ -820,6 +889,12 @@ async function handleLeadCapture(
 
   const sessionState = (leadSession?.state as any) || { messages: [] }
 
+  // ===== Carrega config do agente (Detecção de Fluxo + palavras-chave de urgência) =====
+  const agentConfig = await fetchAgentConfig(supabase)
+  const fluxos: any = agentConfig?.config?.fluxos || {}
+  const detectionMode: 'ai' | 'ask' | 'menu' = fluxos.detection || 'ai'
+  const urgencyKeywords: string[] = Array.isArray(fluxos.keywords) ? fluxos.keywords : []
+
   // Append user message to history
   if (isTextMsg && messageText) {
     sessionState.messages = [...(sessionState.messages || []), { role: 'user', content: messageText }]
@@ -834,6 +909,110 @@ async function handleLeadCapture(
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     }).eq('id', leadSession!.id)
     return { status: 'lead_capture_attachment', lead_id: leadId }
+  }
+
+  // ===== Palavras-chave de urgência → handoff imediato =====
+  if (urgencyKeywords.length > 0 && messageText) {
+    const lowMsg = messageText.toLowerCase()
+    const matched = urgencyKeywords.find((k) => k && lowMsg.includes(String(k).toLowerCase()))
+    if (matched) {
+      await escalateConversation(
+        supabase, zapiInstanceId, zapiToken, zapiSecurityToken,
+        phone, leadId, leadSession!.id, sessionState,
+        `Detectei que você precisa de ajuda urgente. Vou te transferir agora para um(a) consultor(a) — em instantes alguém te atende. 🙏`,
+        `palavra-chave de urgência: ${matched}`,
+      )
+      return { status: 'lead_capture_handoff', lead_id: leadId }
+    }
+  }
+
+  // ===== Detecção: Menu numerado de opções =====
+  if (detectionMode === 'menu') {
+    const MENU_TEXT =
+      'Olá! 👋 Para te direcionar mais rápido, escolha uma opção respondendo apenas com o número:\n\n' +
+      '1 - Nova Cotação\n' +
+      '2 - Preciso de informações da minha viagem já contratada\n' +
+      '3 - Estou em viagem e preciso de suporte\n' +
+      '4 - Solicitações e informações de pós venda\n' +
+      '5 - Falar com um Atendente'
+
+    if (!sessionState.menu_sent) {
+      await sendZapiText(zapiInstanceId, zapiToken, zapiSecurityToken, phone, MENU_TEXT)
+      sessionState.menu_sent = true
+      sessionState.awaiting_menu_choice = true
+      sessionState.messages = [...(sessionState.messages || []), { role: 'assistant', content: MENU_TEXT }]
+      await supabase.from('whatsapp_sessions').update({
+        state: sessionState,
+        lead_id: leadId,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      }).eq('id', leadSession!.id)
+      return { status: 'menu_sent', lead_id: leadId }
+    }
+
+    if (sessionState.awaiting_menu_choice) {
+      const choice = parseMenuChoice(messageText)
+      if (!choice) {
+        const reprompt = 'Por favor, responda apenas com o número da opção (1 a 5).\n\n' + MENU_TEXT
+        await sendZapiText(zapiInstanceId, zapiToken, zapiSecurityToken, phone, reprompt)
+        sessionState.messages = [...(sessionState.messages || []), { role: 'assistant', content: reprompt }]
+        await supabase.from('whatsapp_sessions').update({
+          state: sessionState,
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        }).eq('id', leadSession!.id)
+        return { status: 'menu_invalid', lead_id: leadId }
+      }
+      sessionState.menu_choice = choice
+      sessionState.awaiting_menu_choice = false
+
+      if (choice !== 1) {
+        const reasonMap: Record<number, { msg: string; reason: string }> = {
+          2: { msg: 'Perfeito! Vou te conectar com um(a) consultor(a) que tem o histórico da sua viagem para te passar todas as informações. Já já te chamam por aqui. ✈️', reason: 'menu opção 2: informações de viagem contratada' },
+          3: { msg: 'Entendi, suporte em viagem é prioridade. Estou chamando um(a) consultor(a) AGORA para te ajudar. Aguarde só um instante. 🙏', reason: 'menu opção 3: suporte em viagem (prioridade)' },
+          4: { msg: 'Combinado! Encaminhando para o time de pós-venda. Em instantes alguém te responde por aqui. 💙', reason: 'menu opção 4: solicitações pós-venda' },
+          5: { msg: 'Claro! Já estou chamando um(a) atendente humano(a). Aguarde só um momento. 🙌', reason: 'menu opção 5: pediu atendente humano' },
+        }
+        const r = reasonMap[choice]
+        await escalateConversation(
+          supabase, zapiInstanceId, zapiToken, zapiSecurityToken,
+          phone, leadId, leadSession!.id, sessionState, r.msg, r.reason,
+        )
+        return { status: 'lead_capture_handoff', lead_id: leadId }
+      }
+
+      // Opção 1: Nova Cotação → segue no fluxo de IA com mensagem de transição
+      const ack = 'Que ótimo! 🎉 Vou te ajudar com uma nova cotação. Me conta um pouquinho — qual destino você está pensando e quando seria a viagem?'
+      await sendZapiText(zapiInstanceId, zapiToken, zapiSecurityToken, phone, ack)
+      sessionState.messages = [...(sessionState.messages || []), { role: 'assistant', content: ack }]
+      await supabase.from('whatsapp_sessions').update({
+        state: sessionState,
+        lead_id: leadId,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      }).eq('id', leadSession!.id)
+      return { status: 'menu_choice_quote', lead_id: leadId }
+    }
+  }
+
+  // ===== Detecção: Perguntar ao cliente no início =====
+  if (
+    detectionMode === 'ask' &&
+    !sessionState.classification_asked &&
+    (sessionState.messages?.length ?? 0) <= 1
+  ) {
+    const ASK_TEXT =
+      'Olá! 👋 Para te ajudar melhor, você está buscando:\n\n' +
+      '• Uma *nova cotação* de viagem;\n' +
+      '• *Suporte* para uma viagem já contratada;\n' +
+      '• Ou ainda *explorando* possibilidades?\n\n' +
+      'Me conta com suas palavras o que precisa! 😊'
+    await sendZapiText(zapiInstanceId, zapiToken, zapiSecurityToken, phone, ASK_TEXT)
+    sessionState.classification_asked = true
+    sessionState.messages = [...(sessionState.messages || []), { role: 'assistant', content: ASK_TEXT }]
+    await supabase.from('whatsapp_sessions').update({
+      state: sessionState,
+      lead_id: leadId,
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    }).eq('id', leadSession!.id)
+    return { status: 'ask_sent', lead_id: leadId }
   }
 
   // Build full client context (CRM + previous conversations + quotations)
