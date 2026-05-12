@@ -356,7 +356,7 @@ export function TestarAgenteSection({ agent }: Props) {
     setSentiment("neutro");
     setData({});
     setNextAction("Aguardar mensagem");
-    setRulesApplied([]);
+    setRulesApplied([]); setAwaitingMenuChoice(detectionMode === "menu");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [welcomeMessage]);
 
@@ -501,7 +501,7 @@ export function TestarAgenteSection({ agent }: Props) {
     setSentiment("neutro");
     setData({});
     setNextAction("Aguardar mensagem");
-    setRulesApplied([]);
+    setRulesApplied([]); setAwaitingMenuChoice(detectionMode === "menu");
 
     if (p?.firstMsg) {
       // auto-send after a tick so UI shows welcome first
@@ -520,7 +520,7 @@ export function TestarAgenteSection({ agent }: Props) {
     setSentiment("neutro");
     setData({});
     setNextAction("Aguardar mensagem");
-    setRulesApplied([]);
+    setRulesApplied([]); setAwaitingMenuChoice(detectionMode === "menu");
   };
 
   const handleSelectExistingContact = async (contactId: string) => {
@@ -612,7 +612,7 @@ export function TestarAgenteSection({ agent }: Props) {
       setSentiment("neutro");
       setData(merged as Record<string, string>);
       setNextAction("Aguardar mensagem");
-      setRulesApplied([]);
+      setRulesApplied([]); setAwaitingMenuChoice(detectionMode === "menu");
       toast.success(`Simulando como ${contact.full_name}`);
     } catch (e: any) {
       console.error(e);
