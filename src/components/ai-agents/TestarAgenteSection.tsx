@@ -285,10 +285,36 @@ export function TestarAgenteSection({ agent }: Props) {
   const [rulesApplied, setRulesApplied] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const detectionMode: "ai" | "ask" | "menu" =
+    ((agent.config as any)?.fluxos?.detection as any) || "ai";
+  const urgencyKeywords: string[] = Array.isArray((agent.config as any)?.fluxos?.keywords)
+    ? (agent.config as any).fluxos.keywords
+    : [];
+
+  const MENU_TEXT =
+    "Olá! 👋 Para te direcionar mais rápido, escolha uma opção respondendo apenas com o número:\n\n" +
+    "1 - Nova Cotação\n" +
+    "2 - Preciso de informações da minha viagem já contratada\n" +
+    "3 - Estou em viagem e preciso de suporte\n" +
+    "4 - Solicitações e informações de pós venda\n" +
+    "5 - Falar com um Atendente";
+
+  const ASK_TEXT =
+    "Olá! 👋 Para eu te direcionar melhor, me conta rapidinho: você quer uma **nova cotação**, precisa de **suporte com uma viagem em andamento**, está com uma **dúvida pós-venda**, ou prefere **falar com um atendente humano**?";
+
   const welcomeMessage = useMemo(() => {
+    if (detectionMode === "menu") return MENU_TEXT;
+    if (detectionMode === "ask") return ASK_TEXT;
     const w = agent.config?.comunicacao?.welcome_message;
     return (w && String(w).trim()) || "Olá! Como posso te ajudar hoje?";
-  }, [agent.config?.comunicacao?.welcome_message]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agent.config?.comunicacao?.welcome_message, detectionMode]);
+
+  const [awaitingMenuChoice, setAwaitingMenuChoice] = useState<boolean>(detectionMode === "menu");
+
+  useEffect(() => {
+    setAwaitingMenuChoice(detectionMode === "menu");
+  }, [detectionMode]);
 
   const systemPrompt = useMemo(
     () => buildSystemPrompt(agent, contactContextBlock || undefined),
@@ -330,7 +356,7 @@ export function TestarAgenteSection({ agent }: Props) {
     setSentiment("neutro");
     setData({});
     setNextAction("Aguardar mensagem");
-    setRulesApplied([]);
+    setRulesApplied([]); setAwaitingMenuChoice(detectionMode === "menu");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [welcomeMessage]);
 
@@ -364,6 +390,69 @@ export function TestarAgenteSection({ agent }: Props) {
     const newHistory = [...messages, userMsg];
     setMessages(newHistory);
     setInput("");
+
+    // Urgency keywords → handoff imediato (independente do modo)
+    const lowMsg = trimmed.toLowerCase();
+    const matchedKw = urgencyKeywords.find((k) => k && lowMsg.includes(String(k).toLowerCase()));
+    if (matchedKw) {
+      setMessages((m) => [
+        ...m,
+        {
+          id: crypto.randomUUID(),
+          role: "agent",
+          text: `Detectei que você precisa de ajuda urgente. Vou te transferir agora para um(a) consultor(a) — em instantes alguém te atende. 🙏\n\n_(simulação · palavra-chave: ${matchedKw})_`,
+          ts: new Date(),
+        },
+      ]);
+      setFlow("suporte");
+      setNextAction(`Handoff humano (palavra-chave: ${matchedKw})`);
+      return;
+    }
+
+    // Modo MENU: processa escolha 1-5 sem chamar IA
+    if (detectionMode === "menu" && awaitingMenuChoice) {
+      const m = trimmed.match(/^([1-5])\b/) || trimmed.match(/\b([1-5])\b/);
+      const choice = m ? Number(m[1]) : null;
+      if (!choice) {
+        setMessages((mm) => [
+          ...mm,
+          {
+            id: crypto.randomUUID(),
+            role: "agent",
+            text: "Por favor, responda apenas com o número da opção (1 a 5).\n\n" + MENU_TEXT,
+            ts: new Date(),
+          },
+        ]);
+        return;
+      }
+      setAwaitingMenuChoice(false);
+      if (choice !== 1) {
+        const reasonMap: Record<number, { msg: string; flow: FlowKey; action: string }> = {
+          2: { msg: "Perfeito! Vou te conectar com um(a) consultor(a) que tem o histórico da sua viagem para te passar todas as informações. Já já te chamam por aqui. ✈️", flow: "suporte", action: "Handoff: informações de viagem contratada" },
+          3: { msg: "Entendi, suporte em viagem é prioridade. Estou chamando um(a) consultor(a) AGORA para te ajudar. Aguarde só um instante. 🙏", flow: "suporte", action: "Handoff: suporte em viagem (prioridade)" },
+          4: { msg: "Combinado! Encaminhando para o time de pós-venda. Em instantes alguém te responde por aqui. 💙", flow: "suporte", action: "Handoff: pós-venda" },
+          5: { msg: "Claro! Já estou chamando um(a) atendente humano(a). Aguarde só um momento. 🙌", flow: "suporte", action: "Handoff: pediu atendente humano" },
+        };
+        const r = reasonMap[choice];
+        setMessages((mm) => [
+          ...mm,
+          { id: crypto.randomUUID(), role: "agent", text: r.msg, ts: new Date() },
+        ]);
+        setFlow(r.flow);
+        setNextAction(r.action);
+        return;
+      }
+      // Opção 1 → segue com a IA
+      const ack = "Que ótimo! 🎉 Vou te ajudar com uma nova cotação. Me conta um pouquinho — qual destino você está pensando e quando seria a viagem?";
+      setMessages((mm) => [
+        ...mm,
+        { id: crypto.randomUUID(), role: "agent", text: ack, ts: new Date() },
+      ]);
+      setFlow("nova_cotacao");
+      setNextAction("Coletar destino e período");
+      return;
+    }
+
     setTyping(true);
 
     try {
@@ -412,7 +501,7 @@ export function TestarAgenteSection({ agent }: Props) {
     setSentiment("neutro");
     setData({});
     setNextAction("Aguardar mensagem");
-    setRulesApplied([]);
+    setRulesApplied([]); setAwaitingMenuChoice(detectionMode === "menu");
 
     if (p?.firstMsg) {
       // auto-send after a tick so UI shows welcome first
@@ -431,7 +520,7 @@ export function TestarAgenteSection({ agent }: Props) {
     setSentiment("neutro");
     setData({});
     setNextAction("Aguardar mensagem");
-    setRulesApplied([]);
+    setRulesApplied([]); setAwaitingMenuChoice(detectionMode === "menu");
   };
 
   const handleSelectExistingContact = async (contactId: string) => {
@@ -523,7 +612,7 @@ export function TestarAgenteSection({ agent }: Props) {
       setSentiment("neutro");
       setData(merged as Record<string, string>);
       setNextAction("Aguardar mensagem");
-      setRulesApplied([]);
+      setRulesApplied([]); setAwaitingMenuChoice(detectionMode === "menu");
       toast.success(`Simulando como ${contact.full_name}`);
     } catch (e: any) {
       console.error(e);
