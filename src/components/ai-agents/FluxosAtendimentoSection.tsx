@@ -222,14 +222,25 @@ export function FluxosAtendimentoSection({ value, onChange }: Props = {}) {
               {[
                 { v: "ai", l: "IA detecta automaticamente pela conversa" },
                 { v: "ask", l: "Perguntar ao cliente no início" },
-                { v: "menu", l: "Menu de opções numerado (1-Cotação, 2-Suporte, 3-Explorar)" },
+                { v: "menu", l: "Menu de opções numerado" },
               ].map((opt) => (
                 <label
                   key={opt.v}
-                  className="flex items-center gap-3 px-3 py-2 rounded-md border border-input hover:bg-muted/50 cursor-pointer"
+                  className="flex items-start gap-3 px-3 py-2 rounded-md border border-input hover:bg-muted/50 cursor-pointer"
                 >
-                  <RadioGroupItem value={opt.v} id={`det-${opt.v}`} />
-                  <span className="text-sm">{opt.l}</span>
+                  <RadioGroupItem value={opt.v} id={`det-${opt.v}`} className="mt-0.5" />
+                  <div className="flex-1">
+                    <span className="text-sm">{opt.l}</span>
+                    {opt.v === "menu" && detection === "menu" && (
+                      <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                        <li>1 - Nova Cotação</li>
+                        <li>2 - Preciso de informações da minha viagem já contratada</li>
+                        <li>3 - Estou em viagem e preciso de suporte</li>
+                        <li>4 - Solicitações e informações de pós venda</li>
+                        <li>5 - Falar com um Atendente</li>
+                      </ul>
+                    )}
+                  </div>
                 </label>
               ))}
             </RadioGroup>
