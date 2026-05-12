@@ -92,6 +92,48 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_agents: {
+        Row: {
+          config: Json
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          model: string
+          name: string
+          personality: string | null
+          rules: string | null
+          tone: string | null
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id: string
+          model?: string
+          name?: string
+          personality?: string | null
+          rules?: string | null
+          tone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          model?: string
+          name?: string
+          personality?: string | null
+          rules?: string | null
+          tone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       airlines: {
         Row: {
           country: string | null
