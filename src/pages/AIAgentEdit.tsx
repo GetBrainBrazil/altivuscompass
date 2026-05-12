@@ -262,6 +262,39 @@ export default function AIAgentEdit() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Load full agent config from DB on mount (single source of truth for webhook/IA)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("ai_agents" as any)
+        .select("*")
+        .eq("id", form.id)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      const row = data as any;
+      const config = (row.config || {}) as Record<string, unknown>;
+      setForm((f) => {
+        const merged: Agent = {
+          ...f,
+          name: row.name ?? f.name,
+          model: row.model ?? f.model,
+          personality: row.personality ?? f.personality,
+          rules: row.rules ?? f.rules,
+          tone: row.tone ?? f.tone,
+          icon: row.icon ?? f.icon,
+          description: row.description ?? f.description,
+          config: { ...(f.config || {}), ...config },
+        } as Agent;
+        setSavedSnapshot(serialize(merged));
+        seededConfigKeys.current = new Set(Object.keys(config));
+        return merged;
+      });
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const confirmStatusChange = async () => {
     if (pendingStatus === null) return;
     const next = pendingStatus;
