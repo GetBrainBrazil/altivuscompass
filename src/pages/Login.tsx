@@ -111,6 +111,9 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
+      extraParams: {
+        prompt: "select_account",
+      },
     });
     if (result.error) {
       toast({ title: "Erro ao entrar com Google", description: result.error.message ?? "Tente novamente.", variant: "destructive" });
