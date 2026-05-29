@@ -794,6 +794,7 @@ const ContactBanner = ({ conversation }: { conversation: Conversation }) => {
 // ============= Main Page =============
 export default function ServiceCenter() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
@@ -802,7 +803,6 @@ export default function ServiceCenter() {
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [sidePanelTab, setSidePanelTab] = useState<"summary" | "crm">("summary");
   const [newMsgOpen, setNewMsgOpen] = useState(false);
-  const [waConnOpen, setWaConnOpen] = useState(false);
 
   // ===== Status do Agente IA (fonte da verdade: ai_agent_status.active) =====
   const AGENT_ID = "1";
