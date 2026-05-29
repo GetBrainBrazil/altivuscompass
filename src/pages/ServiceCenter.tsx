@@ -1059,17 +1059,13 @@ export default function ServiceCenter() {
         content:
           m.message_type === "text"
             ? (m.content ?? "")
-            : m.message_type === "image"
-              ? `📷 ${m.media_caption ?? "Imagem"}${m.media_url ? `\n${m.media_url}` : ""}`
-              : m.message_type === "audio"
-                ? `🎤 Áudio${m.media_url ? `\n${m.media_url}` : ""}`
-                : m.message_type === "video"
-                  ? `🎥 ${m.media_caption ?? "Vídeo"}${m.media_url ? `\n${m.media_url}` : ""}`
-                  : m.message_type === "document"
-                    ? `📄 ${m.media_caption ?? "Documento"}${m.media_url ? `\n${m.media_url}` : ""}`
-                    : (m.content ?? m.media_url ?? "Mensagem"),
+            : (m.media_caption ?? ""),
         timestamp: m.created_at,
         status: (m.status ?? undefined) as MessageStatus | undefined,
+        messageType: m.message_type ?? "text",
+        mediaUrl: m.media_url ?? undefined,
+        mediaMime: m.media_mime ?? undefined,
+        mediaCaption: m.media_caption ?? undefined,
       }));
       // Se não há nenhuma mensagem carregada, cria uma "fake" só para preview
       const fallbackMsg: Message = {
