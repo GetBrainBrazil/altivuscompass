@@ -1155,6 +1155,12 @@ export default function ServiceCenter() {
   }, [searchParams, conversations, setSearchParams]);
 
 
+  // Ref para auto-scroll no chat
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  };
+
   const handleSend = async () => {
     if (!selectedId || !draft.trim() || sending) return;
     const convo = convoRows.find((c: any) => c.id === selectedId);
