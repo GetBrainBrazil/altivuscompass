@@ -1238,6 +1238,120 @@ export default function ServiceCenter() {
     }
   };
 
+  // ===== Audio recording / sending =====
+  const [recording, setRecording] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
+  const [sendingAudio, setSendingAudio] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordTimerRef = useRef<number | null>(null);
+  const cancelRecordingRef = useRef(false);
+
+  const stopRecordingStream = () => {
+    try {
+      mediaRecorderRef.current?.stream.getTracks().forEach((t) => t.stop());
+    } catch {}
+    if (recordTimerRef.current) {
+      window.clearInterval(recordTimerRef.current);
+      recordTimerRef.current = null;
+    }
+  };
+
+  const uploadAndSendAudio = async (blob: Blob) => {
+    if (!selectedId) return;
+    const convo = convoRows.find((c: any) => c.id === selectedId);
+    if (!convo?.phone) {
+      toast.error("Telefone da conversa não encontrado.");
+      return;
+    }
+    setSendingAudio(true);
+    try {
+      const ext = blob.type.includes("ogg") ? "ogg" : "webm";
+      const path = `wa-audio/${convo.phone}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("quote-images")
+        .upload(path, blob, { contentType: blob.type || "audio/webm", upsert: false });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("quote-images").getPublicUrl(path);
+      const audioUrl = pub.publicUrl;
+      const { data, error } = await supabase.functions.invoke("send-whatsapp", {
+        body: { action: "send-audio", phone: convo.phone, audio_url: audioUrl },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      scrollToBottom();
+      qc.invalidateQueries({ queryKey: ["wa_messages", selectedId] });
+      qc.invalidateQueries({ queryKey: ["wa_conversations"] });
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao enviar áudio");
+    } finally {
+      setSendingAudio(false);
+    }
+  };
+
+  const startRecording = async () => {
+    if (recording || sendingAudio) return;
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      toast.error("Gravação de áudio não suportada neste navegador.");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/webm")
+          ? "audio/webm"
+          : "";
+      const rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      cancelRecordingRef.current = false;
+      rec.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      rec.onstop = async () => {
+        stopRecordingStream();
+        setRecording(false);
+        setRecordSeconds(0);
+        if (cancelRecordingRef.current) return;
+        const blob = new Blob(audioChunksRef.current, { type: rec.mimeType || "audio/webm" });
+        if (blob.size < 800) {
+          toast.error("Áudio muito curto.");
+          return;
+        }
+        await uploadAndSendAudio(blob);
+      };
+      mediaRecorderRef.current = rec;
+      rec.start();
+      setRecording(true);
+      setRecordSeconds(0);
+      recordTimerRef.current = window.setInterval(() => {
+        setRecordSeconds((s) => {
+          if (s >= 120) {
+            try { rec.stop(); } catch {}
+            return s;
+          }
+          return s + 1;
+        });
+      }, 1000);
+    } catch (err: any) {
+      toast.error(err?.message || "Não foi possível acessar o microfone.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (!recording) return;
+    cancelRecordingRef.current = false;
+    try { mediaRecorderRef.current?.stop(); } catch {}
+  };
+
+  const cancelRecording = () => {
+    if (!recording) return;
+    cancelRecordingRef.current = true;
+    try { mediaRecorderRef.current?.stop(); } catch {}
+  };
+
+
+
 
 
   const counts = useMemo(
