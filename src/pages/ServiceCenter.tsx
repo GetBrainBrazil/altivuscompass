@@ -1042,6 +1042,7 @@ export default function ServiceCenter() {
         firstContactAt: meta?.first_contact_at ?? c.created_at ?? undefined,
         lastContactAt: meta?.last_contact_at ?? c.last_message_at ?? undefined,
         isReturning: !!meta?.is_returning,
+        unreadCount: Number(c.unread_count ?? 0),
       };
     });
   }, [convoRows, msgRows, selectedId, contactMetaById]);
