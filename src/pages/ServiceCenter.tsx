@@ -1243,14 +1243,14 @@ export default function ServiceCenter() {
             <h1 className="text-lg font-semibold">Atendimento</h1>
             <div className="flex items-center gap-1.5">
               <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setWaConnOpen(true)}
-                className="h-8 w-8"
-                title="Configurações de conexão do WhatsApp"
-                aria-label="Configurações de conexão do WhatsApp"
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/ai-agents")}
+                className="h-8 gap-1.5"
+                title="Configurar Agente de IA e WhatsApp"
               >
-                <Settings className="h-4 w-4" />
+                <Bot className="h-3.5 w-3.5" />
+                Agente IA
               </Button>
               <Button
                 size="sm"
