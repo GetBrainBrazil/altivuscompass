@@ -125,6 +125,8 @@ interface Conversation {
   firstContactAt?: string;
   lastContactAt?: string;
   isReturning?: boolean;
+  /** Quantidade de mensagens recebidas não lidas (incrementado pelo webhook). */
+  unreadCount?: number;
 }
 
 // Conversas reais vêm do banco (wa_conversations / wa_messages) via Realtime.
