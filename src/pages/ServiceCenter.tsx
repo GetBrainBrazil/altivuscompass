@@ -1242,14 +1242,26 @@ export default function ServiceCenter() {
         <div className="p-4 border-b space-y-3">
           <div className="flex items-center justify-between gap-2">
             <h1 className="text-lg font-semibold">Atendimento</h1>
-            <Button
-              size="sm"
-              onClick={() => setNewMsgOpen(true)}
-              className="h-8 gap-1.5 bg-[hsl(var(--navy))] text-[hsl(var(--cream))] hover:bg-[hsl(var(--navy))]/90"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Nova
-            </Button>
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setWaConnOpen(true)}
+                className="h-8 w-8"
+                title="Configurações de conexão do WhatsApp"
+                aria-label="Configurações de conexão do WhatsApp"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => setNewMsgOpen(true)}
+                className="h-8 gap-1.5 bg-[hsl(var(--navy))] text-[hsl(var(--cream))] hover:bg-[hsl(var(--navy))]/90"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Nova
+              </Button>
+            </div>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
