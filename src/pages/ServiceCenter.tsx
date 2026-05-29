@@ -1176,6 +1176,7 @@ export default function ServiceCenter() {
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       setDraft("");
+      scrollToBottom();
       qc.invalidateQueries({ queryKey: ["wa_messages", selectedId] });
       qc.invalidateQueries({ queryKey: ["wa_conversations"] });
     } catch (err: any) {
