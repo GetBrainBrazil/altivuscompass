@@ -16,6 +16,7 @@ interface NewMessageDialogProps {
 }
 
 export function NewMessageDialog({ open, onOpenChange, onSent }: NewMessageDialogProps) {
+  const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -33,13 +34,19 @@ export function NewMessageDialog({ open, onOpenChange, onSent }: NewMessageDialo
     setSending(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-whatsapp", {
-        body: { action: "send-text", phone: cleanPhone, message: message.trim() },
+        body: {
+          action: "send-text",
+          phone: cleanPhone,
+          message: message.trim(),
+          contact_name: name.trim() || undefined,
+        },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       toast.success("Mensagem enviada com sucesso.");
       setMessage("");
       setPhone("");
+      setName("");
       onOpenChange(false);
       onSent?.(cleanPhone);
     } catch (err: any) {
