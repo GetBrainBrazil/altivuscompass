@@ -36,7 +36,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
 import { NewMessageDialog } from "@/components/service-center/NewMessageDialog";
-import { Plus, Info, Bot, Check, CheckCheck, Clock } from "lucide-react";
+import { Plus, Info, Bot, Check, CheckCheck, Clock, Mic, Square, Trash2, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -81,6 +81,10 @@ interface Message {
   content: string;
   timestamp: string; // ISO
   status?: MessageStatus;
+  messageType?: "text" | "image" | "audio" | "video" | "document" | "sticker";
+  mediaUrl?: string;
+  mediaMime?: string;
+  mediaCaption?: string;
 }
 
 type ConversationStatus = "ai" | "human";
@@ -433,11 +437,15 @@ const ChatBubble = ({ message }: ChatBubbleProps) => {
   const isLead = message.sender === "lead";
   const isAgent = message.sender === "agent";
   const isAi = message.sender === "ai";
+  const mt = message.messageType ?? "text";
+  const isMedia = mt !== "text" && !!message.mediaUrl;
   return (
     <div className={cn("flex w-full flex-col gap-1", isLead ? "items-start" : "items-end")}>
       <div
         className={cn(
-          "max-w-[75%] rounded-3xl px-5 py-3 text-sm leading-relaxed shadow-sm",
+          "max-w-[75%] rounded-3xl text-sm leading-relaxed shadow-sm overflow-hidden",
+          !isMedia && "px-5 py-3",
+          isMedia && "p-2",
           isLead && "bg-white text-foreground rounded-bl-md border border-border/40",
           isAi && "bg-[hsl(var(--navy))] text-[hsl(var(--cream))] rounded-br-md",
           isAgent && "bg-emerald-600 text-white rounded-br-md",
@@ -446,12 +454,60 @@ const ChatBubble = ({ message }: ChatBubbleProps) => {
         {!isLead && (
           <p className={cn(
             "text-[10px] font-semibold uppercase tracking-wider mb-1 opacity-80",
+            isMedia && "px-3 pt-1",
             isAi ? "text-[hsl(var(--cream))]" : "text-emerald-50",
           )}>
             {isAi ? "🤖 IA" : "👤 Agente"}
           </p>
         )}
-        <p className="whitespace-pre-wrap break-words">{message.content}</p>
+        {mt === "audio" && message.mediaUrl ? (
+          <audio
+            controls
+            src={message.mediaUrl}
+            className="w-[260px] max-w-full"
+            preload="metadata"
+          />
+        ) : mt === "image" && message.mediaUrl ? (
+          <div className="space-y-1">
+            <a href={message.mediaUrl} target="_blank" rel="noreferrer">
+              <img
+                src={message.mediaUrl}
+                alt={message.mediaCaption || "Imagem"}
+                className="rounded-2xl max-h-[280px] w-auto object-cover"
+                loading="lazy"
+              />
+            </a>
+            {message.mediaCaption && (
+              <p className={cn("whitespace-pre-wrap break-words px-3 pb-1", isLead ? "" : "")}>
+                {message.mediaCaption}
+              </p>
+            )}
+          </div>
+        ) : mt === "video" && message.mediaUrl ? (
+          <div className="space-y-1">
+            <video controls src={message.mediaUrl} className="rounded-2xl max-h-[280px] w-auto" preload="metadata" />
+            {message.mediaCaption && (
+              <p className="whitespace-pre-wrap break-words px-3 pb-1">{message.mediaCaption}</p>
+            )}
+          </div>
+        ) : mt === "document" && message.mediaUrl ? (
+          <a
+            href={message.mediaUrl}
+            target="_blank"
+            rel="noreferrer"
+            className={cn(
+              "flex items-center gap-2 px-3 py-2 rounded-xl underline-offset-2 hover:underline",
+              isLead ? "text-foreground" : "text-current"
+            )}
+          >
+            <FileText className="h-4 w-4 shrink-0" />
+            <span className="truncate">{message.mediaCaption || "Documento"}</span>
+          </a>
+        ) : mt === "sticker" && message.mediaUrl ? (
+          <img src={message.mediaUrl} alt="sticker" className="h-32 w-32 object-contain" />
+        ) : (
+          <p className="whitespace-pre-wrap break-words">{message.content}</p>
+        )}
       </div>
       <span className="flex items-center gap-1 text-[10px] text-muted-foreground px-2">
         {isAi ? "IA · " : isAgent ? "Agente · " : ""}
@@ -1055,17 +1111,13 @@ export default function ServiceCenter() {
         content:
           m.message_type === "text"
             ? (m.content ?? "")
-            : m.message_type === "image"
-              ? `📷 ${m.media_caption ?? "Imagem"}${m.media_url ? `\n${m.media_url}` : ""}`
-              : m.message_type === "audio"
-                ? `🎤 Áudio${m.media_url ? `\n${m.media_url}` : ""}`
-                : m.message_type === "video"
-                  ? `🎥 ${m.media_caption ?? "Vídeo"}${m.media_url ? `\n${m.media_url}` : ""}`
-                  : m.message_type === "document"
-                    ? `📄 ${m.media_caption ?? "Documento"}${m.media_url ? `\n${m.media_url}` : ""}`
-                    : (m.content ?? m.media_url ?? "Mensagem"),
+            : (m.media_caption ?? ""),
         timestamp: m.created_at,
         status: (m.status ?? undefined) as MessageStatus | undefined,
+        messageType: m.message_type ?? "text",
+        mediaUrl: m.media_url ?? undefined,
+        mediaMime: m.media_mime ?? undefined,
+        mediaCaption: m.media_caption ?? undefined,
       }));
       // Se não há nenhuma mensagem carregada, cria uma "fake" só para preview
       const fallbackMsg: Message = {
@@ -1185,6 +1237,120 @@ export default function ServiceCenter() {
       setSending(false);
     }
   };
+
+  // ===== Audio recording / sending =====
+  const [recording, setRecording] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
+  const [sendingAudio, setSendingAudio] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordTimerRef = useRef<number | null>(null);
+  const cancelRecordingRef = useRef(false);
+
+  const stopRecordingStream = () => {
+    try {
+      mediaRecorderRef.current?.stream.getTracks().forEach((t) => t.stop());
+    } catch {}
+    if (recordTimerRef.current) {
+      window.clearInterval(recordTimerRef.current);
+      recordTimerRef.current = null;
+    }
+  };
+
+  const uploadAndSendAudio = async (blob: Blob) => {
+    if (!selectedId) return;
+    const convo = convoRows.find((c: any) => c.id === selectedId);
+    if (!convo?.phone) {
+      toast.error("Telefone da conversa não encontrado.");
+      return;
+    }
+    setSendingAudio(true);
+    try {
+      const ext = blob.type.includes("ogg") ? "ogg" : "webm";
+      const path = `wa-audio/${convo.phone}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("quote-images")
+        .upload(path, blob, { contentType: blob.type || "audio/webm", upsert: false });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("quote-images").getPublicUrl(path);
+      const audioUrl = pub.publicUrl;
+      const { data, error } = await supabase.functions.invoke("send-whatsapp", {
+        body: { action: "send-audio", phone: convo.phone, audio_url: audioUrl },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      scrollToBottom();
+      qc.invalidateQueries({ queryKey: ["wa_messages", selectedId] });
+      qc.invalidateQueries({ queryKey: ["wa_conversations"] });
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao enviar áudio");
+    } finally {
+      setSendingAudio(false);
+    }
+  };
+
+  const startRecording = async () => {
+    if (recording || sendingAudio) return;
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      toast.error("Gravação de áudio não suportada neste navegador.");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/webm")
+          ? "audio/webm"
+          : "";
+      const rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      cancelRecordingRef.current = false;
+      rec.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      rec.onstop = async () => {
+        stopRecordingStream();
+        setRecording(false);
+        setRecordSeconds(0);
+        if (cancelRecordingRef.current) return;
+        const blob = new Blob(audioChunksRef.current, { type: rec.mimeType || "audio/webm" });
+        if (blob.size < 800) {
+          toast.error("Áudio muito curto.");
+          return;
+        }
+        await uploadAndSendAudio(blob);
+      };
+      mediaRecorderRef.current = rec;
+      rec.start();
+      setRecording(true);
+      setRecordSeconds(0);
+      recordTimerRef.current = window.setInterval(() => {
+        setRecordSeconds((s) => {
+          if (s >= 120) {
+            try { rec.stop(); } catch {}
+            return s;
+          }
+          return s + 1;
+        });
+      }, 1000);
+    } catch (err: any) {
+      toast.error(err?.message || "Não foi possível acessar o microfone.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (!recording) return;
+    cancelRecordingRef.current = false;
+    try { mediaRecorderRef.current?.stop(); } catch {}
+  };
+
+  const cancelRecording = () => {
+    if (!recording) return;
+    cancelRecordingRef.current = true;
+    try { mediaRecorderRef.current?.stop(); } catch {}
+  };
+
+
 
 
 
@@ -1554,27 +1720,74 @@ export default function ServiceCenter() {
               ) : (
                 <>
                   <div className="flex items-center gap-3 max-w-3xl mx-auto">
-                    <Input
-                      placeholder="Digite uma mensagem..."
-                      value={draft}
-                      onChange={(e) => setDraft(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSend();
-                        }
-                      }}
-                      disabled={sending}
-                      className="h-11 rounded-full px-5 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-ring"
-                    />
-                    <Button
-                      size="icon"
-                      disabled={!draft.trim() || sending}
-                      onClick={handleSend}
-                      className="h-11 w-11 rounded-full shrink-0"
-                    >
-                      <SendHorizontal className="h-5 w-5" />
-                    </Button>
+                    {recording ? (
+                      <div className="flex-1 flex items-center gap-3 h-11 rounded-full px-5 bg-red-50 border border-red-200">
+                        <span className="relative flex h-2.5 w-2.5">
+                          <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75 animate-ping" />
+                          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-600" />
+                        </span>
+                        <span className="text-sm text-red-700 font-medium tabular-nums">
+                          Gravando… {String(Math.floor(recordSeconds / 60)).padStart(2, "0")}:{String(recordSeconds % 60).padStart(2, "0")}
+                        </span>
+                        <span className="ml-auto text-[11px] text-red-600/80">Máx 2:00</span>
+                      </div>
+                    ) : (
+                      <Input
+                        placeholder={sendingAudio ? "Enviando áudio…" : "Digite uma mensagem..."}
+                        value={draft}
+                        onChange={(e) => setDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSend();
+                          }
+                        }}
+                        disabled={sending || sendingAudio}
+                        className="h-11 rounded-full px-5 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-ring"
+                      />
+                    )}
+
+                    {recording ? (
+                      <>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          onClick={cancelRecording}
+                          className="h-11 w-11 rounded-full shrink-0 text-destructive hover:text-destructive"
+                          title="Cancelar"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          onClick={stopRecording}
+                          className="h-11 w-11 rounded-full shrink-0 bg-red-600 hover:bg-red-700 text-white"
+                          title="Parar e enviar"
+                        >
+                          <Square className="h-4 w-4 fill-current" />
+                        </Button>
+                      </>
+                    ) : draft.trim() ? (
+                      <Button
+                        size="icon"
+                        disabled={sending || sendingAudio}
+                        onClick={handleSend}
+                        className="h-11 w-11 rounded-full shrink-0"
+                        title="Enviar mensagem"
+                      >
+                        <SendHorizontal className="h-5 w-5" />
+                      </Button>
+                    ) : (
+                      <Button
+                        size="icon"
+                        disabled={sending || sendingAudio}
+                        onClick={startRecording}
+                        className="h-11 w-11 rounded-full shrink-0"
+                        title="Gravar áudio"
+                      >
+                        {sendingAudio ? <Loader2 className="h-5 w-5 animate-spin" /> : <Mic className="h-5 w-5" />}
+                      </Button>
+                    )}
                   </div>
                 </>
               )}
