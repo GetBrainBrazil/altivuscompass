@@ -422,11 +422,35 @@ const ChatBubble = ({ message }: ChatBubbleProps) => {
         )}
         <p className="whitespace-pre-wrap break-words">{message.content}</p>
       </div>
-      <span className="text-[10px] text-muted-foreground px-2">
+      <span className="flex items-center gap-1 text-[10px] text-muted-foreground px-2">
         {isAi ? "IA · " : isAgent ? "Agente · " : ""}
         {formatTime(message.timestamp)}
+        {!isLead && message.status && <MessageStatusTicks status={message.status} />}
       </span>
     </div>
+  );
+};
+
+const MessageStatusTicks = ({ status }: { status: MessageStatus }) => {
+  const label =
+    status === "pending" ? "Enviando..." :
+    status === "sent" ? "Enviada" :
+    status === "received" ? "Entregue" :
+    status === "read" ? "Lida" :
+    status === "played" ? "Reproduzida" :
+    status === "failed" ? "Falha no envio" : "";
+  const cls = "h-3 w-3";
+  const node =
+    status === "pending" ? <Clock className={cls} /> :
+    status === "sent" ? <Check className={cls} /> :
+    status === "received" ? <CheckCheck className={cls} /> :
+    status === "read" || status === "played" ? <CheckCheck className={cn(cls, "text-sky-500")} /> :
+    status === "failed" ? <span className="text-destructive font-bold">!</span> :
+    null;
+  return (
+    <span title={label} aria-label={label} className="inline-flex items-center">
+      {node}
+    </span>
   );
 };
 
