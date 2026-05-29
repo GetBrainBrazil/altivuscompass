@@ -268,8 +268,10 @@ Deno.serve(async (req) => {
             media_url: mediaUrl,
             media_caption: mediaCaption,
             zapi_message_id: result?.messageId || result?.id || null,
+            status: 'sent',
             raw: { action, payload: body, response: result },
           })
+
         }
       }
     } catch (mirrorErr) {
