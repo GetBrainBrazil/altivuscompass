@@ -125,6 +125,8 @@ interface Conversation {
   firstContactAt?: string;
   lastContactAt?: string;
   isReturning?: boolean;
+  /** Quantidade de mensagens recebidas não lidas (incrementado pelo webhook). */
+  unreadCount?: number;
 }
 
 // Conversas reais vêm do banco (wa_conversations / wa_messages) via Realtime.
@@ -295,6 +297,7 @@ interface ConversationCardProps {
 const ConversationCard = ({ conversation, active, onClick }: ConversationCardProps) => {
   const last = getLastMessage(conversation);
   const isAi = conversation.status === "ai";
+  const hasUnread = (conversation.unreadCount ?? 0) > 0 && !active;
   return (
     <button
       type="button"
@@ -303,6 +306,8 @@ const ConversationCard = ({ conversation, active, onClick }: ConversationCardPro
         "relative w-full text-left px-4 py-3.5 rounded-xl border transition-all duration-200 overflow-hidden",
         "border-gray-200 bg-white shadow-sm hover:shadow-md hover:bg-gray-50/80",
         active && "bg-gray-50 border-gray-300 shadow-md ring-1 ring-gray-200",
+        hasUnread &&
+          "bg-amber-50 border-amber-300 hover:bg-amber-50 ring-1 ring-amber-200 shadow-[0_0_0_1px_hsl(var(--warning)/0.15)]",
       )}
     >
       {active && (
@@ -314,6 +319,12 @@ const ConversationCard = ({ conversation, active, onClick }: ConversationCardPro
           )}
         />
       )}
+      {hasUnread && !active && (
+        <span
+          aria-hidden
+          className="absolute left-0 top-0 bottom-0 w-[3px] rounded-r bg-amber-500"
+        />
+      )}
       <div className="flex items-center gap-3">
         <Avatar className="h-10 w-10 shrink-0 self-center">
           <AvatarFallback className="text-xs font-medium">
@@ -322,12 +333,22 @@ const ConversationCard = ({ conversation, active, onClick }: ConversationCardPro
         </Avatar>
         <div className="min-w-0 flex-1 py-0.5">
           <div className="flex items-center justify-between gap-2">
-            <p className="font-medium text-sm truncate">{conversation.leadName}</p>
-            <span className="text-[11px] text-muted-foreground shrink-0">
+            <p className={cn("font-medium text-sm truncate", hasUnread && "font-semibold text-amber-950")}>
+              {conversation.leadName}
+            </p>
+            <span className="text-[11px] text-muted-foreground shrink-0 flex items-center gap-1.5">
+              {hasUnread && (
+                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold">
+                  {conversation.unreadCount! > 99 ? "99+" : conversation.unreadCount}
+                </span>
+              )}
               {formatTime(last.timestamp)}
             </span>
           </div>
-          <p className="text-xs text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
+          <p className={cn(
+            "text-xs line-clamp-2 mt-1 leading-relaxed",
+            hasUnread ? "text-amber-900 font-medium" : "text-muted-foreground",
+          )}>
             {last.sender === "ai" ? "IA: " : last.sender === "agent" ? "Você: " : ""}
             {last.content}
           </p>
@@ -1021,6 +1042,7 @@ export default function ServiceCenter() {
         firstContactAt: meta?.first_contact_at ?? c.created_at ?? undefined,
         lastContactAt: meta?.last_contact_at ?? c.last_message_at ?? undefined,
         isReturning: !!meta?.is_returning,
+        unreadCount: Number(c.unread_count ?? 0),
       };
     });
   }, [convoRows, msgRows, selectedId, contactMetaById]);
