@@ -219,18 +219,20 @@ Deno.serve(async (req) => {
           messageType === 'image' ? '📷 Imagem' :
           messageType === 'document' ? '📄 Documento' : 'Mensagem'
 
+        const convoPayload: Record<string, unknown> = {
+          phone: cleanPhone,
+          last_message_text: preview,
+          last_message_at: new Date().toISOString(),
+          last_message_from: 'agent',
+          updated_at: new Date().toISOString(),
+        }
+        if (contact_name && String(contact_name).trim()) {
+          convoPayload.contact_name = String(contact_name).trim()
+        }
+
         const { data: convo } = await serviceClient
           .from('wa_conversations')
-          .upsert(
-            {
-              phone: cleanPhone,
-              last_message_text: preview,
-              last_message_at: new Date().toISOString(),
-              last_message_from: 'agent',
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: 'phone' }
-          )
+          .upsert(convoPayload, { onConflict: 'phone' })
           .select('id')
           .single()
 
