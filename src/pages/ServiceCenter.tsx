@@ -890,6 +890,9 @@ export default function ServiceCenter() {
       if (error) throw error;
       return data ?? [];
     },
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
   });
 
   // ===== Carrega contatos linkados (datas e flag retornou) =====
@@ -929,6 +932,9 @@ export default function ServiceCenter() {
       if (error) throw error;
       return data ?? [];
     },
+    refetchInterval: selectedId ? 3000 : false,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
   });
 
   // ===== Realtime: novas mensagens / conversas / contatos / leads atualizados =====
