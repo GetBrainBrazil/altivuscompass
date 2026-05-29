@@ -70,6 +70,44 @@ Deno.serve(async (req) => {
     const body = await req.json()
     console.log('Webhook payload:', JSON.stringify(body).substring(0, 2000))
 
+    // ===== Z-API MessageStatusCallback =====
+    // Atualiza status das mensagens enviadas (SENT, RECEIVED, READ, PLAYED, FAILED).
+    // Pode chegar como type === 'MessageStatusCallback' OU objeto com status + ids/messageId.
+    const rawStatus: string | undefined =
+      typeof body.status === 'string' ? body.status :
+      typeof body.messageStatus === 'string' ? body.messageStatus :
+      undefined
+    const looksLikeStatusCallback =
+      body.type === 'MessageStatusCallback' ||
+      (!!rawStatus && !body.text && !body.image && !body.audio && !body.video && !body.document && !body.body)
+
+    if (looksLikeStatusCallback && rawStatus) {
+      const statusMap: Record<string, string> = {
+        SENT: 'sent',
+        RECEIVED: 'received',
+        DELIVERED: 'received',
+        READ: 'read',
+        PLAYED: 'played',
+        FAILED: 'failed',
+        ERROR: 'failed',
+      }
+      const normalized = statusMap[rawStatus.toUpperCase()] ?? rawStatus.toLowerCase()
+      const ids: string[] = Array.isArray(body.ids)
+        ? body.ids
+        : (body.messageId ? [body.messageId] : (body.id ? [body.id] : []))
+      if (ids.length > 0) {
+        const { error: stErr } = await supabase
+          .from('wa_messages')
+          .update({ status: normalized })
+          .in('zapi_message_id', ids)
+        if (stErr) console.error('wa_messages status update error:', stErr.message)
+      }
+      return new Response(JSON.stringify({ status: 'status_updated', value: normalized }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+
     // Z-API webhook payload structure
     const phone = body.phone || body.from || ''
 
