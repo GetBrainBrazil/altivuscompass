@@ -1034,6 +1034,7 @@ export default function ServiceCenter() {
                     ? `📄 ${m.media_caption ?? "Documento"}${m.media_url ? `\n${m.media_url}` : ""}`
                     : (m.content ?? m.media_url ?? "Mensagem"),
         timestamp: m.created_at,
+        status: (m.status ?? undefined) as MessageStatus | undefined,
       }));
       // Se não há nenhuma mensagem carregada, cria uma "fake" só para preview
       const fallbackMsg: Message = {
