@@ -36,7 +36,8 @@ import {
 import { cn } from "@/lib/utils";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
 import { NewMessageDialog } from "@/components/service-center/NewMessageDialog";
-import { Plus, Info } from "lucide-react";
+import { WhatsAppConnectionDialog } from "@/components/service-center/WhatsAppConnectionDialog";
+import { Plus, Info, Settings } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
