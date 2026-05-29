@@ -1524,6 +1524,7 @@ export default function ServiceCenter() {
                     {selected.handoffAfterMessageId === m.id && <HandoffDivider />}
                   </div>
                 ))}
+                <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
 
