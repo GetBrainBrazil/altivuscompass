@@ -1459,9 +1459,6 @@ export default function ServiceCenter() {
                       <SendHorizontal className="h-5 w-5" />
                     </Button>
                   </div>
-                  <p className="text-[10px] text-muted-foreground text-center mt-3">
-                    Mensagens enviadas vão direto para o WhatsApp do contato via Z-API.
-                  </p>
                 </>
               )}
             </footer>
