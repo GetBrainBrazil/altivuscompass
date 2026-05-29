@@ -79,7 +79,7 @@ function generateCaptcha() {
 
 export default function Login() {
   const navigate = useNavigate();
-  const { session } = useAuth();
+  const { session, realRole, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -89,28 +89,24 @@ export default function Login() {
   const [captchaInput, setCaptchaInput] = useState("");
 
   useEffect(() => {
+    if (authLoading) return;
     if (!session) return;
-    // Validate user is already registered (has profile). Prevents new Google signups.
+
+    // Only users already provisioned by an admin should be able to stay signed in.
     (async () => {
-      const userId = session.user.id;
-      const email = session.user.email;
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id")
-        .or(`user_id.eq.${userId}${email ? `,email.eq.${email}` : ""}`)
-        .maybeSingle();
-      if (!profile) {
+      if (!realRole) {
         await supabase.auth.signOut();
         toast({
           title: "Acesso negado",
-          description: "Este e-mail não está cadastrado. Solicite acesso ao administrador.",
+          description: "Este usuário não foi liberado no sistema. Solicite acesso ao administrador.",
           variant: "destructive",
         });
         return;
       }
+
       navigate("/", { replace: true });
     })();
-  }, [session, navigate, toast]);
+  }, [authLoading, session, realRole, navigate, toast]);
 
   const handleGoogleLogin = async () => {
     const result = await lovable.auth.signInWithOAuth("google", {
