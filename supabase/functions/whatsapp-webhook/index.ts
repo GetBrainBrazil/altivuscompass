@@ -950,16 +950,24 @@ async function handleLeadCapture(
   if (isTextMsg && messageText) {
     sessionState.messages = [...(sessionState.messages || []), { role: 'user', content: messageText }]
   } else {
-    // Non-text messages: still acknowledge but skip AI extraction this turn
-    await sendZapiText(
-      zapiInstanceId, zapiToken, zapiSecurityToken, phone,
-      'Recebi seu arquivo! Pode me contar em texto também o que você está procurando? (destino, datas, quantas pessoas)',
-    )
+    // Non-text messages (áudio/imagem/doc/sticker/etc.):
+    // - Em modo menu: NÃO enviar nada (apenas registra) — evita spam de "Recebi seu arquivo".
+    // - Em outros modos: envia o aviso UMA única vez por sessão (debounce via flag).
+    const inMenuMode = detectionMode === 'menu'
+    const alreadyAcked = !!sessionState.attachment_acked
+    if (!inMenuMode && !alreadyAcked) {
+      await sendZapiText(
+        zapiInstanceId, zapiToken, zapiSecurityToken, phone,
+        'Recebi seu arquivo! Pode me contar em texto também o que você está procurando? (destino, datas, quantas pessoas)',
+      )
+      sessionState.attachment_acked = true
+    }
+    sessionState.messages = [...(sessionState.messages || []), { role: 'user', content: '[anexo recebido]' }]
     await supabase.from('whatsapp_sessions').update({
       state: sessionState,
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     }).eq('id', leadSession!.id)
-    return { status: 'lead_capture_attachment', lead_id: leadId }
+    return { status: 'lead_capture_attachment', lead_id: leadId, acked: !inMenuMode && !alreadyAcked }
   }
 
   // ===== Palavras-chave de urgência → handoff imediato =====
