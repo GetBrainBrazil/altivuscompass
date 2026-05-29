@@ -382,6 +382,11 @@ const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = fa
                 <span className="w-1 h-1 rounded-full bg-success" />
                 IA
               </span>
+            ) : aiGloballyPaused && conversation.status === "ai" ? (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground border border-border">
+                <span className="w-1 h-1 rounded-full bg-muted-foreground" />
+                IA pausada
+              </span>
             ) : (
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-warning/20 text-warning border border-warning/30">
                 <span className="w-1 h-1 rounded-full bg-warning" />
