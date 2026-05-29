@@ -1523,6 +1523,7 @@ export default function ServiceCenter() {
           qc.invalidateQueries({ queryKey: ["wa_conversations"] });
         }}
       />
+      <WhatsAppConnectionDialog open={waConnOpen} onOpenChange={setWaConnOpen} />
     </div>
   );
 }
