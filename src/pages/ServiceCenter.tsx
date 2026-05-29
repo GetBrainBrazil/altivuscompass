@@ -1720,27 +1720,74 @@ export default function ServiceCenter() {
               ) : (
                 <>
                   <div className="flex items-center gap-3 max-w-3xl mx-auto">
-                    <Input
-                      placeholder="Digite uma mensagem..."
-                      value={draft}
-                      onChange={(e) => setDraft(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSend();
-                        }
-                      }}
-                      disabled={sending}
-                      className="h-11 rounded-full px-5 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-ring"
-                    />
-                    <Button
-                      size="icon"
-                      disabled={!draft.trim() || sending}
-                      onClick={handleSend}
-                      className="h-11 w-11 rounded-full shrink-0"
-                    >
-                      <SendHorizontal className="h-5 w-5" />
-                    </Button>
+                    {recording ? (
+                      <div className="flex-1 flex items-center gap-3 h-11 rounded-full px-5 bg-red-50 border border-red-200">
+                        <span className="relative flex h-2.5 w-2.5">
+                          <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75 animate-ping" />
+                          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-600" />
+                        </span>
+                        <span className="text-sm text-red-700 font-medium tabular-nums">
+                          Gravando… {String(Math.floor(recordSeconds / 60)).padStart(2, "0")}:{String(recordSeconds % 60).padStart(2, "0")}
+                        </span>
+                        <span className="ml-auto text-[11px] text-red-600/80">Máx 2:00</span>
+                      </div>
+                    ) : (
+                      <Input
+                        placeholder={sendingAudio ? "Enviando áudio…" : "Digite uma mensagem..."}
+                        value={draft}
+                        onChange={(e) => setDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSend();
+                          }
+                        }}
+                        disabled={sending || sendingAudio}
+                        className="h-11 rounded-full px-5 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-ring"
+                      />
+                    )}
+
+                    {recording ? (
+                      <>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          onClick={cancelRecording}
+                          className="h-11 w-11 rounded-full shrink-0 text-destructive hover:text-destructive"
+                          title="Cancelar"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          onClick={stopRecording}
+                          className="h-11 w-11 rounded-full shrink-0 bg-red-600 hover:bg-red-700 text-white"
+                          title="Parar e enviar"
+                        >
+                          <Square className="h-4 w-4 fill-current" />
+                        </Button>
+                      </>
+                    ) : draft.trim() ? (
+                      <Button
+                        size="icon"
+                        disabled={sending || sendingAudio}
+                        onClick={handleSend}
+                        className="h-11 w-11 rounded-full shrink-0"
+                        title="Enviar mensagem"
+                      >
+                        <SendHorizontal className="h-5 w-5" />
+                      </Button>
+                    ) : (
+                      <Button
+                        size="icon"
+                        disabled={sending || sendingAudio}
+                        onClick={startRecording}
+                        className="h-11 w-11 rounded-full shrink-0"
+                        title="Gravar áudio"
+                      >
+                        {sendingAudio ? <Loader2 className="h-5 w-5 animate-spin" /> : <Mic className="h-5 w-5" />}
+                      </Button>
+                    )}
                   </div>
                 </>
               )}
