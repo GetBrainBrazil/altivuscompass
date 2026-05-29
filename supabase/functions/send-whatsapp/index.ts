@@ -219,6 +219,28 @@ Deno.serve(async (req) => {
           messageType === 'image' ? '📷 Imagem' :
           messageType === 'document' ? '📄 Documento' : 'Mensagem'
 
+        // Se o usuário não informou um nome, tenta buscar o nome do contato no WhatsApp via Z-API
+        let resolvedName: string | null = contact_name && String(contact_name).trim() ? String(contact_name).trim() : null
+        if (!resolvedName) {
+          try {
+            const contactRes = await fetch(`${baseUrl}/contacts/${cleanPhone}`, {
+              method: 'GET',
+              headers: zapiHeaders,
+            })
+            if (contactRes.ok) {
+              const contactData: any = await contactRes.json()
+              const entry = Array.isArray(contactData) ? contactData[0] : contactData
+              const candidate =
+                entry?.name || entry?.vname || entry?.short || entry?.notify || entry?.pushname || null
+              if (candidate && String(candidate).trim() && !/^\+?\d/.test(String(candidate).trim())) {
+                resolvedName = String(candidate).trim()
+              }
+            }
+          } catch (e) {
+            console.warn('Z-API contact lookup failed:', (e as Error)?.message)
+          }
+        }
+
         const convoPayload: Record<string, unknown> = {
           phone: cleanPhone,
           last_message_text: preview,
@@ -226,14 +248,14 @@ Deno.serve(async (req) => {
           last_message_from: 'agent',
           updated_at: new Date().toISOString(),
         }
-        if (contact_name && String(contact_name).trim()) {
-          convoPayload.contact_name = String(contact_name).trim()
+        if (resolvedName) {
+          convoPayload.contact_name = resolvedName
         }
 
         const { data: convo } = await serviceClient
           .from('wa_conversations')
           .upsert(convoPayload, { onConflict: 'phone' })
-          .select('id')
+          .select('id, contact_name')
           .single()
 
         if (convo) {
