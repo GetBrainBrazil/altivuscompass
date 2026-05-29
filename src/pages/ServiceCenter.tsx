@@ -437,11 +437,15 @@ const ChatBubble = ({ message }: ChatBubbleProps) => {
   const isLead = message.sender === "lead";
   const isAgent = message.sender === "agent";
   const isAi = message.sender === "ai";
+  const mt = message.messageType ?? "text";
+  const isMedia = mt !== "text" && !!message.mediaUrl;
   return (
     <div className={cn("flex w-full flex-col gap-1", isLead ? "items-start" : "items-end")}>
       <div
         className={cn(
-          "max-w-[75%] rounded-3xl px-5 py-3 text-sm leading-relaxed shadow-sm",
+          "max-w-[75%] rounded-3xl text-sm leading-relaxed shadow-sm overflow-hidden",
+          !isMedia && "px-5 py-3",
+          isMedia && "p-2",
           isLead && "bg-white text-foreground rounded-bl-md border border-border/40",
           isAi && "bg-[hsl(var(--navy))] text-[hsl(var(--cream))] rounded-br-md",
           isAgent && "bg-emerald-600 text-white rounded-br-md",
@@ -450,12 +454,60 @@ const ChatBubble = ({ message }: ChatBubbleProps) => {
         {!isLead && (
           <p className={cn(
             "text-[10px] font-semibold uppercase tracking-wider mb-1 opacity-80",
+            isMedia && "px-3 pt-1",
             isAi ? "text-[hsl(var(--cream))]" : "text-emerald-50",
           )}>
             {isAi ? "🤖 IA" : "👤 Agente"}
           </p>
         )}
-        <p className="whitespace-pre-wrap break-words">{message.content}</p>
+        {mt === "audio" && message.mediaUrl ? (
+          <audio
+            controls
+            src={message.mediaUrl}
+            className="w-[260px] max-w-full"
+            preload="metadata"
+          />
+        ) : mt === "image" && message.mediaUrl ? (
+          <div className="space-y-1">
+            <a href={message.mediaUrl} target="_blank" rel="noreferrer">
+              <img
+                src={message.mediaUrl}
+                alt={message.mediaCaption || "Imagem"}
+                className="rounded-2xl max-h-[280px] w-auto object-cover"
+                loading="lazy"
+              />
+            </a>
+            {message.mediaCaption && (
+              <p className={cn("whitespace-pre-wrap break-words px-3 pb-1", isLead ? "" : "")}>
+                {message.mediaCaption}
+              </p>
+            )}
+          </div>
+        ) : mt === "video" && message.mediaUrl ? (
+          <div className="space-y-1">
+            <video controls src={message.mediaUrl} className="rounded-2xl max-h-[280px] w-auto" preload="metadata" />
+            {message.mediaCaption && (
+              <p className="whitespace-pre-wrap break-words px-3 pb-1">{message.mediaCaption}</p>
+            )}
+          </div>
+        ) : mt === "document" && message.mediaUrl ? (
+          <a
+            href={message.mediaUrl}
+            target="_blank"
+            rel="noreferrer"
+            className={cn(
+              "flex items-center gap-2 px-3 py-2 rounded-xl underline-offset-2 hover:underline",
+              isLead ? "text-foreground" : "text-current"
+            )}
+          >
+            <FileText className="h-4 w-4 shrink-0" />
+            <span className="truncate">{message.mediaCaption || "Documento"}</span>
+          </a>
+        ) : mt === "sticker" && message.mediaUrl ? (
+          <img src={message.mediaUrl} alt="sticker" className="h-32 w-32 object-contain" />
+        ) : (
+          <p className="whitespace-pre-wrap break-words">{message.content}</p>
+        )}
       </div>
       <span className="flex items-center gap-1 text-[10px] text-muted-foreground px-2">
         {isAi ? "IA · " : isAgent ? "Agente · " : ""}
