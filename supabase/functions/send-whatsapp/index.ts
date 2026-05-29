@@ -217,7 +217,7 @@ Deno.serve(async (req) => {
 
     // ===== Espelha mensagem enviada na Central de Atendimento =====
     try {
-      const sendableActions = ['send-text', 'send-image', 'send-document', 'send-link']
+      const sendableActions = ['send-text', 'send-image', 'send-document', 'send-link', 'send-audio']
       if (sendableActions.includes(action)) {
         const serviceClient = createClient(
           supabaseUrl,
@@ -232,6 +232,8 @@ Deno.serve(async (req) => {
           messageType = 'image'; mediaUrl = image_url ?? null; mediaCaption = message ?? null; content = null
         } else if (action === 'send-document') {
           messageType = 'document'; mediaUrl = document_url ?? null; mediaCaption = message ?? null; content = null
+        } else if (action === 'send-audio') {
+          messageType = 'audio'; mediaUrl = audio_url ?? null; content = null
         } else if (action === 'send-link') {
           messageType = 'text'; content = `${message ?? ''}\n${body.link_url ?? ''}`.trim()
         }
@@ -239,6 +241,7 @@ Deno.serve(async (req) => {
         const preview =
           messageType === 'text' ? (content ?? '').slice(0, 200) :
           messageType === 'image' ? '📷 Imagem' :
+          messageType === 'audio' ? '🎤 Áudio' :
           messageType === 'document' ? '📄 Documento' : 'Mensagem'
 
         // Se o usuário não informou um nome, tenta buscar o nome do contato no WhatsApp via Z-API
