@@ -41,14 +41,9 @@ Deno.serve(async (req) => {
     const zapiToken = Deno.env.get('ZAPI_TOKEN')!
     const zapiSecurityToken = Deno.env.get('ZAPI_SECURITY_TOKEN')!
 
-    // Validate that the request actually came from Z-API.
-    // Z-API sends the configured Account Security Token in the `Client-Token` header
-    // on every webhook call. Also accept it via `?token=` query param as a fallback
-    // for environments where custom headers cannot be configured.
-    // Z-API normalmente NÃO envia o Account Security Token nos webhooks de entrada
-    // (esse header é usado nas chamadas SAINDO para a Z-API). Aceitamos sem token
-    // — a URL já contém o ID do projeto e não é trivial de adivinhar. Se um token
-    // for fornecido (header ou query), exigimos que ele bata com o configurado.
+    // Valida que a requisição realmente veio da Z-API.
+    // Aceita o token via header (`Client-Token`) OU query string (`?token=...`).
+    // Com ZAPI_SECURITY_TOKEN configurado, o token é OBRIGATÓRIO e precisa bater.
     if (zapiSecurityToken) {
       const url = new URL(req.url)
       const headerToken =
@@ -58,15 +53,12 @@ Deno.serve(async (req) => {
         ''
       const queryToken = url.searchParams.get('token') || url.searchParams.get('secret') || ''
       const provided = headerToken || queryToken
-      if (provided && provided !== zapiSecurityToken) {
-        console.warn('Webhook rejected: Z-API security token mismatch')
+      if (!provided || provided !== zapiSecurityToken) {
+        console.warn('Webhook rejected: missing or invalid Z-API security token')
         return new Response(JSON.stringify({ error: 'Forbidden' }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
-      }
-      if (!provided) {
-        console.log('Webhook received without Client-Token (Z-API default behavior) — accepting')
       }
     }
 
