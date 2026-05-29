@@ -282,6 +282,7 @@ Deno.serve(async (req) => {
             media_mime: mediaMime,
             media_caption: mediaCaption,
             zapi_message_id: zapiMsgId,
+            status: isFromMe ? 'sent' : 'received',
             raw: body,
           })
           if (msgErr) console.error('wa_messages insert error:', msgErr.message)
