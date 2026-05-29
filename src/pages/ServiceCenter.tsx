@@ -358,32 +358,62 @@ const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = fa
           </p>
           <div className="mt-2 flex items-center gap-1.5 flex-wrap">
             {/* Nível do contato (Prospect / Lead / Cliente) */}
-            <ContactLevelBadge level={conversation.level} size="xs" />
+            <span
+              title={
+                conversation.level === "cliente"
+                  ? "Cliente: já fechou ao menos uma cotação."
+                  : conversation.level === "lead"
+                  ? "Lead: contato qualificado em negociação."
+                  : "Prospect: contato novo, ainda não qualificado."
+              }
+              className="inline-flex"
+            >
+              <ContactLevelBadge level={conversation.level} size="xs" />
+            </span>
             {conversation.isNew && (
-              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300 uppercase tracking-wide">
+              <span
+                title="Conversa nova — ainda não foi aberta/lida na Central."
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300 uppercase tracking-wide"
+              >
                 Novo
               </span>
             )}
             {conversation.isTraveling && (
-              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-800 border border-amber-300">
+              <span
+                title="Cliente em viagem no momento."
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-800 border border-amber-300"
+              >
                 <Plane className="w-2.5 h-2.5" />
                 Em viagem
               </span>
             )}
             {conversation.category === "post-sale" && !conversation.isTraveling && (
-              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
+              <span
+                title="Atendimento de pós-venda: suporte após a viagem ou contratação."
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-rose-50 text-rose-700 border border-rose-200"
+              >
                 <LifeBuoy className="w-2.5 h-2.5" />
                 Pós-venda
               </span>
             )}
             {/* Status humano/IA */}
             {isAi ? (
-              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-success/15 text-success border border-success/25">
+              <span
+                title="IA ativa: a inteligência artificial está respondendo automaticamente esta conversa."
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-success/15 text-success border border-success/25"
+              >
                 <span className="w-1 h-1 rounded-full bg-success" />
                 IA
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-warning/20 text-warning border border-warning/30">
+              <span
+                title={
+                  aiGloballyPaused
+                    ? "Modo manual: a IA está desativada globalmente. Apenas atendentes humanos respondem."
+                    : "Atendimento humano: esta conversa foi assumida por um atendente e a IA está pausada para este contato."
+                }
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-warning/20 text-warning border border-warning/30"
+              >
                 <span className="w-1 h-1 rounded-full bg-warning" />
                 Humano
               </span>
