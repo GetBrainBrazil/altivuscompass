@@ -71,6 +71,20 @@ export function NewMessageDialog({ open, onOpenChange, onSent }: NewMessageDialo
 
         <div className="space-y-4 py-2">
           <div className="space-y-2">
+            <Label htmlFor="new-msg-name">Nome do contato</Label>
+            <Input
+              id="new-msg-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ex.: Maria Silva"
+              disabled={sending}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Mesmo nome que aparecerá no WhatsApp e na lista de conversas.
+            </p>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="new-msg-phone">Telefone do destinatário</Label>
             <IntlPhoneInput
               id="new-msg-phone"
