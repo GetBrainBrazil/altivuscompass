@@ -128,6 +128,28 @@ Deno.serve(async (req) => {
         break
       }
 
+      case 'send-audio': {
+        if (!audio_url) {
+          return new Response(JSON.stringify({ error: 'URL do áudio é obrigatória' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
+        }
+        response = await fetch(`${baseUrl}/send-audio`, {
+          method: 'POST',
+          headers: zapiHeaders,
+          body: JSON.stringify({
+            phone: cleanPhone,
+            audio: audio_url,
+            viewOnce: false,
+            waveform: true,
+          }),
+        })
+        result = await response.json()
+        break
+      }
+
+
       case 'send-link': {
         if (!message) {
           return new Response(JSON.stringify({ error: 'Mensagem é obrigatória' }), {
