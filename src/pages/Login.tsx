@@ -145,8 +145,8 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: '#e8e6e3' }}>
-      <div className="w-full max-w-sm space-y-6 sm:space-y-8">
-        <div className="flex flex-col items-center gap-3 sm:gap-4">
+      <div className="w-full max-w-sm space-y-4">
+        <div className="flex flex-col items-center gap-2">
           <img src={logoAltivusLogin} alt="Altivus Turismo" className="h-16 sm:h-20 object-contain" />
           <p className="text-sm text-muted-foreground font-body">Entre com suas credenciais</p>
         </div>
@@ -165,7 +165,7 @@ export default function Login() {
           </div>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
+        <form onSubmit={handleLogin} className="space-y-3">
           <div className="space-y-2">
             <Label htmlFor="email" className="font-body">E-mail</Label>
             <Input id="email" type="email" placeholder="seu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
