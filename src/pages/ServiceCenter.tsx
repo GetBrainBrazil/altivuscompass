@@ -1186,12 +1186,6 @@ export default function ServiceCenter() {
   };
 
 
-  // Auto-scroll to latest message on new messages or when switching conversations
-  useEffect(() => {
-    if (selected) {
-      setTimeout(scrollToBottom, 50);
-    }
-  }, [selected?.messages.length, selectedId]);
 
   const counts = useMemo(
     () => ({
