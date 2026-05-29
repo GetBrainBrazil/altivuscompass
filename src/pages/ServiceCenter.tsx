@@ -1381,6 +1381,7 @@ export default function ServiceCenter() {
                   key={c.id}
                   conversation={c}
                   active={c.id === selectedId}
+                  aiGloballyPaused={aiGloballyPaused}
                   onClick={() => {
                     setSelectedId(c.id);
                     setSummaryOpen(false);
