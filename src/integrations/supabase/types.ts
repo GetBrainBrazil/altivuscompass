@@ -3548,6 +3548,7 @@ export type Database = {
           message_type: string
           raw: Json | null
           sender: string
+          status: string
           zapi_message_id: string | null
         }
         Insert: {
@@ -3562,6 +3563,7 @@ export type Database = {
           message_type?: string
           raw?: Json | null
           sender: string
+          status?: string
           zapi_message_id?: string | null
         }
         Update: {
@@ -3576,6 +3578,7 @@ export type Database = {
           message_type?: string
           raw?: Json | null
           sender?: string
+          status?: string
           zapi_message_id?: string | null
         }
         Relationships: [

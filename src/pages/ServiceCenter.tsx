@@ -36,7 +36,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
 import { NewMessageDialog } from "@/components/service-center/NewMessageDialog";
-import { Plus, Info, Bot } from "lucide-react";
+import { Plus, Info, Bot, Check, CheckCheck, Clock } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -73,11 +73,14 @@ interface CRMLink {
 // ============= Types =============
 type MessageSender = "lead" | "ai" | "agent";
 
+type MessageStatus = "pending" | "sent" | "received" | "read" | "played" | "failed";
+
 interface Message {
   id: string;
   sender: MessageSender;
   content: string;
   timestamp: string; // ISO
+  status?: MessageStatus;
 }
 
 type ConversationStatus = "ai" | "human";
@@ -419,11 +422,35 @@ const ChatBubble = ({ message }: ChatBubbleProps) => {
         )}
         <p className="whitespace-pre-wrap break-words">{message.content}</p>
       </div>
-      <span className="text-[10px] text-muted-foreground px-2">
+      <span className="flex items-center gap-1 text-[10px] text-muted-foreground px-2">
         {isAi ? "IA · " : isAgent ? "Agente · " : ""}
         {formatTime(message.timestamp)}
+        {!isLead && message.status && <MessageStatusTicks status={message.status} />}
       </span>
     </div>
+  );
+};
+
+const MessageStatusTicks = ({ status }: { status: MessageStatus }) => {
+  const label =
+    status === "pending" ? "Enviando..." :
+    status === "sent" ? "Enviada" :
+    status === "received" ? "Entregue" :
+    status === "read" ? "Lida" :
+    status === "played" ? "Reproduzida" :
+    status === "failed" ? "Falha no envio" : "";
+  const cls = "h-3 w-3";
+  const node =
+    status === "pending" ? <Clock className={cls} /> :
+    status === "sent" ? <Check className={cls} /> :
+    status === "received" ? <CheckCheck className={cls} /> :
+    status === "read" || status === "played" ? <CheckCheck className={cn(cls, "text-sky-500")} /> :
+    status === "failed" ? <span className="text-destructive font-bold">!</span> :
+    null;
+  return (
+    <span title={label} aria-label={label} className="inline-flex items-center">
+      {node}
+    </span>
   );
 };
 
@@ -1007,6 +1034,7 @@ export default function ServiceCenter() {
                     ? `📄 ${m.media_caption ?? "Documento"}${m.media_url ? `\n${m.media_url}` : ""}`
                     : (m.content ?? m.media_url ?? "Mensagem"),
         timestamp: m.created_at,
+        status: (m.status ?? undefined) as MessageStatus | undefined,
       }));
       // Se não há nenhuma mensagem carregada, cria uma "fake" só para preview
       const fallbackMsg: Message = {
