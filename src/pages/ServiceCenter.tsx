@@ -295,11 +295,12 @@ interface ConversationCardProps {
   conversation: Conversation;
   active: boolean;
   onClick: () => void;
+  aiGloballyPaused?: boolean;
 }
 
-const ConversationCard = ({ conversation, active, onClick }: ConversationCardProps) => {
+const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = false }: ConversationCardProps) => {
   const last = getLastMessage(conversation);
-  const isAi = conversation.status === "ai";
+  const isAi = conversation.status === "ai" && !aiGloballyPaused;
   const hasUnread = (conversation.unreadCount ?? 0) > 0 && !active;
   return (
     <button
@@ -380,6 +381,11 @@ const ConversationCard = ({ conversation, active, onClick }: ConversationCardPro
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-success/15 text-success border border-success/25">
                 <span className="w-1 h-1 rounded-full bg-success" />
                 IA
+              </span>
+            ) : aiGloballyPaused && conversation.status === "ai" ? (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground border border-border">
+                <span className="w-1 h-1 rounded-full bg-muted-foreground" />
+                IA pausada
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-warning/20 text-warning border border-warning/30">
@@ -1375,6 +1381,7 @@ export default function ServiceCenter() {
                   key={c.id}
                   conversation={c}
                   active={c.id === selectedId}
+                  aiGloballyPaused={aiGloballyPaused}
                   onClick={() => {
                     setSelectedId(c.id);
                     setSummaryOpen(false);
