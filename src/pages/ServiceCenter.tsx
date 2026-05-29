@@ -295,11 +295,12 @@ interface ConversationCardProps {
   conversation: Conversation;
   active: boolean;
   onClick: () => void;
+  aiGloballyPaused?: boolean;
 }
 
-const ConversationCard = ({ conversation, active, onClick }: ConversationCardProps) => {
+const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = false }: ConversationCardProps) => {
   const last = getLastMessage(conversation);
-  const isAi = conversation.status === "ai";
+  const isAi = conversation.status === "ai" && !aiGloballyPaused;
   const hasUnread = (conversation.unreadCount ?? 0) > 0 && !active;
   return (
     <button
