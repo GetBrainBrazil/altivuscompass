@@ -1235,6 +1235,13 @@ export default function ServiceCenter() {
     [conversations, selectedId],
   );
 
+  // Auto-scroll to latest message on new messages or when switching conversations
+  useEffect(() => {
+    if (selected) {
+      setTimeout(scrollToBottom, 50);
+    }
+  }, [selected?.messages.length, selectedId]);
+
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden bg-background">
       {/* ===== Banner global de status da IA (sincronizado com Agentes IA) ===== */}
