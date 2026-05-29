@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -1155,6 +1155,12 @@ export default function ServiceCenter() {
   }, [searchParams, conversations, setSearchParams]);
 
 
+  // Ref para auto-scroll no chat
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  };
+
   const handleSend = async () => {
     if (!selectedId || !draft.trim() || sending) return;
     const convo = convoRows.find((c: any) => c.id === selectedId);
@@ -1170,6 +1176,7 @@ export default function ServiceCenter() {
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       setDraft("");
+      scrollToBottom();
       qc.invalidateQueries({ queryKey: ["wa_messages", selectedId] });
       qc.invalidateQueries({ queryKey: ["wa_conversations"] });
     } catch (err: any) {
@@ -1178,6 +1185,7 @@ export default function ServiceCenter() {
       setSending(false);
     }
   };
+
 
 
   const counts = useMemo(
@@ -1227,6 +1235,13 @@ export default function ServiceCenter() {
     () => conversations.find((c) => c.id === selectedId) ?? null,
     [conversations, selectedId],
   );
+
+  // Auto-scroll to latest message on new messages or when switching conversations
+  useEffect(() => {
+    if (selected) {
+      setTimeout(scrollToBottom, 50);
+    }
+  }, [selected?.messages.length, selectedId]);
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden bg-background">
@@ -1509,6 +1524,7 @@ export default function ServiceCenter() {
                     {selected.handoffAfterMessageId === m.id && <HandoffDivider />}
                   </div>
                 ))}
+                <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
 
