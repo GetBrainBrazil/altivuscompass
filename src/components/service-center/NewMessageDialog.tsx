@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { IntlPhoneInput } from "@/components/ui/intl-phone-input";
@@ -15,6 +16,7 @@ interface NewMessageDialogProps {
 }
 
 export function NewMessageDialog({ open, onOpenChange, onSent }: NewMessageDialogProps) {
+  const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -32,13 +34,19 @@ export function NewMessageDialog({ open, onOpenChange, onSent }: NewMessageDialo
     setSending(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-whatsapp", {
-        body: { action: "send-text", phone: cleanPhone, message: message.trim() },
+        body: {
+          action: "send-text",
+          phone: cleanPhone,
+          message: message.trim(),
+          contact_name: name.trim() || undefined,
+        },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       toast.success("Mensagem enviada com sucesso.");
       setMessage("");
       setPhone("");
+      setName("");
       onOpenChange(false);
       onSent?.(cleanPhone);
     } catch (err: any) {
@@ -62,6 +70,20 @@ export function NewMessageDialog({ open, onOpenChange, onSent }: NewMessageDialo
         </DialogHeader>
 
         <div className="space-y-4 py-2">
+          <div className="space-y-2">
+            <Label htmlFor="new-msg-name">Nome do contato</Label>
+            <Input
+              id="new-msg-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ex.: Maria Silva"
+              disabled={sending}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Mesmo nome que aparecerá no WhatsApp e na lista de conversas.
+            </p>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="new-msg-phone">Telefone do destinatário</Label>
             <IntlPhoneInput
