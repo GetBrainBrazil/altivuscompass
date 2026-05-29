@@ -89,8 +89,37 @@ export default function Login() {
   const [captchaInput, setCaptchaInput] = useState("");
 
   useEffect(() => {
-    if (session) navigate("/", { replace: true });
-  }, [session, navigate]);
+    if (!session) return;
+    // Validate user is already registered (has profile). Prevents new Google signups.
+    (async () => {
+      const userId = session.user.id;
+      const email = session.user.email;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .or(`user_id.eq.${userId}${email ? `,email.eq.${email}` : ""}`)
+        .maybeSingle();
+      if (!profile) {
+        await supabase.auth.signOut();
+        toast({
+          title: "Acesso negado",
+          description: "Este e-mail não está cadastrado. Solicite acesso ao administrador.",
+          variant: "destructive",
+        });
+        return;
+      }
+      navigate("/", { replace: true });
+    })();
+  }, [session, navigate, toast]);
+
+  const handleGoogleLogin = async () => {
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin + "/login",
+    });
+    if (result.error) {
+      toast({ title: "Erro ao entrar com Google", description: result.error.message ?? "Tente novamente.", variant: "destructive" });
+    }
+  };
 
   const refreshCaptcha = useCallback(() => {
     setCaptcha(generateCaptcha());
