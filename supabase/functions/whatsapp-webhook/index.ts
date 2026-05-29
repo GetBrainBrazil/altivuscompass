@@ -70,42 +70,52 @@ Deno.serve(async (req) => {
     const body = await req.json()
     console.log('Webhook payload:', JSON.stringify(body).substring(0, 2000))
 
-    // ===== Z-API MessageStatusCallback =====
+    // ===== Z-API MessageStatusCallback / DeliveryCallback / etc. =====
     // Atualiza status das mensagens enviadas (SENT, RECEIVED, READ, PLAYED, FAILED).
-    // Pode chegar como type === 'MessageStatusCallback' OU objeto com status + ids/messageId.
+    // Aceita type === 'MessageStatusCallback', 'DeliveryCallback', 'ReadReceiptCallback', etc.
+    const callbackType: string | undefined = typeof body.type === 'string' ? body.type : undefined
+    const isCallbackType = !!callbackType && /Callback$/i.test(callbackType)
     const rawStatus: string | undefined =
       typeof body.status === 'string' ? body.status :
       typeof body.messageStatus === 'string' ? body.messageStatus :
-      undefined
+      (callbackType === 'DeliveryCallback' ? 'DELIVERED' :
+       callbackType === 'ReadReceiptCallback' ? 'READ' :
+       callbackType === 'PlayedCallback' ? 'PLAYED' :
+       undefined)
+    const hasMessageContent =
+      !!body.text || !!body.image || !!body.audio || !!body.video || !!body.document || !!body.body || !!body.sticker
     const looksLikeStatusCallback =
-      body.type === 'MessageStatusCallback' ||
-      (!!rawStatus && !body.text && !body.image && !body.audio && !body.video && !body.document && !body.body)
+      (isCallbackType && !hasMessageContent) ||
+      (!!rawStatus && !hasMessageContent)
 
-    if (looksLikeStatusCallback && rawStatus) {
-      const statusMap: Record<string, string> = {
-        SENT: 'sent',
-        RECEIVED: 'received',
-        DELIVERED: 'received',
-        READ: 'read',
-        PLAYED: 'played',
-        FAILED: 'failed',
-        ERROR: 'failed',
+    if (looksLikeStatusCallback) {
+      if (rawStatus) {
+        const statusMap: Record<string, string> = {
+          SENT: 'sent',
+          RECEIVED: 'received',
+          DELIVERED: 'received',
+          READ: 'read',
+          PLAYED: 'played',
+          FAILED: 'failed',
+          ERROR: 'failed',
+        }
+        const normalized = statusMap[rawStatus.toUpperCase()] ?? rawStatus.toLowerCase()
+        const ids: string[] = Array.isArray(body.ids)
+          ? body.ids
+          : (body.messageId ? [body.messageId] : (body.id ? [body.id] : []))
+        if (ids.length > 0) {
+          const { error: stErr } = await supabase
+            .from('wa_messages')
+            .update({ status: normalized })
+            .in('zapi_message_id', ids)
+          if (stErr) console.error('wa_messages status update error:', stErr.message)
+        }
       }
-      const normalized = statusMap[rawStatus.toUpperCase()] ?? rawStatus.toLowerCase()
-      const ids: string[] = Array.isArray(body.ids)
-        ? body.ids
-        : (body.messageId ? [body.messageId] : (body.id ? [body.id] : []))
-      if (ids.length > 0) {
-        const { error: stErr } = await supabase
-          .from('wa_messages')
-          .update({ status: normalized })
-          .in('zapi_message_id', ids)
-        if (stErr) console.error('wa_messages status update error:', stErr.message)
-      }
-      return new Response(JSON.stringify({ status: 'status_updated', value: normalized }), {
+      return new Response(JSON.stringify({ status: 'callback_ignored', type: callbackType ?? null }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+
 
 
     // Z-API webhook payload structure
