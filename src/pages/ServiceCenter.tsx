@@ -73,11 +73,14 @@ interface CRMLink {
 // ============= Types =============
 type MessageSender = "lead" | "ai" | "agent";
 
+type MessageStatus = "pending" | "sent" | "received" | "read" | "played" | "failed";
+
 interface Message {
   id: string;
   sender: MessageSender;
   content: string;
   timestamp: string; // ISO
+  status?: MessageStatus;
 }
 
 type ConversationStatus = "ai" | "human";
