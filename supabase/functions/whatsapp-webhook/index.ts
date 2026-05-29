@@ -40,11 +40,14 @@ Deno.serve(async (req) => {
     const zapiInstanceId = Deno.env.get('ZAPI_INSTANCE_ID')!
     const zapiToken = Deno.env.get('ZAPI_TOKEN')!
     const zapiSecurityToken = Deno.env.get('ZAPI_SECURITY_TOKEN')!
+    // Token específico do webhook (separado do Account Security Token usado nas chamadas SAINDO).
+    // Configure no painel Z-API o webhook como `?token=<ZAPI_WEBHOOK_TOKEN>`.
+    const zapiWebhookToken = Deno.env.get('ZAPI_WEBHOOK_TOKEN') || ''
 
     // Valida que a requisição realmente veio da Z-API.
     // Aceita o token via header (`Client-Token`) OU query string (`?token=...`).
-    // Com ZAPI_SECURITY_TOKEN configurado, o token é OBRIGATÓRIO e precisa bater.
-    if (zapiSecurityToken) {
+    // Com ZAPI_WEBHOOK_TOKEN configurado, o token é OBRIGATÓRIO e precisa bater.
+    if (zapiWebhookToken) {
       const url = new URL(req.url)
       const headerToken =
         req.headers.get('client-token') ||
@@ -53,8 +56,8 @@ Deno.serve(async (req) => {
         ''
       const queryToken = url.searchParams.get('token') || url.searchParams.get('secret') || ''
       const provided = headerToken || queryToken
-      if (!provided || provided !== zapiSecurityToken) {
-        console.warn('Webhook rejected: missing or invalid Z-API security token')
+      if (!provided || provided !== zapiWebhookToken) {
+        console.warn('Webhook rejected: missing or invalid webhook token')
         return new Response(JSON.stringify({ error: 'Forbidden' }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
