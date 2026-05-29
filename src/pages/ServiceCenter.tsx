@@ -81,6 +81,10 @@ interface Message {
   content: string;
   timestamp: string; // ISO
   status?: MessageStatus;
+  messageType?: "text" | "image" | "audio" | "video" | "document" | "sticker";
+  mediaUrl?: string;
+  mediaMime?: string;
+  mediaCaption?: string;
 }
 
 type ConversationStatus = "ai" | "human";
