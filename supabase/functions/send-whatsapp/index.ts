@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json()
-    const { action, phone, message, quote_id, image_url, document_url, document_name, contact_name } = body
+    const { action, phone, message, quote_id, image_url, document_url, document_name, contact_name, audio_url } = body
 
     if (!phone) {
       return new Response(JSON.stringify({ error: 'Telefone é obrigatório' }), {
