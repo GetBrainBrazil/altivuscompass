@@ -36,8 +36,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
 import { NewMessageDialog } from "@/components/service-center/NewMessageDialog";
-import { WhatsAppConnectionDialog } from "@/components/service-center/WhatsAppConnectionDialog";
-import { Plus, Info, Settings } from "lucide-react";
+import { Plus, Info, Bot } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -795,6 +794,7 @@ const ContactBanner = ({ conversation }: { conversation: Conversation }) => {
 // ============= Main Page =============
 export default function ServiceCenter() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
@@ -803,7 +803,6 @@ export default function ServiceCenter() {
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [sidePanelTab, setSidePanelTab] = useState<"summary" | "crm">("summary");
   const [newMsgOpen, setNewMsgOpen] = useState(false);
-  const [waConnOpen, setWaConnOpen] = useState(false);
 
   // ===== Status do Agente IA (fonte da verdade: ai_agent_status.active) =====
   const AGENT_ID = "1";
@@ -1244,14 +1243,14 @@ export default function ServiceCenter() {
             <h1 className="text-lg font-semibold">Atendimento</h1>
             <div className="flex items-center gap-1.5">
               <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setWaConnOpen(true)}
-                className="h-8 w-8"
-                title="Configurações de conexão do WhatsApp"
-                aria-label="Configurações de conexão do WhatsApp"
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/ai-agents")}
+                className="h-8 gap-1.5"
+                title="Configurar Agente de IA e WhatsApp"
               >
-                <Settings className="h-4 w-4" />
+                <Bot className="h-3.5 w-3.5" />
+                Agente IA
               </Button>
               <Button
                 size="sm"
@@ -1523,7 +1522,7 @@ export default function ServiceCenter() {
           qc.invalidateQueries({ queryKey: ["wa_conversations"] });
         }}
       />
-      <WhatsAppConnectionDialog open={waConnOpen} onOpenChange={setWaConnOpen} />
+      
     </div>
   );
 }
