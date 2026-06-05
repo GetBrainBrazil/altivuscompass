@@ -572,12 +572,36 @@ export default function Vault() {
               </div>
               <div className="space-y-1.5">
                 <Label className="font-body text-xs">Senha</Label>
-                <Input
-                  type="text"
-                  value={form.password ?? ""}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  className="font-mono"
-                />
+                <div className="relative">
+                  <Input
+                    type={showFormPassword ? "text" : "password"}
+                    value={form.password ?? ""}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    className="font-mono pr-20"
+                  />
+                  <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      onClick={() => setShowFormPassword((s) => !s)}
+                      title={showFormPassword ? "Ocultar" : "Mostrar"}
+                    >
+                      {showFormPassword ? <EyeOff size={13} /> : <Eye size={13} />}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      onClick={() => copyToClipboard(form.password ?? "", "Senha")}
+                      title="Copiar"
+                    >
+                      <Copy size={13} />
+                    </Button>
+                  </div>
+                </div>
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label className="font-body text-xs">Observações</Label>
