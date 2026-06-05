@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             phone: cleanPhone,
             image: image_url,
-            caption: message || '',
+            caption: captionWithAgent || '',
           }),
         })
         result = await response.json()
@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
             phone: cleanPhone,
             document: document_url,
             fileName: document_name || 'documento.pdf',
-            caption: message || '',
+            caption: captionWithAgent || '',
           }),
         })
         result = await response.json()
@@ -185,7 +185,7 @@ Deno.serve(async (req) => {
           headers: zapiHeaders,
           body: JSON.stringify({
             phone: cleanPhone,
-            message,
+            message: textWithAgent,
             image: image_url || '',
             linkUrl: body.link_url || '',
             title: body.link_title || '',
