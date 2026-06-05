@@ -243,7 +243,12 @@ Deno.serve(async (req) => {
       // Mesmo com IA pausada, todo número novo precisa virar Prospect no CRM e
       // todo número conhecido precisa estar vinculado à conversa.
       let contactLink: { contact_id?: string; lead_id?: string; client_id?: string } = {}
-      let resolvedDisplayName = senderName || formatPhonePlaceholder(phone)
+      // Só temos um "nome do cliente confiável" quando: é uma mensagem recebida
+      // (não fromMe) E o sender informou um nome que não é o da agência E o
+      // contato no CRM já tem nome real. Caso contrário deixamos o `contact_name`
+      // intocado no upsert (preserva o valor existente, evitando sobrescrever
+      // um nome real com "Altivus Turismo" ou placeholder).
+      let trustedDisplayName: string | null = null
       if (!isFromMe) {
         try {
           const link = await ensureContactForPhone(supabase, phone, senderName)
@@ -252,26 +257,28 @@ Deno.serve(async (req) => {
             lead_id: link.lead_id ?? undefined,
             client_id: link.client_id ?? undefined,
           }
-          if (link.display_name) resolvedDisplayName = link.display_name
+          // Aceita display_name apenas se parece um nome real (≥2 palavras, sem dígitos).
+          const dn = (link.display_name || '').trim()
+          const looksReal = !!dn && !/\d/.test(dn) && dn.split(/\s+/).filter((w) => w.length > 1).length >= 2 && !isAgencyName(dn)
+          if (looksReal) trustedDisplayName = dn
         } catch (linkErr) {
           console.error('ensureContactForPhone failed:', linkErr)
         }
       }
 
+      const convoUpsert: Record<string, unknown> = {
+        phone,
+        last_message_text: preview,
+        last_message_at: new Date().toISOString(),
+        last_message_from: isFromMe ? 'agent' : 'lead',
+        updated_at: new Date().toISOString(),
+        ...contactLink,
+      }
+      if (trustedDisplayName) convoUpsert.contact_name = trustedDisplayName
+
       const { data: convo, error: convoErr } = await supabase
         .from('wa_conversations')
-        .upsert(
-          {
-            phone,
-            contact_name: resolvedDisplayName,
-            last_message_text: preview,
-            last_message_at: new Date().toISOString(),
-            last_message_from: isFromMe ? 'agent' : 'lead',
-            updated_at: new Date().toISOString(),
-            ...contactLink,
-          },
-          { onConflict: 'phone' }
-        )
+        .upsert(convoUpsert, { onConflict: 'phone' })
         .select('id, unread_count')
         .single()
 
