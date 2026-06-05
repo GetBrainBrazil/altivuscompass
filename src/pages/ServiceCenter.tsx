@@ -457,12 +457,30 @@ interface ChatBubbleProps {
   agentLabel?: string;
 }
 
+const AGENT_LABEL_RE = /^\*([^\n*]{1,60})\*\n?/;
+const extractAgentLabel = (text?: string | null): { label: string | null; rest: string } => {
+  const t = (text ?? "").toString();
+  const m = t.match(AGENT_LABEL_RE);
+  if (m) return { label: m[1].trim(), rest: t.slice(m[0].length) };
+  return { label: null, rest: t };
+};
+
 const ChatBubble = ({ message, agentLabel }: ChatBubbleProps) => {
   const isLead = message.sender === "lead";
   const isAgent = message.sender === "agent";
   const isAi = message.sender === "ai";
   const mt = message.messageType ?? "text";
   const isMedia = mt !== "text" && !!message.mediaUrl;
+
+  // For agent messages, prefer the label persisted inline (`*Nome*\n...`)
+  // so historic messages keep the original sender even if nickname changes.
+  const parsedText = isAgent && mt === "text" ? extractAgentLabel(message.content) : { label: null, rest: message.content ?? "" };
+  const parsedCaption = isAgent && isMedia ? extractAgentLabel(message.mediaCaption) : { label: null, rest: message.mediaCaption ?? "" };
+  const persistedLabel = parsedText.label || parsedCaption.label;
+  const displayLabel = isAgent ? (persistedLabel || agentLabel || "Agente") : (agentLabel || "Agente");
+  const displayContent = isAgent && mt === "text" ? parsedText.rest : message.content;
+  const displayCaption = isAgent && isMedia ? parsedCaption.rest : message.mediaCaption;
+
   return (
     <div className={cn("flex w-full flex-col gap-1", isLead ? "items-start" : "items-end")}>
       <div
@@ -481,7 +499,7 @@ const ChatBubble = ({ message, agentLabel }: ChatBubbleProps) => {
             isMedia && "px-3 pt-1",
             isAi ? "text-[hsl(var(--cream))]" : "text-emerald-50",
           )}>
-            {isAi ? "🤖 IA" : `👤 ${agentLabel || "Agente"}`}
+            {isAi ? "🤖 IA" : `👤 ${displayLabel}`}
           </p>
         )}
         {mt === "audio" && message.mediaUrl ? (
@@ -501,17 +519,17 @@ const ChatBubble = ({ message, agentLabel }: ChatBubbleProps) => {
                 loading="lazy"
               />
             </a>
-            {message.mediaCaption && (
+            {displayCaption && (
               <p className={cn("whitespace-pre-wrap break-words px-3 pb-1", isLead ? "" : "")}>
-                {message.mediaCaption}
+                {displayCaption}
               </p>
             )}
           </div>
         ) : mt === "video" && message.mediaUrl ? (
           <div className="space-y-1">
             <video controls src={message.mediaUrl} className="rounded-2xl max-h-[280px] w-auto" preload="metadata" />
-            {message.mediaCaption && (
-              <p className="whitespace-pre-wrap break-words px-3 pb-1">{message.mediaCaption}</p>
+            {displayCaption && (
+              <p className="whitespace-pre-wrap break-words px-3 pb-1">{displayCaption}</p>
             )}
           </div>
         ) : mt === "document" && message.mediaUrl ? (
@@ -525,12 +543,12 @@ const ChatBubble = ({ message, agentLabel }: ChatBubbleProps) => {
             )}
           >
             <FileText className="h-4 w-4 shrink-0" />
-            <span className="truncate">{message.mediaCaption || "Documento"}</span>
+            <span className="truncate">{displayCaption || "Documento"}</span>
           </a>
         ) : mt === "sticker" && message.mediaUrl ? (
           <img src={message.mediaUrl} alt="sticker" className="h-32 w-32 object-contain" />
         ) : (
-          <p className="whitespace-pre-wrap break-words">{message.content}</p>
+          <p className="whitespace-pre-wrap break-words">{displayContent}</p>
         )}
       </div>
       <span className="flex items-center gap-1 text-[10px] text-muted-foreground px-2">

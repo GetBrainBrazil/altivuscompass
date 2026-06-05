@@ -54,6 +54,29 @@ Deno.serve(async (req) => {
       })
     }
 
+    // Resolve agent display label (nickname → full_name → "Atendente").
+    // Embedded into outgoing text so the historic record never changes
+    // even if the user later updates their nickname.
+    let agentLabel = 'Atendente'
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('nickname, full_name')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      const p = profile as { nickname?: string | null; full_name?: string | null } | null
+      const candidate = (p?.nickname?.trim() || p?.full_name?.trim() || '').trim()
+      if (candidate) agentLabel = candidate
+    } catch (_) { /* ignore — fallback to "Atendente" */ }
+
+    const prefixWithAgent = (txt?: string | null) => {
+      const t = (txt ?? '').toString()
+      return t ? `*${agentLabel}*\n${t}` : `*${agentLabel}*`
+    }
+
+    const textWithAgent = prefixWithAgent(message)
+    const captionWithAgent = (image_url || document_url) ? prefixWithAgent(message) : message
+
     // Clean phone number - remove non-digits
     const cleanPhone = phone.replace(/\D/g, '')
 
@@ -80,7 +103,7 @@ Deno.serve(async (req) => {
           headers: zapiHeaders,
           body: JSON.stringify({
             phone: cleanPhone,
-            message,
+            message: textWithAgent,
           }),
         })
         result = await response.json()
@@ -100,7 +123,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             phone: cleanPhone,
             image: image_url,
-            caption: message || '',
+            caption: captionWithAgent || '',
           }),
         })
         result = await response.json()
@@ -121,7 +144,7 @@ Deno.serve(async (req) => {
             phone: cleanPhone,
             document: document_url,
             fileName: document_name || 'documento.pdf',
-            caption: message || '',
+            caption: captionWithAgent || '',
           }),
         })
         result = await response.json()
@@ -162,7 +185,7 @@ Deno.serve(async (req) => {
           headers: zapiHeaders,
           body: JSON.stringify({
             phone: cleanPhone,
-            message,
+            message: textWithAgent,
             image: image_url || '',
             linkUrl: body.link_url || '',
             title: body.link_title || '',
@@ -225,17 +248,17 @@ Deno.serve(async (req) => {
         )
 
         let messageType = 'text'
-        let content: string | null = message ?? null
+        let content: string | null = textWithAgent ?? null
         let mediaUrl: string | null = null
         let mediaCaption: string | null = null
         if (action === 'send-image') {
-          messageType = 'image'; mediaUrl = image_url ?? null; mediaCaption = message ?? null; content = null
+          messageType = 'image'; mediaUrl = image_url ?? null; mediaCaption = captionWithAgent ?? null; content = null
         } else if (action === 'send-document') {
-          messageType = 'document'; mediaUrl = document_url ?? null; mediaCaption = message ?? null; content = null
+          messageType = 'document'; mediaUrl = document_url ?? null; mediaCaption = captionWithAgent ?? null; content = null
         } else if (action === 'send-audio') {
           messageType = 'audio'; mediaUrl = audio_url ?? null; content = null
         } else if (action === 'send-link') {
-          messageType = 'text'; content = `${message ?? ''}\n${body.link_url ?? ''}`.trim()
+          messageType = 'text'; content = `${textWithAgent ?? ''}\n${body.link_url ?? ''}`.trim()
         }
 
         const preview =
