@@ -149,6 +149,7 @@ export default function PayableReceivableForm() {
       recurrence_enabled: !!existing.recurrence_type && existing.recurrence_type !== "none",
       recurrence_period: existing.recurrence_type && existing.recurrence_type !== "none" ? existing.recurrence_type : "monthly",
       observations: existing.observations ?? "",
+      company: (existing.company as CompanyBrand) ?? DEFAULT_COMPANY,
     }));
   }, [existing]);
 
