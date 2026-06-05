@@ -13,12 +13,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import BankAccountCredentials from "./BankAccountCredentials";
 import { logAuditEvent } from "@/lib/audit";
+import { COMPANY_OPTIONS, DEFAULT_COMPANY, type CompanyBrand } from "@/lib/company";
+import { CompanyBadge } from "@/components/company/CompanyBadge";
 
 type BankAccount = {
   id: string; bank_name: string; agency: string | null; account_number: string | null;
   account_type: string | null; pix_key: string | null; pix_key_type: string | null;
   holder_name: string | null; holder_document: string | null; is_active: boolean;
-  notes: string | null; created_at: string; updated_at: string;
+  notes: string | null; created_at: string; updated_at: string; company?: string | null;
 };
 
 const accountTypeLabels: Record<string, string> = {
