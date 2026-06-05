@@ -234,6 +234,7 @@ export default function Vault() {
       queryClient.invalidateQueries({ queryKey: ["vault-items"] });
       queryClient.invalidateQueries({ queryKey: ["vault-viewers"] });
       setConfirmDelete(null);
+      closeForm();
     },
     onError: (err: Error) =>
       toast({ title: "Erro", description: err.message, variant: "destructive" }),
