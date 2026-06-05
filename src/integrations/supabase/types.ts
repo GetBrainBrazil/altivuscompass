@@ -3825,12 +3825,24 @@ export type Database = {
       }
     }
     Functions: {
+      can_edit_vault_item: {
+        Args: { _item_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_view_vault_item: {
+        Args: { _item_id: string; _user_id: string }
+        Returns: boolean
+      }
       current_user_display_name: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_vault_item_owner: {
+        Args: { _item_id: string; _user_id: string }
         Returns: boolean
       }
       touch_lead_interaction: { Args: { _lead_id: string }; Returns: undefined }
