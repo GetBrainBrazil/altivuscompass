@@ -169,6 +169,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
       if (!t.due_date) return false;
       if (t.due_date < range.from || t.due_date > range.to) return false;
       if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
+      if (!matchesCompanyFilter(companyFilter, t.company)) return false;
       if (search) {
         const q = search.toLowerCase();
         const haystack = `${t.description ?? ""} ${t._party} ${t.category ?? ""}`.toLowerCase();
