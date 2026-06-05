@@ -59,7 +59,7 @@ export default function UserDetail() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, any>>({
-    full_name: "", email: "", password: "", role: "sales_agent",
+    full_name: "", nickname: "", email: "", password: "", role: "sales_agent",
     phone: "", cep: "", address_street: "", address_number: "", address_complement: "",
     neighborhood: "", city: "", state: "", country: "Brasil",
     emergency_contact_name: "", emergency_contact_phone: "", health_plan: "",
@@ -82,6 +82,7 @@ export default function UserDetail() {
     if (userData) {
       setForm({
         full_name: userData.full_name ?? "",
+        nickname: userData.nickname ?? "",
         email: userData.email ?? "",
         password: "",
         role: userData.role ?? "sales_agent",
@@ -148,6 +149,7 @@ export default function UserDetail() {
             action: "update",
             user_id: id,
             full_name: form.full_name.trim(),
+            nickname: form.nickname?.trim() || null,
             role: form.role,
             ...(avatarPath ? { avatar_url: avatarPath } : {}),
             phone: form.phone || null,
@@ -309,6 +311,16 @@ export default function UserDetail() {
               <div className="space-y-2 sm:col-span-2">
                 <Label className="font-body text-xs uppercase tracking-wide text-muted-foreground">Nome completo</Label>
                 <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label className="font-body text-xs uppercase tracking-wide text-muted-foreground">Apelido (opcional)</Label>
+                <Input
+                  value={form.nickname ?? ""}
+                  onChange={(e) => setForm({ ...form, nickname: e.target.value })}
+                  placeholder="Ex: João"
+                  maxLength={40}
+                />
+                <p className="text-xs text-muted-foreground font-body">Usado na Central de Atendimento. Se vazio, exibimos o nome completo.</p>
               </div>
               <div className="space-y-2">
                 <Label className="font-body text-xs uppercase tracking-wide text-muted-foreground">E-mail</Label>

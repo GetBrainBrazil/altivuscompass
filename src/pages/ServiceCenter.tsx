@@ -454,9 +454,10 @@ const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = fa
 
 interface ChatBubbleProps {
   message: Message;
+  agentLabel?: string;
 }
 
-const ChatBubble = ({ message }: ChatBubbleProps) => {
+const ChatBubble = ({ message, agentLabel }: ChatBubbleProps) => {
   const isLead = message.sender === "lead";
   const isAgent = message.sender === "agent";
   const isAi = message.sender === "ai";
@@ -480,7 +481,7 @@ const ChatBubble = ({ message }: ChatBubbleProps) => {
             isMedia && "px-3 pt-1",
             isAi ? "text-[hsl(var(--cream))]" : "text-emerald-50",
           )}>
-            {isAi ? "🤖 IA" : "👤 Agente"}
+            {isAi ? "🤖 IA" : `👤 ${agentLabel || "Agente"}`}
           </p>
         )}
         {mt === "audio" && message.mediaUrl ? (
@@ -961,6 +962,23 @@ export default function ServiceCenter() {
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [sidePanelTab, setSidePanelTab] = useState<"summary" | "crm">("summary");
   const [newMsgOpen, setNewMsgOpen] = useState(false);
+
+  // Apelido/nome do atendente logado (para exibir nas mensagens enviadas)
+  const { data: myAgentLabel } = useQuery({
+    queryKey: ["my-agent-label"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return "Agente";
+      const { data } = await (supabase as any)
+        .from("profiles")
+        .select("nickname, full_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const p = data as { nickname?: string | null; full_name?: string | null } | null;
+      return (p?.nickname?.trim() || p?.full_name?.trim() || "Agente");
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   // ===== Status do Agente IA (fonte da verdade: ai_agent_status.active) =====
   const AGENT_ID = "1";
@@ -1709,7 +1727,7 @@ export default function ServiceCenter() {
               <div className="space-y-4 max-w-3xl mx-auto">
                 {selected.messages.map((m) => (
                   <div key={m.id} className="space-y-4">
-                    <ChatBubble message={m} />
+                    <ChatBubble message={m} agentLabel={myAgentLabel} />
                     {selected.handoffAfterMessageId === m.id && <HandoffDivider />}
                   </div>
                 ))}

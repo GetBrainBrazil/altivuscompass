@@ -2282,6 +2282,7 @@ export type Database = {
           health_plan: string | null
           id: string
           neighborhood: string | null
+          nickname: string | null
           phone: string | null
           state: string | null
           updated_at: string
@@ -2303,6 +2304,7 @@ export type Database = {
           health_plan?: string | null
           id?: string
           neighborhood?: string | null
+          nickname?: string | null
           phone?: string | null
           state?: string | null
           updated_at?: string
@@ -2324,6 +2326,7 @@ export type Database = {
           health_plan?: string | null
           id?: string
           neighborhood?: string | null
+          nickname?: string | null
           phone?: string | null
           state?: string | null
           updated_at?: string
