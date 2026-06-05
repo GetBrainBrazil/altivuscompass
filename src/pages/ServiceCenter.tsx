@@ -1727,7 +1727,7 @@ export default function ServiceCenter() {
               <div className="space-y-4 max-w-3xl mx-auto">
                 {selected.messages.map((m) => (
                   <div key={m.id} className="space-y-4">
-                    <ChatBubble message={m} />
+                    <ChatBubble message={m} agentLabel={myAgentLabel} />
                     {selected.handoffAfterMessageId === m.id && <HandoffDivider />}
                   </div>
                 ))}
