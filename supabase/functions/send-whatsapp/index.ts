@@ -54,6 +54,29 @@ Deno.serve(async (req) => {
       })
     }
 
+    // Resolve agent display label (nickname → full_name → "Atendente").
+    // Embedded into outgoing text so the historic record never changes
+    // even if the user later updates their nickname.
+    let agentLabel = 'Atendente'
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('nickname, full_name')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      const p = profile as { nickname?: string | null; full_name?: string | null } | null
+      const candidate = (p?.nickname?.trim() || p?.full_name?.trim() || '').trim()
+      if (candidate) agentLabel = candidate
+    } catch (_) { /* ignore — fallback to "Atendente" */ }
+
+    const prefixWithAgent = (txt?: string | null) => {
+      const t = (txt ?? '').toString()
+      return t ? `*${agentLabel}*\n${t}` : `*${agentLabel}*`
+    }
+
+    const textWithAgent = prefixWithAgent(message)
+    const captionWithAgent = (image_url || document_url) ? prefixWithAgent(message) : message
+
     // Clean phone number - remove non-digits
     const cleanPhone = phone.replace(/\D/g, '')
 
