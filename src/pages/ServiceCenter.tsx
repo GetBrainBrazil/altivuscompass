@@ -417,19 +417,27 @@ const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = fa
             {last.content}
           </p>
           <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-            {/* Nível do contato (Prospect / Lead / Cliente) */}
-            <span
-              title={
-                conversation.level === "cliente"
-                  ? "Cliente: já fechou ao menos uma cotação."
-                  : conversation.level === "lead"
-                  ? "Lead: contato qualificado em negociação."
-                  : "Prospect: contato novo, ainda não qualificado."
-              }
-              className="inline-flex"
-            >
-              <ContactLevelBadge level={conversation.level} size="xs" />
-            </span>
+            {conversation.isGroup ? (
+              <span
+                title="Conversa de grupo do WhatsApp. A IA não responde em grupos."
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-violet-100 text-violet-700 border border-violet-300 uppercase tracking-wide"
+              >
+                👥 Grupo
+              </span>
+            ) : (
+              <span
+                title={
+                  conversation.level === "cliente"
+                    ? "Cliente: já fechou ao menos uma cotação."
+                    : conversation.level === "lead"
+                    ? "Lead: contato qualificado em negociação."
+                    : "Prospect: contato novo, ainda não qualificado."
+                }
+                className="inline-flex"
+              >
+                <ContactLevelBadge level={conversation.level} size="xs" />
+              </span>
+            )}
             {conversation.isNew && (
               <span
                 title="Conversa nova — ainda não foi aberta/lida na Central."
