@@ -81,6 +81,7 @@ export default function BankAccountsTab() {
         account_type: form.account_type || "checking", pix_key: form.pix_key || null,
         pix_key_type: form.pix_key_type || null, holder_name: form.holder_name || null,
         holder_document: form.holder_document || null, is_active: form.is_active ?? true, notes: form.notes || null,
+        company: (form.company as CompanyBrand) || DEFAULT_COMPANY,
       };
       if (editing) {
         const { error } = await supabase.from("bank_accounts").update(payload).eq("id", editing.id);
