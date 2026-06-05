@@ -75,7 +75,7 @@ export default function PromoteContact() {
     Number(travelersCount) > 0 &&
     (flexibleDates || travelDateStart.length > 0 || travelDateEnd.length > 0);
 
-  const goBack = () => navigate("/contacts");
+  const goBack = () => navigate("/clients");
 
   const handleSubmit = async () => {
     if (!canSubmit || !contact) return;
