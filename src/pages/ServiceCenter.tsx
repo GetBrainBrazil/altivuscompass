@@ -174,6 +174,21 @@ const formatConversationTime = (iso: string) => {
     : { day: "2-digit", month: "2-digit", year: "2-digit" });
 };
 
+// Formata telefone para exibição (BR: +55 (21) 99999-9999). Para outros países,
+// devolve "+<digits>" agrupado.
+const formatPhoneDisplay = (raw: string): string => {
+  const digits = (raw || "").replace(/\D/g, "");
+  if (!digits) return raw || "";
+  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) {
+    const cc = digits.slice(0, 2);
+    const ddd = digits.slice(2, 4);
+    const rest = digits.slice(4);
+    if (rest.length === 9) return `+${cc} (${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
+    if (rest.length === 8) return `+${cc} (${ddd}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
+  }
+  return `+${digits}`;
+};
+
 const formatPhone = (phone: string) => {
   const m = phone.match(/^\+(\d{2})(\d{2})(\d{5})(\d{4})$/);
   if (!m) return phone;
