@@ -36,11 +36,11 @@ import {
   Search,
   X,
   Copy,
-  Lock,
   Star,
   ExternalLink,
   Shield,
   Pencil,
+  Lock,
 } from "lucide-react";
 import { ROLE_LABELS } from "@/lib/permissions";
 import type { Tables } from "@/integrations/supabase/types";
@@ -59,21 +59,23 @@ type VaultItem = {
   updated_at: string;
 };
 
-type Viewer = { id: string; vault_item_id: string; user_id: string };
+type Viewer = { id: string; vault_item_id: string; user_id: string; can_edit: boolean };
 type ProfileWithRole = Tables<"profiles"> & { role?: string };
+type ViewerDraft = { user_id: string; can_edit: boolean };
 
 export default function Vault() {
   const { toast } = useToast();
-  const { userRole, user } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
-  const isAdmin = userRole === "admin";
+  const currentUserId = user?.id ?? "";
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [ownerFilter, setOwnerFilter] = useState<"all" | "mine" | "shared">("all");
   const [formOpen, setFormOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingItem, setEditingItem] = useState<VaultItem | null>(null);
   const [form, setForm] = useState<Partial<VaultItem>>({});
-  const [selectedViewers, setSelectedViewers] = useState<string[]>([]);
+  const [draftViewers, setDraftViewers] = useState<ViewerDraft[]>([]);
   const [viewerSearch, setViewerSearch] = useState("");
   const [viewerDropdownOpen, setViewerDropdownOpen] = useState(false);
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
@@ -95,13 +97,10 @@ export default function Vault() {
   const { data: viewers = [] } = useQuery({
     queryKey: ["vault-viewers"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("vault_item_viewers")
-        .select("*");
+      const { data, error } = await supabase.from("vault_item_viewers").select("*");
       if (error) throw error;
       return data as Viewer[];
     },
-    enabled: isAdmin,
   });
 
   const { data: profilesWithRoles = [] } = useQuery({
@@ -117,20 +116,25 @@ export default function Vault() {
         role: rolesData?.find((r: Tables<"user_roles">) => r.user_id === p.user_id)?.role ?? "",
       })) as ProfileWithRole[];
     },
-    enabled: isAdmin,
   });
 
+  const profileById = useMemo(() => {
+    const m = new Map<string, ProfileWithRole>();
+    profilesWithRoles.forEach((p) => m.set(p.user_id, p));
+    return m;
+  }, [profilesWithRoles]);
+
   const filteredProfiles = useMemo(() => {
-    if (!viewerSearch.trim()) return profilesWithRoles;
+    const others = profilesWithRoles.filter((p) => p.user_id !== currentUserId);
+    if (!viewerSearch.trim()) return others;
     const q = viewerSearch.toLowerCase();
-    return profilesWithRoles.filter((p) => {
+    return others.filter((p) => {
       const roleLabel = ROLE_LABELS[p.role ?? ""] ?? p.role ?? "";
       return (
-        p.full_name.toLowerCase().includes(q) ||
-        roleLabel.toLowerCase().includes(q)
+        p.full_name.toLowerCase().includes(q) || roleLabel.toLowerCase().includes(q)
       );
     });
-  }, [profilesWithRoles, viewerSearch]);
+  }, [profilesWithRoles, viewerSearch, currentUserId]);
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -138,11 +142,17 @@ export default function Vault() {
     return Array.from(set).sort();
   }, [items]);
 
+  const canEditItem = (it: VaultItem) =>
+    it.created_by === currentUserId ||
+    viewers.some((v) => v.vault_item_id === it.id && v.user_id === currentUserId && v.can_edit);
+
+  const isOwner = (it: VaultItem) => it.created_by === currentUserId;
+
   const visibleItems = useMemo(() => {
     let list = items;
-    if (categoryFilter !== "all") {
-      list = list.filter((i) => (i.category ?? "") === categoryFilter);
-    }
+    if (ownerFilter === "mine") list = list.filter((i) => isOwner(i));
+    if (ownerFilter === "shared") list = list.filter((i) => !isOwner(i));
+    if (categoryFilter !== "all") list = list.filter((i) => (i.category ?? "") === categoryFilter);
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -151,11 +161,12 @@ export default function Vault() {
           (i.username ?? "").toLowerCase().includes(q) ||
           (i.url ?? "").toLowerCase().includes(q) ||
           (i.notes ?? "").toLowerCase().includes(q) ||
-          (i.category ?? "").toLowerCase().includes(q)
+          (i.category ?? "").toLowerCase().includes(q),
       );
     }
     return list;
-  }, [items, search, categoryFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, search, categoryFilter, ownerFilter, currentUserId]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -170,35 +181,40 @@ export default function Vault() {
       };
       if (!payload.title) throw new Error("Título é obrigatório");
 
-      let itemId = editingId;
-      if (editingId) {
+      let itemId = editingItem?.id ?? null;
+      const ownerControlsAccess = !editingItem || editingItem.created_by === currentUserId;
+
+      if (editingItem) {
         const { error } = await supabase
           .from("vault_items")
           .update(payload)
-          .eq("id", editingId);
+          .eq("id", editingItem.id);
         if (error) throw error;
-        await supabase.from("vault_item_viewers").delete().eq("vault_item_id", editingId);
       } else {
         const { data, error } = await supabase
           .from("vault_items")
-          .insert({ ...payload, created_by: user?.id ?? null })
+          .insert({ ...payload, created_by: currentUserId })
           .select("id")
           .single();
         if (error) throw error;
         itemId = data.id;
       }
 
-      if (selectedViewers.length > 0 && itemId) {
-        const rows = selectedViewers.map((uid) => ({
-          vault_item_id: itemId!,
-          user_id: uid,
-        }));
-        const { error } = await supabase.from("vault_item_viewers").insert(rows);
-        if (error) throw error;
+      if (ownerControlsAccess && itemId) {
+        await supabase.from("vault_item_viewers").delete().eq("vault_item_id", itemId);
+        if (draftViewers.length > 0) {
+          const rows = draftViewers.map((v) => ({
+            vault_item_id: itemId!,
+            user_id: v.user_id,
+            can_edit: v.can_edit,
+          }));
+          const { error } = await supabase.from("vault_item_viewers").insert(rows);
+          if (error) throw error;
+        }
       }
     },
     onSuccess: () => {
-      toast({ title: editingId ? "Item atualizado" : "Item criado" });
+      toast({ title: editingItem ? "Item atualizado" : "Item criado" });
       queryClient.invalidateQueries({ queryKey: ["vault-items"] });
       queryClient.invalidateQueries({ queryKey: ["vault-viewers"] });
       closeForm();
@@ -223,30 +239,40 @@ export default function Vault() {
   });
 
   const openCreate = () => {
-    setEditingId(null);
+    setEditingItem(null);
     setForm({ is_favorite: false });
-    setSelectedViewers([]);
+    setDraftViewers([]);
     setFormOpen(true);
   };
 
   const openEdit = (it: VaultItem) => {
-    setEditingId(it.id);
+    setEditingItem(it);
     setForm({ ...it });
-    setSelectedViewers(viewers.filter((v) => v.vault_item_id === it.id).map((v) => v.user_id));
+    setDraftViewers(
+      viewers
+        .filter((v) => v.vault_item_id === it.id)
+        .map((v) => ({ user_id: v.user_id, can_edit: v.can_edit })),
+    );
     setFormOpen(true);
   };
 
   const closeForm = () => {
     setFormOpen(false);
-    setEditingId(null);
+    setEditingItem(null);
     setForm({});
-    setSelectedViewers([]);
+    setDraftViewers([]);
     setViewerSearch("");
   };
 
-  const toggleViewer = (uid: string) =>
-    setSelectedViewers((prev) =>
-      prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid]
+  const addViewer = (uid: string) =>
+    setDraftViewers((prev) =>
+      prev.some((v) => v.user_id === uid) ? prev : [...prev, { user_id: uid, can_edit: false }],
+    );
+  const removeViewer = (uid: string) =>
+    setDraftViewers((prev) => prev.filter((v) => v.user_id !== uid));
+  const toggleViewerEdit = (uid: string) =>
+    setDraftViewers((prev) =>
+      prev.map((v) => (v.user_id === uid ? { ...v, can_edit: !v.can_edit } : v)),
     );
 
   const copyToClipboard = async (text: string | null, label: string) => {
@@ -259,16 +285,10 @@ export default function Vault() {
     }
   };
 
-  const getViewerNames = (itemId: string) => {
-    const ids = viewers.filter((v) => v.vault_item_id === itemId).map((v) => v.user_id);
-    return profilesWithRoles
-      .filter((p) => ids.includes(p.user_id))
-      .map((p) => p.full_name)
-      .join(", ");
-  };
+  const ownerCanManageDraft = !editingItem || editingItem.created_by === currentUserId;
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 max-w-6xl space-y-6">
+    <div className="container mx-auto p-4 sm:p-6 max-w-7xl space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -277,57 +297,68 @@ export default function Vault() {
             Cofre de Senhas
           </h1>
           <p className="text-sm font-body text-muted-foreground mt-1">
-            {isAdmin
-              ? "Gerencie senhas, acessos e observações sensíveis. Você controla quem pode ver cada item."
-              : "Visualize apenas os itens em que um administrador te autorizou."}
+            Senhas e acessos são privados por padrão. Quem cria escolhe quem mais pode ver ou editar.
           </p>
         </div>
-        {isAdmin && (
-          <Button onClick={openCreate} className="font-body">
-            <Plus size={16} className="mr-1" /> Novo Item
-          </Button>
-        )}
+        <Button onClick={openCreate} className="font-body">
+          <Plus size={16} className="mr-1" /> Novo Item
+        </Button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-2">
+      <div className="flex flex-col lg:flex-row gap-2">
         <div className="relative flex-1">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar por título, usuário, URL..."
+            placeholder="Buscar por título, usuário, URL, observações..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 font-body"
           />
         </div>
-        {categories.length > 0 && (
-          <div className="flex gap-1 flex-wrap">
+        <div className="flex gap-1 flex-wrap items-center">
+          {(["all", "mine", "shared"] as const).map((k) => (
             <Button
+              key={k}
               type="button"
-              variant={categoryFilter === "all" ? "default" : "outline"}
+              variant={ownerFilter === k ? "default" : "outline"}
               size="sm"
-              onClick={() => setCategoryFilter("all")}
+              onClick={() => setOwnerFilter(k)}
               className="font-body text-xs h-9"
             >
-              Todas
+              {k === "all" ? "Todos" : k === "mine" ? "Meus" : "Compartilhados"}
             </Button>
-            {categories.map((c) => (
+          ))}
+          {categories.length > 0 && (
+            <>
+              <span className="mx-1 h-5 w-px bg-border" />
               <Button
-                key={c}
                 type="button"
-                variant={categoryFilter === c ? "default" : "outline"}
+                variant={categoryFilter === "all" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setCategoryFilter(c)}
+                onClick={() => setCategoryFilter("all")}
                 className="font-body text-xs h-9"
               >
-                {c}
+                Todas as tags
               </Button>
-            ))}
-          </div>
-        )}
+              {categories.map((c) => (
+                <Button
+                  key={c}
+                  type="button"
+                  variant={categoryFilter === c ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCategoryFilter(c)}
+                  className="font-body text-xs h-9"
+                >
+                  {c}
+                </Button>
+              ))}
+            </>
+          )}
+        </div>
       </div>
 
-      {/* List */}
+      {/* Table */}
       {isLoading ? (
         <p className="text-sm font-body text-muted-foreground">Carregando...</p>
       ) : visibleItems.length === 0 ? (
@@ -335,122 +366,165 @@ export default function Vault() {
           <Lock className="mx-auto text-muted-foreground mb-3" size={28} />
           <p className="text-sm font-body text-muted-foreground">
             {items.length === 0
-              ? isAdmin
-                ? "Nenhum item no cofre ainda. Clique em \"Novo Item\" para começar."
-                : "Você ainda não foi autorizado a ver nenhum item."
-              : "Nenhum item corresponde à busca."}
+              ? "Nenhum item no cofre ainda. Clique em \"Novo Item\" para começar."
+              : "Nenhum item corresponde aos filtros."}
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {visibleItems.map((it) => {
-            const show = revealed[it.id];
-            const viewerNames = isAdmin ? getViewerNames(it.id) : "";
-            return (
-              <div
-                key={it.id}
-                className="border border-border/60 rounded-lg p-4 bg-card hover:border-primary/40 transition-colors space-y-3"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {it.is_favorite && (
-                        <Star size={14} className="text-amber-500 fill-amber-500 shrink-0" />
-                      )}
-                      <h3 className="font-display text-base text-foreground truncate">
-                        {it.title}
-                      </h3>
-                      {it.category && (
-                        <span className="text-[10px] font-body bg-muted text-muted-foreground rounded-full px-2 py-0.5">
-                          {it.category}
+        <div className="border border-border rounded-lg overflow-hidden bg-card">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm font-body">
+              <thead className="bg-muted/40 border-b border-border">
+                <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
+                  <th className="px-3 py-2.5 w-8"></th>
+                  <th className="px-3 py-2.5">Título</th>
+                  <th className="px-3 py-2.5">Tag</th>
+                  <th className="px-3 py-2.5">Usuário</th>
+                  <th className="px-3 py-2.5">Senha</th>
+                  <th className="px-3 py-2.5">URL</th>
+                  <th className="px-3 py-2.5">Dono</th>
+                  <th className="px-3 py-2.5 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleItems.map((it) => {
+                  const show = revealed[it.id];
+                  const owner = profileById.get(it.created_by ?? "");
+                  const ownerName = owner?.full_name ?? (isOwner(it) ? "Você" : "—");
+                  const editable = canEditItem(it);
+                  const mine = isOwner(it);
+                  return (
+                    <tr
+                      key={it.id}
+                      className="border-b border-border/60 last:border-0 hover:bg-muted/20 transition-colors"
+                    >
+                      <td className="px-3 py-2.5 align-middle">
+                        {it.is_favorite ? (
+                          <Star size={14} className="text-amber-500 fill-amber-500" />
+                        ) : null}
+                      </td>
+                      <td className="px-3 py-2.5 align-middle">
+                        <button
+                          type="button"
+                          onClick={() => openEdit(it)}
+                          className="text-left font-medium text-foreground hover:text-primary truncate max-w-[260px] inline-block"
+                        >
+                          {it.title}
+                        </button>
+                        {it.notes && (
+                          <div className="text-[11px] text-muted-foreground truncate max-w-[260px]">
+                            {it.notes.replace(/\s+/g, " ").slice(0, 80)}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5 align-middle">
+                        {it.category ? (
+                          <span className="inline-flex text-[10px] bg-primary/10 text-primary rounded-full px-2 py-0.5">
+                            {it.category}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5 align-middle">
+                        {it.username ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-xs truncate max-w-[160px]">{it.username}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={() => copyToClipboard(it.username, "Usuário")}
+                            >
+                              <Copy size={11} />
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5 align-middle">
+                        {it.password ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-xs truncate max-w-[140px]">
+                              {show ? it.password : "••••••••"}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={() => setRevealed((r) => ({ ...r, [it.id]: !r[it.id] }))}
+                            >
+                              {show ? <EyeOff size={11} /> : <Eye size={11} />}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={() => copyToClipboard(it.password, "Senha")}
+                            >
+                              <Copy size={11} />
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5 align-middle">
+                        {it.url ? (
+                          <a
+                            href={it.url.startsWith("http") ? it.url : `https://${it.url}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-primary hover:underline inline-flex items-center gap-1 text-xs truncate max-w-[180px]"
+                          >
+                            {it.url} <ExternalLink size={10} />
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5 align-middle">
+                        <span className="text-xs truncate max-w-[140px] inline-block">
+                          {mine ? (
+                            <span className="font-medium text-foreground">Você</span>
+                          ) : (
+                            ownerName
+                          )}
                         </span>
-                      )}
-                    </div>
-                    {it.url && (
-                      <a
-                        href={it.url.startsWith("http") ? it.url : `https://${it.url}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs font-body text-primary hover:underline inline-flex items-center gap-1 mt-1 truncate"
-                      >
-                        {it.url} <ExternalLink size={10} />
-                      </a>
-                    )}
-                  </div>
-                  {isAdmin && (
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(it)}>
-                        <Pencil size={14} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                        onClick={() => setConfirmDelete(it.id)}
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  {it.username && (
-                    <div className="flex items-center gap-2 text-xs font-body">
-                      <span className="text-muted-foreground w-20">Usuário</span>
-                      <span className="flex-1 font-mono text-foreground truncate">{it.username}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
-                        onClick={() => copyToClipboard(it.username, "Usuário")}
-                      >
-                        <Copy size={12} />
-                      </Button>
-                    </div>
-                  )}
-                  {it.password && (
-                    <div className="flex items-center gap-2 text-xs font-body">
-                      <span className="text-muted-foreground w-20">Senha</span>
-                      <span className="flex-1 font-mono text-foreground truncate">
-                        {show ? it.password : "••••••••••"}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
-                        onClick={() => setRevealed((r) => ({ ...r, [it.id]: !r[it.id] }))}
-                      >
-                        {show ? <EyeOff size={12} /> : <Eye size={12} />}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
-                        onClick={() => copyToClipboard(it.password, "Senha")}
-                      >
-                        <Copy size={12} />
-                      </Button>
-                    </div>
-                  )}
-                  {it.notes && (
-                    <div className="text-xs font-body text-muted-foreground bg-muted/30 rounded p-2 whitespace-pre-wrap">
-                      {it.notes}
-                    </div>
-                  )}
-                </div>
-
-                {isAdmin && (
-                  <div className="pt-2 border-t border-border/40 text-[11px] font-body text-muted-foreground flex items-center gap-1">
-                    <Users size={11} />
-                    <span className="truncate">
-                      Visível para: {viewerNames || <em>somente admins</em>}
-                    </span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                      </td>
+                      <td className="px-3 py-2.5 align-middle text-right">
+                        <div className="inline-flex items-center gap-1">
+                          {editable && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0"
+                              onClick={() => openEdit(it)}
+                              title="Editar"
+                            >
+                              <Pencil size={13} />
+                            </Button>
+                          )}
+                          {mine && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                              onClick={() => setConfirmDelete(it.id)}
+                              title="Remover"
+                            >
+                              <Trash2 size={13} />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -459,7 +533,7 @@ export default function Vault() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="font-display">
-              {editingId ? "Editar Item" : "Novo Item do Cofre"}
+              {editingItem ? "Editar Item" : "Novo Item do Cofre"}
             </DialogTitle>
           </DialogHeader>
 
@@ -524,105 +598,107 @@ export default function Vault() {
             </div>
 
             {/* Viewers selector */}
-            <div className="space-y-2 pt-2 border-t border-border/40">
-              <Label className="font-body text-xs font-semibold flex items-center gap-1">
-                <Users size={12} /> Usuários autorizados a ver este item
-              </Label>
-              <p className="text-[11px] font-body text-muted-foreground">
-                Administradores sempre têm acesso. Selecione abaixo os demais usuários que poderão visualizar este item.
-              </p>
-              <Popover open={viewerDropdownOpen} onOpenChange={setViewerDropdownOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full justify-between h-auto min-h-[2.25rem] text-xs font-body font-normal px-3 py-1.5"
-                  >
-                    <span className="text-left truncate">
-                      {selectedViewers.length === 0
-                        ? "Nenhum usuário adicional (apenas admins)"
-                        : `${selectedViewers.length} usuário(s) autorizado(s)`}
-                    </span>
-                    <ChevronDown size={14} className="shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[360px] p-0" align="start">
-                  <div className="p-2 border-b border-border/50">
-                    <div className="relative">
-                      <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        placeholder="Buscar usuário ou função..."
-                        value={viewerSearch}
-                        onChange={(e) => setViewerSearch(e.target.value)}
-                        className="h-8 text-xs pl-7 pr-7"
-                      />
-                      {viewerSearch && (
-                        <button
-                          type="button"
-                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                          onClick={() => setViewerSearch("")}
-                        >
-                          <X size={12} />
-                        </button>
-                      )}
+            {ownerCanManageDraft ? (
+              <div className="space-y-2 pt-2 border-t border-border/40">
+                <Label className="font-body text-xs font-semibold flex items-center gap-1">
+                  <Users size={12} /> Compartilhar com outros usuários
+                </Label>
+                <p className="text-[11px] font-body text-muted-foreground">
+                  Por padrão, apenas você vê este item. Adicione abaixo quem pode visualizar e marque
+                  "Editar" para também permitir alterações.
+                </p>
+                <Popover open={viewerDropdownOpen} onOpenChange={setViewerDropdownOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full justify-between h-9 text-xs font-body font-normal"
+                    >
+                      <span>Adicionar usuário...</span>
+                      <ChevronDown size={14} className="opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[360px] p-0" align="start">
+                    <div className="p-2 border-b border-border/50">
+                      <div className="relative">
+                        <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          placeholder="Buscar usuário..."
+                          value={viewerSearch}
+                          onChange={(e) => setViewerSearch(e.target.value)}
+                          className="h-8 text-xs pl-7"
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <div className="max-h-56 overflow-y-auto p-1">
-                    {filteredProfiles.length === 0 ? (
-                      <p className="text-xs text-muted-foreground font-body text-center py-3">
-                        Nenhum usuário encontrado.
-                      </p>
-                    ) : (
-                      filteredProfiles
-                        .filter((p) => (p.role ?? "") !== "admin")
-                        .map((p) => {
+                    <div className="max-h-56 overflow-y-auto p-1">
+                      {filteredProfiles.length === 0 ? (
+                        <p className="text-xs text-muted-foreground font-body text-center py-3">
+                          Nenhum usuário.
+                        </p>
+                      ) : (
+                        filteredProfiles.map((p) => {
+                          const already = draftViewers.some((v) => v.user_id === p.user_id);
                           const roleLabel = ROLE_LABELS[p.role ?? ""] ?? p.role ?? "";
                           return (
-                            <label
+                            <button
                               key={p.user_id}
-                              className="flex items-center gap-2 cursor-pointer hover:bg-muted/30 rounded px-2 py-1.5"
+                              type="button"
+                              disabled={already}
+                              onClick={() => { addViewer(p.user_id); setViewerDropdownOpen(false); }}
+                              className="w-full text-left text-xs font-body hover:bg-muted/40 disabled:opacity-50 rounded px-2 py-1.5 flex items-center justify-between"
                             >
-                              <Checkbox
-                                checked={selectedViewers.includes(p.user_id)}
-                                onCheckedChange={() => toggleViewer(p.user_id)}
-                              />
-                              <span className="text-xs font-body">
+                              <span>
                                 {p.full_name}
                                 {roleLabel && (
                                   <span className="text-muted-foreground"> — {roleLabel}</span>
                                 )}
                               </span>
-                            </label>
+                              {already && <span className="text-[10px] text-muted-foreground">Adicionado</span>}
+                            </button>
                           );
                         })
-                    )}
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+
+                {draftViewers.length > 0 && (
+                  <div className="border border-border/60 rounded-md divide-y divide-border/40">
+                    {draftViewers.map((v) => {
+                      const p = profileById.get(v.user_id);
+                      return (
+                        <div key={v.user_id} className="flex items-center justify-between gap-2 px-3 py-2 text-xs">
+                          <span className="truncate">{p?.full_name ?? v.user_id}</span>
+                          <div className="flex items-center gap-3 shrink-0">
+                            <label className="flex items-center gap-1.5 cursor-pointer">
+                              <Checkbox
+                                checked={v.can_edit}
+                                onCheckedChange={() => toggleViewerEdit(v.user_id)}
+                              />
+                              <span>Pode editar</span>
+                            </label>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 text-muted-foreground"
+                              onClick={() => removeViewer(v.user_id)}
+                            >
+                              <X size={12} />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                </PopoverContent>
-              </Popover>
-              {selectedViewers.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {selectedViewers.map((uid) => {
-                    const p = profilesWithRoles.find((pr) => pr.user_id === uid);
-                    if (!p) return null;
-                    return (
-                      <span
-                        key={uid}
-                        className="inline-flex items-center gap-1 text-[10px] font-body bg-muted rounded-full px-2 py-0.5"
-                      >
-                        {p.full_name}
-                        <button
-                          type="button"
-                          onClick={() => toggleViewer(uid)}
-                          className="text-muted-foreground hover:text-foreground"
-                        >
-                          <X size={10} />
-                        </button>
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-[11px] font-body text-muted-foreground pt-2 border-t border-border/40">
+                Você tem permissão de edição neste item, mas apenas o criador pode gerenciar quem mais
+                vê este registro.
+              </p>
+            )}
           </div>
 
           <DialogFooter>
@@ -753,4 +829,3 @@ function CategoryPicker({
     </Popover>
   );
 }
-
