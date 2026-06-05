@@ -561,6 +561,47 @@ const ChatBubble = ({ message, agentLabel }: ChatBubbleProps) => {
   );
 };
 
+/**
+ * Nota interna — visível APENAS para a equipe. Nunca é enviada ao cliente.
+ * Usada para o resumo automático de handoff gerado pela IA.
+ */
+const InternalNote = ({ message }: { message: Message }) => {
+  // Renderiza markdown leve: **negrito** e listas com "- "
+  const lines = (message.content || "").split("\n");
+  return (
+    <div className="flex w-full justify-center">
+      <div className="w-full max-w-2xl rounded-2xl border border-amber-300/70 bg-amber-50 px-5 py-4 text-sm text-amber-950 shadow-sm">
+        <div className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-amber-700">
+          <span>🔒 Nota interna · Visível apenas para a equipe</span>
+        </div>
+        <div className="space-y-1 leading-relaxed">
+          {lines.map((line, i) => {
+            const html = line
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+              .replace(/\*(.+?)\*/g, "<em>$1</em>")
+              .replace(/_(.+?)_/g, "<em>$1</em>");
+            return (
+              <p
+                key={i}
+                className="whitespace-pre-wrap break-words"
+                dangerouslySetInnerHTML={{ __html: html || "&nbsp;" }}
+              />
+            );
+          })}
+        </div>
+        <div className="mt-2 text-[10px] text-amber-700/80">
+          {formatTime(message.timestamp)}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+
 const MessageStatusTicks = ({ status }: { status: MessageStatus }) => {
   const label =
     status === "pending" ? "Enviando..." :
