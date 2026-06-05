@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CompanyBadge } from "@/components/company/CompanyBadge";
 
 /**
  * Card redesenhado do kanban de cotações.
