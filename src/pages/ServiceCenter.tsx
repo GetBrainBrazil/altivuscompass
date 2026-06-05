@@ -373,7 +373,7 @@ const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = fa
                   {conversation.unreadCount! > 99 ? "99+" : conversation.unreadCount}
                 </span>
               )}
-              {formatTime(last.timestamp)}
+              {formatConversationTime(last.timestamp)}
             </span>
           </div>
           <p className={cn(
