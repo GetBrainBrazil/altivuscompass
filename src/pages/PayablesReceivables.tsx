@@ -76,6 +76,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
   const [month, setMonth] = useState(today.getMonth()); // 0-indexed
   const [showPartialBalances, setShowPartialBalances] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [companyFilter, setCompanyFilter] = useCompanyFilter("payables-receivables");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sortKey, setSortKey] = useState<SortKey>("due_date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
