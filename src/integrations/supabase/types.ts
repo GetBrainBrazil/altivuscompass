@@ -3478,6 +3478,77 @@ export type Database = {
         }
         Relationships: []
       }
+      vault_item_viewers: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          vault_item_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          vault_item_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          vault_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_item_viewers_vault_item_id_fkey"
+            columns: ["vault_item_id"]
+            isOneToOne: false
+            referencedRelation: "vault_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_items: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          is_favorite: boolean
+          notes: string | null
+          password: string | null
+          title: string
+          updated_at: string
+          url: string | null
+          username: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_favorite?: boolean
+          notes?: string | null
+          password?: string | null
+          title: string
+          updated_at?: string
+          url?: string | null
+          username?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_favorite?: boolean
+          notes?: string | null
+          password?: string | null
+          title?: string
+          updated_at?: string
+          url?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
       wa_conversations: {
         Row: {
           ai_enabled: boolean
