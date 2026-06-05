@@ -86,6 +86,10 @@ interface Message {
   mediaMime?: string;
   mediaCaption?: string;
   isInternal?: boolean;
+  /** Em conversas de grupo: nome do participante que enviou. */
+  senderName?: string;
+  /** Em conversas de grupo: telefone do participante que enviou. */
+  senderPhone?: string;
 }
 
 type ConversationStatus = "ai" | "human";
