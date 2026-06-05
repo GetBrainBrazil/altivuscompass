@@ -150,6 +150,29 @@ const getInitials = (name: string) =>
 const formatTime = (iso: string) =>
   new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
+const formatConversationTime = (iso: string) => {
+  const d = new Date(iso);
+  const now = new Date();
+  const sameDay =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+  if (sameDay) {
+    return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  }
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday =
+    d.getFullYear() === yesterday.getFullYear() &&
+    d.getMonth() === yesterday.getMonth() &&
+    d.getDate() === yesterday.getDate();
+  if (isYesterday) return "Ontem";
+  const sameYear = d.getFullYear() === now.getFullYear();
+  return d.toLocaleDateString("pt-BR", sameYear
+    ? { day: "2-digit", month: "2-digit" }
+    : { day: "2-digit", month: "2-digit", year: "2-digit" });
+};
+
 const formatPhone = (phone: string) => {
   const m = phone.match(/^\+(\d{2})(\d{2})(\d{5})(\d{4})$/);
   if (!m) return phone;
