@@ -1924,6 +1924,9 @@ export default function Quotes() {
     if (filterLeadSource !== "all") {
       list = list.filter((q) => (q.lead_source ?? "") === filterLeadSource);
     }
+    if (filterCompany !== "all") {
+      list = list.filter((q) => matchesCompanyFilter(filterCompany, (q as any).company));
+    }
     const sorted = [...list];
     sorted.sort((a: any, b: any) => {
       switch (pipelineSort) {
