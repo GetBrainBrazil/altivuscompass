@@ -26,6 +26,18 @@ function formatPhonePlaceholder(phone: string): string {
   return `+${digits}`
 }
 
+// O senderName do Z-API pode vir como o nome da AGÊNCIA (push name da própria
+// instância do WhatsApp), especialmente em mensagens fromMe. Nesses casos NÃO
+// devemos usar como "nome do cliente" — preferimos o telefone até a pessoa
+// se identificar.
+const AGENCY_NAME_RES = [/altivus/i, /turismo$/i]
+function isAgencyName(name: string | null | undefined): boolean {
+  const n = (name || '').trim()
+  if (!n) return false
+  return AGENCY_NAME_RES.some((re) => re.test(n))
+}
+
+
 
 
 Deno.serve(async (req) => {
