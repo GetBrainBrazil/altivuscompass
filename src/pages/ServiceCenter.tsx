@@ -519,17 +519,17 @@ const ChatBubble = ({ message, agentLabel }: ChatBubbleProps) => {
                 loading="lazy"
               />
             </a>
-            {message.mediaCaption && (
+            {displayCaption && (
               <p className={cn("whitespace-pre-wrap break-words px-3 pb-1", isLead ? "" : "")}>
-                {message.mediaCaption}
+                {displayCaption}
               </p>
             )}
           </div>
         ) : mt === "video" && message.mediaUrl ? (
           <div className="space-y-1">
             <video controls src={message.mediaUrl} className="rounded-2xl max-h-[280px] w-auto" preload="metadata" />
-            {message.mediaCaption && (
-              <p className="whitespace-pre-wrap break-words px-3 pb-1">{message.mediaCaption}</p>
+            {displayCaption && (
+              <p className="whitespace-pre-wrap break-words px-3 pb-1">{displayCaption}</p>
             )}
           </div>
         ) : mt === "document" && message.mediaUrl ? (
@@ -543,12 +543,12 @@ const ChatBubble = ({ message, agentLabel }: ChatBubbleProps) => {
             )}
           >
             <FileText className="h-4 w-4 shrink-0" />
-            <span className="truncate">{message.mediaCaption || "Documento"}</span>
+            <span className="truncate">{displayCaption || "Documento"}</span>
           </a>
         ) : mt === "sticker" && message.mediaUrl ? (
           <img src={message.mediaUrl} alt="sticker" className="h-32 w-32 object-contain" />
         ) : (
-          <p className="whitespace-pre-wrap break-words">{message.content}</p>
+          <p className="whitespace-pre-wrap break-words">{displayContent}</p>
         )}
       </div>
       <span className="flex items-center gap-1 text-[10px] text-muted-foreground px-2">
