@@ -969,7 +969,7 @@ export default function ServiceCenter() {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return "Agente";
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("profiles")
         .select("nickname, full_name")
         .eq("user_id", user.id)
