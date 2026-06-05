@@ -201,6 +201,17 @@ export default function BankAccountsTab() {
           <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="sm:col-span-3 space-y-2">
+                <Label className="font-body">Empresa *</Label>
+                <Select value={form.company ?? DEFAULT_COMPANY} onValueChange={(v) => setForm({ ...form, company: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {COMPANY_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="sm:col-span-3 space-y-2">
                 <Label className="font-body">Banco *</Label>
                 <Input value={form.bank_name ?? ""} onChange={(e) => setForm({ ...form, bank_name: e.target.value })} required />
               </div>
