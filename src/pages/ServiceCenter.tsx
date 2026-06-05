@@ -85,6 +85,7 @@ interface Message {
   mediaUrl?: string;
   mediaMime?: string;
   mediaCaption?: string;
+  isInternal?: boolean;
 }
 
 type ConversationStatus = "ai" | "human";
