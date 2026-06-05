@@ -394,7 +394,7 @@ const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = fa
               <p className={cn("font-medium text-sm truncate", hasUnread && "font-semibold text-amber-950")}>
                 {conversation.leadName}
               </p>
-              {conversation.phone && conversation.phone !== conversation.leadName && (
+              {!conversation.isGroup && conversation.phone && conversation.phone !== conversation.leadName && (
                 <p className="text-[11px] text-muted-foreground truncate font-mono">
                   {formatPhoneDisplay(conversation.phone)}
                 </p>
