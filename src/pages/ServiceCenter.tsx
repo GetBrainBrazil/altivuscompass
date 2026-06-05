@@ -1497,13 +1497,7 @@ export default function ServiceCenter() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     // Prioridade: Cliente em viagem > Cliente > Lead > Prospect.
-    // Dentro do mesmo nível, mais recente primeiro.
-    const priority = (c: Conversation) => {
-      if (c.level === "cliente" && c.isTraveling) return 0;
-      if (c.level === "cliente") return 1;
-      if (c.level === "lead") return 2;
-      return 3;
-    };
+    // Ordenação puramente cronológica: mais recente no topo, independente do nível.
     return conversations
       .filter((c) => {
         if (activeTab === "leads" && c.category !== "sales") return false;
@@ -1517,9 +1511,6 @@ export default function ServiceCenter() {
         );
       })
       .sort((a, b) => {
-        const pa = priority(a);
-        const pb = priority(b);
-        if (pa !== pb) return pa - pb;
         return (
           new Date(getLastMessage(b).timestamp).getTime() -
           new Date(getLastMessage(a).timestamp).getTime()
