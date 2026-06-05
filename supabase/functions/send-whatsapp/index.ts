@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
           headers: zapiHeaders,
           body: JSON.stringify({
             phone: cleanPhone,
-            message,
+            message: textWithAgent,
           }),
         })
         result = await response.json()
