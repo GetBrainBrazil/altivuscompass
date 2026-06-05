@@ -1410,7 +1410,7 @@ export default function ServiceCenter() {
   }, [selected?.messages.length, selectedId]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] -m-3 sm:-m-4 md:-m-6 lg:-m-8 overflow-hidden bg-background">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] -m-3 sm:-m-4 md:-m-6 lg:-m-8 overflow-hidden bg-background">
       {/* ===== Banner global de status da IA (sincronizado com Agentes IA) ===== */}
       <div
         className={cn(
