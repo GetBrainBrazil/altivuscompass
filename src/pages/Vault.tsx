@@ -247,8 +247,10 @@ export default function Vault() {
   };
 
   const openEdit = (it: VaultItem) => {
+    if (!canEditItem(it)) return;
     setEditingItem(it);
     setForm({ ...it });
+    setShowFormPassword(false);
     setDraftViewers(
       viewers
         .filter((v) => v.vault_item_id === it.id)
