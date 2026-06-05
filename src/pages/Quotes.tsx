@@ -45,6 +45,9 @@ import QuoteAcceptanceInfo from "@/components/quotes/QuoteAcceptanceInfo";
 import ItineraryTimeline from "@/components/itineraries/ItineraryTimeline";
 import ItineraryMapView from "@/components/itineraries/ItineraryMapView";
 import { ClientDataCompletionDialog } from "@/components/contacts/ClientDataCompletionDialog";
+import { COMPANY_OPTIONS, DEFAULT_COMPANY, type CompanyBrand } from "@/lib/company";
+import { CompanyBadge } from "@/components/company/CompanyBadge";
+import { useCompanyFilter, matchesCompanyFilter } from "@/hooks/useCompanyFilter";
 
 
 const stages = [
@@ -175,6 +178,7 @@ const buildQuoteEditorForm = (q: Quote) => {
     internal_due_date: "",
     flexible_dates: pb?.flexible_dates ?? false,
     flexible_dates_description: pb?.flexible_dates_description ?? "",
+    company: ((q as any).company as CompanyBrand) || DEFAULT_COMPANY,
   };
 };
 
@@ -240,6 +244,7 @@ export default function Quotes() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterAssignee, setFilterAssignee] = useState<string>("all");
   const [filterLeadSource, setFilterLeadSource] = useState<string>("all");
+  const [filterCompany, setFilterCompany] = useCompanyFilter("quotes");
   const [pipelineSort, setPipelineSort] = useState<"recent" | "oldest" | "value_desc" | "value_asc" | "updated">("recent");
   const [archiveTarget, setArchiveTarget] = useState<Quote | null>(null);
   const [unarchiveTarget, setUnarchiveTarget] = useState<Quote | null>(null);
@@ -835,6 +840,7 @@ export default function Quotes() {
         internal_due_date: null,
         quote_validity: form.quote_validity || null,
         price_breakdown: { linked_client_ids: selectedLinkedClients, client_self_traveling: clientSelfTraveling, flexible_dates: !!form.flexible_dates, flexible_dates_description: form.flexible_dates_description || null },
+        company: (form.company as CompanyBrand) || DEFAULT_COMPANY,
       };
 
       if (editingQuote) {
@@ -1240,7 +1246,7 @@ export default function Quotes() {
   const openCreate = (preset?: { client_id?: string }) => {
     setIsHydratingEditQuote(false);
     setEditingQuote(null);
-    setForm({ stage: "new", total_value: "", ...(preset?.client_id ? { client_id: preset.client_id } : {}) });
+    setForm({ stage: "new", total_value: "", company: DEFAULT_COMPANY, ...(preset?.client_id ? { client_id: preset.client_id } : {}) });
     setItems([]);
     setSelectedPassengers([]);
     setSelectedLinkedClients([]);
@@ -1441,6 +1447,7 @@ export default function Quotes() {
       internal_due_date: "",
       flexible_dates: pb?.flexible_dates ?? false,
       flexible_dates_description: pb?.flexible_dates_description ?? "",
+      company: ((q as any).company as CompanyBrand) || DEFAULT_COMPANY,
     });
     setItems([]);
     setSelectedPassengers([]);
@@ -1917,6 +1924,9 @@ export default function Quotes() {
     if (filterLeadSource !== "all") {
       list = list.filter((q) => (q.lead_source ?? "") === filterLeadSource);
     }
+    if (filterCompany !== "all") {
+      list = list.filter((q) => matchesCompanyFilter(filterCompany, (q as any).company));
+    }
     const sorted = [...list];
     sorted.sort((a: any, b: any) => {
       switch (pipelineSort) {
@@ -1934,7 +1944,7 @@ export default function Quotes() {
       }
     });
     return sorted;
-  }, [quotes, searchTerm, filterAssignee, filterLeadSource, pipelineSort]);
+  }, [quotes, searchTerm, filterAssignee, filterLeadSource, filterCompany, pipelineSort]);
 
   // Placeholder neutro enquanto o editor está sendo aberto a partir de outra página
   // (ex.: card do CRM). Evita o "flash" do pipeline antes do editor renderizar.
@@ -2094,6 +2104,31 @@ export default function Quotes() {
             </TabsList>
 
             <TabsContent value="main" className="mt-3 space-y-3">
+              {/* Empresa (marca organizacional) */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <Label className="font-body text-xs text-muted-foreground">Empresa:</Label>
+                <div className="inline-flex rounded-md border border-border bg-muted/30 p-0.5">
+                  {COMPANY_OPTIONS.map((o) => {
+                    const selected = (form.company || DEFAULT_COMPANY) === o.value;
+                    return (
+                      <button
+                        key={o.value}
+                        type="button"
+                        onClick={() => setForm({ ...form, company: o.value })}
+                        className={cn(
+                          "px-2.5 py-1 text-xs font-medium rounded transition-colors font-body",
+                          selected
+                            ? "bg-card text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        {o.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Row 1: Título, Cliente, Imagem de Capa */}
               <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-3">
                 <div className="col-span-2 lg:col-span-3 space-y-1">
@@ -3545,7 +3580,7 @@ export default function Quotes() {
     ? "—"
     : `${Math.round((wonCount / closedQuotes.length) * 100)}%`;
 
-  const hasActiveFilters = searchTerm !== "" || filterAssignee !== "all" || filterLeadSource !== "all";
+  const hasActiveFilters = searchTerm !== "" || filterAssignee !== "all" || filterLeadSource !== "all" || filterCompany !== "all";
 
   // ─── LIST VIEW (pipeline / table) ─────────────────────────
   return (
@@ -3628,6 +3663,15 @@ export default function Quotes() {
             ))}
           </SelectContent>
         </Select>
+        <Select value={filterCompany} onValueChange={(v) => setFilterCompany(v as any)}>
+          <SelectTrigger className="h-9 w-full sm:w-[160px] font-body text-sm"><SelectValue placeholder="Empresa" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as empresas</SelectItem>
+            {COMPANY_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={pipelineSort} onValueChange={(v) => setPipelineSort(v as any)}>
           <SelectTrigger className="h-9 w-full sm:w-[180px] font-body text-sm"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -3643,7 +3687,7 @@ export default function Quotes() {
             variant="ghost"
             size="sm"
             className="font-body h-9 gap-1.5"
-            onClick={() => { setSearchInput(""); setFilterAssignee("all"); setFilterLeadSource("all"); }}
+            onClick={() => { setSearchInput(""); setFilterAssignee("all"); setFilterLeadSource("all"); setFilterCompany("all"); }}
           >
             <X className="w-3.5 h-3.5" /> Limpar
           </Button>

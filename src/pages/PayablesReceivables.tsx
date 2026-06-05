@@ -22,6 +22,9 @@ import {
   ArrowUpDown, ArrowUp as ArrUp, ArrowDown as ArrDown, User, Inbox,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { COMPANY_OPTIONS } from "@/lib/company";
+import { CompanyBadge } from "@/components/company/CompanyBadge";
+import { useCompanyFilter, matchesCompanyFilter } from "@/hooks/useCompanyFilter";
 
 // ----- types & constants -----
 type TxType = "payable" | "receivable";
@@ -73,6 +76,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
   const [month, setMonth] = useState(today.getMonth()); // 0-indexed
   const [showPartialBalances, setShowPartialBalances] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [companyFilter, setCompanyFilter] = useCompanyFilter("payables-receivables");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sortKey, setSortKey] = useState<SortKey>("due_date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -165,6 +169,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
       if (!t.due_date) return false;
       if (t.due_date < range.from || t.due_date > range.to) return false;
       if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
+      if (!matchesCompanyFilter(companyFilter, t.company)) return false;
       if (search) {
         const q = search.toLowerCase();
         const haystack = `${t.description ?? ""} ${t._party} ${t.category ?? ""}`.toLowerCase();
@@ -190,7 +195,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
       return 0;
     });
     return rows;
-  }, [enriched, range, categoryFilter, search, sortKey, sortDir]);
+  }, [enriched, range, categoryFilter, companyFilter, search, sortKey, sortDir]);
 
   // ----- pagination -----
   const totalRecords = filtered.length;
@@ -407,6 +412,18 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
             ))}
           </SelectContent>
         </Select>
+
+        <Select value={companyFilter} onValueChange={(v) => { setCompanyFilter(v as any); setPage(1); }}>
+          <SelectTrigger className="w-full lg:w-44">
+            <SelectValue placeholder="Empresa" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as empresas</SelectItem>
+            {COMPANY_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Table */}
@@ -495,7 +512,10 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
                       <td className="px-3 py-3 whitespace-nowrap">{fmtDate(t.due_date)}</td>
                       <td className="px-3 py-3 whitespace-nowrap text-muted-foreground">{fmtDate(t.payment_date)}</td>
                       <td className="px-3 py-3">
-                        <div className="truncate max-w-[260px]">{t.description || "—"}</div>
+                        <div className="flex items-center gap-2 max-w-[280px]">
+                          <span className="truncate">{t.description || "—"}</span>
+                          <CompanyBadge company={t.company} />
+                        </div>
                         {t.installment_total > 1 && (
                           <span className="text-[10px] text-muted-foreground">
                             Parcela {t.installment_number}/{t.installment_total}

@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, Repeat, Layers, Upload, X, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { COMPANY_OPTIONS, DEFAULT_COMPANY, type CompanyBrand } from "@/lib/company";
 
 type TxType = "payable" | "receivable";
 
@@ -71,6 +72,7 @@ const emptyForm = {
   recurrence_period: "monthly",
   recurrence_until: "",
   observations: "",
+  company: DEFAULT_COMPANY as CompanyBrand,
 };
 
 export default function PayableReceivableForm() {
@@ -147,6 +149,7 @@ export default function PayableReceivableForm() {
       recurrence_enabled: !!existing.recurrence_type && existing.recurrence_type !== "none",
       recurrence_period: existing.recurrence_type && existing.recurrence_type !== "none" ? existing.recurrence_type : "monthly",
       observations: existing.observations ?? "",
+      company: (existing.company as CompanyBrand) ?? DEFAULT_COMPANY,
     }));
   }, [existing]);
 
@@ -180,6 +183,7 @@ export default function PayableReceivableForm() {
         status: "pending",
         party_name:
           (form.type === "payable" ? suppliersMap[form.supplier_id] : clientsMap[form.client_id]) ?? null,
+        company: (form.company as CompanyBrand) || DEFAULT_COMPANY,
       };
 
       if (editingId) {
@@ -263,6 +267,27 @@ export default function PayableReceivableForm() {
         {/* DADOS PRINCIPAIS */}
         <Section title="Dados principais">
           <div className="grid grid-cols-12 gap-3">
+            <div className="space-y-1 col-span-12">
+              <Label>Empresa *</Label>
+              <div className="inline-flex rounded-md border border-border bg-muted/30 p-0.5">
+                {COMPANY_OPTIONS.map((o) => {
+                  const selected = (form.company || DEFAULT_COMPANY) === o.value;
+                  return (
+                    <button
+                      key={o.value}
+                      type="button"
+                      onClick={() => setForm({ ...form, company: o.value })}
+                      className={cn(
+                        "px-3 py-1 text-xs font-medium rounded transition-colors",
+                        selected ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {o.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             <div className="space-y-1 col-span-12 md:col-span-7">
               <Label>Descrição da movimentação *</Label>
               <Input

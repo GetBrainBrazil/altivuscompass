@@ -13,12 +13,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import BankAccountCredentials from "./BankAccountCredentials";
 import { logAuditEvent } from "@/lib/audit";
+import { COMPANY_OPTIONS, DEFAULT_COMPANY, type CompanyBrand } from "@/lib/company";
+import { CompanyBadge } from "@/components/company/CompanyBadge";
 
 type BankAccount = {
   id: string; bank_name: string; agency: string | null; account_number: string | null;
   account_type: string | null; pix_key: string | null; pix_key_type: string | null;
   holder_name: string | null; holder_document: string | null; is_active: boolean;
-  notes: string | null; created_at: string; updated_at: string;
+  notes: string | null; created_at: string; updated_at: string; company?: string | null;
 };
 
 const accountTypeLabels: Record<string, string> = {
@@ -79,6 +81,7 @@ export default function BankAccountsTab() {
         account_type: form.account_type || "checking", pix_key: form.pix_key || null,
         pix_key_type: form.pix_key_type || null, holder_name: form.holder_name || null,
         holder_document: form.holder_document || null, is_active: form.is_active ?? true, notes: form.notes || null,
+        company: (form.company as CompanyBrand) || DEFAULT_COMPANY,
       };
       if (editing) {
         const { error } = await supabase.from("bank_accounts").update(payload).eq("id", editing.id);
@@ -115,7 +118,7 @@ export default function BankAccountsTab() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ account_type: "checking", is_active: true });
+    setForm({ account_type: "checking", is_active: true, company: DEFAULT_COMPANY });
     setDialogOpen(true);
   };
 
@@ -126,6 +129,7 @@ export default function BankAccountsTab() {
       account_type: a.account_type ?? "checking", pix_key: a.pix_key ?? "",
       pix_key_type: a.pix_key_type ?? "", holder_name: a.holder_name ?? "",
       holder_document: a.holder_document ?? "", is_active: a.is_active, notes: a.notes ?? "",
+      company: (a.company as CompanyBrand) ?? DEFAULT_COMPANY,
     });
     setDialogOpen(true);
   };
@@ -152,6 +156,7 @@ export default function BankAccountsTab() {
                 <th className="p-4 text-left">
                   <SortHeader label="Banco" active={sortKey === "bank_name"} direction={sortKey === "bank_name" ? sortDir : null} onClick={() => toggleSort("bank_name")} />
                 </th>
+                <th className="p-4 text-left font-medium text-xs uppercase tracking-wider text-muted-foreground">Empresa</th>
                 <th className="p-4 text-left">
                   <SortHeader label="Tipo" active={sortKey === "account_type"} direction={sortKey === "account_type" ? sortDir : null} onClick={() => toggleSort("account_type")} />
                 </th>
@@ -171,6 +176,7 @@ export default function BankAccountsTab() {
               {sorted.map((a) => (
                 <tr key={a.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEdit(a)}>
                   <td className="p-4 font-body font-medium text-foreground">{a.bank_name}</td>
+                  <td className="p-4"><CompanyBadge company={a.company ?? DEFAULT_COMPANY} alwaysShow /></td>
                   <td className="p-4 font-body text-muted-foreground">{accountTypeLabels[a.account_type ?? "checking"] ?? a.account_type}</td>
                   <td className="p-4 font-body text-muted-foreground">{a.agency || "—"}</td>
                   <td className="p-4 font-body text-muted-foreground">{a.account_number || "—"}</td>
@@ -196,6 +202,17 @@ export default function BankAccountsTab() {
           </DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="sm:col-span-3 space-y-2">
+                <Label className="font-body">Empresa *</Label>
+                <Select value={form.company ?? DEFAULT_COMPANY} onValueChange={(v) => setForm({ ...form, company: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {COMPANY_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="sm:col-span-3 space-y-2">
                 <Label className="font-body">Banco *</Label>
                 <Input value={form.bank_name ?? ""} onChange={(e) => setForm({ ...form, bank_name: e.target.value })} required />

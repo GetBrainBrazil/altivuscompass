@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CompanyBadge } from "@/components/company/CompanyBadge";
 
 /**
  * Card redesenhado do kanban de cotações.
@@ -132,6 +133,7 @@ export interface QuoteKanbanCardProps {
     assigned_to?: string | null;
     conclusion_type?: string | null;
     archived_at?: string | null;
+    company?: string | null;
   };
   assigneeName?: string | null;
   isDragging?: boolean;
@@ -187,6 +189,7 @@ export function QuoteKanbanCard({
             {quote.title || quote.destination || "Sem título"}
           </p>
           <div className="shrink-0 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <CompanyBadge company={quote.company} />
             {critical && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-destructive/15 text-destructive">
                 <AlertTriangle className="w-3 h-3" />
