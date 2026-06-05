@@ -475,17 +475,11 @@ export default function Vault() {
               </div>
               <div className="space-y-1.5">
                 <Label className="font-body text-xs">Categoria</Label>
-                <Input
+                <CategoryPicker
                   value={form.category ?? ""}
-                  onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  placeholder="Ex.: Redes Sociais, Bancos..."
-                  list="vault-categories"
+                  onChange={(v) => setForm({ ...form, category: v })}
+                  options={categories}
                 />
-                <datalist id="vault-categories">
-                  {categories.map((c) => (
-                    <option key={c} value={c} />
-                  ))}
-                </datalist>
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label className="font-body text-xs">URL</Label>
@@ -664,3 +658,99 @@ export default function Vault() {
     </div>
   );
 }
+
+function CategoryPicker({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const trimmed = query.trim();
+  const filtered = trimmed
+    ? options.filter((o) => o.toLowerCase().includes(trimmed.toLowerCase()))
+    : options;
+  const canCreate = trimmed.length > 0 && !options.some((o) => o.toLowerCase() === trimmed.toLowerCase());
+
+  const commit = (v: string) => {
+    onChange(v);
+    setQuery("");
+    setOpen(false);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="w-full h-10 px-3 rounded-md border border-input bg-background text-left text-sm font-body flex items-center justify-between gap-2 hover:bg-muted/40 transition-colors"
+        >
+          {value ? (
+            <span className="inline-flex items-center gap-1.5 bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs">
+              {value}
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => { e.stopPropagation(); onChange(""); }}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); onChange(""); } }}
+                className="hover:text-destructive"
+                aria-label="Limpar categoria"
+              >
+                <X size={11} />
+              </span>
+            </span>
+          ) : (
+            <span className="text-muted-foreground text-xs">Selecione ou crie uma tag...</span>
+          )}
+          <ChevronDown size={14} className="opacity-60 shrink-0" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+        <div className="p-2 border-b border-border">
+          <Input
+            autoFocus
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && canCreate) {
+                e.preventDefault();
+                commit(trimmed);
+              }
+            }}
+            placeholder="Buscar ou criar..."
+            className="h-8 text-xs"
+          />
+        </div>
+        <div className="max-h-56 overflow-y-auto py-1">
+          {filtered.length === 0 && !canCreate && (
+            <div className="px-3 py-3 text-xs text-muted-foreground text-center">Nenhuma tag</div>
+          )}
+          {filtered.map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => commit(opt)}
+              className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted/60 transition-colors ${value === opt ? "text-primary font-medium" : ""}`}
+            >
+              {opt}
+            </button>
+          ))}
+          {canCreate && (
+            <button
+              type="button"
+              onClick={() => commit(trimmed)}
+              className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted/60 transition-colors border-t border-border text-primary"
+            >
+              + Criar "{trimmed}"
+            </button>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
