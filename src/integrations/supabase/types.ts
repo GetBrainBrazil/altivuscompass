@@ -3545,6 +3545,7 @@ export type Database = {
           created_at: string
           direction: string
           id: string
+          is_internal: boolean
           media_caption: string | null
           media_mime: string | null
           media_url: string | null
@@ -3560,6 +3561,7 @@ export type Database = {
           created_at?: string
           direction: string
           id?: string
+          is_internal?: boolean
           media_caption?: string | null
           media_mime?: string | null
           media_url?: string | null
@@ -3575,6 +3577,7 @@ export type Database = {
           created_at?: string
           direction?: string
           id?: string
+          is_internal?: boolean
           media_caption?: string | null
           media_mime?: string | null
           media_url?: string | null

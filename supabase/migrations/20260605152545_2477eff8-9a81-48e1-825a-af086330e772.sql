@@ -1,0 +1,2 @@
+ALTER TABLE public.wa_messages ADD COLUMN IF NOT EXISTS is_internal boolean NOT NULL DEFAULT false;
+CREATE INDEX IF NOT EXISTS idx_wa_messages_is_internal ON public.wa_messages(conversation_id, is_internal);
