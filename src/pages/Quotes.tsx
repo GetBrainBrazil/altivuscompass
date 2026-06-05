@@ -178,6 +178,7 @@ const buildQuoteEditorForm = (q: Quote) => {
     internal_due_date: "",
     flexible_dates: pb?.flexible_dates ?? false,
     flexible_dates_description: pb?.flexible_dates_description ?? "",
+    company: ((q as any).company as CompanyBrand) || DEFAULT_COMPANY,
   };
 };
 
