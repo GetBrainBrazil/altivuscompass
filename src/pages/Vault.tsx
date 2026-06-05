@@ -399,21 +399,24 @@ export default function Vault() {
                   <th className="px-3 py-2.5">Usuário</th>
                   <th className="px-3 py-2.5">Senha</th>
                   <th className="px-3 py-2.5">URL</th>
-                  <th className="px-3 py-2.5">Dono</th>
-                  <th className="px-3 py-2.5 text-right">Ações</th>
+                  <th className="px-3 py-2.5">Compartilhado</th>
                 </tr>
               </thead>
               <tbody>
                 {visibleItems.map((it) => {
                   const show = revealed[it.id];
-                  const owner = profileById.get(it.created_by ?? "");
-                  const ownerName = owner?.full_name ?? (isOwner(it) ? "Você" : "—");
                   const editable = canEditItem(it);
-                  const mine = isOwner(it);
+                  const itemViewers = viewers.filter((v) => v.vault_item_id === it.id);
+                  const sharedNames = itemViewers
+                    .map((v) => profileById.get(v.user_id)?.full_name)
+                    .filter(Boolean) as string[];
                   return (
                     <tr
                       key={it.id}
-                      className="border-b border-border/60 last:border-0 hover:bg-muted/20 transition-colors"
+                      onClick={() => editable && openEdit(it)}
+                      className={`border-b border-border/60 last:border-0 transition-colors ${
+                        editable ? "hover:bg-muted/30 cursor-pointer" : "hover:bg-muted/10"
+                      }`}
                     >
                       <td className="px-3 py-2.5 align-middle">
                         {it.is_favorite ? (
@@ -421,13 +424,9 @@ export default function Vault() {
                         ) : null}
                       </td>
                       <td className="px-3 py-2.5 align-middle">
-                        <button
-                          type="button"
-                          onClick={() => openEdit(it)}
-                          className="text-left font-medium text-foreground hover:text-primary truncate max-w-[260px] inline-block"
-                        >
+                        <div className="font-medium text-foreground truncate max-w-[260px]">
                           {it.title}
-                        </button>
+                        </div>
                         {it.notes && (
                           <div className="text-[11px] text-muted-foreground truncate max-w-[260px]">
                             {it.notes.replace(/\s+/g, " ").slice(0, 80)}
@@ -445,7 +444,7 @@ export default function Vault() {
                       </td>
                       <td className="px-3 py-2.5 align-middle">
                         {it.username ? (
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                             <span className="font-mono text-xs truncate max-w-[160px]">{it.username}</span>
                             <Button
                               variant="ghost"
@@ -462,7 +461,7 @@ export default function Vault() {
                       </td>
                       <td className="px-3 py-2.5 align-middle">
                         {it.password ? (
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                             <span className="font-mono text-xs truncate max-w-[140px]">
                               {show ? it.password : "••••••••"}
                             </span>
@@ -493,6 +492,7 @@ export default function Vault() {
                             href={it.url.startsWith("http") ? it.url : `https://${it.url}`}
                             target="_blank"
                             rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
                             className="text-primary hover:underline inline-flex items-center gap-1 text-xs truncate max-w-[180px]"
                           >
                             {it.url} <ExternalLink size={10} />
@@ -502,44 +502,27 @@ export default function Vault() {
                         )}
                       </td>
                       <td className="px-3 py-2.5 align-middle">
-                        <span className="text-xs truncate max-w-[140px] inline-block">
-                          {mine ? (
-                            <span className="font-medium text-foreground">Você</span>
-                          ) : (
-                            ownerName
-                          )}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2.5 align-middle text-right">
-                        <div className="inline-flex items-center gap-1">
-                          {editable && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0"
-                              onClick={() => openEdit(it)}
-                              title="Editar"
-                            >
-                              <Pencil size={13} />
-                            </Button>
-                          )}
-                          {mine && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                              onClick={() => setConfirmDelete(it.id)}
-                              title="Remover"
-                            >
-                              <Trash2 size={13} />
-                            </Button>
-                          )}
-                        </div>
+                        {sharedNames.length === 0 ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] bg-muted text-muted-foreground rounded-full px-2 py-0.5">
+                            <Lock size={10} /> Privado
+                          </span>
+                        ) : (
+                          <span
+                            className="inline-flex items-center gap-1 text-[10px] bg-primary/10 text-primary rounded-full px-2 py-0.5 max-w-[220px] truncate"
+                            title={sharedNames.join(", ")}
+                          >
+                            <Users size={10} />
+                            {sharedNames.length === 1
+                              ? sharedNames[0]
+                              : `${sharedNames.length} usuários`}
+                          </span>
+                        )}
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
+
             </table>
           </div>
         </div>
