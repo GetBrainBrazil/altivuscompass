@@ -2104,6 +2104,31 @@ export default function Quotes() {
             </TabsList>
 
             <TabsContent value="main" className="mt-3 space-y-3">
+              {/* Empresa (marca organizacional) */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <Label className="font-body text-xs text-muted-foreground">Empresa:</Label>
+                <div className="inline-flex rounded-md border border-border bg-muted/30 p-0.5">
+                  {COMPANY_OPTIONS.map((o) => {
+                    const selected = (form.company || DEFAULT_COMPANY) === o.value;
+                    return (
+                      <button
+                        key={o.value}
+                        type="button"
+                        onClick={() => setForm({ ...form, company: o.value })}
+                        className={cn(
+                          "px-2.5 py-1 text-xs font-medium rounded transition-colors font-body",
+                          selected
+                            ? "bg-card text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        {o.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Row 1: Título, Cliente, Imagem de Capa */}
               <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-3">
                 <div className="col-span-2 lg:col-span-3 space-y-1">
