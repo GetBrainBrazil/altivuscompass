@@ -1386,7 +1386,13 @@ export default function ServiceCenter() {
     setSending(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-whatsapp", {
-        body: { action: "send-text", phone: convo.phone, message: draft.trim() },
+        body: {
+          action: "send-text",
+          phone: convo.phone,
+          message: draft.trim(),
+          is_group: !!convo.is_group,
+          group_id: convo.group_id ?? undefined,
+        },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
