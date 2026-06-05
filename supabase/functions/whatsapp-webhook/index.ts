@@ -1156,12 +1156,93 @@ async function handleLeadCapture(
       }
 
       // 2) Mudar wa_conversations.status para 'human' (o trigger DB notifica admins/managers)
-      await supabase
+      const { data: convoRow } = await supabase
         .from('wa_conversations')
         .update({ status: 'human' })
         .eq('phone', phone)
+        .select('id')
+        .maybeSingle()
 
       console.log(`[handoff] conversa ${phone} escalada para humano. motivo: ${reason}`)
+
+      // 3) Gera resumo interno via IA e posta como NOTA INTERNA na Central
+      //    (is_internal=true → não é enviada ao cliente; renderizada como aviso
+      //    amarelo para o atendente humano com contexto da conversa).
+      if (convoRow?.id) {
+        try {
+          const transcript = (sessionState.messages || [])
+            .slice(-30)
+            .map((m: any) => `${m.role === 'user' ? 'Cliente' : 'IA'}: ${String(m.content || '').slice(0, 500)}`)
+            .join('\n')
+          const knownJson = JSON.stringify({
+            nome: leadRow?.full_name || matchedContact?.full_name || senderName,
+            telefone: phone,
+            destino: leadRow?.destination,
+            data_ini: leadRow?.travel_date_start,
+            data_fim: leadRow?.travel_date_end,
+            datas_flexiveis: leadRow?.flexible_dates,
+            viajantes: leadRow?.travelers_count,
+            orcamento: leadRow?.budget_estimate,
+            preferencias: leadRow?.preferences,
+            email: leadRow?.email,
+          }, null, 2)
+
+          const sumPrompt = `Você é um assistente que prepara um BRIEFING INTERNO curto para um(a) consultor(a) humano(a) que vai assumir um atendimento WhatsApp.
+
+NUNCA cumprimente, NUNCA fale com o cliente — esta nota é só para a equipe ler.
+
+Motivo do handoff: ${reason}
+
+Dados coletados:
+${knownJson}
+
+Últimas mensagens da conversa:
+${transcript}
+
+Responda em PT-BR usando exatamente este formato em markdown (≤120 palavras):
+
+**📋 Resumo do atendimento**
+- **Cliente:** <nome ou "não informado">
+- **Quer:** <intenção principal em 1 linha>
+- **Status:** <o que já foi coletado / o que falta>
+
+**🎯 Próximo passo sugerido**
+<1-2 frases objetivas do que fazer agora ao assumir>`
+
+          const sumRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${lovableApiKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: 'google/gemini-2.5-flash',
+              messages: [{ role: 'user', content: sumPrompt }],
+            }),
+          })
+          let summaryText = ''
+          if (sumRes.ok) {
+            const sumData = await sumRes.json()
+            summaryText = String(sumData?.choices?.[0]?.message?.content || '').trim()
+          }
+          if (!summaryText) {
+            summaryText = `**📋 Resumo do atendimento**\n- **Motivo do handoff:** ${reason}\n- **Telefone:** ${phone}\n\n**🎯 Próximo passo sugerido**\nAssuma a conversa e revise o histórico acima para dar continuidade.`
+          }
+
+          const finalNote = `🤝 *Handoff para atendente humano*\n_Motivo: ${reason}_\n\n${summaryText}`
+
+          await supabase.from('wa_messages').insert({
+            conversation_id: convoRow.id,
+            direction: 'internal',
+            sender: 'system',
+            message_type: 'text',
+            content: finalNote,
+            is_internal: true,
+            status: 'sent',
+            raw: { kind: 'handoff_summary', reason },
+          })
+          console.log(`[handoff] nota interna de resumo inserida na conversa ${convoRow.id}`)
+        } catch (sumErr) {
+          console.error('[handoff] falha ao gerar/inserir resumo interno:', sumErr)
+        }
+      }
     } catch (e) {
       console.error('[handoff] erro ao escalar:', e)
     }
