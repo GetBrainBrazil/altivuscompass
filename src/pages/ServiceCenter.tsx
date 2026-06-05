@@ -139,6 +139,12 @@ interface Conversation {
   isReturning?: boolean;
   /** Quantidade de mensagens recebidas não lidas (incrementado pelo webhook). */
   unreadCount?: number;
+  /** Conversa é um grupo do WhatsApp. */
+  isGroup?: boolean;
+  /** Nome do grupo (subject). */
+  groupSubject?: string;
+  /** ID do grupo no WhatsApp. */
+  groupId?: string;
 }
 
 // Conversas reais vêm do banco (wa_conversations / wa_messages) via Realtime.
