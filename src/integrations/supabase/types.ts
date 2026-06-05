@@ -3480,18 +3480,21 @@ export type Database = {
       }
       vault_item_viewers: {
         Row: {
+          can_edit: boolean
           created_at: string
           id: string
           user_id: string
           vault_item_id: string
         }
         Insert: {
+          can_edit?: boolean
           created_at?: string
           id?: string
           user_id: string
           vault_item_id: string
         }
         Update: {
+          can_edit?: boolean
           created_at?: string
           id?: string
           user_id?: string
