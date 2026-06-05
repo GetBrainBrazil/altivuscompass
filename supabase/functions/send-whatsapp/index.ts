@@ -248,17 +248,17 @@ Deno.serve(async (req) => {
         )
 
         let messageType = 'text'
-        let content: string | null = message ?? null
+        let content: string | null = textWithAgent ?? null
         let mediaUrl: string | null = null
         let mediaCaption: string | null = null
         if (action === 'send-image') {
-          messageType = 'image'; mediaUrl = image_url ?? null; mediaCaption = message ?? null; content = null
+          messageType = 'image'; mediaUrl = image_url ?? null; mediaCaption = captionWithAgent ?? null; content = null
         } else if (action === 'send-document') {
-          messageType = 'document'; mediaUrl = document_url ?? null; mediaCaption = message ?? null; content = null
+          messageType = 'document'; mediaUrl = document_url ?? null; mediaCaption = captionWithAgent ?? null; content = null
         } else if (action === 'send-audio') {
           messageType = 'audio'; mediaUrl = audio_url ?? null; content = null
         } else if (action === 'send-link') {
-          messageType = 'text'; content = `${message ?? ''}\n${body.link_url ?? ''}`.trim()
+          messageType = 'text'; content = `${textWithAgent ?? ''}\n${body.link_url ?? ''}`.trim()
         }
 
         const preview =
