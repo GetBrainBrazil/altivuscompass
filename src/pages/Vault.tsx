@@ -80,6 +80,7 @@ export default function Vault() {
   const [viewerDropdownOpen, setViewerDropdownOpen] = useState(false);
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [showFormPassword, setShowFormPassword] = useState(false);
 
   const { data: items = [], isLoading, error: itemsError, refetch: refetchItems } = useQuery({
     queryKey: ["vault-items"],
