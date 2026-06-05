@@ -118,7 +118,7 @@ export default function BankAccountsTab() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ account_type: "checking", is_active: true });
+    setForm({ account_type: "checking", is_active: true, company: DEFAULT_COMPANY });
     setDialogOpen(true);
   };
 
@@ -129,6 +129,7 @@ export default function BankAccountsTab() {
       account_type: a.account_type ?? "checking", pix_key: a.pix_key ?? "",
       pix_key_type: a.pix_key_type ?? "", holder_name: a.holder_name ?? "",
       holder_document: a.holder_document ?? "", is_active: a.is_active, notes: a.notes ?? "",
+      company: (a.company as CompanyBrand) ?? DEFAULT_COMPANY,
     });
     setDialogOpen(true);
   };
