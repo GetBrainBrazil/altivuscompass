@@ -82,6 +82,7 @@ export default function UserDetail() {
     if (userData) {
       setForm({
         full_name: userData.full_name ?? "",
+        nickname: userData.nickname ?? "",
         email: userData.email ?? "",
         password: "",
         role: userData.role ?? "sales_agent",
