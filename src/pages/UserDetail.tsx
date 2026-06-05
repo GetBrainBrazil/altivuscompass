@@ -312,6 +312,16 @@ export default function UserDetail() {
                 <Label className="font-body text-xs uppercase tracking-wide text-muted-foreground">Nome completo</Label>
                 <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
               </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label className="font-body text-xs uppercase tracking-wide text-muted-foreground">Apelido (opcional)</Label>
+                <Input
+                  value={form.nickname ?? ""}
+                  onChange={(e) => setForm({ ...form, nickname: e.target.value })}
+                  placeholder="Ex: João"
+                  maxLength={40}
+                />
+                <p className="text-xs text-muted-foreground font-body">Usado na Central de Atendimento. Se vazio, exibimos o nome completo.</p>
+              </div>
               <div className="space-y-2">
                 <Label className="font-body text-xs uppercase tracking-wide text-muted-foreground">E-mail</Label>
                 <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required disabled={!isNew} />
