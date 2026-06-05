@@ -22,6 +22,9 @@ import {
   ArrowUpDown, ArrowUp as ArrUp, ArrowDown as ArrDown, User, Inbox,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { COMPANY_OPTIONS } from "@/lib/company";
+import { CompanyBadge } from "@/components/company/CompanyBadge";
+import { useCompanyFilter, matchesCompanyFilter } from "@/hooks/useCompanyFilter";
 
 // ----- types & constants -----
 type TxType = "payable" | "receivable";
