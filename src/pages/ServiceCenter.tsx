@@ -534,6 +534,14 @@ const ChatBubble = ({ message, agentLabel }: ChatBubbleProps) => {
           isAgent && "bg-emerald-600 text-white rounded-br-md",
         )}
       >
+        {isLead && message.senderName && (
+          <p className={cn(
+            "text-[11px] font-semibold mb-1 text-violet-700",
+            isMedia && "px-3 pt-1",
+          )}>
+            {message.senderName}
+          </p>
+        )}
         {!isLead && (
           <p className={cn(
             "text-[10px] font-semibold uppercase tracking-wider mb-1 opacity-80",
