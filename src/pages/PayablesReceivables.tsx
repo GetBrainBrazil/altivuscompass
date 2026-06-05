@@ -412,6 +412,18 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
             ))}
           </SelectContent>
         </Select>
+
+        <Select value={companyFilter} onValueChange={(v) => { setCompanyFilter(v as any); setPage(1); }}>
+          <SelectTrigger className="w-full lg:w-44">
+            <SelectValue placeholder="Empresa" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as empresas</SelectItem>
+            {COMPANY_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Table */}
