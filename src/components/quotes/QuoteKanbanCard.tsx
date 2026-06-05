@@ -190,6 +190,7 @@ export function QuoteKanbanCard({
           </p>
           <div className="shrink-0 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
             <CompanyBadge company={quote.company} />
+            {critical && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-destructive/15 text-destructive">
                 <AlertTriangle className="w-3 h-3" />
                 {critical.badge}
