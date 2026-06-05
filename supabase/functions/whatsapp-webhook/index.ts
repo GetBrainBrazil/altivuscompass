@@ -360,25 +360,14 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Grupos: por padrão apenas espelhar (sem IA, sem handoff, sem fluxo #pago).
-    // Admin pode habilitar IA por grupo via toggle ai_enabled.
+    // Grupos: apenas espelhar (sem IA, sem handoff, sem fluxo #pago).
+    // O toggle ai_enabled fica salvo para uso futuro, mas no MVP a IA nunca responde em grupos.
     if (isGroup) {
-      let groupAiOn = false
-      if (groupId) {
-        const { data: gc } = await supabase
-          .from('wa_conversations')
-          .select('ai_enabled')
-          .eq('group_id', groupId)
-          .maybeSingle()
-        groupAiOn = gc?.ai_enabled === true
-      }
-      if (!groupAiOn) {
-        return new Response(JSON.stringify({ status: 'mirrored', reason: 'group_ai_off' }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        })
-      }
-      // Se IA está ligada no grupo, segue o fluxo normal (mas pulando CRM/handoff abaixo)
+      return new Response(JSON.stringify({ status: 'mirrored', reason: 'group' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
+
 
 
 
