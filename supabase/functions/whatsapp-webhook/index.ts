@@ -243,14 +243,10 @@ Deno.serve(async (req) => {
       // ====== Garantir contato/lead/cliente ANTES da pausa global ======
       // Mesmo com IA pausada, todo número novo precisa virar Prospect no CRM e
       // todo número conhecido precisa estar vinculado à conversa.
+      // Em GRUPOS pulamos toda a lógica de CRM — grupos não viram leads.
       let contactLink: { contact_id?: string; lead_id?: string; client_id?: string } = {}
-      // Só temos um "nome do cliente confiável" quando: é uma mensagem recebida
-      // (não fromMe) E o sender informou um nome que não é o da agência E o
-      // contato no CRM já tem nome real. Caso contrário deixamos o `contact_name`
-      // intocado no upsert (preserva o valor existente, evitando sobrescrever
-      // um nome real com "Altivus Turismo" ou placeholder).
       let trustedDisplayName: string | null = null
-      if (!isFromMe) {
+      if (!isFromMe && !isGroup) {
         try {
           const link = await ensureContactForPhone(supabase, phone, senderName)
           contactLink = {
@@ -258,7 +254,6 @@ Deno.serve(async (req) => {
             lead_id: link.lead_id ?? undefined,
             client_id: link.client_id ?? undefined,
           }
-          // Aceita display_name apenas se parece um nome real (≥2 palavras, sem dígitos).
           const dn = (link.display_name || '').trim()
           const looksReal = !!dn && !/\d/.test(dn) && dn.split(/\s+/).filter((w) => w.length > 1).length >= 2 && !isAgencyName(dn)
           if (looksReal) trustedDisplayName = dn
@@ -267,21 +262,52 @@ Deno.serve(async (req) => {
         }
       }
 
-      const convoUpsert: Record<string, unknown> = {
-        phone,
+      const nowIso = new Date().toISOString()
+      const baseConvo: Record<string, unknown> = {
         last_message_text: preview,
-        last_message_at: new Date().toISOString(),
+        last_message_at: nowIso,
         last_message_from: isFromMe ? 'agent' : 'lead',
-        updated_at: new Date().toISOString(),
-        ...contactLink,
+        updated_at: nowIso,
       }
-      if (trustedDisplayName) convoUpsert.contact_name = trustedDisplayName
 
-      const { data: convo, error: convoErr } = await supabase
-        .from('wa_conversations')
-        .upsert(convoUpsert, { onConflict: 'phone' })
-        .select('id, unread_count')
-        .single()
+      let convo: { id: string; unread_count?: number | null } | null = null
+      let convoErr: { message: string } | null = null
+
+      if (isGroup && groupId) {
+        // Upsert por group_id. Não criamos como contact do CRM.
+        const groupConvoPayload: Record<string, unknown> = {
+          ...baseConvo,
+          phone: groupId, // mantém compat com NOT NULL em phone
+          is_group: true,
+          group_id: groupId,
+          ai_enabled: false, // grupos sem IA por padrão
+        }
+        if (groupSubject) {
+          groupConvoPayload.group_subject = groupSubject
+          groupConvoPayload.contact_name = groupSubject
+        }
+        const { data, error } = await supabase
+          .from('wa_conversations')
+          .upsert(groupConvoPayload, { onConflict: 'group_id' })
+          .select('id, unread_count')
+          .single()
+        convo = data as any
+        convoErr = error as any
+      } else {
+        const convoUpsert: Record<string, unknown> = {
+          ...baseConvo,
+          phone,
+          ...contactLink,
+        }
+        if (trustedDisplayName) convoUpsert.contact_name = trustedDisplayName
+        const { data, error } = await supabase
+          .from('wa_conversations')
+          .upsert(convoUpsert, { onConflict: 'phone' })
+          .select('id, unread_count')
+          .single()
+        convo = data as any
+        convoErr = error as any
+      }
 
       if (convoErr) {
         console.error('wa_conversations upsert error:', convoErr.message)
@@ -317,6 +343,8 @@ Deno.serve(async (req) => {
             media_caption: mediaCaption,
             zapi_message_id: zapiMsgId,
             status: isFromMe ? 'sent' : 'received',
+            sender_phone: isGroup ? (participantPhone || null) : null,
+            sender_name: isGroup ? (senderName || null) : null,
             raw: body,
           })
           if (msgErr) console.error('wa_messages insert error:', msgErr.message)
@@ -331,6 +359,14 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+
+    // Grupos: apenas espelhar (sem IA, sem handoff, sem fluxo #pago)
+    if (isGroup) {
+      return new Response(JSON.stringify({ status: 'mirrored', reason: 'group' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
 
     // ===== Pausa global removida: fonte da verdade agora é ai_agent_status.active =====
 
