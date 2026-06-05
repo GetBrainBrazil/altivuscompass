@@ -3638,6 +3638,15 @@ export default function Quotes() {
             ))}
           </SelectContent>
         </Select>
+        <Select value={filterCompany} onValueChange={(v) => setFilterCompany(v as any)}>
+          <SelectTrigger className="h-9 w-full sm:w-[160px] font-body text-sm"><SelectValue placeholder="Empresa" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as empresas</SelectItem>
+            {COMPANY_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={pipelineSort} onValueChange={(v) => setPipelineSort(v as any)}>
           <SelectTrigger className="h-9 w-full sm:w-[180px] font-body text-sm"><SelectValue /></SelectTrigger>
           <SelectContent>
