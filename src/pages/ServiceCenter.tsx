@@ -1178,6 +1178,7 @@ export default function ServiceCenter() {
         mediaUrl: m.media_url ?? undefined,
         mediaMime: m.media_mime ?? undefined,
         mediaCaption: m.media_caption ?? undefined,
+        isInternal: !!m.is_internal,
       }));
       // Se não há nenhuma mensagem carregada, cria uma "fake" só para preview
       const fallbackMsg: Message = {
