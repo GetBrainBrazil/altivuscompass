@@ -81,7 +81,7 @@ export default function Vault() {
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
-  const { data: items = [], isLoading } = useQuery({
+  const { data: items = [], isLoading, error: itemsError, refetch: refetchItems } = useQuery({
     queryKey: ["vault-items"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -94,7 +94,7 @@ export default function Vault() {
     },
   });
 
-  const { data: viewers = [] } = useQuery({
+  const { data: viewers = [], error: viewersError } = useQuery({
     queryKey: ["vault-viewers"],
     queryFn: async () => {
       const { data, error } = await supabase.from("vault_item_viewers").select("*");
@@ -361,6 +361,19 @@ export default function Vault() {
       {/* Table */}
       {isLoading ? (
         <p className="text-sm font-body text-muted-foreground">Carregando...</p>
+      ) : itemsError || viewersError ? (
+        <div className="border border-dashed border-destructive/40 rounded-lg p-10 text-center space-y-3">
+          <Lock className="mx-auto text-destructive" size={28} />
+          <div className="space-y-1">
+            <p className="text-sm font-body text-foreground">Não foi possível carregar o cofre agora.</p>
+            <p className="text-xs font-body text-muted-foreground">
+              {(itemsError ?? viewersError)?.message ?? "Tente novamente em instantes."}
+            </p>
+          </div>
+          <Button type="button" variant="outline" onClick={() => refetchItems()} className="font-body">
+            Tentar novamente
+          </Button>
+        </div>
       ) : visibleItems.length === 0 ? (
         <div className="border border-dashed border-border rounded-lg p-10 text-center">
           <Lock className="mx-auto text-muted-foreground mb-3" size={28} />
