@@ -3662,7 +3662,7 @@ export default function Quotes() {
             variant="ghost"
             size="sm"
             className="font-body h-9 gap-1.5"
-            onClick={() => { setSearchInput(""); setFilterAssignee("all"); setFilterLeadSource("all"); }}
+            onClick={() => { setSearchInput(""); setFilterAssignee("all"); setFilterLeadSource("all"); setFilterCompany("all"); }}
           >
             <X className="w-3.5 h-3.5" /> Limpar
           </Button>
