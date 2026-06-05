@@ -512,7 +512,10 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
                       <td className="px-3 py-3 whitespace-nowrap">{fmtDate(t.due_date)}</td>
                       <td className="px-3 py-3 whitespace-nowrap text-muted-foreground">{fmtDate(t.payment_date)}</td>
                       <td className="px-3 py-3">
-                        <div className="truncate max-w-[260px]">{t.description || "—"}</div>
+                        <div className="flex items-center gap-2 max-w-[280px]">
+                          <span className="truncate">{t.description || "—"}</span>
+                          <CompanyBadge company={t.company} />
+                        </div>
                         {t.installment_total > 1 && (
                           <span className="text-[10px] text-muted-foreground">
                             Parcela {t.installment_number}/{t.installment_total}
