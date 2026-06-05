@@ -149,6 +149,7 @@ export default function UserDetail() {
             action: "update",
             user_id: id,
             full_name: form.full_name.trim(),
+            nickname: form.nickname?.trim() || null,
             role: form.role,
             ...(avatarPath ? { avatar_url: avatarPath } : {}),
             phone: form.phone || null,
