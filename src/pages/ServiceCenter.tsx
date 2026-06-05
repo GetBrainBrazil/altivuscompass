@@ -454,9 +454,10 @@ const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = fa
 
 interface ChatBubbleProps {
   message: Message;
+  agentLabel?: string;
 }
 
-const ChatBubble = ({ message }: ChatBubbleProps) => {
+const ChatBubble = ({ message, agentLabel }: ChatBubbleProps) => {
   const isLead = message.sender === "lead";
   const isAgent = message.sender === "agent";
   const isAi = message.sender === "ai";
@@ -480,7 +481,7 @@ const ChatBubble = ({ message }: ChatBubbleProps) => {
             isMedia && "px-3 pt-1",
             isAi ? "text-[hsl(var(--cream))]" : "text-emerald-50",
           )}>
-            {isAi ? "🤖 IA" : "👤 Agente"}
+            {isAi ? "🤖 IA" : `👤 ${agentLabel || "Agente"}`}
           </p>
         )}
         {mt === "audio" && message.mediaUrl ? (
