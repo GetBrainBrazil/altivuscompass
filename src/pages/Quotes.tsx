@@ -243,6 +243,7 @@ export default function Quotes() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterAssignee, setFilterAssignee] = useState<string>("all");
   const [filterLeadSource, setFilterLeadSource] = useState<string>("all");
+  const [filterCompany, setFilterCompany] = useCompanyFilter("quotes");
   const [pipelineSort, setPipelineSort] = useState<"recent" | "oldest" | "value_desc" | "value_asc" | "updated">("recent");
   const [archiveTarget, setArchiveTarget] = useState<Quote | null>(null);
   const [unarchiveTarget, setUnarchiveTarget] = useState<Quote | null>(null);
