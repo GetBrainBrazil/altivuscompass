@@ -1444,7 +1444,13 @@ export default function ServiceCenter() {
       const { data: pub } = supabase.storage.from("quote-images").getPublicUrl(path);
       const audioUrl = pub.publicUrl;
       const { data, error } = await supabase.functions.invoke("send-whatsapp", {
-        body: { action: "send-audio", phone: convo.phone, audio_url: audioUrl },
+        body: {
+          action: "send-audio",
+          phone: convo.phone,
+          audio_url: audioUrl,
+          is_group: !!convo.is_group,
+          group_id: convo.group_id ?? undefined,
+        },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
