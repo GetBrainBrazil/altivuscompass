@@ -243,6 +243,7 @@ export default function Vault() {
     setEditingItem(null);
     setForm({ is_favorite: false });
     setDraftViewers([]);
+    setShowFormPassword(false);
     setFormOpen(true);
   };
 
