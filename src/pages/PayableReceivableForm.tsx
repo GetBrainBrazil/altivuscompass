@@ -72,6 +72,7 @@ const emptyForm = {
   recurrence_period: "monthly",
   recurrence_until: "",
   observations: "",
+  company: DEFAULT_COMPANY as CompanyBrand,
 };
 
 export default function PayableReceivableForm() {
