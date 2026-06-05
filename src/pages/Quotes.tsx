@@ -3555,7 +3555,7 @@ export default function Quotes() {
     ? "—"
     : `${Math.round((wonCount / closedQuotes.length) * 100)}%`;
 
-  const hasActiveFilters = searchTerm !== "" || filterAssignee !== "all" || filterLeadSource !== "all";
+  const hasActiveFilters = searchTerm !== "" || filterAssignee !== "all" || filterLeadSource !== "all" || filterCompany !== "all";
 
   // ─── LIST VIEW (pipeline / table) ─────────────────────────
   return (
