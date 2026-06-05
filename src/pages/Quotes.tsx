@@ -1246,7 +1246,7 @@ export default function Quotes() {
   const openCreate = (preset?: { client_id?: string }) => {
     setIsHydratingEditQuote(false);
     setEditingQuote(null);
-    setForm({ stage: "new", total_value: "", ...(preset?.client_id ? { client_id: preset.client_id } : {}) });
+    setForm({ stage: "new", total_value: "", company: DEFAULT_COMPANY, ...(preset?.client_id ? { client_id: preset.client_id } : {}) });
     setItems([]);
     setSelectedPassengers([]);
     setSelectedLinkedClients([]);
