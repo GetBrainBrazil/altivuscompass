@@ -839,6 +839,7 @@ export default function Quotes() {
         internal_due_date: null,
         quote_validity: form.quote_validity || null,
         price_breakdown: { linked_client_ids: selectedLinkedClients, client_self_traveling: clientSelfTraveling, flexible_dates: !!form.flexible_dates, flexible_dates_description: form.flexible_dates_description || null },
+        company: (form.company as CompanyBrand) || DEFAULT_COMPANY,
       };
 
       if (editingQuote) {
