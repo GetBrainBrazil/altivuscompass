@@ -338,6 +338,7 @@ export type Database = {
           account_type: string | null
           agency: string | null
           bank_name: string
+          company: Database["public"]["Enums"]["company_brand"]
           created_at: string
           holder_document: string | null
           holder_name: string | null
@@ -353,6 +354,7 @@ export type Database = {
           account_type?: string | null
           agency?: string | null
           bank_name: string
+          company?: Database["public"]["Enums"]["company_brand"]
           created_at?: string
           holder_document?: string | null
           holder_name?: string | null
@@ -368,6 +370,7 @@ export type Database = {
           account_type?: string | null
           agency?: string | null
           bank_name?: string
+          company?: Database["public"]["Enums"]["company_brand"]
           created_at?: string
           holder_document?: string | null
           holder_name?: string | null
@@ -1183,6 +1186,7 @@ export type Database = {
           base_amount: number | null
           category: string | null
           client_id: string | null
+          company: Database["public"]["Enums"]["company_brand"]
           competence_date: string | null
           cost_center: string | null
           created_at: string
@@ -1221,6 +1225,7 @@ export type Database = {
           base_amount?: number | null
           category?: string | null
           client_id?: string | null
+          company?: Database["public"]["Enums"]["company_brand"]
           competence_date?: string | null
           cost_center?: string | null
           created_at?: string
@@ -1259,6 +1264,7 @@ export type Database = {
           base_amount?: number | null
           category?: string | null
           client_id?: string | null
+          company?: Database["public"]["Enums"]["company_brand"]
           competence_date?: string | null
           cost_center?: string | null
           created_at?: string
@@ -2694,6 +2700,7 @@ export type Database = {
           client_id: string | null
           client_notes: string | null
           close_probability: string | null
+          company: Database["public"]["Enums"]["company_brand"]
           conclusion_type: string | null
           cover_image_url: string | null
           created_at: string
@@ -2735,6 +2742,7 @@ export type Database = {
           client_id?: string | null
           client_notes?: string | null
           close_probability?: string | null
+          company?: Database["public"]["Enums"]["company_brand"]
           conclusion_type?: string | null
           cover_image_url?: string | null
           created_at?: string
@@ -2776,6 +2784,7 @@ export type Database = {
           client_id?: string | null
           client_notes?: string | null
           close_probability?: string | null
+          company?: Database["public"]["Enums"]["company_brand"]
           conclusion_type?: string | null
           cover_image_url?: string | null
           created_at?: string
@@ -3759,6 +3768,7 @@ export type Database = {
         | "melhoria"
         | "correcao"
         | "remocao"
+      company_brand: "altivus" | "milhas_e_voos"
       contact_level: "prospect" | "lead" | "cliente"
       contract_type:
         | "clt"
@@ -3919,6 +3929,7 @@ export const Constants = {
         "correcao",
         "remocao",
       ],
+      company_brand: ["altivus", "milhas_e_voos"],
       contact_level: ["prospect", "lead", "cliente"],
       contract_type: [
         "clt",
