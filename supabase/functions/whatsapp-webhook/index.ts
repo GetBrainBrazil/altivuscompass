@@ -158,7 +158,11 @@ Deno.serve(async (req) => {
     const isStickerMsg = body.sticker != null
     const isLocationMsg = body.location != null
     const isContactMsg = body.contact != null || body.contacts != null
-    const senderName = body.senderName || body.chatName || ''
+    const rawSenderName = body.senderName || body.chatName || ''
+    // Em mensagens fromMe o Z-API devolve o nome da própria agência como
+    // senderName. Também ignoramos qualquer string que pareça ser o nome da
+    // agência para não poluir o nome do cliente no card.
+    const senderName = (!rawSenderName || isAgencyName(rawSenderName)) ? '' : rawSenderName
 
     const messageText = extractedText
     const imageUrl = body.image?.imageUrl || body.image?.url || ''
