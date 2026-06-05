@@ -1230,7 +1230,13 @@ export default function ServiceCenter() {
       };
       const meta = c.contact_id ? contactMetaById.get(c.contact_id) : null;
       // Fonte da verdade: tabela contacts. wa_conversations.contact_name é apenas espelho.
-      const canonicalName = (meta?.full_name && String(meta.full_name).trim()) || c.contact_name || c.phone || "Sem nome";
+      // Filtra nomes "lixo" (vazios, nome da própria agência, telefones, "Sem nome")
+      // → nesse caso o card mostra apenas o telefone formatado, até o cliente se identificar.
+      const rawName = (meta?.full_name && String(meta.full_name).trim()) || (c.contact_name && String(c.contact_name).trim()) || "";
+      const isAgencyName = /altivus/i.test(rawName);
+      const looksLikePhone = /^\+?\d[\d\s\-()]{4,}$/.test(rawName);
+      const isPlaceholderName = !rawName || rawName.toLowerCase() === "sem nome" || isAgencyName || looksLikePhone;
+      const canonicalName = isPlaceholderName ? (c.phone || "Sem nome") : rawName;
       const canonicalLevel: ContactLevel =
         (meta?.level as ContactLevel) ||
         (c.client_id ? "cliente" : c.lead_id ? "lead" : "prospect");
