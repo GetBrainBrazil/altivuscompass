@@ -1128,8 +1128,17 @@ async function handleLeadCapture(
   }
 
   // ===== HANDOFF: a IA detectou que precisa de atendimento humano =====
-  const shouldEscalate = ai.extracted?.escalate_to_human === true
+  // Safety net: se a IA prometeu que um humano entrará em contato (sem marcar
+  // escalate_to_human), forçamos o handoff para que admins/managers sejam
+  // notificados — caso contrário o cliente fica esperando ninguém.
+  const replyText = String(ai.reply || '').toLowerCase()
+  const handoffPromiseRe = /(consultor|atendente|equipe|algu[ée]m|um\s+human[oa])[^.!?\n]{0,80}(entrar[áa]|entrar[ãa]o|vai\s+entrar|v[ãa]o\s+entrar|chamar[áa]|chamando|te\s+chamam|te\s+atende|dar[áa]\s+continuidade|assumir[áa]|assumindo|retornar[áa]|retorno\s+em\s+breve)|em\s+breve.{0,40}(entrar[áa]|contato|atende)|transferir.{0,30}(consultor|atendente|humano)/i
+  const promisedHumanFollowUp = handoffPromiseRe.test(ai.reply || '')
+  const shouldEscalate = ai.extracted?.escalate_to_human === true || promisedHumanFollowUp
   if (shouldEscalate) {
+    if (!ai.extracted?.escalate_to_human && promisedHumanFollowUp) {
+      console.log(`[handoff] safety-net: IA prometeu contato humano sem marcar escalate_to_human. Forçando handoff.`)
+    }
     const reason = (ai.extracted?.escalation_reason || 'sinal de handoff detectado pela IA').toString().slice(0, 200)
     try {
       // 1) Garantir que o contato esteja como 'lead' (ou superior). Trigger anti-regressão protege 'cliente'.
