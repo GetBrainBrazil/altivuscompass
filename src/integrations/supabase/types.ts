@@ -3514,7 +3514,7 @@ export type Database = {
         Row: {
           category: string | null
           created_at: string
-          created_by: string | null
+          created_by: string
           id: string
           is_favorite: boolean
           notes: string | null
@@ -3527,7 +3527,7 @@ export type Database = {
         Insert: {
           category?: string | null
           created_at?: string
-          created_by?: string | null
+          created_by: string
           id?: string
           is_favorite?: boolean
           notes?: string | null
@@ -3540,7 +3540,7 @@ export type Database = {
         Update: {
           category?: string | null
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           id?: string
           is_favorite?: boolean
           notes?: string | null
