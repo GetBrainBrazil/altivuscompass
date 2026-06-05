@@ -365,9 +365,16 @@ const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = fa
         </Avatar>
         <div className="min-w-0 flex-1 py-0.5">
           <div className="flex items-center justify-between gap-2">
-            <p className={cn("font-medium text-sm truncate", hasUnread && "font-semibold text-amber-950")}>
-              {conversation.leadName}
-            </p>
+            <div className="min-w-0 flex-1">
+              <p className={cn("font-medium text-sm truncate", hasUnread && "font-semibold text-amber-950")}>
+                {conversation.leadName}
+              </p>
+              {conversation.phone && conversation.phone !== conversation.leadName && (
+                <p className="text-[11px] text-muted-foreground truncate font-mono">
+                  {formatPhoneDisplay(conversation.phone)}
+                </p>
+              )}
+            </div>
             <span className="text-[11px] text-muted-foreground shrink-0 flex items-center gap-1.5">
               {hasUnread && (
                 <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold">
