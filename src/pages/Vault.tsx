@@ -475,17 +475,11 @@ export default function Vault() {
               </div>
               <div className="space-y-1.5">
                 <Label className="font-body text-xs">Categoria</Label>
-                <Input
+                <CategoryPicker
                   value={form.category ?? ""}
-                  onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  placeholder="Ex.: Redes Sociais, Bancos..."
-                  list="vault-categories"
+                  onChange={(v) => setForm({ ...form, category: v })}
+                  options={categories}
                 />
-                <datalist id="vault-categories">
-                  {categories.map((c) => (
-                    <option key={c} value={c} />
-                  ))}
-                </datalist>
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label className="font-body text-xs">URL</Label>
