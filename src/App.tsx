@@ -75,7 +75,7 @@ const App = () => (
             <Route path="/tasks/new" element={<ProtectedRoute><AppLayout><TaskDetail /></AppLayout></ProtectedRoute>} />
             <Route path="/tasks/:id" element={<ProtectedRoute><AppLayout><TaskDetail /></AppLayout></ProtectedRoute>} />
             <Route path="/changelog" element={<ProtectedRoute><AppLayout><Changelog /></AppLayout></ProtectedRoute>} />
-            <Route path="/contacts" element={<ProtectedRoute><AppLayout><Contacts /></AppLayout></ProtectedRoute>} />
+            <Route path="/contacts" element={<Navigate to="/clients" replace />} />
             <Route path="/contacts/:id/promote" element={<ProtectedRoute><AppLayout><PromoteContact /></AppLayout></ProtectedRoute>} />
             <Route path="/clients" element={<ProtectedRoute><AppLayout><Clients /></AppLayout></ProtectedRoute>} />
             <Route path="/quotes" element={<ProtectedRoute><AppLayout><Quotes /></AppLayout></ProtectedRoute>} />
