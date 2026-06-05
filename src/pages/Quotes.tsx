@@ -1944,7 +1944,7 @@ export default function Quotes() {
       }
     });
     return sorted;
-  }, [quotes, searchTerm, filterAssignee, filterLeadSource, pipelineSort]);
+  }, [quotes, searchTerm, filterAssignee, filterLeadSource, filterCompany, pipelineSort]);
 
   // Placeholder neutro enquanto o editor está sendo aberto a partir de outra página
   // (ex.: card do CRM). Evita o "flash" do pipeline antes do editor renderizar.
