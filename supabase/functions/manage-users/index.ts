@@ -71,6 +71,7 @@ Deno.serve(async (req) => {
 
       const profileUpdate: Record<string, any> = {};
       if (full_name !== undefined) profileUpdate.full_name = full_name;
+      if (nickname !== undefined) profileUpdate.nickname = nickname;
       if (avatar_url !== undefined) profileUpdate.avatar_url = avatar_url;
       if (phone !== undefined) profileUpdate.phone = phone;
       if (cep !== undefined) profileUpdate.cep = cep;
