@@ -1301,7 +1301,7 @@ Seu papel:
 4. Se a pessoa já forneceu uma informação, NÃO peça de novo
 5. Use emojis com moderação (✈️ 🏝️ 🗺️)
 6. Mantenha as respostas curtas (máximo 3-4 linhas)
-7. Quando tiver dados suficientes (destino + datas + viajantes), avise que um consultor humano dará continuidade com uma cotação personalizada
+7. Quando tiver dados suficientes (destino + datas + viajantes), avise que um consultor humano dará continuidade com uma cotação personalizada — **e nesse caso defina escalate_to_human=true** (qualquer promessa de retorno humano OBRIGA escalate_to_human=true; nunca prometa contato humano sem escalar)
 8. **HANDOFF (escalate_to_human=true)**: defina como true SEMPRE que detectar que o contato precisa de atendimento humano AGORA — mesmo que ainda não tenha coletado todos os dados. Sinais claros:
    - Pedido explícito ("quero falar com atendente", "consultor humano", "alguém pode me ajudar")
    - Reclamações, urgência, problema com viagem em andamento, suporte pós-venda
