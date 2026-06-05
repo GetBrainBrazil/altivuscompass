@@ -59,7 +59,7 @@ export default function UserDetail() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, any>>({
-    full_name: "", email: "", password: "", role: "sales_agent",
+    full_name: "", nickname: "", email: "", password: "", role: "sales_agent",
     phone: "", cep: "", address_street: "", address_number: "", address_complement: "",
     neighborhood: "", city: "", state: "", country: "Brasil",
     emergency_contact_name: "", emergency_contact_phone: "", health_plan: "",
