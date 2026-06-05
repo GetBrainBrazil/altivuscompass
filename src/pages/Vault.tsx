@@ -725,13 +725,26 @@ export default function Vault() {
             )}
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={closeForm}>
-              Cancelar
-            </Button>
-            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
-              {saveMutation.isPending ? "Salvando..." : "Salvar"}
-            </Button>
+          <DialogFooter className="sm:justify-between gap-2">
+            <div>
+              {editingItem && editingItem.created_by === currentUserId && (
+                <Button
+                  variant="outline"
+                  onClick={() => setConfirmDelete(editingItem.id)}
+                  className="text-destructive hover:text-destructive border-destructive/40 hover:bg-destructive/10"
+                >
+                  <Trash2 size={14} className="mr-1" /> Excluir
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={closeForm}>
+                Cancelar
+              </Button>
+              <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+                {saveMutation.isPending ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
