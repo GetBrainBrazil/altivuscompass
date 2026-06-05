@@ -174,6 +174,21 @@ const formatConversationTime = (iso: string) => {
     : { day: "2-digit", month: "2-digit", year: "2-digit" });
 };
 
+// Formata telefone para exibição (BR: +55 (21) 99999-9999). Para outros países,
+// devolve "+<digits>" agrupado.
+const formatPhoneDisplay = (raw: string): string => {
+  const digits = (raw || "").replace(/\D/g, "");
+  if (!digits) return raw || "";
+  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) {
+    const cc = digits.slice(0, 2);
+    const ddd = digits.slice(2, 4);
+    const rest = digits.slice(4);
+    if (rest.length === 9) return `+${cc} (${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
+    if (rest.length === 8) return `+${cc} (${ddd}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
+  }
+  return `+${digits}`;
+};
+
 const formatPhone = (phone: string) => {
   const m = phone.match(/^\+(\d{2})(\d{2})(\d{5})(\d{4})$/);
   if (!m) return phone;
@@ -365,9 +380,16 @@ const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = fa
         </Avatar>
         <div className="min-w-0 flex-1 py-0.5">
           <div className="flex items-center justify-between gap-2">
-            <p className={cn("font-medium text-sm truncate", hasUnread && "font-semibold text-amber-950")}>
-              {conversation.leadName}
-            </p>
+            <div className="min-w-0 flex-1">
+              <p className={cn("font-medium text-sm truncate", hasUnread && "font-semibold text-amber-950")}>
+                {conversation.leadName}
+              </p>
+              {conversation.phone && conversation.phone !== conversation.leadName && (
+                <p className="text-[11px] text-muted-foreground truncate font-mono">
+                  {formatPhoneDisplay(conversation.phone)}
+                </p>
+              )}
+            </div>
             <span className="text-[11px] text-muted-foreground shrink-0 flex items-center gap-1.5">
               {hasUnread && (
                 <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold">
@@ -1230,7 +1252,13 @@ export default function ServiceCenter() {
       };
       const meta = c.contact_id ? contactMetaById.get(c.contact_id) : null;
       // Fonte da verdade: tabela contacts. wa_conversations.contact_name é apenas espelho.
-      const canonicalName = (meta?.full_name && String(meta.full_name).trim()) || c.contact_name || c.phone || "Sem nome";
+      // Filtra nomes "lixo" (vazios, nome da própria agência, telefones, "Sem nome")
+      // → nesse caso o card mostra apenas o telefone formatado, até o cliente se identificar.
+      const rawName = (meta?.full_name && String(meta.full_name).trim()) || (c.contact_name && String(c.contact_name).trim()) || "";
+      const isAgencyName = /altivus/i.test(rawName);
+      const looksLikePhone = /^\+?\d[\d\s\-()]{4,}$/.test(rawName);
+      const isPlaceholderName = !rawName || rawName.toLowerCase() === "sem nome" || isAgencyName || looksLikePhone;
+      const canonicalName = isPlaceholderName ? (c.phone ? formatPhoneDisplay(c.phone) : "Sem nome") : rawName;
       const canonicalLevel: ContactLevel =
         (meta?.level as ContactLevel) ||
         (c.client_id ? "cliente" : c.lead_id ? "lead" : "prospect");
