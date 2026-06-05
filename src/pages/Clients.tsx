@@ -1877,9 +1877,6 @@ export default function Clients() {
 
   // ========== LIST VIEW ==========
   // Listagem antiga descontinuada — sem param de edição, redireciona para /contacts.
-  if (!hasEditParam) {
-    return null;
-  }
   return (
     <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
