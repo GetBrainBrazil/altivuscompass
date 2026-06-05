@@ -3471,6 +3471,7 @@ export type Database = {
       }
       wa_conversations: {
         Row: {
+          ai_enabled: boolean
           client_context_snapshot: Json | null
           client_id: string | null
           collected_data: Json
@@ -3478,6 +3479,8 @@ export type Database = {
           contact_name: string | null
           created_at: string
           days_inactive_on_resume: number | null
+          group_id: string | null
+          group_subject: string | null
           id: string
           is_group: boolean
           last_message_at: string | null
@@ -3493,6 +3496,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ai_enabled?: boolean
           client_context_snapshot?: Json | null
           client_id?: string | null
           collected_data?: Json
@@ -3500,6 +3504,8 @@ export type Database = {
           contact_name?: string | null
           created_at?: string
           days_inactive_on_resume?: number | null
+          group_id?: string | null
+          group_subject?: string | null
           id?: string
           is_group?: boolean
           last_message_at?: string | null
@@ -3515,6 +3521,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ai_enabled?: boolean
           client_context_snapshot?: Json | null
           client_id?: string | null
           collected_data?: Json
@@ -3522,6 +3529,8 @@ export type Database = {
           contact_name?: string | null
           created_at?: string
           days_inactive_on_resume?: number | null
+          group_id?: string | null
+          group_subject?: string | null
           id?: string
           is_group?: boolean
           last_message_at?: string | null
@@ -3552,6 +3561,8 @@ export type Database = {
           message_type: string
           raw: Json | null
           sender: string
+          sender_name: string | null
+          sender_phone: string | null
           status: string
           zapi_message_id: string | null
         }
@@ -3568,6 +3579,8 @@ export type Database = {
           message_type?: string
           raw?: Json | null
           sender: string
+          sender_name?: string | null
+          sender_phone?: string | null
           status?: string
           zapi_message_id?: string | null
         }
@@ -3584,6 +3597,8 @@ export type Database = {
           message_type?: string
           raw?: Json | null
           sender?: string
+          sender_name?: string | null
+          sender_phone?: string | null
           status?: string
           zapi_message_id?: string | null
         }

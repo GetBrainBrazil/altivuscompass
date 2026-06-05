@@ -86,6 +86,10 @@ interface Message {
   mediaMime?: string;
   mediaCaption?: string;
   isInternal?: boolean;
+  /** Em conversas de grupo: nome do participante que enviou. */
+  senderName?: string;
+  /** Em conversas de grupo: telefone do participante que enviou. */
+  senderPhone?: string;
 }
 
 type ConversationStatus = "ai" | "human";
@@ -135,6 +139,12 @@ interface Conversation {
   isReturning?: boolean;
   /** Quantidade de mensagens recebidas não lidas (incrementado pelo webhook). */
   unreadCount?: number;
+  /** Conversa é um grupo do WhatsApp. */
+  isGroup?: boolean;
+  /** Nome do grupo (subject). */
+  groupSubject?: string;
+  /** ID do grupo no WhatsApp. */
+  groupId?: string;
 }
 
 // Conversas reais vêm do banco (wa_conversations / wa_messages) via Realtime.
@@ -384,7 +394,7 @@ const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = fa
               <p className={cn("font-medium text-sm truncate", hasUnread && "font-semibold text-amber-950")}>
                 {conversation.leadName}
               </p>
-              {conversation.phone && conversation.phone !== conversation.leadName && (
+              {!conversation.isGroup && conversation.phone && conversation.phone !== conversation.leadName && (
                 <p className="text-[11px] text-muted-foreground truncate font-mono">
                   {formatPhoneDisplay(conversation.phone)}
                 </p>
@@ -407,19 +417,27 @@ const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = fa
             {last.content}
           </p>
           <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-            {/* Nível do contato (Prospect / Lead / Cliente) */}
-            <span
-              title={
-                conversation.level === "cliente"
-                  ? "Cliente: já fechou ao menos uma cotação."
-                  : conversation.level === "lead"
-                  ? "Lead: contato qualificado em negociação."
-                  : "Prospect: contato novo, ainda não qualificado."
-              }
-              className="inline-flex"
-            >
-              <ContactLevelBadge level={conversation.level} size="xs" />
-            </span>
+            {conversation.isGroup ? (
+              <span
+                title="Conversa de grupo do WhatsApp. A IA não responde em grupos."
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-violet-100 text-violet-700 border border-violet-300 uppercase tracking-wide"
+              >
+                👥 Grupo
+              </span>
+            ) : (
+              <span
+                title={
+                  conversation.level === "cliente"
+                    ? "Cliente: já fechou ao menos uma cotação."
+                    : conversation.level === "lead"
+                    ? "Lead: contato qualificado em negociação."
+                    : "Prospect: contato novo, ainda não qualificado."
+                }
+                className="inline-flex"
+              >
+                <ContactLevelBadge level={conversation.level} size="xs" />
+              </span>
+            )}
             {conversation.isNew && (
               <span
                 title="Conversa nova — ainda não foi aberta/lida na Central."
@@ -516,6 +534,14 @@ const ChatBubble = ({ message, agentLabel }: ChatBubbleProps) => {
           isAgent && "bg-emerald-600 text-white rounded-br-md",
         )}
       >
+        {isLead && message.senderName && (
+          <p className={cn(
+            "text-[11px] font-semibold mb-1 text-violet-700",
+            isMedia && "px-3 pt-1",
+          )}>
+            {message.senderName}
+          </p>
+        )}
         {!isLead && (
           <p className={cn(
             "text-[10px] font-semibold uppercase tracking-wider mb-1 opacity-80",
@@ -1242,6 +1268,8 @@ export default function ServiceCenter() {
         mediaMime: m.media_mime ?? undefined,
         mediaCaption: m.media_caption ?? undefined,
         isInternal: !!m.is_internal,
+        senderName: m.sender_name ?? undefined,
+        senderPhone: m.sender_phone ?? undefined,
       }));
       // Se não há nenhuma mensagem carregada, cria uma "fake" só para preview
       const fallbackMsg: Message = {
@@ -1250,15 +1278,17 @@ export default function ServiceCenter() {
         content: c.last_message_text ?? "",
         timestamp: c.last_message_at ?? c.updated_at ?? c.created_at,
       };
+      const isGroup = !!c.is_group;
       const meta = c.contact_id ? contactMetaById.get(c.contact_id) : null;
-      // Fonte da verdade: tabela contacts. wa_conversations.contact_name é apenas espelho.
-      // Filtra nomes "lixo" (vazios, nome da própria agência, telefones, "Sem nome")
-      // → nesse caso o card mostra apenas o telefone formatado, até o cliente se identificar.
-      const rawName = (meta?.full_name && String(meta.full_name).trim()) || (c.contact_name && String(c.contact_name).trim()) || "";
+      const rawName = isGroup
+        ? (c.group_subject || c.contact_name || "Grupo")
+        : ((meta?.full_name && String(meta.full_name).trim()) || (c.contact_name && String(c.contact_name).trim()) || "");
       const isAgencyName = /altivus/i.test(rawName);
       const looksLikePhone = /^\+?\d[\d\s\-()]{4,}$/.test(rawName);
-      const isPlaceholderName = !rawName || rawName.toLowerCase() === "sem nome" || isAgencyName || looksLikePhone;
-      const canonicalName = isPlaceholderName ? (c.phone ? formatPhoneDisplay(c.phone) : "Sem nome") : rawName;
+      const isPlaceholderName = !isGroup && (!rawName || rawName.toLowerCase() === "sem nome" || isAgencyName || looksLikePhone);
+      const canonicalName = isGroup
+        ? rawName
+        : (isPlaceholderName ? (c.phone ? formatPhoneDisplay(c.phone) : "Sem nome") : rawName);
       const canonicalLevel: ContactLevel =
         (meta?.level as ContactLevel) ||
         (c.client_id ? "cliente" : c.lead_id ? "lead" : "prospect");
@@ -1278,8 +1308,8 @@ export default function ServiceCenter() {
           clientName: canonicalName,
         },
         level: canonicalLevel,
-        // "Novo" = primeiro contato (criado < 24h) E ainda não foi promovido a Lead/Cliente
         isNew:
+          !isGroup &&
           !canonicalClientId &&
           canonicalLevel === "prospect" &&
           !!c.created_at &&
@@ -1290,6 +1320,9 @@ export default function ServiceCenter() {
         lastContactAt: meta?.last_contact_at ?? c.last_message_at ?? undefined,
         isReturning: !!meta?.is_returning,
         unreadCount: Number(c.unread_count ?? 0),
+        isGroup,
+        groupSubject: c.group_subject ?? undefined,
+        groupId: c.group_id ?? undefined,
       };
     });
   }, [convoRows, msgRows, selectedId, contactMetaById]);
@@ -1353,7 +1386,13 @@ export default function ServiceCenter() {
     setSending(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-whatsapp", {
-        body: { action: "send-text", phone: convo.phone, message: draft.trim() },
+        body: {
+          action: "send-text",
+          phone: convo.phone,
+          message: draft.trim(),
+          is_group: !!convo.is_group,
+          group_id: convo.group_id ?? undefined,
+        },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
@@ -1405,7 +1444,13 @@ export default function ServiceCenter() {
       const { data: pub } = supabase.storage.from("quote-images").getPublicUrl(path);
       const audioUrl = pub.publicUrl;
       const { data, error } = await supabase.functions.invoke("send-whatsapp", {
-        body: { action: "send-audio", phone: convo.phone, audio_url: audioUrl },
+        body: {
+          action: "send-audio",
+          phone: convo.phone,
+          audio_url: audioUrl,
+          is_group: !!convo.is_group,
+          group_id: convo.group_id ?? undefined,
+        },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);

@@ -45,7 +45,8 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json()
-    const { action, phone, message, quote_id, image_url, document_url, document_name, contact_name, audio_url } = body
+    const { action, phone, message, quote_id, image_url, document_url, document_name, contact_name, audio_url, is_group, group_id } = body
+    const isGroupSend = is_group === true || !!group_id
 
     if (!phone) {
       return new Response(JSON.stringify({ error: 'Telefone é obrigatório' }), {
@@ -268,8 +269,9 @@ Deno.serve(async (req) => {
           messageType === 'document' ? '📄 Documento' : 'Mensagem'
 
         // Se o usuário não informou um nome, tenta buscar o nome do contato no WhatsApp via Z-API
+        // (skip para grupos — group name vem do webhook)
         let resolvedName: string | null = contact_name && String(contact_name).trim() ? String(contact_name).trim() : null
-        if (!resolvedName) {
+        if (!resolvedName && !isGroupSend) {
           try {
             const contactRes = await fetch(`${baseUrl}/contacts/${cleanPhone}`, {
               method: 'GET',
@@ -289,22 +291,47 @@ Deno.serve(async (req) => {
           }
         }
 
-        const convoPayload: Record<string, unknown> = {
-          phone: cleanPhone,
-          last_message_text: preview,
-          last_message_at: new Date().toISOString(),
-          last_message_from: 'agent',
-          updated_at: new Date().toISOString(),
-        }
-        if (resolvedName) {
-          convoPayload.contact_name = resolvedName
+        const nowIso = new Date().toISOString()
+        let convo: { id: string } | null = null
+
+        if (isGroupSend) {
+          const gid = (group_id || cleanPhone) as string
+          const groupPayload: Record<string, unknown> = {
+            phone: gid,
+            group_id: gid,
+            is_group: true,
+            last_message_text: preview,
+            last_message_at: nowIso,
+            last_message_from: 'agent',
+            updated_at: nowIso,
+          }
+          if (resolvedName) {
+            groupPayload.group_subject = resolvedName
+            groupPayload.contact_name = resolvedName
+          }
+          const { data } = await serviceClient
+            .from('wa_conversations')
+            .upsert(groupPayload, { onConflict: 'group_id' })
+            .select('id')
+            .single()
+          convo = data as any
+        } else {
+          const convoPayload: Record<string, unknown> = {
+            phone: cleanPhone,
+            last_message_text: preview,
+            last_message_at: nowIso,
+            last_message_from: 'agent',
+            updated_at: nowIso,
+          }
+          if (resolvedName) convoPayload.contact_name = resolvedName
+          const { data } = await serviceClient
+            .from('wa_conversations')
+            .upsert(convoPayload, { onConflict: 'phone' })
+            .select('id')
+            .single()
+          convo = data as any
         }
 
-        const { data: convo } = await serviceClient
-          .from('wa_conversations')
-          .upsert(convoPayload, { onConflict: 'phone' })
-          .select('id, contact_name')
-          .single()
 
         if (convo) {
           await serviceClient.from('wa_messages').insert({
