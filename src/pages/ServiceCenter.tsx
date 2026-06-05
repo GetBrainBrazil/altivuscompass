@@ -963,6 +963,23 @@ export default function ServiceCenter() {
   const [sidePanelTab, setSidePanelTab] = useState<"summary" | "crm">("summary");
   const [newMsgOpen, setNewMsgOpen] = useState(false);
 
+  // Apelido/nome do atendente logado (para exibir nas mensagens enviadas)
+  const { data: myAgentLabel } = useQuery({
+    queryKey: ["my-agent-label"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return "Agente";
+      const { data } = await supabase
+        .from("profiles")
+        .select("nickname, full_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const p = data as { nickname?: string | null; full_name?: string | null } | null;
+      return (p?.nickname?.trim() || p?.full_name?.trim() || "Agente");
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   // ===== Status do Agente IA (fonte da verdade: ai_agent_status.active) =====
   const AGENT_ID = "1";
   const { data: agentStatus } = useQuery({
