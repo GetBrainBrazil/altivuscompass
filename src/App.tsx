@@ -45,6 +45,7 @@ import LeadConvert from "./pages/LeadConvert";
 import OpsNew from "./pages/OpsNew";
 
 import AIAgentEdit from "./pages/AIAgentEdit";
+import Vault from "./pages/Vault";
 
 import NotFound from "./pages/NotFound";
 
