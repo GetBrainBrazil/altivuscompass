@@ -182,6 +182,7 @@ export default function PayableReceivableForm() {
         status: "pending",
         party_name:
           (form.type === "payable" ? suppliersMap[form.supplier_id] : clientsMap[form.client_id]) ?? null,
+        company: (form.company as CompanyBrand) || DEFAULT_COMPANY,
       };
 
       if (editingId) {
