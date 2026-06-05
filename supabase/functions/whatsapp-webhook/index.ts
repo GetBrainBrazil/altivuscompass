@@ -1128,9 +1128,18 @@ async function handleLeadCapture(
   }
 
   // ===== HANDOFF: a IA detectou que precisa de atendimento humano =====
-  const shouldEscalate = ai.extracted?.escalate_to_human === true
+  // Safety net: se a IA prometeu que um humano entrará em contato (sem marcar
+  // escalate_to_human), forçamos o handoff para que admins/managers sejam
+  // notificados — caso contrário o cliente fica esperando ninguém.
+  const replyText = String(ai.reply || '').toLowerCase()
+  const handoffPromiseRe = /(consultor|atendente|equipe|algu[ée]m|um\s+human[oa])[^.!?\n]{0,80}(entrar[áa]|entrar[ãa]o|vai\s+entrar|v[ãa]o\s+entrar|chamar[áa]|chamando|te\s+chamam|te\s+atende|dar[áa]\s+continuidade|assumir[áa]|assumindo|retornar[áa]|retorno\s+em\s+breve)|em\s+breve.{0,40}(entrar[áa]|contato|atende)|transferir.{0,30}(consultor|atendente|humano)/i
+  const promisedHumanFollowUp = handoffPromiseRe.test(ai.reply || '')
+  const shouldEscalate = ai.extracted?.escalate_to_human === true || promisedHumanFollowUp
   if (shouldEscalate) {
-    const reason = (ai.extracted?.escalation_reason || 'sinal de handoff detectado pela IA').toString().slice(0, 200)
+    if (!ai.extracted?.escalate_to_human && promisedHumanFollowUp) {
+      console.log(`[handoff] safety-net: IA prometeu contato humano sem marcar escalate_to_human. Forçando handoff.`)
+    }
+    const reason = (ai.extracted?.escalation_reason || (promisedHumanFollowUp ? 'IA prometeu retorno humano ao cliente' : 'sinal de handoff detectado pela IA')).toString().slice(0, 200)
     try {
       // 1) Garantir que o contato esteja como 'lead' (ou superior). Trigger anti-regressão protege 'cliente'.
       const { data: contactRow } = await supabase
@@ -1292,7 +1301,7 @@ Seu papel:
 4. Se a pessoa já forneceu uma informação, NÃO peça de novo
 5. Use emojis com moderação (✈️ 🏝️ 🗺️)
 6. Mantenha as respostas curtas (máximo 3-4 linhas)
-7. Quando tiver dados suficientes (destino + datas + viajantes), avise que um consultor humano dará continuidade com uma cotação personalizada
+7. Quando tiver dados suficientes (destino + datas + viajantes), avise que um consultor humano dará continuidade com uma cotação personalizada — **e nesse caso defina escalate_to_human=true** (qualquer promessa de retorno humano OBRIGA escalate_to_human=true; nunca prometa contato humano sem escalar)
 8. **HANDOFF (escalate_to_human=true)**: defina como true SEMPRE que detectar que o contato precisa de atendimento humano AGORA — mesmo que ainda não tenha coletado todos os dados. Sinais claros:
    - Pedido explícito ("quero falar com atendente", "consultor humano", "alguém pode me ajudar")
    - Reclamações, urgência, problema com viagem em andamento, suporte pós-venda
