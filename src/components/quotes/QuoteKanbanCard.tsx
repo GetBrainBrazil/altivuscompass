@@ -133,6 +133,7 @@ export interface QuoteKanbanCardProps {
     assigned_to?: string | null;
     conclusion_type?: string | null;
     archived_at?: string | null;
+    company?: string | null;
   };
   assigneeName?: string | null;
   isDragging?: boolean;
