@@ -1139,7 +1139,7 @@ async function handleLeadCapture(
     if (!ai.extracted?.escalate_to_human && promisedHumanFollowUp) {
       console.log(`[handoff] safety-net: IA prometeu contato humano sem marcar escalate_to_human. Forçando handoff.`)
     }
-    const reason = (ai.extracted?.escalation_reason || 'sinal de handoff detectado pela IA').toString().slice(0, 200)
+    const reason = (ai.extracted?.escalation_reason || (promisedHumanFollowUp ? 'IA prometeu retorno humano ao cliente' : 'sinal de handoff detectado pela IA')).toString().slice(0, 200)
     try {
       // 1) Garantir que o contato esteja como 'lead' (ou superior). Trigger anti-regressão protege 'cliente'.
       const { data: contactRow } = await supabase
