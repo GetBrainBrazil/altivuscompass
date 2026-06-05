@@ -182,7 +182,7 @@ export default function Vault() {
       };
       if (!payload.title) throw new Error("Título é obrigatório");
 
-      let itemId = editingItem?.id ?? null;
+      let itemId = editingItem?.id ?? crypto.randomUUID();
       const ownerControlsAccess = !editingItem || editingItem.created_by === currentUserId;
 
       if (editingItem) {
@@ -192,13 +192,10 @@ export default function Vault() {
           .eq("id", editingItem.id);
         if (error) throw error;
       } else {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from("vault_items")
-          .insert({ ...payload, created_by: currentUserId })
-          .select("id")
-          .single();
+          .insert({ id: itemId, ...payload, created_by: currentUserId });
         if (error) throw error;
-        itemId = data.id;
       }
 
       if (ownerControlsAccess && itemId) {
