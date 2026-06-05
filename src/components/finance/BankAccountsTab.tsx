@@ -156,6 +156,7 @@ export default function BankAccountsTab() {
                 <th className="p-4 text-left">
                   <SortHeader label="Banco" active={sortKey === "bank_name"} direction={sortKey === "bank_name" ? sortDir : null} onClick={() => toggleSort("bank_name")} />
                 </th>
+                <th className="p-4 text-left font-medium text-xs uppercase tracking-wider text-muted-foreground">Empresa</th>
                 <th className="p-4 text-left">
                   <SortHeader label="Tipo" active={sortKey === "account_type"} direction={sortKey === "account_type" ? sortDir : null} onClick={() => toggleSort("account_type")} />
                 </th>
@@ -175,6 +176,7 @@ export default function BankAccountsTab() {
               {sorted.map((a) => (
                 <tr key={a.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEdit(a)}>
                   <td className="p-4 font-body font-medium text-foreground">{a.bank_name}</td>
+                  <td className="p-4"><CompanyBadge company={a.company ?? DEFAULT_COMPANY} alwaysShow /></td>
                   <td className="p-4 font-body text-muted-foreground">{accountTypeLabels[a.account_type ?? "checking"] ?? a.account_type}</td>
                   <td className="p-4 font-body text-muted-foreground">{a.agency || "—"}</td>
                   <td className="p-4 font-body text-muted-foreground">{a.account_number || "—"}</td>
