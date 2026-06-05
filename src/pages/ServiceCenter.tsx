@@ -1252,6 +1252,8 @@ export default function ServiceCenter() {
         mediaMime: m.media_mime ?? undefined,
         mediaCaption: m.media_caption ?? undefined,
         isInternal: !!m.is_internal,
+        senderName: m.sender_name ?? undefined,
+        senderPhone: m.sender_phone ?? undefined,
       }));
       // Se não há nenhuma mensagem carregada, cria uma "fake" só para preview
       const fallbackMsg: Message = {
@@ -1260,15 +1262,17 @@ export default function ServiceCenter() {
         content: c.last_message_text ?? "",
         timestamp: c.last_message_at ?? c.updated_at ?? c.created_at,
       };
+      const isGroup = !!c.is_group;
       const meta = c.contact_id ? contactMetaById.get(c.contact_id) : null;
-      // Fonte da verdade: tabela contacts. wa_conversations.contact_name é apenas espelho.
-      // Filtra nomes "lixo" (vazios, nome da própria agência, telefones, "Sem nome")
-      // → nesse caso o card mostra apenas o telefone formatado, até o cliente se identificar.
-      const rawName = (meta?.full_name && String(meta.full_name).trim()) || (c.contact_name && String(c.contact_name).trim()) || "";
+      const rawName = isGroup
+        ? (c.group_subject || c.contact_name || "Grupo")
+        : ((meta?.full_name && String(meta.full_name).trim()) || (c.contact_name && String(c.contact_name).trim()) || "");
       const isAgencyName = /altivus/i.test(rawName);
       const looksLikePhone = /^\+?\d[\d\s\-()]{4,}$/.test(rawName);
-      const isPlaceholderName = !rawName || rawName.toLowerCase() === "sem nome" || isAgencyName || looksLikePhone;
-      const canonicalName = isPlaceholderName ? (c.phone ? formatPhoneDisplay(c.phone) : "Sem nome") : rawName;
+      const isPlaceholderName = !isGroup && (!rawName || rawName.toLowerCase() === "sem nome" || isAgencyName || looksLikePhone);
+      const canonicalName = isGroup
+        ? rawName
+        : (isPlaceholderName ? (c.phone ? formatPhoneDisplay(c.phone) : "Sem nome") : rawName);
       const canonicalLevel: ContactLevel =
         (meta?.level as ContactLevel) ||
         (c.client_id ? "cliente" : c.lead_id ? "lead" : "prospect");
@@ -1288,8 +1292,8 @@ export default function ServiceCenter() {
           clientName: canonicalName,
         },
         level: canonicalLevel,
-        // "Novo" = primeiro contato (criado < 24h) E ainda não foi promovido a Lead/Cliente
         isNew:
+          !isGroup &&
           !canonicalClientId &&
           canonicalLevel === "prospect" &&
           !!c.created_at &&
@@ -1300,6 +1304,9 @@ export default function ServiceCenter() {
         lastContactAt: meta?.last_contact_at ?? c.last_message_at ?? undefined,
         isReturning: !!meta?.is_returning,
         unreadCount: Number(c.unread_count ?? 0),
+        isGroup,
+        groupSubject: c.group_subject ?? undefined,
+        groupId: c.group_id ?? undefined,
       };
     });
   }, [convoRows, msgRows, selectedId, contactMetaById]);
