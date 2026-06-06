@@ -349,9 +349,40 @@ export default function Clients() {
   const { data: allPassengers = [] } = useQuery({
     queryKey: ["all-passengers-for-search"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("passengers").select("id, full_name, client_id, birth_date, nationality, passport_number, relationship_type");
+      const { data, error } = await supabase.from("passengers").select("id, full_name, client_id, birth_date, nationality, passport_number, relationship_type, cpf");
       if (error) throw error;
       return data;
+    },
+  });
+
+  // Fetch client relationships (bidirectional client-as-traveler links)
+  const { data: allRelationships = [] } = useQuery({
+    queryKey: ["all-client-relationships"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("client_relationships")
+        .select("id, client_id_a, client_id_b, relationship_type, relationship_label");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const relatedClientIds = useMemo(() => {
+    const s = new Set<string>();
+    for (const r of allRelationships as any[]) { s.add(r.client_id_a); s.add(r.client_id_b); }
+    return Array.from(s);
+  }, [allRelationships]);
+
+  const { data: relatedPassports = [] } = useQuery({
+    queryKey: ["all-related-passports", relatedClientIds.length],
+    enabled: relatedClientIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("passports")
+        .select("client_id, passport_number, expiry_date")
+        .in("client_id", relatedClientIds);
+      if (error) throw error;
+      return data ?? [];
     },
   });
 
@@ -376,6 +407,61 @@ export default function Clients() {
     }
     return map;
   }, [allPassengers]);
+
+  // client_id -> linked clients as travelers (both directions)
+  const linkedTravelersByClient = useMemo(() => {
+    const map: Record<string, any[]> = {};
+    const clientsById = new Map<string, any>();
+    for (const c of (clients as any[])) clientsById.set(c.id, c);
+    const passportsByClient = new Map<string, any[]>();
+    for (const p of (relatedPassports as any[])) {
+      const arr = passportsByClient.get(p.client_id) ?? [];
+      arr.push(p);
+      passportsByClient.set(p.client_id, arr);
+    }
+    const pickPassport = (cid: string) => {
+      const arr = passportsByClient.get(cid) ?? [];
+      const valid = arr.filter((p) => !p.expiry_date || new Date(p.expiry_date) >= new Date());
+      return (valid[0] ?? arr[0])?.passport_number ?? null;
+    };
+    for (const r of (allRelationships as any[])) {
+      const push = (ownerId: string, otherId: string) => {
+        const other = clientsById.get(otherId);
+        if (!other) return;
+        if (!map[ownerId]) map[ownerId] = [];
+        map[ownerId].push({
+          _kind: "client",
+          id: other.id,
+          full_name: other.full_name,
+          relationship_type: r.relationship_type,
+          relationship_label: r.relationship_label,
+          cpf: other.cpf_cnpj ?? null,
+          birth_date: other.birth_date ?? null,
+          nationality: other.nationality ?? null,
+          passport_number: pickPassport(other.id),
+          _client: other,
+        });
+      };
+      push(r.client_id_a, r.client_id_b);
+      push(r.client_id_b, r.client_id_a);
+    }
+    return map;
+  }, [allRelationships, relatedPassports, clients]);
+
+  // Unified travelers per client (passengers + linked clients)
+  const travelersByClient = useMemo(() => {
+    const map: Record<string, any[]> = {};
+    const owners = new Set<string>([
+      ...Object.keys(passengersByClient),
+      ...Object.keys(linkedTravelersByClient),
+    ]);
+    for (const id of owners) {
+      const passengers = (passengersByClient[id] ?? []).map((p: any) => ({ _kind: "passenger", ...p }));
+      const linked = linkedTravelersByClient[id] ?? [];
+      map[id] = [...linked, ...passengers];
+    }
+    return map;
+  }, [passengersByClient, linkedTravelersByClient]);
 
   const toggleExpand = (clientId: string) => {
     setExpandedClients(prev => {
