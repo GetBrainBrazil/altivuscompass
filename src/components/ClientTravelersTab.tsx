@@ -638,9 +638,18 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
             <p className="text-xs text-muted-foreground font-body">Passageiros vinculados a este cliente e clientes com relacionamento (cônjuge, filho, etc.)</p>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => { setCopyDialog(true); setCopyClientSearch(""); setSelectedCopyClient(null); setCopyPassengerIds(new Set()); }}>
-              <Copy className="h-3 w-3 mr-1" />Copiar de outro cliente
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => { setCopyDialog(true); setCopyClientSearch(""); setCopyPassengerIds(new Set()); }}>
+                    <Copy className="h-3 w-3 mr-1" />Copiar de outro cliente
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  Lista apenas passageiros que ainda não foram cadastrados como clientes próprios. Cada passageiro aparece com o cliente de origem ao lado.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => { setLinkDialog(true); setLinkSearch(""); setSelectedLinkClient(null); setLinkRelType("other"); }}>
               <Link2 className="h-3 w-3 mr-1" />Vincular Cliente
             </Button>
