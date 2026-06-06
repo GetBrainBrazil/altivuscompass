@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, ExternalLink, UserPlus, Link2, ArrowUp, ArrowDown, ArrowUpDown, Copy, Check } from "lucide-react";
 import { isValidCPF, cleanDigits } from "@/lib/validators";
@@ -125,7 +126,6 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
   // Copy passengers state
   const [copyDialog, setCopyDialog] = useState(false);
   const [copyClientSearch, setCopyClientSearch] = useState("");
-  const [selectedCopyClient, setSelectedCopyClient] = useState<string | null>(null);
   const [copyPassengerIds, setCopyPassengerIds] = useState<Set<string>>(new Set());
 
   // Fetch passengers
@@ -213,23 +213,49 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
   const { data: allClients = [] } = useQuery({
     queryKey: ["all-clients-for-link"],
     queryFn: async () => {
-      const { data } = await supabase.from("clients").select("id, full_name, city, state").order("full_name");
+      const { data } = await supabase.from("clients").select("id, full_name, city, state, cpf_cnpj, birth_date").order("full_name");
       return data ?? [];
     },
     enabled: linkDialog || copyDialog,
   });
 
-  // Fetch passengers of selected copy client
-  const { data: copyClientPassengers = [] } = useQuery({
-    queryKey: ["copy-client-passengers", selectedCopyClient],
+  // Fetch ALL passengers across clients (used by copy dialog).
+  // We filter out passengers that already correspond to a client (by CPF or by name+birth_date).
+  const { data: allPassengersRaw = [] } = useQuery({
+    queryKey: ["all-passengers-cross-client"],
     queryFn: async () => {
-      if (!selectedCopyClient) return [];
-      const { data, error } = await supabase.from("passengers").select("*").eq("client_id", selectedCopyClient).order("full_name");
+      const { data, error } = await supabase
+        .from("passengers")
+        .select("id, full_name, cpf, birth_date, nationality, passport_number, passport_expiry, notes, client_id, client:clients!passengers_client_id_fkey(id, full_name)")
+        .order("full_name");
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
-    enabled: !!selectedCopyClient && copyDialog,
+    enabled: copyDialog,
   });
+
+  const allPassengersNotClients = useMemo(() => {
+    const clientCpfs = new Set(
+      (allClients as any[])
+        .map((c) => cleanDigits(c.cpf_cnpj))
+        .filter((v) => v.length === 11),
+    );
+    const clientNameBirth = new Set(
+      (allClients as any[])
+        .filter((c) => c.birth_date && c.full_name)
+        .map((c) => `${String(c.full_name).trim().toLowerCase()}|${c.birth_date}`),
+    );
+    return (allPassengersRaw as any[]).filter((p) => {
+      if (clientId && p.client_id === clientId) return false; // não copiar do próprio
+      const cpf = cleanDigits(p.cpf);
+      if (cpf.length === 11 && clientCpfs.has(cpf)) return false;
+      if (p.full_name && p.birth_date) {
+        const key = `${String(p.full_name).trim().toLowerCase()}|${p.birth_date}`;
+        if (clientNameBirth.has(key)) return false;
+      }
+      return true;
+    });
+  }, [allPassengersRaw, allClients, clientId]);
 
   const filteredLinkClients = allClients.filter((c: any) => {
     if (c.id === clientId) return false;
@@ -238,11 +264,15 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     return c.full_name.toLowerCase().includes(linkSearch.toLowerCase());
   });
 
-  const filteredCopyClients = allClients.filter((c: any) => {
-    if (c.id === clientId) return false;
-    if (!copyClientSearch) return true;
-    return c.full_name.toLowerCase().includes(copyClientSearch.toLowerCase());
-  });
+  const filteredCopyPassengers = useMemo(() => {
+    const q = copyClientSearch.trim().toLowerCase();
+    if (!q) return allPassengersNotClients;
+    return allPassengersNotClients.filter((p: any) => {
+      const pname = String(p.full_name || "").toLowerCase();
+      const cname = String(p.client?.full_name || "").toLowerCase();
+      return pname.includes(q) || cname.includes(q);
+    });
+  }, [allPassengersNotClients, copyClientSearch]);
 
   // Save passenger mutation
   const savePassengerMutation = useMutation({
