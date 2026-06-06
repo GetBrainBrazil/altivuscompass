@@ -39,6 +39,33 @@ export function isValidCPF(cpf: string | null | undefined): boolean {
   return dv2 === parseInt(digits[10], 10);
 }
 
+/** Full CNPJ validation including check digits per Receita Federal algorithm. */
+export function isValidCNPJ(cnpj: string | null | undefined): boolean {
+  const digits = cleanDigits(cnpj);
+  if (digits.length !== 14) return false;
+  if (/^(\d)\1{13}$/.test(digits)) return false;
+  const calcDV = (base: string, weights: number[]): number => {
+    let sum = 0;
+    for (let i = 0; i < base.length; i++) sum += parseInt(base[i], 10) * weights[i];
+    const mod = sum % 11;
+    return mod < 2 ? 0 : 11 - mod;
+  };
+  const w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  const w2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  const dv1 = calcDV(digits.slice(0, 12), w1);
+  if (dv1 !== parseInt(digits[12], 10)) return false;
+  const dv2 = calcDV(digits.slice(0, 13), w2);
+  return dv2 === parseInt(digits[13], 10);
+}
+
+/** Accepts either a valid CPF (11 digits) or a valid CNPJ (14 digits). */
+export function isValidCPFOrCNPJ(value: string | null | undefined): boolean {
+  const len = cleanDigits(value).length;
+  if (len === 11) return isValidCPF(value);
+  if (len === 14) return isValidCNPJ(value);
+  return false;
+}
+
 /** Brazilian-friendly range: 10 (landline w/ DDD) up to 13 digits (with country code). */
 export function isValidPhoneLength(phone: string | null | undefined): boolean {
   const len = cleanDigits(phone).length;

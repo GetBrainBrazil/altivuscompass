@@ -29,6 +29,7 @@ import { ListSkeleton, TableSkeleton } from "@/components/ui/loading-skeletons";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccessFeature } from "@/lib/permissions";
 import { logAuditEvent } from "@/lib/audit";
+import { isValidCPFOrCNPJ, cleanDigits } from "@/lib/validators";
 import PrivateImage from "@/components/PrivateImage";
 
 type SortDir = "asc" | "desc";
@@ -1382,7 +1383,27 @@ export default function Clients() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
                     <Label className="font-body text-xs">CPF / CNPJ</Label>
-                    <Input value={form.cpf_cnpj} onChange={(e) => upd("cpf_cnpj", e.target.value)} />
+                    {(() => {
+                      const raw = form.cpf_cnpj || "";
+                      const digits = cleanDigits(raw);
+                      const isInvalid = digits.length > 0 && !isValidCPFOrCNPJ(raw);
+                      const incomplete = digits.length > 0 && digits.length !== 11 && digits.length !== 14;
+                      return (
+                        <>
+                          <Input
+                            value={raw}
+                            onChange={(e) => upd("cpf_cnpj", e.target.value)}
+                            className={isInvalid ? "border-destructive focus-visible:ring-destructive" : ""}
+                            aria-invalid={isInvalid}
+                          />
+                          {isInvalid && (
+                            <p className="text-[11px] text-destructive font-body">
+                              {incomplete ? "CPF/CNPJ incompleto" : "CPF/CNPJ inválido"}
+                            </p>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                   <div className="space-y-1.5">
                     <Label className="font-body text-xs">RG</Label>
@@ -1873,14 +1894,23 @@ export default function Clients() {
               </Button>
             ) : <div />}
             <div className="flex gap-2">
-              {editingId && (
-                <Button type="button" disabled={saveMutation.isPending} className="font-body" variant="secondary" onClick={() => { shouldGoBackRef.current = true; saveMutation.mutate(); }}>
-                  {saveMutation.isPending ? "Salvando..." : "Salvar e Voltar"}
-                </Button>
-              )}
-              <Button type="button" disabled={saveMutation.isPending} className="font-body" onClick={() => { shouldGoBackRef.current = !editingId; saveMutation.mutate(); }}>
-                {saveMutation.isPending ? "Salvando..." : (editingId ? "Salvar" : "Criar Cliente")}
-              </Button>
+              {(() => {
+                const cpfFilled = !!cleanDigits(form.cpf_cnpj).length;
+                const cpfInvalid = cpfFilled && !isValidCPFOrCNPJ(form.cpf_cnpj);
+                const disabled = saveMutation.isPending || cpfInvalid;
+                return (
+                  <>
+                    {editingId && (
+                      <Button type="button" disabled={disabled} className="font-body" variant="secondary" onClick={() => { shouldGoBackRef.current = true; saveMutation.mutate(); }}>
+                        {saveMutation.isPending ? "Salvando..." : "Salvar e Voltar"}
+                      </Button>
+                    )}
+                    <Button type="button" disabled={disabled} className="font-body" onClick={() => { shouldGoBackRef.current = !editingId; saveMutation.mutate(); }}>
+                      {saveMutation.isPending ? "Salvando..." : (editingId ? "Salvar" : "Criar Cliente")}
+                    </Button>
+                  </>
+                );
+              })()}
             </div>
           </div>
 
