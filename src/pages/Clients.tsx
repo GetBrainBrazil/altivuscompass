@@ -2115,7 +2115,9 @@ export default function Clients() {
               <tr className="border-b border-border/50">
                 <th className="p-2 w-10"></th>
                 <SortableHeader label="Cliente" sortKey="full_name" />
-                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Nível</th>
+                {levelFilter === "all" && (
+                  <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Nível</th>
+                )}
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">CPF</th>
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Telefone</th>
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">E-mail</th>
@@ -2171,9 +2173,11 @@ export default function Clients() {
                           {client.is_active === false && <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-body">Inativo</span>}
                         </div>
                       </td>
-                      <td className="p-4">
-                        <ContactLevelBadge level={client._level as ContactLevel} size="xs" />
-                      </td>
+                      {levelFilter === "all" && (
+                        <td className="p-4">
+                          <ContactLevelBadge level={client._level as ContactLevel} size="xs" />
+                        </td>
+                      )}
                       <td className="p-4">
                         <p className="text-sm font-body text-foreground whitespace-nowrap">{client.cpf_cnpj || "—"}</p>
                       </td>
