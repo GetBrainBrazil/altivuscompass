@@ -245,7 +245,7 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
                   ) : (
                     <button
                       type="button"
-                      onClick={() => handleDeleteClick(a.id, "", a.file_name, true, Number(a.id.replace("pending-", "")))}
+                      onClick={() => handleDeleteClick(a, Number(a.id.replace("pending-", "")))}
                       className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-destructive"
                       title="Remover"
                     >
