@@ -5,6 +5,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Paperclip, Upload, Download, Trash2, FileText, FileImage, File as FileIcon, Loader2 } from "lucide-react";
+import { ImageViewerDialog, ViewerAttachment } from "@/components/ImageViewerDialog";
+
+function isImage(type?: string | null, name?: string) {
+  if (type?.startsWith("image/")) return true;
+  if (name && /\.(jpe?g|png|gif|webp|bmp|avif)$/i.test(name)) return true;
+  return false;
+}
+
 
 interface Props {
   taskId: string | null;
