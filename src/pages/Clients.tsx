@@ -1023,7 +1023,7 @@ export default function Clients() {
   // ========== FORM VIEW ==========
   if (view === "form") {
     return (
-      <div className="max-w-5xl mx-auto space-y-4">
+      <div className="max-w-[1600px] mx-auto space-y-4">
         {needsComplementaryData && contactLevel === "cliente" && (
           <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 font-body">
             <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
