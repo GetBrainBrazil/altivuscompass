@@ -1767,6 +1767,41 @@ export default function ServiceCenter() {
           <div className="flex items-center justify-between gap-2">
             <h1 className="text-lg font-semibold">Atendimento</h1>
             <div className="flex items-center gap-1.5">
+              <Popover open={nicknameOpen} onOpenChange={setNicknameOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
+                    title="Editar apelido exibido nas mensagens"
+                  >
+                    <Pencil className="h-3 w-3" />
+                    {myAgentLabel}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-72 p-3 space-y-2">
+                  <p className="text-xs font-medium">Seu apelido</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Exibido nas mensagens que você envia. Se vazio, usamos seu nome completo.
+                  </p>
+                  <Input
+                    value={nicknameDraft}
+                    onChange={(e) => setNicknameDraft(e.target.value)}
+                    placeholder={myProfile?.full_name ?? "Seu apelido"}
+                    maxLength={40}
+                    onKeyDown={(e) => { if (e.key === "Enter") saveNickname(); }}
+                    autoFocus
+                  />
+                  <div className="flex justify-end gap-2 pt-1">
+                    <Button variant="ghost" size="sm" onClick={() => setNicknameOpen(false)} disabled={savingNickname}>
+                      Cancelar
+                    </Button>
+                    <Button size="sm" onClick={saveNickname} disabled={savingNickname}>
+                      {savingNickname ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Salvar"}
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
               <Button
                 variant="outline"
                 size="sm"
