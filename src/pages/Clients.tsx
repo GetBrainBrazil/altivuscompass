@@ -26,6 +26,7 @@ import { COUNTRY_CODES, applyPhoneMask } from "@/lib/phone-masks";
 import { ImageEditor } from "@/components/ImageEditor";
 import { ClientTravelersTab } from "@/components/ClientTravelersTab";
 import ClientConversationsTab from "@/components/ClientConversationsTab";
+import { ClientInteractionPanel } from "@/components/clients/ClientInteractionPanel";
 import { ListSkeleton, TableSkeleton } from "@/components/ui/loading-skeletons";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccessFeature } from "@/lib/permissions";
