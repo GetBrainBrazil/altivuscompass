@@ -930,48 +930,8 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         </DialogContent>
       </Dialog>
 
-      {/* Link client dialog */}
-      <Dialog open={linkDialog} onOpenChange={(o) => { if (!o) setLinkDialog(false); }}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="font-display">Vincular Cliente Existente</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-3">
-            <div>
-              <Label className="font-body text-xs">Buscar cliente</Label>
-              <Input value={linkSearch} onChange={(e) => setLinkSearch(e.target.value)} placeholder="Nome do cliente..." className="h-9" />
-            </div>
-            <div className="max-h-48 overflow-y-auto border border-border/50 rounded-lg">
-              {filteredLinkClients.length === 0 ? (
-                <p className="p-3 text-xs text-muted-foreground font-body">Nenhum cliente encontrado.</p>
-              ) : (
-                filteredLinkClients.slice(0, 20).map((c: any) => (
-                  <button key={c.id} type="button"
-                    className={`w-full text-left px-3 py-2 text-sm font-body hover:bg-muted/50 transition-colors ${selectedLinkClient === c.id ? "bg-primary/10 text-primary" : "text-foreground"}`}
-                    onClick={() => setSelectedLinkClient(c.id)}>
-                    <span className="font-medium">{c.full_name}</span>
-                    {c.city && <span className="text-xs text-muted-foreground ml-2">{c.city}{c.state ? `, ${c.state}` : ""}</span>}
-                  </button>
-                ))
-              )}
-            </div>
-            <div>
-              <Label className="font-body text-xs">Tipo de vínculo</Label>
-              <Select value={linkRelType} onValueChange={setLinkRelType}>
-                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {Object.entries(RELATIONSHIP_TYPES).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>{v}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button onClick={() => linkClientMutation.mutate()} disabled={!selectedLinkClient || linkClientMutation.isPending} className="font-body">
-              {linkClientMutation.isPending ? "Vinculando..." : "Vincular"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+
+
 
       {/* Promote dialog */}
       <Dialog open={!!promotePassenger} onOpenChange={(o) => { if (!o) setPromotePassenger(null); }}>
