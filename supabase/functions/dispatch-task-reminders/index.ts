@@ -106,8 +106,37 @@ Deno.serve(async (req) => {
     }
 
     if (channels.includes('email')) {
-      // Email infrastructure not yet configured for this project.
-      errors.push('email: infraestrutura de email não configurada')
+      const recipientEmail = assignee?.email
+      if (!recipientEmail) {
+        errors.push('email: responsável sem e-mail cadastrado')
+      } else {
+        try {
+          const remindAt = new Date(r.remind_at).toLocaleString('pt-BR', {
+            timeZone: 'America/Sao_Paulo',
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit',
+          })
+          const taskUrl = `https://compass.altivusturismo.com.br/tasks/${r.task_id}`
+          const { error: emailErr } = await supabase.functions.invoke('send-transactional-email', {
+            body: {
+              templateName: 'task-reminder',
+              recipientEmail,
+              idempotencyKey: `task-reminder-${r.id}`,
+              templateData: {
+                taskTitle: task?.title ?? 'Tarefa',
+                message: r.message ?? null,
+                remindAt,
+                taskUrl,
+                recipientName: assignee?.full_name ?? null,
+              },
+            },
+          })
+          if (emailErr) errors.push(`email: ${emailErr.message ?? emailErr}`)
+          else delivered.push('email')
+        } catch (e: any) {
+          errors.push(`email: ${e?.message ?? 'falha ao enviar'}`)
+        }
+      }
     }
 
     const allOk = channels.every((c) => delivered.includes(c))
