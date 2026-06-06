@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, ExternalLink, UserPlus, Link2, ArrowUp, ArrowDown, ArrowUpDown, Copy, Check } from "lucide-react";
+import { isValidCPF, cleanDigits } from "@/lib/validators";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
@@ -734,11 +735,16 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                 <Input
                   value={passengerForm.cpf}
                   onChange={(e) => setPassengerForm({ ...passengerForm, cpf: maskCPF(e.target.value) })}
-                  className="h-9"
+                  className={`h-9 ${passengerForm.cpf && !isValidCPF(passengerForm.cpf) ? "border-destructive focus-visible:ring-destructive" : ""}`}
                   placeholder="000.000.000-00"
                   inputMode="numeric"
                   maxLength={14}
                 />
+                {passengerForm.cpf && !isValidCPF(passengerForm.cpf) && (
+                  <p className="text-[11px] text-destructive mt-1 font-body">
+                    {cleanDigits(passengerForm.cpf).length < 11 ? "CPF incompleto" : "CPF inválido"}
+                  </p>
+                )}
               </div>
               <div>
                 <Label className="font-body text-xs">Nascimento</Label>
@@ -781,7 +787,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                 </div>
               </div>
             )}
-            <Button onClick={() => savePassengerMutation.mutate()} disabled={!passengerForm.full_name || savePassengerMutation.isPending} className="font-body">
+            <Button onClick={() => savePassengerMutation.mutate()} disabled={!passengerForm.full_name || (!!passengerForm.cpf && !isValidCPF(passengerForm.cpf)) || savePassengerMutation.isPending} className="font-body">
               {savePassengerMutation.isPending ? "Salvando..." : "Salvar"}
             </Button>
           </div>
