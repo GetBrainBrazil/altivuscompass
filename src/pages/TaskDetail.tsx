@@ -117,6 +117,23 @@ export default function TaskDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task, isNew, user?.id]);
 
+  const assigneePhone = (profiles as any[]).find((p) => p.user_id === form.assigned_to)?.phone ?? null;
+  const assigneeHasWhatsapp = isValidPhoneLength(assigneePhone);
+  const assigneeName = (profiles as any[]).find((p) => p.user_id === form.assigned_to)?.full_name ?? "Responsável";
+
+  // Avisa quando o responsável muda para alguém sem WhatsApp válido
+  const prevAssignee = useRef<string | null>(null);
+  useEffect(() => {
+    const current = form.assigned_to || null;
+    if (prevAssignee.current && current && prevAssignee.current !== current && !assigneeHasWhatsapp) {
+      toast({
+        title: "WhatsApp indisponível",
+        description: `${assigneeName} não possui um telefone válido para WhatsApp. Lembretes por WhatsApp serão desativados.`,
+      });
+    }
+    prevAssignee.current = current;
+  }, [form.assigned_to, assigneeHasWhatsapp, assigneeName, toast]);
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       const payload: any = {
