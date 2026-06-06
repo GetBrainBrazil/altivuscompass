@@ -1194,7 +1194,100 @@ async function handleLeadCapture(
     console.error('[collected_data persist] error:', e)
   }
 
-  // ===== HANDOFF: a IA detectou que precisa de atendimento humano =====
+  // ===== DENY_IDENTITY: o usuário disse que não é o cliente associado ao número =====
+  // Política: NUNCA alteramos client_phones automaticamente. Apenas:
+  //  1) Desvinculamos a conversa atual do cliente
+  //  2) Criamos um novo Lead (prospect) para esse número
+  //  3) Notificamos admins/managers para revisarem o telefone na ficha do cliente
+  if (ai.extracted?.deny_identity === true && matchedContact?.client_id) {
+    try {
+      const clientId = matchedContact.client_id
+      const previousName = matchedContact.full_name || 'o cliente'
+      const nowIso = new Date().toISOString()
+
+      // 1) Cria novo Lead/Prospect para o número (sem vínculo com o cliente)
+      const cleanName = formatPhonePlaceholder(phone)
+      const { data: newLead } = await supabase
+        .from('leads')
+        .insert({
+          full_name: cleanName,
+          phone,
+          source: 'whatsapp_ai',
+          status: 'new',
+          ai_collected_data: { whatsapp_sender_name: senderName || null, deny_identity_from_client_id: clientId },
+        })
+        .select('id, full_name')
+        .single()
+
+      const newLeadId = newLead?.id ?? null
+
+      // 2) Encontra o novo contact criado pelo trigger e desvincula a conversa do cliente
+      let newContactId: string | null = null
+      if (newLeadId) {
+        const { data: newContact } = await supabase
+          .from('contacts')
+          .select('id')
+          .eq('lead_id', newLeadId)
+          .maybeSingle()
+        newContactId = newContact?.id ?? null
+      }
+
+      const { data: convoRow } = await supabase
+        .from('wa_conversations')
+        .update({
+          client_id: null,
+          contact_id: newContactId,
+          lead_id: newLeadId,
+          contact_name: cleanName,
+          status: 'ai',
+          updated_at: nowIso,
+        })
+        .eq('phone', phone)
+        .select('id')
+        .maybeSingle()
+
+      // 3) Notifica admins/managers (sem botão de atalho — operador edita na ficha)
+      const { data: staff } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('role', ['admin', 'manager'])
+      const recipients = Array.from(new Set((staff || []).map((s: any) => s.user_id)))
+      if (recipients.length > 0) {
+        const convoLink = convoRow?.id ? `/whatsapp?conversation=${convoRow.id}` : '/whatsapp'
+        const notifRows = recipients.map((uid) => ({
+          user_id: uid,
+          type: 'phone_identity_change',
+          title: 'Telefone de cliente pode estar desatualizado',
+          message: `${previousName} aparentemente não usa mais o número ${formatPhonePlaceholder(phone)}, conforme conversa no WhatsApp. Revise os telefones na ficha do cliente.`,
+          link: `/clients?id=${clientId}`,
+          metadata: {
+            client_id: clientId,
+            phone,
+            conversation_id: convoRow?.id || null,
+            conversation_link: convoLink,
+            new_lead_id: newLeadId,
+          },
+        }))
+        await supabase.from('notifications').insert(notifRows)
+      }
+
+      console.log(`[deny_identity] número ${phone} desvinculado do cliente ${clientId}; novo lead ${newLeadId}`)
+
+      // Reseta a sessão para um novo lead capture limpo
+      sessionState.messages = [...(sessionState.messages || []), { role: 'assistant', content: ai.reply }]
+      await supabase.from('whatsapp_sessions').update({
+        state: { messages: [], sender_name: senderName },
+        lead_id: newLeadId,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      }).eq('id', leadSession!.id)
+
+      await sendZapiText(zapiInstanceId, zapiToken, zapiSecurityToken, phone, ai.reply)
+      return { status: 'identity_denied', lead_id: newLeadId }
+    } catch (e) {
+      console.error('[deny_identity] erro:', e)
+    }
+  }
+
   // Safety net: se a IA prometeu que um humano entrará em contato (sem marcar
   // escalate_to_human), forçamos o handoff para que admins/managers sejam
   // notificados — caso contrário o cliente fica esperando ninguém.
