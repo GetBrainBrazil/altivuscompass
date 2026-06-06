@@ -230,23 +230,31 @@ export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
                   const meta = CHANNEL_META[ch];
                   const Icon = meta.Icon;
                   const checked = draftChannels.includes(ch);
+                  const waDisabled = ch === "whatsapp" && !assigneeHasWhatsapp;
+                  const disabled = ch === "system" || waDisabled;
+                  const title = waDisabled
+                    ? `${assigneeName || "O responsável"} não possui telefone válido para WhatsApp`
+                    : undefined;
                   return (
                     <label
                       key={ch}
+                      title={title}
                       className={cn(
-                        "inline-flex items-center gap-1.5 rounded border border-border px-2 py-1 cursor-pointer text-xs",
+                        "inline-flex items-center gap-1.5 rounded border border-border px-2 py-1 text-xs",
                         checked && "bg-primary/10 border-primary/40",
-                        ch === "system" && "opacity-90 cursor-default"
+                        disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
+                        ch === "system" && "opacity-90"
                       )}
                     >
                       <Checkbox
                         checked={checked}
-                        disabled={ch === "system"}
+                        disabled={disabled}
                         onCheckedChange={() => toggleChannel(ch)}
                         className="h-3.5 w-3.5"
                       />
                       <Icon size={12} /> {meta.label}
                       {ch === "system" && <span className="text-[9px] text-muted-foreground">(padrão)</span>}
+                      {waDisabled && <span className="text-[9px] text-muted-foreground">(sem nº)</span>}
                     </label>
                   );
                 })}
