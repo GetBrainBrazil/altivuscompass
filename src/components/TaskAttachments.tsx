@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -53,7 +53,25 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [viewer, setViewer] = useState<ViewerAttachment | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<{ id: string; path: string; name: string; pending?: boolean; pendingIndex?: number } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; path: string; name: string; type?: string | null; pending?: boolean; pendingIndex?: number; file?: File } | null>(null);
+  const [confirmThumb, setConfirmThumb] = useState<string | null>(null);
+
+  useEffect(() => {
+    let revoke: string | null = null;
+    (async () => {
+      if (!confirmDelete) { setConfirmThumb(null); return; }
+      if (!isImage(confirmDelete.type, confirmDelete.name)) { setConfirmThumb(null); return; }
+      if (confirmDelete.pending && confirmDelete.file) {
+        const url = URL.createObjectURL(confirmDelete.file);
+        revoke = url;
+        setConfirmThumb(url);
+      } else if (confirmDelete.path) {
+        const { data } = await supabase.storage.from("task-attachments").createSignedUrl(confirmDelete.path, 60 * 5);
+        setConfirmThumb(data?.signedUrl ?? null);
+      }
+    })();
+    return () => { if (revoke) URL.revokeObjectURL(revoke); };
+  }, [confirmDelete]);
 
 
 
@@ -119,8 +137,16 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
     window.open(data.signedUrl, "_blank");
   };
 
-  const handleDeleteClick = (id: string, path: string, name: string, pending?: boolean, pendingIndex?: number) => {
-    setConfirmDelete({ id, path, name, pending, pendingIndex });
+  const handleDeleteClick = (a: any, pendingIndex?: number) => {
+    setConfirmDelete({
+      id: a.id,
+      path: a.file_path || "",
+      name: a.file_name,
+      type: a.file_type,
+      pending: !!a._pending,
+      pendingIndex,
+      file: a._file,
+    });
   };
 
   const confirmDeleteAction = async () => {
@@ -212,14 +238,14 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
                       <button type="button" onClick={() => handleDownload(a.file_path, a.file_name)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground" title="Baixar">
                         <Download size={13} />
                       </button>
-                      <button type="button" onClick={() => handleDeleteClick(a.id, a.file_path, a.file_name)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-destructive" title="Remover">
+                      <button type="button" onClick={() => handleDeleteClick(a)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-destructive" title="Remover">
                         <Trash2 size={13} />
                       </button>
                     </>
                   ) : (
                     <button
                       type="button"
-                      onClick={() => handleDeleteClick(a.id, "", a.file_name, true, Number(a.id.replace("pending-", "")))}
+                      onClick={() => handleDeleteClick(a, Number(a.id.replace("pending-", "")))}
                       className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-destructive"
                       title="Remover"
                     >
@@ -248,8 +274,21 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir anexo?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir <strong>{confirmDelete?.name}</strong>? Esta ação não poderá ser desfeita.
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                {confirmThumb && (
+                  <div className="flex justify-center">
+                    <img
+                      src={confirmThumb}
+                      alt={confirmDelete?.name}
+                      className="max-h-40 max-w-full rounded border border-border object-contain bg-muted/30"
+                    />
+                  </div>
+                )}
+                <p>
+                  Tem certeza que deseja excluir <strong>{confirmDelete?.name}</strong>? Esta ação não poderá ser desfeita.
+                </p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
