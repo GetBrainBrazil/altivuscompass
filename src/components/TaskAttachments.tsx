@@ -274,8 +274,21 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir anexo?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir <strong>{confirmDelete?.name}</strong>? Esta ação não poderá ser desfeita.
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                {confirmThumb && (
+                  <div className="flex justify-center">
+                    <img
+                      src={confirmThumb}
+                      alt={confirmDelete?.name}
+                      className="max-h-40 max-w-full rounded border border-border object-contain bg-muted/30"
+                    />
+                  </div>
+                )}
+                <p>
+                  Tem certeza que deseja excluir <strong>{confirmDelete?.name}</strong>? Esta ação não poderá ser desfeita.
+                </p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
