@@ -5,6 +5,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Paperclip, Upload, Download, Trash2, FileText, FileImage, File as FileIcon, Loader2 } from "lucide-react";
+import { ImageViewerDialog, ViewerAttachment } from "@/components/ImageViewerDialog";
+import { cn } from "@/lib/utils";
+
+function isImage(type?: string | null, name?: string) {
+  if (type?.startsWith("image/")) return true;
+  if (name && /\.(jpe?g|png|gif|webp|bmp|avif)$/i.test(name)) return true;
+  return false;
+}
+
 
 interface Props {
   taskId: string | null;
@@ -33,6 +42,8 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
   const qc = useQueryClient();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [viewer, setViewer] = useState<ViewerAttachment | null>(null);
+
 
   const { data: attachments = [] } = useQuery({
     queryKey: ["task-attachments", taskId],
@@ -102,9 +113,19 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
     qc.invalidateQueries({ queryKey: ["task-attachments", taskId] });
   };
 
-  const items = taskId ? attachments : pending.map((f, i) => ({
-    id: `pending-${i}`, file_name: f.name, file_size: f.size, file_type: f.type, file_path: "", _pending: true as const,
+  const items: any[] = taskId ? attachments : pending.map((f, i) => ({
+    id: `pending-${i}`, file_name: f.name, file_size: f.size, file_type: f.type, file_path: "", _pending: true as const, _file: f,
   }));
+
+  const openImage = (a: any) => {
+    if (!isImage(a.file_type, a.file_name)) return;
+    if (a._pending) {
+      setViewer({ id: a.id, file_name: a.file_name, file_type: a.file_type, _pending: true, _file: a._file });
+    } else {
+      setViewer({ id: a.id, file_name: a.file_name, file_type: a.file_type, file_path: a.file_path });
+    }
+  };
+
 
   return (
     <div>
@@ -146,11 +167,24 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
           <ul className="space-y-1.5">
             {items.map((a: any) => {
               const Icon = iconFor(a.file_type);
+              const img = isImage(a.file_type, a.file_name);
               return (
                 <li key={a.id} className="flex items-center gap-2 px-2 py-1.5 rounded bg-background border border-border text-sm">
                   <Icon size={14} className="text-muted-foreground shrink-0" />
-                  <span className="flex-1 truncate">{a.file_name}</span>
+                  <button
+                    type="button"
+                    onClick={() => img && openImage(a)}
+                    className={cn(
+                      "flex-1 truncate text-left",
+                      img && "hover:underline cursor-pointer",
+                      !img && "cursor-default",
+                    )}
+                    title={img ? "Visualizar imagem" : a.file_name}
+                  >
+                    {a.file_name}
+                  </button>
                   <span className="text-xs text-muted-foreground shrink-0">{bytes(a.file_size)}</span>
+
                   {!a._pending ? (
                     <>
                       <button type="button" onClick={() => handleDownload(a.file_path, a.file_name)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground" title="Baixar">
@@ -179,6 +213,14 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
       {!taskId && pending.length > 0 && (
         <p className="text-[11px] text-muted-foreground mt-1.5">Os arquivos serão enviados ao salvar a tarefa.</p>
       )}
+      <ImageViewerDialog
+        open={!!viewer}
+        onOpenChange={(v) => !v && setViewer(null)}
+        attachment={viewer}
+        taskId={taskId}
+        pending={pending}
+        onPendingChange={onPendingChange}
+      />
     </div>
   );
 }
