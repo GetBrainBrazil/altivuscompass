@@ -127,6 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       newData: { event: logoutEvent, email: user?.email },
     });
     hasLoggedLoginRef.current = false;
+    try { sessionStorage.clear(); } catch {}
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
