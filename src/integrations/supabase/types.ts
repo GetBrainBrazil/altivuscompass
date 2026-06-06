@@ -496,6 +496,42 @@ export type Database = {
           },
         ]
       }
+      client_interactions: {
+        Row: {
+          attachments: Json
+          contact_id: string
+          content: string
+          created_at: string
+          id: string
+          kind: string
+          updated_at: string
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          attachments?: Json
+          contact_id: string
+          content?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          updated_at?: string
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          attachments?: Json
+          contact_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          updated_at?: string
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       client_passports: {
         Row: {
           client_id: string
