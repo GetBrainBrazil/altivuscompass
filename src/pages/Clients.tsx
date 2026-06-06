@@ -145,7 +145,24 @@ export default function Clients() {
   const [needsComplementaryData, setNeedsComplementaryData] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [activeTab, setActiveTab] = useState("contact");
+  const [resolvedContactId, setResolvedContactId] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Resolve contact_id para o painel de Interações (a partir do client_id editado, se necessário)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (linkContactId) { setResolvedContactId(linkContactId); return; }
+      if (!editingId) { setResolvedContactId(null); return; }
+      const { data } = await supabase
+        .from("contacts")
+        .select("id")
+        .eq("client_id", editingId)
+        .maybeSingle();
+      if (!cancelled) setResolvedContactId((data as any)?.id ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [editingId, linkContactId]);
 
   const hasEditParam =
     !!(searchParams.get("id") ||
