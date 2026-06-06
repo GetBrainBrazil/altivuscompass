@@ -36,7 +36,10 @@ import {
 import { cn } from "@/lib/utils";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
 import { NewMessageDialog } from "@/components/service-center/NewMessageDialog";
-import { Plus, Info, Bot, Check, CheckCheck, Clock, Mic, Square, Trash2, Loader2 } from "lucide-react";
+import { ClientSidePanel } from "@/components/service-center/ClientSidePanel";
+import { MessageLinkDialog } from "@/components/service-center/MessageLinkDialog";
+import { Plus, Info, Bot, Check, CheckCheck, Clock, Mic, Square, Trash2, Loader2, Link2, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -496,6 +499,9 @@ const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = fa
 interface ChatBubbleProps {
   message: Message;
   agentLabel?: string;
+  linkedQuotes?: { id: string; title: string | null; destination: string | null }[];
+  onLinkClick?: () => void;
+  onOpenQuote?: (id: string) => void;
 }
 
 const AGENT_LABEL_RE = /^\*([^\n*]{1,60})\*\n?/;
@@ -506,7 +512,7 @@ const extractAgentLabel = (text?: string | null): { label: string | null; rest: 
   return { label: null, rest: t };
 };
 
-const ChatBubble = ({ message, agentLabel }: ChatBubbleProps) => {
+const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuote }: ChatBubbleProps) => {
   const isLead = message.sender === "lead";
   const isAgent = message.sender === "agent";
   const isAi = message.sender === "ai";
@@ -600,11 +606,44 @@ const ChatBubble = ({ message, agentLabel }: ChatBubbleProps) => {
           <p className="whitespace-pre-wrap break-words">{displayContent}</p>
         )}
       </div>
-      <span className="flex items-center gap-1 text-[10px] text-muted-foreground px-2">
-        {isAi ? "IA · " : isAgent ? "Agente · " : ""}
-        {formatTime(message.timestamp)}
-        {!isLead && message.status && <MessageStatusTicks status={message.status} />}
-      </span>
+      <div className={cn("flex items-center gap-1.5 px-2 flex-wrap", isLead ? "" : "justify-end")}>
+        <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+          {isAi ? "IA · " : isAgent ? "Agente · " : ""}
+          {formatTime(message.timestamp)}
+          {!isLead && message.status && <MessageStatusTicks status={message.status} />}
+        </span>
+        {linkedQuotes && linkedQuotes.length > 0 && linkedQuotes.map((q) => (
+          <button
+            key={q.id}
+            type="button"
+            onClick={() => onOpenQuote?.(q.id)}
+            className="inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 text-[10px] hover:bg-blue-100"
+            title="Abrir cotação vinculada"
+          >
+            <Link2 className="h-2.5 w-2.5" />
+            {q.title || q.destination || "Cotação"}
+          </button>
+        ))}
+        {onLinkClick && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted/60"
+                title="Mais ações"
+              >
+                <MoreVertical className="h-3 w-3" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align={isLead ? "start" : "end"}>
+              <DropdownMenuItem onClick={onLinkClick}>
+                <Link2 className="h-3.5 w-3.5 mr-2" />
+                Vincular a cotação…
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
     </div>
   );
 };
@@ -1070,6 +1109,7 @@ export default function ServiceCenter() {
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [sidePanelTab, setSidePanelTab] = useState<"summary" | "crm">("summary");
   const [newMsgOpen, setNewMsgOpen] = useState(false);
+  const [linkDialogMessages, setLinkDialogMessages] = useState<string[]>([]);
 
   // Apelido/nome do atendente logado (para exibir nas mensagens enviadas)
   const { data: myAgentLabel } = useQuery({
@@ -1572,6 +1612,31 @@ export default function ServiceCenter() {
     [conversations, selectedId],
   );
 
+  // Vínculos de mensagens a cotações (busca em lote por conversa)
+  const messageIds = useMemo(() => (selected?.messages ?? []).map((m) => m.id), [selected]);
+  const { data: messageLinks = [] } = useQuery({
+    queryKey: ["wa-message-links", selectedId, messageIds.length],
+    enabled: !!selectedId && messageIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("wa_message_links" as any)
+        .select("message_id, quote_id, quotes:quote_id (id, title, destination)")
+        .in("message_id", messageIds);
+      return (data ?? []) as any[];
+    },
+  });
+  const linksByMessage = useMemo(() => {
+    const map = new Map<string, { id: string; title: string | null; destination: string | null }[]>();
+    for (const l of messageLinks as any[]) {
+      if (!l.quotes) continue;
+      const arr = map.get(l.message_id) ?? [];
+      arr.push(l.quotes);
+      map.set(l.message_id, arr);
+    }
+    return map;
+  }, [messageLinks]);
+
+
   // Auto-scroll to latest message on new messages or when switching conversations
   useEffect(() => {
     if (selected) {
@@ -1859,7 +1924,13 @@ export default function ServiceCenter() {
                     {m.isInternal ? (
                       <InternalNote message={m} />
                     ) : (
-                      <ChatBubble message={m} agentLabel={myAgentLabel} />
+                      <ChatBubble
+                        message={m}
+                        agentLabel={myAgentLabel}
+                        linkedQuotes={linksByMessage.get(m.id)}
+                        onLinkClick={() => setLinkDialogMessages([m.id])}
+                        onOpenQuote={(qid) => navigate(`/quotes?id=${qid}`)}
+                      />
                     )}
                     {selected.handoffAfterMessageId === m.id && <HandoffDivider />}
                   </div>
@@ -1972,35 +2043,16 @@ export default function ServiceCenter() {
 
       {/* ===== Right column: lead summary + CRM panel ===== */}
       {selected && summaryOpen && (
-        <aside className="w-[340px] shrink-0 border-l hidden lg:flex flex-col bg-white">
-          <Tabs
-            value={sidePanelTab}
-            onValueChange={(v) => setSidePanelTab(v as "summary" | "crm")}
-            className="flex-1 flex flex-col min-h-0"
-          >
-            <div className="px-4 pt-3 pb-0 border-b">
-              <TabsList className="grid grid-cols-2 w-full h-9 bg-muted/60 p-0.5">
-                <TabsTrigger value="summary" className="text-xs gap-1.5">
-                  <Sparkles className="h-3 w-3" />
-                  Resumo IA
-                </TabsTrigger>
-                <TabsTrigger value="crm" className="text-xs gap-1.5">
-                  {selected.category === "post-sale" ? (
-                    <LifeBuoy className="h-3 w-3" />
-                  ) : (
-                    <TrendingUp className="h-3 w-3" />
-                  )}
-                  CRM
-                </TabsTrigger>
-              </TabsList>
-            </div>
-            <TabsContent value="summary" className="flex-1 min-h-0 m-0 data-[state=inactive]:hidden">
-              <LeadSummaryPanel summary={selected.summary} />
-            </TabsContent>
-            <TabsContent value="crm" className="flex-1 min-h-0 m-0 data-[state=inactive]:hidden">
-              <CRMPanel conversation={selected} />
-            </TabsContent>
-          </Tabs>
+        <aside className="w-[340px] xl:w-[420px] shrink-0 border-l hidden lg:flex flex-col bg-white">
+          <ClientSidePanel
+            level={selected.level}
+            contactId={selected.contactId}
+            leadId={selected.leadId}
+            clientId={selected.crm.clientId}
+            contactName={selected.leadName}
+            phone={selected.phone}
+            summary={selected.summary}
+          />
         </aside>
       )}
 
@@ -2013,6 +2065,15 @@ export default function ServiceCenter() {
           qc.invalidateQueries({ queryKey: ["wa_conversations"] });
         }}
       />
+
+      <MessageLinkDialog
+        open={linkDialogMessages.length > 0}
+        onOpenChange={(o) => { if (!o) setLinkDialogMessages([]); }}
+        messageIds={linkDialogMessages}
+        clientId={selected?.crm.clientId ?? null}
+        leadId={selected?.leadId ?? null}
+      />
+      
       
     </div>
   );

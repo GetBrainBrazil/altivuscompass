@@ -3633,6 +3633,54 @@ export type Database = {
         }
         Relationships: []
       }
+      wa_message_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          link_kind: string
+          message_id: string
+          post_sale_id: string | null
+          quote_id: string | null
+          receivable_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link_kind?: string
+          message_id: string
+          post_sale_id?: string | null
+          quote_id?: string | null
+          receivable_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link_kind?: string
+          message_id?: string
+          post_sale_id?: string | null
+          quote_id?: string | null
+          receivable_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wa_message_links_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "wa_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wa_message_links_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wa_messages: {
         Row: {
           content: string | null
