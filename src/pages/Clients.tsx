@@ -2079,30 +2079,6 @@ export default function Clients() {
                               );
                             })
                           )}
-                          {isVirtual && (client._level === "prospect" || client._level === "lead") && (
-                            <TooltipProvider delayDuration={200}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      navigate(`/contacts/${client._contactId}/promote`);
-                                    }}
-                                    className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full font-body text-sky-700 hover:bg-sky-50 border border-sky-200 self-start"
-                                  >
-                                    <Sparkles className="h-3 w-3" />
-                                    Promover
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="max-w-xs font-body text-xs">
-                                  {client._level === "prospect"
-                                    ? "Promove este Prospect para Lead, tornando-o elegível para criação de cotações e acompanhamento no funil de vendas."
-                                    : "Promove este Lead para Cliente, registrando dados completos do viajante e habilitando histórico de viagens."}
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
                         </div>
                       </td>
                     </tr>

@@ -217,20 +217,6 @@ export default function Contacts() {
                   {r.source ?? "manual"}
                 </div>
                 <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
-                  {r.level === "prospect" && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1.5 h-8 text-xs border-sky-300 text-sky-700 hover:bg-sky-50"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/contacts/${r.id}/promote`);
-                      }}
-                    >
-                      <Sparkles className="w-3 h-3" />
-                      Promover
-                    </Button>
-                  )}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button

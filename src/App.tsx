@@ -10,7 +10,7 @@ import { AppLayout } from "@/components/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
 import Contacts from "./pages/Contacts";
-import PromoteContact from "./pages/PromoteContact";
+
 import Quotes from "./pages/Quotes";
 import Campaigns from "./pages/Campaigns";
 import Finance from "./pages/Finance";
@@ -77,7 +77,7 @@ const App = () => (
             <Route path="/tasks/:id" element={<ProtectedRoute><AppLayout><TaskDetail /></AppLayout></ProtectedRoute>} />
             <Route path="/changelog" element={<ProtectedRoute><AppLayout><Changelog /></AppLayout></ProtectedRoute>} />
             <Route path="/contacts" element={<Navigate to="/clients" replace />} />
-            <Route path="/contacts/:id/promote" element={<ProtectedRoute><AppLayout><PromoteContact /></AppLayout></ProtectedRoute>} />
+            
             <Route path="/clients" element={<ProtectedRoute><AppLayout><Clients /></AppLayout></ProtectedRoute>} />
             <Route path="/quotes" element={<ProtectedRoute><AppLayout><Quotes /></AppLayout></ProtectedRoute>} />
             <Route path="/sales" element={<ProtectedRoute><AppLayout><Sales /></AppLayout></ProtectedRoute>} />
