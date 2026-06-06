@@ -606,11 +606,44 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
           <p className="whitespace-pre-wrap break-words">{displayContent}</p>
         )}
       </div>
-      <span className="flex items-center gap-1 text-[10px] text-muted-foreground px-2">
-        {isAi ? "IA · " : isAgent ? "Agente · " : ""}
-        {formatTime(message.timestamp)}
-        {!isLead && message.status && <MessageStatusTicks status={message.status} />}
-      </span>
+      <div className={cn("flex items-center gap-1.5 px-2 flex-wrap", isLead ? "" : "justify-end")}>
+        <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+          {isAi ? "IA · " : isAgent ? "Agente · " : ""}
+          {formatTime(message.timestamp)}
+          {!isLead && message.status && <MessageStatusTicks status={message.status} />}
+        </span>
+        {linkedQuotes && linkedQuotes.length > 0 && linkedQuotes.map((q) => (
+          <button
+            key={q.id}
+            type="button"
+            onClick={() => onOpenQuote?.(q.id)}
+            className="inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 text-[10px] hover:bg-blue-100"
+            title="Abrir cotação vinculada"
+          >
+            <Link2 className="h-2.5 w-2.5" />
+            {q.title || q.destination || "Cotação"}
+          </button>
+        ))}
+        {onLinkClick && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted/60"
+                title="Mais ações"
+              >
+                <MoreVertical className="h-3 w-3" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align={isLead ? "start" : "end"}>
+              <DropdownMenuItem onClick={onLinkClick}>
+                <Link2 className="h-3.5 w-3.5 mr-2" />
+                Vincular a cotação…
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
     </div>
   );
 };
