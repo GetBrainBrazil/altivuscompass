@@ -166,14 +166,14 @@ export function ImageViewerDialog({ open, onOpenChange, attachment, taskId, pend
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-[95vw] w-[95vw] sm:max-w-5xl p-0 gap-0 overflow-hidden">
         <DialogHeader className="p-4 pb-3 border-b">
           <DialogTitle className="font-display text-base">Visualizar imagem</DialogTitle>
         </DialogHeader>
 
         <div className="p-4 space-y-3">
-          <div className="flex items-end gap-2">
-            <div className="flex-1">
+          <div className="flex items-end gap-2 flex-wrap">
+            <div className="flex-1 min-w-[200px]">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">Nome do arquivo</Label>
               <Input
                 value={name}
@@ -185,6 +185,18 @@ export function ImageViewerDialog({ open, onOpenChange, attachment, taskId, pend
               />
             </div>
             <div className="flex gap-1">
+              <Button type="button" variant="outline" size="icon" onClick={() => setZoom((z) => Math.max(0.1, z - 0.25))} disabled={cropMode} title="Diminuir zoom">
+                <ZoomOut size={16} />
+              </Button>
+              <Button type="button" variant="outline" size="icon" onClick={() => setZoom(1)} disabled={cropMode} title="Tamanho original (100%)">
+                <Maximize2 size={16} />
+              </Button>
+              <Button type="button" variant="outline" size="icon" onClick={() => setZoom((z) => Math.min(8, z + 0.25))} disabled={cropMode} title="Aumentar zoom">
+                <ZoomIn size={16} />
+              </Button>
+              <span className="text-xs text-muted-foreground self-center w-12 text-center tabular-nums">
+                {Math.round(zoom * 100)}%
+              </span>
               <Button type="button" variant="outline" size="icon" onClick={() => rotateBy(-90)} title="Girar -90°">
                 <RotateCcw size={16} />
               </Button>
@@ -206,14 +218,23 @@ export function ImageViewerDialog({ open, onOpenChange, attachment, taskId, pend
             </div>
           </div>
 
-          <div className="bg-muted/30 rounded-md flex items-center justify-center min-h-[320px] max-h-[60vh] overflow-hidden">
+          <div
+            className="bg-muted/30 rounded-md flex items-center justify-center h-[70vh] overflow-auto"
+            onWheel={(e) => {
+              if (cropMode) return;
+              if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                setZoom((z) => Math.min(8, Math.max(0.1, z - e.deltaY * 0.002)));
+              }
+            }}
+          >
             {!src ? (
               <Loader2 size={20} className="animate-spin text-muted-foreground" />
             ) : cropMode ? (
               <Cropper
                 ref={cropperRef}
                 src={src}
-                style={{ height: "60vh", width: "100%" }}
+                style={{ height: "70vh", width: "100%" }}
                 viewMode={1}
                 background={false}
                 autoCropArea={1}
@@ -223,12 +244,14 @@ export function ImageViewerDialog({ open, onOpenChange, attachment, taskId, pend
               <img
                 src={src}
                 alt={name}
-                style={{ transform: `rotate(${rotation}deg)`, maxHeight: "60vh", maxWidth: "100%" }}
-                className="object-contain transition-transform"
+                style={{ transform: `rotate(${rotation}deg) scale(${zoom})`, transformOrigin: "center center" }}
+                className="transition-transform select-none"
+                draggable={false}
               />
             )}
           </div>
         </div>
+
 
         <DialogFooter className="p-4 pt-3 border-t flex sm:justify-between gap-2">
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
