@@ -1,75 +1,96 @@
+
 ## Objetivo
 
-Na Central de Atendimento, o painel lateral direito deixa de ser apenas "Resumo IA / CRM" e passa a oferecer uma visão **Cliente 360** com abas condicionais por nível do contato (Prospect / Lead / Cliente), edição completa equivalente às telas dedicadas, e atalhos para Cotações, Vendas e Pós-venda. Em paralelo, a conversa do WhatsApp continua **contínua** (sem sessões obrigatórias), mas permite **marcar mensagens** (uma ou várias) e vinculá-las a uma ou mais Cotações / Vendas / Pós-vendas.
+Tornar o CRM o centro da jornada comercial com 3 sub-itens (**Cotações → Vendas → Pós-Venda**) e mover a leitura financeira das vendas para o módulo **Financeiro** como "Vendas Fechadas". Sem mudança de banco e sem alteração funcional do Pós-Venda nesta etapa.
 
-## Parte 1 — Painel lateral por nível
+---
 
-O painel direito mostra abas diferentes conforme o nível do contato selecionado:
+## Nova estrutura do menu lateral (ordem definitiva)
 
-| Nível | Abas exibidas |
-| --- | --- |
-| **Prospect** | Cliente · Resumo IA |
-| **Lead** | Cliente · Cotações · Resumo IA |
-| **Cliente** | Cliente · Cotações · Vendas · Pós-venda · Resumo IA |
+```text
+Painel
+Clientes
 
-Notas:
-- A aba **Cliente** existe sempre, mesmo quando o contato ainda não foi promovido — é a "ficha" do contato (dados, contatos, endereços, etc.). Para Prospect/Lead ela edita os dados disponíveis em `contacts` + `leads` (campos básicos + viagem); para Cliente, edita o registro completo em `clients` e tabelas relacionadas.
-- Largura atual (340px) cresce para ~420–460px em desktop ≥1280px. Em telas menores, vira drawer fullscreen acionado por botão no header da conversa.
-- Cada aba carrega lazy via React Query, mantendo Realtime quando aplicável.
+CRM
+ ├─ Cotações        (/quotes)
+ ├─ Vendas          (/sales — visão comercial)
+ └─ Pós-Venda       (/crm?tab=ops)
 
-### Aba Cliente
-- **Prospect/Lead** (sem `client_id`): formulário compacto com nome, telefones, e-mails, origem, e — quando for Lead — campos de viagem (destino, datas, viajantes, orçamento, preferências). Reaproveita `LeadDetailPanel`/`LeadConvert` em formato embed.
-- **Cliente** (com `client_id`): reaproveita a estrutura de `src/pages/Clients.tsx` (sub-abas Dados, Endereços, Contatos, Passaportes, Vistos, Milhas, Viajantes, Documentos, Conversas).
-- Refatorar o conteúdo do modal atual de Clients em um componente `ClientFormContent` puro (sem `Dialog`) e reusá-lo no painel; saves usam as mesmas mutations já existentes (edição equivalente à da página dedicada).
-- Botão "Abrir em página inteira" leva para `/clients?id=<id>` (cliente) ou `/leads/<id>` (lead) preservando o estado.
+Roteiros
+Central de Atendimento
+Campanhas
+Milhas
 
-### Aba Cotações (Lead e Cliente)
-- Lista todas as `quotes` onde `lead_id` aponta para o lead atual, ou cujo `lead.converted_client_id = client.id`.
-- Cards compactos: título, estágio (badge), valor, última atualização.
-- Ações inline: mudar estágio (drop-down idêntico ao Sales kanban), abrir em `/quotes?id=<id>`, **+ Nova cotação** (atalho).
-- Edição completa = abrir a cotação no formulário existente; inline mantém só ações leves (estágio, conclusão).
+Financeiro
+ ├─ Contas a Pagar
+ ├─ Contas a Receber
+ ├─ Vendas Fechadas       (NOVO — visão financeira/margens)
+ ├─ Cadastros Financeiros
+ └─ Relatórios
 
-### Aba Vendas (somente Cliente)
-- Mostra `quotes` em estágio `confirmed`/`won` do cliente + recebíveis vinculados (`payables_receivables` com `quote_id`).
-- Permite alterar status do recebível (pago/pendente) e abrir cotação/recebível.
+Cadastros
+Cofre de Senhas
+```
 
-### Aba Pós-venda (somente Cliente)
-- Para vendas confirmadas, lista as viagens com placeholders de checklist e botão "Abrir pós-venda" que leva para `/sales`/`/quotes`. Sem criar tabelas novas para pós-venda neste passo — apenas expor o ponto de entrada e a estrutura visual.
+Alterações pontuais:
 
-### Aba Resumo IA (sempre)
-- Conteúdo atual de `LeadSummaryPanel` (resumo, destino, pessoas, duração, orçamento, anotações IA), movida para o fim do menu.
+- Remover do raiz: `Cotações`, `Vendas`, `Roteiros` antigo posicionamento — reordenar conforme acima.
+- Remover `Funil de Vendas` de dentro do CRM (o pai "CRM" já leva ao funil em `/crm`).
+- Manter rotas atuais (`/quotes`, `/sales`, `/crm`, `/crm?tab=ops`, `/crm/lead/...`) para não quebrar links, e-mails e PDFs.
+- Quando o usuário estiver em `/quotes`, `/sales` ou `/crm?tab=ops`, destacar "CRM" como pai ativo + o sub-item correspondente (estender a lógica de `effectivePath`/`quotesOrigin` já existente).
 
-## Parte 2 — Vínculo de mensagens a Cotação / Venda / Pós-venda
+---
 
-Decisão: **não amarrar conversas em sessões agora**. A conversa do WhatsApp continua única e contínua por contato. O atendente pode marcar manualmente **uma ou várias mensagens** e atribuí-las a **um ou mais** itens.
+## Vendas — Comercial vs. Financeiro
 
-### UX
-- Cada bolha de mensagem ganha um menu "•••" com a opção **"Vincular a..."**.
-- Modo de seleção múltipla por checkbox, acionado no header da conversa.
-- Dialog de vínculo lista Cotações / Vendas / Pós-vendas **do contato/cliente atual** com checkboxes (multi-select).
-- Mensagens vinculadas mostram um chip discreto no rodapé da bolha: "Cotação #123" / "Venda #45" / "Pós-venda #7" (clicável → abre o item).
-- Nas abas Cotações/Vendas/Pós-venda do painel, cada item exibe "X mensagens vinculadas" e abre a conversa filtrada por essas mensagens.
+### `/sales` (continua, dentro do CRM — visão Comercial)
+Sem mudanças de comportamento. Acompanhamento da venda, ajustes, trocas, cancelamentos, devoluções, inclusões. Só muda de lugar no menu.
 
-### Modelagem
-Tabela nova `wa_message_links`:
-- `id`, `message_id` (FK `wa_messages.id` ON DELETE CASCADE), `quote_id` (nullable), `receivable_id` (nullable), `post_sale_id` (nullable, reservado), `created_by`, `created_at`.
-- CHECK garantindo que pelo menos uma das três FKs esteja preenchida.
-- Índices por `message_id` e por cada FK.
-- RLS no padrão dos demais módulos (usuário autenticado lê/escreve; service_role total).
-- GRANTs explícitos para `authenticated` e `service_role`.
+### `/finance/closed-sales` (NOVO — visão Financeira)
+Lê das vendas fechadas (`quotes` confirmadas/won), itens (custos) e `accounts_receivable` (parcelas). Apresenta:
 
-Sem alterar `wa_conversations`/`wa_messages` (zero impacto no webhook e na dedup atual).
+- Tabela: cliente, valor de venda, custo total, **margem (R$ e %)**, forma de pagamento (à vista / nº de parcelas), valor recebido, em aberto, próximo vencimento.
+- Filtros: período, vendedor, cliente, status de pagamento (em dia / atrasado / quitado).
+- Totais no topo: receita confirmada, custo, margem média.
+- Clique na linha → drawer com parcelas e itens.
+
+Cancelamentos/devoluções continuam sendo lançados em `/sales`; aqui só refletem.
+
+---
+
+## Permissões
+
+- Sub-itens herdam regras já existentes de `/quotes`, `/sales`, `/crm` em `canAccess`.
+- `/finance/closed-sales` segue o mesmo perfil de `/finance/*`.
+
+---
 
 ## Detalhes técnicos
 
-- Extrair de `src/pages/Clients.tsx` o conteúdo do modal de edição para `src/components/clients/ClientFormContent.tsx`, mantendo a página dedicada usando o mesmo componente.
-- Criar `src/components/service-center/ClientSidePanel.tsx` com `Tabs` condicionais baseadas em `contact.level`. Renderizado em `ServiceCenter.tsx` no lugar do bloco atual (`summary`/`crm`).
-- Criar `src/components/service-center/MessageLinkDialog.tsx` (multi-select de cotações/vendas/pós-vendas) e hook `useMessageLinks` para leitura/escrita em `wa_message_links`.
-- No `MessageList` da Central, fazer fetch agregado dos links por intervalo de IDs visíveis (1 query por página, nunca 1 por mensagem).
-- Migração SQL: `CREATE TABLE wa_message_links (...)` + GRANTs + RLS + policies.
+Arquivos:
 
-## Fora de escopo
+- `src/components/AppSidebar.tsx`
+  - Reescrever `navItems` para a ordem acima (Painel, Clientes, CRM[Cotações/Vendas/Pós-Venda], Roteiros, Central de Atendimento, Campanhas, Milhas, Financeiro[…+Vendas Fechadas], Cadastros, Cofre de Senhas).
+  - Remover entradas raiz de Cotações e Vendas.
+  - Trocar `subItems` do CRM para `[Cotações → /quotes, Vendas → /sales, Pós-Venda → /crm?tab=ops]`.
+  - Estender `effectivePath` para mapear `/quotes` e `/sales` ao pai "CRM" sempre (não só quando vier do CRM), e destacar o sub-item correto pelo `pathname`.
+  - Adicionar `Vendas Fechadas → /finance/closed-sales` no grupo Financeiro.
 
-- Não criar tabela própria de "pós-venda" agora — só ponto de entrada visual.
-- Não introduzir "sessão" automática por inatividade nem encerramento manual de sessão.
-- Não alterar webhook, dedupe, handoff humano, ou kanban de leads.
+- `src/App.tsx`
+  - Adicionar rota `/finance/closed-sales` apontando para nova página `FinanceClosedSales`.
+
+- `src/pages/FinanceClosedSales.tsx` (novo)
+  - Tabela + filtros + totais conforme descrito, consumindo Supabase (`quotes`, itens, `accounts_receivable`).
+
+- `src/lib/permissions.ts`
+  - Garantir entrada para `/finance/closed-sales` (perfil financeiro/admin).
+
+Sem migração de banco.
+
+---
+
+## Fora de escopo (próximas conversas)
+
+- Expansão funcional do Pós-Venda (checklist de reservas, alertas D-3/D-1 de check-in, feedback pós-viagem).
+- Kanban único Lead → Cotação → Venda → Pós-Venda.
+- Relatórios avançados de margem por destino/fornecedor/vendedor.
