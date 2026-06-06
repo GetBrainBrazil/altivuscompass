@@ -1,68 +1,43 @@
 ## Objetivo
 
-Marcar **cotações/vendas** e **registros financeiros** como pertencentes a **Altivus** (padrão) ou **Milhas e Voos**, para organização, filtros e relatórios separados. Cliente permanece neutro (sem vínculo a empresa).
+Eliminar a promoção manual de Prospect → Lead → Cliente, mantendo apenas o fluxo automático (que já existe no banco). O conceito agora é:
 
-## Modelo de dados
+- **Prospect**: alguém que entrou em contato (ou queremos contatar), sem interesse declarado.
+- **Lead**: demonstrou interesse em um produto (ex.: ao se criar uma cotação para ele).
+- **Cliente**: contratou um produto (ao concluir uma cotação como `won` / receber pagamento).
+- Fluxo é **estritamente sequencial e irreversível** (Prospect → Lead → Cliente, nunca regride, nunca pula).
 
-Criar enum `company_brand` com 2 valores: `altivus`, `milhas_e_voos`.
+## O que será removido (apenas UI/rota — sem mexer em lógica de negócio)
 
-Adicionar coluna `company` (`company_brand`, NOT NULL, default `'altivus'`) em:
-- `quotes` — define a marca da cotação/venda
-- `financial_transactions` — toda receita/despesa pertence a uma empresa
-- `bank_accounts` — cada conta bancária pertence a uma empresa
+1. **Pílula "Promover"** na lista de Clientes (`src/pages/Clients.tsx`, linhas ~2082-2105, incluindo o Tooltip recém-adicionado).
+2. **Botão "Promover"** na lista de Contatos (`src/pages/Contacts.tsx`, linhas ~220-233).
+3. **Página** `src/pages/PromoteContact.tsx` (rota `/contacts/:id/promote`).
+4. **Componente** `src/components/contacts/PromoteToLeadDialog.tsx` (não é referenciado em nenhum outro lugar — confirmar no commit).
+5. **Rota e import** correspondentes em `src/App.tsx` (linhas 13 e 80).
+6. Notificações com `link` apontando para `/contacts/:id/promote` (se houver) continuam válidas porque a página apenas deixará de existir; ajustaremos para apontar para `/clients?contact=:id`.
 
-Backfill: todos os registros existentes ficam como `altivus`.
+## O que permanece
 
-Nenhuma alteração em `clients`, `contacts`, `leads`.
+- Componentes de **promoção a Cliente** acionados por contexto de cotação (`ClientPromotionDialog`, `ClientTravelersTab`) — esses são parte do fluxo automático ao fechar cotação (captura de dados complementares dos viajantes), não são "promoção manual" de nível, então **ficam**.
+- Triggers no banco:
+  - `sync_contact_from_lead` — define `prospect` ou `lead` conforme o lead já tenha destino + datas + nº de viajantes (interesse demonstrado).
+  - `promote_contact_on_quote_confirmed` e `promote_contact_on_payment` — promovem a Cliente automaticamente.
+  - `prevent_contact_level_regression` — garante que nunca volta.
+  - `notify_contact_promoted_to_lead` — notifica admins/managers.
 
-## UI
+## Garantia adicional (banco)
 
-**1. Cotações/Vendas**
-- Campo "Empresa" no header do form (toggle: Altivus | Milhas e Voos), default Altivus.
-- Filtro "Empresa" em `/quotes` (kanban e tabela), persistido em localStorage.
-- Badge discreto "Milhas e Voos" em cards/linhas (Altivus não exibe, para reduzir ruído).
+Para fechar a regra "Lead = demonstrou interesse em um produto", adicionar uma promoção automática extra: **ao criar uma `quote` vinculada a um `lead` cujo contato ainda está como `prospect`, promover o contato para `lead`** (e gravar `promoted_to_lead_at`). Isso cobre o caso em que o lead foi criado sem destino/datas no primeiro momento, mas já recebeu uma cotação.
 
-**2. Contas Bancárias** (`/finance/registrations` → aba Contas Bancárias)
-- Campo "Empresa" no form de conta bancária.
-- Coluna/badge "Empresa" na listagem.
-- Filtro por empresa.
+```text
+trigger trg_promote_contact_on_quote_created
+  AFTER INSERT ON quotes
+  → se contacts.level = 'prospect' para o lead_id da quote
+  → UPDATE contacts SET level='lead', promoted_to_lead_at = now()
+```
 
-**3. Transações Financeiras** (Contas a Pagar/Receber e Finance)
-- Campo "Empresa" no form de transação, default Altivus.
-- Quando uma conta bancária é selecionada, sugere automaticamente a empresa dela (editável).
-- Quando vinculada a uma cotação, herda a empresa da cotação.
-- Filtro "Empresa" nas listagens de `/finance/payables-receivables` e `/finance` (cards e tabelas), persistido em localStorage.
-- Badge discreto em linhas/cards.
+## Verificação pós-implementação
 
-**4. Relatórios Financeiros** (`/finance/reports`)
-- Filtro "Empresa" no topo (Todas | Altivus | Milhas e Voos).
-- Quando "Todas", agrupar/quebrar os totais por empresa nos KPIs e gráficos principais.
-
-## Regras de propagação
-
-- Cotação → quando uma venda é fechada e gera lançamento financeiro, o lançamento herda a `company` da cotação.
-- Transação ↔ Conta bancária → conta bancária define a empresa por padrão; pode ser sobrescrito manualmente em casos raros (sem validação rígida agora).
-
-## Fora de escopo (confirmado)
-
-- ❌ Cliente NÃO recebe campo de empresa
-- ❌ Logo/branding diferente no PDF e cotação pública (continua Altivus)
-- ❌ Permissões/RLS por empresa (todos autenticados continuam vendo tudo)
-- ❌ Cadastro dinâmico de empresas (enum fixo de 2)
-
-## Detalhes técnicos
-
-- Migration:
-  ```sql
-  CREATE TYPE public.company_brand AS ENUM ('altivus','milhas_e_voos');
-  ALTER TABLE public.quotes
-    ADD COLUMN company public.company_brand NOT NULL DEFAULT 'altivus';
-  ALTER TABLE public.financial_transactions
-    ADD COLUMN company public.company_brand NOT NULL DEFAULT 'altivus';
-  ALTER TABLE public.bank_accounts
-    ADD COLUMN company public.company_brand NOT NULL DEFAULT 'altivus';
-  ```
-- RLS inalterada — campo é só marcação organizacional.
-- Após a migration, `src/integrations/supabase/types.ts` é regenerado.
-- Badge usa cor accent secundária do design system (sem novas cores).
-- Hook utilitário pequeno `useCompanyFilter(scopeKey)` para padronizar persistência do filtro nas várias listagens.
+- Build limpo (sem imports órfãos de `PromoteContact` / `PromoteToLeadDialog`).
+- Nenhum link visível para `/contacts/:id/promote` na UI.
+- Criar uma cotação para um Prospect deve, após o INSERT, deixá-lo como Lead automaticamente (testado por leitura do registro).
