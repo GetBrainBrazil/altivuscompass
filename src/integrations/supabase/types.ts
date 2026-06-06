@@ -3843,18 +3843,21 @@ export type Database = {
           avatar_url: string | null
           email: string | null
           full_name: string | null
+          phone: string | null
           user_id: string | null
         }
         Insert: {
           avatar_url?: string | null
           email?: string | null
           full_name?: string | null
+          phone?: string | null
           user_id?: string | null
         }
         Update: {
           avatar_url?: string | null
           email?: string | null
           full_name?: string | null
+          phone?: string | null
           user_id?: string | null
         }
         Relationships: []
