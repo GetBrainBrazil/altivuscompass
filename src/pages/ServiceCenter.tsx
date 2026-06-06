@@ -2065,6 +2065,15 @@ export default function ServiceCenter() {
           qc.invalidateQueries({ queryKey: ["wa_conversations"] });
         }}
       />
+
+      <MessageLinkDialog
+        open={linkDialogMessages.length > 0}
+        onOpenChange={(o) => { if (!o) setLinkDialogMessages([]); }}
+        messageIds={linkDialogMessages}
+        clientId={selected?.crm.clientId ?? null}
+        leadId={selected?.leadId ?? null}
+      />
+      
       
     </div>
   );
