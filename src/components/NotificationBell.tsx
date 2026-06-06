@@ -151,6 +151,9 @@ export function NotificationBell() {
     if (item.kind === "notification" && item.type === "lead_promoted") {
       return <Sparkles size={14} className="text-sky-600" strokeWidth={1.5} />;
     }
+    if (item.kind === "notification" && item.type === "task_assigned") {
+      return <CheckSquare size={14} className="text-sky-600" strokeWidth={1.5} />;
+    }
     return <ListTodo size={14} className="text-muted-foreground" strokeWidth={1.5} />;
   };
 
