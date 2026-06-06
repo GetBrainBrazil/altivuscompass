@@ -787,7 +787,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                 </div>
               </div>
             )}
-            <Button onClick={() => savePassengerMutation.mutate()} disabled={!passengerForm.full_name || savePassengerMutation.isPending} className="font-body">
+            <Button onClick={() => savePassengerMutation.mutate()} disabled={!passengerForm.full_name || (!!passengerForm.cpf && !isValidCPF(passengerForm.cpf)) || savePassengerMutation.isPending} className="font-body">
               {savePassengerMutation.isPending ? "Salvando..." : "Salvar"}
             </Button>
           </div>
