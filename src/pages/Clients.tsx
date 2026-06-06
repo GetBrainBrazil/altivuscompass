@@ -1200,6 +1200,9 @@ export default function Clients() {
                 )}
                 <TabsTrigger value="preferences" className="font-body text-xs">Preferências</TabsTrigger>
                 <TabsTrigger value="observations" className="font-body text-xs">Observações</TabsTrigger>
+                {editingId && (
+                  <TabsTrigger value="conversations" className="font-body text-xs">Conversas</TabsTrigger>
+                )}
               </TabsList>
 
               {/* Contact Tab */}
