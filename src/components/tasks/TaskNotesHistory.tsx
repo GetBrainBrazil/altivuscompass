@@ -200,7 +200,7 @@ export function TaskNotesHistory({ taskId, assigneePhone, assigneeName }: Props)
       </div>
 
       {/* Lembretes */}
-      <TaskReminders taskId={taskId} />
+      <TaskReminders taskId={taskId} assigneePhone={assigneePhone} assigneeName={assigneeName} />
 
       {/* Histórico */}
       <div>
