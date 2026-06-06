@@ -14,6 +14,291 @@ export type Database = {
   }
   public: {
     Tables: {
+      _pre_etapa3_snapshot_deal_events_dealid_nulls: {
+        Row: {
+          event_type: string | null
+          id: string | null
+          quote_id: string | null
+          recorded_at: string | null
+          sale_id: string | null
+        }
+        Insert: {
+          event_type?: string | null
+          id?: string | null
+          quote_id?: string | null
+          recorded_at?: string | null
+          sale_id?: string | null
+        }
+        Update: {
+          event_type?: string | null
+          id?: string | null
+          quote_id?: string | null
+          recorded_at?: string | null
+          sale_id?: string | null
+        }
+        Relationships: []
+      }
+      _pre_etapa3_snapshot_quote_items: {
+        Row: {
+          attachment_urls: string[] | null
+          commission_amount: number | null
+          commission_status: string | null
+          created_at: string | null
+          description: string | null
+          details: Json | null
+          external_url: string | null
+          id: string | null
+          is_recommended: boolean | null
+          is_selected: boolean | null
+          item_type: string | null
+          option_group: string | null
+          option_label: string | null
+          option_order: number | null
+          payment_source: string | null
+          quantity: number | null
+          quote_id: string | null
+          sort_order: number | null
+          supplier_id: string | null
+          title: string | null
+          unit_cost: number | null
+          unit_price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          attachment_urls?: string[] | null
+          commission_amount?: number | null
+          commission_status?: string | null
+          created_at?: string | null
+          description?: string | null
+          details?: Json | null
+          external_url?: string | null
+          id?: string | null
+          is_recommended?: boolean | null
+          is_selected?: boolean | null
+          item_type?: string | null
+          option_group?: string | null
+          option_label?: string | null
+          option_order?: number | null
+          payment_source?: string | null
+          quantity?: number | null
+          quote_id?: string | null
+          sort_order?: number | null
+          supplier_id?: string | null
+          title?: string | null
+          unit_cost?: number | null
+          unit_price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          attachment_urls?: string[] | null
+          commission_amount?: number | null
+          commission_status?: string | null
+          created_at?: string | null
+          description?: string | null
+          details?: Json | null
+          external_url?: string | null
+          id?: string | null
+          is_recommended?: boolean | null
+          is_selected?: boolean | null
+          item_type?: string | null
+          option_group?: string | null
+          option_label?: string | null
+          option_order?: number | null
+          payment_source?: string | null
+          quantity?: number | null
+          quote_id?: string | null
+          sort_order?: number | null
+          supplier_id?: string | null
+          title?: string | null
+          unit_cost?: number | null
+          unit_price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      _pre_etapa3_snapshot_quotes: {
+        Row: {
+          airline_options: string | null
+          archived_at: string | null
+          archived_by: string | null
+          assigned_to: string | null
+          client_id: string | null
+          client_notes: string | null
+          close_probability: string | null
+          company: Database["public"]["Enums"]["company_brand"] | null
+          conclusion_type: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          created_by: string | null
+          departure_airport: string | null
+          departure_city: string | null
+          destination: string | null
+          destination_images: string[] | null
+          details: string | null
+          discount_amount: number | null
+          discount_percent: number | null
+          hotel_options: string | null
+          id: string | null
+          internal_due_date: string | null
+          internal_notes: string | null
+          is_template: boolean | null
+          lead_id: string | null
+          lead_source: string | null
+          notes: string | null
+          other_info: string | null
+          payment_terms: string | null
+          price_breakdown: Json | null
+          quote_validity: string | null
+          stage: Database["public"]["Enums"]["quote_stage"] | null
+          template_name: string | null
+          terms_conditions: string | null
+          title: string | null
+          total_value: number | null
+          travel_date_end: string | null
+          travel_date_start: string | null
+          updated_at: string | null
+          validity_warning_sent_at: string | null
+        }
+        Insert: {
+          airline_options?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
+          assigned_to?: string | null
+          client_id?: string | null
+          client_notes?: string | null
+          close_probability?: string | null
+          company?: Database["public"]["Enums"]["company_brand"] | null
+          conclusion_type?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          departure_airport?: string | null
+          departure_city?: string | null
+          destination?: string | null
+          destination_images?: string[] | null
+          details?: string | null
+          discount_amount?: number | null
+          discount_percent?: number | null
+          hotel_options?: string | null
+          id?: string | null
+          internal_due_date?: string | null
+          internal_notes?: string | null
+          is_template?: boolean | null
+          lead_id?: string | null
+          lead_source?: string | null
+          notes?: string | null
+          other_info?: string | null
+          payment_terms?: string | null
+          price_breakdown?: Json | null
+          quote_validity?: string | null
+          stage?: Database["public"]["Enums"]["quote_stage"] | null
+          template_name?: string | null
+          terms_conditions?: string | null
+          title?: string | null
+          total_value?: number | null
+          travel_date_end?: string | null
+          travel_date_start?: string | null
+          updated_at?: string | null
+          validity_warning_sent_at?: string | null
+        }
+        Update: {
+          airline_options?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
+          assigned_to?: string | null
+          client_id?: string | null
+          client_notes?: string | null
+          close_probability?: string | null
+          company?: Database["public"]["Enums"]["company_brand"] | null
+          conclusion_type?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          departure_airport?: string | null
+          departure_city?: string | null
+          destination?: string | null
+          destination_images?: string[] | null
+          details?: string | null
+          discount_amount?: number | null
+          discount_percent?: number | null
+          hotel_options?: string | null
+          id?: string | null
+          internal_due_date?: string | null
+          internal_notes?: string | null
+          is_template?: boolean | null
+          lead_id?: string | null
+          lead_source?: string | null
+          notes?: string | null
+          other_info?: string | null
+          payment_terms?: string | null
+          price_breakdown?: Json | null
+          quote_validity?: string | null
+          stage?: Database["public"]["Enums"]["quote_stage"] | null
+          template_name?: string | null
+          terms_conditions?: string | null
+          title?: string | null
+          total_value?: number | null
+          travel_date_end?: string | null
+          travel_date_start?: string | null
+          updated_at?: string | null
+          validity_warning_sent_at?: string | null
+        }
+        Relationships: []
+      }
+      _pre_etapa3_snapshot_sales: {
+        Row: {
+          assigned_to: string | null
+          client_id: string | null
+          created_at: string | null
+          created_by: string | null
+          destination: string | null
+          id: string | null
+          notes: string | null
+          quote_id: string | null
+          stage: string | null
+          ticket_issued_at: string | null
+          ticket_number: string | null
+          total_value: number | null
+          travel_date_end: string | null
+          travel_date_start: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          destination?: string | null
+          id?: string | null
+          notes?: string | null
+          quote_id?: string | null
+          stage?: string | null
+          ticket_issued_at?: string | null
+          ticket_number?: string | null
+          total_value?: number | null
+          travel_date_end?: string | null
+          travel_date_start?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          destination?: string | null
+          id?: string | null
+          notes?: string | null
+          quote_id?: string | null
+          stage?: string | null
+          ticket_issued_at?: string | null
+          ticket_number?: string | null
+          total_value?: number | null
+          travel_date_end?: string | null
+          travel_date_start?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       agency_settings: {
         Row: {
           address: string | null
@@ -1262,6 +1547,183 @@ export type Database = {
           ran_at?: string
           ran_by?: string | null
           result?: Json
+        }
+        Relationships: []
+      }
+      deal_templates: {
+        Row: {
+          company: Database["public"]["Enums"]["company_brand"]
+          created_at: string
+          created_by: string | null
+          id: string
+          payload: Json
+          source_quote_id: string | null
+          template_name: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          company?: Database["public"]["Enums"]["company_brand"]
+          created_at?: string
+          created_by?: string | null
+          id: string
+          payload?: Json
+          source_quote_id?: string | null
+          template_name?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company?: Database["public"]["Enums"]["company_brand"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          payload?: Json
+          source_quote_id?: string | null
+          template_name?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      deals: {
+        Row: {
+          archived_at: string | null
+          archived_by: string | null
+          assigned_to: string | null
+          client_id: string | null
+          client_notes: string | null
+          close_probability: string | null
+          company: Database["public"]["Enums"]["company_brand"]
+          conclusion_type: string | null
+          cover_image_url: string | null
+          created_at: string
+          created_by: string | null
+          current_acceptance_id: string | null
+          departure_airport: string | null
+          departure_city: string | null
+          destination: string | null
+          destination_images: string[] | null
+          details: string | null
+          discount_amount: number | null
+          discount_percent: number | null
+          id: string
+          internal_due_date: string | null
+          internal_notes: string | null
+          lead_id: string | null
+          lead_source: string | null
+          lost_reason_code: string | null
+          lost_reason_text: string | null
+          notes: string | null
+          other_info: string | null
+          payment_terms: string | null
+          phase: Database["public"]["Enums"]["deal_phase"]
+          price_breakdown: Json | null
+          quote_validity: string | null
+          source_quote_id: string | null
+          source_sale_id: string | null
+          stage: string
+          terms_conditions: string | null
+          ticket_issued_at: string | null
+          ticket_number: string | null
+          title: string | null
+          total_value: number | null
+          travel_date_end: string | null
+          travel_date_start: string | null
+          updated_at: string
+          validity_warning_sent_at: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
+          assigned_to?: string | null
+          client_id?: string | null
+          client_notes?: string | null
+          close_probability?: string | null
+          company?: Database["public"]["Enums"]["company_brand"]
+          conclusion_type?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_acceptance_id?: string | null
+          departure_airport?: string | null
+          departure_city?: string | null
+          destination?: string | null
+          destination_images?: string[] | null
+          details?: string | null
+          discount_amount?: number | null
+          discount_percent?: number | null
+          id: string
+          internal_due_date?: string | null
+          internal_notes?: string | null
+          lead_id?: string | null
+          lead_source?: string | null
+          lost_reason_code?: string | null
+          lost_reason_text?: string | null
+          notes?: string | null
+          other_info?: string | null
+          payment_terms?: string | null
+          phase?: Database["public"]["Enums"]["deal_phase"]
+          price_breakdown?: Json | null
+          quote_validity?: string | null
+          source_quote_id?: string | null
+          source_sale_id?: string | null
+          stage: string
+          terms_conditions?: string | null
+          ticket_issued_at?: string | null
+          ticket_number?: string | null
+          title?: string | null
+          total_value?: number | null
+          travel_date_end?: string | null
+          travel_date_start?: string | null
+          updated_at?: string
+          validity_warning_sent_at?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          archived_by?: string | null
+          assigned_to?: string | null
+          client_id?: string | null
+          client_notes?: string | null
+          close_probability?: string | null
+          company?: Database["public"]["Enums"]["company_brand"]
+          conclusion_type?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_acceptance_id?: string | null
+          departure_airport?: string | null
+          departure_city?: string | null
+          destination?: string | null
+          destination_images?: string[] | null
+          details?: string | null
+          discount_amount?: number | null
+          discount_percent?: number | null
+          id?: string
+          internal_due_date?: string | null
+          internal_notes?: string | null
+          lead_id?: string | null
+          lead_source?: string | null
+          lost_reason_code?: string | null
+          lost_reason_text?: string | null
+          notes?: string | null
+          other_info?: string | null
+          payment_terms?: string | null
+          phase?: Database["public"]["Enums"]["deal_phase"]
+          price_breakdown?: Json | null
+          quote_validity?: string | null
+          source_quote_id?: string | null
+          source_sale_id?: string | null
+          stage?: string
+          terms_conditions?: string | null
+          ticket_issued_at?: string | null
+          ticket_number?: string | null
+          title?: string | null
+          total_value?: number | null
+          travel_date_end?: string | null
+          travel_date_start?: string | null
+          updated_at?: string
+          validity_warning_sent_at?: string | null
         }
         Relationships: []
       }
@@ -2962,6 +3424,7 @@ export type Database = {
           commission_amount: number | null
           commission_status: string | null
           created_at: string
+          deal_id: string | null
           description: string | null
           details: Json | null
           external_url: string | null
@@ -2987,6 +3450,7 @@ export type Database = {
           commission_amount?: number | null
           commission_status?: string | null
           created_at?: string
+          deal_id?: string | null
           description?: string | null
           details?: Json | null
           external_url?: string | null
@@ -3012,6 +3476,7 @@ export type Database = {
           commission_amount?: number | null
           commission_status?: string | null
           created_at?: string
+          deal_id?: string | null
           description?: string | null
           details?: Json | null
           external_url?: string | null
@@ -4318,6 +4783,15 @@ export type Database = {
           metric: string
         }[]
       }
+      audit_deals_sync: {
+        Args: never
+        Returns: {
+          actual: number
+          check_name: string
+          expected: number
+          gap: number
+        }[]
+      }
       backfill_deal_events: { Args: never; Returns: Json }
       can_edit_vault_item: {
         Args: { _item_id: string; _user_id: string }
@@ -4391,6 +4865,7 @@ export type Database = {
         | "temporario"
         | "freelancer"
         | "outro"
+      deal_phase: "quoting" | "selling" | "fulfilling"
       financial_party_type: "individual" | "company"
       quote_stage:
         | "new"
@@ -4553,6 +5028,7 @@ export const Constants = {
         "freelancer",
         "outro",
       ],
+      deal_phase: ["quoting", "selling", "fulfilling"],
       financial_party_type: ["individual", "company"],
       quote_stage: [
         "new",
