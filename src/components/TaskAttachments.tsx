@@ -112,9 +112,19 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
     qc.invalidateQueries({ queryKey: ["task-attachments", taskId] });
   };
 
-  const items = taskId ? attachments : pending.map((f, i) => ({
-    id: `pending-${i}`, file_name: f.name, file_size: f.size, file_type: f.type, file_path: "", _pending: true as const,
+  const items: any[] = taskId ? attachments : pending.map((f, i) => ({
+    id: `pending-${i}`, file_name: f.name, file_size: f.size, file_type: f.type, file_path: "", _pending: true as const, _file: f,
   }));
+
+  const openImage = (a: any) => {
+    if (!isImage(a.file_type, a.file_name)) return;
+    if (a._pending) {
+      setViewer({ id: a.id, file_name: a.file_name, file_type: a.file_type, _pending: true, _file: a._file });
+    } else {
+      setViewer({ id: a.id, file_name: a.file_name, file_type: a.file_type, file_path: a.file_path });
+    }
+  };
+
 
   return (
     <div>
