@@ -375,15 +375,113 @@ function ClientTab({ level, contactId, leadId, clientId, contactName, phone }: P
             <Field label="Nome completo">
               <Input value={form.full_name || ""} onChange={(e) => set("full_name", e.target.value)} className="h-8" />
             </Field>
-            <div className="grid grid-cols-2 gap-2">
-              <Field label="Telefone">
-                <Input value={form.phone || ""} onChange={(e) => set("phone", e.target.value)} className="h-8" />
-              </Field>
-              <Field label="E-mail">
-                <Input type="email" value={form.email || ""} onChange={(e) => set("email", e.target.value)} className="h-8" />
-              </Field>
-            </div>
+            {level !== "cliente" && (
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="Telefone">
+                  <Input value={form.phone || ""} onChange={(e) => set("phone", e.target.value)} className="h-8" />
+                </Field>
+                <Field label="E-mail">
+                  <Input type="email" value={form.email || ""} onChange={(e) => set("email", e.target.value)} className="h-8" />
+                </Field>
+              </div>
+            )}
           </FieldGroup>
+
+          {/* Cliente: múltiplos telefones / e-mails (igual à ficha) */}
+          {level === "cliente" && (
+            <>
+              <FieldGroup title="Celulares / Telefones">
+                <div className="space-y-1.5">
+                  {phones.length === 0 && (
+                    <p className="text-[11px] text-muted-foreground italic">Nenhum telefone.</p>
+                  )}
+                  {phones.map((p, i) => {
+                    const cc = COUNTRY_CODES.find((c) => c.code === p.country_code) || COUNTRY_CODES[0];
+                    return (
+                      <div key={i} className="flex items-center gap-1.5">
+                        <Checkbox
+                          checked={phones.length === 1 || p.is_primary}
+                          onCheckedChange={() => setPhones(phones.map((ph, j) => ({ ...ph, is_primary: j === i })))}
+                          className="shrink-0"
+                          title="Principal"
+                        />
+                        <Select
+                          value={p.country_code}
+                          onValueChange={(v) => {
+                            const ncc = COUNTRY_CODES.find((c) => c.code === v) || COUNTRY_CODES[0];
+                            setPhones(phones.map((ph, j) => j === i ? { ...ph, country_code: v, phone: applyPhoneMask(stripMask(ph.phone), ncc.mask) } : ph));
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-[78px] px-2 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {COUNTRY_CODES.map((c) => (
+                              <SelectItem key={c.code} value={c.code}>{c.flag} {c.dial}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          value={p.phone}
+                          onChange={(e) => setPhones(phones.map((ph, j) => j === i ? { ...ph, phone: applyPhoneMask(e.target.value, cc.mask) } : ph))}
+                          placeholder={cc.mask.replace(/#/g, "0")}
+                          className="h-8 flex-1 min-w-0"
+                        />
+                        <Input
+                          value={p.description}
+                          onChange={(e) => setPhones(phones.map((ph, j) => j === i ? { ...ph, description: e.target.value } : ph))}
+                          placeholder="Descrição"
+                          className="h-8 w-24"
+                        />
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive shrink-0" onClick={() => setPhones(phones.filter((_, j) => j !== i))}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                  <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => setPhones([...phones, { phone: "", description: "", country_code: "BR", is_primary: phones.length === 0 }])}>
+                    <Plus className="h-3 w-3" /> Adicionar
+                  </Button>
+                </div>
+              </FieldGroup>
+
+              <FieldGroup title="E-mails">
+                <div className="space-y-1.5">
+                  {emails.length === 0 && (
+                    <p className="text-[11px] text-muted-foreground italic">Nenhum e-mail.</p>
+                  )}
+                  {emails.map((e, i) => (
+                    <div key={i} className="flex items-center gap-1.5">
+                      <Checkbox
+                        checked={emails.length === 1 || e.is_primary}
+                        onCheckedChange={() => setEmails(emails.map((em, j) => ({ ...em, is_primary: j === i })))}
+                        className="shrink-0"
+                        title="Principal"
+                      />
+                      <Input
+                        type="email"
+                        value={e.email}
+                        onChange={(ev) => setEmails(emails.map((em, j) => j === i ? { ...em, email: ev.target.value } : em))}
+                        placeholder="email@exemplo.com"
+                        className="h-8 flex-1 min-w-0"
+                      />
+                      <Input
+                        value={e.description}
+                        onChange={(ev) => setEmails(emails.map((em, j) => j === i ? { ...em, description: ev.target.value } : em))}
+                        placeholder="Descrição"
+                        className="h-8 w-24"
+                      />
+                      <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive shrink-0" onClick={() => setEmails(emails.filter((_, j) => j !== i))}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => setEmails([...emails, { email: "", description: "", is_primary: emails.length === 0 }])}>
+                    <Plus className="h-3 w-3" /> Adicionar
+                  </Button>
+                </div>
+              </FieldGroup>
+            </>
+          )}
+
 
           {/* Lead extras */}
           {level === "lead" && (
