@@ -25,6 +25,7 @@ import { useCountries, useStates, useCities, useContinents, useCustomDestination
 import { COUNTRY_CODES, applyPhoneMask } from "@/lib/phone-masks";
 import { ImageEditor } from "@/components/ImageEditor";
 import { ClientTravelersTab } from "@/components/ClientTravelersTab";
+import ClientConversationsTab from "@/components/ClientConversationsTab";
 import { ListSkeleton, TableSkeleton } from "@/components/ui/loading-skeletons";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccessFeature } from "@/lib/permissions";
@@ -1199,6 +1200,9 @@ export default function Clients() {
                 )}
                 <TabsTrigger value="preferences" className="font-body text-xs">Preferências</TabsTrigger>
                 <TabsTrigger value="observations" className="font-body text-xs">Observações</TabsTrigger>
+                {editingId && (
+                  <TabsTrigger value="conversations" className="font-body text-xs">Conversas</TabsTrigger>
+                )}
               </TabsList>
 
               {/* Contact Tab */}
@@ -1895,6 +1899,13 @@ export default function Clients() {
                   <Textarea value={form.notes} onChange={(e) => upd("notes", e.target.value)} rows={4} placeholder="Anotações sobre o cliente..." />
                 </div>
               </TabsContent>
+
+              {/* Conversations Tab */}
+              {editingId && (
+                <TabsContent value="conversations" className="pt-3">
+                  <ClientConversationsTab clientId={editingId} />
+                </TabsContent>
+              )}
             </Tabs>
           </div>
 

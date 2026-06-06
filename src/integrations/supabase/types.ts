@@ -3848,6 +3848,10 @@ export type Database = {
         Args: { _item_id: string; _user_id: string }
         Returns: boolean
       }
+      merge_contact_into_client: {
+        Args: { client_contact_id: string; orphan_id: string }
+        Returns: undefined
+      }
       touch_lead_interaction: { Args: { _lead_id: string }; Returns: undefined }
     }
     Enums: {
