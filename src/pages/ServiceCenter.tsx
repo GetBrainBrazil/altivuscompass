@@ -32,6 +32,7 @@ import {
   FileText,
   AlertTriangle,
   AlertCircle,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
