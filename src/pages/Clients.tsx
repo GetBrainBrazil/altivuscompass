@@ -587,12 +587,22 @@ export default function Clients() {
     isLoadingClientMiles
   );
 
+  // Snapshot só pode ser tirado quando as listas locais já refletem os dados
+  // retornados pelas queries (evita falso "alterações não salvas").
+  const isClientFormReady =
+    !!editingId &&
+    !isHydratingClientForm &&
+    phones.length === clientPhones.length &&
+    emails.length === clientEmails.length &&
+    socials.length === clientSocials.length &&
+    passports.length === clientPassports.length &&
+    milesPrograms.length === clientMiles.length;
+
   useEffect(() => {
-    if (!editingId || isHydratingClientForm || initialClientSnapshotRef.current) return;
+    if (!isClientFormReady || initialClientSnapshotRef.current) return;
     initialClientSnapshotRef.current = buildClientSnapshot();
   }, [
-    editingId,
-    isHydratingClientForm,
+    isClientFormReady,
     form,
     phones,
     emails,
