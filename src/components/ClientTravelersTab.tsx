@@ -71,6 +71,7 @@ const INVERSE_RELATIONSHIP: Record<string, string> = {
 type Passenger = {
   id?: string;
   full_name: string;
+  cpf: string;
   birth_date: string;
   nationality: string;
   passport_number: string;
@@ -78,6 +79,14 @@ type Passenger = {
   notes: string;
   relationship_type: string;
 };
+
+function maskCPF(v: string): string {
+  const d = (v || "").replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
+  if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+}
 
 interface ClientTravelersTabProps {
   clientId: string | null;
@@ -92,7 +101,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
   const [passengerDialog, setPassengerDialog] = useState(false);
   const [editingPassenger, setEditingPassenger] = useState<Passenger | null>(null);
   const [passengerForm, setPassengerForm] = useState<Passenger>({
-    full_name: "", birth_date: "", nationality: "", passport_number: "", passport_expiry: "", notes: "", relationship_type: "",
+    full_name: "", cpf: "", birth_date: "", nationality: "", passport_number: "", passport_expiry: "", notes: "", relationship_type: "",
   });
   const [deletePassengerId, setDeletePassengerId] = useState<string | null>(null);
 
@@ -239,6 +248,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     mutationFn: async () => {
       const updatedData = {
         full_name: passengerForm.full_name,
+        cpf: passengerForm.cpf ? passengerForm.cpf : null,
         birth_date: passengerForm.birth_date || null,
         nationality: passengerForm.nationality || null,
         passport_number: passengerForm.passport_number || null,
@@ -518,13 +528,13 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     if (p) {
       setEditingPassenger(p);
       setPassengerForm({
-        full_name: p.full_name, birth_date: p.birth_date ?? "", nationality: p.nationality ?? "",
+        full_name: p.full_name, cpf: p.cpf ? maskCPF(p.cpf) : "", birth_date: p.birth_date ?? "", nationality: p.nationality ?? "",
         passport_number: p.passport_number ?? "", passport_expiry: p.passport_expiry ?? "", notes: p.notes ?? "",
         relationship_type: p.relationship_type ?? "",
       });
     } else {
       setEditingPassenger(null);
-      setPassengerForm({ full_name: "", birth_date: "", nationality: "", passport_number: "", passport_expiry: "", notes: "", relationship_type: "" });
+      setPassengerForm({ full_name: "", cpf: "", birth_date: "", nationality: "", passport_number: "", passport_expiry: "", notes: "", relationship_type: "" });
     }
     setPassengerDialog(true);
   };
