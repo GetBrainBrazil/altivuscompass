@@ -4,6 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Paperclip, Upload, Download, Trash2, FileText, FileImage, File as FileIcon, Loader2 } from "lucide-react";
 import { ImageViewerDialog, ViewerAttachment } from "@/components/ImageViewerDialog";
 import { cn } from "@/lib/utils";
