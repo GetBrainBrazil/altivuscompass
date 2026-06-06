@@ -71,8 +71,9 @@ Deno.serve(async (req) => {
     // system: nothing to do, popup reads from DB
     if (channels.includes('system')) delivered.push('system')
 
-    // Fetch task + related contact/client for WhatsApp/email recipients
+    // Fetch task + assignee for WhatsApp/email recipients
     let task: any = null
+    let assignee: any = null
     if (channels.includes('whatsapp') || channels.includes('email')) {
       const { data: t } = await supabase
         .from('tasks')
@@ -80,18 +81,21 @@ Deno.serve(async (req) => {
         .eq('id', r.task_id)
         .maybeSingle()
       task = t
+      if (task?.assigned_to) {
+        const { data: p } = await supabase
+          .from('profiles')
+          .select('phone, email, full_name')
+          .eq('user_id', task.assigned_to)
+          .maybeSingle()
+        assignee = p
+      }
     }
 
     const text = (r.message?.trim() || task?.title || 'Lembrete de tarefa')
     const fullMessage = `🔔 *Lembrete de tarefa*\n\n${text}`
 
     if (channels.includes('whatsapp')) {
-      // O WhatsApp do lembrete vai SEMPRE para o responsável da tarefa
-      let phone: string | null = null
-      if (task?.assigned_to) {
-        const { data: p } = await supabase.from('profiles').select('phone').eq('user_id', task.assigned_to).maybeSingle()
-        phone = normalizePhone(p?.phone)
-      }
+      const phone = normalizePhone(assignee?.phone)
       if (!phone) {
         errors.push('whatsapp: responsável sem telefone válido')
       } else {
@@ -102,8 +106,37 @@ Deno.serve(async (req) => {
     }
 
     if (channels.includes('email')) {
-      // Email infrastructure not yet configured for this project.
-      errors.push('email: infraestrutura de email não configurada')
+      const recipientEmail = assignee?.email
+      if (!recipientEmail) {
+        errors.push('email: responsável sem e-mail cadastrado')
+      } else {
+        try {
+          const remindAt = new Date(r.remind_at).toLocaleString('pt-BR', {
+            timeZone: 'America/Sao_Paulo',
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit',
+          })
+          const taskUrl = `https://compass.altivusturismo.com.br/tasks/${r.task_id}`
+          const { error: emailErr } = await supabase.functions.invoke('send-transactional-email', {
+            body: {
+              templateName: 'task-reminder',
+              recipientEmail,
+              idempotencyKey: `task-reminder-${r.id}`,
+              templateData: {
+                taskTitle: task?.title ?? 'Tarefa',
+                message: r.message ?? null,
+                remindAt,
+                taskUrl,
+                recipientName: assignee?.full_name ?? null,
+              },
+            },
+          })
+          if (emailErr) errors.push(`email: ${emailErr.message ?? emailErr}`)
+          else delivered.push('email')
+        } catch (e: any) {
+          errors.push(`email: ${e?.message ?? 'falha ao enviar'}`)
+        }
+      }
     }
 
     const allOk = channels.every((c) => delivered.includes(c))

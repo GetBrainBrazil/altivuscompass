@@ -50,6 +50,7 @@ import Vault from "./pages/Vault";
 
 import { ReminderPopupCenter } from "@/components/ReminderPopupCenter";
 
+import Unsubscribe from "./pages/Unsubscribe";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -74,6 +75,7 @@ const App = () => (
             <Route path="/roteiro/:token" element={<PublicItinerary />} />
             <Route path="/roteiro/:token/pdf" element={<PublicItineraryPDF />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/" element={<ProtectedRoute><AppLayout><Dashboard /></AppLayout></ProtectedRoute>} />
             <Route path="/tasks" element={<ProtectedRoute><AppLayout><Tasks /></AppLayout></ProtectedRoute>} />
             <Route path="/tasks/new" element={<ProtectedRoute><AppLayout><TaskDetail /></AppLayout></ProtectedRoute>} />
