@@ -14,8 +14,9 @@ import { TaskAttachments } from "@/components/TaskAttachments";
 import { TaskNotesHistory } from "@/components/tasks/TaskNotesHistory";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Calendar } from "@/components/ui/calendar";
-import { ArrowLeft, CalendarIcon, CheckSquare, FileText } from "lucide-react";
+import { ArrowLeft, CalendarIcon, CheckSquare, ChevronsUpDown, Check, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const STATUS_OPTIONS = [
@@ -324,35 +325,95 @@ export default function TaskDetail() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label className="font-body text-xs uppercase tracking-wide text-muted-foreground">Cotação vinculada</Label>
-            <Select
-              value={form.quote_id}
-              onValueChange={(v) => setForm({ ...form, quote_id: v, client_id: v !== "none" ? "none" : form.client_id })}
-            >
-              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Nenhuma" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Nenhuma</SelectItem>
-                {quotes.map((q: any) => (
-                  <SelectItem key={q.id} value={q.id}>
-                    {q.clients?.full_name ?? "—"} — {q.destination ?? q.title ?? "Sem destino"}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  className="mt-1.5 w-full justify-between font-body font-normal"
+                >
+                  <span className="truncate">
+                    {form.quote_id === "none"
+                      ? "Nenhuma"
+                      : (() => {
+                          const q = quotes.find((x: any) => x.id === form.quote_id);
+                          return q ? `${q.clients?.full_name ?? "—"} — ${q.destination ?? q.title ?? "Sem destino"}` : "Nenhuma";
+                        })()}
+                  </span>
+                  <ChevronsUpDown size={14} className="opacity-50 shrink-0" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" align="start">
+                <Command>
+                  <CommandInput placeholder="Buscar cotação..." />
+                  <CommandList>
+                    <CommandEmpty>Nenhum resultado.</CommandEmpty>
+                    <CommandGroup>
+                      <CommandItem value="nenhuma" onSelect={() => setForm({ ...form, quote_id: "none" })}>
+                        <Check size={14} className={cn("mr-2", form.quote_id === "none" ? "opacity-100" : "opacity-0")} />
+                        Nenhuma
+                      </CommandItem>
+                      {quotes.map((q: any) => {
+                        const label = `${q.clients?.full_name ?? "—"} — ${q.destination ?? q.title ?? "Sem destino"}`;
+                        return (
+                          <CommandItem
+                            key={q.id}
+                            value={label}
+                            onSelect={() => setForm({ ...form, quote_id: q.id, client_id: "none" })}
+                          >
+                            <Check size={14} className={cn("mr-2", form.quote_id === q.id ? "opacity-100" : "opacity-0")} />
+                            {label}
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
           <div>
             <Label className="font-body text-xs uppercase tracking-wide text-muted-foreground">Cliente vinculado</Label>
-            <Select
-              value={form.client_id}
-              onValueChange={(v) => setForm({ ...form, client_id: v, quote_id: v !== "none" ? "none" : form.quote_id })}
-            >
-              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Nenhum" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Nenhum</SelectItem>
-                {clients.map((c: any) => (
-                  <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  className="mt-1.5 w-full justify-between font-body font-normal"
+                >
+                  <span className="truncate">
+                    {form.client_id === "none"
+                      ? "Nenhum"
+                      : (clients.find((c: any) => c.id === form.client_id)?.full_name ?? "Nenhum")}
+                  </span>
+                  <ChevronsUpDown size={14} className="opacity-50 shrink-0" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" align="start">
+                <Command>
+                  <CommandInput placeholder="Buscar cliente..." />
+                  <CommandList>
+                    <CommandEmpty>Nenhum resultado.</CommandEmpty>
+                    <CommandGroup>
+                      <CommandItem value="nenhum" onSelect={() => setForm({ ...form, client_id: "none" })}>
+                        <Check size={14} className={cn("mr-2", form.client_id === "none" ? "opacity-100" : "opacity-0")} />
+                        Nenhum
+                      </CommandItem>
+                      {clients.map((c: any) => (
+                        <CommandItem
+                          key={c.id}
+                          value={c.full_name}
+                          onSelect={() => setForm({ ...form, client_id: c.id, quote_id: "none" })}
+                        >
+                          <Check size={14} className={cn("mr-2", form.client_id === c.id ? "opacity-100" : "opacity-0")} />
+                          {c.full_name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
