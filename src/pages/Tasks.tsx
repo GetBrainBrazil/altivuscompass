@@ -33,7 +33,7 @@ type KanbanStage = { id: string; label: string; accentClass: string; dotClass: s
 const KANBAN_STAGES: KanbanStage[] = [
   { id: "pending", label: "Aguardando Início", accentClass: "border-l-warning", dotClass: "bg-warning" },
   { id: "in_progress", label: "Em Andamento", accentClass: "border-l-soft-blue", dotClass: "bg-soft-blue" },
-  { id: "review", label: "Em Revisão", accentClass: "border-l-purple-500", dotClass: "bg-purple-500" },
+  { id: "review", label: "Suspensa", accentClass: "border-l-muted-foreground", dotClass: "bg-muted-foreground" },
   { id: "completed", label: "Concluída", accentClass: "border-l-success", dotClass: "bg-success" },
 ];
 
