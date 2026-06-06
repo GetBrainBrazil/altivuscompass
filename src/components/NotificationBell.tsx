@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bell, Check, Sparkles, ListTodo } from "lucide-react";
+import { Bell, Check, Sparkles, ListTodo, CheckSquare } from "lucide-react";
 
 type GenericItem = {
   kind: "reminder" | "notification";
@@ -150,6 +150,9 @@ export function NotificationBell() {
   const renderIcon = (item: GenericItem) => {
     if (item.kind === "notification" && item.type === "lead_promoted") {
       return <Sparkles size={14} className="text-sky-600" strokeWidth={1.5} />;
+    }
+    if (item.kind === "notification" && item.type === "task_assigned") {
+      return <CheckSquare size={14} className="text-sky-600" strokeWidth={1.5} />;
     }
     return <ListTodo size={14} className="text-muted-foreground" strokeWidth={1.5} />;
   };
