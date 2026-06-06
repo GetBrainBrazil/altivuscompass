@@ -190,7 +190,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       // Fetch linked client details
       if (allRels.length === 0) return [];
       const ids = allRels.map((r) => r.linked_client_id);
-      const { data: clientsData } = await supabase.from("clients").select("id, full_name, birth_date, nationality, city, state").in("id", ids);
+      const { data: clientsData } = await supabase.from("clients").select("id, full_name, birth_date, nationality, city, state, cpf_cnpj").in("id", ids);
       
       // Fetch valid passports for linked clients
       const today = new Date().toISOString().slice(0, 10);
