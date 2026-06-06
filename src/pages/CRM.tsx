@@ -889,6 +889,108 @@ export default function CRM() {
     }
   }, [opsColumns]);
 
+  // ─── Etapa 1: persistência do pós-venda no banco (ops_cards) ──────────
+  // Importa o localStorage uma vez (idempotente, não destrutivo), hidrata
+  // a partir do banco, e mantém sincronização via Realtime + debounce.
+  const opsDbReadyRef = useRef(false);
+  const opsHydrationRef = useRef(false);
+  const opsPersistTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { migrateOpsCardsFromLocalStorage } = await import("@/lib/ops-cards-migration");
+        const { fetchActiveOpsCards, rowToCard } = await import("@/lib/ops-cards-repo");
+        const res = await migrateOpsCardsFromLocalStorage();
+        if (res.ran && res.migratedCount > 0) {
+          toast.success(`Pós-venda sincronizado com o servidor (${res.migratedCount} cards).`);
+        }
+        if (res.skippedCount > 0) {
+          console.warn("[ops-migration] cards preservados (já existiam no servidor):", res.skippedIds);
+        }
+        const rows = await fetchActiveOpsCards();
+        if (cancelled) return;
+        opsHydrationRef.current = true;
+        setOpsColumns((prev) => {
+          const byCol: Record<string, KanbanCardData[]> = {};
+          rows.forEach((r) => {
+            (byCol[r.column_id] ||= []).push(rowToCard(r));
+          });
+          return prev.map((col) => {
+            // mantém cards não-manuais (lead-/quote-) que o CRM injeta em paralelo
+            const keep = col.cards.filter((c) => !c.id.startsWith("manual-ops-"));
+            const fromDb = byCol[col.id] || [];
+            return { ...col, cards: [...fromDb, ...keep] };
+          });
+        });
+        opsDbReadyRef.current = true;
+      } catch (err) {
+        console.error("[ops-cards] hydration failed:", err);
+      }
+    })();
+
+    // Realtime
+    const channel = supabase
+      .channel("ops_cards_changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "ops_cards" },
+        async () => {
+          try {
+            const { fetchActiveOpsCards, rowToCard } = await import("@/lib/ops-cards-repo");
+            const rows = await fetchActiveOpsCards();
+            if (cancelled) return;
+            opsHydrationRef.current = true;
+            setOpsColumns((prev) => {
+              const byCol: Record<string, KanbanCardData[]> = {};
+              rows.forEach((r) => {
+                (byCol[r.column_id] ||= []).push(rowToCard(r));
+              });
+              return prev.map((col) => {
+                const keep = col.cards.filter((c) => !c.id.startsWith("manual-ops-"));
+                const fromDb = byCol[col.id] || [];
+                return { ...col, cards: [...fromDb, ...keep] };
+              });
+            });
+          } catch (e) {
+            console.error("[ops-cards] realtime refetch error:", e);
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Debounced sync: replica opsColumns no banco (apenas cards manual-ops-).
+  useEffect(() => {
+    if (!opsDbReadyRef.current) return;
+    if (opsHydrationRef.current) {
+      // Mudanças vindas da hidratação não disparam persistência.
+      opsHydrationRef.current = false;
+      return;
+    }
+    if (opsPersistTimerRef.current) window.clearTimeout(opsPersistTimerRef.current);
+    opsPersistTimerRef.current = window.setTimeout(async () => {
+      try {
+        const { bulkPersistColumns } = await import("@/lib/ops-cards-repo");
+        await bulkPersistColumns(
+          opsColumns.map((c) => ({ id: c.id as any, cards: c.cards })),
+        );
+      } catch (e) {
+        console.error("[ops-cards] persist error:", e);
+      }
+    }, 400);
+    return () => {
+      if (opsPersistTimerRef.current) window.clearTimeout(opsPersistTimerRef.current);
+    };
+  }, [opsColumns]);
+
   // Consome card pendente criado em /crm/ops/new
   useEffect(() => {
     try {
