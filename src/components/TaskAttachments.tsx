@@ -137,8 +137,16 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
     window.open(data.signedUrl, "_blank");
   };
 
-  const handleDeleteClick = (id: string, path: string, name: string, pending?: boolean, pendingIndex?: number) => {
-    setConfirmDelete({ id, path, name, pending, pendingIndex });
+  const handleDeleteClick = (a: any, pendingIndex?: number) => {
+    setConfirmDelete({
+      id: a.id,
+      path: a.file_path || "",
+      name: a.file_name,
+      type: a.file_type,
+      pending: !!a._pending,
+      pendingIndex,
+      file: a._file,
+    });
   };
 
   const confirmDeleteAction = async () => {
