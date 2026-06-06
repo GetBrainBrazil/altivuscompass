@@ -901,18 +901,22 @@ async function handleLeadCapture(
 ) {
   const { phone, senderName, messageText, isTextMsg } = ctx
 
-  // 1) Lookup contact by phone (matches by digits, ignoring formatting)
+  // 1) Lookup contact by phone — prioriza client_phones (DDD+número),
+  //    senão cai no match clássico por sufixo em contacts.phone.
   const phoneDigits = phone.replace(/\D/g, '')
   let matchedContact: any = null
   if (phoneDigits) {
-    const { data: candidates } = await supabase
-      .from('contacts')
-      .select('id, full_name, phone, level, client_id, lead_id')
-      .ilike('phone', `%${phoneDigits.slice(-9)}%`)
-      .limit(10)
-    matchedContact = (candidates || []).find((c: any) =>
-      (c.phone || '').replace(/\D/g, '').endsWith(phoneDigits.slice(-9)),
-    ) || null
+    matchedContact = await matchContactByClientPhones(supabase, phone)
+    if (!matchedContact) {
+      const { data: candidates } = await supabase
+        .from('contacts')
+        .select('id, full_name, phone, level, client_id, lead_id')
+        .ilike('phone', `%${phoneDigits.slice(-9)}%`)
+        .limit(10)
+      matchedContact = (candidates || []).find((c: any) =>
+        (c.phone || '').replace(/\D/g, '').endsWith(phoneDigits.slice(-9)),
+      ) || null
+    }
   }
 
   // 2) Find or create the lead-capture session for this phone
@@ -1190,7 +1194,100 @@ async function handleLeadCapture(
     console.error('[collected_data persist] error:', e)
   }
 
-  // ===== HANDOFF: a IA detectou que precisa de atendimento humano =====
+  // ===== DENY_IDENTITY: o usuário disse que não é o cliente associado ao número =====
+  // Política: NUNCA alteramos client_phones automaticamente. Apenas:
+  //  1) Desvinculamos a conversa atual do cliente
+  //  2) Criamos um novo Lead (prospect) para esse número
+  //  3) Notificamos admins/managers para revisarem o telefone na ficha do cliente
+  if (ai.extracted?.deny_identity === true && matchedContact?.client_id) {
+    try {
+      const clientId = matchedContact.client_id
+      const previousName = matchedContact.full_name || 'o cliente'
+      const nowIso = new Date().toISOString()
+
+      // 1) Cria novo Lead/Prospect para o número (sem vínculo com o cliente)
+      const cleanName = formatPhonePlaceholder(phone)
+      const { data: newLead } = await supabase
+        .from('leads')
+        .insert({
+          full_name: cleanName,
+          phone,
+          source: 'whatsapp_ai',
+          status: 'new',
+          ai_collected_data: { whatsapp_sender_name: senderName || null, deny_identity_from_client_id: clientId },
+        })
+        .select('id, full_name')
+        .single()
+
+      const newLeadId = newLead?.id ?? null
+
+      // 2) Encontra o novo contact criado pelo trigger e desvincula a conversa do cliente
+      let newContactId: string | null = null
+      if (newLeadId) {
+        const { data: newContact } = await supabase
+          .from('contacts')
+          .select('id')
+          .eq('lead_id', newLeadId)
+          .maybeSingle()
+        newContactId = newContact?.id ?? null
+      }
+
+      const { data: convoRow } = await supabase
+        .from('wa_conversations')
+        .update({
+          client_id: null,
+          contact_id: newContactId,
+          lead_id: newLeadId,
+          contact_name: cleanName,
+          status: 'ai',
+          updated_at: nowIso,
+        })
+        .eq('phone', phone)
+        .select('id')
+        .maybeSingle()
+
+      // 3) Notifica admins/managers (sem botão de atalho — operador edita na ficha)
+      const { data: staff } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('role', ['admin', 'manager'])
+      const recipients = Array.from(new Set((staff || []).map((s: any) => s.user_id)))
+      if (recipients.length > 0) {
+        const convoLink = convoRow?.id ? `/whatsapp?conversation=${convoRow.id}` : '/whatsapp'
+        const notifRows = recipients.map((uid) => ({
+          user_id: uid,
+          type: 'phone_identity_change',
+          title: 'Telefone de cliente pode estar desatualizado',
+          message: `${previousName} aparentemente não usa mais o número ${formatPhonePlaceholder(phone)}, conforme conversa no WhatsApp. Revise os telefones na ficha do cliente.`,
+          link: `/clients?id=${clientId}`,
+          metadata: {
+            client_id: clientId,
+            phone,
+            conversation_id: convoRow?.id || null,
+            conversation_link: convoLink,
+            new_lead_id: newLeadId,
+          },
+        }))
+        await supabase.from('notifications').insert(notifRows)
+      }
+
+      console.log(`[deny_identity] número ${phone} desvinculado do cliente ${clientId}; novo lead ${newLeadId}`)
+
+      // Reseta a sessão para um novo lead capture limpo
+      sessionState.messages = [...(sessionState.messages || []), { role: 'assistant', content: ai.reply }]
+      await supabase.from('whatsapp_sessions').update({
+        state: { messages: [], sender_name: senderName },
+        lead_id: newLeadId,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      }).eq('id', leadSession!.id)
+
+      await sendZapiText(zapiInstanceId, zapiToken, zapiSecurityToken, phone, ai.reply)
+      return { status: 'identity_denied', lead_id: newLeadId }
+    } catch (e) {
+      console.error('[deny_identity] erro:', e)
+    }
+  }
+
   // Safety net: se a IA prometeu que um humano entrará em contato (sem marcar
   // escalate_to_human), forçamos o handoff para que admins/managers sejam
   // notificados — caso contrário o cliente fica esperando ninguém.
@@ -1415,6 +1512,7 @@ async function callLeadCaptureAI(
   const clientPrompt = `Você é um(a) consultor(a) de viagens da **Altivus Turismo** atendendo um(a) CLIENTE JÁ EXISTENTE pelo WhatsApp.
 
 Nome do cliente: ${clientContext?.name || senderName}
+Primeiro nome: ${clientFirstName || '—'}
 
 ${contextBlock}
 
@@ -1425,13 +1523,15 @@ Regras OBRIGATÓRIAS:
 4. Se houver última viagem registrada, pode mencionar de leve ("espero que tenha sido incrível!") sem ser invasivo.
 5. Use português brasileiro, tom premium e próximo. Emojis com moderação.
 6. Mantenha a resposta curta (máx 3 linhas).
+7. **IMPORTANTE — IDENTIDADE**: SEMPRE, ao final da PRIMEIRA mensagem desta conversa (e em qualquer menu numerado que você ofereça), inclua de forma discreta a opção: *"Caso você não seja o(a) ${clientFirstName}, responda 'não sou ${clientFirstName}'."* — assim contatos novos que herdaram o número conseguem se identificar.
+8. **DENY_IDENTITY**: se o usuário responder de forma clara que NÃO é o(a) ${clientFirstName} (ex.: "não sou ${clientFirstName}", "esse número é meu agora", "${clientFirstName} não está mais nesse número", "sou outra pessoa"), defina **deny_identity=true** no JSON. Sua resposta deve então se desculpar brevemente, dar boas-vindas e pedir o nome — você passará a tratá-lo(a) como novo contato.
 
 Hoje é ${today}.
 
 **FORMATO DE RESPOSTA OBRIGATÓRIO**:
 Responda primeiro a mensagem em texto natural. Depois, em uma linha separada no FINAL, retorne EXATAMENTE este bloco JSON (use null para campos não mencionados nesta mensagem):
 
-###JSON###{"full_name":null,"email":null,"destination":null,"travel_date_start":null,"travel_date_end":null,"flexible_dates":null,"flexible_dates_description":null,"travelers_count":null,"budget_estimate":null,"preferences":null,"ai_summary":null,"extras":{},"escalate_to_human":false,"escalation_reason":null}`
+###JSON###{"full_name":null,"email":null,"destination":null,"travel_date_start":null,"travel_date_end":null,"flexible_dates":null,"flexible_dates_description":null,"travelers_count":null,"budget_estimate":null,"preferences":null,"ai_summary":null,"extras":{},"escalate_to_human":false,"escalation_reason":null,"deny_identity":false}`
 
   const leadPrompt = `Você é um(a) consultor(a) de viagens da **Altivus Turismo** atendendo um contato pelo WhatsApp.
 
@@ -1543,6 +1643,40 @@ Regras do JSON:
  * Roda ANTES das checagens de pausa/humano para garantir que cada número que chega
  * vire registro no CRM e apareça nos kanbans corretos.
  */
+/**
+ * Procura o telefone em client_phones por DDD+número (últimos 11 dígitos)
+ * e retorna o contact vinculado ao cliente. Tem prioridade absoluta sobre
+ * qualquer match em contacts.phone — client_phones é a fonte de verdade dos
+ * telefones do cliente, gerenciada manualmente na ficha.
+ */
+async function matchContactByClientPhones(
+  supabase: any,
+  phone: string,
+): Promise<any | null> {
+  const digits = (phone || '').replace(/\D/g, '')
+  if (digits.length < 10) return null
+  const tail11 = digits.slice(-11)
+  const tail10 = digits.slice(-10)
+  const { data: phones } = await supabase
+    .from('client_phones')
+    .select('client_id, phone')
+    .or(`phone.ilike.%${tail11}%,phone.ilike.%${tail10}%`)
+    .limit(50)
+  const hit = (phones || []).find((p: any) => {
+    const d = (p.phone || '').replace(/\D/g, '')
+    return d.endsWith(tail11) || d.endsWith(tail10)
+  })
+  if (!hit) return null
+  const { data: contact } = await supabase
+    .from('contacts')
+    .select('id, full_name, phone, level, client_id, lead_id')
+    .eq('client_id', hit.client_id)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+  return contact || null
+}
+
 async function ensureContactForPhone(
   supabase: any,
   phone: string,
@@ -1560,6 +1694,9 @@ async function ensureContactForPhone(
 
   const tail = phoneDigits.slice(-9)
 
+  // 0) Match prioritário em client_phones (fonte de verdade do CRM)
+  const clientMatch = await matchContactByClientPhones(supabase, phone)
+
   // 1) Procura contact existente pelo final do telefone (ignora formatação)
   const { data: candidates } = await supabase
     .from('contacts')
@@ -1567,7 +1704,7 @@ async function ensureContactForPhone(
     .ilike('phone', `%${tail}%`)
     .limit(10)
 
-  const matched = (candidates || []).find((c: any) =>
+  const matched = clientMatch || (candidates || []).find((c: any) =>
     (c.phone || '').replace(/\D/g, '').endsWith(tail),
   )
 
