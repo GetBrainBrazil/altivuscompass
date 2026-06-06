@@ -128,6 +128,19 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
   const [copyClientSearch, setCopyClientSearch] = useState("");
   const [copyPassengerIds, setCopyPassengerIds] = useState<Set<string>>(new Set());
 
+  // Unified "+ Adicionar viajante" state
+  const [addDialog, setAddDialog] = useState(false);
+  const [addSearch, setAddSearch] = useState("");
+  // Pending link confirmation (after selecting a client or passenger from search)
+  const [pendingLink, setPendingLink] = useState<
+    | { kind: "client"; clientId: string; clientName: string }
+    | { kind: "passenger"; passenger: any }
+    | null
+  >(null);
+  const [pendingAtoB, setPendingAtoB] = useState<string>("other"); // current is ___ of selected
+  const [pendingBtoA, setPendingBtoA] = useState<string>("other"); // selected is ___ of current
+
+
   // Fetch passengers
   const { data: passengers = [] } = useQuery({
     queryKey: ["client-passengers", clientId],
@@ -216,8 +229,21 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       const { data } = await supabase.from("clients").select("id, full_name, city, state, cpf_cnpj, birth_date").order("full_name");
       return data ?? [];
     },
-    enabled: linkDialog || copyDialog,
+    enabled: linkDialog || copyDialog || addDialog,
   });
+
+  // Current client name (for bidirectional labels)
+  const { data: currentClient } = useQuery({
+    queryKey: ["client-name", clientId],
+    queryFn: async () => {
+      if (!clientId) return null;
+      const { data } = await supabase.from("clients").select("id, full_name").eq("id", clientId).single();
+      return data;
+    },
+    enabled: !!clientId,
+  });
+
+
 
   // Fetch ALL passengers across clients (used by copy dialog).
   // We filter out passengers that already correspond to a client (by CPF or by name+birth_date).
@@ -231,7 +257,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       if (error) throw error;
       return data ?? [];
     },
-    enabled: copyDialog,
+    enabled: copyDialog || addDialog,
   });
 
   const allPassengersNotClients = useMemo(() => {
@@ -557,6 +583,65 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
 
+  // Unified add traveler: handles linking an existing client OR copying an existing passenger,
+  // capturing the bidirectional relationship.
+  const addTravelerMutation = useMutation({
+    mutationFn: async () => {
+      if (!clientId || !pendingLink) return;
+      if (pendingLink.kind === "client") {
+        // Compute custom inverse only if user changed B→A to something other than auto-inverse
+        const autoInverse = INVERSE_RELATIONSHIP[pendingAtoB] || "other";
+        const customInverse = pendingBtoA !== autoInverse ? pendingBtoA : null;
+        const { error } = await supabase.from("client_relationships").insert({
+          client_id_a: clientId,
+          client_id_b: pendingLink.clientId,
+          relationship_type: pendingAtoB as any,
+          relationship_label: customInverse,
+        });
+        if (error) throw error;
+        const currentName = currentClient?.full_name ?? "Desconhecido";
+        await logAuditEvent({
+          action: "create",
+          tableName: "client_relationships",
+          recordLabel: `${currentName} ↔ ${pendingLink.clientName}`,
+          newData: {
+            vínculo: `${currentName} ↔ ${pendingLink.clientName}`,
+            tipo_relacionamento: pendingAtoB,
+            inverso_customizado: customInverse,
+            ficha_origem: currentName,
+          },
+        });
+      } else {
+        const p = pendingLink.passenger;
+        const { error } = await supabase.from("passengers").insert({
+          client_id: clientId,
+          full_name: p.full_name,
+          birth_date: p.birth_date || null,
+          nationality: p.nationality || null,
+          passport_number: p.passport_number || null,
+          passport_expiry: p.passport_expiry || null,
+          notes: p.notes || null,
+          relationship_type: (pendingBtoA || null) as any,
+        });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast({ title: pendingLink?.kind === "client" ? "Vínculo criado" : "Passageiro adicionado" });
+      qc.invalidateQueries({ queryKey: ["client-relationships", clientId] });
+      qc.invalidateQueries({ queryKey: ["client-passengers", clientId] });
+      qc.invalidateQueries({ queryKey: ["all-passengers-cross-client"] });
+      setPendingLink(null);
+      setAddDialog(false);
+      setAddSearch("");
+      setPendingAtoB("other");
+      setPendingBtoA("other");
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+
+
   const openPassengerForm = (p?: any) => {
     if (p) {
       setEditingPassenger(p);
@@ -574,8 +659,10 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
 
   const sortedRelationships = useMemo(() => {
     return relationships.map((r: any) => {
+      // When viewed from the inverted side, prefer custom inverse (relationship_label) if set,
+      // otherwise fall back to the auto-inverse table.
       const displayType = r.inverted
-        ? (INVERSE_RELATIONSHIP[r.relationship_type] || r.relationship_type)
+        ? (r.relationship_label || INVERSE_RELATIONSHIP[r.relationship_type] || r.relationship_type)
         : r.relationship_type;
       return {
         ...r,
@@ -641,21 +728,15 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => { setCopyDialog(true); setCopyClientSearch(""); setCopyPassengerIds(new Set()); }}>
-                    <Copy className="h-3 w-3 mr-1" />Copiar passageiro
+                  <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => { setAddDialog(true); setAddSearch(""); setPendingLink(null); setPendingAtoB("other"); setPendingBtoA("other"); }}>
+                    <Plus className="h-3 w-3 mr-1" />Adicionar viajante
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
-                  Lista apenas passageiros que ainda não foram cadastrados como clientes próprios. Cada passageiro aparece com o cliente de origem ao lado.
+                  Comece digitando o nome. O sistema busca entre seus clientes e passageiros existentes — se não encontrar, você cadastra um novo passageiro deste cliente.
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => { setLinkDialog(true); setLinkSearch(""); setSelectedLinkClient(null); setLinkRelType("other"); }}>
-              <Link2 className="h-3 w-3 mr-1" />Vincular Cliente
-            </Button>
-            <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => openPassengerForm()}>
-              <Plus className="h-3 w-3 mr-1" />Adicionar
-            </Button>
           </div>
         </div>
 
@@ -849,48 +930,8 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         </DialogContent>
       </Dialog>
 
-      {/* Link client dialog */}
-      <Dialog open={linkDialog} onOpenChange={(o) => { if (!o) setLinkDialog(false); }}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="font-display">Vincular Cliente Existente</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-3">
-            <div>
-              <Label className="font-body text-xs">Buscar cliente</Label>
-              <Input value={linkSearch} onChange={(e) => setLinkSearch(e.target.value)} placeholder="Nome do cliente..." className="h-9" />
-            </div>
-            <div className="max-h-48 overflow-y-auto border border-border/50 rounded-lg">
-              {filteredLinkClients.length === 0 ? (
-                <p className="p-3 text-xs text-muted-foreground font-body">Nenhum cliente encontrado.</p>
-              ) : (
-                filteredLinkClients.slice(0, 20).map((c: any) => (
-                  <button key={c.id} type="button"
-                    className={`w-full text-left px-3 py-2 text-sm font-body hover:bg-muted/50 transition-colors ${selectedLinkClient === c.id ? "bg-primary/10 text-primary" : "text-foreground"}`}
-                    onClick={() => setSelectedLinkClient(c.id)}>
-                    <span className="font-medium">{c.full_name}</span>
-                    {c.city && <span className="text-xs text-muted-foreground ml-2">{c.city}{c.state ? `, ${c.state}` : ""}</span>}
-                  </button>
-                ))
-              )}
-            </div>
-            <div>
-              <Label className="font-body text-xs">Tipo de vínculo</Label>
-              <Select value={linkRelType} onValueChange={setLinkRelType}>
-                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {Object.entries(RELATIONSHIP_TYPES).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>{v}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button onClick={() => linkClientMutation.mutate()} disabled={!selectedLinkClient || linkClientMutation.isPending} className="font-body">
-              {linkClientMutation.isPending ? "Vinculando..." : "Vincular"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+
+
 
       {/* Promote dialog */}
       <Dialog open={!!promotePassenger} onOpenChange={(o) => { if (!o) setPromotePassenger(null); }}>
@@ -981,90 +1022,203 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       </Dialog>
 
 
-      <Dialog open={copyDialog} onOpenChange={(o) => { if (!o) { setCopyDialog(false); setCopyPassengerIds(new Set()); setCopyClientSearch(""); } }}>
-        <DialogContent className="max-w-2xl">
+      {/* Unified Add Traveler dialog */}
+      <Dialog open={addDialog} onOpenChange={(o) => { if (!o) { setAddDialog(false); setAddSearch(""); setPendingLink(null); } }}>
+        <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle className="font-display">Copiar passageiro</DialogTitle>
+            <DialogTitle className="font-display">Adicionar viajante</DialogTitle>
             <DialogDescription className="font-body">
-              Apenas passageiros que ainda não foram cadastrados como clientes próprios. O cliente de origem é exibido ao lado de cada passageiro.
+              Comece digitando o nome. Buscamos entre seus clientes e passageiros de outros clientes — se não encontrar, cadastre como novo passageiro deste cliente.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3">
             <div>
-              <Label className="font-body text-xs">Buscar passageiro ou cliente de origem</Label>
+              <Label className="font-body text-xs">Nome completo</Label>
               <Input
-                value={copyClientSearch}
-                onChange={(e) => setCopyClientSearch(e.target.value)}
-                placeholder="Nome do passageiro ou cliente..."
+                value={addSearch}
+                onChange={(e) => setAddSearch(e.target.value)}
+                placeholder="Digite o nome..."
                 className="h-9"
                 autoFocus
               />
             </div>
-            {filteredCopyPassengers.length === 0 ? (
-              <p className="text-xs text-muted-foreground font-body italic p-3 border border-border/50 rounded-lg">
-                Nenhum passageiro disponível para copiar.
-              </p>
-            ) : (
-              <div className="border border-border/50 rounded-lg overflow-hidden max-h-80 overflow-y-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border/50 bg-muted/30">
-                      <th className="p-2 w-8">
-                        <Checkbox
-                          checked={copyPassengerIds.size === filteredCopyPassengers.length && filteredCopyPassengers.length > 0}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setCopyPassengerIds(new Set(filteredCopyPassengers.map((p: any) => p.id)));
-                            } else {
-                              setCopyPassengerIds(new Set());
-                            }
+            {(() => {
+              const q = addSearch.trim().toLowerCase();
+              const linkedClientIds = new Set(relationships.map((r: any) => r.linked_client_id));
+              const clientMatches = q.length >= 2
+                ? (allClients as any[]).filter((c) =>
+                    c.id !== clientId &&
+                    !linkedClientIds.has(c.id) &&
+                    String(c.full_name || "").toLowerCase().includes(q),
+                  ).slice(0, 8)
+                : [];
+              const passengerMatches = q.length >= 2
+                ? (allPassengersNotClients as any[]).filter((p) =>
+                    String(p.full_name || "").toLowerCase().includes(q),
+                  ).slice(0, 8)
+                : [];
+              const hasResults = clientMatches.length + passengerMatches.length > 0;
+              return (
+                <div className="border border-border/50 rounded-lg overflow-hidden max-h-80 overflow-y-auto">
+                  {q.length < 2 ? (
+                    <p className="p-3 text-xs text-muted-foreground font-body italic">Digite ao menos 2 caracteres para buscar…</p>
+                  ) : (
+                    <>
+                      {clientMatches.length > 0 && (
+                        <div>
+                          <div className="px-3 py-1.5 text-[10px] uppercase tracking-widest text-muted-foreground font-body bg-muted/30">Clientes</div>
+                          {clientMatches.map((c: any) => (
+                            <button
+                              key={`c-${c.id}`}
+                              type="button"
+                              className="w-full text-left px-3 py-2 text-sm font-body hover:bg-muted/50 flex items-center justify-between gap-2"
+                              onClick={() => {
+                                setPendingLink({ kind: "client", clientId: c.id, clientName: c.full_name });
+                                setPendingAtoB("other");
+                                setPendingBtoA("other");
+                              }}
+                            >
+                              <div className="min-w-0">
+                                <div className="text-foreground font-medium truncate">{c.full_name}</div>
+                                <div className="text-[11px] text-muted-foreground truncate">
+                                  {[c.cpf_cnpj ? maskCPF(c.cpf_cnpj) : null, c.birth_date ? new Date(c.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : null, c.city].filter(Boolean).join(" · ") || "—"}
+                                </div>
+                              </div>
+                              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary text-primary-foreground font-body shrink-0">Cliente</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {passengerMatches.length > 0 && (
+                        <div>
+                          <div className="px-3 py-1.5 text-[10px] uppercase tracking-widest text-muted-foreground font-body bg-muted/30 border-t border-border/50">Passageiros de outros clientes</div>
+                          {passengerMatches.map((p: any) => (
+                            <button
+                              key={`p-${p.id}`}
+                              type="button"
+                              className="w-full text-left px-3 py-2 text-sm font-body hover:bg-muted/50 flex items-center justify-between gap-2"
+                              onClick={() => {
+                                setPendingLink({ kind: "passenger", passenger: p });
+                                setPendingAtoB("other");
+                                setPendingBtoA(p.relationship_type || "other");
+                              }}
+                            >
+                              <div className="min-w-0">
+                                <div className="text-foreground font-medium truncate">{p.full_name}</div>
+                                <div className="text-[11px] text-muted-foreground truncate">
+                                  {[p.cpf ? maskCPF(p.cpf) : null, p.birth_date ? new Date(p.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : null].filter(Boolean).join(" · ")}
+                                  {p.client?.full_name ? <> · de <strong>{p.client.full_name}</strong></> : null}
+                                </div>
+                              </div>
+                              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-body shrink-0">Passageiro</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <div className="border-t border-border/50">
+                        <button
+                          type="button"
+                          className="w-full text-left px-3 py-2.5 text-sm font-body hover:bg-primary/5 text-primary flex items-center gap-2"
+                          onClick={() => {
+                            const name = addSearch.trim();
+                            setAddDialog(false);
+                            setAddSearch("");
+                            setEditingPassenger(null);
+                            setPassengerForm({ full_name: name, cpf: "", birth_date: "", nationality: "", passport_number: "", passport_expiry: "", notes: "", relationship_type: "" });
+                            setPassengerDialog(true);
                           }}
-                        />
-                      </th>
-                      <th className="text-left p-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Passageiro</th>
-                      <th className="text-left p-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Cliente de origem</th>
-                      <th className="text-left p-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Nascimento</th>
-                      <th className="text-left p-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Passaporte</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/30">
-                    {filteredCopyPassengers.map((p: any) => (
-                      <tr key={p.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => {
-                        setCopyPassengerIds(prev => {
-                          const next = new Set(prev);
-                          if (next.has(p.id)) next.delete(p.id); else next.add(p.id);
-                          return next;
-                        });
-                      }}>
-                        <td className="p-2">
-                          <Checkbox checked={copyPassengerIds.has(p.id)} onCheckedChange={() => {
-                            setCopyPassengerIds(prev => {
-                              const next = new Set(prev);
-                              if (next.has(p.id)) next.delete(p.id); else next.add(p.id);
-                              return next;
-                            });
-                          }} />
-                        </td>
-                        <td className="p-2 text-sm font-body text-foreground">{p.full_name}</td>
-                        <td className="p-2 text-xs font-body text-muted-foreground">{p.client?.full_name || "—"}</td>
-                        <td className="p-2 text-sm font-body text-foreground">{p.birth_date ? new Date(p.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
-                        <td className="p-2 text-sm font-body text-foreground">{p.passport_number || "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            <Button
-              onClick={() => copyPassengersMutation.mutate()}
-              disabled={copyPassengerIds.size === 0 || copyPassengersMutation.isPending}
-              className="font-body"
-            >
-              {copyPassengersMutation.isPending ? "Copiando..." : `Copiar ${copyPassengerIds.size} passageiro(s)`}
-            </Button>
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          Cadastrar <strong className="mx-1">{addSearch.trim() || "novo viajante"}</strong> como novo passageiro deste cliente
+                        </button>
+                      </div>
+                      {!hasResults && (
+                        <p className="px-3 py-2 text-[11px] text-muted-foreground font-body italic border-t border-border/50">
+                          Nenhum cliente ou passageiro existente encontrado para "{addSearch.trim()}".
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Pending link confirmation (bidirectional) */}
+      <Dialog open={!!pendingLink} onOpenChange={(o) => { if (!o) setPendingLink(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display">
+              {pendingLink?.kind === "client" ? "Definir vínculo entre clientes" : "Adicionar passageiro existente"}
+            </DialogTitle>
+            <DialogDescription className="font-body">
+              {pendingLink?.kind === "client"
+                ? "Todo vínculo tem dois lados. Confirme como cada pessoa se relaciona com a outra."
+                : "Defina como este passageiro se relaciona com o cliente atual."}
+            </DialogDescription>
+          </DialogHeader>
+          {pendingLink && (() => {
+            const currentName = currentClient?.full_name || "Cliente atual";
+            const otherName = pendingLink.kind === "client" ? pendingLink.clientName : pendingLink.passenger.full_name;
+            const isSymmetric = ["spouse", "partner", "sibling", "other"].includes(pendingAtoB);
+            return (
+              <div className="grid gap-3">
+                {pendingLink.kind === "client" && (
+                  <div>
+                    <Label className="font-body text-xs">
+                      <strong>{currentName}</strong> é ___ de <strong>{otherName}</strong>
+                    </Label>
+                    <Select
+                      value={pendingAtoB}
+                      onValueChange={(v) => {
+                        setPendingAtoB(v);
+                        // auto-update inverse
+                        setPendingBtoA(INVERSE_RELATIONSHIP[v] || "other");
+                      }}
+                    >
+                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(RELATIONSHIP_TYPES).map(([k, v]) => (
+                          <SelectItem key={k} value={k}>{v}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <div>
+                  <Label className="font-body text-xs">
+                    <strong>{otherName}</strong> é ___ de <strong>{currentName}</strong>
+                  </Label>
+                  <Select
+                    value={pendingBtoA}
+                    onValueChange={setPendingBtoA}
+                    disabled={pendingLink.kind === "client" && isSymmetric}
+                  >
+                    <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(RELATIONSHIP_TYPES).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {pendingLink.kind === "client" && isSymmetric && (
+                    <p className="text-[10px] text-muted-foreground font-body mt-1">Vínculo simétrico — ambos os lados iguais.</p>
+                  )}
+                </div>
+                <div className="flex gap-2 justify-end pt-2">
+                  <Button type="button" variant="ghost" onClick={() => setPendingLink(null)} className="font-body">Cancelar</Button>
+                  <Button type="button" onClick={() => addTravelerMutation.mutate()} disabled={addTravelerMutation.isPending} className="font-body">
+                    {addTravelerMutation.isPending ? "Salvando..." : "Confirmar"}
+                  </Button>
+                </div>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
