@@ -190,7 +190,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       // Fetch linked client details
       if (allRels.length === 0) return [];
       const ids = allRels.map((r) => r.linked_client_id);
-      const { data: clientsData } = await supabase.from("clients").select("id, full_name, birth_date, nationality, city, state").in("id", ids);
+      const { data: clientsData } = await supabase.from("clients").select("id, full_name, birth_date, nationality, city, state, cpf_cnpj").in("id", ids);
       
       // Fetch valid passports for linked clients
       const today = new Date().toISOString().slice(0, 10);
@@ -559,8 +559,36 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     });
   }, [relationships]);
 
-  const { sorted: sortedPassengers, sort: passengerSort, toggleSort: togglePassengerSort } = useSortableData(passengers);
-  const { sorted: sortedRels, sort: relSort, toggleSort: toggleRelSort } = useSortableData(sortedRelationships);
+  // Lista unificada: passageiros + clientes vinculados em uma única tabela
+  const unifiedTravelers = useMemo(() => {
+    const fromPassengers = passengers.map((p: any) => ({
+      _kind: "passenger" as const,
+      _id: `p-${p.id}`,
+      _raw: p,
+      _name: p.full_name ?? "",
+      _relType: p.relationship_type ?? "",
+      _relLabel: p.relationship_type ? (RELATIONSHIP_TYPES[p.relationship_type] || p.relationship_type) : "",
+      _cpf: p.cpf ?? "",
+      _birth_date: p.birth_date ?? "",
+      _nationality: p.nationality ?? "",
+      _passport: p.passport_number ?? "",
+    }));
+    const fromRels = sortedRelationships.map((r: any) => ({
+      _kind: "client" as const,
+      _id: `r-${r.id}`,
+      _raw: r,
+      _name: r._name,
+      _relType: r._display_type,
+      _relLabel: r._type,
+      _cpf: r.client?.cpf_cnpj ?? "",
+      _birth_date: r._birth_date,
+      _nationality: r._nationality,
+      _passport: r._passports,
+    }));
+    return [...fromRels, ...fromPassengers];
+  }, [passengers, sortedRelationships]);
+
+  const { sorted: sortedTravelers, sort: travelerSort, toggleSort: toggleTravelerSort } = useSortableData(unifiedTravelers);
 
   if (!clientId) {
     return (
@@ -572,16 +600,19 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
 
   return (
     <div className="space-y-6 pt-3">
-      {/* ===== PASSAGEIROS ===== */}
+      {/* ===== VIAJANTES (Passageiros + Clientes Vinculados unificados) ===== */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
-            <h3 className="text-sm font-semibold font-body text-foreground">Passageiros</h3>
-            <p className="text-xs text-muted-foreground font-body">Viajantes vinculados a este cliente (sem ficha própria)</p>
+            <h3 className="text-sm font-semibold font-body text-foreground">Viajantes</h3>
+            <p className="text-xs text-muted-foreground font-body">Passageiros vinculados a este cliente e clientes com relacionamento (cônjuge, filho, etc.)</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => { setCopyDialog(true); setCopyClientSearch(""); setSelectedCopyClient(null); setCopyPassengerIds(new Set()); }}>
               <Copy className="h-3 w-3 mr-1" />Copiar de outro cliente
+            </Button>
+            <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => { setLinkDialog(true); setLinkSearch(""); setSelectedLinkClient(null); setLinkRelType("other"); }}>
+              <Link2 className="h-3 w-3 mr-1" />Vincular Cliente
             </Button>
             <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => openPassengerForm()}>
               <Plus className="h-3 w-3 mr-1" />Adicionar
@@ -589,120 +620,105 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
           </div>
         </div>
 
-        {passengers.length === 0 ? (
-          <p className="text-xs text-muted-foreground font-body italic">Nenhum passageiro cadastrado.</p>
+        {sortedTravelers.length === 0 ? (
+          <p className="text-xs text-muted-foreground font-body italic">Nenhum viajante cadastrado.</p>
         ) : (
           <div className="border border-border/50 rounded-lg overflow-hidden">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border/50 bg-muted/30">
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => togglePassengerSort("full_name")}>Nome<SortIcon columnKey="full_name" sort={passengerSort} /></th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => togglePassengerSort("relationship_type")}>Vínculo<SortIcon columnKey="relationship_type" sort={passengerSort} /></th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => togglePassengerSort("cpf")}>CPF<SortIcon columnKey="cpf" sort={passengerSort} /></th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => togglePassengerSort("birth_date")}>Nascimento<SortIcon columnKey="birth_date" sort={passengerSort} /></th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => togglePassengerSort("nationality")}>Nacionalidade<SortIcon columnKey="nationality" sort={passengerSort} /></th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => togglePassengerSort("passport_number")}>Passaporte<SortIcon columnKey="passport_number" sort={passengerSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleTravelerSort("_name")}>Nome<SortIcon columnKey="_name" sort={travelerSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleTravelerSort("_kind")}>Tipo<SortIcon columnKey="_kind" sort={travelerSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleTravelerSort("_relLabel")}>Vínculo<SortIcon columnKey="_relLabel" sort={travelerSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleTravelerSort("_cpf")}>CPF<SortIcon columnKey="_cpf" sort={travelerSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleTravelerSort("_birth_date")}>Nascimento<SortIcon columnKey="_birth_date" sort={travelerSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleTravelerSort("_nationality")}>Nacionalidade<SortIcon columnKey="_nationality" sort={travelerSort} /></th>
+                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleTravelerSort("_passport")}>Passaporte<SortIcon columnKey="_passport" sort={travelerSort} /></th>
                   <th className="p-3 w-20"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/30">
-                {sortedPassengers.map((p: any) => (
-                  <tr key={p.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => openPassengerForm(p)}>
-                    <td className="p-3 text-sm font-body text-foreground">{p.full_name}</td>
-                    <td className="p-3">
-                      {p.relationship_type ? (
-                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary font-body">
-                          {RELATIONSHIP_TYPES[p.relationship_type] || p.relationship_type}
+                {sortedTravelers.map((t: any) => {
+                  if (t._kind === "passenger") {
+                    const p = t._raw;
+                    return (
+                      <tr key={t._id} className="hover:bg-muted/20 cursor-pointer" onClick={() => openPassengerForm(p)}>
+                        <td className="p-3 text-sm font-body text-foreground">{p.full_name}</td>
+                        <td className="p-3">
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-body">
+                            Passageiro
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          {p.relationship_type ? (
+                            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary font-body">
+                              {RELATIONSHIP_TYPES[p.relationship_type] || p.relationship_type}
+                            </span>
+                          ) : <span className="text-sm text-muted-foreground">—</span>}
+                        </td>
+                        <td className="p-3 text-sm font-body text-foreground">{p.cpf ? maskCPF(p.cpf) : "—"}</td>
+                        <td className="p-3 text-sm font-body text-foreground">{p.birth_date ? new Date(p.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
+                        <td className="p-3 text-sm font-body text-foreground">{p.nationality || "—"}</td>
+                        <td className="p-3 text-sm font-body text-foreground">{p.passport_number || "—"}</td>
+                        <td className="p-3">
+                          <div className="flex gap-1">
+                            <Button type="button" variant="ghost" size="icon" className="h-7 w-7" title="Promover a Cliente"
+                              onClick={(e) => { e.stopPropagation(); setPromotePassenger(p); setPromoteRelType(p.relationship_type || "child"); }}>
+                              <UserPlus className="h-3.5 w-3.5 text-primary" />
+                            </Button>
+                            <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" title="Excluir passageiro"
+                              onClick={(e) => { e.stopPropagation(); setDeletePassengerId(p.id); }}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  }
+                  const r = t._raw;
+                  return (
+                    <tr key={t._id} className="hover:bg-muted/20 cursor-pointer" onClick={() => { setEditingRel(r); setEditRelType(r._display_type); setEditRelDialog(true); }}>
+                      <td className="p-3">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            className="text-sm font-body font-medium text-primary hover:underline"
+                            onClick={(e) => { e.stopPropagation(); onNavigateToClient(r.linked_client_id); }}
+                          >
+                            {r.client?.full_name ?? "—"}
+                          </button>
+                          <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary text-primary-foreground font-body">
+                          Cliente
                         </span>
-                      ) : <span className="text-sm text-muted-foreground">—</span>}
-                    </td>
-                    <td className="p-3 text-sm font-body text-foreground">{p.cpf ? maskCPF(p.cpf) : "—"}</td>
-                    <td className="p-3 text-sm font-body text-foreground">{p.birth_date ? new Date(p.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
-                    <td className="p-3 text-sm font-body text-foreground">{p.nationality || "—"}</td>
-                    <td className="p-3 text-sm font-body text-foreground">{p.passport_number || "—"}</td>
-                    <td className="p-3">
-                      <div className="flex gap-1">
-                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" title="Promover a Cliente"
-                          onClick={(e) => { e.stopPropagation(); setPromotePassenger(p); setPromoteRelType(p.relationship_type || "child"); }}>
-                          <UserPlus className="h-3.5 w-3.5 text-primary" />
-                        </Button>
-                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive"
-                          onClick={(e) => { e.stopPropagation(); setDeletePassengerId(p.id); }}>
+                      </td>
+                      <td className="p-3">
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary font-body">
+                          {r._type}
+                        </span>
+                      </td>
+                      <td className="p-3 text-sm font-body text-foreground">{r.client?.cpf_cnpj ? maskCPF(r.client.cpf_cnpj) : "—"}</td>
+                      <td className="p-3 text-sm font-body text-foreground">{r.client?.birth_date ? new Date(r.client.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
+                      <td className="p-3 text-sm font-body text-foreground">{r.client?.nationality || "—"}</td>
+                      <td className="p-3 text-sm font-body text-foreground">{r._passports || "—"}</td>
+                      <td className="p-3">
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" title="Desvincular cliente"
+                          onClick={(e) => { e.stopPropagation(); setDeleteRelId(r.id); }}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
       </div>
 
-      {/* ===== CLIENTES VINCULADOS ===== */}
-      <div className="space-y-3 border-t border-border/50 pt-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold font-body text-foreground">Clientes Vinculados</h3>
-            <p className="text-xs text-muted-foreground font-body">Clientes com relacionamento (cônjuge, filho, funcionário, etc.)</p>
-          </div>
-          <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => { setLinkDialog(true); setLinkSearch(""); setSelectedLinkClient(null); setLinkRelType("other"); }}>
-            <Link2 className="h-3 w-3 mr-1" />Vincular Cliente
-          </Button>
-        </div>
-
-        {relationships.length === 0 ? (
-          <p className="text-xs text-muted-foreground font-body italic">Nenhum cliente vinculado.</p>
-        ) : (
-          <div className="border border-border/50 rounded-lg overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border/50 bg-muted/30">
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_name")}>Nome<SortIcon columnKey="_name" sort={relSort} /></th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_type")}>Vínculo<SortIcon columnKey="_type" sort={relSort} /></th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_birth_date")}>Nascimento<SortIcon columnKey="_birth_date" sort={relSort} /></th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_nationality")}>Nacionalidade<SortIcon columnKey="_nationality" sort={relSort} /></th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleRelSort("_passports")}>Passaporte(s) válido(s)<SortIcon columnKey="_passports" sort={relSort} /></th>
-                  <th className="p-3 w-20"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/30">
-                {sortedRels.map((r: any) => (
-                  <tr key={r.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => { setEditingRel(r); setEditRelType(r._display_type); setEditRelDialog(true); }}>
-                    <td className="p-3">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          className="text-sm font-body font-medium text-primary hover:underline"
-                          onClick={(e) => { e.stopPropagation(); onNavigateToClient(r.linked_client_id); }}
-                        >
-                          {r.client?.full_name ?? "—"}
-                        </button>
-                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                      </div>
-                    </td>
-                    <td className="p-3">
-                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary font-body">
-                        {r._type}
-                      </span>
-                    </td>
-                    <td className="p-3 text-sm font-body text-foreground">{r.client?.birth_date ? new Date(r.client.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
-                    <td className="p-3 text-sm font-body text-foreground">{r.client?.nationality || "—"}</td>
-                    <td className="p-3 text-sm font-body text-foreground">{r._passports || "—"}</td>
-                    <td className="p-3">
-                      <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive"
-                        onClick={(e) => { e.stopPropagation(); setDeleteRelId(r.id); }}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
 
       {/* ===== DIALOGS ===== */}
 

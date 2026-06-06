@@ -1,43 +1,38 @@
-## Objetivo
+## Unificar Passageiros e Clientes Vinculados em uma única tabela
 
-Eliminar a promoção manual de Prospect → Lead → Cliente, mantendo apenas o fluxo automático (que já existe no banco). O conceito agora é:
+Atualmente a aba **Viajantes** mostra duas tabelas separadas: **Passageiros** (sem ficha) e **Clientes Vinculados** (com ficha própria). Vamos unificar em **uma só tabela** mantendo a distinção visual e funcional entre os dois tipos.
 
-- **Prospect**: alguém que entrou em contato (ou queremos contatar), sem interesse declarado.
-- **Lead**: demonstrou interesse em um produto (ex.: ao se criar uma cotação para ele).
-- **Cliente**: contratou um produto (ao concluir uma cotação como `won` / receber pagamento).
-- Fluxo é **estritamente sequencial e irreversível** (Prospect → Lead → Cliente, nunca regride, nunca pula).
+### Mudanças em `src/components/ClientTravelersTab.tsx`
 
-## O que será removido (apenas UI/rota — sem mexer em lógica de negócio)
+1. **Header único** "Viajantes" com os 3 botões à direita: `Copiar de outro cliente`, `Vincular Cliente`, `Adicionar`.
 
-1. **Pílula "Promover"** na lista de Clientes (`src/pages/Clients.tsx`, linhas ~2082-2105, incluindo o Tooltip recém-adicionado).
-2. **Botão "Promover"** na lista de Contatos (`src/pages/Contacts.tsx`, linhas ~220-233).
-3. **Página** `src/pages/PromoteContact.tsx` (rota `/contacts/:id/promote`).
-4. **Componente** `src/components/contacts/PromoteToLeadDialog.tsx` (não é referenciado em nenhum outro lugar — confirmar no commit).
-5. **Rota e import** correspondentes em `src/App.tsx` (linhas 13 e 80).
-6. Notificações com `link` apontando para `/contacts/:id/promote` (se houver) continuam válidas porque a página apenas deixará de existir; ajustaremos para apontar para `/clients?contact=:id`.
+2. **Tabela unificada** com as colunas:
+   - **Nome** — nome + ícone `ExternalLink` (clicável) quando for cliente vinculado
+   - **Tipo** — pill: `Cliente` (azul/primary) para vinculados; `Passageiro` (cinza/muted) para passageiros simples
+   - **Vínculo** — relação (Cônjuge, Filho(a), etc.)
+   - **CPF** — só passageiros têm; vinculados ficam `—` (ou poderemos buscar `cpf_cnpj` do cliente vinculado em iteração futura)
+   - **Nascimento**
+   - **Nacionalidade**
+   - **Passaporte** — passageiros: `passport_number`; vinculados: `_passports` (válidos)
+   - **Ações** — passageiros: Promover + Excluir; vinculados: Excluir vínculo
 
-## O que permanece
+3. **Linha unificada**: clique abre o editor correto:
+   - passageiro → `openPassengerForm(p)`
+   - vinculado → diálogo `editRelDialog` existente
 
-- Componentes de **promoção a Cliente** acionados por contexto de cotação (`ClientPromotionDialog`, `ClientTravelersTab`) — esses são parte do fluxo automático ao fechar cotação (captura de dados complementares dos viajantes), não são "promoção manual" de nível, então **ficam**.
-- Triggers no banco:
-  - `sync_contact_from_lead` — define `prospect` ou `lead` conforme o lead já tenha destino + datas + nº de viajantes (interesse demonstrado).
-  - `promote_contact_on_quote_confirmed` e `promote_contact_on_payment` — promovem a Cliente automaticamente.
-  - `prevent_contact_level_regression` — garante que nunca volta.
-  - `notify_contact_promoted_to_lead` — notifica admins/managers.
+4. **Ordenação**: mesclar `passengers` + `relationships` em uma única lista normalizada com chaves comuns (`_kind`, `_name`, `_relType`, `_cpf`, `_birth`, `_nationality`, `_passport`) e usar `useSortableData` em cima dela. Tipo padrão de ordenação: primeiro `Cliente`, depois `Passageiro`, alfabético por nome.
 
-## Garantia adicional (banco)
+5. **Estado vazio único**: "Nenhum viajante cadastrado."
 
-Para fechar a regra "Lead = demonstrou interesse em um produto", adicionar uma promoção automática extra: **ao criar uma `quote` vinculada a um `lead` cujo contato ainda está como `prospect`, promover o contato para `lead`** (e gravar `promoted_to_lead_at`). Isso cobre o caso em que o lead foi criado sem destino/datas no primeiro momento, mas já recebeu uma cotação.
+6. Remover o `border-t` separador entre as duas seções (não existirão mais duas seções).
 
-```text
-trigger trg_promote_contact_on_quote_created
-  AFTER INSERT ON quotes
-  → se contacts.level = 'prospect' para o lead_id da quote
-  → UPDATE contacts SET level='lead', promoted_to_lead_at = now()
-```
+### O que NÃO muda
+- Diálogos de criar/editar passageiro, vincular cliente, editar vínculo, promover, copiar de outro cliente — todos permanecem iguais.
+- Mutations e queries permanecem iguais.
+- Esquema do banco não muda.
 
-## Verificação pós-implementação
-
-- Build limpo (sem imports órfãos de `PromoteContact` / `PromoteToLeadDialog`).
-- Nenhum link visível para `/contacts/:id/promote` na UI.
-- Criar uma cotação para um Prospect deve, após o INSERT, deixá-lo como Lead automaticamente (testado por leitura do registro).
+### Verificação
+- Conferir visualmente que os 3 botões aparecem no header da tabela única.
+- Conferir pills `Cliente` vs `Passageiro` legíveis e distintos.
+- Conferir que clicar em linha de cliente abre edição de vínculo e o ícone externo navega para a ficha.
+- Conferir ordenação por cada coluna.
