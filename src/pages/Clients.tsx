@@ -1928,6 +1928,12 @@ export default function Clients() {
             </Tabs>
           </div>
 
+          {/* Right column: Interaction + History */}
+          <div className="lg:col-span-5">
+            <ClientInteractionPanel contactId={resolvedContactId} clientId={editingId} />
+          </div>
+          </div>
+
           {/* Actions */}
           <div className="flex gap-2 justify-between">
             {editingId || linkContactId ? (
