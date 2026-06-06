@@ -1975,35 +1975,16 @@ export default function ServiceCenter() {
 
       {/* ===== Right column: lead summary + CRM panel ===== */}
       {selected && summaryOpen && (
-        <aside className="w-[340px] shrink-0 border-l hidden lg:flex flex-col bg-white">
-          <Tabs
-            value={sidePanelTab}
-            onValueChange={(v) => setSidePanelTab(v as "summary" | "crm")}
-            className="flex-1 flex flex-col min-h-0"
-          >
-            <div className="px-4 pt-3 pb-0 border-b">
-              <TabsList className="grid grid-cols-2 w-full h-9 bg-muted/60 p-0.5">
-                <TabsTrigger value="summary" className="text-xs gap-1.5">
-                  <Sparkles className="h-3 w-3" />
-                  Resumo IA
-                </TabsTrigger>
-                <TabsTrigger value="crm" className="text-xs gap-1.5">
-                  {selected.category === "post-sale" ? (
-                    <LifeBuoy className="h-3 w-3" />
-                  ) : (
-                    <TrendingUp className="h-3 w-3" />
-                  )}
-                  CRM
-                </TabsTrigger>
-              </TabsList>
-            </div>
-            <TabsContent value="summary" className="flex-1 min-h-0 m-0 data-[state=inactive]:hidden">
-              <LeadSummaryPanel summary={selected.summary} />
-            </TabsContent>
-            <TabsContent value="crm" className="flex-1 min-h-0 m-0 data-[state=inactive]:hidden">
-              <CRMPanel conversation={selected} />
-            </TabsContent>
-          </Tabs>
+        <aside className="w-[340px] xl:w-[420px] shrink-0 border-l hidden lg:flex flex-col bg-white">
+          <ClientSidePanel
+            level={selected.level}
+            contactId={selected.contactId}
+            leadId={selected.leadId}
+            clientId={selected.crm.clientId}
+            contactName={selected.leadName}
+            phone={selected.phone}
+            summary={selected.summary}
+          />
         </aside>
       )}
 
