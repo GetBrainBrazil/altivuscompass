@@ -118,6 +118,7 @@ export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
 
   const toggleChannel = (ch: string) => {
     if (ch === "system") return; // sempre obrigatório
+    if (ch === "whatsapp" && !assigneeHasWhatsapp) return; // bloqueado sem WA válido
     setDraftChannels((cur) => (cur.includes(ch) ? cur.filter((c) => c !== ch) : [...cur, ch]));
   };
 
