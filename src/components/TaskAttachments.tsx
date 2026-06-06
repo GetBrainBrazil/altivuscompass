@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Paperclip, Upload, Download, Trash2, FileText, FileImage, File as FileIcon, Loader2 } from "lucide-react";
 import { ImageViewerDialog, ViewerAttachment } from "@/components/ImageViewerDialog";
+import { cn } from "@/lib/utils";
 
 function isImage(type?: string | null, name?: string) {
   if (type?.startsWith("image/")) return true;
