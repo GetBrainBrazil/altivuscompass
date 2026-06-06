@@ -559,8 +559,36 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     });
   }, [relationships]);
 
-  const { sorted: sortedPassengers, sort: passengerSort, toggleSort: togglePassengerSort } = useSortableData(passengers);
-  const { sorted: sortedRels, sort: relSort, toggleSort: toggleRelSort } = useSortableData(sortedRelationships);
+  // Lista unificada: passageiros + clientes vinculados em uma única tabela
+  const unifiedTravelers = useMemo(() => {
+    const fromPassengers = passengers.map((p: any) => ({
+      _kind: "passenger" as const,
+      _id: `p-${p.id}`,
+      _raw: p,
+      _name: p.full_name ?? "",
+      _relType: p.relationship_type ?? "",
+      _relLabel: p.relationship_type ? (RELATIONSHIP_TYPES[p.relationship_type] || p.relationship_type) : "",
+      _cpf: p.cpf ?? "",
+      _birth_date: p.birth_date ?? "",
+      _nationality: p.nationality ?? "",
+      _passport: p.passport_number ?? "",
+    }));
+    const fromRels = sortedRelationships.map((r: any) => ({
+      _kind: "client" as const,
+      _id: `r-${r.id}`,
+      _raw: r,
+      _name: r._name,
+      _relType: r._display_type,
+      _relLabel: r._type,
+      _cpf: r.client?.cpf_cnpj ?? "",
+      _birth_date: r._birth_date,
+      _nationality: r._nationality,
+      _passport: r._passports,
+    }));
+    return [...fromRels, ...fromPassengers];
+  }, [passengers, sortedRelationships]);
+
+  const { sorted: sortedTravelers, sort: travelerSort, toggleSort: toggleTravelerSort } = useSortableData(unifiedTravelers);
 
   if (!clientId) {
     return (
