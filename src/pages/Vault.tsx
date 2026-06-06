@@ -70,7 +70,9 @@ export default function Vault() {
   const currentUserId = user?.id ?? "";
 
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
+  const [tagFilterOpen, setTagFilterOpen] = useState(false);
+  const [tagFilterSearch, setTagFilterSearch] = useState("");
   const [ownerFilter, setOwnerFilter] = useState<"all" | "mine" | "shared">("all");
   const [formOpen, setFormOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<VaultItem | null>(null);
@@ -153,7 +155,7 @@ export default function Vault() {
     let list = items;
     if (ownerFilter === "mine") list = list.filter((i) => isOwner(i));
     if (ownerFilter === "shared") list = list.filter((i) => !isOwner(i));
-    if (categoryFilter !== "all") list = list.filter((i) => (i.category ?? "") === categoryFilter);
+    if (categoryFilter.length > 0) list = list.filter((i) => categoryFilter.includes(i.category ?? ""));
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -334,27 +336,72 @@ export default function Vault() {
           {categories.length > 0 && (
             <>
               <span className="mx-1 h-5 w-px bg-border" />
-              <Button
-                type="button"
-                variant={categoryFilter === "all" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setCategoryFilter("all")}
-                className="font-body text-xs h-9"
-              >
-                Todas as tags
-              </Button>
-              {categories.map((c) => (
-                <Button
-                  key={c}
-                  type="button"
-                  variant={categoryFilter === c ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setCategoryFilter(c)}
-                  className="font-body text-xs h-9"
-                >
-                  {c}
-                </Button>
-              ))}
+              <Popover open={tagFilterOpen} onOpenChange={setTagFilterOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant={categoryFilter.length > 0 ? "default" : "outline"}
+                    size="sm"
+                    className="font-body text-xs h-9"
+                  >
+                    {categoryFilter.length === 0
+                      ? "Todas as tags"
+                      : categoryFilter.length === 1
+                        ? categoryFilter[0]
+                        : `${categoryFilter.length} tags`}
+                    <ChevronDown size={12} className="ml-1 opacity-60" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0 w-64" align="start">
+                  <div className="relative p-2 border-b border-border">
+                    <Search size={13} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      autoFocus
+                      value={tagFilterSearch}
+                      onChange={(e) => setTagFilterSearch(e.target.value)}
+                      placeholder="Buscar tag..."
+                      className="h-8 pl-7 text-xs"
+                    />
+                  </div>
+                  {categoryFilter.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setCategoryFilter([])}
+                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-muted/60 border-b border-border text-muted-foreground"
+                    >
+                      Limpar seleção
+                    </button>
+                  )}
+                  <div className="max-h-64 overflow-y-auto py-1">
+                    {(() => {
+                      const filtered = tagFilterSearch.trim()
+                        ? categories.filter((c) => c.toLowerCase().includes(tagFilterSearch.toLowerCase()))
+                        : categories;
+                      if (filtered.length === 0) {
+                        return <div className="px-3 py-4 text-xs text-muted-foreground text-center">Nenhuma tag</div>;
+                      }
+                      return filtered.map((c) => {
+                        const checked = categoryFilter.includes(c);
+                        return (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() =>
+                              setCategoryFilter((prev) =>
+                                prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c],
+                              )
+                            }
+                            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-muted/60"
+                          >
+                            <Checkbox checked={checked} className="pointer-events-none" />
+                            <span className="truncate">{c}</span>
+                          </button>
+                        );
+                      });
+                    })()}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </>
           )}
         </div>
