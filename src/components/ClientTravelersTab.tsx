@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, ExternalLink, UserPlus, Link2, ArrowUp, ArrowDown, ArrowUpDown, Copy, Check } from "lucide-react";
 import { isValidCPF, cleanDigits } from "@/lib/validators";
@@ -125,7 +126,6 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
   // Copy passengers state
   const [copyDialog, setCopyDialog] = useState(false);
   const [copyClientSearch, setCopyClientSearch] = useState("");
-  const [selectedCopyClient, setSelectedCopyClient] = useState<string | null>(null);
   const [copyPassengerIds, setCopyPassengerIds] = useState<Set<string>>(new Set());
 
   // Fetch passengers
@@ -213,23 +213,49 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
   const { data: allClients = [] } = useQuery({
     queryKey: ["all-clients-for-link"],
     queryFn: async () => {
-      const { data } = await supabase.from("clients").select("id, full_name, city, state").order("full_name");
+      const { data } = await supabase.from("clients").select("id, full_name, city, state, cpf_cnpj, birth_date").order("full_name");
       return data ?? [];
     },
     enabled: linkDialog || copyDialog,
   });
 
-  // Fetch passengers of selected copy client
-  const { data: copyClientPassengers = [] } = useQuery({
-    queryKey: ["copy-client-passengers", selectedCopyClient],
+  // Fetch ALL passengers across clients (used by copy dialog).
+  // We filter out passengers that already correspond to a client (by CPF or by name+birth_date).
+  const { data: allPassengersRaw = [] } = useQuery({
+    queryKey: ["all-passengers-cross-client"],
     queryFn: async () => {
-      if (!selectedCopyClient) return [];
-      const { data, error } = await supabase.from("passengers").select("*").eq("client_id", selectedCopyClient).order("full_name");
+      const { data, error } = await supabase
+        .from("passengers")
+        .select("id, full_name, cpf, birth_date, nationality, passport_number, passport_expiry, notes, client_id, client:clients!passengers_client_id_fkey(id, full_name)")
+        .order("full_name");
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
-    enabled: !!selectedCopyClient && copyDialog,
+    enabled: copyDialog,
   });
+
+  const allPassengersNotClients = useMemo(() => {
+    const clientCpfs = new Set(
+      (allClients as any[])
+        .map((c) => cleanDigits(c.cpf_cnpj))
+        .filter((v) => v.length === 11),
+    );
+    const clientNameBirth = new Set(
+      (allClients as any[])
+        .filter((c) => c.birth_date && c.full_name)
+        .map((c) => `${String(c.full_name).trim().toLowerCase()}|${c.birth_date}`),
+    );
+    return (allPassengersRaw as any[]).filter((p) => {
+      if (clientId && p.client_id === clientId) return false; // não copiar do próprio
+      const cpf = cleanDigits(p.cpf);
+      if (cpf.length === 11 && clientCpfs.has(cpf)) return false;
+      if (p.full_name && p.birth_date) {
+        const key = `${String(p.full_name).trim().toLowerCase()}|${p.birth_date}`;
+        if (clientNameBirth.has(key)) return false;
+      }
+      return true;
+    });
+  }, [allPassengersRaw, allClients, clientId]);
 
   const filteredLinkClients = allClients.filter((c: any) => {
     if (c.id === clientId) return false;
@@ -238,11 +264,15 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     return c.full_name.toLowerCase().includes(linkSearch.toLowerCase());
   });
 
-  const filteredCopyClients = allClients.filter((c: any) => {
-    if (c.id === clientId) return false;
-    if (!copyClientSearch) return true;
-    return c.full_name.toLowerCase().includes(copyClientSearch.toLowerCase());
-  });
+  const filteredCopyPassengers = useMemo(() => {
+    const q = copyClientSearch.trim().toLowerCase();
+    if (!q) return allPassengersNotClients;
+    return allPassengersNotClients.filter((p: any) => {
+      const pname = String(p.full_name || "").toLowerCase();
+      const cname = String(p.client?.full_name || "").toLowerCase();
+      return pname.includes(q) || cname.includes(q);
+    });
+  }, [allPassengersNotClients, copyClientSearch]);
 
   // Save passenger mutation
   const savePassengerMutation = useMutation({
@@ -503,7 +533,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
   const copyPassengersMutation = useMutation({
     mutationFn: async () => {
       if (!clientId || copyPassengerIds.size === 0) return;
-      const toCopy = copyClientPassengers.filter((p: any) => copyPassengerIds.has(p.id));
+      const toCopy = allPassengersNotClients.filter((p: any) => copyPassengerIds.has(p.id));
       const inserts = toCopy.map((p: any) => ({
         client_id: clientId,
         full_name: p.full_name,
@@ -519,8 +549,8 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     onSuccess: () => {
       toast({ title: `${copyPassengerIds.size} passageiro(s) copiado(s)` });
       qc.invalidateQueries({ queryKey: ["client-passengers", clientId] });
+      qc.invalidateQueries({ queryKey: ["all-passengers-cross-client"] });
       setCopyDialog(false);
-      setSelectedCopyClient(null);
       setCopyPassengerIds(new Set());
       setCopyClientSearch("");
     },
@@ -608,9 +638,18 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
             <p className="text-xs text-muted-foreground font-body">Passageiros vinculados a este cliente e clientes com relacionamento (cônjuge, filho, etc.)</p>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => { setCopyDialog(true); setCopyClientSearch(""); setSelectedCopyClient(null); setCopyPassengerIds(new Set()); }}>
-              <Copy className="h-3 w-3 mr-1" />Copiar de outro cliente
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => { setCopyDialog(true); setCopyClientSearch(""); setCopyPassengerIds(new Set()); }}>
+                    <Copy className="h-3 w-3 mr-1" />Copiar de outro cliente
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  Lista apenas passageiros que ainda não foram cadastrados como clientes próprios. Cada passageiro aparece com o cliente de origem ao lado.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => { setLinkDialog(true); setLinkSearch(""); setSelectedLinkClient(null); setLinkRelType("other"); }}>
               <Link2 className="h-3 w-3 mr-1" />Vincular Cliente
             </Button>
@@ -942,103 +981,87 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       </Dialog>
 
 
-      <Dialog open={copyDialog} onOpenChange={(o) => { if (!o) { setCopyDialog(false); setSelectedCopyClient(null); setCopyPassengerIds(new Set()); } }}>
-        <DialogContent className="max-w-lg">
+      <Dialog open={copyDialog} onOpenChange={(o) => { if (!o) { setCopyDialog(false); setCopyPassengerIds(new Set()); setCopyClientSearch(""); } }}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="font-display">Copiar Passageiros de Outro Cliente</DialogTitle>
+            <DialogDescription className="font-body">
+              Apenas passageiros que ainda não foram cadastrados como clientes próprios. O cliente de origem é exibido ao lado de cada passageiro.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3">
-            {!selectedCopyClient ? (
-              <>
-                <div>
-                  <Label className="font-body text-xs">Buscar cliente de origem</Label>
-                  <Input value={copyClientSearch} onChange={(e) => setCopyClientSearch(e.target.value)} placeholder="Nome do cliente..." className="h-9" />
-                </div>
-                <div className="max-h-48 overflow-y-auto border border-border/50 rounded-lg">
-                  {filteredCopyClients.length === 0 ? (
-                    <p className="p-3 text-xs text-muted-foreground font-body">Nenhum cliente encontrado.</p>
-                  ) : (
-                    filteredCopyClients.slice(0, 20).map((c: any) => (
-                      <button key={c.id} type="button"
-                        className="w-full text-left px-3 py-2 text-sm font-body hover:bg-muted/50 transition-colors text-foreground"
-                        onClick={() => { setSelectedCopyClient(c.id); setCopyPassengerIds(new Set()); }}>
-                        <span className="font-medium">{c.full_name}</span>
-                        {c.city && <span className="text-xs text-muted-foreground ml-2">{c.city}{c.state ? `, ${c.state}` : ""}</span>}
-                      </button>
-                    ))
-                  )}
-                </div>
-              </>
+            <div>
+              <Label className="font-body text-xs">Buscar passageiro ou cliente de origem</Label>
+              <Input
+                value={copyClientSearch}
+                onChange={(e) => setCopyClientSearch(e.target.value)}
+                placeholder="Nome do passageiro ou cliente..."
+                className="h-9"
+                autoFocus
+              />
+            </div>
+            {filteredCopyPassengers.length === 0 ? (
+              <p className="text-xs text-muted-foreground font-body italic p-3 border border-border/50 rounded-lg">
+                Nenhum passageiro disponível para copiar.
+              </p>
             ) : (
-              <>
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-body text-muted-foreground">
-                    Passageiros de <strong className="text-foreground">{allClients.find((c: any) => c.id === selectedCopyClient)?.full_name}</strong>
-                  </p>
-                  <Button type="button" variant="ghost" size="sm" className="font-body text-xs" onClick={() => { setSelectedCopyClient(null); setCopyPassengerIds(new Set()); }}>
-                    Trocar cliente
-                  </Button>
-                </div>
-                {copyClientPassengers.length === 0 ? (
-                  <p className="text-xs text-muted-foreground font-body italic p-3">Este cliente não possui passageiros.</p>
-                ) : (
-                  <div className="border border-border/50 rounded-lg overflow-hidden max-h-64 overflow-y-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-border/50 bg-muted/30">
-                          <th className="p-2 w-8">
-                            <Checkbox
-                              checked={copyPassengerIds.size === copyClientPassengers.length && copyClientPassengers.length > 0}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setCopyPassengerIds(new Set(copyClientPassengers.map((p: any) => p.id)));
-                                } else {
-                                  setCopyPassengerIds(new Set());
-                                }
-                              }}
-                            />
-                          </th>
-                          <th className="text-left p-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Nome</th>
-                          <th className="text-left p-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Nascimento</th>
-                          <th className="text-left p-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Passaporte</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border/30">
-                        {copyClientPassengers.map((p: any) => (
-                          <tr key={p.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => {
+              <div className="border border-border/50 rounded-lg overflow-hidden max-h-80 overflow-y-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border/50 bg-muted/30">
+                      <th className="p-2 w-8">
+                        <Checkbox
+                          checked={copyPassengerIds.size === filteredCopyPassengers.length && filteredCopyPassengers.length > 0}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setCopyPassengerIds(new Set(filteredCopyPassengers.map((p: any) => p.id)));
+                            } else {
+                              setCopyPassengerIds(new Set());
+                            }
+                          }}
+                        />
+                      </th>
+                      <th className="text-left p-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Passageiro</th>
+                      <th className="text-left p-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Cliente de origem</th>
+                      <th className="text-left p-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Nascimento</th>
+                      <th className="text-left p-2 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Passaporte</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/30">
+                    {filteredCopyPassengers.map((p: any) => (
+                      <tr key={p.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => {
+                        setCopyPassengerIds(prev => {
+                          const next = new Set(prev);
+                          if (next.has(p.id)) next.delete(p.id); else next.add(p.id);
+                          return next;
+                        });
+                      }}>
+                        <td className="p-2">
+                          <Checkbox checked={copyPassengerIds.has(p.id)} onCheckedChange={() => {
                             setCopyPassengerIds(prev => {
                               const next = new Set(prev);
                               if (next.has(p.id)) next.delete(p.id); else next.add(p.id);
                               return next;
                             });
-                          }}>
-                            <td className="p-2">
-                              <Checkbox checked={copyPassengerIds.has(p.id)} onCheckedChange={() => {
-                                setCopyPassengerIds(prev => {
-                                  const next = new Set(prev);
-                                  if (next.has(p.id)) next.delete(p.id); else next.add(p.id);
-                                  return next;
-                                });
-                              }} />
-                            </td>
-                            <td className="p-2 text-sm font-body text-foreground">{p.full_name}</td>
-                            <td className="p-2 text-sm font-body text-foreground">{p.birth_date ? new Date(p.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
-                            <td className="p-2 text-sm font-body text-foreground">{p.passport_number || "—"}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-                <Button
-                  onClick={() => copyPassengersMutation.mutate()}
-                  disabled={copyPassengerIds.size === 0 || copyPassengersMutation.isPending}
-                  className="font-body"
-                >
-                  {copyPassengersMutation.isPending ? "Copiando..." : `Copiar ${copyPassengerIds.size} passageiro(s)`}
-                </Button>
-              </>
+                          }} />
+                        </td>
+                        <td className="p-2 text-sm font-body text-foreground">{p.full_name}</td>
+                        <td className="p-2 text-xs font-body text-muted-foreground">{p.client?.full_name || "—"}</td>
+                        <td className="p-2 text-sm font-body text-foreground">{p.birth_date ? new Date(p.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
+                        <td className="p-2 text-sm font-body text-foreground">{p.passport_number || "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
+            <Button
+              onClick={() => copyPassengersMutation.mutate()}
+              disabled={copyPassengerIds.size === 0 || copyPassengersMutation.isPending}
+              className="font-body"
+            >
+              {copyPassengersMutation.isPending ? "Copiando..." : `Copiar ${copyPassengerIds.size} passageiro(s)`}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
