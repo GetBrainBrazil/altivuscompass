@@ -320,7 +320,7 @@ export default function TaskDetail() {
         </div>
 
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <Label className="font-body text-xs uppercase tracking-wide text-muted-foreground">Cotação vinculada</Label>
             <Popover>
@@ -328,7 +328,7 @@ export default function TaskDetail() {
                 <Button
                   variant="outline"
                   role="combobox"
-                  className="mt-1.5 w-full justify-between font-body font-normal"
+                  className="mt-1 w-full justify-between font-body font-normal"
                 >
                   <span className="truncate">
                     {form.quote_id === "none"
@@ -377,7 +377,7 @@ export default function TaskDetail() {
                 <Button
                   variant="outline"
                   role="combobox"
-                  className="mt-1.5 w-full justify-between font-body font-normal"
+                  className="mt-1 w-full justify-between font-body font-normal"
                 >
                   <span className="truncate">
                     {form.client_id === "none"
@@ -419,7 +419,7 @@ export default function TaskDetail() {
           <Label className="font-body text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
             <FileText size={12} /> Descrição
           </Label>
-          <div className="mt-1.5">
+          <div className="mt-1">
             <RichTextEditor
               value={form.description}
               onChange={(html) => setForm({ ...form, description: html })}
