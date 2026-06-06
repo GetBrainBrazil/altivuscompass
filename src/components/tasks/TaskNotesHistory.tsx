@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, StickyNote, History, Search, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TaskReminders } from "./TaskReminders";
 
 const STATUS_LABEL: Record<string, string> = {
   pending: "A iniciar",
@@ -195,6 +196,9 @@ export function TaskNotesHistory({ taskId }: Props) {
           </Button>
         </div>
       </div>
+
+      {/* Lembretes */}
+      <TaskReminders taskId={taskId} />
 
       {/* Histórico */}
       <div>
