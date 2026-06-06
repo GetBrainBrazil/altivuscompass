@@ -28,6 +28,7 @@ import UserDetail from "./pages/UserDetail";
 import Permissions from "./pages/Permissions";
 import Registrations from "./pages/Registrations";
 import Sales from "./pages/Sales";
+import FinanceClosedSales from "./pages/FinanceClosedSales";
 import MyProfile from "./pages/MyProfile";
 import System from "./pages/System";
 import Tasks from "./pages/Tasks";
@@ -90,6 +91,7 @@ const App = () => (
             <Route path="/finance/payables-receivables/:id/edit" element={<ProtectedRoute><AppLayout><PayableReceivableForm /></AppLayout></ProtectedRoute>} />
             <Route path="/finance/registrations" element={<ProtectedRoute><AppLayout><FinancialRegistrations /></AppLayout></ProtectedRoute>} />
             <Route path="/finance/reports" element={<ProtectedRoute><AppLayout><FinancialReports /></AppLayout></ProtectedRoute>} />
+            <Route path="/finance/closed-sales" element={<ProtectedRoute><AppLayout><FinanceClosedSales /></AppLayout></ProtectedRoute>} />
             <Route path="/miles" element={<ProtectedRoute><AppLayout><Miles /></AppLayout></ProtectedRoute>} />
             <Route path="/users" element={<ProtectedRoute><AppLayout><UserManagement /></AppLayout></ProtectedRoute>} />
             <Route path="/users/new" element={<ProtectedRoute><AppLayout><UserDetail /></AppLayout></ProtectedRoute>} />
