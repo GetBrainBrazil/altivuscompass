@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 const STATUS_OPTIONS = [
   { value: "pending", label: "A iniciar", dot: "bg-warning" },
   { value: "in_progress", label: "Em andamento", dot: "bg-soft-blue" },
-  { value: "review", label: "Em revisão", dot: "bg-purple-500" },
+  { value: "review", label: "Suspensa", dot: "bg-muted-foreground" },
   { value: "completed", label: "Concluída", dot: "bg-success" },
 ];
 

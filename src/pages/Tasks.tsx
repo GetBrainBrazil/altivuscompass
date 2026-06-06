@@ -25,7 +25,7 @@ import { FilterChip, SearchableList } from "@/components/tasks/FilterChip";
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Aguardando Início", color: "bg-warning/10 text-warning border-warning/20", icon: Clock },
   in_progress: { label: "Em Andamento", color: "bg-soft-blue/10 text-soft-blue border-soft-blue/20", icon: AlertCircle },
-  review: { label: "Em Revisão", color: "bg-purple-500/10 text-purple-600 border-purple-500/20", icon: AlertCircle },
+  review: { label: "Suspensa", color: "bg-muted-foreground/10 text-muted-foreground border-muted-foreground/20", icon: AlertCircle },
   completed: { label: "Concluída", color: "bg-success/10 text-success border-success/20", icon: CheckCircle2 },
 };
 
@@ -33,7 +33,7 @@ type KanbanStage = { id: string; label: string; accentClass: string; dotClass: s
 const KANBAN_STAGES: KanbanStage[] = [
   { id: "pending", label: "Aguardando Início", accentClass: "border-l-warning", dotClass: "bg-warning" },
   { id: "in_progress", label: "Em Andamento", accentClass: "border-l-soft-blue", dotClass: "bg-soft-blue" },
-  { id: "review", label: "Em Revisão", accentClass: "border-l-purple-500", dotClass: "bg-purple-500" },
+  { id: "review", label: "Suspensa", accentClass: "border-l-muted-foreground", dotClass: "bg-muted-foreground" },
   { id: "completed", label: "Concluída", accentClass: "border-l-success", dotClass: "bg-success" },
 ];
 
@@ -426,7 +426,7 @@ export default function Tasks() {
                 { id: "all", label: "Todos" },
                 { id: "pending", label: "Aguardando Início" },
                 { id: "in_progress", label: "Em Andamento" },
-                { id: "review", label: "Em Revisão" },
+                { id: "review", label: "Suspensa" },
                 { id: "completed", label: "Concluída" },
               ]}
               selected={statusFilter}
