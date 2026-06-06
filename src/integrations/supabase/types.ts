@@ -1130,6 +1130,141 @@ export type Database = {
         }
         Relationships: []
       }
+      deal_events: {
+        Row: {
+          amount: number | null
+          contact_id: string | null
+          currency: string | null
+          deal_id: string | null
+          dedup_key: string | null
+          event_type: string
+          from_phase: string | null
+          from_stage: string | null
+          id: string
+          item_id: string | null
+          lead_id: string | null
+          metadata: Json
+          occurred_at: string
+          quote_id: string | null
+          reason_code: string | null
+          reason_text: string | null
+          recorded_at: string
+          sale_id: string | null
+          source: string
+          to_phase: string | null
+          to_stage: string | null
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          amount?: number | null
+          contact_id?: string | null
+          currency?: string | null
+          deal_id?: string | null
+          dedup_key?: string | null
+          event_type: string
+          from_phase?: string | null
+          from_stage?: string | null
+          id?: string
+          item_id?: string | null
+          lead_id?: string | null
+          metadata?: Json
+          occurred_at: string
+          quote_id?: string | null
+          reason_code?: string | null
+          reason_text?: string | null
+          recorded_at?: string
+          sale_id?: string | null
+          source?: string
+          to_phase?: string | null
+          to_stage?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          amount?: number | null
+          contact_id?: string | null
+          currency?: string | null
+          deal_id?: string | null
+          dedup_key?: string | null
+          event_type?: string
+          from_phase?: string | null
+          from_stage?: string | null
+          id?: string
+          item_id?: string | null
+          lead_id?: string | null
+          metadata?: Json
+          occurred_at?: string
+          quote_id?: string | null
+          reason_code?: string | null
+          reason_text?: string | null
+          recorded_at?: string
+          sale_id?: string | null
+          source?: string
+          to_phase?: string | null
+          to_stage?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_events_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_events_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "quote_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_events_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_events_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_events_backfill_log: {
+        Row: {
+          id: string
+          ran_at: string
+          ran_by: string | null
+          result: Json
+        }
+        Insert: {
+          id?: string
+          ran_at?: string
+          ran_by?: string | null
+          result: Json
+        }
+        Update: {
+          id?: string
+          ran_at?: string
+          ran_by?: string | null
+          result?: Json
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -4174,6 +4309,16 @@ export type Database = {
       }
     }
     Functions: {
+      audit_deal_events_coverage: {
+        Args: never
+        Returns: {
+          expected: number
+          gap: number
+          in_log: number
+          metric: string
+        }[]
+      }
+      backfill_deal_events: { Args: never; Returns: Json }
       can_edit_vault_item: {
         Args: { _item_id: string; _user_id: string }
         Returns: boolean
@@ -4187,6 +4332,7 @@ export type Database = {
         Returns: boolean
       }
       current_user_display_name: { Args: never; Returns: string }
+      deal_event_phase_of: { Args: { _stage: string }; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
