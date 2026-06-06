@@ -1894,14 +1894,23 @@ export default function Clients() {
               </Button>
             ) : <div />}
             <div className="flex gap-2">
-              {editingId && (
-                <Button type="button" disabled={saveMutation.isPending} className="font-body" variant="secondary" onClick={() => { shouldGoBackRef.current = true; saveMutation.mutate(); }}>
-                  {saveMutation.isPending ? "Salvando..." : "Salvar e Voltar"}
-                </Button>
-              )}
-              <Button type="button" disabled={saveMutation.isPending} className="font-body" onClick={() => { shouldGoBackRef.current = !editingId; saveMutation.mutate(); }}>
-                {saveMutation.isPending ? "Salvando..." : (editingId ? "Salvar" : "Criar Cliente")}
-              </Button>
+              {(() => {
+                const cpfFilled = !!cleanDigits(form.cpf_cnpj).length;
+                const cpfInvalid = cpfFilled && !isValidCPFOrCNPJ(form.cpf_cnpj);
+                const disabled = saveMutation.isPending || cpfInvalid;
+                return (
+                  <>
+                    {editingId && (
+                      <Button type="button" disabled={disabled} className="font-body" variant="secondary" onClick={() => { shouldGoBackRef.current = true; saveMutation.mutate(); }}>
+                        {saveMutation.isPending ? "Salvando..." : "Salvar e Voltar"}
+                      </Button>
+                    )}
+                    <Button type="button" disabled={disabled} className="font-body" onClick={() => { shouldGoBackRef.current = !editingId; saveMutation.mutate(); }}>
+                      {saveMutation.isPending ? "Salvando..." : (editingId ? "Salvar" : "Criar Cliente")}
+                    </Button>
+                  </>
+                );
+              })()}
             </div>
           </div>
 
