@@ -378,7 +378,7 @@ export default function Clients() {
     enabled: relatedClientIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("passports")
+        .from("client_passports")
         .select("client_id, passport_number, expiry_date")
         .in("client_id", relatedClientIds);
       if (error) throw error;
