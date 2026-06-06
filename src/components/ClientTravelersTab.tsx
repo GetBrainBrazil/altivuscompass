@@ -533,7 +533,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
   const copyPassengersMutation = useMutation({
     mutationFn: async () => {
       if (!clientId || copyPassengerIds.size === 0) return;
-      const toCopy = copyClientPassengers.filter((p: any) => copyPassengerIds.has(p.id));
+      const toCopy = allPassengersNotClients.filter((p: any) => copyPassengerIds.has(p.id));
       const inserts = toCopy.map((p: any) => ({
         client_id: clientId,
         full_name: p.full_name,
@@ -549,8 +549,8 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     onSuccess: () => {
       toast({ title: `${copyPassengerIds.size} passageiro(s) copiado(s)` });
       qc.invalidateQueries({ queryKey: ["client-passengers", clientId] });
+      qc.invalidateQueries({ queryKey: ["all-passengers-cross-client"] });
       setCopyDialog(false);
-      setSelectedCopyClient(null);
       setCopyPassengerIds(new Set());
       setCopyClientSearch("");
     },
