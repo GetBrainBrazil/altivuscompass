@@ -2237,9 +2237,9 @@ export default function Clients() {
           <div className="p-8 text-center text-muted-foreground font-body">Nenhum cliente encontrado.</div>
         ) : (
           filtered.map((client: any) => {
-            const clientPassengersList = passengersByClient[client.id] ?? [];
+            const clientTravelersList = travelersByClient[client.id] ?? [];
             const isExpanded = expandedClients.has(client.id);
-            const hasPassengers = clientPassengersList.length > 0;
+            const hasTravelers = clientTravelersList.length > 0;
             return (
               <div key={client.id} className="glass-card rounded-xl p-4 space-y-3 cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => client._contactId ? navigate(`/clients?contact=${client._contactId}`) : openEdit(client)}>
                 <div className="flex items-start justify-between">
@@ -2247,16 +2247,16 @@ export default function Clients() {
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <p className="text-sm font-medium font-body text-foreground">{client.full_name}</p>
                       <ContactLevelBadge level={client._level as ContactLevel} size="xs" />
-                      {hasPassengers && (
+                      {hasTravelers && (
                         <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground font-body">
-                          <Users className="h-3 w-3" />{clientPassengersList.length}
+                          <Users className="h-3 w-3" />{clientTravelersList.length}
                         </span>
                       )}
                     </div>
                     {client.rating > 0 && <div className="flex gap-0.5 mt-0.5">{[1,2,3,4,5].map(i => <Star key={i} className={`h-3 w-3 ${i <= client.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"}`} />)}</div>}
                   </div>
                   <div className="flex items-center gap-1">
-                    {hasPassengers && (
+                    {hasTravelers && (
                       <button type="button" className="p-1 rounded hover:bg-muted/50 text-muted-foreground" onClick={(e) => { e.stopPropagation(); toggleExpand(client.id); }}>
                         {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                       </button>
@@ -2270,19 +2270,24 @@ export default function Clients() {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground font-body">
+                  {client.cpf_cnpj && <span>CPF: {client.cpf_cnpj}</span>}
                   {client.city && <span>{client.city}{client.state ? `, ${client.state}` : ""}</span>}
                   {client.primary_phone && <a href={`https://wa.me/${client.primary_phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-primary hover:underline">{client.primary_phone}</a>}
                   {client.primary_email && <span>{client.primary_email}</span>}
                 </div>
-                {isExpanded && clientPassengersList.length > 0 && (
+                {isExpanded && clientTravelersList.length > 0 && (
                   <div className="border-t border-border/30 pt-2 mt-1 space-y-1" onClick={(e) => e.stopPropagation()}>
-                    {clientPassengersList.map((p: any) => (
-                      <div key={p.id} className="flex items-center gap-2 text-xs font-body text-foreground py-0.5">
+                    {clientTravelersList.map((p: any, idx: number) => (
+                      <div key={`${p._kind}-${p.id}-${idx}`} className="flex items-center gap-2 text-xs font-body text-foreground py-0.5">
                         <Users className="h-3 w-3 text-muted-foreground shrink-0" />
                         <span>{p.full_name}</span>
+                        {p._kind === "client" && (
+                          <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-primary/15 text-primary">Cliente</span>
+                        )}
                         {p.relationship_type && (
                           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">{RELATIONSHIP_LABELS[p.relationship_type] || p.relationship_type}</span>
                         )}
+                        {p.cpf && <span className="text-muted-foreground">· {p.cpf}</span>}
                       </div>
                     ))}
                   </div>
