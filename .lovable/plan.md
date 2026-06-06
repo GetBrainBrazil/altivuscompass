@@ -1,59 +1,55 @@
-## Proposta: unificar em um único botão "+ Adicionar viajante" com busca inteligente e vínculo bidirecional
+## Diagnóstico
 
-Sim, é totalmente viável e melhora bastante a UX. Hoje o usuário precisa decidir antes qual fluxo seguir ("é cliente? é passageiro de outro? é novo?") — carga cognitiva desnecessária. Com um único ponto de entrada que busca enquanto digita, a decisão vira automática.
+O telefone +55 (21) 99477-2165 pertence ao cliente **Alexandre Magalhães Serrado** (em `client_phones`), mas na Central de Atendimento aparece como **Lead**. Investigando o banco:
 
-### Como funcionaria
+- Existem **dois contatos** para o mesmo número:
+  - `b5cfebf2…` — level=`lead`, `phone=5521994772165`, sem `client_id` (criado antes pelo webhook).
+  - `4737f969…` — level=`cliente`, `phone=NULL`, com `client_id` apontando para o Alexandre (criado depois pela trigger `sync_contact_from_client`).
+- A `wa_conversations` está amarrada ao contato **lead** (criada antes do cliente ter sido cadastrado) e nunca foi remapeada.
+- A trigger `sync_contact_from_client` só busca contato por `client_id`. Quando já existe um contato órfão com o mesmo telefone, ela cria um segundo contato em vez de fundir.
 
-1. Apenas um botão no topo da seção Viajantes: **+ Adicionar viajante**.
-2. Ao abrir, o foco vai direto para o campo **Nome completo**.
-3. Conforme digita (a partir de 2 caracteres, debounce ~200ms), aparece uma lista de sugestões com 3 categorias visualmente distintas:
-   - **Clientes** (badge azul) — cria vínculo via `client_relationships`.
-   - **Passageiros de outros clientes** (badge cinza com o nome do cliente de origem) — copia para este cliente.
-   - Linha final fixa: **"+ Cadastrar [nome digitado] como novo passageiro"**.
-4. Cada sugestão mostra nome, CPF mascarado, nascimento e origem, para evitar confusão com homônimos.
-5. **Mini-confirm de vínculo bidirecional** (passo essencial):
-   - Ao escolher um Cliente ou um Passageiro existente, abre um confirm pequeno com **dois selects de vínculo**:
-     - "{Cliente atual} é **___** de {Selecionado}" (ex.: pai)
-     - "{Selecionado} é **___** de {Cliente atual}" (ex.: filho) — preenchido automaticamente pelo inverso do primeiro, mas editável
-   - Tipos simétricos (cônjuge, sócio, irmão) travam os dois lados iguais.
-   - Tipos assimétricos (pai↔filho, funcionário↔sócio) sugerem o inverso correto via tabela `INVERSE_RELATIONSHIP` já existente, mas o usuário pode ajustar se o inverso real for diferente (ex.: "outro").
-6. Ao clicar em "Cadastrar novo" → abre o form completo de passageiro já com o nome preenchido, contendo também o campo "Vínculo com o cliente" (que é unidirecional, já que passageiro não é cliente — sem inverso necessário).
+E não há, hoje, lugar no cadastro do cliente para ver as conversas de WhatsApp dele.
 
-### Como o vínculo bidirecional é gravado
+## Plano
 
-- **Cliente ↔ Cliente** (escolheu um cliente da busca):
-  - Grava 1 linha em `client_relationships` com `client_id_a` = cliente atual, `client_id_b` = selecionado, `relationship_type` = tipo do lado A→B.
-  - Se o usuário ajustar manualmente o inverso para algo diferente do automático, salvamos em `relationship_label` (campo livre já existente) ou criamos uma segunda linha invertida. **Decisão proposta:** continuar com 1 linha + tabela `INVERSE_RELATIONSHIP` para exibição (como já funciona hoje no `sortedRelationships`), só usando `relationship_label` quando o inverso for customizado.
-- **Passageiro de outro cliente → este cliente** (escolheu um passageiro):
-  - Copia o passageiro para o cliente atual (mantém comportamento atual de `copyPassengersMutation`).
-  - `passenger.relationship_type` desta cópia recebe o tipo "este cliente é ___ do passageiro" invertido pela tabela, já que o campo descreve o vínculo do passageiro com o cliente dono da ficha.
-- **Novo passageiro**: como hoje, só um lado (`passenger.relationship_type`).
+### 1. Migração de banco — fundir contatos duplicados e religar conversas
 
-### Por que isso é melhor (UX)
+Função `merge_contact_into_client(contact_orphan_id, client_contact_id)` que:
+- Reaponta `wa_conversations.contact_id`, `notifications`, `contact_events`, `lead.*` (se houver `lead_id` no órfão) para o contato cliente.
+- Copia `phone`/`email`/`first_contact_at`/`last_contact_at`/`is_returning` do órfão para o contato cliente quando estiverem vazios no cliente.
+- Apaga o contato órfão.
 
-- **Um caminho, não três.** O sistema descobre se é cliente, passageiro existente ou novo.
-- **Vínculo correto dos dois lados em uma só etapa**, sem o usuário precisar abrir a ficha do outro cliente para corrigir.
-- **Menos duplicidade**: descobre passageiros/clientes existentes antes de criar um novo.
-- **Menos cliques** no fluxo comum (novo passageiro continua em 2 cliques).
-- **Descoberta natural** de vinculação sem precisar conhecer botões escondidos.
+Backfill único: para cada `client_phones`, achar contato órfão (sem `client_id`) cujo telefone bate por DDD+número e fundir no contato `level='cliente'` daquele cliente.
 
-### Pontos de atenção
+### 2. Migração — atualizar `sync_contact_from_client`
 
-- **Performance:** reaproveitar `allClients` e `all-passengers-cross-client` já existentes; filtro no client-side por enquanto, paginação só se necessário.
-- **Visual:** badges distintos (Cliente/Passageiro) para a lista de sugestões.
-- **Promover a cliente** continua intacto (botão na linha da tabela).
-- **Tipos simétricos** (cônjuge, irmão, sócio): travar campo do inverso = ao primeiro.
+Antes de criar um novo contato, procurar contato existente pelo telefone (DDD+número via `client_phones` do `NEW.id` + `clients.phone` legado). Se achar, promover para `cliente` e setar `client_id`, em vez de inserir duplicado. Mantém o `prevent_contact_level_regression` em ordem (lead→cliente é promoção válida).
 
-### Arquivos a alterar
+### 3. Webhook — religar conversa existente quando o contato muda
 
-- `src/components/ClientTravelersTab.tsx`:
-  - Remover botões "Copiar passageiro" e "Vincular Cliente" do header (linhas ~640-655).
-  - Remover dialogs `linkDialog` e `copyDialog`.
-  - Criar `addTravelerDialog` com Command/Combobox de busca + sub-step de confirmação de vínculo bidirecional (com 2 selects).
-  - Reaproveitar `allClients`, `allPassengersNotClients`, `linkClientMutation`, `copyPassengersMutation`, `INVERSE_RELATIONSHIP`.
-  - `linkClientMutation` passa a aceitar opcionalmente `customInverseLabel` para gravar em `relationship_label` quando o inverso difere do automático.
-- Sem mudanças no banco (colunas `relationship_type` e `relationship_label` já existem).
+Em `whatsapp-webhook/index.ts`, depois de `ensureContactForPhone`, se a `wa_conversation` existente do telefone tem `contact_id` diferente do retornado, atualizar `contact_id` (e `client_id`/`lead_id` derivados) da conversa. Isso evita que conversas antigas fiquem "presas" no contato errado mesmo após o cliente ser cadastrado.
 
-### Decisão antes de implementar
+### 4. ServiceCenter — recálculo defensivo do nível
 
-Confirmar uma única coisa: quando o usuário escolher um **Cliente** ou **Passageiro** da busca, abrimos um mini-confirm com os 2 selects de vínculo (pai/filho etc.) — concorda? Ou prefere apenas 1 campo (lado A→B) e o inverso fica implícito pela tabela, sem exibir?
+Em `src/pages/ServiceCenter.tsx`, no carregamento das conversas, quando `contact.client_id` estiver presente forçar `level='cliente'` (já existe a lógica em `c.client_id ? "cliente" : c.lead_id ? "lead" : "prospect"`, mas hoje o `meta?.level` snapshot pode sobrescrever). Priorizar `client_id`/`lead_id` reais sobre o snapshot.
+
+### 5. Aba "Conversas" na ficha do cliente
+
+Onde ver as conversas hoje: em lugar nenhum dentro da ficha — só na Central de Atendimento. Vou adicionar uma nova aba **Conversas** em `src/pages/Clients.tsx` (modal de edição), que:
+- Lista `wa_conversations` ligadas ao cliente via:
+  - `contact_id` cujo `client_id = clientes.id`, **ou**
+  - `phone` cuja digit-tail bate com algum `client_phones` daquele cliente (fallback caso ainda haja conversa órfã).
+- Cada item mostra: número, último contato, status (IA/humano/resolvido), preview da última mensagem, e botão **Abrir na Central** que navega para `/service-center?conversation=<id>` (já suportado lá).
+- Read-only nesta primeira versão (não envia mensagem direto da ficha — abre na Central).
+
+## Detalhes técnicos
+
+- Migração 1 e 2 são SQL puras, sem mudança de schema (apenas função e trigger). Backfill roda uma vez via `DO $$ … $$`.
+- Mudança no webhook é `UPDATE wa_conversations SET contact_id=…, lead_id=…, client_id=… WHERE id=$conv AND contact_id IS DISTINCT FROM $new`.
+- ServiceCenter: ajustar o trecho ~linha 1293-1296 para que `client_id`/`lead_id` da row mandem em vez de `meta?.level`.
+- Nova aba: componente `ClientConversationsTab.tsx` consumindo `wa_conversations` + `wa_messages` (último resumo). Sem realtime nesta primeira entrega.
+
+## Fora de escopo
+
+- Não alterar política de mudança automática de status de telefone do cliente (já decidida anteriormente).
+- Não enviar mensagens novas a partir da ficha do cliente neste plano.
