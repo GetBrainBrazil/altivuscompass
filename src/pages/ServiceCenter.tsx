@@ -1109,6 +1109,7 @@ export default function ServiceCenter() {
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [sidePanelTab, setSidePanelTab] = useState<"summary" | "crm">("summary");
   const [newMsgOpen, setNewMsgOpen] = useState(false);
+  const [linkDialogMessages, setLinkDialogMessages] = useState<string[]>([]);
 
   // Apelido/nome do atendente logado (para exibir nas mensagens enviadas)
   const { data: myAgentLabel } = useQuery({
