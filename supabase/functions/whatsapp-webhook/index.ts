@@ -1543,6 +1543,40 @@ Regras do JSON:
  * Roda ANTES das checagens de pausa/humano para garantir que cada número que chega
  * vire registro no CRM e apareça nos kanbans corretos.
  */
+/**
+ * Procura o telefone em client_phones por DDD+número (últimos 11 dígitos)
+ * e retorna o contact vinculado ao cliente. Tem prioridade absoluta sobre
+ * qualquer match em contacts.phone — client_phones é a fonte de verdade dos
+ * telefones do cliente, gerenciada manualmente na ficha.
+ */
+async function matchContactByClientPhones(
+  supabase: any,
+  phone: string,
+): Promise<any | null> {
+  const digits = (phone || '').replace(/\D/g, '')
+  if (digits.length < 10) return null
+  const tail11 = digits.slice(-11)
+  const tail10 = digits.slice(-10)
+  const { data: phones } = await supabase
+    .from('client_phones')
+    .select('client_id, phone')
+    .or(`phone.ilike.%${tail11}%,phone.ilike.%${tail10}%`)
+    .limit(50)
+  const hit = (phones || []).find((p: any) => {
+    const d = (p.phone || '').replace(/\D/g, '')
+    return d.endsWith(tail11) || d.endsWith(tail10)
+  })
+  if (!hit) return null
+  const { data: contact } = await supabase
+    .from('contacts')
+    .select('id, full_name, phone, level, client_id, lead_id')
+    .eq('client_id', hit.client_id)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+  return contact || null
+}
+
 async function ensureContactForPhone(
   supabase: any,
   phone: string,
@@ -1560,6 +1594,9 @@ async function ensureContactForPhone(
 
   const tail = phoneDigits.slice(-9)
 
+  // 0) Match prioritário em client_phones (fonte de verdade do CRM)
+  const clientMatch = await matchContactByClientPhones(supabase, phone)
+
   // 1) Procura contact existente pelo final do telefone (ignora formatação)
   const { data: candidates } = await supabase
     .from('contacts')
@@ -1567,7 +1604,7 @@ async function ensureContactForPhone(
     .ilike('phone', `%${tail}%`)
     .limit(10)
 
-  const matched = (candidates || []).find((c: any) =>
+  const matched = clientMatch || (candidates || []).find((c: any) =>
     (c.phone || '').replace(/\D/g, '').endsWith(tail),
   )
 
