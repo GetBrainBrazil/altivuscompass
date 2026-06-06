@@ -659,8 +659,10 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
 
   const sortedRelationships = useMemo(() => {
     return relationships.map((r: any) => {
+      // When viewed from the inverted side, prefer custom inverse (relationship_label) if set,
+      // otherwise fall back to the auto-inverse table.
       const displayType = r.inverted
-        ? (INVERSE_RELATIONSHIP[r.relationship_type] || r.relationship_type)
+        ? (r.relationship_label || INVERSE_RELATIONSHIP[r.relationship_type] || r.relationship_type)
         : r.relationship_type;
       return {
         ...r,
