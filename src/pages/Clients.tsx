@@ -2172,24 +2172,36 @@ export default function Clients() {
                         </div>
                       </td>
                     </tr>
-                    {isExpanded && clientPassengersList.length > 0 && (
+                    {isExpanded && clientTravelersList.length > 0 && (
                       <tr className="bg-muted/10">
-                        <td colSpan={9} className="p-0">
+                        <td colSpan={10} className="p-0">
                           <div className="pl-12 pr-4 py-2">
                             <table className="w-full">
                               <thead>
                                 <tr className="border-b border-border/30">
-                                  <th className="text-left py-1.5 px-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Passageiro</th>
+                                  <th className="text-left py-1.5 px-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Viajante</th>
                                   <th className="text-left py-1.5 px-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Vínculo</th>
+                                  <th className="text-left py-1.5 px-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">CPF</th>
                                   <th className="text-left py-1.5 px-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Nascimento</th>
                                   <th className="text-left py-1.5 px-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Nacionalidade</th>
                                   <th className="text-left py-1.5 px-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Passaporte</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-border/20">
-                                {clientPassengersList.map((p: any) => (
-                                  <tr key={p.id} className="hover:bg-muted/20 cursor-pointer" onClick={(e) => { e.stopPropagation(); setActiveTab("travelers"); openEdit(client); }}>
-                                    <td className="py-1.5 px-3 text-xs font-body text-foreground">{p.full_name}</td>
+                                {clientTravelersList.map((p: any, idx: number) => (
+                                  <tr
+                                    key={`${p._kind}-${p.id}-${idx}`}
+                                    className="hover:bg-muted/20 cursor-pointer"
+                                    onClick={(e) => { e.stopPropagation(); setActiveTab("travelers"); openEdit(client); }}
+                                  >
+                                    <td className="py-1.5 px-3 text-xs font-body text-foreground">
+                                      <div className="flex items-center gap-1.5">
+                                        <span>{p.full_name}</span>
+                                        {p._kind === "client" && (
+                                          <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-body">Cliente</span>
+                                        )}
+                                      </div>
+                                    </td>
                                     <td className="py-1.5 px-3">
                                       {p.relationship_type ? (
                                         <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary font-body">
@@ -2197,6 +2209,7 @@ export default function Clients() {
                                         </span>
                                       ) : <span className="text-xs text-muted-foreground">—</span>}
                                     </td>
+                                    <td className="py-1.5 px-3 text-xs font-body text-foreground whitespace-nowrap">{p.cpf || "—"}</td>
                                     <td className="py-1.5 px-3 text-xs font-body text-foreground">{p.birth_date ? new Date(p.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
                                     <td className="py-1.5 px-3 text-xs font-body text-foreground">{p.nationality || "—"}</td>
                                     <td className="py-1.5 px-3 text-xs font-body text-foreground">{p.passport_number || "—"}</td>
