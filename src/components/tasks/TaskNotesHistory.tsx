@@ -40,9 +40,11 @@ type Filter = "all" | "notes" | "activity";
 
 interface Props {
   taskId: string;
+  assigneePhone?: string | null;
+  assigneeName?: string | null;
 }
 
-export function TaskNotesHistory({ taskId }: Props) {
+export function TaskNotesHistory({ taskId, assigneePhone, assigneeName }: Props) {
   const { user } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
