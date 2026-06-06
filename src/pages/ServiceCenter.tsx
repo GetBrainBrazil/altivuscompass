@@ -1108,7 +1108,15 @@ export default function ServiceCenter() {
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
-  const [summaryOpen, setSummaryOpen] = useState(true);
+  const [summaryOpen, setSummaryOpen] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    const v = sessionStorage.getItem("sc:summaryOpen");
+    return v === null ? true : v === "1";
+  });
+  useEffect(() => {
+    try { sessionStorage.setItem("sc:summaryOpen", summaryOpen ? "1" : "0"); } catch {}
+  }, [summaryOpen]);
+
   const [sidePanelTab, setSidePanelTab] = useState<"summary" | "crm">("summary");
   const [newMsgOpen, setNewMsgOpen] = useState(false);
   const [linkDialogMessages, setLinkDialogMessages] = useState<string[]>([]);
