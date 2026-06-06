@@ -728,13 +728,24 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
+                <Label className="font-body text-xs">CPF</Label>
+                <Input
+                  value={passengerForm.cpf}
+                  onChange={(e) => setPassengerForm({ ...passengerForm, cpf: maskCPF(e.target.value) })}
+                  className="h-9"
+                  placeholder="000.000.000-00"
+                  inputMode="numeric"
+                  maxLength={14}
+                />
+              </div>
+              <div>
                 <Label className="font-body text-xs">Nascimento</Label>
                 <Input type="date" value={passengerForm.birth_date} onChange={(e) => setPassengerForm({ ...passengerForm, birth_date: e.target.value })} className="h-9" />
               </div>
-              <div>
-                <Label className="font-body text-xs">Nacionalidade</Label>
-                <Input value={passengerForm.nationality} onChange={(e) => setPassengerForm({ ...passengerForm, nationality: e.target.value })} className="h-9" />
-              </div>
+            </div>
+            <div>
+              <Label className="font-body text-xs">Nacionalidade</Label>
+              <Input value={passengerForm.nationality} onChange={(e) => setPassengerForm({ ...passengerForm, nationality: e.target.value })} className="h-9" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
