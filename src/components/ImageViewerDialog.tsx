@@ -43,6 +43,7 @@ export function ImageViewerDialog({ open, onOpenChange, attachment, taskId, pend
   const [name, setName] = useState("");
   const [cropMode, setCropMode] = useState(false);
   const [rotation, setRotation] = useState(0);
+  const [zoom, setZoom] = useState(1);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
 
@@ -51,6 +52,7 @@ export function ImageViewerDialog({ open, onOpenChange, attachment, taskId, pend
     setName(attachment.file_name);
     setCropMode(false);
     setRotation(0);
+    setZoom(1);
     setDirty(false);
 
     let revoke: string | null = null;
