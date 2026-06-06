@@ -10,11 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Sparkles, FileText, ShoppingBag, LifeBuoy, UserRound,
   ExternalLink, Plus, Loader2, MapPin, Users, CalendarRange, Wallet,
-  Phone, Mail, Save, MessageCircle,
+  Phone, Mail, Save, MessageCircle, Trash2,
 } from "lucide-react";
+import { COUNTRY_CODES, applyPhoneMask, stripMask } from "@/lib/phone-masks";
 
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
 import { toast } from "sonner";
@@ -113,8 +115,31 @@ function ClientTab({ level, contactId, leadId, clientId, contactName, phone }: P
   const waEmail = client?.email ?? lead?.email ?? contact?.email ?? "";
 
   // ---- Ficha editável ----
+  type PhoneEntry = { id?: string; phone: string; description: string; country_code: string; is_primary: boolean };
+  type EmailEntry = { id?: string; email: string; description: string; is_primary: boolean };
+
   const [form, setForm] = useState<Record<string, any>>({});
+  const [phones, setPhones] = useState<PhoneEntry[]>([]);
+  const [emails, setEmails] = useState<EmailEntry[]>([]);
   const [saving, setSaving] = useState(false);
+
+  // Cliente: carrega phones/emails normalizados
+  const { data: clientPhones = [] } = useQuery({
+    queryKey: ["side-client-phones", clientId],
+    enabled: !!clientId && level === "cliente",
+    queryFn: async () => {
+      const { data } = await supabase.from("client_phones").select("*").eq("client_id", clientId!);
+      return data ?? [];
+    },
+  });
+  const { data: clientEmails = [] } = useQuery({
+    queryKey: ["side-client-emails", clientId],
+    enabled: !!clientId && level === "cliente",
+    queryFn: async () => {
+      const { data } = await supabase.from("client_emails").select("*").eq("client_id", clientId!);
+      return data ?? [];
+    },
+  });
 
   useEffect(() => {
     const src: any = client || lead || contact || {};
@@ -122,14 +147,12 @@ function ClientTab({ level, contactId, leadId, clientId, contactName, phone }: P
       full_name: src.full_name ?? contactName ?? "",
       email: src.email ?? "",
       phone: src.phone ?? phone ?? "",
-      // Lead extras
       destination: (src as any).destination ?? "",
       travelers_count: (src as any).travelers_count ?? "",
       travel_date_start: (src as any).travel_date_start ?? "",
       travel_date_end: (src as any).travel_date_end ?? "",
       budget_estimate: (src as any).budget_estimate ?? "",
       preferences: (src as any).preferences ?? "",
-      // Cliente extras
       cpf_cnpj: (src as any).cpf_cnpj ?? "",
       birth_date: (src as any).birth_date ?? "",
       gender: (src as any).gender ?? "",
@@ -146,6 +169,38 @@ function ClientTab({ level, contactId, leadId, clientId, contactName, phone }: P
       notes: (src as any).notes ?? "",
     });
   }, [client?.id, lead?.id, contact?.id]);
+
+  // Hidrata phones/emails para cliente
+  useEffect(() => {
+    if (level !== "cliente" || !clientId) return;
+    if (clientPhones.length > 0) {
+      setPhones(clientPhones.map((p: any) => {
+        // Parse "+55 (21) 9..." -> separa dial do número
+        const raw = String(p.phone || "");
+        const match = raw.match(/^(\+\d{1,4})\s*(.*)$/);
+        const dial = match?.[1] || "+55";
+        const localRaw = match?.[2] || raw;
+        const cc = COUNTRY_CODES.find((c) => c.dial === dial) || COUNTRY_CODES[0];
+        return {
+          id: p.id,
+          phone: applyPhoneMask(stripMask(localRaw), cc.mask),
+          description: p.description ?? "",
+          country_code: cc.code,
+          is_primary: p.is_primary ?? false,
+        };
+      }));
+    } else {
+      setPhones(client?.phone ? [{ phone: client.phone, description: "", country_code: "BR", is_primary: true }] : []);
+    }
+    if (clientEmails.length > 0) {
+      setEmails(clientEmails.map((e: any) => ({
+        id: e.id, email: e.email, description: e.description ?? "", is_primary: e.is_primary ?? false,
+      })));
+    } else {
+      setEmails(client?.email ? [{ email: client.email, description: "", is_primary: true }] : []);
+    }
+  }, [clientPhones, clientEmails, clientId, level, client?.phone, client?.email]);
+
 
   const set = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }));
 
@@ -173,10 +228,16 @@ function ClientTab({ level, contactId, leadId, clientId, contactName, phone }: P
     setSaving(true);
     try {
       if (level === "cliente" && clientId) {
+        // Determina principal/principal email a partir das listas
+        const primaryPhone = phones.find((p) => p.is_primary) || phones[0];
+        const primaryEmail = emails.find((e) => e.is_primary) || emails[0];
+        const primaryPhoneStr = primaryPhone
+          ? `${COUNTRY_CODES.find((c) => c.code === primaryPhone.country_code)?.dial || "+55"} ${primaryPhone.phone}`
+          : null;
         const payload: any = {
           full_name: form.full_name?.trim() || waName,
-          email: form.email || null,
-          phone: form.phone || null,
+          email: primaryEmail?.email || form.email || null,
+          phone: primaryPhoneStr || form.phone || null,
           cpf_cnpj: form.cpf_cnpj || null,
           birth_date: form.birth_date || null,
           gender: form.gender || null,
@@ -194,7 +255,41 @@ function ClientTab({ level, contactId, leadId, clientId, contactName, phone }: P
         };
         const { error } = await supabase.from("clients").update(payload).eq("id", clientId);
         if (error) throw error;
+
+        // Sync client_phones (replace-all, igual a /clients)
+        await supabase.from("client_phones").delete().eq("client_id", clientId);
+        const validPhones = phones.filter((p) => p.phone.trim());
+        if (validPhones.length > 0) {
+          await supabase.from("client_phones").insert(
+            validPhones.map((p, _i, arr) => {
+              const cc = COUNTRY_CODES.find((c) => c.code === p.country_code);
+              const isPrimary = arr.length === 1 ? true : p.is_primary;
+              return {
+                client_id: clientId!,
+                phone: `${cc?.dial || "+55"} ${p.phone}`,
+                description: p.description || null,
+                is_primary: isPrimary,
+              };
+            }),
+          );
+        }
+        // Sync client_emails
+        await supabase.from("client_emails").delete().eq("client_id", clientId);
+        const validEmails = emails.filter((e) => e.email.trim());
+        if (validEmails.length > 0) {
+          await supabase.from("client_emails").insert(
+            validEmails.map((e, _i, arr) => ({
+              client_id: clientId!,
+              email: e.email,
+              description: e.description || null,
+              is_primary: arr.length === 1 ? true : e.is_primary,
+            })),
+          );
+        }
         qc.invalidateQueries({ queryKey: ["side-client", clientId] });
+        qc.invalidateQueries({ queryKey: ["side-client-phones", clientId] });
+        qc.invalidateQueries({ queryKey: ["side-client-emails", clientId] });
+
       } else if (level === "lead" && leadId) {
         const payload: any = {
           full_name: form.full_name?.trim() || waName,
@@ -280,15 +375,113 @@ function ClientTab({ level, contactId, leadId, clientId, contactName, phone }: P
             <Field label="Nome completo">
               <Input value={form.full_name || ""} onChange={(e) => set("full_name", e.target.value)} className="h-8" />
             </Field>
-            <div className="grid grid-cols-2 gap-2">
-              <Field label="Telefone">
-                <Input value={form.phone || ""} onChange={(e) => set("phone", e.target.value)} className="h-8" />
-              </Field>
-              <Field label="E-mail">
-                <Input type="email" value={form.email || ""} onChange={(e) => set("email", e.target.value)} className="h-8" />
-              </Field>
-            </div>
+            {level !== "cliente" && (
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="Telefone">
+                  <Input value={form.phone || ""} onChange={(e) => set("phone", e.target.value)} className="h-8" />
+                </Field>
+                <Field label="E-mail">
+                  <Input type="email" value={form.email || ""} onChange={(e) => set("email", e.target.value)} className="h-8" />
+                </Field>
+              </div>
+            )}
           </FieldGroup>
+
+          {/* Cliente: múltiplos telefones / e-mails (igual à ficha) */}
+          {level === "cliente" && (
+            <>
+              <FieldGroup title="Celulares / Telefones">
+                <div className="space-y-1.5">
+                  {phones.length === 0 && (
+                    <p className="text-[11px] text-muted-foreground italic">Nenhum telefone.</p>
+                  )}
+                  {phones.map((p, i) => {
+                    const cc = COUNTRY_CODES.find((c) => c.code === p.country_code) || COUNTRY_CODES[0];
+                    return (
+                      <div key={i} className="flex items-center gap-1.5">
+                        <Checkbox
+                          checked={phones.length === 1 || p.is_primary}
+                          onCheckedChange={() => setPhones(phones.map((ph, j) => ({ ...ph, is_primary: j === i })))}
+                          className="shrink-0"
+                          title="Principal"
+                        />
+                        <Select
+                          value={p.country_code}
+                          onValueChange={(v) => {
+                            const ncc = COUNTRY_CODES.find((c) => c.code === v) || COUNTRY_CODES[0];
+                            setPhones(phones.map((ph, j) => j === i ? { ...ph, country_code: v, phone: applyPhoneMask(stripMask(ph.phone), ncc.mask) } : ph));
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-[78px] px-2 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {COUNTRY_CODES.map((c) => (
+                              <SelectItem key={c.code} value={c.code}>{c.flag} {c.dial}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          value={p.phone}
+                          onChange={(e) => setPhones(phones.map((ph, j) => j === i ? { ...ph, phone: applyPhoneMask(e.target.value, cc.mask) } : ph))}
+                          placeholder={cc.mask.replace(/#/g, "0")}
+                          className="h-8 flex-1 min-w-0"
+                        />
+                        <Input
+                          value={p.description}
+                          onChange={(e) => setPhones(phones.map((ph, j) => j === i ? { ...ph, description: e.target.value } : ph))}
+                          placeholder="Descrição"
+                          className="h-8 w-24"
+                        />
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive shrink-0" onClick={() => setPhones(phones.filter((_, j) => j !== i))}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                  <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => setPhones([...phones, { phone: "", description: "", country_code: "BR", is_primary: phones.length === 0 }])}>
+                    <Plus className="h-3 w-3" /> Adicionar
+                  </Button>
+                </div>
+              </FieldGroup>
+
+              <FieldGroup title="E-mails">
+                <div className="space-y-1.5">
+                  {emails.length === 0 && (
+                    <p className="text-[11px] text-muted-foreground italic">Nenhum e-mail.</p>
+                  )}
+                  {emails.map((e, i) => (
+                    <div key={i} className="flex items-center gap-1.5">
+                      <Checkbox
+                        checked={emails.length === 1 || e.is_primary}
+                        onCheckedChange={() => setEmails(emails.map((em, j) => ({ ...em, is_primary: j === i })))}
+                        className="shrink-0"
+                        title="Principal"
+                      />
+                      <Input
+                        type="email"
+                        value={e.email}
+                        onChange={(ev) => setEmails(emails.map((em, j) => j === i ? { ...em, email: ev.target.value } : em))}
+                        placeholder="email@exemplo.com"
+                        className="h-8 flex-1 min-w-0"
+                      />
+                      <Input
+                        value={e.description}
+                        onChange={(ev) => setEmails(emails.map((em, j) => j === i ? { ...em, description: ev.target.value } : em))}
+                        placeholder="Descrição"
+                        className="h-8 w-24"
+                      />
+                      <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive shrink-0" onClick={() => setEmails(emails.filter((_, j) => j !== i))}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => setEmails([...emails, { email: "", description: "", is_primary: emails.length === 0 }])}>
+                    <Plus className="h-3 w-3" /> Adicionar
+                  </Button>
+                </div>
+              </FieldGroup>
+            </>
+          )}
+
 
           {/* Lead extras */}
           {level === "lead" && (
