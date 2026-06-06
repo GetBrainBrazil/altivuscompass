@@ -26,6 +26,7 @@ import { COUNTRY_CODES, applyPhoneMask } from "@/lib/phone-masks";
 import { ImageEditor } from "@/components/ImageEditor";
 import { ClientTravelersTab } from "@/components/ClientTravelersTab";
 import ClientConversationsTab from "@/components/ClientConversationsTab";
+import { ClientInteractionPanel } from "@/components/clients/ClientInteractionPanel";
 import { ListSkeleton, TableSkeleton } from "@/components/ui/loading-skeletons";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccessFeature } from "@/lib/permissions";
@@ -144,7 +145,24 @@ export default function Clients() {
   const [needsComplementaryData, setNeedsComplementaryData] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [activeTab, setActiveTab] = useState("contact");
+  const [resolvedContactId, setResolvedContactId] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Resolve contact_id para o painel de Interações (a partir do client_id editado, se necessário)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (linkContactId) { setResolvedContactId(linkContactId); return; }
+      if (!editingId) { setResolvedContactId(null); return; }
+      const { data } = await supabase
+        .from("contacts")
+        .select("id")
+        .eq("client_id", editingId)
+        .maybeSingle();
+      if (!cancelled) setResolvedContactId((data as any)?.id ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [editingId, linkContactId]);
 
   const hasEditParam =
     !!(searchParams.get("id") ||
@@ -1005,7 +1023,7 @@ export default function Clients() {
   // ========== FORM VIEW ==========
   if (view === "form") {
     return (
-      <div className="max-w-5xl mx-auto space-y-4">
+      <div className="max-w-[1600px] mx-auto space-y-4">
         {needsComplementaryData && contactLevel === "cliente" && (
           <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 font-body">
             <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
@@ -1187,8 +1205,9 @@ export default function Clients() {
             </div>
           </div>
 
-          {/* ====== LOWER SECTION: Tabs ====== */}
-          <div className="glass-card rounded-xl p-4">
+          {/* ====== LOWER SECTION: Tabs (left) + Interaction panel (right) ====== */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="glass-card rounded-xl p-4 lg:col-span-7">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="w-full justify-start flex-wrap h-auto">
                 <TabsTrigger value="contact" className="font-body text-xs">Contato</TabsTrigger>
@@ -1199,10 +1218,10 @@ export default function Clients() {
                   <TabsTrigger value="miles" className="font-body text-xs">Milhas</TabsTrigger>
                 )}
                 <TabsTrigger value="preferences" className="font-body text-xs">Preferências</TabsTrigger>
-                <TabsTrigger value="observations" className="font-body text-xs">Observações</TabsTrigger>
                 {editingId && (
-                  <TabsTrigger value="conversations" className="font-body text-xs">Conversas</TabsTrigger>
+                  <TabsTrigger value="conversations" className="font-body text-xs">Chats</TabsTrigger>
                 )}
+                <TabsTrigger value="observations" className="font-body text-xs">Observações</TabsTrigger>
               </TabsList>
 
               {/* Contact Tab */}
@@ -1907,6 +1926,12 @@ export default function Clients() {
                 </TabsContent>
               )}
             </Tabs>
+          </div>
+
+          {/* Right column: Interaction + History */}
+          <div className="lg:col-span-5">
+            <ClientInteractionPanel contactId={resolvedContactId} clientId={editingId} />
+          </div>
           </div>
 
           {/* Actions */}
