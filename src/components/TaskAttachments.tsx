@@ -212,14 +212,14 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
                       <button type="button" onClick={() => handleDownload(a.file_path, a.file_name)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground" title="Baixar">
                         <Download size={13} />
                       </button>
-                      <button type="button" onClick={() => handleDelete(a.id, a.file_path)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-destructive" title="Remover">
+                      <button type="button" onClick={() => handleDeleteClick(a.id, a.file_path, a.file_name)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-destructive" title="Remover">
                         <Trash2 size={13} />
                       </button>
                     </>
                   ) : (
                     <button
                       type="button"
-                      onClick={() => onPendingChange?.(pending.filter((_, i) => `pending-${i}` !== a.id))}
+                      onClick={() => handleDeleteClick(a.id, "", a.file_name, true, Number(a.id.replace("pending-", "")))}
                       className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-destructive"
                       title="Remover"
                     >
