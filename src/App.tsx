@@ -48,6 +48,8 @@ import OpsNew from "./pages/OpsNew";
 import AIAgentEdit from "./pages/AIAgentEdit";
 import Vault from "./pages/Vault";
 
+import { ReminderPopupCenter } from "@/components/ReminderPopupCenter";
+
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -116,6 +118,7 @@ const App = () => (
             <Route path="/whatsapp-connection" element={<Navigate to="/ai-agents?section=whatsapp" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <ReminderPopupCenter />
           </ThemeProvider>
         </AuthProvider>
       </BrowserRouter>
