@@ -53,7 +53,25 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [viewer, setViewer] = useState<ViewerAttachment | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<{ id: string; path: string; name: string; pending?: boolean; pendingIndex?: number } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; path: string; name: string; type?: string | null; pending?: boolean; pendingIndex?: number; file?: File } | null>(null);
+  const [confirmThumb, setConfirmThumb] = useState<string | null>(null);
+
+  useEffect(() => {
+    let revoke: string | null = null;
+    (async () => {
+      if (!confirmDelete) { setConfirmThumb(null); return; }
+      if (!isImage(confirmDelete.type, confirmDelete.name)) { setConfirmThumb(null); return; }
+      if (confirmDelete.pending && confirmDelete.file) {
+        const url = URL.createObjectURL(confirmDelete.file);
+        revoke = url;
+        setConfirmThumb(url);
+      } else if (confirmDelete.path) {
+        const { data } = await supabase.storage.from("task-attachments").createSignedUrl(confirmDelete.path, 60 * 5);
+        setConfirmThumb(data?.signedUrl ?? null);
+      }
+    })();
+    return () => { if (revoke) URL.revokeObjectURL(revoke); };
+  }, [confirmDelete]);
 
 
 
