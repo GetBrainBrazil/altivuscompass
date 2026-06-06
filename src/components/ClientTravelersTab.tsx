@@ -735,11 +735,16 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                 <Input
                   value={passengerForm.cpf}
                   onChange={(e) => setPassengerForm({ ...passengerForm, cpf: maskCPF(e.target.value) })}
-                  className="h-9"
+                  className={`h-9 ${passengerForm.cpf && !isValidCPF(passengerForm.cpf) ? "border-destructive focus-visible:ring-destructive" : ""}`}
                   placeholder="000.000.000-00"
                   inputMode="numeric"
                   maxLength={14}
                 />
+                {passengerForm.cpf && !isValidCPF(passengerForm.cpf) && (
+                  <p className="text-[11px] text-destructive mt-1 font-body">
+                    {cleanDigits(passengerForm.cpf).length < 11 ? "CPF incompleto" : "CPF inválido"}
+                  </p>
+                )}
               </div>
               <div>
                 <Label className="font-body text-xs">Nascimento</Label>
