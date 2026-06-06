@@ -1924,7 +1924,13 @@ export default function ServiceCenter() {
                     {m.isInternal ? (
                       <InternalNote message={m} />
                     ) : (
-                      <ChatBubble message={m} agentLabel={myAgentLabel} />
+                      <ChatBubble
+                        message={m}
+                        agentLabel={myAgentLabel}
+                        linkedQuotes={linksByMessage.get(m.id)}
+                        onLinkClick={() => setLinkDialogMessages([m.id])}
+                        onOpenQuote={(qid) => navigate(`/quotes?id=${qid}`)}
+                      />
                     )}
                     {selected.handoffAfterMessageId === m.id && <HandoffDivider />}
                   </div>
