@@ -12,9 +12,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { isValidPhoneLength } from "@/lib/validators";
 
 interface Props {
   taskId: string;
+  assigneePhone?: string | null;
+  assigneeName?: string | null;
 }
 
 type Reminder = {
