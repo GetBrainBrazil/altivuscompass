@@ -1445,7 +1445,7 @@ export default function Clients() {
                 <div className="border-t border-border/50 pt-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-display font-medium text-foreground">Passaportes</h3>
-                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setPassports([...passports, { passport_number: "", issue_date: "", expiry_date: "", nationality: "", status: "valid", visas: [], image_urls: [], _imageFiles: [] }])}>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => { const idx = passports.length; setPassports([...passports, { passport_number: "", issue_date: "", expiry_date: "", nationality: "", status: "valid", visas: [], image_urls: [], _imageFiles: [] }]); setCollapsedPassports(prev => new Set(prev).add(idx)); }}>
                       <Plus className="h-3 w-3 mr-1" />Adicionar Passaporte
                     </Button>
                   </div>
@@ -1541,7 +1541,7 @@ export default function Clients() {
                         <div className="flex items-center justify-between mb-2">
                           <Label className="font-body text-xs font-medium">Vistos deste passaporte</Label>
                           <Button type="button" variant="ghost" size="sm" className="h-5 px-1 text-xs" onClick={() => {
-                            const n = [...passports]; n[pi].visas = [...n[pi].visas, { visa_type: "", validity_date: "", country_region: "", visa_number: "", issue_date: "", entry_type: "single", description: "", image_url: "" }]; setPassports(n);
+                            const n = [...passports]; const vi = n[pi].visas.length; n[pi].visas = [...n[pi].visas, { visa_type: "", validity_date: "", country_region: "", visa_number: "", issue_date: "", entry_type: "single", description: "", image_url: "" }]; setPassports(n); setCollapsedVisas(prev => new Set(prev).add(`${pi}-${vi}`));
                           }}>
                             <Plus className="h-3 w-3 mr-1" />Visto
                           </Button>
