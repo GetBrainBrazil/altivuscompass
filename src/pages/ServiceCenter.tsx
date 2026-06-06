@@ -1106,7 +1106,7 @@ export default function ServiceCenter() {
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
-  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(true);
   const [sidePanelTab, setSidePanelTab] = useState<"summary" | "crm">("summary");
   const [newMsgOpen, setNewMsgOpen] = useState(false);
   const [linkDialogMessages, setLinkDialogMessages] = useState<string[]>([]);
