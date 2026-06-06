@@ -728,21 +728,15 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => { setCopyDialog(true); setCopyClientSearch(""); setCopyPassengerIds(new Set()); }}>
-                    <Copy className="h-3 w-3 mr-1" />Copiar passageiro
+                  <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => { setAddDialog(true); setAddSearch(""); setPendingLink(null); setPendingAtoB("other"); setPendingBtoA("other"); }}>
+                    <Plus className="h-3 w-3 mr-1" />Adicionar viajante
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
-                  Lista apenas passageiros que ainda não foram cadastrados como clientes próprios. Cada passageiro aparece com o cliente de origem ao lado.
+                  Comece digitando o nome. O sistema busca entre seus clientes e passageiros existentes — se não encontrar, você cadastra um novo passageiro deste cliente.
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => { setLinkDialog(true); setLinkSearch(""); setSelectedLinkClient(null); setLinkRelType("other"); }}>
-              <Link2 className="h-3 w-3 mr-1" />Vincular Cliente
-            </Button>
-            <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => openPassengerForm()}>
-              <Plus className="h-3 w-3 mr-1" />Adicionar
-            </Button>
           </div>
         </div>
 
