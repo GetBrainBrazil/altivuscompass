@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { RotateCcw, RotateCw, Crop as CropIcon, Save, Loader2, X } from "lucide-react";
+import { RotateCcw, RotateCw, Crop as CropIcon, Save, Loader2, X, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 
 interface SavedAttachment {
   id: string;
