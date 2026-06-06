@@ -1696,21 +1696,41 @@ export default function ServiceCenter() {
           </span>
         </div>
         {agentActive ? (
-          <button
-            type="button"
-            onClick={() => setPendingAgentToggle(false)}
-            className="h-7 px-3 text-[12px] rounded-md border border-gray-300 text-gray-600 hover:bg-white transition-colors"
-          >
-            Desativar IA
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPendingAgentToggle(false)}
+              className="h-7 px-3 text-[12px] rounded-md border border-gray-300 text-gray-600 hover:bg-white transition-colors"
+            >
+              Desativar IA
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/ai-agents")}
+              className="h-7 w-7 flex items-center justify-center rounded-md border border-gray-300 text-gray-500 hover:bg-white hover:text-gray-700 transition-colors"
+              title="Configurar Agente de IA e WhatsApp"
+            >
+              <Settings className="h-3.5 w-3.5" />
+            </button>
+          </div>
         ) : (
-          <button
-            type="button"
-            onClick={() => setPendingAgentToggle(true)}
-            className="h-7 px-3 text-[12px] rounded-md bg-green-500 hover:bg-green-600 text-white font-medium transition-colors"
-          >
-            Ativar IA
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPendingAgentToggle(true)}
+              className="h-7 px-3 text-[12px] rounded-md bg-green-500 hover:bg-green-600 text-white font-medium transition-colors"
+            >
+              Ativar IA
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/ai-agents")}
+              className="h-7 w-7 flex items-center justify-center rounded-md border border-gray-300 text-gray-500 hover:bg-white hover:text-gray-700 transition-colors"
+              title="Configurar Agente de IA e WhatsApp"
+            >
+              <Settings className="h-3.5 w-3.5" />
+            </button>
+          </div>
         )}
       </div>
 
