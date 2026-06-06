@@ -642,7 +642,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button type="button" variant="outline" size="sm" className="font-body text-xs" onClick={() => { setCopyDialog(true); setCopyClientSearch(""); setCopyPassengerIds(new Set()); }}>
-                    <Copy className="h-3 w-3 mr-1" />Copiar de outro cliente
+                    <Copy className="h-3 w-3 mr-1" />Copiar passageiro
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
@@ -984,7 +984,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       <Dialog open={copyDialog} onOpenChange={(o) => { if (!o) { setCopyDialog(false); setCopyPassengerIds(new Set()); setCopyClientSearch(""); } }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="font-display">Copiar Passageiros de Outro Cliente</DialogTitle>
+            <DialogTitle className="font-display">Copiar passageiro</DialogTitle>
             <DialogDescription className="font-body">
               Apenas passageiros que ainda não foram cadastrados como clientes próprios. O cliente de origem é exibido ao lado de cada passageiro.
             </DialogDescription>
