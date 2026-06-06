@@ -169,6 +169,7 @@ export function TaskNotesHistory({ taskId }: Props) {
 
   return (
     <div className="space-y-5">
+      <h2 className="font-display text-lg text-foreground">Interações</h2>
       {/* Adicionar nota */}
       <div>
         <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground font-body mb-2">
