@@ -10,11 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Sparkles, FileText, ShoppingBag, LifeBuoy, UserRound,
   ExternalLink, Plus, Loader2, MapPin, Users, CalendarRange, Wallet,
-  Phone, Mail, Save, MessageCircle,
+  Phone, Mail, Save, MessageCircle, Trash2,
 } from "lucide-react";
+import { COUNTRY_CODES, applyPhoneMask, stripMask } from "@/lib/phone-masks";
 
 import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/ContactLevelBadge";
 import { toast } from "sonner";
