@@ -2068,9 +2068,9 @@ export default function Clients() {
             </thead>
             <tbody className="divide-y divide-border/30">
               {filtered.map((client: any) => {
-                const clientPassengersList = passengersByClient[client.id] ?? [];
+                const clientTravelersList = travelersByClient[client.id] ?? [];
                 const isExpanded = expandedClients.has(client.id);
-                const hasPassengers = clientPassengersList.length > 0;
+                const hasTravelers = clientTravelersList.length > 0;
                 const isVirtual = !!client._contactId;
                 const handleRowOpen = () => {
                   if (isVirtual) {
