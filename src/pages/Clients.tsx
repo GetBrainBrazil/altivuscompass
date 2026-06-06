@@ -349,9 +349,40 @@ export default function Clients() {
   const { data: allPassengers = [] } = useQuery({
     queryKey: ["all-passengers-for-search"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("passengers").select("id, full_name, client_id, birth_date, nationality, passport_number, relationship_type");
+      const { data, error } = await supabase.from("passengers").select("id, full_name, client_id, birth_date, nationality, passport_number, relationship_type, cpf");
       if (error) throw error;
       return data;
+    },
+  });
+
+  // Fetch client relationships (bidirectional client-as-traveler links)
+  const { data: allRelationships = [] } = useQuery({
+    queryKey: ["all-client-relationships"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("client_relationships")
+        .select("id, client_id_a, client_id_b, relationship_type, relationship_label");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const relatedClientIds = useMemo(() => {
+    const s = new Set<string>();
+    for (const r of allRelationships as any[]) { s.add(r.client_id_a); s.add(r.client_id_b); }
+    return Array.from(s);
+  }, [allRelationships]);
+
+  const { data: relatedPassports = [] } = useQuery({
+    queryKey: ["all-related-passports", relatedClientIds.length],
+    enabled: relatedClientIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("client_passports")
+        .select("client_id, passport_number, expiry_date")
+        .in("client_id", relatedClientIds);
+      if (error) throw error;
+      return data ?? [];
     },
   });
 
@@ -376,6 +407,61 @@ export default function Clients() {
     }
     return map;
   }, [allPassengers]);
+
+  // client_id -> linked clients as travelers (both directions)
+  const linkedTravelersByClient = useMemo(() => {
+    const map: Record<string, any[]> = {};
+    const clientsById = new Map<string, any>();
+    for (const c of (clients as any[])) clientsById.set(c.id, c);
+    const passportsByClient = new Map<string, any[]>();
+    for (const p of (relatedPassports as any[])) {
+      const arr = passportsByClient.get(p.client_id) ?? [];
+      arr.push(p);
+      passportsByClient.set(p.client_id, arr);
+    }
+    const pickPassport = (cid: string) => {
+      const arr = passportsByClient.get(cid) ?? [];
+      const valid = arr.filter((p) => !p.expiry_date || new Date(p.expiry_date) >= new Date());
+      return (valid[0] ?? arr[0])?.passport_number ?? null;
+    };
+    for (const r of (allRelationships as any[])) {
+      const push = (ownerId: string, otherId: string) => {
+        const other = clientsById.get(otherId);
+        if (!other) return;
+        if (!map[ownerId]) map[ownerId] = [];
+        map[ownerId].push({
+          _kind: "client",
+          id: other.id,
+          full_name: other.full_name,
+          relationship_type: r.relationship_type,
+          relationship_label: r.relationship_label,
+          cpf: other.cpf_cnpj ?? null,
+          birth_date: other.birth_date ?? null,
+          nationality: other.nationality ?? null,
+          passport_number: pickPassport(other.id),
+          _client: other,
+        });
+      };
+      push(r.client_id_a, r.client_id_b);
+      push(r.client_id_b, r.client_id_a);
+    }
+    return map;
+  }, [allRelationships, relatedPassports, clients]);
+
+  // Unified travelers per client (passengers + linked clients)
+  const travelersByClient = useMemo(() => {
+    const map: Record<string, any[]> = {};
+    const owners = new Set<string>([
+      ...Object.keys(passengersByClient),
+      ...Object.keys(linkedTravelersByClient),
+    ]);
+    for (const id of owners) {
+      const passengers = (passengersByClient[id] ?? []).map((p: any) => ({ _kind: "passenger", ...p }));
+      const linked = linkedTravelersByClient[id] ?? [];
+      map[id] = [...linked, ...passengers];
+    }
+    return map;
+  }, [passengersByClient, linkedTravelersByClient]);
 
   const toggleExpand = (clientId: string) => {
     setExpandedClients(prev => {
@@ -1971,6 +2057,7 @@ export default function Clients() {
                 <th className="p-2 w-10"></th>
                 <SortableHeader label="Cliente" sortKey="full_name" />
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Nível</th>
+                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">CPF</th>
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Telefone</th>
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">E-mail</th>
                 <SortableHeader label="Localização" sortKey="city" />
@@ -1981,9 +2068,9 @@ export default function Clients() {
             </thead>
             <tbody className="divide-y divide-border/30">
               {filtered.map((client: any) => {
-                const clientPassengersList = passengersByClient[client.id] ?? [];
+                const clientTravelersList = travelersByClient[client.id] ?? [];
                 const isExpanded = expandedClients.has(client.id);
-                const hasPassengers = clientPassengersList.length > 0;
+                const hasTravelers = clientTravelersList.length > 0;
                 const isVirtual = !!client._contactId;
                 const handleRowOpen = () => {
                   if (isVirtual) {
@@ -1996,12 +2083,12 @@ export default function Clients() {
                   <React.Fragment key={client.id}>
                     <tr className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={handleRowOpen}>
                       <td className="p-2 text-center">
-                        {hasPassengers ? (
+                        {hasTravelers ? (
                           <button
                             type="button"
                             className="p-1 rounded hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
                             onClick={(e) => { e.stopPropagation(); toggleExpand(client.id); }}
-                            title={`${clientPassengersList.length} passageiro(s)`}
+                            title={`${clientTravelersList.length} viajante(s)`}
                           >
                             {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                           </button>
@@ -2014,9 +2101,9 @@ export default function Clients() {
                           <div>
                             <div className="flex items-center gap-1.5">
                               <p className="text-sm font-medium font-body text-foreground">{client.full_name}</p>
-                              {hasPassengers && (
+                              {hasTravelers && (
                                 <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground font-body">
-                                  <Users className="h-3 w-3" />{clientPassengersList.length}
+                                  <Users className="h-3 w-3" />{clientTravelersList.length}
                                 </span>
                               )}
                             </div>
@@ -2027,6 +2114,9 @@ export default function Clients() {
                       </td>
                       <td className="p-4">
                         <ContactLevelBadge level={client._level as ContactLevel} size="xs" />
+                      </td>
+                      <td className="p-4">
+                        <p className="text-sm font-body text-foreground whitespace-nowrap">{client.cpf_cnpj || "—"}</p>
                       </td>
                       <td className="p-4">
                         {client.primary_phone ? (
@@ -2082,24 +2172,36 @@ export default function Clients() {
                         </div>
                       </td>
                     </tr>
-                    {isExpanded && clientPassengersList.length > 0 && (
+                    {isExpanded && clientTravelersList.length > 0 && (
                       <tr className="bg-muted/10">
-                        <td colSpan={9} className="p-0">
+                        <td colSpan={10} className="p-0">
                           <div className="pl-12 pr-4 py-2">
                             <table className="w-full">
                               <thead>
                                 <tr className="border-b border-border/30">
-                                  <th className="text-left py-1.5 px-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Passageiro</th>
+                                  <th className="text-left py-1.5 px-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Viajante</th>
                                   <th className="text-left py-1.5 px-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Vínculo</th>
+                                  <th className="text-left py-1.5 px-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">CPF</th>
                                   <th className="text-left py-1.5 px-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Nascimento</th>
                                   <th className="text-left py-1.5 px-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Nacionalidade</th>
                                   <th className="text-left py-1.5 px-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body">Passaporte</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-border/20">
-                                {clientPassengersList.map((p: any) => (
-                                  <tr key={p.id} className="hover:bg-muted/20 cursor-pointer" onClick={(e) => { e.stopPropagation(); setActiveTab("travelers"); openEdit(client); }}>
-                                    <td className="py-1.5 px-3 text-xs font-body text-foreground">{p.full_name}</td>
+                                {clientTravelersList.map((p: any, idx: number) => (
+                                  <tr
+                                    key={`${p._kind}-${p.id}-${idx}`}
+                                    className="hover:bg-muted/20 cursor-pointer"
+                                    onClick={(e) => { e.stopPropagation(); setActiveTab("travelers"); openEdit(client); }}
+                                  >
+                                    <td className="py-1.5 px-3 text-xs font-body text-foreground">
+                                      <div className="flex items-center gap-1.5">
+                                        <span>{p.full_name}</span>
+                                        {p._kind === "client" && (
+                                          <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-body">Cliente</span>
+                                        )}
+                                      </div>
+                                    </td>
                                     <td className="py-1.5 px-3">
                                       {p.relationship_type ? (
                                         <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary font-body">
@@ -2107,6 +2209,7 @@ export default function Clients() {
                                         </span>
                                       ) : <span className="text-xs text-muted-foreground">—</span>}
                                     </td>
+                                    <td className="py-1.5 px-3 text-xs font-body text-foreground whitespace-nowrap">{p.cpf || "—"}</td>
                                     <td className="py-1.5 px-3 text-xs font-body text-foreground">{p.birth_date ? new Date(p.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
                                     <td className="py-1.5 px-3 text-xs font-body text-foreground">{p.nationality || "—"}</td>
                                     <td className="py-1.5 px-3 text-xs font-body text-foreground">{p.passport_number || "—"}</td>
@@ -2134,9 +2237,9 @@ export default function Clients() {
           <div className="p-8 text-center text-muted-foreground font-body">Nenhum cliente encontrado.</div>
         ) : (
           filtered.map((client: any) => {
-            const clientPassengersList = passengersByClient[client.id] ?? [];
+            const clientTravelersList = travelersByClient[client.id] ?? [];
             const isExpanded = expandedClients.has(client.id);
-            const hasPassengers = clientPassengersList.length > 0;
+            const hasTravelers = clientTravelersList.length > 0;
             return (
               <div key={client.id} className="glass-card rounded-xl p-4 space-y-3 cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => client._contactId ? navigate(`/clients?contact=${client._contactId}`) : openEdit(client)}>
                 <div className="flex items-start justify-between">
@@ -2144,16 +2247,16 @@ export default function Clients() {
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <p className="text-sm font-medium font-body text-foreground">{client.full_name}</p>
                       <ContactLevelBadge level={client._level as ContactLevel} size="xs" />
-                      {hasPassengers && (
+                      {hasTravelers && (
                         <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground font-body">
-                          <Users className="h-3 w-3" />{clientPassengersList.length}
+                          <Users className="h-3 w-3" />{clientTravelersList.length}
                         </span>
                       )}
                     </div>
                     {client.rating > 0 && <div className="flex gap-0.5 mt-0.5">{[1,2,3,4,5].map(i => <Star key={i} className={`h-3 w-3 ${i <= client.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"}`} />)}</div>}
                   </div>
                   <div className="flex items-center gap-1">
-                    {hasPassengers && (
+                    {hasTravelers && (
                       <button type="button" className="p-1 rounded hover:bg-muted/50 text-muted-foreground" onClick={(e) => { e.stopPropagation(); toggleExpand(client.id); }}>
                         {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                       </button>
@@ -2167,19 +2270,24 @@ export default function Clients() {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground font-body">
+                  {client.cpf_cnpj && <span>CPF: {client.cpf_cnpj}</span>}
                   {client.city && <span>{client.city}{client.state ? `, ${client.state}` : ""}</span>}
                   {client.primary_phone && <a href={`https://wa.me/${client.primary_phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-primary hover:underline">{client.primary_phone}</a>}
                   {client.primary_email && <span>{client.primary_email}</span>}
                 </div>
-                {isExpanded && clientPassengersList.length > 0 && (
+                {isExpanded && clientTravelersList.length > 0 && (
                   <div className="border-t border-border/30 pt-2 mt-1 space-y-1" onClick={(e) => e.stopPropagation()}>
-                    {clientPassengersList.map((p: any) => (
-                      <div key={p.id} className="flex items-center gap-2 text-xs font-body text-foreground py-0.5">
+                    {clientTravelersList.map((p: any, idx: number) => (
+                      <div key={`${p._kind}-${p.id}-${idx}`} className="flex items-center gap-2 text-xs font-body text-foreground py-0.5">
                         <Users className="h-3 w-3 text-muted-foreground shrink-0" />
                         <span>{p.full_name}</span>
+                        {p._kind === "client" && (
+                          <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-primary/15 text-primary">Cliente</span>
+                        )}
                         {p.relationship_type && (
                           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">{RELATIONSHIP_LABELS[p.relationship_type] || p.relationship_type}</span>
                         )}
+                        {p.cpf && <span className="text-muted-foreground">· {p.cpf}</span>}
                       </div>
                     ))}
                   </div>
