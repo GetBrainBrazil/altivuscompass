@@ -18,6 +18,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Calendar } from "@/components/ui/calendar";
 import { ArrowLeft, CalendarIcon, CheckSquare, ChevronsUpDown, Check, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isValidPhoneLength } from "@/lib/validators";
 
 const STATUS_OPTIONS = [
   { value: "pending", label: "A iniciar", dot: "bg-warning" },
