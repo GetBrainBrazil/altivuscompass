@@ -1205,8 +1205,9 @@ export default function Clients() {
             </div>
           </div>
 
-          {/* ====== LOWER SECTION: Tabs ====== */}
-          <div className="glass-card rounded-xl p-4">
+          {/* ====== LOWER SECTION: Tabs (left) + Interaction panel (right) ====== */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="glass-card rounded-xl p-4 lg:col-span-7">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="w-full justify-start flex-wrap h-auto">
                 <TabsTrigger value="contact" className="font-body text-xs">Contato</TabsTrigger>
@@ -1217,10 +1218,10 @@ export default function Clients() {
                   <TabsTrigger value="miles" className="font-body text-xs">Milhas</TabsTrigger>
                 )}
                 <TabsTrigger value="preferences" className="font-body text-xs">Preferências</TabsTrigger>
-                <TabsTrigger value="observations" className="font-body text-xs">Observações</TabsTrigger>
                 {editingId && (
-                  <TabsTrigger value="conversations" className="font-body text-xs">Conversas</TabsTrigger>
+                  <TabsTrigger value="conversations" className="font-body text-xs">Chats</TabsTrigger>
                 )}
+                <TabsTrigger value="observations" className="font-body text-xs">Observações</TabsTrigger>
               </TabsList>
 
               {/* Contact Tab */}
