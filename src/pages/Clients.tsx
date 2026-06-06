@@ -1899,6 +1899,13 @@ export default function Clients() {
                   <Textarea value={form.notes} onChange={(e) => upd("notes", e.target.value)} rows={4} placeholder="Anotações sobre o cliente..." />
                 </div>
               </TabsContent>
+
+              {/* Conversations Tab */}
+              {editingId && (
+                <TabsContent value="conversations" className="pt-3">
+                  <ClientConversationsTab clientId={editingId} />
+                </TabsContent>
+              )}
             </Tabs>
           </div>
 
