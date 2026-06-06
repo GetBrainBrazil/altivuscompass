@@ -166,13 +166,13 @@ export function ImageViewerDialog({ open, onOpenChange, attachment, taskId, pend
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] w-[95vw] sm:max-w-5xl p-0 gap-0 overflow-hidden">
-        <DialogHeader className="p-4 pb-3 border-b">
+      <DialogContent className="max-w-[95vw] w-[95vw] sm:max-w-5xl max-h-[95vh] p-0 gap-0 overflow-hidden flex flex-col">
+        <DialogHeader className="p-4 pb-3 border-b shrink-0">
           <DialogTitle className="font-display text-base">Visualizar imagem</DialogTitle>
         </DialogHeader>
 
-        <div className="p-4 space-y-3">
-          <div className="flex items-end gap-2 flex-wrap">
+        <div className="p-4 space-y-3 flex-1 min-h-0 flex flex-col overflow-hidden">
+          <div className="flex items-end gap-2 flex-wrap shrink-0">
             <div className="flex-1 min-w-[200px]">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">Nome do arquivo</Label>
               <Input
@@ -184,7 +184,7 @@ export function ImageViewerDialog({ open, onOpenChange, attachment, taskId, pend
                 className="mt-1"
               />
             </div>
-            <div className="flex gap-1">
+            <div className="flex gap-1 flex-wrap">
               <Button type="button" variant="outline" size="icon" onClick={() => setZoom((z) => Math.max(0.1, z - 0.25))} disabled={cropMode} title="Diminuir zoom">
                 <ZoomOut size={16} />
               </Button>
@@ -219,7 +219,7 @@ export function ImageViewerDialog({ open, onOpenChange, attachment, taskId, pend
           </div>
 
           <div
-            className="bg-muted/30 rounded-md flex items-center justify-center h-[70vh] overflow-auto"
+            className="bg-muted/30 rounded-md flex items-center justify-center flex-1 min-h-0 overflow-auto"
             onWheel={(e) => {
               if (cropMode) return;
               if (e.ctrlKey || e.metaKey) {
@@ -234,7 +234,7 @@ export function ImageViewerDialog({ open, onOpenChange, attachment, taskId, pend
               <Cropper
                 ref={cropperRef}
                 src={src}
-                style={{ height: "70vh", width: "100%" }}
+                style={{ height: "100%", width: "100%" }}
                 viewMode={1}
                 background={false}
                 autoCropArea={1}
@@ -251,6 +251,8 @@ export function ImageViewerDialog({ open, onOpenChange, attachment, taskId, pend
             )}
           </div>
         </div>
+
+
 
 
         <DialogFooter className="p-4 pt-3 border-t flex sm:justify-between gap-2">
