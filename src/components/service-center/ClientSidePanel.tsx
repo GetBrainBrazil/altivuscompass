@@ -115,8 +115,31 @@ function ClientTab({ level, contactId, leadId, clientId, contactName, phone }: P
   const waEmail = client?.email ?? lead?.email ?? contact?.email ?? "";
 
   // ---- Ficha editável ----
+  type PhoneEntry = { id?: string; phone: string; description: string; country_code: string; is_primary: boolean };
+  type EmailEntry = { id?: string; email: string; description: string; is_primary: boolean };
+
   const [form, setForm] = useState<Record<string, any>>({});
+  const [phones, setPhones] = useState<PhoneEntry[]>([]);
+  const [emails, setEmails] = useState<EmailEntry[]>([]);
   const [saving, setSaving] = useState(false);
+
+  // Cliente: carrega phones/emails normalizados
+  const { data: clientPhones = [] } = useQuery({
+    queryKey: ["side-client-phones", clientId],
+    enabled: !!clientId && level === "cliente",
+    queryFn: async () => {
+      const { data } = await supabase.from("client_phones").select("*").eq("client_id", clientId!);
+      return data ?? [];
+    },
+  });
+  const { data: clientEmails = [] } = useQuery({
+    queryKey: ["side-client-emails", clientId],
+    enabled: !!clientId && level === "cliente",
+    queryFn: async () => {
+      const { data } = await supabase.from("client_emails").select("*").eq("client_id", clientId!);
+      return data ?? [];
+    },
+  });
 
   useEffect(() => {
     const src: any = client || lead || contact || {};
@@ -124,14 +147,12 @@ function ClientTab({ level, contactId, leadId, clientId, contactName, phone }: P
       full_name: src.full_name ?? contactName ?? "",
       email: src.email ?? "",
       phone: src.phone ?? phone ?? "",
-      // Lead extras
       destination: (src as any).destination ?? "",
       travelers_count: (src as any).travelers_count ?? "",
       travel_date_start: (src as any).travel_date_start ?? "",
       travel_date_end: (src as any).travel_date_end ?? "",
       budget_estimate: (src as any).budget_estimate ?? "",
       preferences: (src as any).preferences ?? "",
-      // Cliente extras
       cpf_cnpj: (src as any).cpf_cnpj ?? "",
       birth_date: (src as any).birth_date ?? "",
       gender: (src as any).gender ?? "",
@@ -148,6 +169,38 @@ function ClientTab({ level, contactId, leadId, clientId, contactName, phone }: P
       notes: (src as any).notes ?? "",
     });
   }, [client?.id, lead?.id, contact?.id]);
+
+  // Hidrata phones/emails para cliente
+  useEffect(() => {
+    if (level !== "cliente" || !clientId) return;
+    if (clientPhones.length > 0) {
+      setPhones(clientPhones.map((p: any) => {
+        // Parse "+55 (21) 9..." -> separa dial do número
+        const raw = String(p.phone || "");
+        const match = raw.match(/^(\+\d{1,4})\s*(.*)$/);
+        const dial = match?.[1] || "+55";
+        const localRaw = match?.[2] || raw;
+        const cc = COUNTRY_CODES.find((c) => c.dial === dial) || COUNTRY_CODES[0];
+        return {
+          id: p.id,
+          phone: applyPhoneMask(stripMask(localRaw), cc.mask),
+          description: p.description ?? "",
+          country_code: cc.code,
+          is_primary: p.is_primary ?? false,
+        };
+      }));
+    } else {
+      setPhones(client?.phone ? [{ phone: client.phone, description: "", country_code: "BR", is_primary: true }] : []);
+    }
+    if (clientEmails.length > 0) {
+      setEmails(clientEmails.map((e: any) => ({
+        id: e.id, email: e.email, description: e.description ?? "", is_primary: e.is_primary ?? false,
+      })));
+    } else {
+      setEmails(client?.email ? [{ email: client.email, description: "", is_primary: true }] : []);
+    }
+  }, [clientPhones, clientEmails, clientId, level, client?.phone, client?.email]);
+
 
   const set = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }));
 
