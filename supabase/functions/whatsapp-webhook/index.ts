@@ -901,18 +901,22 @@ async function handleLeadCapture(
 ) {
   const { phone, senderName, messageText, isTextMsg } = ctx
 
-  // 1) Lookup contact by phone (matches by digits, ignoring formatting)
+  // 1) Lookup contact by phone — prioriza client_phones (DDD+número),
+  //    senão cai no match clássico por sufixo em contacts.phone.
   const phoneDigits = phone.replace(/\D/g, '')
   let matchedContact: any = null
   if (phoneDigits) {
-    const { data: candidates } = await supabase
-      .from('contacts')
-      .select('id, full_name, phone, level, client_id, lead_id')
-      .ilike('phone', `%${phoneDigits.slice(-9)}%`)
-      .limit(10)
-    matchedContact = (candidates || []).find((c: any) =>
-      (c.phone || '').replace(/\D/g, '').endsWith(phoneDigits.slice(-9)),
-    ) || null
+    matchedContact = await matchContactByClientPhones(supabase, phone)
+    if (!matchedContact) {
+      const { data: candidates } = await supabase
+        .from('contacts')
+        .select('id, full_name, phone, level, client_id, lead_id')
+        .ilike('phone', `%${phoneDigits.slice(-9)}%`)
+        .limit(10)
+      matchedContact = (candidates || []).find((c: any) =>
+        (c.phone || '').replace(/\D/g, '').endsWith(phoneDigits.slice(-9)),
+      ) || null
+    }
   }
 
   // 2) Find or create the lead-capture session for this phone
