@@ -134,13 +134,33 @@ export async function bulkPersistColumns(
   columns: { id: OpsColumnId; cards: KanbanCardData[] }[],
 ): Promise<void> {
   const rows: (OpsCardWritable & { id: string })[] = [];
+  const keepIds = new Set<string>();
   for (const col of columns) {
     col.cards.forEach((card, idx) => {
-      if (!card.id.startsWith("manual-ops-")) return; // only manual ops cards persist here
-      rows.push({ ...cardToRow(card, col.id, idx), created_by: undefined });
+      if (!card.id.startsWith("manual-ops-")) return;
+      const row = cardToRow(card, col.id, idx);
+      rows.push(row);
+      keepIds.add(row.id);
     });
   }
-  if (!rows.length) return;
-  const { error } = await supabase.from("ops_cards").upsert(rows as any, { onConflict: "id" });
-  if (error) throw error;
+
+  if (rows.length > 0) {
+    const { error } = await supabase.from("ops_cards").upsert(rows as any, { onConflict: "id" });
+    if (error) throw error;
+  }
+
+  // Sync deletes: linhas ativas no banco que não estão mais no estado React → archive (não delete físico).
+  const { data: live } = await supabase
+    .from("ops_cards")
+    .select("id")
+    .is("archived_at", null);
+  const liveIds = (live || []).map((r: any) => r.id as string);
+  const toArchive = liveIds.filter((id) => !keepIds.has(id));
+  if (toArchive.length > 0) {
+    await supabase
+      .from("ops_cards")
+      .update({ archived_at: new Date().toISOString() })
+      .in("id", toArchive);
+  }
 }
+
