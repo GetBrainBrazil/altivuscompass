@@ -255,7 +255,7 @@ export function ImageViewerDialog({ open, onOpenChange, attachment, taskId, pend
 
 
 
-        <DialogFooter className="p-4 pt-3 border-t flex sm:justify-between gap-2">
+        <DialogFooter className="p-4 pt-3 border-t flex sm:justify-between gap-2 shrink-0">
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
             <X size={14} className="mr-1.5" /> Cancelar
           </Button>
