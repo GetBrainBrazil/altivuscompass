@@ -1289,11 +1289,15 @@ export default function ServiceCenter() {
       const canonicalName = isGroup
         ? rawName
         : (isPlaceholderName ? (c.phone ? formatPhoneDisplay(c.phone) : "Sem nome") : rawName);
-      const canonicalLevel: ContactLevel =
-        (meta?.level as ContactLevel) ||
-        (c.client_id ? "cliente" : c.lead_id ? "lead" : "prospect");
       const canonicalClientId = meta?.client_id ?? c.client_id ?? undefined;
       const canonicalLeadId = meta?.lead_id ?? c.lead_id ?? undefined;
+      // Prioriza vínculo real (client_id/lead_id) sobre o snapshot de level,
+      // que pode estar defasado se o contato foi promovido depois.
+      const canonicalLevel: ContactLevel = canonicalClientId
+        ? "cliente"
+        : canonicalLeadId
+          ? "lead"
+          : ((meta?.level as ContactLevel) || "prospect");
       return {
         id: c.id,
         leadName: canonicalName,
