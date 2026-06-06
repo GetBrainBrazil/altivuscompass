@@ -1,55 +1,75 @@
-## Diagnóstico
+## Objetivo
 
-O telefone +55 (21) 99477-2165 pertence ao cliente **Alexandre Magalhães Serrado** (em `client_phones`), mas na Central de Atendimento aparece como **Lead**. Investigando o banco:
+Na Central de Atendimento, o painel lateral direito deixa de ser apenas "Resumo IA / CRM" e passa a oferecer uma visão **Cliente 360** com abas condicionais por nível do contato (Prospect / Lead / Cliente), edição completa equivalente às telas dedicadas, e atalhos para Cotações, Vendas e Pós-venda. Em paralelo, a conversa do WhatsApp continua **contínua** (sem sessões obrigatórias), mas permite **marcar mensagens** (uma ou várias) e vinculá-las a uma ou mais Cotações / Vendas / Pós-vendas.
 
-- Existem **dois contatos** para o mesmo número:
-  - `b5cfebf2…` — level=`lead`, `phone=5521994772165`, sem `client_id` (criado antes pelo webhook).
-  - `4737f969…` — level=`cliente`, `phone=NULL`, com `client_id` apontando para o Alexandre (criado depois pela trigger `sync_contact_from_client`).
-- A `wa_conversations` está amarrada ao contato **lead** (criada antes do cliente ter sido cadastrado) e nunca foi remapeada.
-- A trigger `sync_contact_from_client` só busca contato por `client_id`. Quando já existe um contato órfão com o mesmo telefone, ela cria um segundo contato em vez de fundir.
+## Parte 1 — Painel lateral por nível
 
-E não há, hoje, lugar no cadastro do cliente para ver as conversas de WhatsApp dele.
+O painel direito mostra abas diferentes conforme o nível do contato selecionado:
 
-## Plano
+| Nível | Abas exibidas |
+| --- | --- |
+| **Prospect** | Cliente · Resumo IA |
+| **Lead** | Cliente · Cotações · Resumo IA |
+| **Cliente** | Cliente · Cotações · Vendas · Pós-venda · Resumo IA |
 
-### 1. Migração de banco — fundir contatos duplicados e religar conversas
+Notas:
+- A aba **Cliente** existe sempre, mesmo quando o contato ainda não foi promovido — é a "ficha" do contato (dados, contatos, endereços, etc.). Para Prospect/Lead ela edita os dados disponíveis em `contacts` + `leads` (campos básicos + viagem); para Cliente, edita o registro completo em `clients` e tabelas relacionadas.
+- Largura atual (340px) cresce para ~420–460px em desktop ≥1280px. Em telas menores, vira drawer fullscreen acionado por botão no header da conversa.
+- Cada aba carrega lazy via React Query, mantendo Realtime quando aplicável.
 
-Função `merge_contact_into_client(contact_orphan_id, client_contact_id)` que:
-- Reaponta `wa_conversations.contact_id`, `notifications`, `contact_events`, `lead.*` (se houver `lead_id` no órfão) para o contato cliente.
-- Copia `phone`/`email`/`first_contact_at`/`last_contact_at`/`is_returning` do órfão para o contato cliente quando estiverem vazios no cliente.
-- Apaga o contato órfão.
+### Aba Cliente
+- **Prospect/Lead** (sem `client_id`): formulário compacto com nome, telefones, e-mails, origem, e — quando for Lead — campos de viagem (destino, datas, viajantes, orçamento, preferências). Reaproveita `LeadDetailPanel`/`LeadConvert` em formato embed.
+- **Cliente** (com `client_id`): reaproveita a estrutura de `src/pages/Clients.tsx` (sub-abas Dados, Endereços, Contatos, Passaportes, Vistos, Milhas, Viajantes, Documentos, Conversas).
+- Refatorar o conteúdo do modal atual de Clients em um componente `ClientFormContent` puro (sem `Dialog`) e reusá-lo no painel; saves usam as mesmas mutations já existentes (edição equivalente à da página dedicada).
+- Botão "Abrir em página inteira" leva para `/clients?id=<id>` (cliente) ou `/leads/<id>` (lead) preservando o estado.
 
-Backfill único: para cada `client_phones`, achar contato órfão (sem `client_id`) cujo telefone bate por DDD+número e fundir no contato `level='cliente'` daquele cliente.
+### Aba Cotações (Lead e Cliente)
+- Lista todas as `quotes` onde `lead_id` aponta para o lead atual, ou cujo `lead.converted_client_id = client.id`.
+- Cards compactos: título, estágio (badge), valor, última atualização.
+- Ações inline: mudar estágio (drop-down idêntico ao Sales kanban), abrir em `/quotes?id=<id>`, **+ Nova cotação** (atalho).
+- Edição completa = abrir a cotação no formulário existente; inline mantém só ações leves (estágio, conclusão).
 
-### 2. Migração — atualizar `sync_contact_from_client`
+### Aba Vendas (somente Cliente)
+- Mostra `quotes` em estágio `confirmed`/`won` do cliente + recebíveis vinculados (`payables_receivables` com `quote_id`).
+- Permite alterar status do recebível (pago/pendente) e abrir cotação/recebível.
 
-Antes de criar um novo contato, procurar contato existente pelo telefone (DDD+número via `client_phones` do `NEW.id` + `clients.phone` legado). Se achar, promover para `cliente` e setar `client_id`, em vez de inserir duplicado. Mantém o `prevent_contact_level_regression` em ordem (lead→cliente é promoção válida).
+### Aba Pós-venda (somente Cliente)
+- Para vendas confirmadas, lista as viagens com placeholders de checklist e botão "Abrir pós-venda" que leva para `/sales`/`/quotes`. Sem criar tabelas novas para pós-venda neste passo — apenas expor o ponto de entrada e a estrutura visual.
 
-### 3. Webhook — religar conversa existente quando o contato muda
+### Aba Resumo IA (sempre)
+- Conteúdo atual de `LeadSummaryPanel` (resumo, destino, pessoas, duração, orçamento, anotações IA), movida para o fim do menu.
 
-Em `whatsapp-webhook/index.ts`, depois de `ensureContactForPhone`, se a `wa_conversation` existente do telefone tem `contact_id` diferente do retornado, atualizar `contact_id` (e `client_id`/`lead_id` derivados) da conversa. Isso evita que conversas antigas fiquem "presas" no contato errado mesmo após o cliente ser cadastrado.
+## Parte 2 — Vínculo de mensagens a Cotação / Venda / Pós-venda
 
-### 4. ServiceCenter — recálculo defensivo do nível
+Decisão: **não amarrar conversas em sessões agora**. A conversa do WhatsApp continua única e contínua por contato. O atendente pode marcar manualmente **uma ou várias mensagens** e atribuí-las a **um ou mais** itens.
 
-Em `src/pages/ServiceCenter.tsx`, no carregamento das conversas, quando `contact.client_id` estiver presente forçar `level='cliente'` (já existe a lógica em `c.client_id ? "cliente" : c.lead_id ? "lead" : "prospect"`, mas hoje o `meta?.level` snapshot pode sobrescrever). Priorizar `client_id`/`lead_id` reais sobre o snapshot.
+### UX
+- Cada bolha de mensagem ganha um menu "•••" com a opção **"Vincular a..."**.
+- Modo de seleção múltipla por checkbox, acionado no header da conversa.
+- Dialog de vínculo lista Cotações / Vendas / Pós-vendas **do contato/cliente atual** com checkboxes (multi-select).
+- Mensagens vinculadas mostram um chip discreto no rodapé da bolha: "Cotação #123" / "Venda #45" / "Pós-venda #7" (clicável → abre o item).
+- Nas abas Cotações/Vendas/Pós-venda do painel, cada item exibe "X mensagens vinculadas" e abre a conversa filtrada por essas mensagens.
 
-### 5. Aba "Conversas" na ficha do cliente
+### Modelagem
+Tabela nova `wa_message_links`:
+- `id`, `message_id` (FK `wa_messages.id` ON DELETE CASCADE), `quote_id` (nullable), `receivable_id` (nullable), `post_sale_id` (nullable, reservado), `created_by`, `created_at`.
+- CHECK garantindo que pelo menos uma das três FKs esteja preenchida.
+- Índices por `message_id` e por cada FK.
+- RLS no padrão dos demais módulos (usuário autenticado lê/escreve; service_role total).
+- GRANTs explícitos para `authenticated` e `service_role`.
 
-Onde ver as conversas hoje: em lugar nenhum dentro da ficha — só na Central de Atendimento. Vou adicionar uma nova aba **Conversas** em `src/pages/Clients.tsx` (modal de edição), que:
-- Lista `wa_conversations` ligadas ao cliente via:
-  - `contact_id` cujo `client_id = clientes.id`, **ou**
-  - `phone` cuja digit-tail bate com algum `client_phones` daquele cliente (fallback caso ainda haja conversa órfã).
-- Cada item mostra: número, último contato, status (IA/humano/resolvido), preview da última mensagem, e botão **Abrir na Central** que navega para `/service-center?conversation=<id>` (já suportado lá).
-- Read-only nesta primeira versão (não envia mensagem direto da ficha — abre na Central).
+Sem alterar `wa_conversations`/`wa_messages` (zero impacto no webhook e na dedup atual).
 
 ## Detalhes técnicos
 
-- Migração 1 e 2 são SQL puras, sem mudança de schema (apenas função e trigger). Backfill roda uma vez via `DO $$ … $$`.
-- Mudança no webhook é `UPDATE wa_conversations SET contact_id=…, lead_id=…, client_id=… WHERE id=$conv AND contact_id IS DISTINCT FROM $new`.
-- ServiceCenter: ajustar o trecho ~linha 1293-1296 para que `client_id`/`lead_id` da row mandem em vez de `meta?.level`.
-- Nova aba: componente `ClientConversationsTab.tsx` consumindo `wa_conversations` + `wa_messages` (último resumo). Sem realtime nesta primeira entrega.
+- Extrair de `src/pages/Clients.tsx` o conteúdo do modal de edição para `src/components/clients/ClientFormContent.tsx`, mantendo a página dedicada usando o mesmo componente.
+- Criar `src/components/service-center/ClientSidePanel.tsx` com `Tabs` condicionais baseadas em `contact.level`. Renderizado em `ServiceCenter.tsx` no lugar do bloco atual (`summary`/`crm`).
+- Criar `src/components/service-center/MessageLinkDialog.tsx` (multi-select de cotações/vendas/pós-vendas) e hook `useMessageLinks` para leitura/escrita em `wa_message_links`.
+- No `MessageList` da Central, fazer fetch agregado dos links por intervalo de IDs visíveis (1 query por página, nunca 1 por mensagem).
+- Migração SQL: `CREATE TABLE wa_message_links (...)` + GRANTs + RLS + policies.
 
 ## Fora de escopo
 
-- Não alterar política de mudança automática de status de telefone do cliente (já decidida anteriormente).
-- Não enviar mensagens novas a partir da ficha do cliente neste plano.
+- Não criar tabela própria de "pós-venda" agora — só ponto de entrada visual.
+- Não introduzir "sessão" automática por inatividade nem encerramento manual de sessão.
+- Não alterar webhook, dedupe, handoff humano, ou kanban de leads.
