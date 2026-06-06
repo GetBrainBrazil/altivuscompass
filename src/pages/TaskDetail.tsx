@@ -456,7 +456,7 @@ export default function TaskDetail() {
         {/* Coluna direita: notas + histórico */}
         {!isNew && id && (
           <aside className="lg:border-l lg:border-border lg:pl-6">
-            <TaskNotesHistory taskId={id} />
+            <TaskNotesHistory taskId={id} assigneePhone={assigneePhone} assigneeName={assigneeName} />
           </aside>
         )}
       </div>
