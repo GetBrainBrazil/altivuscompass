@@ -14,8 +14,9 @@ import { TaskAttachments } from "@/components/TaskAttachments";
 import { TaskNotesHistory } from "@/components/tasks/TaskNotesHistory";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Calendar } from "@/components/ui/calendar";
-import { ArrowLeft, CalendarIcon, CheckSquare, FileText } from "lucide-react";
+import { ArrowLeft, CalendarIcon, CheckSquare, ChevronsUpDown, Check, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const STATUS_OPTIONS = [
