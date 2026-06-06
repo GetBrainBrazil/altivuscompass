@@ -4,6 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Paperclip, Upload, Download, Trash2, FileText, FileImage, File as FileIcon, Loader2 } from "lucide-react";
 import { ImageViewerDialog, ViewerAttachment } from "@/components/ImageViewerDialog";
 import { cn } from "@/lib/utils";
@@ -43,6 +53,8 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [viewer, setViewer] = useState<ViewerAttachment | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; path: string; name: string; pending?: boolean; pendingIndex?: number } | null>(null);
+
 
 
   const { data: attachments = [] } = useQuery({
@@ -107,10 +119,20 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
     window.open(data.signedUrl, "_blank");
   };
 
-  const handleDelete = async (id: string, path: string) => {
-    await supabase.storage.from("task-attachments").remove([path]);
-    await supabase.from("task_attachments").delete().eq("id", id);
-    qc.invalidateQueries({ queryKey: ["task-attachments", taskId] });
+  const handleDeleteClick = (id: string, path: string, name: string, pending?: boolean, pendingIndex?: number) => {
+    setConfirmDelete({ id, path, name, pending, pendingIndex });
+  };
+
+  const confirmDeleteAction = async () => {
+    if (!confirmDelete) return;
+    if (confirmDelete.pending) {
+      onPendingChange?.(pending.filter((_, i) => i !== (confirmDelete.pendingIndex ?? -1)));
+    } else {
+      await supabase.storage.from("task-attachments").remove([confirmDelete.path]);
+      await supabase.from("task_attachments").delete().eq("id", confirmDelete.id);
+      qc.invalidateQueries({ queryKey: ["task-attachments", taskId] });
+    }
+    setConfirmDelete(null);
   };
 
   const items: any[] = taskId ? attachments : pending.map((f, i) => ({
@@ -190,14 +212,14 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
                       <button type="button" onClick={() => handleDownload(a.file_path, a.file_name)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground" title="Baixar">
                         <Download size={13} />
                       </button>
-                      <button type="button" onClick={() => handleDelete(a.id, a.file_path)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-destructive" title="Remover">
+                      <button type="button" onClick={() => handleDeleteClick(a.id, a.file_path, a.file_name)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-destructive" title="Remover">
                         <Trash2 size={13} />
                       </button>
                     </>
                   ) : (
                     <button
                       type="button"
-                      onClick={() => onPendingChange?.(pending.filter((_, i) => `pending-${i}` !== a.id))}
+                      onClick={() => handleDeleteClick(a.id, "", a.file_name, true, Number(a.id.replace("pending-", "")))}
                       className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-destructive"
                       title="Remover"
                     >
@@ -221,6 +243,23 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
         pending={pending}
         onPendingChange={onPendingChange}
       />
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(v) => !v && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir anexo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir <strong>{confirmDelete?.name}</strong>? Esta ação não poderá ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConfirmDelete(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteAction} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
