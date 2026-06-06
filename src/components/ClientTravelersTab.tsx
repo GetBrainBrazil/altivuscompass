@@ -283,6 +283,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
             const ids = matches.map((m: any) => m.id);
             await supabase.from("passengers").update({
               full_name: updatedData.full_name,
+              cpf: updatedData.cpf,
               birth_date: updatedData.birth_date,
               nationality: updatedData.nationality,
               passport_number: updatedData.passport_number,
