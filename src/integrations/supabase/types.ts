@@ -3257,26 +3257,44 @@ export type Database = {
       }
       task_reminders: {
         Row: {
+          channels: string[]
           created_at: string
+          delivered_channels: string[]
+          error: string | null
           id: string
           is_read: boolean
+          message: string | null
           remind_at: string
+          sent_at: string | null
+          status: string
           task_id: string
           user_id: string
         }
         Insert: {
+          channels?: string[]
           created_at?: string
+          delivered_channels?: string[]
+          error?: string | null
           id?: string
           is_read?: boolean
+          message?: string | null
           remind_at: string
+          sent_at?: string | null
+          status?: string
           task_id: string
           user_id: string
         }
         Update: {
+          channels?: string[]
           created_at?: string
+          delivered_channels?: string[]
+          error?: string | null
           id?: string
           is_read?: boolean
+          message?: string | null
           remind_at?: string
+          sent_at?: string | null
+          status?: string
           task_id?: string
           user_id?: string
         }

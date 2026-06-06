@@ -1,0 +1,270 @@
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Bell, Plus, Trash2, MessageSquare, Mail, Monitor, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+
+interface Props {
+  taskId: string;
+}
+
+type Reminder = {
+  id: string;
+  task_id: string;
+  user_id: string;
+  remind_at: string;
+  channels: string[];
+  message: string | null;
+  status: string;
+  sent_at: string | null;
+  delivered_channels: string[];
+  error: string | null;
+};
+
+const CHANNEL_META = {
+  system: { label: "Sistema", Icon: Monitor },
+  whatsapp: { label: "WhatsApp", Icon: MessageSquare },
+  email: { label: "Email", Icon: Mail },
+} as const;
+
+function defaultDate() {
+  const d = new Date(Date.now() + 60 * 60 * 1000);
+  d.setSeconds(0, 0);
+  return d;
+}
+
+export function TaskReminders({ taskId }: Props) {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const [draftDate, setDraftDate] = useState(format(defaultDate(), "yyyy-MM-dd"));
+  const [draftTime, setDraftTime] = useState(format(defaultDate(), "HH:mm"));
+  const [draftChannels, setDraftChannels] = useState<string[]>(["system"]);
+  const [draftMsg, setDraftMsg] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  const isNewTask = !taskId || taskId === "new";
+
+  const { data: reminders = [] } = useQuery({
+    queryKey: ["task-reminders", taskId],
+    enabled: !isNewTask,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("task_reminders")
+        .select("*")
+        .eq("task_id", taskId)
+        .order("remind_at", { ascending: true });
+      return (data ?? []) as Reminder[];
+    },
+  });
+
+  const addReminder = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) return;
+      const remindAt = new Date(`${draftDate}T${draftTime}:00`);
+      if (isNaN(remindAt.getTime())) throw new Error("Data/hora inválida");
+      const channels = draftChannels.includes("system") ? draftChannels : ["system", ...draftChannels];
+      const { error } = await supabase.from("task_reminders").insert({
+        task_id: taskId,
+        user_id: user.id,
+        remind_at: remindAt.toISOString(),
+        channels,
+        message: draftMsg.trim() || null,
+        status: "pending",
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["task-reminders", taskId] });
+      const d = defaultDate();
+      setDraftDate(format(d, "yyyy-MM-dd"));
+      setDraftTime(format(d, "HH:mm"));
+      setDraftChannels(["system"]);
+      setDraftMsg("");
+      setAdding(false);
+      toast({ title: "Lembrete criado" });
+    },
+    onError: (e: any) => toast({ title: "Erro ao criar lembrete", description: e.message, variant: "destructive" }),
+  });
+
+  const removeReminder = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("task_reminders").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["task-reminders", taskId] }),
+  });
+
+  const toggleChannel = (ch: string) => {
+    if (ch === "system") return; // sempre obrigatório
+    setDraftChannels((cur) => (cur.includes(ch) ? cur.filter((c) => c !== ch) : [...cur, ch]));
+  };
+
+  if (isNewTask) {
+    return (
+      <div>
+        <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground font-body mb-2">
+          <Bell size={12} /> Lembretes
+        </div>
+        <p className="text-xs text-muted-foreground font-body">
+          Salve a tarefa para adicionar lembretes.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground font-body">
+          <Bell size={12} /> Lembretes ({reminders.length})
+        </div>
+        {!adding && (
+          <Button size="sm" variant="ghost" onClick={() => setAdding(true)} className="h-7 text-xs">
+            <Plus size={14} className="mr-1" /> Adicionar
+          </Button>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        {reminders.map((r) => {
+          const isDone = r.status === "sent" || r.status === "partial";
+          const isFailed = r.status === "failed";
+          return (
+            <div
+              key={r.id}
+              className={cn(
+                "rounded-md border border-border bg-card/30 p-2.5 text-xs space-y-1 group",
+                isDone && "opacity-60"
+              )}
+            >
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-medium text-foreground">
+                  {format(new Date(r.remind_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                </span>
+                {isDone && (
+                  <Badge variant="secondary" className="h-5 text-[10px] gap-1">
+                    <Check size={10} /> Enviado
+                  </Badge>
+                )}
+                {isFailed && (
+                  <Badge variant="destructive" className="h-5 text-[10px]">Falhou</Badge>
+                )}
+                <button
+                  onClick={() => removeReminder.mutate(r.id)}
+                  className="ml-auto opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                  aria-label="Remover lembrete"
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {r.channels.map((ch) => {
+                  const meta = (CHANNEL_META as any)[ch];
+                  if (!meta) return null;
+                  const delivered = r.delivered_channels?.includes(ch);
+                  const Icon = meta.Icon;
+                  return (
+                    <span
+                      key={ch}
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px]",
+                        delivered
+                          ? "bg-success/10 text-success"
+                          : "bg-muted text-muted-foreground"
+                      )}
+                    >
+                      <Icon size={10} /> {meta.label}
+                    </span>
+                  );
+                })}
+              </div>
+              {r.message && (
+                <p className="text-muted-foreground whitespace-pre-wrap break-words">{r.message}</p>
+              )}
+              {isFailed && r.error && (
+                <p className="text-destructive/80 text-[10px]">{r.error}</p>
+              )}
+            </div>
+          );
+        })}
+
+        {adding && (
+          <div className="rounded-md border border-border bg-muted/20 p-3 space-y-2.5">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[10px] uppercase tracking-wide text-muted-foreground">Data</label>
+                <Input type="date" value={draftDate} onChange={(e) => setDraftDate(e.target.value)} className="h-8 text-xs" />
+              </div>
+              <div>
+                <label className="text-[10px] uppercase tracking-wide text-muted-foreground">Hora</label>
+                <Input type="time" value={draftTime} onChange={(e) => setDraftTime(e.target.value)} className="h-8 text-xs" />
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1.5">Disparar por</div>
+              <div className="flex flex-wrap gap-2">
+                {(["system", "whatsapp", "email"] as const).map((ch) => {
+                  const meta = CHANNEL_META[ch];
+                  const Icon = meta.Icon;
+                  const checked = draftChannels.includes(ch);
+                  return (
+                    <label
+                      key={ch}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded border border-border px-2 py-1 cursor-pointer text-xs",
+                        checked && "bg-primary/10 border-primary/40",
+                        ch === "system" && "opacity-90 cursor-default"
+                      )}
+                    >
+                      <Checkbox
+                        checked={checked}
+                        disabled={ch === "system"}
+                        onCheckedChange={() => toggleChannel(ch)}
+                        className="h-3.5 w-3.5"
+                      />
+                      <Icon size={12} /> {meta.label}
+                      {ch === "system" && <span className="text-[9px] text-muted-foreground">(padrão)</span>}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+            <Textarea
+              value={draftMsg}
+              onChange={(e) => setDraftMsg(e.target.value)}
+              placeholder="Mensagem (opcional, padrão: título da tarefa)"
+              className="min-h-[56px] text-xs resize-none"
+            />
+            <div className="flex items-center justify-end gap-2">
+              <Button size="sm" variant="ghost" onClick={() => setAdding(false)} className="h-7 text-xs">
+                Cancelar
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => addReminder.mutate()}
+                disabled={addReminder.isPending}
+                className="h-7 text-xs"
+              >
+                Salvar lembrete
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {!adding && reminders.length === 0 && (
+          <p className="text-xs text-muted-foreground font-body py-2">Nenhum lembrete.</p>
+        )}
+      </div>
+    </div>
+  );
+}
