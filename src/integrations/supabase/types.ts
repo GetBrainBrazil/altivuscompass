@@ -2212,6 +2212,136 @@ export type Database = {
         }
         Relationships: []
       }
+      ops_cards: {
+        Row: {
+          agent_avatar: string | null
+          agent_name: string | null
+          agent_user_id: string | null
+          archived_at: string | null
+          client_id: string | null
+          client_name: string
+          column_id: string
+          contact_id: string | null
+          created_at: string
+          created_by: string | null
+          deal_id: string | null
+          destination: string | null
+          id: string
+          is_manual_lead: boolean
+          quote_id: string | null
+          sort_order: number
+          stage_entered_at: string
+          tags: Json
+          travel_date: string | null
+          travel_date_iso: string | null
+          updated_at: string
+        }
+        Insert: {
+          agent_avatar?: string | null
+          agent_name?: string | null
+          agent_user_id?: string | null
+          archived_at?: string | null
+          client_id?: string | null
+          client_name: string
+          column_id: string
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deal_id?: string | null
+          destination?: string | null
+          id?: string
+          is_manual_lead?: boolean
+          quote_id?: string | null
+          sort_order?: number
+          stage_entered_at?: string
+          tags?: Json
+          travel_date?: string | null
+          travel_date_iso?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agent_avatar?: string | null
+          agent_name?: string | null
+          agent_user_id?: string | null
+          archived_at?: string | null
+          client_id?: string | null
+          client_name?: string
+          column_id?: string
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deal_id?: string | null
+          destination?: string | null
+          id?: string
+          is_manual_lead?: boolean
+          quote_id?: string | null
+          sort_order?: number
+          stage_entered_at?: string
+          tags?: Json
+          travel_date?: string | null
+          travel_date_iso?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ops_cards_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ops_cards_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ops_cards_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ops_migration_log: {
+        Row: {
+          id: string
+          migrated_at: string
+          migrated_count: number
+          notes: string | null
+          skipped_count: number
+          skipped_ids: Json
+          source_payload: Json | null
+          unparsed_dates: Json
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          migrated_at?: string
+          migrated_count?: number
+          notes?: string | null
+          skipped_count?: number
+          skipped_ids?: Json
+          source_payload?: Json | null
+          unparsed_dates?: Json
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          migrated_at?: string
+          migrated_count?: number
+          notes?: string | null
+          skipped_count?: number
+          skipped_ids?: Json
+          source_payload?: Json | null
+          unparsed_dates?: Json
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       passengers: {
         Row: {
           birth_date: string | null
@@ -4046,6 +4176,10 @@ export type Database = {
     Functions: {
       can_edit_vault_item: {
         Args: { _item_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_manage_ops_card: {
+        Args: { _agent_user_id: string; _created_by: string }
         Returns: boolean
       }
       can_view_vault_item: {
