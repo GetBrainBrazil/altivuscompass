@@ -1824,16 +1824,6 @@ export default function ServiceCenter() {
                 </PopoverContent>
               </Popover>
               <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/ai-agents")}
-                className="h-8 gap-1.5"
-                title="Configurar Agente de IA e WhatsApp"
-              >
-                <Bot className="h-3.5 w-3.5" />
-                Agente IA
-              </Button>
-              <Button
                 size="sm"
                 onClick={() => setNewMsgOpen(true)}
                 className="h-8 gap-1.5 bg-[hsl(var(--navy))] text-[hsl(var(--cream))] hover:bg-[hsl(var(--navy))]/90"
