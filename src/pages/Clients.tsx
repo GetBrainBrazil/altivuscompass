@@ -551,12 +551,20 @@ export default function Clients() {
   }, [clientSocials, editingId]);
   useEffect(() => {
     if (editingId) {
-      setPassports(clientPassports.map((p: any) => ({
+      const mapped = clientPassports.map((p: any) => ({
         id: p.id, passport_number: p.passport_number ?? "", issue_date: p.issue_date ?? "",
         expiry_date: p.expiry_date ?? "", nationality: p.nationality ?? "", status: p.status ?? "valid",
         image_urls: p.image_urls ?? [], _imageFiles: [] as File[],
         visas: (p.visas ?? []).map((v: any) => ({ id: v.id, visa_type: v.visa_type, validity_date: v.validity_date ?? "", country_region: v.country_region ?? "", visa_number: v.visa_number ?? "", issue_date: v.issue_date ?? "", entry_type: v.entry_type ?? "single", description: v.description ?? "", image_url: v.image_url ?? "" })),
-      })));
+      }));
+      setPassports(mapped);
+      // Start with all passports and visas collapsed
+      setCollapsedPassports(new Set(mapped.map((_: any, i: number) => i)));
+      const visaKeys = new Set<string>();
+      mapped.forEach((p: any, pi: number) => {
+        (p.visas ?? []).forEach((_: any, vi: number) => visaKeys.add(`${pi}-${vi}`));
+      });
+      setCollapsedVisas(visaKeys);
     }
   }, [clientPassports, editingId]);
   useEffect(() => {
