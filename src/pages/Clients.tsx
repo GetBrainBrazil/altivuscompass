@@ -2083,12 +2083,12 @@ export default function Clients() {
                   <React.Fragment key={client.id}>
                     <tr className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={handleRowOpen}>
                       <td className="p-2 text-center">
-                        {hasPassengers ? (
+                        {hasTravelers ? (
                           <button
                             type="button"
                             className="p-1 rounded hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
                             onClick={(e) => { e.stopPropagation(); toggleExpand(client.id); }}
-                            title={`${clientPassengersList.length} passageiro(s)`}
+                            title={`${clientTravelersList.length} viajante(s)`}
                           >
                             {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                           </button>
@@ -2101,9 +2101,9 @@ export default function Clients() {
                           <div>
                             <div className="flex items-center gap-1.5">
                               <p className="text-sm font-medium font-body text-foreground">{client.full_name}</p>
-                              {hasPassengers && (
+                              {hasTravelers && (
                                 <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground font-body">
-                                  <Users className="h-3 w-3" />{clientPassengersList.length}
+                                  <Users className="h-3 w-3" />{clientTravelersList.length}
                                 </span>
                               )}
                             </div>
@@ -2114,6 +2114,9 @@ export default function Clients() {
                       </td>
                       <td className="p-4">
                         <ContactLevelBadge level={client._level as ContactLevel} size="xs" />
+                      </td>
+                      <td className="p-4">
+                        <p className="text-sm font-body text-foreground whitespace-nowrap">{client.cpf_cnpj || "—"}</p>
                       </td>
                       <td className="p-4">
                         {client.primary_phone ? (
