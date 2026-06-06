@@ -155,7 +155,7 @@ export default function Vault() {
     let list = items;
     if (ownerFilter === "mine") list = list.filter((i) => isOwner(i));
     if (ownerFilter === "shared") list = list.filter((i) => !isOwner(i));
-    if (categoryFilter !== "all") list = list.filter((i) => (i.category ?? "") === categoryFilter);
+    if (categoryFilter.length > 0) list = list.filter((i) => categoryFilter.includes(i.category ?? ""));
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
