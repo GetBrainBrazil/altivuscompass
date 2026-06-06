@@ -70,7 +70,9 @@ export default function Vault() {
   const currentUserId = user?.id ?? "";
 
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
+  const [tagFilterOpen, setTagFilterOpen] = useState(false);
+  const [tagFilterSearch, setTagFilterSearch] = useState("");
   const [ownerFilter, setOwnerFilter] = useState<"all" | "mine" | "shared">("all");
   const [formOpen, setFormOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<VaultItem | null>(null);
