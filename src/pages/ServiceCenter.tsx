@@ -51,7 +51,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-type FilterTab = "all" | "leads" | "support" | "human";
+type FilterTab = "all" | "clientes" | "leads" | "prospects";
 
 /** Categoria detectada pela IA: lead de vendas (entra no funil) ou pós-venda/suporte (não entra no funil). */
 type ContactCategory = "sales" | "post-sale";
@@ -1576,22 +1576,21 @@ export default function ServiceCenter() {
   const counts = useMemo(
     () => ({
       all: conversations.length,
-      leads: conversations.filter((c) => c.category === "sales").length,
-      support: conversations.filter((c) => c.category === "post-sale").length,
-      human: conversations.filter((c) => c.status === "human").length,
+      clientes: conversations.filter((c) => c.level === "cliente").length,
+      leads: conversations.filter((c) => c.level === "lead").length,
+      prospects: conversations.filter((c) => c.level === "prospect").length,
     }),
     [conversations],
   );
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    // Prioridade: Cliente em viagem > Cliente > Lead > Prospect.
     // Ordenação puramente cronológica: mais recente no topo, independente do nível.
     return conversations
       .filter((c) => {
-        if (activeTab === "leads" && c.category !== "sales") return false;
-        if (activeTab === "support" && c.category !== "post-sale") return false;
-        if (activeTab === "human" && c.status !== "human") return false;
+        if (activeTab === "clientes" && c.level !== "cliente") return false;
+        if (activeTab === "leads" && c.level !== "lead") return false;
+        if (activeTab === "prospects" && c.level !== "prospect") return false;
         if (!q) return true;
         return (
           c.leadName.toLowerCase().includes(q) ||
@@ -1780,17 +1779,17 @@ export default function ServiceCenter() {
                 Todos
                 <span className="text-[10px] text-muted-foreground">{counts.all}</span>
               </TabsTrigger>
+              <TabsTrigger value="clientes" className="text-[11px] gap-1">
+                Clientes
+                <span className="text-[10px] text-muted-foreground">{counts.clientes}</span>
+              </TabsTrigger>
               <TabsTrigger value="leads" className="text-[11px] gap-1">
                 Leads
                 <span className="text-[10px] text-muted-foreground">{counts.leads}</span>
               </TabsTrigger>
-              <TabsTrigger value="support" className="text-[11px] gap-1">
-                Suporte
-                <span className="text-[10px] text-muted-foreground">{counts.support}</span>
-              </TabsTrigger>
-              <TabsTrigger value="human" className="text-[11px] gap-1">
-                Humanos
-                <span className="text-[10px] text-muted-foreground">{counts.human}</span>
+              <TabsTrigger value="prospects" className="text-[11px] gap-1">
+                Prospects
+                <span className="text-[10px] text-muted-foreground">{counts.prospects}</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>
