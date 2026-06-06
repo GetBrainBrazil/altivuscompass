@@ -499,6 +499,9 @@ const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = fa
 interface ChatBubbleProps {
   message: Message;
   agentLabel?: string;
+  linkedQuotes?: { id: string; title: string | null; destination: string | null }[];
+  onLinkClick?: () => void;
+  onOpenQuote?: (id: string) => void;
 }
 
 const AGENT_LABEL_RE = /^\*([^\n*]{1,60})\*\n?/;
@@ -509,7 +512,7 @@ const extractAgentLabel = (text?: string | null): { label: string | null; rest: 
   return { label: null, rest: t };
 };
 
-const ChatBubble = ({ message, agentLabel }: ChatBubbleProps) => {
+const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuote }: ChatBubbleProps) => {
   const isLead = message.sender === "lead";
   const isAgent = message.sender === "agent";
   const isAi = message.sender === "ai";
