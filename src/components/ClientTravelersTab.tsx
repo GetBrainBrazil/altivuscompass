@@ -583,6 +583,65 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
     onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
 
+  // Unified add traveler: handles linking an existing client OR copying an existing passenger,
+  // capturing the bidirectional relationship.
+  const addTravelerMutation = useMutation({
+    mutationFn: async () => {
+      if (!clientId || !pendingLink) return;
+      if (pendingLink.kind === "client") {
+        // Compute custom inverse only if user changed B→A to something other than auto-inverse
+        const autoInverse = INVERSE_RELATIONSHIP[pendingAtoB] || "other";
+        const customInverse = pendingBtoA !== autoInverse ? pendingBtoA : null;
+        const { error } = await supabase.from("client_relationships").insert({
+          client_id_a: clientId,
+          client_id_b: pendingLink.clientId,
+          relationship_type: pendingAtoB as any,
+          relationship_label: customInverse,
+        });
+        if (error) throw error;
+        const currentName = currentClient?.full_name ?? "Desconhecido";
+        await logAuditEvent({
+          action: "create",
+          tableName: "client_relationships",
+          recordLabel: `${currentName} ↔ ${pendingLink.clientName}`,
+          newData: {
+            vínculo: `${currentName} ↔ ${pendingLink.clientName}`,
+            tipo_relacionamento: pendingAtoB,
+            inverso_customizado: customInverse,
+            ficha_origem: currentName,
+          },
+        });
+      } else {
+        const p = pendingLink.passenger;
+        const { error } = await supabase.from("passengers").insert({
+          client_id: clientId,
+          full_name: p.full_name,
+          birth_date: p.birth_date || null,
+          nationality: p.nationality || null,
+          passport_number: p.passport_number || null,
+          passport_expiry: p.passport_expiry || null,
+          notes: p.notes || null,
+          relationship_type: (pendingBtoA || null) as any,
+        });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast({ title: pendingLink?.kind === "client" ? "Vínculo criado" : "Passageiro adicionado" });
+      qc.invalidateQueries({ queryKey: ["client-relationships", clientId] });
+      qc.invalidateQueries({ queryKey: ["client-passengers", clientId] });
+      qc.invalidateQueries({ queryKey: ["all-passengers-cross-client"] });
+      setPendingLink(null);
+      setAddDialog(false);
+      setAddSearch("");
+      setPendingAtoB("other");
+      setPendingBtoA("other");
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+
+
   const openPassengerForm = (p?: any) => {
     if (p) {
       setEditingPassenger(p);
