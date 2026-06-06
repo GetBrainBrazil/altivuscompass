@@ -1612,6 +1612,31 @@ export default function ServiceCenter() {
     [conversations, selectedId],
   );
 
+  // Vínculos de mensagens a cotações (busca em lote por conversa)
+  const messageIds = useMemo(() => (selected?.messages ?? []).map((m) => m.id), [selected]);
+  const { data: messageLinks = [] } = useQuery({
+    queryKey: ["wa-message-links", selectedId, messageIds.length],
+    enabled: !!selectedId && messageIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("wa_message_links" as any)
+        .select("message_id, quote_id, quotes:quote_id (id, title, destination)")
+        .in("message_id", messageIds);
+      return (data ?? []) as any[];
+    },
+  });
+  const linksByMessage = useMemo(() => {
+    const map = new Map<string, { id: string; title: string | null; destination: string | null }[]>();
+    for (const l of messageLinks as any[]) {
+      if (!l.quotes) continue;
+      const arr = map.get(l.message_id) ?? [];
+      arr.push(l.quotes);
+      map.set(l.message_id, arr);
+    }
+    return map;
+  }, [messageLinks]);
+
+
   // Auto-scroll to latest message on new messages or when switching conversations
   useEffect(() => {
     if (selected) {
