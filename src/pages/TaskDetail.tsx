@@ -245,22 +245,22 @@ export default function TaskDetail() {
 
       <div className={cn("py-6 grid gap-6", !isNew && "lg:grid-cols-[minmax(0,1fr)_360px]")}>
         {/* Form */}
-        <div className="space-y-5 min-w-0">
+        <div className="space-y-3 min-w-0">
           <div>
           <Label className="font-body text-xs uppercase tracking-wide text-muted-foreground">Título *</Label>
           <Input
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
             placeholder="Nome da tarefa..."
-            className="mt-1.5"
+            className="mt-1"
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div>
             <Label className="font-body text-xs uppercase tracking-wide text-muted-foreground">Responsável</Label>
             <Select value={form.assigned_to} onValueChange={(v) => setForm({ ...form, assigned_to: v })}>
-              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
                 {profiles.map((p: any) => (
                   <SelectItem key={p.user_id} value={p.user_id}>{p.full_name}</SelectItem>
@@ -271,7 +271,7 @@ export default function TaskDetail() {
           <div>
             <Label className="font-body text-xs uppercase tracking-wide text-muted-foreground">Importância</Label>
             <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
-              <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {PRIORITY_OPTIONS.map((p) => (
                   <SelectItem key={p.value} value={p.value}>
@@ -284,16 +284,13 @@ export default function TaskDetail() {
               </SelectContent>
             </Select>
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label className="font-body text-xs uppercase tracking-wide text-muted-foreground">Prazo de entrega</Label>
+            <Label className="font-body text-xs uppercase tracking-wide text-muted-foreground">Prazo</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className={cn("w-full mt-1.5 justify-start text-left font-normal", !form.due_date && "text-muted-foreground")}
+                  className={cn("w-full mt-1 justify-start text-left font-normal", !form.due_date && "text-muted-foreground")}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {form.due_date ? format(form.due_date, "dd/MM/yyyy") : "Selecionar"}
@@ -307,7 +304,7 @@ export default function TaskDetail() {
           <div>
             <Label className="font-body text-xs uppercase tracking-wide text-muted-foreground">Status</Label>
             <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-              <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {STATUS_OPTIONS.map((s) => (
                   <SelectItem key={s.value} value={s.value}>
@@ -321,6 +318,7 @@ export default function TaskDetail() {
             </Select>
           </div>
         </div>
+
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
