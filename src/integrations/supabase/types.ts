@@ -2093,6 +2093,7 @@ export type Database = {
         Row: {
           birth_date: string | null
           client_id: string | null
+          cpf: string | null
           created_at: string
           full_name: string
           id: string
@@ -2106,6 +2107,7 @@ export type Database = {
         Insert: {
           birth_date?: string | null
           client_id?: string | null
+          cpf?: string | null
           created_at?: string
           full_name: string
           id?: string
@@ -2119,6 +2121,7 @@ export type Database = {
         Update: {
           birth_date?: string | null
           client_id?: string | null
+          cpf?: string | null
           created_at?: string
           full_name?: string
           id?: string
