@@ -257,7 +257,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       if (error) throw error;
       return data ?? [];
     },
-    enabled: copyDialog,
+    enabled: copyDialog || addDialog,
   });
 
   const allPassengersNotClients = useMemo(() => {
