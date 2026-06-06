@@ -86,21 +86,14 @@ Deno.serve(async (req) => {
     const fullMessage = `🔔 *Lembrete de tarefa*\n\n${text}`
 
     if (channels.includes('whatsapp')) {
+      // O WhatsApp do lembrete vai SEMPRE para o responsável da tarefa
       let phone: string | null = null
-      if (task?.contact_id) {
-        const { data: c } = await supabase.from('contacts').select('phone').eq('id', task.contact_id).maybeSingle()
-        phone = normalizePhone(c?.phone)
-      }
-      if (!phone && task?.client_id) {
-        const { data: c } = await supabase.from('clients').select('phone').eq('id', task.client_id).maybeSingle()
-        phone = normalizePhone(c?.phone)
-      }
-      if (!phone && task?.assigned_to) {
+      if (task?.assigned_to) {
         const { data: p } = await supabase.from('profiles').select('phone').eq('user_id', task.assigned_to).maybeSingle()
         phone = normalizePhone(p?.phone)
       }
       if (!phone) {
-        errors.push('whatsapp: telefone não encontrado')
+        errors.push('whatsapp: responsável sem telefone válido')
       } else {
         const wa = await sendWhatsApp(phone, fullMessage)
         if (wa.ok) delivered.push('whatsapp')

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Calendar } from "@/components/ui/calendar";
 import { ArrowLeft, CalendarIcon, CheckSquare, ChevronsUpDown, Check, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isValidPhoneLength } from "@/lib/validators";
 
 const STATUS_OPTIONS = [
   { value: "pending", label: "A iniciar", dot: "bg-warning" },
@@ -70,7 +71,7 @@ export default function TaskDetail() {
   const { data: profiles = [] } = useQuery({
     queryKey: ["profiles-list"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles_basic").select("user_id, full_name");
+      const { data } = await supabase.from("profiles_basic").select("user_id, full_name, phone");
       return data ?? [];
     },
   });
@@ -115,6 +116,23 @@ export default function TaskDetail() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task, isNew, user?.id]);
+
+  const assigneePhone = (profiles as any[]).find((p) => p.user_id === form.assigned_to)?.phone ?? null;
+  const assigneeHasWhatsapp = isValidPhoneLength(assigneePhone);
+  const assigneeName = (profiles as any[]).find((p) => p.user_id === form.assigned_to)?.full_name ?? "Responsável";
+
+  // Avisa quando o responsável muda para alguém sem WhatsApp válido
+  const prevAssignee = useRef<string | null>(null);
+  useEffect(() => {
+    const current = form.assigned_to || null;
+    if (prevAssignee.current && current && prevAssignee.current !== current && !assigneeHasWhatsapp) {
+      toast({
+        title: "WhatsApp indisponível",
+        description: `${assigneeName} não possui um telefone válido para WhatsApp. Lembretes por WhatsApp serão desativados.`,
+      });
+    }
+    prevAssignee.current = current;
+  }, [form.assigned_to, assigneeHasWhatsapp, assigneeName, toast]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -438,7 +456,7 @@ export default function TaskDetail() {
         {/* Coluna direita: notas + histórico */}
         {!isNew && id && (
           <aside className="lg:border-l lg:border-border lg:pl-6">
-            <TaskNotesHistory taskId={id} />
+            <TaskNotesHistory taskId={id} assigneePhone={assigneePhone} assigneeName={assigneeName} />
           </aside>
         )}
       </div>
