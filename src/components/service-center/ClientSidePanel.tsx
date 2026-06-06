@@ -228,10 +228,16 @@ function ClientTab({ level, contactId, leadId, clientId, contactName, phone }: P
     setSaving(true);
     try {
       if (level === "cliente" && clientId) {
+        // Determina principal/principal email a partir das listas
+        const primaryPhone = phones.find((p) => p.is_primary) || phones[0];
+        const primaryEmail = emails.find((e) => e.is_primary) || emails[0];
+        const primaryPhoneStr = primaryPhone
+          ? `${COUNTRY_CODES.find((c) => c.code === primaryPhone.country_code)?.dial || "+55"} ${primaryPhone.phone}`
+          : null;
         const payload: any = {
           full_name: form.full_name?.trim() || waName,
-          email: form.email || null,
-          phone: form.phone || null,
+          email: primaryEmail?.email || form.email || null,
+          phone: primaryPhoneStr || form.phone || null,
           cpf_cnpj: form.cpf_cnpj || null,
           birth_date: form.birth_date || null,
           gender: form.gender || null,
@@ -249,7 +255,41 @@ function ClientTab({ level, contactId, leadId, clientId, contactName, phone }: P
         };
         const { error } = await supabase.from("clients").update(payload).eq("id", clientId);
         if (error) throw error;
+
+        // Sync client_phones (replace-all, igual a /clients)
+        await supabase.from("client_phones").delete().eq("client_id", clientId);
+        const validPhones = phones.filter((p) => p.phone.trim());
+        if (validPhones.length > 0) {
+          await supabase.from("client_phones").insert(
+            validPhones.map((p, _i, arr) => {
+              const cc = COUNTRY_CODES.find((c) => c.code === p.country_code);
+              const isPrimary = arr.length === 1 ? true : p.is_primary;
+              return {
+                client_id: clientId!,
+                phone: `${cc?.dial || "+55"} ${p.phone}`,
+                description: p.description || null,
+                is_primary: isPrimary,
+              };
+            }),
+          );
+        }
+        // Sync client_emails
+        await supabase.from("client_emails").delete().eq("client_id", clientId);
+        const validEmails = emails.filter((e) => e.email.trim());
+        if (validEmails.length > 0) {
+          await supabase.from("client_emails").insert(
+            validEmails.map((e, _i, arr) => ({
+              client_id: clientId!,
+              email: e.email,
+              description: e.description || null,
+              is_primary: arr.length === 1 ? true : e.is_primary,
+            })),
+          );
+        }
         qc.invalidateQueries({ queryKey: ["side-client", clientId] });
+        qc.invalidateQueries({ queryKey: ["side-client-phones", clientId] });
+        qc.invalidateQueries({ queryKey: ["side-client-emails", clientId] });
+
       } else if (level === "lead" && leadId) {
         const payload: any = {
           full_name: form.full_name?.trim() || waName,
