@@ -119,10 +119,20 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
     window.open(data.signedUrl, "_blank");
   };
 
-  const handleDelete = async (id: string, path: string) => {
-    await supabase.storage.from("task-attachments").remove([path]);
-    await supabase.from("task_attachments").delete().eq("id", id);
-    qc.invalidateQueries({ queryKey: ["task-attachments", taskId] });
+  const handleDeleteClick = (id: string, path: string, name: string, pending?: boolean, pendingIndex?: number) => {
+    setConfirmDelete({ id, path, name, pending, pendingIndex });
+  };
+
+  const confirmDeleteAction = async () => {
+    if (!confirmDelete) return;
+    if (confirmDelete.pending) {
+      onPendingChange?.(pending.filter((_, i) => i !== (confirmDelete.pendingIndex ?? -1)));
+    } else {
+      await supabase.storage.from("task-attachments").remove([confirmDelete.path]);
+      await supabase.from("task_attachments").delete().eq("id", confirmDelete.id);
+      qc.invalidateQueries({ queryKey: ["task-attachments", taskId] });
+    }
+    setConfirmDelete(null);
   };
 
   const items: any[] = taskId ? attachments : pending.map((f, i) => ({
