@@ -53,6 +53,8 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [viewer, setViewer] = useState<ViewerAttachment | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; path: string; name: string; pending?: boolean; pendingIndex?: number } | null>(null);
+
 
 
   const { data: attachments = [] } = useQuery({
