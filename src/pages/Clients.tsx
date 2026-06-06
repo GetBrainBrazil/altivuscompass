@@ -551,12 +551,20 @@ export default function Clients() {
   }, [clientSocials, editingId]);
   useEffect(() => {
     if (editingId) {
-      setPassports(clientPassports.map((p: any) => ({
+      const mapped = clientPassports.map((p: any) => ({
         id: p.id, passport_number: p.passport_number ?? "", issue_date: p.issue_date ?? "",
         expiry_date: p.expiry_date ?? "", nationality: p.nationality ?? "", status: p.status ?? "valid",
         image_urls: p.image_urls ?? [], _imageFiles: [] as File[],
         visas: (p.visas ?? []).map((v: any) => ({ id: v.id, visa_type: v.visa_type, validity_date: v.validity_date ?? "", country_region: v.country_region ?? "", visa_number: v.visa_number ?? "", issue_date: v.issue_date ?? "", entry_type: v.entry_type ?? "single", description: v.description ?? "", image_url: v.image_url ?? "" })),
-      })));
+      }));
+      setPassports(mapped);
+      // Start with all passports and visas collapsed
+      setCollapsedPassports(new Set(mapped.map((_: any, i: number) => i)));
+      const visaKeys = new Set<string>();
+      mapped.forEach((p: any, pi: number) => {
+        (p.visas ?? []).forEach((_: any, vi: number) => visaKeys.add(`${pi}-${vi}`));
+      });
+      setCollapsedVisas(visaKeys);
     }
   }, [clientPassports, editingId]);
   useEffect(() => {
@@ -1437,7 +1445,7 @@ export default function Clients() {
                 <div className="border-t border-border/50 pt-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-display font-medium text-foreground">Passaportes</h3>
-                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => setPassports([...passports, { passport_number: "", issue_date: "", expiry_date: "", nationality: "", status: "valid", visas: [], image_urls: [], _imageFiles: [] }])}>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1 text-xs" onClick={() => { const idx = passports.length; setPassports([...passports, { passport_number: "", issue_date: "", expiry_date: "", nationality: "", status: "valid", visas: [], image_urls: [], _imageFiles: [] }]); setCollapsedPassports(prev => new Set(prev).add(idx)); }}>
                       <Plus className="h-3 w-3 mr-1" />Adicionar Passaporte
                     </Button>
                   </div>
@@ -1533,7 +1541,7 @@ export default function Clients() {
                         <div className="flex items-center justify-between mb-2">
                           <Label className="font-body text-xs font-medium">Vistos deste passaporte</Label>
                           <Button type="button" variant="ghost" size="sm" className="h-5 px-1 text-xs" onClick={() => {
-                            const n = [...passports]; n[pi].visas = [...n[pi].visas, { visa_type: "", validity_date: "", country_region: "", visa_number: "", issue_date: "", entry_type: "single", description: "", image_url: "" }]; setPassports(n);
+                            const n = [...passports]; const vi = n[pi].visas.length; n[pi].visas = [...n[pi].visas, { visa_type: "", validity_date: "", country_region: "", visa_number: "", issue_date: "", entry_type: "single", description: "", image_url: "" }]; setPassports(n); setCollapsedVisas(prev => new Set(prev).add(`${pi}-${vi}`));
                           }}>
                             <Plus className="h-3 w-3 mr-1" />Visto
                           </Button>
