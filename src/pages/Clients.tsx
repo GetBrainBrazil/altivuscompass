@@ -1383,7 +1383,27 @@ export default function Clients() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
                     <Label className="font-body text-xs">CPF / CNPJ</Label>
-                    <Input value={form.cpf_cnpj} onChange={(e) => upd("cpf_cnpj", e.target.value)} />
+                    {(() => {
+                      const raw = form.cpf_cnpj || "";
+                      const digits = cleanDigits(raw);
+                      const isInvalid = digits.length > 0 && !isValidCPFOrCNPJ(raw);
+                      const incomplete = digits.length > 0 && digits.length !== 11 && digits.length !== 14;
+                      return (
+                        <>
+                          <Input
+                            value={raw}
+                            onChange={(e) => upd("cpf_cnpj", e.target.value)}
+                            className={isInvalid ? "border-destructive focus-visible:ring-destructive" : ""}
+                            aria-invalid={isInvalid}
+                          />
+                          {isInvalid && (
+                            <p className="text-[11px] text-destructive font-body">
+                              {incomplete ? "CPF/CNPJ incompleto" : "CPF/CNPJ inválido"}
+                            </p>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                   <div className="space-y-1.5">
                     <Label className="font-body text-xs">RG</Label>
