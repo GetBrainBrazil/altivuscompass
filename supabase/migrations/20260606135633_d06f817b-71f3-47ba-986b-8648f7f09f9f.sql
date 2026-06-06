@@ -1,0 +1,1 @@
+ALTER TABLE public.passengers ADD COLUMN IF NOT EXISTS cpf text;
