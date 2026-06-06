@@ -38,8 +38,9 @@ import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/Cont
 import { NewMessageDialog } from "@/components/service-center/NewMessageDialog";
 import { ClientSidePanel } from "@/components/service-center/ClientSidePanel";
 import { MessageLinkDialog } from "@/components/service-center/MessageLinkDialog";
-import { Plus, Info, Bot, Check, CheckCheck, Clock, Mic, Square, Trash2, Loader2, Link2, MoreVertical } from "lucide-react";
+import { Plus, Info, Bot, Check, CheckCheck, Clock, Mic, Square, Trash2, Loader2, Link2, MoreVertical, Pencil } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -1112,21 +1113,43 @@ export default function ServiceCenter() {
   const [linkDialogMessages, setLinkDialogMessages] = useState<string[]>([]);
 
   // Apelido/nome do atendente logado (para exibir nas mensagens enviadas)
-  const { data: myAgentLabel } = useQuery({
-    queryKey: ["my-agent-label"],
+  const { data: myProfile } = useQuery({
+    queryKey: ["my-agent-profile"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return "Agente";
+      if (!user) return null;
       const { data } = await (supabase as any)
         .from("profiles")
-        .select("nickname, full_name")
+        .select("user_id, nickname, full_name")
         .eq("user_id", user.id)
         .maybeSingle();
-      const p = data as { nickname?: string | null; full_name?: string | null } | null;
-      return (p?.nickname?.trim() || p?.full_name?.trim() || "Agente");
+      return data as { user_id: string; nickname?: string | null; full_name?: string | null } | null;
     },
     staleTime: 5 * 60 * 1000,
   });
+  const myAgentLabel = (myProfile?.nickname?.trim() || myProfile?.full_name?.trim() || "Agente");
+  const [nicknameOpen, setNicknameOpen] = useState(false);
+  const [nicknameDraft, setNicknameDraft] = useState("");
+  const [savingNickname, setSavingNickname] = useState(false);
+  useEffect(() => { setNicknameDraft(myProfile?.nickname ?? ""); }, [myProfile?.nickname]);
+  const saveNickname = async () => {
+    if (!myProfile?.user_id) return;
+    setSavingNickname(true);
+    try {
+      const { error } = await (supabase as any)
+        .from("profiles")
+        .update({ nickname: nicknameDraft.trim() || null })
+        .eq("user_id", myProfile.user_id);
+      if (error) throw error;
+      toast.success("Apelido atualizado");
+      qc.invalidateQueries({ queryKey: ["my-agent-profile"] });
+      setNicknameOpen(false);
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao salvar apelido");
+    } finally {
+      setSavingNickname(false);
+    }
+  };
 
   // ===== Status do Agente IA (fonte da verdade: ai_agent_status.active) =====
   const AGENT_ID = "1";
