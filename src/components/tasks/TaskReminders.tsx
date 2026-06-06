@@ -45,7 +45,7 @@ function defaultDate() {
   return d;
 }
 
-export function TaskReminders({ taskId }: Props) {
+export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
   const { user } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -54,6 +54,15 @@ export function TaskReminders({ taskId }: Props) {
   const [draftChannels, setDraftChannels] = useState<string[]>(["system"]);
   const [draftMsg, setDraftMsg] = useState("");
   const [adding, setAdding] = useState(false);
+
+  const assigneeHasWhatsapp = isValidPhoneLength(assigneePhone);
+
+  // Se o responsável mudar e não tiver WhatsApp válido, desmarca o canal do rascunho
+  useEffect(() => {
+    if (!assigneeHasWhatsapp && draftChannels.includes("whatsapp")) {
+      setDraftChannels((cur) => cur.filter((c) => c !== "whatsapp"));
+    }
+  }, [assigneeHasWhatsapp]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isNewTask = !taskId || taskId === "new";
 
