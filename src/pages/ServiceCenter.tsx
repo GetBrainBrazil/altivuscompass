@@ -1786,53 +1786,52 @@ export default function ServiceCenter() {
       <aside className="w-[340px] shrink-0 border-r flex flex-col">
         <div className="p-4 border-b space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <h1 className="text-lg font-semibold">Atendimento</h1>
-            <div className="flex items-center gap-1.5">
-              <Popover open={nicknameOpen} onOpenChange={setNicknameOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
-                    title="Editar apelido exibido nas mensagens"
-                  >
-                    <Pencil className="h-3 w-3" />
-                    {myAgentLabel}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-72 p-3 space-y-2">
-                  <p className="text-xs font-medium">Seu apelido</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Exibido nas mensagens que você envia. Se vazio, usamos seu nome completo.
-                  </p>
-                  <Input
-                    value={nicknameDraft}
-                    onChange={(e) => setNicknameDraft(e.target.value)}
-                    placeholder={myProfile?.full_name ?? "Seu apelido"}
-                    maxLength={40}
-                    onKeyDown={(e) => { if (e.key === "Enter") saveNickname(); }}
-                    autoFocus
-                  />
-                  <div className="flex justify-end gap-2 pt-1">
-                    <Button variant="ghost" size="sm" onClick={() => setNicknameOpen(false)} disabled={savingNickname}>
-                      Cancelar
-                    </Button>
-                    <Button size="sm" onClick={saveNickname} disabled={savingNickname}>
-                      {savingNickname ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Salvar"}
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
-              <Button
-                size="sm"
-                onClick={() => setNewMsgOpen(true)}
-                className="h-8 gap-1.5 bg-[hsl(var(--navy))] text-[hsl(var(--cream))] hover:bg-[hsl(var(--navy))]/90"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Nova
-              </Button>
-            </div>
+            <h1 className="text-lg font-semibold truncate">Atendimento</h1>
+            <Button
+              size="sm"
+              onClick={() => setNewMsgOpen(true)}
+              className="h-8 gap-1.5 shrink-0 bg-[hsl(var(--navy))] text-[hsl(var(--cream))] hover:bg-[hsl(var(--navy))]/90"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Nova
+            </Button>
           </div>
+          <Popover open={nicknameOpen} onOpenChange={setNicknameOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-full justify-start gap-1.5 px-2 -mt-1 text-xs text-muted-foreground hover:text-foreground"
+                title="Editar apelido exibido nas mensagens"
+              >
+                <Pencil className="h-3 w-3 shrink-0" />
+                <span className="truncate">{myAgentLabel}</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-72 p-3 space-y-2">
+              <p className="text-xs font-medium">Seu apelido</p>
+              <p className="text-[11px] text-muted-foreground">
+                Exibido nas mensagens que você envia. Se vazio, usamos seu nome completo.
+              </p>
+              <Input
+                value={nicknameDraft}
+                onChange={(e) => setNicknameDraft(e.target.value)}
+                placeholder={myProfile?.full_name ?? "Seu apelido"}
+                maxLength={40}
+                onKeyDown={(e) => { if (e.key === "Enter") saveNickname(); }}
+                autoFocus
+              />
+              <div className="flex justify-end gap-2 pt-1">
+                <Button variant="ghost" size="sm" onClick={() => setNicknameOpen(false)} disabled={savingNickname}>
+                  Cancelar
+                </Button>
+                <Button size="sm" onClick={saveNickname} disabled={savingNickname}>
+                  {savingNickname ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Salvar"}
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
