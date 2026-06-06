@@ -167,6 +167,7 @@ export function TaskNotesHistory({ taskId }: Props) {
 
   const totalCount = notes.length + activity.length;
 
+  return (
     <div className="space-y-5">
       <h2 className="font-display text-lg text-foreground">Interações</h2>
       {/* Adicionar nota */}
