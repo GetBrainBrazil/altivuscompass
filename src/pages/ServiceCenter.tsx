@@ -1900,7 +1900,6 @@ export default function ServiceCenter() {
                   aiGloballyPaused={aiGloballyPaused}
                   onClick={() => {
                     setSelectedId(c.id);
-                    setSummaryOpen(false);
                   }}
                 />
               ))
