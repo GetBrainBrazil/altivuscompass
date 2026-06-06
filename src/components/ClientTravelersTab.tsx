@@ -229,8 +229,18 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       const { data } = await supabase.from("clients").select("id, full_name, city, state, cpf_cnpj, birth_date").order("full_name");
       return data ?? [];
     },
-    enabled: linkDialog || copyDialog,
+    enabled: linkDialog || copyDialog || addDialog,
   });
+
+  // Current client name (for bidirectional labels)
+  const { data: currentClient } = useQuery({
+    queryKey: ["client-name", clientId],
+    queryFn: async () => {
+      if (!clientId) return null;
+      const { data } = await supabase.from("clients").select("id, full_name").eq("id", clientId).single();
+      return data;
+    },
+    enabled: !!clientId,
 
   // Fetch ALL passengers across clients (used by copy dialog).
   // We filter out passengers that already correspond to a client (by CPF or by name+birth_date).
