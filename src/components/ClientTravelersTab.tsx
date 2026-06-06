@@ -128,6 +128,19 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
   const [copyClientSearch, setCopyClientSearch] = useState("");
   const [copyPassengerIds, setCopyPassengerIds] = useState<Set<string>>(new Set());
 
+  // Unified "+ Adicionar viajante" state
+  const [addDialog, setAddDialog] = useState(false);
+  const [addSearch, setAddSearch] = useState("");
+  // Pending link confirmation (after selecting a client or passenger from search)
+  const [pendingLink, setPendingLink] = useState<
+    | { kind: "client"; clientId: string; clientName: string }
+    | { kind: "passenger"; passenger: any }
+    | null
+  >(null);
+  const [pendingAtoB, setPendingAtoB] = useState<string>("other"); // current is ___ of selected
+  const [pendingBtoA, setPendingBtoA] = useState<string>("other"); // selected is ___ of current
+
+
   // Fetch passengers
   const { data: passengers = [] } = useQuery({
     queryKey: ["client-passengers", clientId],
