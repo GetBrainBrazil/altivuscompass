@@ -414,25 +414,27 @@ export default function Tasks() {
             />
           </FilterChip>
 
-          {/* Status */}
-          <FilterChip
-            label="Status"
-            active={statusFilter !== "all"}
-            value={statusFilter === "all" ? "Status" : (STATUS_CONFIG[statusFilter]?.label ?? "Status")}
-            onClear={() => setStatusFilter("all")}
-          >
-            <SearchableList
-              items={[
-                { id: "all", label: "Todos" },
-                { id: "pending", label: "Aguardando Início" },
-                { id: "in_progress", label: "Em Andamento" },
-                { id: "review", label: "Suspensa" },
-                { id: "completed", label: "Concluída" },
-              ]}
-              selected={statusFilter}
-              onSelect={(id) => setStatusFilter(id)}
-            />
-          </FilterChip>
+          {/* Status — oculto no Kanban (cada coluna já é um status) */}
+          {view !== "kanban" && (
+            <FilterChip
+              label="Status"
+              active={statusFilter !== "all"}
+              value={statusFilter === "all" ? "Status" : (STATUS_CONFIG[statusFilter]?.label ?? "Status")}
+              onClear={() => setStatusFilter("all")}
+            >
+              <SearchableList
+                items={[
+                  { id: "all", label: "Todos" },
+                  { id: "pending", label: "Aguardando Início" },
+                  { id: "in_progress", label: "Em Andamento" },
+                  { id: "review", label: "Suspensa" },
+                  { id: "completed", label: "Concluída" },
+                ]}
+                selected={statusFilter}
+                onSelect={(id) => setStatusFilter(id)}
+              />
+            </FilterChip>
+          )}
 
           {/* Prazo */}
           <FilterChip
