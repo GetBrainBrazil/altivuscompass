@@ -426,7 +426,7 @@ export default function Tasks() {
                 { id: "all", label: "Todos" },
                 { id: "pending", label: "Aguardando Início" },
                 { id: "in_progress", label: "Em Andamento" },
-                { id: "review", label: "Em Revisão" },
+                { id: "review", label: "Suspensa" },
                 { id: "completed", label: "Concluída" },
               ]}
               selected={statusFilter}
