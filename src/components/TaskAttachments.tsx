@@ -213,6 +213,14 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
       {!taskId && pending.length > 0 && (
         <p className="text-[11px] text-muted-foreground mt-1.5">Os arquivos serão enviados ao salvar a tarefa.</p>
       )}
+      <ImageViewerDialog
+        open={!!viewer}
+        onOpenChange={(v) => !v && setViewer(null)}
+        attachment={viewer}
+        taskId={taskId}
+        pending={pending}
+        onPendingChange={onPendingChange}
+      />
     </div>
   );
 }
