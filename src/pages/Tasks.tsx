@@ -25,7 +25,7 @@ import { FilterChip, SearchableList } from "@/components/tasks/FilterChip";
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Aguardando Início", color: "bg-warning/10 text-warning border-warning/20", icon: Clock },
   in_progress: { label: "Em Andamento", color: "bg-soft-blue/10 text-soft-blue border-soft-blue/20", icon: AlertCircle },
-  review: { label: "Em Revisão", color: "bg-purple-500/10 text-purple-600 border-purple-500/20", icon: AlertCircle },
+  review: { label: "Suspensa", color: "bg-muted-foreground/10 text-muted-foreground border-muted-foreground/20", icon: AlertCircle },
   completed: { label: "Concluída", color: "bg-success/10 text-success border-success/20", icon: CheckCircle2 },
 };
 
