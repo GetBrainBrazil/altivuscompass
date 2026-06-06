@@ -417,6 +417,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       // Create new client
       const { data: newClient, error: clientErr } = await supabase.from("clients").insert({
         full_name: promotePassenger.full_name,
+        cpf_cnpj: (promotePassenger as any).cpf ? (promotePassenger as any).cpf : null,
         birth_date: promotePassenger.birth_date || null,
         nationality: promotePassenger.nationality || null,
         notes: notesText,
