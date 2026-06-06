@@ -241,6 +241,9 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
       return data;
     },
     enabled: !!clientId,
+  });
+
+
 
   // Fetch ALL passengers across clients (used by copy dialog).
   // We filter out passengers that already correspond to a client (by CPF or by name+birth_date).
