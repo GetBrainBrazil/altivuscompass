@@ -13,6 +13,7 @@ import {
   MessageSquare, History, FileText, Loader2, X, Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ClientTasksPanel } from "./ClientTasksPanel";
 
 type Kind = "note" | "call" | "email" | "meeting" | "other";
 
@@ -317,6 +318,8 @@ export function ClientInteractionPanel({ contactId, clientId }: Props) {
           </Button>
         </div>
       </div>
+      {/* Tarefas */}
+      <ClientTasksPanel contactId={contactId} clientId={clientId} />
 
       {/* Histórico */}
       <div className="glass-card rounded-xl p-3">
