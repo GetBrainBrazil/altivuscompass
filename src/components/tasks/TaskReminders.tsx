@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Bell, Plus, Trash2, MessageSquare, Mail, Monitor, Check } from "lucide-react";
+import { Bell, Plus, Trash2, MessageSquare, Mail, Monitor, Check, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -54,6 +54,7 @@ export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
   const [draftChannels, setDraftChannels] = useState<string[]>(["system"]);
   const [draftMsg, setDraftMsg] = useState("");
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [showSent, setShowSent] = useState(false);
 
   const assigneeHasWhatsapp = isValidPhoneLength(assigneePhone);
@@ -80,33 +81,65 @@ export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
     },
   });
 
-  const addReminder = useMutation({
+  const resetDraft = () => {
+    const d = defaultDate();
+    setDraftDate(format(d, "yyyy-MM-dd"));
+    setDraftTime(format(d, "HH:mm"));
+    setDraftChannels(["system"]);
+    setDraftMsg("");
+  };
+
+  const startEdit = (r: Reminder) => {
+    const d = new Date(r.remind_at);
+    setDraftDate(format(d, "yyyy-MM-dd"));
+    setDraftTime(format(d, "HH:mm"));
+    setDraftChannels(r.channels?.length ? r.channels : ["system"]);
+    setDraftMsg(r.message ?? "");
+    setEditingId(r.id);
+    setAdding(false);
+  };
+
+  const cancelForm = () => {
+    setAdding(false);
+    setEditingId(null);
+    resetDraft();
+  };
+
+  const saveReminder = useMutation({
     mutationFn: async () => {
       if (!user?.id) return;
       const remindAt = new Date(`${draftDate}T${draftTime}:00`);
       if (isNaN(remindAt.getTime())) throw new Error("Data/hora inválida");
       const channels = draftChannels.includes("system") ? draftChannels : ["system", ...draftChannels];
-      const { error } = await supabase.from("task_reminders").insert({
-        task_id: taskId,
-        user_id: user.id,
-        remind_at: remindAt.toISOString(),
-        channels,
-        message: draftMsg.trim() || null,
-        status: "pending",
-      });
-      if (error) throw error;
+      if (editingId) {
+        const { error } = await supabase
+          .from("task_reminders")
+          .update({
+            remind_at: remindAt.toISOString(),
+            channels,
+            message: draftMsg.trim() || null,
+          })
+          .eq("id", editingId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("task_reminders").insert({
+          task_id: taskId,
+          user_id: user.id,
+          remind_at: remindAt.toISOString(),
+          channels,
+          message: draftMsg.trim() || null,
+          status: "pending",
+        });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["task-reminders", taskId] });
-      const d = defaultDate();
-      setDraftDate(format(d, "yyyy-MM-dd"));
-      setDraftTime(format(d, "HH:mm"));
-      setDraftChannels(["system"]);
-      setDraftMsg("");
-      setAdding(false);
-      toast({ title: "Lembrete criado" });
+      const wasEditing = !!editingId;
+      cancelForm();
+      toast({ title: wasEditing ? "Lembrete atualizado" : "Lembrete criado" });
     },
-    onError: (e: any) => toast({ title: "Erro ao criar lembrete", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: "Erro ao salvar lembrete", description: e.message, variant: "destructive" }),
   });
 
   const removeReminder = useMutation({
@@ -162,13 +195,24 @@ export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
           {isFailed && (
             <Badge variant="destructive" className="h-5 text-[10px]">Falhou</Badge>
           )}
-          <button
-            onClick={() => removeReminder.mutate(r.id)}
-            className="ml-auto opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
-            aria-label="Remover lembrete"
-          >
-            <Trash2 size={12} />
-          </button>
+          <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {!isDone && (
+              <button
+                onClick={() => startEdit(r)}
+                className="text-muted-foreground hover:text-foreground"
+                aria-label="Editar lembrete"
+              >
+                <Pencil size={12} />
+              </button>
+            )}
+            <button
+              onClick={() => removeReminder.mutate(r.id)}
+              className="text-muted-foreground hover:text-destructive"
+              aria-label="Remover lembrete"
+            >
+              <Trash2 size={12} />
+            </button>
+          </div>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
           {r.channels.map((ch) => {
@@ -201,24 +245,27 @@ export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
     );
   };
 
+  const showForm = adding || !!editingId;
+
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground font-body">
           <Bell size={12} /> Lembretes ({activeReminders.length})
         </div>
-        {!adding && (
-          <Button size="sm" variant="ghost" onClick={() => setAdding(true)} className="h-7 text-xs">
+        {!showForm && (
+          <Button size="sm" variant="ghost" onClick={() => { resetDraft(); setAdding(true); }} className="h-7 text-xs">
             <Plus size={14} className="mr-1" /> Adicionar
           </Button>
         )}
       </div>
 
       <div className="space-y-2">
-        {activeReminders.map(renderReminder)}
-
-        {adding && (
+        {showForm && (
           <div className="rounded-md border border-border bg-muted/20 p-3 space-y-2.5">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              {editingId ? "Editar lembrete" : "Novo lembrete"}
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-[10px] uppercase tracking-wide text-muted-foreground">Data</label>
@@ -273,20 +320,22 @@ export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
               className="min-h-[56px] text-xs resize-none"
             />
             <div className="flex items-center justify-end gap-2">
-              <Button size="sm" variant="ghost" onClick={() => setAdding(false)} className="h-7 text-xs">
+              <Button size="sm" variant="ghost" onClick={cancelForm} className="h-7 text-xs">
                 Cancelar
               </Button>
               <Button
                 size="sm"
-                onClick={() => addReminder.mutate()}
-                disabled={addReminder.isPending}
+                onClick={() => saveReminder.mutate()}
+                disabled={saveReminder.isPending}
                 className="h-7 text-xs"
               >
-                Salvar lembrete
+                {editingId ? "Salvar alterações" : "Salvar lembrete"}
               </Button>
             </div>
           </div>
         )}
+
+        {activeReminders.map(renderReminder)}
 
         {sentReminders.length > 0 && (
           <div className="space-y-2 pt-1">
@@ -301,8 +350,7 @@ export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
           </div>
         )}
 
-
-        {!adding && reminders.length === 0 && (
+        {!showForm && reminders.length === 0 && (
           <p className="text-xs text-muted-foreground font-body py-2">Nenhum lembrete.</p>
         )}
       </div>
