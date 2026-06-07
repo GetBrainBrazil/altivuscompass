@@ -1259,13 +1259,75 @@ export default function Clients() {
         </div>
 
         <form onSubmit={(e) => { e.preventDefault(); if (saveMutation.isPending) return; handleSaveClick(!editingId); }} className="space-y-4">
+          {/* Banner de CPF já cadastrado (real-time) */}
+          {!editingId && cpfMatchClient && (
+            <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-100 px-4 py-3 flex items-center gap-3 flex-wrap">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <p className="text-sm font-body flex-1 min-w-0">
+                Já existe um cliente com este CPF/CNPJ: <strong>{cpfMatchClient.full_name}</strong>
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="border-amber-500/40"
+                onClick={() => {
+                  setSearchParams({ id: cpfMatchClient.id }, { replace: true });
+                }}
+              >
+                Abrir cliente
+              </Button>
+            </div>
+          )}
           {/* ====== UPPER SECTION: Compact header with key data ====== */}
           <div className="glass-card rounded-xl p-4 space-y-3">
             {/* Row 1: Name + Rating + Birth + Gender + Active */}
             <div className="grid grid-cols-12 gap-3 items-end">
               <div className="col-span-12 sm:col-span-4 space-y-1">
                 <Label className="font-body text-xs">Nome completo *</Label>
-                <Input value={form.full_name} onChange={(e) => upd("full_name", e.target.value)} required className="h-9" />
+                {editingId ? (
+                  <Input value={form.full_name} onChange={(e) => upd("full_name", e.target.value)} required className="h-9" />
+                ) : (
+                  <ClientNameSuggest
+                    value={form.full_name}
+                    onChange={(v) => upd("full_name", v)}
+                    required
+                    inputClassName="h-9"
+                    onPickClient={(id, name) => {
+                      if (window.confirm(`"${name}" já está cadastrado como cliente. Abrir esse cliente em vez de criar um novo?`)) {
+                        setSearchParams({ id }, { replace: true });
+                      }
+                    }}
+                    onPickPassengerLinked={(clientId, clientName) => {
+                      if (window.confirm(`Esse viajante já pertence ao cliente "${clientName}". Abrir esse cliente?`)) {
+                        setSearchParams({ id: clientId }, { replace: true });
+                      }
+                    }}
+                    onPickPassengerFree={(p: PassengerSuggestion) => {
+                      if (!window.confirm(`"${p.full_name}" é um viajante ainda sem cadastro de cliente. Promover a cliente preenchendo os dados existentes?`)) return;
+                      setPromoteFromPassengerId(p.id);
+                      setForm((prev) => ({
+                        ...prev,
+                        full_name: p.full_name,
+                        cpf_cnpj: p.cpf || prev.cpf_cnpj,
+                        birth_date: p.birth_date || prev.birth_date,
+                        nationality: p.nationality || prev.nationality,
+                      }));
+                      if (p.passport_number) {
+                        setPassports((prev) => prev.length > 0 ? prev : [{
+                          passport_number: p.passport_number || "",
+                          issue_date: "",
+                          expiry_date: p.passport_expiry || "",
+                          nationality: p.nationality || "",
+                          status: "valid",
+                          visas: [],
+                          image_urls: [],
+                        }]);
+                      }
+                      toast({ title: "Viajante carregado", description: "Complete os dados e salve para promover a cliente." });
+                    }}
+                  />
+                )}
               </div>
               <div className="col-span-6 sm:col-span-2 space-y-1">
                 <Label className="font-body text-xs">Nascimento</Label>
