@@ -27,6 +27,7 @@ import UserManagement from "./pages/UserManagement";
 import UserDetail from "./pages/UserDetail";
 import Permissions from "./pages/Permissions";
 import Registrations from "./pages/Registrations";
+import CategoryFieldsPage from "./pages/CategoryFieldsPage";
 import Sales from "./pages/Sales";
 import FinanceClosedSales from "./pages/FinanceClosedSales";
 import MyProfile from "./pages/MyProfile";
@@ -102,6 +103,7 @@ const App = () => (
             <Route path="/users/:id" element={<ProtectedRoute><AppLayout><UserDetail /></AppLayout></ProtectedRoute>} />
             <Route path="/permissions" element={<ProtectedRoute><AppLayout><Permissions /></AppLayout></ProtectedRoute>} />
             <Route path="/registrations" element={<ProtectedRoute><AppLayout><Registrations /></AppLayout></ProtectedRoute>} />
+            <Route path="/registrations/categories/:id/fields" element={<ProtectedRoute><AppLayout><CategoryFieldsPage /></AppLayout></ProtectedRoute>} />
             <Route path="/itineraries" element={<ProtectedRoute><AppLayout><Itineraries /></AppLayout></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><AppLayout><MyProfile /></AppLayout></ProtectedRoute>} />
             <Route path="/system" element={<ProtectedRoute><AppLayout><System /></AppLayout></ProtectedRoute>} />
