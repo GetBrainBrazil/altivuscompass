@@ -345,40 +345,29 @@ function FieldRenderer({
     case "baggage": {
       const v = value ?? { mochila: 0, mao: 0, despachada: 0 };
       const setPart = (k: string, n: number) => onChange({ ...v, [k]: n });
+      const parts: Array<{ key: "mochila" | "mao" | "despachada"; lbl: string }> = [
+        { key: "mochila", lbl: "Mochila" },
+        { key: "mao", lbl: "Mão" },
+        { key: "despachada", lbl: "Desp." },
+      ];
       return (
         <div className="space-y-1">
           {label}
           <div className="grid grid-cols-3 gap-1">
-            <div className="flex flex-col">
-              <Label className="text-[10px] text-muted-foreground">Mochila</Label>
-              <Input
-                type="number"
-                min={0}
-                value={v.mochila ?? 0}
-                onChange={(e) => setPart("mochila", Number(e.target.value) || 0)}
-                className="h-8 text-xs px-1.5"
-              />
-            </div>
-            <div className="flex flex-col">
-              <Label className="text-[10px] text-muted-foreground">Mão</Label>
-              <Input
-                type="number"
-                min={0}
-                value={v.mao ?? 0}
-                onChange={(e) => setPart("mao", Number(e.target.value) || 0)}
-                className="h-8 text-xs px-1.5"
-              />
-            </div>
-            <div className="flex flex-col">
-              <Label className="text-[10px] text-muted-foreground">Desp.</Label>
-              <Input
-                type="number"
-                min={0}
-                value={v.despachada ?? 0}
-                onChange={(e) => setPart("despachada", Number(e.target.value) || 0)}
-                className="h-8 text-xs px-1.5"
-              />
-            </div>
+            {parts.map((p) => (
+              <div key={p.key} className="relative">
+                <span className="pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+                  {p.lbl}
+                </span>
+                <Input
+                  type="number"
+                  min={0}
+                  value={(v as any)[p.key] ?? 0}
+                  onChange={(e) => setPart(p.key, Number(e.target.value) || 0)}
+                  className="h-8 text-xs pl-[52px] pr-1.5 text-right"
+                />
+              </div>
+            ))}
           </div>
         </div>
       );
