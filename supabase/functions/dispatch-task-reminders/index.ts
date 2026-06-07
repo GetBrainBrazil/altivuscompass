@@ -139,7 +139,10 @@ Deno.serve(async (req) => {
     }
 
     const text = (r.message?.trim() || task?.title || 'Lembrete de tarefa')
-    const waMessage = `🔔 *Lembrete de tarefa*\n\n${text}`
+    const linksText = links
+      ? `\n\n✅ Concluir: ${links.complete}\n⏰ Adiar 30 min: ${links.snooze}`
+      : ''
+    const waMessage = `🔔 *Lembrete de tarefa*\n\n${text}${linksText}`
 
     if (channels.includes('whatsapp')) {
       const phone = normalizePhone(assignee?.phone)
@@ -151,6 +154,7 @@ Deno.serve(async (req) => {
         else errors.push(`whatsapp: ${wa.error}`)
       }
     }
+
 
     if (channels.includes('email')) {
       const recipientEmail = assignee?.email
@@ -164,13 +168,13 @@ Deno.serve(async (req) => {
             hour: '2-digit', minute: '2-digit',
           })
           const taskUrl = `${APP_URL}/tasks/${r.task_id}`
-          // Direct fetch with service-role auth to avoid 401
+          const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
           const resp = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${SERVICE_KEY}`,
-              'apikey': SERVICE_KEY,
+              'Authorization': `Bearer ${anonKey}`,
+              'apikey': anonKey,
             },
             body: JSON.stringify({
               templateName: 'task-reminder',
@@ -197,7 +201,9 @@ Deno.serve(async (req) => {
           errors.push(`email: ${e?.message ?? 'falha ao enviar'}`)
         }
       }
+
     }
+
 
 
     const allOk = channels.every((c) => delivered.includes(c))
