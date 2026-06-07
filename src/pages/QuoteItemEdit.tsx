@@ -196,19 +196,12 @@ export default function QuoteItemEdit() {
           </Button>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setConfirmDelete(true)}
-            className="gap-1"
-          >
-            <Trash2 className="w-3.5 h-3.5" /> Excluir item
-          </Button>
           <Button size="sm" onClick={() => handleSave()} disabled={saving} className="gap-1">
             {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
             Salvar
           </Button>
         </div>
+
       </div>
 
       {/* Identidade */}
@@ -251,12 +244,21 @@ export default function QuoteItemEdit() {
 
       <Separator />
 
-      <div className="flex justify-end">
+      <div className="flex justify-between items-center gap-2">
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => setConfirmDelete(true)}
+          className="gap-1"
+        >
+          <Trash2 className="w-3.5 h-3.5" /> Excluir item
+        </Button>
         <Button size="sm" onClick={() => handleSave()} disabled={saving} className="gap-1">
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
           Salvar
         </Button>
       </div>
+
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
