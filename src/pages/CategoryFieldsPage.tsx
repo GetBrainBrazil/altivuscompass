@@ -272,37 +272,13 @@ export default function CategoryFieldsPage() {
         <Button variant="outline" size="sm" className="gap-1.5" onClick={addField}>
           <Plus className="w-4 h-4" /> Adicionar campo
         </Button>
-        <div className="flex items-center gap-2 ml-auto">
-          <div className="flex items-center gap-1.5">
-            <Switch checked={showTechnical} onCheckedChange={setShowTechnical} id="tech-toggle" />
-            <Label htmlFor="tech-toggle" className="text-xs cursor-pointer">Dados técnicos</Label>
-          </div>
-          <span className="text-xs text-muted-foreground">{fields.length} campo(s)</span>
-        </div>
+        <span className="text-xs text-muted-foreground ml-auto">
+          {fields.length} campo(s) · grid 12 col
+        </span>
       </div>
 
-      <div className="space-y-3">
-        {fields.length === 0 ? (
-          <div className="text-sm text-muted-foreground border border-dashed rounded-md p-6 text-center">
-            Nenhum campo definido. Aplique um modelo ou adicione manualmente.
-          </div>
-        ) : (
-          fields.map((f, idx) => (
-            <FieldRow
-              key={`${f.key}-${idx}`}
-              field={f}
-              takenKeys={fields.map((x, i) => (i === idx ? "__self__" : x.key))}
-              onChange={(patch) => updateField(idx, patch)}
-              onMoveUp={() => move(idx, -1)}
-              onMoveDown={() => move(idx, 1)}
-              onRemove={() => remove(idx)}
-              isFirst={idx === 0}
-              isLast={idx === fields.length - 1}
-              showTechnical={showTechnical}
-            />
-          ))
-        )}
-      </div>
+      <CategoryFieldsCanvas fields={fields} onChange={setFields} />
+
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-4 border-t">
         <div className="flex flex-col gap-1">
