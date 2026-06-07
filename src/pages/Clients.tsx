@@ -855,6 +855,14 @@ export default function Clients() {
             setNeedsComplementaryData(false);
           }
         }
+
+        // Promoção de viajante → cliente: vincula o passenger existente ao novo cliente criado
+        if (!editingId && promoteFromPassengerId) {
+          await supabase
+            .from("passengers")
+            .update({ client_id: clientId })
+            .eq("id", promoteFromPassengerId);
+        }
       }
     },
     onSuccess: () => {
