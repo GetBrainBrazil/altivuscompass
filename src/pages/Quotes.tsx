@@ -682,50 +682,56 @@ export default function Quotes() {
     return () => document.removeEventListener("keydown", onKey);
   }, [dialogOpen]);
 
-  // Load existing quote items when editing
+  // Load existing quote items when editing — runs ONCE per opened quote.
+  // Não depender de items.length aqui: senão, ao remover o último item
+  // localmente, o effect re-dispara e re-hidrata do banco (item "reaparece").
+  const hydratedQuoteIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (editingQuote && !draftRestored) return;
-
-    if (editingQuote && items.length === 0) {
-      setIsHydratingEditQuote(true);
-      Promise.all([
-        supabase.from("quote_items").select("*").eq("quote_id", editingQuote.id).order("sort_order"),
-        supabase.from("quote_passengers").select("passenger_id").eq("quote_id", editingQuote.id),
-      ]).then(([itemsResult, passengersResult]) => {
-        const loadedItems = (itemsResult.data ?? []).map((i: any) => {
-          const details = i.details ?? {};
-          // Backfill defaults for legacy flight items missing baggage fields
-          if (i.item_type === "flight") {
-            if (details.pax_adults === undefined || details.pax_adults === null) details.pax_adults = 0;
-            if (details.pax_children === undefined || details.pax_children === null) details.pax_children = 0;
-            if (details.pax_infants === undefined || details.pax_infants === null) details.pax_infants = 0;
-          }
-          return { ...i, details };
-        });
-        const loadedPassengers = (passengersResult.data ?? []).map((p: any) => p.passenger_id);
-
-        setItems((current) => current.length > 0 ? current : loadedItems);
-        setSelectedPassengers((current) => current.length > 0 ? current : loadedPassengers);
-
-        const flightIndices = new Set<number>();
-        loadedItems.forEach((it: any, idx: number) => { if (it.item_type === "flight") flightIndices.add(idx); });
-        setCollapsedFlights(flightIndices);
-
-        // Baseline snapshot is captured by the dedicated effect above once
-        // hydration settles — using the actual editor state (single source of truth).
-      }).finally(() => {
-        setIsHydratingEditQuote(false);
-      });
-
-      const pb = (editingQuote as any).price_breakdown;
-      if (pb && typeof pb === 'object') {
-        if (Array.isArray((pb as any).linked_client_ids)) {
-          setSelectedLinkedClients((current) => current.length > 0 ? current : (pb as any).linked_client_ids);
-        }
-        setClientSelfTraveling((current) => current || !!(pb as any).client_self_traveling);
-      }
+    if (!dialogOpen) {
+      hydratedQuoteIdRef.current = null;
+      return;
     }
-  }, [editingQuote, draftRestored, items.length]);
+    if (editingQuote && !draftRestored) return;
+    if (!editingQuote) return;
+    if (hydratedQuoteIdRef.current === editingQuote.id) return;
+
+    hydratedQuoteIdRef.current = editingQuote.id;
+    setIsHydratingEditQuote(true);
+    Promise.all([
+      supabase.from("quote_items").select("*").eq("quote_id", editingQuote.id).order("sort_order"),
+      supabase.from("quote_passengers").select("passenger_id").eq("quote_id", editingQuote.id),
+    ]).then(([itemsResult, passengersResult]) => {
+      const loadedItems = (itemsResult.data ?? []).map((i: any) => {
+        const details = i.details ?? {};
+        // Backfill defaults for legacy flight items missing baggage fields
+        if (i.item_type === "flight") {
+          if (details.pax_adults === undefined || details.pax_adults === null) details.pax_adults = 0;
+          if (details.pax_children === undefined || details.pax_children === null) details.pax_children = 0;
+          if (details.pax_infants === undefined || details.pax_infants === null) details.pax_infants = 0;
+        }
+        return { ...i, details };
+      });
+      const loadedPassengers = (passengersResult.data ?? []).map((p: any) => p.passenger_id);
+
+      setItems((current) => current.length > 0 ? current : loadedItems);
+      setSelectedPassengers((current) => current.length > 0 ? current : loadedPassengers);
+
+      const flightIndices = new Set<number>();
+      loadedItems.forEach((it: any, idx: number) => { if (it.item_type === "flight") flightIndices.add(idx); });
+      setCollapsedFlights(flightIndices);
+    }).finally(() => {
+      setIsHydratingEditQuote(false);
+    });
+
+    const pb = (editingQuote as any).price_breakdown;
+    if (pb && typeof pb === 'object') {
+      if (Array.isArray((pb as any).linked_client_ids)) {
+        setSelectedLinkedClients((current) => current.length > 0 ? current : (pb as any).linked_client_ids);
+      }
+      setClientSelfTraveling((current) => current || !!(pb as any).client_self_traveling);
+    }
+  }, [dialogOpen, editingQuote, draftRestored]);
+
 
   // Detect if this quote has any client acceptance (drives the "Aceite" tab visibility)
   useEffect(() => {

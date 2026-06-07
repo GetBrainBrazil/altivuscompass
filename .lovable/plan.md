@@ -1,57 +1,41 @@
-## Lembretes de tarefas — multi-canal
+## Problema
 
-Hoje já existe `task_reminders` (com `task_id`, `user_id`, `remind_at`, `is_read`), mas sem canais e sem disparo. Vou estendê-la e construir UI + worker.
+Ao editar uma cotação e remover o último item de um tipo (no caso, o último voo) sem salvar, o item volta a aparecer sozinho. Não é o backend recriando — é o editor recarregando os itens do banco em cima do estado local.
 
-### 1. Banco — extensão de `task_reminders`
+## Causa raiz
 
-Novas colunas:
-- `channels text[]` — combinação de `system` / `whatsapp` / `email` (default `{system}`)
-- `message text` — opcional, default = título da tarefa
-- `status text` — `pending` | `sent` | `failed` | `cancelled`
-- `sent_at timestamptz`, `error text`, `delivered_channels text[]`
+`src/pages/Quotes.tsx`, useEffect das linhas 686–728 (hidratação dos `quote_items` ao abrir o editor):
 
-RLS mantém escopo `user_id = auth.uid()`.
+- Guarda: `if (editingQuote && items.length === 0) { ...fetch quote_items... setItems(loadedItems) }`
+- Dependências (linha 728): `[editingQuote, draftRestored, items.length]`
 
-### 2. UI no formulário da tarefa
+Como `items.length` está nas dependências, toda vez que o usuário apaga o último item e a lista fica vazia (`items.length === 0`), o effect dispara de novo, busca os `quote_items` do banco e repõe o item que o usuário acabou de remover. Reproduz exatamente o sintoma: deleta o voo → ele "reaparece" instantaneamente.
 
-A coluna direita (`TaskNotesHistory`) ganha uma seção **"Lembretes"** posicionada **entre a Nota e o Histórico**. Componente novo `TaskReminders` injetado pelo `TaskNotesHistory` nesse ponto.
+(O setItems na linha 707 usa o updater `current.length > 0 ? current : loadedItems`, que protege contra concorrência mas não contra o próprio effect ser re-disparado depois que current já zerou.)
 
-Cada item da lista:
-- Data (DD/MM/AAAA) + Hora (HH:mm)
-- Checkboxes de canal: **Sistema** (marcado por padrão, não pode desligar), **WhatsApp**, **Email**
-- Mensagem opcional (placeholder = título da tarefa)
-- Botão remover
-- Botão **"+ Adicionar lembrete"** para vários lembretes
+## Correção
 
-Salvar é imediato (insert/update direto na tabela, sem precisar clicar em "Salvar tarefa"). Lembretes já disparados aparecem em cinza com badge "Enviado".
+Tornar a hidratação dos itens estritamente "uma vez por cotação aberta", desacoplada de `items.length`:
 
-### 3. Popup do canal Sistema (canto inferior direito)
+1. Adicionar um `useRef<string | null>(null)` — `hydratedQuoteIdRef` — com o id da cotação cuja hidratação já rodou.
+2. No effect (linhas 686–728):
+   - Sair cedo se `hydratedQuoteIdRef.current === editingQuote.id` (já hidratou esta cotação).
+   - Manter a guarda existente para draft restaurado.
+   - No `then()` da busca, marcar `hydratedQuoteIdRef.current = editingQuote.id` após `setItems`/`setSelectedPassengers`.
+3. Remover `items.length` do array de dependências (linha 728). Passa a depender apenas de `[editingQuote, draftRestored]`.
+4. Resetar `hydratedQuoteIdRef.current = null` quando o dialog fechar ou ao trocar `editingQuote?.id` (no mesmo effect já existente em 628–631 que zera `snapshotCapturedRef`).
 
-Novo `<ReminderPopupCenter />` montado uma vez no `App.tsx`:
-- Realtime em `task_reminders` do usuário + polling de 30s para `remind_at <= now()` com canal `system` e `is_read=false`
-- Card fixo bottom-right (empilha se houver vários) com título, mensagem, horário, **"Abrir tarefa"** e **"Dispensar"** (marca `is_read=true`)
+Resultado: a remoção do último item passa a ser respeitada localmente até o usuário salvar (que já cuida de deletar do banco corretamente, linhas 905–909). Re-hidratação só acontece ao abrir o editor de uma cotação diferente.
 
-### 4. Worker de disparo
+## Escopo
 
-Nova edge function `dispatch-task-reminders`:
-- Busca `status='pending' AND remind_at <= now()`
-- **whatsapp**: telefone do contato/cliente vinculado à tarefa, ou do responsável (`profiles.phone`); invoca `send-whatsapp`
-- **email**: invoca `send-transactional-email` com template `task-reminder`
-- **system**: nada (o popup lê do banco)
-- Atualiza `status`, `sent_at`, `delivered_channels`, `error`
+- Apenas `src/pages/Quotes.tsx`. Sem migração, sem edge, sem triggers. Não toca a lógica de save/delete (linhas 905–975), que já está correta.
+- Não muda o comportamento de draft do localStorage.
+- Não toca `QuoteOptionsManager` nem a geração de tarefas de pós-venda da Etapa 6.
 
-Cron `pg_cron` a cada 1 min via `supabase--insert`.
+## Validação manual
 
-### 5. Pré-requisito do canal Email
-
-A infra de App Emails ainda não está instalada. Ao aprovar, rodo `setup_email_infra` + `scaffold_transactional_email` e crio o template `task-reminder`. Se preferir, entrego **Sistema + WhatsApp** primeiro e o **Email** depois — me avise na aprovação.
-
-### Arquivos
-- migration `task_reminders`
-- `src/components/tasks/TaskReminders.tsx` (novo)
-- `src/components/tasks/TaskNotesHistory.tsx` (injeta seção entre Nota e Histórico)
-- `src/components/ReminderPopupCenter.tsx` (novo)
-- `src/App.tsx` (monta popup)
-- `supabase/functions/dispatch-task-reminders/index.ts` (novo)
-- `supabase/functions/_shared/transactional-email-templates/task-reminder.tsx` (se incluir email)
-- cron via `supabase--insert`
+1. Abrir cotação existente que tem 1 voo. Remover o voo. Confirmar que ele não reaparece.
+2. Salvar. Reabrir. Confirmar que continua sem voo (delete persistido no banco).
+3. Em outra cotação com 1 voo + 1 hotel, remover apenas o voo. Hotel deve permanecer. Salvar e reabrir.
+4. Abrir cotação A (com voo), fechar sem salvar, abrir cotação B (com voo): B deve carregar seu próprio voo (hidratação dispara ao trocar de cotação).
