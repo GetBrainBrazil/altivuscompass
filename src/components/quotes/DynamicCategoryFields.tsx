@@ -351,8 +351,12 @@ function FieldRenderer({
       );
     }
     case "baggage": {
-      const v = value ?? { mochila: 0, mao: 0, despachada: 0 };
-      const setPart = (k: string, n: number) => onChange({ ...v, [k]: n });
+      const v =
+        value && typeof value === "object"
+          ? value
+          : { mochila: 0, mao: 0, despachada: 0 };
+      const setPart = (k: string, n: number) =>
+        onChange({ ...v, [k]: Number.isFinite(n) ? n : 0 });
       const parts: Array<{ key: "mochila" | "mao" | "despachada"; lbl: string; full: string }> = [
         { key: "mochila", lbl: "Mochila", full: "Mochila" },
         { key: "mao", lbl: "Mão", full: "Mala de Mão" },
@@ -362,27 +366,38 @@ function FieldRenderer({
         <div className="space-y-1">
           {label}
           <div className="grid grid-cols-3 gap-1">
-            {parts.map((p) => (
-              <Tooltip key={p.key}>
-                <TooltipTrigger asChild>
-                  <div className="relative">
-                    <span className="pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
-                      {p.lbl}
-                    </span>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={(v as any)[p.key] ?? 0}
-                      onChange={(e) => setPart(p.key, Number(e.target.value) || 0)}
-                      className="h-8 text-xs pl-[52px] pr-1.5 text-right"
-                    />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" sideOffset={4} className="text-[11px]">
-                  {p.full}
-                </TooltipContent>
-              </Tooltip>
-            ))}
+            {parts.map((p) => {
+              const cur = Number((v as any)[p.key] ?? 0);
+              return (
+                <Tooltip key={p.key}>
+                  <TooltipTrigger asChild>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+                        {p.lbl}
+                      </span>
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        step={1}
+                        value={cur === 0 ? "" : cur}
+                        placeholder="0"
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          if (raw === "") return setPart(p.key, 0);
+                          const n = parseInt(raw, 10);
+                          setPart(p.key, Number.isNaN(n) ? 0 : Math.max(0, n));
+                        }}
+                        className="h-8 text-xs pl-[52px] pr-1.5 text-right"
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" sideOffset={4} className="text-[11px]">
+                    {p.full}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
           </div>
         </div>
       );
