@@ -323,6 +323,33 @@ export default function Clients() {
     },
   });
 
+  // Active tasks + pending reminders per client/contact
+  const { data: activityCounts = { tasks: {} as Record<string, number>, reminders: {} as Record<string, number> } } = useQuery({
+    queryKey: ["clients-activity-counts"],
+    queryFn: async () => {
+      const tasks: Record<string, number> = {};
+      const reminders: Record<string, number> = {};
+      const { data: tRows } = await supabase
+        .from("tasks")
+        .select("id, client_id, contact_id, status")
+        .neq("status", "completed");
+      for (const t of (tRows ?? []) as any[]) {
+        if (t.client_id) tasks[`c:${t.client_id}`] = (tasks[`c:${t.client_id}`] ?? 0) + 1;
+        if (t.contact_id) tasks[`p:${t.contact_id}`] = (tasks[`p:${t.contact_id}`] ?? 0) + 1;
+      }
+      const { data: rRows } = await supabase
+        .from("task_reminders")
+        .select("task_id, tasks!inner(client_id, contact_id)")
+        .eq("status", "pending");
+      for (const r of ((rRows ?? []) as any[])) {
+        const t = r.tasks;
+        if (t?.client_id) reminders[`c:${t.client_id}`] = (reminders[`c:${t.client_id}`] ?? 0) + 1;
+        if (t?.contact_id) reminders[`p:${t.contact_id}`] = (reminders[`p:${t.contact_id}`] ?? 0) + 1;
+      }
+      return { tasks, reminders };
+    },
+  });
+
   // Fetch contacts (prospects + leads) to display alongside clients
   const { data: contactsRows = [] } = useQuery({
     queryKey: ["contacts-for-clients-list"],
