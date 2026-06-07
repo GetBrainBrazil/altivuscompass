@@ -62,6 +62,7 @@ export default function Vault() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const currentUserId = user?.id ?? "";
+  const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
