@@ -18,6 +18,17 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Calendar } from "@/components/ui/calendar";
 import { ArrowLeft, CalendarIcon, CheckSquare, ChevronsUpDown, Check, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Loader2 } from "lucide-react";
 import { isValidPhoneLength } from "@/lib/validators";
 
 const STATUS_OPTIONS = [
@@ -56,6 +67,25 @@ export default function TaskDetail() {
   });
 
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const baselineRef = useRef<string>("");
+  const [confirmLeave, setConfirmLeave] = useState(false);
+
+  const snapshot = (f: typeof form, files: File[]) =>
+    JSON.stringify({
+      title: f.title,
+      description: f.description,
+      priority: f.priority,
+      status: f.status,
+      assigned_to: f.assigned_to,
+      quote_id: f.quote_id,
+      client_id: f.client_id,
+      due_date: f.due_date ? f.due_date.toISOString().slice(0, 10) : null,
+      start_date: f.start_date ? f.start_date.toISOString().slice(0, 10) : null,
+      files: files.length,
+    });
+
+  const isDirty = baselineRef.current !== "" && snapshot(form, pendingFiles) !== baselineRef.current;
+
 
   const { data: task, isLoading } = useQuery({
     queryKey: ["task", id],
@@ -100,7 +130,7 @@ export default function TaskDetail() {
 
   useEffect(() => {
     if (task) {
-      setForm({
+      const next = {
         title: task.title ?? "",
         description: task.description ?? "",
         priority: task.priority ?? "medium",
@@ -110,12 +140,33 @@ export default function TaskDetail() {
         client_id: task.client_id ?? "none",
         due_date: task.due_date ? new Date(task.due_date) : null,
         start_date: task.start_date ? new Date(task.start_date) : new Date(),
-      });
+      };
+      setForm(next);
+      baselineRef.current = snapshot(next, []);
     } else if (isNew && user?.id && !form.assigned_to) {
-      setForm((f) => ({ ...f, assigned_to: user.id }));
+      const next = { ...form, assigned_to: user.id };
+      setForm(next);
+      baselineRef.current = snapshot(next, []);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task, isNew, user?.id]);
+
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!isDirty) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
+  const goBack = () => navigate("/tasks");
+  const handleBack = () => {
+    if (isDirty) setConfirmLeave(true);
+    else goBack();
+  };
+
 
   const assigneePhone = (profiles as any[]).find((p) => p.user_id === form.assigned_to)?.phone ?? null;
   const assigneeHasWhatsapp = isValidPhoneLength(assigneePhone);
@@ -241,7 +292,7 @@ export default function TaskDetail() {
       <div className="flex items-start justify-between gap-6 pb-5 border-b border-border">
         <div className="flex items-start gap-3 min-w-0">
           <button
-            onClick={() => navigate("/tasks")}
+            onClick={handleBack}
             className="mt-1 p-1.5 -ml-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             aria-label="Voltar"
           >
@@ -463,11 +514,49 @@ export default function TaskDetail() {
 
       {/* Footer actions */}
       <div className="flex justify-end gap-2 pt-4 border-t border-border">
-        <Button variant="outline" onClick={() => navigate("/tasks")}>Cancelar</Button>
+        <Button variant="outline" onClick={handleBack}>Cancelar</Button>
         <Button onClick={handleSave} disabled={saveMutation.isPending}>
           {isNew ? "Criar Tarefa" : "Salvar Alterações"}
         </Button>
       </div>
+
+      <AlertDialog open={confirmLeave} onOpenChange={setConfirmLeave}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem alterações não salvas</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja salvar antes de voltar para a lista de tarefas? Se sair sem salvar, as alterações serão perdidas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-2">
+            <AlertDialogCancel>Continuar editando</AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setConfirmLeave(false);
+                goBack();
+              }}
+            >
+              Sair sem salvar
+            </Button>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                if (!form.title.trim()) {
+                  toast({ title: "Informe o título da tarefa", variant: "destructive" });
+                  return;
+                }
+                setConfirmLeave(false);
+                saveMutation.mutate();
+              }}
+              disabled={saveMutation.isPending}
+            >
+              {saveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
+              Salvar e voltar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
