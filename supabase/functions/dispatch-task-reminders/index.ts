@@ -168,32 +168,29 @@ Deno.serve(async (req) => {
             hour: '2-digit', minute: '2-digit',
           })
           const taskUrl = `${APP_URL}/tasks/${r.task_id}`
-          // Direct fetch with service-role auth to avoid 401
-          const resp = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${SERVICE_KEY}`,
-              'apikey': SERVICE_KEY,
-            },
-            body: JSON.stringify({
-              templateName: 'task-reminder',
-              recipientEmail,
-              idempotencyKey: `task-reminder-${r.id}`,
-              templateData: {
-                taskTitle: task?.title ?? 'Tarefa',
-                message: r.message ?? null,
-                remindAt,
-                taskUrl,
-                recipientName: assignee?.full_name ?? null,
-                completeUrl: links?.complete ?? null,
-                snoozeUrl: links?.snooze ?? null,
+          const { data: emailRes, error: emailErr } = await supabase.functions.invoke(
+            'send-transactional-email',
+            {
+              body: {
+                templateName: 'task-reminder',
+                recipientEmail,
+                idempotencyKey: `task-reminder-${r.id}`,
+                templateData: {
+                  taskTitle: task?.title ?? 'Tarefa',
+                  message: r.message ?? null,
+                  remindAt,
+                  taskUrl,
+                  recipientName: assignee?.full_name ?? null,
+                  completeUrl: links?.complete ?? null,
+                  snoozeUrl: links?.snooze ?? null,
+                },
               },
-            }),
-          })
-          if (!resp.ok) {
-            const txt = await resp.text().catch(() => '')
-            errors.push(`email: ${resp.status} ${txt.slice(0, 200)}`)
+            },
+          )
+          if (emailErr) {
+            errors.push(`email: ${emailErr.message ?? 'invoke falhou'}`)
+          } else if (emailRes && (emailRes as any).error) {
+            errors.push(`email: ${(emailRes as any).error}`)
           } else {
             delivered.push('email')
           }
@@ -202,6 +199,7 @@ Deno.serve(async (req) => {
         }
       }
     }
+
 
 
     const allOk = channels.every((c) => delivered.includes(c))
