@@ -84,7 +84,7 @@ export function TaskReminders({ taskId, assigneePhone, assigneeName, autoOpenIfE
 
   const activeCount = reminders.filter((r) => r.status !== "sent" && r.status !== "partial").length;
   useEffect(() => {
-    if (autoOpenIfEmpty && !isNewTask && reminders.length > 0 !== undefined && activeCount === 0 && !adding && !editingId) {
+    if (autoOpenIfEmpty && !isNewTask && activeCount === 0 && !adding && !editingId) {
       setAdding(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
