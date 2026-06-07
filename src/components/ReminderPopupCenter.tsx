@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Bell, X, ExternalLink } from "lucide-react";
+import { Bell, X, ExternalLink, Clock, Check } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -83,6 +84,38 @@ export function ReminderPopupCenter() {
     navigate(`/tasks/${item.task_id}`);
   };
 
+  const snooze = async (item: Item, minutes = 30) => {
+    setItems((cur) => cur.filter((i) => i.id !== item.id));
+    const next = new Date(Date.now() + minutes * 60 * 1000).toISOString();
+    const { error } = await supabase
+      .from("task_reminders")
+      .update({ remind_at: next, is_read: false })
+      .eq("id", item.id);
+    if (error) {
+      toast.error("Não foi possível adiar o lembrete");
+      fetchDue();
+    } else {
+      toast.success(`Lembrete adiado por ${minutes} min`);
+    }
+  };
+
+  const complete = async (item: Item) => {
+    setItems((cur) => cur.filter((i) => i.id !== item.id));
+    const [{ error: tErr }, { error: rErr }] = await Promise.all([
+      supabase
+        .from("tasks")
+        .update({ status: "completed", completed_at: new Date().toISOString() })
+        .eq("id", item.task_id),
+      supabase.from("task_reminders").update({ is_read: true }).eq("id", item.id),
+    ]);
+    if (tErr || rErr) {
+      toast.error("Não foi possível concluir a tarefa");
+      fetchDue();
+    } else {
+      toast.success("Tarefa concluída");
+    }
+  };
+
   if (items.length === 0) return null;
 
   return (
@@ -115,9 +148,15 @@ export function ReminderPopupCenter() {
                   {item.message}
                 </p>
               )}
-              <div className="mt-2 flex gap-2">
+              <div className="mt-2 flex flex-wrap gap-1.5">
                 <Button size="sm" className="h-7 text-xs" onClick={() => openTask(item)}>
-                  <ExternalLink size={12} className="mr-1" /> Abrir tarefa
+                  <ExternalLink size={12} className="mr-1" /> Abrir
+                </Button>
+                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => snooze(item, 30)}>
+                  <Clock size={12} className="mr-1" /> Adiar 30min
+                </Button>
+                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => complete(item)}>
+                  <Check size={12} className="mr-1" /> Concluído
                 </Button>
                 <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => dismiss(item.id)}>
                   Dispensar
