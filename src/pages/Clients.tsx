@@ -875,6 +875,9 @@ export default function Clients() {
         initialClientSnapshotRef.current = buildClientSnapshot();
       }
       shouldGoBackRef.current = false;
+      setPromoteFromPassengerId(null);
+      setCpfMatchClient(null);
+      qc.invalidateQueries({ queryKey: ["client-passengers"] });
     },
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
