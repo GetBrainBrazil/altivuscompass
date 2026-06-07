@@ -16,9 +16,26 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CurrencyInput } from "@/components/ui/currency-input";
-import { Plus, Package, Pencil } from "lucide-react";
+import { Plus, Package, Pencil, GripVertical } from "lucide-react";
 import { ProductSearchDialog } from "./ProductSearchDialog";
 import { cn } from "@/lib/utils";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface Props {
   quoteId: string | null | undefined;
@@ -88,6 +105,30 @@ export function QuoteModularItemsList({ quoteId }: Props) {
       return data ?? [];
     },
   });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  async function handleDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIdx = items.findIndex((it: any) => it.id === active.id);
+    const newIdx = items.findIndex((it: any) => it.id === over.id);
+    if (oldIdx < 0 || newIdx < 0) return;
+    const reordered = arrayMove(items as any[], oldIdx, newIdx);
+    // Optimistic update
+    qc.setQueryData(["quote-modular-items", quoteId], reordered);
+    // Persist sort_order sequentially (1-based)
+    await Promise.all(
+      reordered.map((it: any, idx: number) =>
+        supabase.from("quote_items").update({ sort_order: idx + 1 }).eq("id", it.id)
+      )
+    );
+    refetch();
+  }
+
 
   if (!quoteId) {
     return (
@@ -170,71 +211,84 @@ export function QuoteModularItemsList({ quoteId }: Props) {
         </div>
       ) : (
         <div className="rounded-lg border overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="min-w-[180px]">Item</TableHead>
-                <TableHead className="min-w-[200px]">Detalhes</TableHead>
-                <TableHead className="hidden md:table-cell">Categoria</TableHead>
-                <TableHead className="text-right w-[140px]">Preço un.</TableHead>
-                <TableHead className="text-right w-[80px]">Qtd</TableHead>
-                {discountsEnabled && (
-                  <TableHead className="text-right w-[180px]">Desconto</TableHead>
-                )}
-                <TableHead className="text-right w-[120px]">Total</TableHead>
-                <TableHead className="w-[40px]" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((it: any) => (
-                <ItemRow
-                  key={it.id}
-                  item={it}
-                  discountsEnabled={discountsEnabled}
-                  onEdit={() => navigate(`/quotes/${quoteId}/items/${it.id}`)}
-                  onChanged={() => refetch()}
-                />
-              ))}
-            </TableBody>
-            <TableFooter>
-              <TableRow>
-                <TableCell colSpan={3} className="text-xs text-muted-foreground">
-                  Total da cotação
-                </TableCell>
-                {discountsEnabled ? (
-                  <>
-                    <TableCell colSpan={2} className="text-right text-xs text-muted-foreground">
-                      Subtotal sem desconto {fmtBRL(itemsSubtotal)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <QuoteDiscountInput
-                        quoteId={quoteId}
-                        amount={Number(quote?.discount_amount ?? 0)}
-                        percent={Number(quote?.discount_percent ?? 0)}
-                        onChanged={() =>
-                          qc.invalidateQueries({ queryKey: ["quote-discount-cfg", quoteId] })
-                        }
-                      />
-                    </TableCell>
-                  </>
-                ) : (
-                  <TableCell colSpan={2} />
-                )}
-                <TableCell className="text-right">
-                  <div className="flex flex-col items-end leading-tight">
-                    <span className="font-semibold tabular-nums">{fmtBRL(grandTotal)}</span>
-                    {showTotalDiscount && (
-                      <span className="text-[10px] text-emerald-400 tabular-nums">
-                        −{fmtBRL(totalDiscount)}
-                        {totalDiscountPercent > 0.01 ? ` · ${totalDiscountPercent.toFixed(2)}%` : ""}
-                      </span>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell />
-              </TableRow>
-            </TableFooter>
-          </Table>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[32px]" />
+                  <TableHead className="min-w-[180px]">Item</TableHead>
+                  <TableHead className="min-w-[200px]">Detalhes</TableHead>
+                  <TableHead className="hidden md:table-cell">Categoria</TableHead>
+                  <TableHead className="text-right w-[140px]">Preço un.</TableHead>
+                  <TableHead className="text-right w-[80px]">Qtd</TableHead>
+                  {discountsEnabled && (
+                    <TableHead className="text-right w-[180px]">Desconto</TableHead>
+                  )}
+                  <TableHead className="text-right w-[120px]">Total</TableHead>
+                  <TableHead className="w-[40px]" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <SortableContext
+                  items={items.map((it: any) => it.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {items.map((it: any) => (
+                    <ItemRow
+                      key={it.id}
+                      item={it}
+                      discountsEnabled={discountsEnabled}
+                      onEdit={() => navigate(`/quotes/${quoteId}/items/${it.id}`)}
+                      onChanged={() => refetch()}
+                    />
+                  ))}
+                </SortableContext>
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell />
+                  <TableCell colSpan={3} className="text-xs text-muted-foreground">
+                    Total da cotação
+                  </TableCell>
+                  {discountsEnabled ? (
+                    <>
+                      <TableCell colSpan={2} className="text-right text-xs text-muted-foreground">
+                        Subtotal sem desconto {fmtBRL(itemsSubtotal)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <QuoteDiscountInput
+                          quoteId={quoteId}
+                          amount={Number(quote?.discount_amount ?? 0)}
+                          percent={Number(quote?.discount_percent ?? 0)}
+                          onChanged={() =>
+                            qc.invalidateQueries({ queryKey: ["quote-discount-cfg", quoteId] })
+                          }
+                        />
+                      </TableCell>
+                    </>
+                  ) : (
+                    <TableCell colSpan={2} />
+                  )}
+                  <TableCell className="text-right">
+                    <div className="flex flex-col items-end leading-tight">
+                      <span className="font-semibold tabular-nums">{fmtBRL(grandTotal)}</span>
+                      {showTotalDiscount && (
+                        <span className="text-[10px] text-emerald-400 tabular-nums">
+                          −{fmtBRL(totalDiscount)}
+                          {totalDiscountPercent > 0.01 ? ` · ${totalDiscountPercent.toFixed(2)}%` : ""}
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell />
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </DndContext>
         </div>
       )}
 
@@ -317,8 +371,31 @@ function ItemRow({ item, discountsEnabled, onEdit, onChanged }: ItemRowProps) {
   const categoryName =
     item.products?.product_categories?.name ?? ITEM_TYPE_LABEL[item.item_type] ?? item.item_type;
 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.id,
+  });
+  const rowStyle: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : undefined,
+    position: isDragging ? "relative" : undefined,
+    zIndex: isDragging ? 5 : undefined,
+  };
+
   return (
-    <TableRow>
+    <TableRow ref={setNodeRef} style={rowStyle}>
+      <TableCell className="align-top w-[32px] p-1">
+        <button
+          type="button"
+          className="h-7 w-7 inline-flex items-center justify-center text-muted-foreground/70 hover:text-foreground cursor-grab active:cursor-grabbing touch-none"
+          title="Arrastar para reordenar"
+          aria-label="Arrastar para reordenar"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="w-3.5 h-3.5" />
+        </button>
+      </TableCell>
       <TableCell className="font-medium align-top">
         <button
           type="button"
