@@ -867,6 +867,71 @@ export default function Clients() {
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
 
+  // ===== Detecção de duplicados (somente em novo cliente) =====
+  type DupCandidate = { id: string; full_name: string; cpf_cnpj: string | null; phone: string | null; email: string | null; reasons: string[] };
+  const [dupCandidates, setDupCandidates] = useState<DupCandidate[] | null>(null);
+  const [dupDialogOpen, setDupDialogOpen] = useState(false);
+
+  const findDuplicateCandidates = async (): Promise<DupCandidate[]> => {
+    const cpf = cleanDigits(form.cpf_cnpj || "");
+    const primaryEmail = (form.email || emails.find((e) => e.email)?.email || "").trim().toLowerCase();
+    const allPhones = [form.phone, ...phones.map((p) => p.phone)].filter(Boolean) as string[];
+    const phoneTails = Array.from(new Set(allPhones.map((p) => cleanDigits(p).slice(-9)).filter((t) => t.length >= 8)));
+
+    const map = new Map<string, DupCandidate>();
+    const addRow = (row: any, reason: string) => {
+      if (!row?.id) return;
+      const existing = map.get(row.id);
+      if (existing) {
+        if (!existing.reasons.includes(reason)) existing.reasons.push(reason);
+      } else {
+        map.set(row.id, {
+          id: row.id, full_name: row.full_name, cpf_cnpj: row.cpf_cnpj ?? null,
+          phone: row.phone ?? null, email: row.email ?? null, reasons: [reason],
+        });
+      }
+    };
+
+    // CPF/CNPJ (campo principal)
+    if (cpf.length >= 11) {
+      const { data } = await supabase.from("clients").select("id, full_name, cpf_cnpj, phone, email").eq("cpf_cnpj", form.cpf_cnpj.trim());
+      (data ?? []).forEach((r) => addRow(r, "Mesmo CPF/CNPJ"));
+    }
+    // E-mail principal
+    if (primaryEmail) {
+      const { data } = await supabase.from("clients").select("id, full_name, cpf_cnpj, phone, email").ilike("email", primaryEmail);
+      (data ?? []).forEach((r) => addRow(r, "Mesmo e-mail"));
+    }
+    // Telefone (campo principal + lista) — buscar por sufixo de 9 dígitos
+    for (const tail of phoneTails) {
+      const { data: byMain } = await supabase.from("clients").select("id, full_name, cpf_cnpj, phone, email").ilike("phone", `%${tail}%`);
+      (byMain ?? []).forEach((r) => addRow(r, "Mesmo telefone"));
+      const { data: byList } = await supabase.from("client_phones").select("client_id, phone, clients!inner(id, full_name, cpf_cnpj, phone, email)").ilike("phone", `%${tail}%`);
+      (byList ?? []).forEach((r: any) => r.clients && addRow(r.clients, "Mesmo telefone"));
+    }
+
+    return Array.from(map.values());
+  };
+
+  const handleSaveClick = async (goBack: boolean) => {
+    shouldGoBackRef.current = goBack;
+    if (editingId) {
+      saveMutation.mutate();
+      return;
+    }
+    try {
+      const candidates = await findDuplicateCandidates();
+      if (candidates.length > 0) {
+        setDupCandidates(candidates);
+        setDupDialogOpen(true);
+        return;
+      }
+    } catch (err) {
+      console.warn("[Clients] dup check failed", err);
+    }
+    saveMutation.mutate();
+  };
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { data: oldClient } = await supabase.from("clients").select("*").eq("id", id).single();
