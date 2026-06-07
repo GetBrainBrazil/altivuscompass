@@ -25,6 +25,12 @@ import {
 } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import type { CategoryField, CategoryFieldSchema } from "@/lib/category-schema";
 import { getEffectiveSpan, spanClass } from "@/lib/category-schema";
@@ -90,24 +96,36 @@ export function DynamicCategoryFields({ schema, value, onChange }: Props) {
   }
 
   return (
-    <div className="space-y-5">
-      {groups.map(([groupName, fields]) => (
-        <div key={groupName || "default"} className="space-y-2">
-          {groupName && (
-            <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              {groupName}
-            </h4>
-          )}
-          <div className="grid grid-cols-12 gap-3">
-            {fields.map((f) => (
-              <div key={f.key} className={cn(spanClass(getEffectiveSpan(f)))}>
-                <FieldRenderer field={f} value={value?.[f.key]} onChange={(v) => setField(f.key, v)} />
-              </div>
-            ))}
+    <TooltipProvider delayDuration={300}>
+      <div className="space-y-5">
+        {groups.map(([groupName, fields]) => (
+          <div key={groupName || "default"} className="space-y-2">
+            {groupName && (
+              <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {groupName}
+              </h4>
+            )}
+            <div className="grid grid-cols-12 gap-3">
+              {fields.map((f) => (
+                <div key={f.key} className={cn(spanClass(getEffectiveSpan(f)))}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="w-full">
+                        <FieldRenderer field={f} value={value?.[f.key]} onChange={(v) => setField(f.key, v)} />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-[11px]">
+                      {f.label}
+                      {f.required && <span className="text-destructive ml-0.5">*</span>}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    </TooltipProvider>
   );
 }
 
