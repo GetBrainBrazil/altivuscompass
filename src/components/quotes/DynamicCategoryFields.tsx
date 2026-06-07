@@ -29,15 +29,12 @@ import { supabase } from "@/integrations/supabase/client";
 import type { CategoryField, CategoryFieldSchema } from "@/lib/category-schema";
 import { getEffectiveSpan, spanClass } from "@/lib/category-schema";
 import { cn } from "@/lib/utils";
+
+interface Props {
+  schema: CategoryFieldSchema | null | undefined;
+  value: Record<string, any>;
   onChange: (next: Record<string, any>) => void;
 }
-
-const WIDTH_CLASS: Record<string, string> = {
-  full: "col-span-12",
-  half: "col-span-12 md:col-span-6",
-  third: "col-span-12 md:col-span-4",
-  quarter: "col-span-12 md:col-span-6 lg:col-span-3",
-};
 
 // Convenção: duration_auto é computada a partir de embarque/embarque_hora → chegada/chegada_hora
 function computeDuration(values: Record<string, any>): string | null {
