@@ -1,5 +1,4 @@
 // Dispatch worker for task reminders (multi-channel)
-// Runs every minute via pg_cron and sends WhatsApp / Email for due reminders.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -7,44 +6,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const SECRET = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-const FUNCTIONS_BASE = `${Deno.env.get('SUPABASE_URL')}/functions/v1/task-reminder-action`
+const APP_URL = 'https://compass.altivusturismo.com.br'
 
-function b64urlEncode(bytes: Uint8Array): string {
-  const s = btoa(String.fromCharCode(...bytes))
-  return s.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+function randomCode(len = 8): string {
+  const alphabet = 'abcdefghijkmnpqrstuvwxyz23456789'
+  const bytes = new Uint8Array(len)
+  crypto.getRandomValues(bytes)
+  let s = ''
+  for (const b of bytes) s += alphabet[b % alphabet.length]
+  return s
 }
-async function hmac(payload: string): Promise<string> {
-  const key = await crypto.subtle.importKey(
-    'raw',
-    new TextEncoder().encode(SECRET),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  )
-  const sig = new Uint8Array(
-    await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payload)),
-  )
-  return b64urlEncode(sig)
-}
-async function signToken(payload: Record<string, unknown>): Promise<string> {
-  const body = b64urlEncode(new TextEncoder().encode(JSON.stringify(payload)))
-  const sig = await hmac(body)
-  return `${body}.${sig}`
-}
-async function buildActionLinks(reminderId: string) {
-  const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7
-  const [snoozeTok, completeTok] = await Promise.all([
-    signToken({ rid: reminderId, act: 'snooze', m: 30, exp }),
-    signToken({ rid: reminderId, act: 'complete', exp }),
-  ])
-  return {
-    snooze: `${FUNCTIONS_BASE}?t=${snoozeTok}`,
-    complete: `${FUNCTIONS_BASE}?t=${completeTok}`,
-  }
-}
-
-
 
 const ZAPI_BASE_URL = 'https://api.z-api.io'
 
@@ -52,7 +23,6 @@ function normalizePhone(raw: string | null | undefined): string | null {
   if (!raw) return null
   const digits = raw.replace(/\D/g, '')
   if (digits.length < 10) return null
-  // Assume Brazil if missing country code
   return digits.startsWith('55') ? digits : `55${digits}`
 }
 
@@ -80,10 +50,9 @@ async function sendWhatsApp(phone: string, message: string): Promise<{ ok: boole
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  )
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
+  const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  const supabase = createClient(SUPABASE_URL, SERVICE_KEY)
 
   const nowIso = new Date().toISOString()
   const { data: due, error } = await supabase
@@ -107,10 +76,8 @@ Deno.serve(async (req) => {
     const delivered: string[] = []
     const errors: string[] = []
 
-    // system: nothing to do, popup reads from DB
     if (channels.includes('system')) delivered.push('system')
 
-    // Fetch task + assignee for WhatsApp/email recipients
     let task: any = null
     let assignee: any = null
     if (channels.includes('whatsapp') || channels.includes('email')) {
@@ -130,10 +97,26 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Create short codes for action links
+    let links: { complete: string; snooze: string } | null = null
+    if (channels.includes('whatsapp') || channels.includes('email')) {
+      const completeCode = randomCode(8)
+      const snoozeCode = randomCode(8)
+      const { error: codeErr } = await supabase
+        .from('task_reminder_action_codes')
+        .insert([
+          { code: completeCode, reminder_id: r.id, action: 'complete' },
+          { code: snoozeCode, reminder_id: r.id, action: 'snooze', minutes: 30 },
+        ])
+      if (!codeErr) {
+        links = {
+          complete: `${APP_URL}/r/${completeCode}`,
+          snooze: `${APP_URL}/r/${snoozeCode}`,
+        }
+      }
+    }
+
     const text = (r.message?.trim() || task?.title || 'Lembrete de tarefa')
-    const links = (channels.includes('whatsapp') || channels.includes('email'))
-      ? await buildActionLinks(r.id)
-      : null
     const waMessage = links
       ? `🔔 *Lembrete de tarefa*\n\n${text}\n\n✅ Concluir: ${links.complete}\n⏰ Adiar 30 min: ${links.snooze}`
       : `🔔 *Lembrete de tarefa*\n\n${text}`
@@ -160,9 +143,16 @@ Deno.serve(async (req) => {
             day: '2-digit', month: '2-digit', year: 'numeric',
             hour: '2-digit', minute: '2-digit',
           })
-          const taskUrl = `https://compass.altivusturismo.com.br/tasks/${r.task_id}`
-          const { error: emailErr } = await supabase.functions.invoke('send-transactional-email', {
-            body: {
+          const taskUrl = `${APP_URL}/tasks/${r.task_id}`
+          // Direct fetch with service-role auth to avoid 401
+          const resp = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${SERVICE_KEY}`,
+              'apikey': SERVICE_KEY,
+            },
+            body: JSON.stringify({
               templateName: 'task-reminder',
               recipientEmail,
               idempotencyKey: `task-reminder-${r.id}`,
@@ -175,10 +165,14 @@ Deno.serve(async (req) => {
                 completeUrl: links?.complete ?? null,
                 snoozeUrl: links?.snooze ?? null,
               },
-            },
+            }),
           })
-          if (emailErr) errors.push(`email: ${emailErr.message ?? emailErr}`)
-          else delivered.push('email')
+          if (!resp.ok) {
+            const txt = await resp.text().catch(() => '')
+            errors.push(`email: ${resp.status} ${txt.slice(0, 200)}`)
+          } else {
+            delivered.push('email')
+          }
         } catch (e: any) {
           errors.push(`email: ${e?.message ?? 'falha ao enviar'}`)
         }
