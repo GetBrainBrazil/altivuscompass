@@ -1604,38 +1604,7 @@ export default function Clients() {
                           </Select>
                         </div>
                       </div>
-                      {/* Passport images */}
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <Label className="font-body text-xs">Fotos:</Label>
-                        {(pp.image_urls || []).map((url, imgIdx) => (
-                          <div key={imgIdx} className="relative group">
-                            <PrivateImage bucket="passport-images" source={url} alt={`Passaporte ${pi + 1} foto ${imgIdx + 1}`} className="h-10 w-14 object-cover rounded border border-border" linkable />
-                            <button type="button" className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => {
-                              const n = [...passports]; n[pi].image_urls = n[pi].image_urls.filter((_, j) => j !== imgIdx); setPassports([...n]);
-                            }}>×</button>
-                          </div>
-                        ))}
-                        {(pp._imageFiles || []).map((file, fIdx) => (
-                          <div key={`new-${fIdx}`} className="relative group">
-                            <img src={URL.createObjectURL(file)} alt={file.name} className="h-10 w-14 object-cover rounded border border-primary" />
-                            <button type="button" className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => {
-                              const n = [...passports]; n[pi]._imageFiles = (n[pi]._imageFiles || []).filter((_, j) => j !== fIdx); setPassports([...n]);
-                            }}>×</button>
-                          </div>
-                        ))}
-                        <label className="cursor-pointer inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-input bg-background hover:bg-accent text-foreground">
-                          <Plus className="h-3 w-3" />Adicionar
-                          <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => {
-                            const files = Array.from(e.target.files || []);
-                            if (files.length === 1) {
-                              openEditor(files[0], (edited) => { const n = [...passports]; n[pi]._imageFiles = [...(n[pi]._imageFiles || []), edited]; setPassports([...n]); });
-                            } else if (files.length > 1) {
-                              const n = [...passports]; n[pi]._imageFiles = [...(n[pi]._imageFiles || []), ...files]; setPassports([...n]);
-                            }
-                            e.target.value = "";
-                          }} />
-                        </label>
-                      </div>
+                      {/* Fotos do passaporte agora ficam em Anexos (vinculadas a este passaporte) */}
                       </div>
                       )}
 
@@ -1729,32 +1698,7 @@ export default function Clients() {
                                 <Label className="font-body text-xs">Descrição</Label>
                                 <Input className="h-8 text-sm" placeholder="Observações do visto" value={v.description} onChange={(e) => { const n = [...passports]; n[pi].visas[vi].description = e.target.value; setPassports(n); }} />
                               </div>
-                              <div className="space-y-1">
-                                <Label className="font-body text-xs">Imagem do Visto</Label>
-                                <div className="flex items-center gap-2">
-                                  {v._imageFile ? (
-                                    <a href={URL.createObjectURL(v._imageFile)} target="_blank" rel="noopener noreferrer">
-                                      <img src={URL.createObjectURL(v._imageFile)} alt="Visto" className="h-10 w-14 object-cover rounded border border-border" />
-                                    </a>
-                                  ) : v.image_url ? (
-                                    <PrivateImage bucket="visa-images" source={v.image_url} alt="Visto" className="h-10 w-14 object-cover rounded border border-border" linkable />
-                                  ) : null}
-                                  <label className="cursor-pointer inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-input bg-background hover:bg-accent text-foreground">
-                                    {v.image_url || v._imageFile ? "Trocar" : "Upload"}
-                                    <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                                      const file = e.target.files?.[0];
-                                      if (file) {
-                                        openEditor(file, (edited) => { const n = [...passports]; n[pi].visas[vi]._imageFile = edited; setPassports([...n]); });
-                                      }
-                                    }} />
-                                  </label>
-                                  {(v.image_url || v._imageFile) && (
-                                    <button type="button" className="text-destructive" onClick={() => { const n = [...passports]; n[pi].visas[vi].image_url = ""; n[pi].visas[vi]._imageFile = undefined; setPassports([...n]); }}>
-                                      <X className="h-3.5 w-3.5" />
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
+                              {/* Imagem do visto agora fica em Anexos (vinculada a este visto) */}
                             </div>
                             </div>
                             )}

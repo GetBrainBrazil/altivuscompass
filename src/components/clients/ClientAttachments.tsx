@@ -10,6 +10,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImageViewerDialog, ViewerAttachment } from "@/components/ImageViewerDialog";
 import { cn } from "@/lib/utils";
 
@@ -22,8 +23,13 @@ interface AttachmentRow {
   file_path: string;
   mime_type: string | null;
   size_bytes: number | null;
+  description: string | null;
+  passport_id: string | null;
+  visa_id: string | null;
   created_at: string;
 }
+
+type LinkOption = { value: string; label: string; passportId?: string; visaId?: string };
 
 const BUCKET = "client-attachments";
 
@@ -121,6 +127,71 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
       return (data ?? []) as unknown as AttachmentRow[];
     },
   });
+
+  const { data: linkOptions = [] } = useQuery({
+    queryKey: ["client-attachment-link-options", clientId],
+    enabled: !!clientId,
+    queryFn: async (): Promise<LinkOption[]> => {
+      const [{ data: passports }, { data: visas }] = await Promise.all([
+        supabase
+          .from("client_passports")
+          .select("id, passport_number, nationality")
+          .eq("client_id", clientId!)
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("client_visas")
+          .select("id, passport_id, country_region, visa_type, visa_number")
+          .eq("client_id", clientId!)
+          .order("created_at", { ascending: true }),
+      ]);
+      const opts: LinkOption[] = [];
+      (passports ?? []).forEach((p: any, i: number) => {
+        const label = `Passaporte ${i + 1}${p.passport_number ? ` — ${p.passport_number}` : ""}${p.nationality ? ` (${p.nationality})` : ""}`;
+        opts.push({ value: `p:${p.id}`, label, passportId: p.id });
+      });
+      (visas ?? []).forEach((v: any, i: number) => {
+        const parts = [v.country_region, v.visa_type].filter(Boolean).join(" — ");
+        const label = `Visto ${i + 1}${parts ? ` — ${parts}` : ""}${v.visa_number ? ` · ${v.visa_number}` : ""}`;
+        opts.push({ value: `v:${v.id}`, label, visaId: v.id });
+      });
+      return opts;
+    },
+  });
+
+  const linkValueOf = (r: AttachmentRow) =>
+    r.visa_id ? `v:${r.visa_id}` : r.passport_id ? `p:${r.passport_id}` : "none";
+
+  const linkLabelOf = (r: AttachmentRow) => {
+    if (r.visa_id) return linkOptions.find((o) => o.value === `v:${r.visa_id}`)?.label;
+    if (r.passport_id) return linkOptions.find((o) => o.value === `p:${r.passport_id}`)?.label;
+    return null;
+  };
+
+  const updateLink = async (r: AttachmentRow, value: string) => {
+    const patch: { passport_id: string | null; visa_id: string | null } =
+      value === "none"
+        ? { passport_id: null, visa_id: null }
+        : value.startsWith("p:")
+          ? { passport_id: value.slice(2), visa_id: null }
+          : { passport_id: null, visa_id: value.slice(2) };
+    const { error } = await supabase.from("client_attachments" as any).update(patch).eq("id", r.id);
+    if (error) {
+      toast({ title: "Falha ao vincular", description: error.message, variant: "destructive" });
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["client-attachments", clientId] });
+  };
+
+  const updateDescription = async (r: AttachmentRow, value: string) => {
+    const v = value.trim() || null;
+    if (v === (r.description ?? null)) return;
+    const { error } = await supabase.from("client_attachments" as any).update({ description: v }).eq("id", r.id);
+    if (error) {
+      toast({ title: "Falha ao salvar descrição", description: error.message, variant: "destructive" });
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["client-attachments", clientId] });
+  };
 
   const uploadFiles = useCallback(async (files: File[]) => {
     if (!clientId) {
@@ -258,7 +329,8 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
           rows.map((r) => {
             const isRenaming = renamingId === r.id;
             return (
-            <div key={r.id} className="flex items-center gap-2 rounded-md border border-border/50 bg-muted/20 px-3 py-2">
+            <div key={r.id} className="rounded-md border border-border/50 bg-muted/20 px-3 py-2 space-y-1.5">
+              <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
               {isRenaming ? (
                 <input
@@ -337,6 +409,34 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
                   </button>
                 </>
               )}
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 pl-6">
+                <input
+                  type="text"
+                  defaultValue={r.description ?? ""}
+                  placeholder="Descrição (opcional)"
+                  onBlur={(e) => updateDescription(r, e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
+                  }}
+                  className="flex-1 min-w-0 text-xs font-body bg-background border border-border/50 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+                <Select value={linkValueOf(r)} onValueChange={(v) => updateLink(r, v)}>
+                  <SelectTrigger className="h-7 text-xs sm:w-[260px]">
+                    <SelectValue placeholder="Sem vínculo" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    <SelectItem value="none">Sem vínculo</SelectItem>
+                    {linkOptions.length === 0 && (
+                      <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhum passaporte ou visto cadastrado</div>
+                    )}
+                    {linkOptions.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             );
           })
