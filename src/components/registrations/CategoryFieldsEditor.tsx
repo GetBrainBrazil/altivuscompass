@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,15 +32,31 @@ import {
   CategoryField,
   CategoryFieldSchema,
   FIELD_TYPE_LABELS,
-  FIELD_WIDTH_LABELS,
   FieldType,
-  FieldWidth,
   SEED_TEMPLATES,
   ensureUniqueKey,
+  getEffectiveSpan,
   isValidSchema,
   slugify,
+  spanClass,
 } from "@/lib/category-schema";
-import { ArrowDown, ArrowUp, Layers, Plus, Sparkles, Trash2 } from "lucide-react";
+import { GripVertical, Layers, Plus, Settings2, Sparkles, Trash2 } from "lucide-react";
+import {
+  DndContext,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { cn } from "@/lib/utils";
 
 interface Props {
   open: boolean;
@@ -47,30 +64,33 @@ interface Props {
   category: { id: string; name: string; field_schema?: unknown } | null;
 }
 
-const TYPES_WITHOUT_OPTIONS: FieldType[] = [
-  "text", "textarea", "number", "currency", "date", "time",
-  "airport", "airline", "google_places", "baggage", "duration_auto",
-];
-
 const newField = (taken: string[]): CategoryField => ({
   key: ensureUniqueKey("novo_campo", taken),
   label: "Novo campo",
   type: "text",
-  width: "half",
+  span: 6,
 });
+
+/** Migra `width` → `span` (sem destruir) ao carregar. */
+function normalize(fields: CategoryFieldSchema): CategoryFieldSchema {
+  return fields.map((f) => ({ ...f, span: getEffectiveSpan(f), width: undefined }));
+}
 
 export default function CategoryFieldsEditor({ open, onOpenChange, category }: Props) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const initial = useMemo<CategoryFieldSchema>(() => {
     if (!category) return [];
-    return isValidSchema(category.field_schema) ? (category.field_schema as CategoryFieldSchema) : [];
+    const base = isValidSchema(category.field_schema) ? (category.field_schema as CategoryFieldSchema) : [];
+    return normalize(base);
   }, [category]);
 
   const [fields, setFields] = useState<CategoryFieldSchema>(initial);
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
 
   useEffect(() => {
     setFields(initial);
+    setEditingIdx(null);
   }, [initial]);
 
   const saveMutation = useMutation({
@@ -95,38 +115,49 @@ export default function CategoryFieldsEditor({ open, onOpenChange, category }: P
     setFields((prev) => prev.map((f, i) => (i === idx ? { ...f, ...patch } : f)));
   };
 
-  const move = (idx: number, dir: -1 | 1) => {
+  const remove = (idx: number) => {
+    setFields((prev) => prev.filter((_, i) => i !== idx));
+    setEditingIdx(null);
+  };
+
+  const addField = () => {
     setFields((prev) => {
-      const next = [...prev];
-      const j = idx + dir;
-      if (j < 0 || j >= next.length) return prev;
-      [next[idx], next[j]] = [next[j], next[idx]];
+      const next = [...prev, newField(prev.map((f) => f.key))];
+      setEditingIdx(next.length - 1);
       return next;
     });
   };
 
-  const remove = (idx: number) => setFields((prev) => prev.filter((_, i) => i !== idx));
-
-  const addField = () =>
-    setFields((prev) => [...prev, newField(prev.map((f) => f.key))]);
-
   const applyTemplate = (key: keyof typeof SEED_TEMPLATES) => {
     const tpl = SEED_TEMPLATES[key];
     if (!tpl) return;
-    setFields(tpl.schema.map((f) => ({ ...f })));
+    setFields(normalize(tpl.schema.map((f) => ({ ...f }))));
+    setEditingIdx(null);
     toast({ title: `Modelo "${tpl.label}" aplicado`, description: "Revise e salve para aplicar." });
+  };
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  const onDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const from = fields.findIndex((f) => f.key === active.id);
+    const to = fields.findIndex((f) => f.key === over.id);
+    if (from < 0 || to < 0) return;
+    setFields((prev) => arrayMove(prev, from, to));
+    setEditingIdx(to);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Layers className="w-5 h-5" /> Campos do produto — {category?.name}
           </DialogTitle>
           <DialogDescription>
-            Defina os campos que serão pedidos ao adicionar um produto desta categoria em uma cotação.
-            Persiste em <code>product_categories.field_schema</code> e os valores ficam em <code>quote_items.details</code>.
+            Arraste para reordenar e use a alça <strong>azul à direita</strong> para redimensionar (grid de 12 colunas).
+            Clique em um campo para editar seus detalhes.
           </DialogDescription>
         </DialogHeader>
 
@@ -148,30 +179,27 @@ export default function CategoryFieldsEditor({ open, onOpenChange, category }: P
           <Button variant="outline" size="sm" className="gap-1.5" onClick={addField}>
             <Plus className="w-4 h-4" /> Adicionar campo
           </Button>
-          <span className="text-xs text-muted-foreground ml-auto">{fields.length} campo(s)</span>
+          <span className="text-xs text-muted-foreground ml-auto">
+            {fields.length} campo(s) · grid 12 col
+          </span>
         </div>
 
-        <div className="space-y-3">
-          {fields.length === 0 ? (
-            <div className="text-sm text-muted-foreground border border-dashed rounded-md p-6 text-center">
-              Nenhum campo definido. Aplique um modelo ou adicione manualmente.
-            </div>
-          ) : (
-            fields.map((f, idx) => (
-              <FieldRow
-                key={`${f.key}-${idx}`}
-                field={f}
-                takenKeys={fields.map((x, i) => (i === idx ? "__self__" : x.key))}
-                onChange={(patch) => updateField(idx, patch)}
-                onMoveUp={() => move(idx, -1)}
-                onMoveDown={() => move(idx, 1)}
-                onRemove={() => remove(idx)}
-                isFirst={idx === 0}
-                isLast={idx === fields.length - 1}
+        {fields.length === 0 ? (
+          <div className="text-sm text-muted-foreground border border-dashed rounded-md p-6 text-center">
+            Nenhum campo definido. Aplique um modelo ou adicione manualmente.
+          </div>
+        ) : (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+            <SortableContext items={fields.map((f) => f.key)} strategy={rectSortingStrategy}>
+              <CanvasGrid
+                fields={fields}
+                editingIdx={editingIdx}
+                onSelect={setEditingIdx}
+                onResize={(idx, span) => updateField(idx, { span })}
               />
-            ))
-          )}
-        </div>
+            </SortableContext>
+          </DndContext>
+        )}
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -185,27 +213,185 @@ export default function CategoryFieldsEditor({ open, onOpenChange, category }: P
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {editingIdx !== null && fields[editingIdx] && (
+        <FieldPropertiesSheet
+          open
+          onClose={() => setEditingIdx(null)}
+          field={fields[editingIdx]}
+          takenKeys={fields.map((f, i) => (i === editingIdx ? "__self__" : f.key))}
+          onChange={(patch) => updateField(editingIdx, patch)}
+          onRemove={() => remove(editingIdx)}
+        />
+      )}
     </Dialog>
   );
 }
 
-interface RowProps {
+/* =================== Canvas WYSIWYG =================== */
+
+interface CanvasProps {
+  fields: CategoryFieldSchema;
+  editingIdx: number | null;
+  onSelect: (idx: number) => void;
+  onResize: (idx: number, span: number) => void;
+}
+
+function CanvasGrid({ fields, editingIdx, onSelect, onResize }: CanvasProps) {
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  return (
+    <div
+      ref={gridRef}
+      className="grid grid-cols-12 gap-2 p-3 rounded-md border bg-muted/20 min-h-[120px]"
+    >
+      {fields.map((f, idx) => (
+        <SortableCard
+          key={f.key}
+          id={f.key}
+          field={f}
+          selected={editingIdx === idx}
+          onClick={() => onSelect(idx)}
+          onResize={(span) => onResize(idx, span)}
+          gridRef={gridRef}
+        />
+      ))}
+    </div>
+  );
+}
+
+interface SortableCardProps {
+  id: string;
+  field: CategoryField;
+  selected: boolean;
+  onClick: () => void;
+  onResize: (span: number) => void;
+  gridRef: React.RefObject<HTMLDivElement>;
+}
+
+function SortableCard({ id, field, selected, onClick, onResize, gridRef }: SortableCardProps) {
+  const span = getEffectiveSpan(field);
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const [resizing, setResizing] = useState(false);
+  const [previewSpan, setPreviewSpan] = useState<number | null>(null);
+
+  const onResizePointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!gridRef.current) return;
+    const gridRect = gridRef.current.getBoundingClientRect();
+    const gapPx = 8; // gap-2 = 8px
+    const colWidth = (gridRect.width - gapPx * 11) / 12;
+    const startX = e.clientX;
+    const startSpan = span;
+    setResizing(true);
+
+    const onMove = (ev: PointerEvent) => {
+      const dx = ev.clientX - startX;
+      const deltaCols = Math.round(dx / (colWidth + gapPx));
+      const next = Math.max(1, Math.min(12, startSpan + deltaCols));
+      setPreviewSpan(next);
+    };
+    const onUp = () => {
+      setResizing(false);
+      setPreviewSpan((cur) => {
+        if (cur !== null && cur !== span) onResize(cur);
+        return null;
+      });
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
+  const displaySpan = previewSpan ?? span;
+  const colClass = spanClass(displaySpan);
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "relative group rounded-md border bg-card transition-shadow",
+        colClass,
+        selected ? "ring-2 ring-primary border-primary" : "hover:border-primary/40",
+        resizing && "ring-2 ring-primary",
+      )}
+      onClick={onClick}
+    >
+      <div className="flex items-stretch min-h-[64px]">
+        {/* Drag handle */}
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="flex items-center px-1.5 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+          onClick={(e) => e.stopPropagation()}
+          aria-label="Arrastar"
+        >
+          <GripVertical className="w-3.5 h-3.5" />
+        </button>
+
+        {/* Content */}
+        <div className="flex-1 py-1.5 pr-2 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-medium truncate">
+              {field.label}
+              {field.required && <span className="text-destructive ml-0.5">*</span>}
+            </span>
+            <span className="ml-auto shrink-0 text-[10px] font-mono text-muted-foreground bg-muted px-1 rounded">
+              {displaySpan}/12
+            </span>
+          </div>
+          <div className="text-[10px] text-muted-foreground truncate">
+            {FIELD_TYPE_LABELS[field.type]}
+          </div>
+        </div>
+
+        {/* Resize handle (right edge) */}
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Redimensionar"
+          onPointerDown={onResizePointerDown}
+          onClick={(e) => e.stopPropagation()}
+          className={cn(
+            "w-1.5 cursor-col-resize rounded-r-md transition-colors",
+            "bg-transparent hover:bg-primary/60 group-hover:bg-primary/30",
+            (resizing || selected) && "bg-primary/70",
+          )}
+          title="Arraste para redimensionar (1–12)"
+        />
+      </div>
+    </div>
+  );
+}
+
+/* =================== Properties Sheet =================== */
+
+interface SheetProps {
+  open: boolean;
+  onClose: () => void;
   field: CategoryField;
   takenKeys: string[];
   onChange: (patch: Partial<CategoryField>) => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
   onRemove: () => void;
-  isFirst: boolean;
-  isLast: boolean;
 }
 
-function FieldRow({ field, takenKeys, onChange, onMoveUp, onMoveDown, onRemove, isFirst, isLast }: RowProps) {
+function FieldPropertiesSheet({ open, onClose, field, takenKeys, onChange, onRemove }: SheetProps) {
   const supportsOptions = field.type === "select" || field.type === "checkbox";
   const isLockedKey = !!field.mapsTo;
+  const span = getEffectiveSpan(field);
 
   const handleLabelChange = (label: string) => {
-    // se a key ainda parece automática, regerar a partir do label
     const taken = takenKeys.filter((k) => k !== "__self__");
     const auto = ensureUniqueKey(slugify(label), taken);
     if (field.key.startsWith("novo_campo") || field.key === slugify(field.label)) {
@@ -216,65 +402,62 @@ function FieldRow({ field, takenKeys, onChange, onMoveUp, onMoveDown, onRemove, 
   };
 
   return (
-    <div className="border rounded-md p-3 bg-card space-y-2">
-      <div className="flex items-start gap-2">
-        <div className="flex flex-col gap-1 pt-1">
-          <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveUp} disabled={isFirst}>
-            <ArrowUp className="w-3.5 h-3.5" />
-          </Button>
-          <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveDown} disabled={isLast}>
-            <ArrowDown className="w-3.5 h-3.5" />
-          </Button>
-        </div>
+    <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
+      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
+            <Settings2 className="w-4 h-4" /> Propriedades do campo
+          </SheetTitle>
+        </SheetHeader>
 
-        <div className="flex-1 grid grid-cols-12 gap-2">
-          <div className="col-span-12 sm:col-span-4 space-y-0.5">
+        <div className="space-y-4 mt-4">
+          <div className="space-y-1">
             <Label className="text-[11px]">Rótulo</Label>
-            <Input
-              value={field.label}
-              onChange={(e) => handleLabelChange(e.target.value)}
-              className="h-8 text-xs"
-            />
-          </div>
-          <div className="col-span-6 sm:col-span-3 space-y-0.5">
-            <Label className="text-[11px]">Chave (key)</Label>
-            <Input
-              value={field.key}
-              onChange={(e) => onChange({ key: slugify(e.target.value) })}
-              disabled={isLockedKey}
-              className="h-8 text-xs font-mono"
-            />
-          </div>
-          <div className="col-span-6 sm:col-span-3 space-y-0.5">
-            <Label className="text-[11px]">Tipo</Label>
-            <Select
-              value={field.type}
-              onValueChange={(v) => onChange({ type: v as FieldType })}
-            >
-              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {(Object.keys(FIELD_TYPE_LABELS) as FieldType[]).map((t) => (
-                  <SelectItem key={t} value={t}>{FIELD_TYPE_LABELS[t]}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="col-span-6 sm:col-span-2 space-y-0.5">
-            <Label className="text-[11px]">Largura</Label>
-            <Select
-              value={field.width ?? "full"}
-              onValueChange={(v) => onChange({ width: v as FieldWidth })}
-            >
-              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {(Object.keys(FIELD_WIDTH_LABELS) as FieldWidth[]).map((w) => (
-                  <SelectItem key={w} value={w}>{FIELD_WIDTH_LABELS[w]}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input value={field.label} onChange={(e) => handleLabelChange(e.target.value)} className="h-8 text-xs" />
           </div>
 
-          <div className="col-span-12 sm:col-span-4 space-y-0.5">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="text-[11px]">Chave (key)</Label>
+              <Input
+                value={field.key}
+                disabled={isLockedKey}
+                onChange={(e) => onChange({ key: slugify(e.target.value) })}
+                className="h-8 text-xs font-mono"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[11px]">Tipo</Label>
+              <Select value={field.type} onValueChange={(v) => onChange({ type: v as FieldType })}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(FIELD_TYPE_LABELS) as FieldType[]).map((t) => (
+                    <SelectItem key={t} value={t}>{FIELD_TYPE_LABELS[t]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <Label className="text-[11px]">Largura no grid</Label>
+              <span className="text-[10px] font-mono text-muted-foreground">{span}/12</span>
+            </div>
+            <input
+              type="range"
+              min={1}
+              max={12}
+              value={span}
+              onChange={(e) => onChange({ span: Number(e.target.value), width: undefined })}
+              className="w-full accent-primary"
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Em mobile todos os campos ficam em 100%. Em tablet, ajustamos automaticamente.
+            </p>
+          </div>
+
+          <div className="space-y-1">
             <Label className="text-[11px]">Placeholder</Label>
             <Input
               value={field.placeholder ?? ""}
@@ -282,8 +465,9 @@ function FieldRow({ field, takenKeys, onChange, onMoveUp, onMoveDown, onRemove, 
               className="h-8 text-xs"
             />
           </div>
-          <div className="col-span-6 sm:col-span-3 space-y-0.5">
-            <Label className="text-[11px]">Grupo</Label>
+
+          <div className="space-y-1">
+            <Label className="text-[11px]">Grupo (opcional)</Label>
             <Input
               value={field.group ?? ""}
               onChange={(e) => onChange({ group: e.target.value || undefined })}
@@ -291,26 +475,19 @@ function FieldRow({ field, takenKeys, onChange, onMoveUp, onMoveDown, onRemove, 
               className="h-8 text-xs"
             />
           </div>
-          <div className="col-span-6 sm:col-span-3 flex items-end gap-2">
-            <div className="flex items-center gap-1.5">
-              <Switch
-                checked={!!field.required}
-                onCheckedChange={(v) => onChange({ required: v })}
-              />
-              <Label className="text-[11px]">Obrigatório</Label>
-            </div>
-          </div>
-          <div className="col-span-12 sm:col-span-2 flex items-end justify-end">
-            <Button type="button" variant="ghost" size="sm" className="text-destructive h-8" onClick={onRemove}>
-              <Trash2 className="w-3.5 h-3.5 mr-1" /> Remover
-            </Button>
+
+          <div className="flex items-center gap-2">
+            <Switch checked={!!field.required} onCheckedChange={(v) => onChange({ required: v })} />
+            <Label className="text-[11px]">Obrigatório</Label>
           </div>
 
           {supportsOptions && (
-            <div className="col-span-12 space-y-1.5 border-t pt-2 mt-1">
-              <Label className="text-[11px]">Opções (uma por linha — formato <code>valor|rótulo</code> ou só o rótulo)</Label>
+            <div className="space-y-1.5 border-t pt-3">
+              <Label className="text-[11px]">
+                Opções (uma por linha — <code>valor|rótulo</code> ou só o rótulo)
+              </Label>
               <textarea
-                className="w-full text-xs font-mono rounded-md border border-input bg-background px-2 py-1.5 min-h-[80px]"
+                className="w-full text-xs font-mono rounded-md border border-input bg-background px-2 py-1.5 min-h-[120px]"
                 value={(field.options ?? [])
                   .map((o) => (o.value === o.label ? o.label : `${o.value}|${o.label}`))
                   .join("\n")}
@@ -327,17 +504,19 @@ function FieldRow({ field, takenKeys, onChange, onMoveUp, onMoveDown, onRemove, 
           )}
 
           {isLockedKey && (
-            <div className="col-span-12 text-[11px] text-muted-foreground bg-muted/40 rounded px-2 py-1">
+            <div className="text-[11px] text-muted-foreground bg-muted/40 rounded px-2 py-1">
               Este campo sincroniza com a coluna <code>{field.mapsTo}</code> do item. A chave não pode ser alterada.
             </div>
           )}
-          {TYPES_WITHOUT_OPTIONS.includes(field.type) && supportsOptions === false && field.options?.length ? (
-            <div className="col-span-12 text-[11px] text-amber-600">
-              Este tipo não usa opções; elas serão ignoradas ao salvar.
-            </div>
-          ) : null}
+
+          <div className="border-t pt-3 flex justify-between">
+            <Button variant="ghost" size="sm" className="text-destructive" onClick={onRemove}>
+              <Trash2 className="w-3.5 h-3.5 mr-1" /> Remover campo
+            </Button>
+            <Button size="sm" onClick={onClose}>Fechar</Button>
+          </div>
         </div>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }
