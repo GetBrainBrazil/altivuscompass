@@ -454,17 +454,22 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
                   >
                     <SelectValue placeholder="Vínculo (obrigatório)" />
                   </SelectTrigger>
-                  <SelectContent className="max-h-72">
+                  <SelectContent className="max-h-72 z-[10001]">
                     {linkOptions.length > 0 && (
-                      <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground">Documentos do cliente</div>
+                      <SelectGroup>
+                        <SelectLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">Documentos do cliente</SelectLabel>
+                        {linkOptions.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        ))}
+                      </SelectGroup>
                     )}
-                    {linkOptions.map((o) => (
-                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                    ))}
-                    <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground border-t mt-1">Categorias</div>
-                    {CATEGORY_OPTIONS.map((o) => (
-                      <SelectItem key={`c:${o.value}`} value={`c:${o.value}`}>{o.label}</SelectItem>
-                    ))}
+                    {linkOptions.length > 0 && <SelectSeparator />}
+                    <SelectGroup>
+                      <SelectLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">Categorias</SelectLabel>
+                      {CATEGORY_OPTIONS.map((o) => (
+                        <SelectItem key={`c:${o.value}`} value={`c:${o.value}`}>{o.label}</SelectItem>
+                      ))}
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
               </div>
