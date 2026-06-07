@@ -409,6 +409,34 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
                   </button>
                 </>
               )}
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 pl-6">
+                <input
+                  type="text"
+                  defaultValue={r.description ?? ""}
+                  placeholder="Descrição (opcional)"
+                  onBlur={(e) => updateDescription(r, e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
+                  }}
+                  className="flex-1 min-w-0 text-xs font-body bg-background border border-border/50 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+                <Select value={linkValueOf(r)} onValueChange={(v) => updateLink(r, v)}>
+                  <SelectTrigger className="h-7 text-xs sm:w-[260px]">
+                    <SelectValue placeholder="Sem vínculo" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    <SelectItem value="none">Sem vínculo</SelectItem>
+                    {linkOptions.length === 0 && (
+                      <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhum passaporte ou visto cadastrado</div>
+                    )}
+                    {linkOptions.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             );
           })
