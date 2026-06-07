@@ -742,6 +742,7 @@ export default function Tasks() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className={cn("text-[10px] font-body whitespace-nowrap", status.color)}>{status.label}</Badge>
+                      {isDueToday && <Badge className="text-[10px] font-body ml-1 bg-warning text-warning-foreground border-0">Hoje</Badge>}
                       {isOverdue && <Badge variant="destructive" className="text-[10px] font-body ml-1">Atrasada</Badge>}
                       {task.completed_at && (
                         <p className="text-[10px] text-success font-body mt-0.5">
