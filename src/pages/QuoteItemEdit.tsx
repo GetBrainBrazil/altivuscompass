@@ -63,15 +63,45 @@ export default function QuoteItemEdit() {
   const [details, setDetails] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
   const lastSavedRef = useRef<string>("");
+
+  const buildSnapshot = (it: ItemRow | null, d: Record<string, any>) =>
+    JSON.stringify({
+      title: it?.title ?? "",
+      quantity: it?.quantity ?? null,
+      unit_cost: it?.unit_cost ?? null,
+      unit_price: it?.unit_price ?? null,
+      utilization_start: it?.utilization_start ?? null,
+      utilization_end: it?.utilization_end ?? null,
+      details: d ?? {},
+    });
 
   useEffect(() => {
     if (!data) return;
     const it = data as any as ItemRow;
     setItem(it);
     setDetails(it.details ?? {});
-    lastSavedRef.current = JSON.stringify(it);
+    lastSavedRef.current = buildSnapshot(it, it.details ?? {});
   }, [data]);
+
+  const isDirty = item ? buildSnapshot(item, details) !== lastSavedRef.current : false;
+
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!isDirty) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
+  const goBack = () => navigate(`/quotes?quoteId=${quoteId}&tab=modular`);
+  const handleBackClick = () => {
+    if (isDirty) setConfirmLeave(true);
+    else goBack();
+  };
 
   const category = (data as any)?.products?.product_categories ?? null;
   const productName = (data as any)?.products?.name ?? null;
