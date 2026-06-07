@@ -1035,6 +1035,36 @@ export default function Clients() {
         return (a.full_name ?? "").localeCompare(b.full_name ?? "", "pt-BR", { sensitivity: "base" });
       });
 
+  const totalCount = filtered.length;
+
+  const paginatedData = useMemo(() => {
+    if (pageSize === "all") {
+      return filtered.slice(0, allChunkSize);
+    }
+    const start = (currentPage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, pageSize, currentPage, allChunkSize]);
+
+  const totalPages = pageSize === "all" ? 1 : Math.ceil(filtered.length / pageSize);
+
+  useEffect(() => {
+    setCurrentPage(1);
+    setAllChunkSize(50);
+  }, [search, levelFilter, profileFilter, tagFilter, sort, pageSize]);
+
+  useEffect(() => {
+    if (pageSize !== "all") return;
+    const el = scrollTriggerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && allChunkSize < filtered.length) {
+        setAllChunkSize((prev) => Math.min(prev + 50, filtered.length));
+      }
+    }, { rootMargin: "200px" });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [pageSize, allChunkSize, filtered.length]);
+
 
   const SortableHeader = ({ label, sortKey, className }: { label: string; sortKey: string; className?: string }) => {
     const active = sort?.key === sortKey;
