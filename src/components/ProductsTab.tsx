@@ -17,8 +17,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { logAuditEvent } from "@/lib/audit";
 import { Layers, Trash2 } from "lucide-react";
+import { CurrencyInput } from "@/components/ui/currency-input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-const CURRENCIES = ["BRL", "USD", "EUR", "GBP", "ARS", "CLP"];
 
 function CategoriesSubTab({ isAdmin }: { isAdmin: boolean }) {
   const navigate = useNavigate();
