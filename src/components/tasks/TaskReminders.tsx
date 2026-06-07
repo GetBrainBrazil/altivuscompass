@@ -217,19 +217,6 @@ export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
       <div className="space-y-2">
         {activeReminders.map(renderReminder)}
 
-        {sentReminders.length > 0 && (
-          <div className="space-y-2 pt-1">
-            <button
-              type="button"
-              onClick={() => setShowSent((v) => !v)}
-              className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {showSent ? "Ocultar" : "Ver"} lembretes enviados ({sentReminders.length})
-            </button>
-            {showSent && sentReminders.map(renderReminder)}
-          </div>
-        )}
-
         {adding && (
           <div className="rounded-md border border-border bg-muted/20 p-3 space-y-2.5">
             <div className="grid grid-cols-2 gap-2">
@@ -300,6 +287,20 @@ export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
             </div>
           </div>
         )}
+
+        {sentReminders.length > 0 && (
+          <div className="space-y-2 pt-1">
+            <button
+              type="button"
+              onClick={() => setShowSent((v) => !v)}
+              className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {showSent ? "Ocultar" : "Ver"} lembretes enviados ({sentReminders.length})
+            </button>
+            {showSent && sentReminders.map(renderReminder)}
+          </div>
+        )}
+
 
         {!adding && reminders.length === 0 && (
           <p className="text-xs text-muted-foreground font-body py-2">Nenhum lembrete.</p>
