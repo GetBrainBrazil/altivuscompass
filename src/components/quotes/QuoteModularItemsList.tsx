@@ -112,12 +112,12 @@ export function QuoteModularItemsList({ quoteId }: Props) {
     (acc: number, it: any) => acc + Number(it.unit_price ?? 0) * Number(it.quantity ?? 1),
     0
   );
-  const itemsDiscountSum = items.reduce(
-    (acc: number, it: any) => acc + itemDiscountValue(it),
-    0
-  );
+  const itemsDiscountSum = discountsEnabled
+    ? items.reduce((acc: number, it: any) => acc + itemDiscountValue(it), 0)
+    : 0;
   const afterItemDiscount = itemsSubtotal - itemsDiscountSum;
   const quoteDiscountValue = (() => {
+    if (!discountsEnabled) return 0;
     const pct = Number(quote?.discount_percent ?? 0);
     const amt = Number(quote?.discount_amount ?? 0);
     if (pct > 0) return (afterItemDiscount * pct) / 100;
@@ -292,8 +292,9 @@ function ItemRow({ item, discountsEnabled, onEdit, onChanged }: ItemRowProps) {
   );
 
   const subtotal = unitPrice * (quantity || 0);
-  const itemDisc =
-    discMode === "percent" ? (subtotal * (discPercent || 0)) / 100 : discAmount || 0;
+  const itemDisc = discountsEnabled
+    ? (discMode === "percent" ? (subtotal * (discPercent || 0)) / 100 : discAmount || 0)
+    : 0;
   const total = Math.max(0, subtotal - itemDisc);
 
   const categoryName =
