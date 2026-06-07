@@ -41,33 +41,40 @@ async function sendWhatsApp(
     links.complete.startsWith('https://') &&
     links.snooze.startsWith('https://')
 
-  const endpoint = useButtons ? 'send-button-actions' : 'send-text'
-  const body = useButtons
-    ? {
-        phone,
-        message,
-        buttonActions: [
-          { id: '1', type: 'URL', url: links!.complete, label: 'Concluir' },
-          { id: '2', type: 'URL', url: links!.snooze, label: 'Adiar 30 min' },
-        ],
-      }
-    : { phone, message }
-
-  try {
+  async function postZapi(endpoint: string, body: any) {
     const res = await fetch(`${ZAPI_BASE_URL}/instances/${id}/token/${token}/${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Client-Token': sec },
       body: JSON.stringify(body),
     })
-    if (!res.ok) {
-      const txt = await res.text().catch(() => '')
-      return { ok: false, error: `Z-API ${res.status}: ${txt.slice(0, 200)}` }
+    const txt = await res.text().catch(() => '')
+    return { ok: res.ok, status: res.status, body: txt }
+  }
+
+  try {
+    if (useButtons) {
+      const r = await postZapi('send-button-actions', {
+        phone,
+        message,
+        title: '🔔 Lembrete de tarefa',
+        footer: 'Altivus Compass',
+        buttonActions: [
+          { id: '1', type: 'URL', url: links!.complete, label: '✅ Concluir' },
+          { id: '2', type: 'URL', url: links!.snooze, label: '⏰ Adiar 30 min' },
+        ],
+      })
+      if (r.ok) return { ok: true }
+      // Fallback automático para texto simples se botões falharem
+      console.log(`[zapi] send-button-actions falhou (${r.status}): ${r.body.slice(0, 200)} — fallback para send-text`)
     }
+    const r2 = await postZapi('send-text', { phone, message })
+    if (!r2.ok) return { ok: false, error: `Z-API ${r2.status}: ${r2.body.slice(0, 200)}` }
     return { ok: true }
   } catch (e: any) {
     return { ok: false, error: e?.message ?? 'erro ao enviar WhatsApp' }
   }
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
