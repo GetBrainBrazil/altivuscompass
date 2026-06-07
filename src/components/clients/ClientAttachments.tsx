@@ -88,7 +88,7 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
     setPreviewLoading(true);
     (async () => {
       const { data, error } = await supabase.storage
-        .from(BUCKET)
+        .from(bucketOf(previewRow))
         .createSignedUrl(previewRow.file_path, 60 * 60);
       if (cancelled) return;
       setPreviewLoading(false);
@@ -104,7 +104,7 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
 
   const downloadRow = async (row: AttachmentRow) => {
     const { data } = await supabase.storage
-      .from(BUCKET)
+      .from(bucketOf(row))
       .createSignedUrl(row.file_path, 60 * 5, { download: row.file_name });
     if (data?.signedUrl) window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   };
