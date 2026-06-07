@@ -202,6 +202,7 @@ export default function Quotes() {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
   const [form, setForm] = useState<Record<string, any>>({});
