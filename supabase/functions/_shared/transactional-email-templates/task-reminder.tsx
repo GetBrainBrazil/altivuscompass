@@ -19,6 +19,8 @@ interface Props {
   remindAt?: string
   taskUrl?: string
   recipientName?: string
+  completeUrl?: string
+  snoozeUrl?: string
 }
 
 const Email = ({
@@ -27,6 +29,8 @@ const Email = ({
   remindAt,
   taskUrl,
   recipientName,
+  completeUrl,
+  snoozeUrl,
 }: Props) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
@@ -52,9 +56,23 @@ const Email = ({
             </Text>
           ) : null}
         </Section>
+        {(completeUrl || snoozeUrl) ? (
+          <Section style={{ textAlign: 'center', margin: '20px 0 8px' }}>
+            {completeUrl ? (
+              <Button href={completeUrl} style={buttonPrimary}>
+                ✅ Marcar concluída
+              </Button>
+            ) : null}
+            {snoozeUrl ? (
+              <Button href={snoozeUrl} style={buttonSecondary}>
+                ⏰ Adiar 30 min
+              </Button>
+            ) : null}
+          </Section>
+        ) : null}
         {taskUrl ? (
-          <Section style={{ textAlign: 'center', margin: '24px 0' }}>
-            <Button href={taskUrl} style={button}>
+          <Section style={{ textAlign: 'center', margin: '16px 0 8px' }}>
+            <Button href={taskUrl} style={buttonGhost}>
               Abrir tarefa
             </Button>
           </Section>
@@ -95,5 +113,7 @@ const card = { backgroundColor: 'hsl(220, 20%, 97%)', border: '1px solid hsl(220
 const taskTitleStyle = { fontSize: '17px', fontWeight: 600, color: 'hsl(220, 40%, 13%)', margin: '0 0 8px' }
 const msgText = { fontSize: '14px', lineHeight: '1.5', color: 'hsl(220, 10%, 35%)', margin: '8px 0' }
 const meta = { fontSize: '13px', color: 'hsl(220, 10%, 50%)', margin: '8px 0 0' }
-const button = { backgroundColor: 'hsl(220, 60%, 18%)', color: '#ffffff', padding: '12px 28px', borderRadius: '8px', textDecoration: 'none', fontSize: '14px', fontWeight: 600 }
+const buttonPrimary = { backgroundColor: 'hsl(142, 70%, 32%)', color: '#ffffff', padding: '12px 24px', borderRadius: '8px', textDecoration: 'none', fontSize: '14px', fontWeight: 600, display: 'inline-block', margin: '0 6px 8px' }
+const buttonSecondary = { backgroundColor: 'hsl(220, 60%, 18%)', color: '#ffffff', padding: '12px 24px', borderRadius: '8px', textDecoration: 'none', fontSize: '14px', fontWeight: 600, display: 'inline-block', margin: '0 6px 8px' }
+const buttonGhost = { backgroundColor: 'hsl(220, 20%, 95%)', color: 'hsl(220, 60%, 18%)', padding: '10px 22px', borderRadius: '8px', textDecoration: 'none', fontSize: '13px', fontWeight: 500, display: 'inline-block' }
 const footer = { fontSize: '12px', color: 'hsl(220, 10%, 50%)', marginTop: '24px', lineHeight: '1.5' }

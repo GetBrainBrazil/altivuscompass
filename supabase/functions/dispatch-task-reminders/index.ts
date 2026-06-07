@@ -7,6 +7,45 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const SECRET = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+const FUNCTIONS_BASE = `${Deno.env.get('SUPABASE_URL')}/functions/v1/task-reminder-action`
+
+function b64urlEncode(bytes: Uint8Array): string {
+  const s = btoa(String.fromCharCode(...bytes))
+  return s.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+async function hmac(payload: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(SECRET),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  )
+  const sig = new Uint8Array(
+    await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payload)),
+  )
+  return b64urlEncode(sig)
+}
+async function signToken(payload: Record<string, unknown>): Promise<string> {
+  const body = b64urlEncode(new TextEncoder().encode(JSON.stringify(payload)))
+  const sig = await hmac(body)
+  return `${body}.${sig}`
+}
+async function buildActionLinks(reminderId: string) {
+  const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7
+  const [snoozeTok, completeTok] = await Promise.all([
+    signToken({ rid: reminderId, act: 'snooze', m: 30, exp }),
+    signToken({ rid: reminderId, act: 'complete', exp }),
+  ])
+  return {
+    snooze: `${FUNCTIONS_BASE}?t=${snoozeTok}`,
+    complete: `${FUNCTIONS_BASE}?t=${completeTok}`,
+  }
+}
+
+
+
 const ZAPI_BASE_URL = 'https://api.z-api.io'
 
 function normalizePhone(raw: string | null | undefined): string | null {
@@ -92,14 +131,19 @@ Deno.serve(async (req) => {
     }
 
     const text = (r.message?.trim() || task?.title || 'Lembrete de tarefa')
-    const fullMessage = `🔔 *Lembrete de tarefa*\n\n${text}`
+    const links = (channels.includes('whatsapp') || channels.includes('email'))
+      ? await buildActionLinks(r.id)
+      : null
+    const waMessage = links
+      ? `🔔 *Lembrete de tarefa*\n\n${text}\n\n✅ Concluir: ${links.complete}\n⏰ Adiar 30 min: ${links.snooze}`
+      : `🔔 *Lembrete de tarefa*\n\n${text}`
 
     if (channels.includes('whatsapp')) {
       const phone = normalizePhone(assignee?.phone)
       if (!phone) {
         errors.push('whatsapp: responsável sem telefone válido')
       } else {
-        const wa = await sendWhatsApp(phone, fullMessage)
+        const wa = await sendWhatsApp(phone, waMessage)
         if (wa.ok) delivered.push('whatsapp')
         else errors.push(`whatsapp: ${wa.error}`)
       }
@@ -128,6 +172,8 @@ Deno.serve(async (req) => {
                 remindAt,
                 taskUrl,
                 recipientName: assignee?.full_name ?? null,
+                completeUrl: links?.complete ?? null,
+                snoozeUrl: links?.snooze ?? null,
               },
             },
           })
@@ -138,6 +184,7 @@ Deno.serve(async (req) => {
         }
       }
     }
+
 
     const allOk = channels.every((c) => delivered.includes(c))
     const anyOk = delivered.length > 0
