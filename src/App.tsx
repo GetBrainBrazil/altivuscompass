@@ -48,6 +48,7 @@ import OpsNew from "./pages/OpsNew";
 
 import AIAgentEdit from "./pages/AIAgentEdit";
 import Vault from "./pages/Vault";
+import VaultEdit from "./pages/VaultEdit";
 
 import { ReminderPopupCenter } from "@/components/ReminderPopupCenter";
 
@@ -108,6 +109,7 @@ const App = () => (
             <Route path="/profile" element={<ProtectedRoute><AppLayout><MyProfile /></AppLayout></ProtectedRoute>} />
             <Route path="/system" element={<ProtectedRoute><AppLayout><System /></AppLayout></ProtectedRoute>} />
             <Route path="/vault" element={<ProtectedRoute><AppLayout><Vault /></AppLayout></ProtectedRoute>} />
+            <Route path="/vault/:id" element={<ProtectedRoute><AppLayout><VaultEdit /></AppLayout></ProtectedRoute>} />
             <Route path="/service-center" element={<ProtectedRoute><AppLayout><ServiceCenter /></AppLayout></ProtectedRoute>} />
             <Route path="/atendimento" element={<ProtectedRoute><AppLayout><ServiceCenter /></AppLayout></ProtectedRoute>} />
             <Route path="/inbox" element={<ProtectedRoute><AppLayout><ServiceCenter /></AppLayout></ProtectedRoute>} />
