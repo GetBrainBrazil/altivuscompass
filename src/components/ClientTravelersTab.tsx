@@ -743,8 +743,8 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
         {sortedTravelers.length === 0 ? (
           <p className="text-xs text-muted-foreground font-body italic">Nenhum viajante cadastrado.</p>
         ) : (
-          <div className="border border-border/50 rounded-lg overflow-hidden">
-            <table className="w-full">
+          <div className="border border-border/50 rounded-lg overflow-x-auto">
+            <table className="w-full min-w-[900px]">
               <thead>
                 <tr className="border-b border-border/50 bg-muted/30">
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleTravelerSort("_name")}>Nome<SortIcon columnKey="_name" sort={travelerSort} /></th>
