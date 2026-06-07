@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import QuoteItemCommercialFields from "@/components/quotes/QuoteItemCommercialFields";
 import QuoteItemSupplierFields from "@/components/quotes/QuoteItemSupplierFields";
+import QuoteItemProductPicker from "@/components/quotes/QuoteItemProductPicker";
 import QuoteItemAttachments from "@/components/quotes/QuoteItemAttachments";
 
 import QuoteOptionsManager from "@/components/quotes/QuoteOptionsManager";
