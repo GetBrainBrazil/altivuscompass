@@ -2226,7 +2226,7 @@ export default function Clients() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
-              {filtered.map((client: any) => {
+              {paginatedData.map((client: any) => {
                 const clientTravelersList = travelersByClient[client.id] ?? [];
                 const isExpanded = expandedClients.has(client.id);
                 const hasTravelers = clientTravelersList.length > 0;
