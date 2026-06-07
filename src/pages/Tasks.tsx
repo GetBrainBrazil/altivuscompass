@@ -853,7 +853,7 @@ export default function Tasks() {
           {reminderTask && (
             <TaskReminders
               taskId={reminderTask.id}
-              assigneePhone={reminderTask.assignee_phone ?? null}
+              assigneePhone={(profiles as any[]).find((p) => p.user_id === reminderTask.assigned_to)?.phone ?? null}
               assigneeName={reminderTask.assigned_to ? getAssigneeName(reminderTask.assigned_to) : null}
               autoOpenIfEmpty
             />
