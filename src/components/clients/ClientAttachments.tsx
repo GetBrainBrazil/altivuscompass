@@ -1,14 +1,15 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Loader2, Upload, FileText, Download, Trash2, Paperclip, Pencil, Check, X } from "lucide-react";
+import { Loader2, Upload, FileText, Download, Trash2, Paperclip, Pencil, Check, X, ExternalLink } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 interface AttachmentRow {
@@ -49,6 +50,36 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [renaming, setRenaming] = useState(false);
+  const [previewRow, setPreviewRow] = useState<AttachmentRow | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  useEffect(() => {
+    if (!previewRow) { setPreviewUrl(null); return; }
+    let cancelled = false;
+    setPreviewLoading(true);
+    (async () => {
+      const { data, error } = await supabase.storage
+        .from(BUCKET)
+        .createSignedUrl(previewRow.file_path, 60 * 60);
+      if (cancelled) return;
+      setPreviewLoading(false);
+      if (error || !data?.signedUrl) {
+        toast({ title: "Não foi possível abrir o anexo", variant: "destructive" });
+        setPreviewRow(null);
+        return;
+      }
+      setPreviewUrl(data.signedUrl);
+    })();
+    return () => { cancelled = true; };
+  }, [previewRow, toast]);
+
+  const downloadRow = async (row: AttachmentRow) => {
+    const { data } = await supabase.storage
+      .from(BUCKET)
+      .createSignedUrl(row.file_path, 60 * 5, { download: row.file_name });
+    if (data?.signedUrl) window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  };
 
   const startRename = (r: AttachmentRow) => {
     setRenamingId(r.id);
@@ -142,15 +173,8 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
     if (list.length) uploadFiles(list);
   };
 
-  const onOpen = async (row: AttachmentRow) => {
-    const { data, error } = await supabase.storage
-      .from(BUCKET)
-      .createSignedUrl(row.file_path, 60 * 60);
-    if (error || !data?.signedUrl) {
-      toast({ title: "Não foi possível abrir o anexo", variant: "destructive" });
-      return;
-    }
-    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  const onOpen = (row: AttachmentRow) => {
+    setPreviewRow(row);
   };
 
   const confirmDelete = async () => {
@@ -284,9 +308,9 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
                   </button>
                   <button
                     type="button"
-                    onClick={() => onOpen(r)}
+                    onClick={() => downloadRow(r)}
                     className="text-muted-foreground hover:text-foreground"
-                    title="Abrir / baixar"
+                    title="Baixar"
                   >
                     <Download className="h-3.5 w-3.5" />
                   </button>
@@ -305,6 +329,46 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
           })
         )}
       </div>
+
+      <Dialog open={!!previewRow} onOpenChange={(o) => { if (!o) setPreviewRow(null); }}>
+        <DialogContent className="max-w-[95vw] w-[95vw] sm:max-w-5xl max-h-[95vh] h-[95vh] p-0 gap-0 overflow-hidden flex flex-col">
+          <DialogHeader className="p-4 pb-3 border-b shrink-0 flex flex-row items-center justify-between gap-2">
+            <DialogTitle className="font-display text-base truncate">{previewRow?.file_name}</DialogTitle>
+            <div className="flex gap-2 mr-6">
+              <Button type="button" variant="outline" size="sm" onClick={() => previewUrl && window.open(previewUrl, "_blank", "noopener,noreferrer")} disabled={!previewUrl}>
+                <ExternalLink size={14} className="mr-1.5" /> Nova guia
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => previewRow && downloadRow(previewRow)}>
+                <Download size={14} className="mr-1.5" /> Baixar
+              </Button>
+            </div>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 bg-muted/30 flex items-center justify-center overflow-auto">
+            {previewLoading || !previewUrl ? (
+              <Loader2 size={20} className="animate-spin text-muted-foreground" />
+            ) : previewRow?.mime_type?.startsWith("image/") ? (
+              <img src={previewUrl} alt={previewRow.file_name} className="max-w-full max-h-full object-contain" />
+            ) : previewRow?.mime_type === "application/pdf" ? (
+              <iframe src={previewUrl} title={previewRow.file_name} className="w-full h-full border-0" />
+            ) : previewRow?.mime_type?.startsWith("video/") ? (
+              <video src={previewUrl} controls className="max-w-full max-h-full" />
+            ) : previewRow?.mime_type?.startsWith("audio/") ? (
+              <audio src={previewUrl} controls />
+            ) : (
+              <div className="text-center p-6 space-y-3">
+                <FileText className="h-12 w-12 mx-auto text-muted-foreground" />
+                <p className="text-sm text-muted-foreground font-body">
+                  Pré-visualização não disponível para este tipo de arquivo.
+                </p>
+                <Button type="button" size="sm" onClick={() => previewRow && downloadRow(previewRow)}>
+                  <Download size={14} className="mr-1.5" /> Baixar arquivo
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
 
       <AlertDialog open={!!pendingDelete} onOpenChange={(o) => { if (!o) setPendingDelete(null); }}>
         <AlertDialogContent>
