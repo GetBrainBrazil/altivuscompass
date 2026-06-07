@@ -2207,7 +2207,8 @@ export default function Clients() {
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground font-body">Nenhum cliente encontrado.</div>
         ) : (
-          <table className="w-full">
+          <>
+            <table className="w-full">
             <thead>
               <tr className="border-b border-border/50">
                 <th className="p-2 w-10"></th>
