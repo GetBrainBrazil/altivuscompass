@@ -63,15 +63,45 @@ export default function QuoteItemEdit() {
   const [details, setDetails] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
   const lastSavedRef = useRef<string>("");
+
+  const buildSnapshot = (it: ItemRow | null, d: Record<string, any>) =>
+    JSON.stringify({
+      title: it?.title ?? "",
+      quantity: it?.quantity ?? null,
+      unit_cost: it?.unit_cost ?? null,
+      unit_price: it?.unit_price ?? null,
+      utilization_start: it?.utilization_start ?? null,
+      utilization_end: it?.utilization_end ?? null,
+      details: d ?? {},
+    });
 
   useEffect(() => {
     if (!data) return;
     const it = data as any as ItemRow;
     setItem(it);
     setDetails(it.details ?? {});
-    lastSavedRef.current = JSON.stringify(it);
+    lastSavedRef.current = buildSnapshot(it, it.details ?? {});
   }, [data]);
+
+  const isDirty = item ? buildSnapshot(item, details) !== lastSavedRef.current : false;
+
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!isDirty) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
+  const goBack = () => navigate(`/quotes?quoteId=${quoteId}&tab=modular`);
+  const handleBackClick = () => {
+    if (isDirty) setConfirmLeave(true);
+    else goBack();
+  };
 
   const category = (data as any)?.products?.product_categories ?? null;
   const productName = (data as any)?.products?.name ?? null;
@@ -99,27 +129,42 @@ export default function QuoteItemEdit() {
     return patch;
   };
 
-  const handleSave = async () => {
-    if (!item) return;
+  const handleSave = async (opts?: { thenBack?: boolean }) => {
+    if (!item) return false;
     setSaving(true);
     const mapped = applyMappedColumns(details);
-    const payload: any = {
+    const nextItem: ItemRow = {
+      ...item,
       title: mapped.title ?? item.title,
-      details,
       quantity: item.quantity ?? 1,
       unit_cost: item.unit_cost ?? 0,
       unit_price: item.unit_price ?? 0,
       utilization_start: mapped.utilization_start ?? item.utilization_start,
       utilization_end: mapped.utilization_end ?? item.utilization_end,
     };
+    const payload: any = {
+      title: nextItem.title,
+      details,
+      quantity: nextItem.quantity,
+      unit_cost: nextItem.unit_cost,
+      unit_price: nextItem.unit_price,
+      utilization_start: nextItem.utilization_start,
+      utilization_end: nextItem.utilization_end,
+    };
     const { error } = await supabase.from("quote_items").update(payload).eq("id", item.id);
     setSaving(false);
     if (error) {
       toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
-      return;
+      return false;
     }
     toast({ title: "Item salvo" });
-    refetch();
+    lastSavedRef.current = buildSnapshot(nextItem, details);
+    if (opts?.thenBack) {
+      goBack();
+    } else {
+      refetch();
+    }
+    return true;
   };
 
   const handleDelete = async () => {
@@ -146,7 +191,7 @@ export default function QuoteItemEdit() {
       {/* Header */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => navigate(`/quotes?quoteId=${quoteId}&tab=modular`)}>
+          <Button variant="ghost" size="sm" onClick={handleBackClick}>
             <ArrowLeft className="w-4 h-4 mr-1" /> Voltar para cotação
           </Button>
         </div>
@@ -159,7 +204,7 @@ export default function QuoteItemEdit() {
           >
             <Trash2 className="w-3.5 h-3.5" /> Excluir item
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={saving} className="gap-1">
+          <Button size="sm" onClick={() => handleSave()} disabled={saving} className="gap-1">
             {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
             Salvar
           </Button>
@@ -232,7 +277,7 @@ export default function QuoteItemEdit() {
       <Separator />
 
       <div className="flex justify-end">
-        <Button size="sm" onClick={handleSave} disabled={saving} className="gap-1">
+        <Button size="sm" onClick={() => handleSave()} disabled={saving} className="gap-1">
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
           Salvar
         </Button>
@@ -249,6 +294,40 @@ export default function QuoteItemEdit() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmLeave} onOpenChange={setConfirmLeave}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem alterações não salvas</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja salvar antes de voltar para a cotação? Se sair sem salvar, as alterações serão perdidas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-2">
+            <AlertDialogCancel>Continuar editando</AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setConfirmLeave(false);
+                goBack();
+              }}
+            >
+              Sair sem salvar
+            </Button>
+            <AlertDialogAction
+              onClick={async (e) => {
+                e.preventDefault();
+                const ok = await handleSave({ thenBack: true });
+                if (ok) setConfirmLeave(false);
+              }}
+              disabled={saving}
+            >
+              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
+              Salvar e voltar
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
