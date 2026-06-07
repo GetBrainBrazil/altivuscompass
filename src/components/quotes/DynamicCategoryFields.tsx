@@ -27,11 +27,8 @@ import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { CategoryField, CategoryFieldSchema } from "@/lib/category-schema";
+import { getEffectiveSpan, spanClass } from "@/lib/category-schema";
 import { cn } from "@/lib/utils";
-
-interface Props {
-  schema: CategoryFieldSchema | null | undefined;
-  value: Record<string, any>;
   onChange: (next: Record<string, any>) => void;
 }
 
