@@ -33,9 +33,19 @@ interface Props {
   taskId: string | null;
   pending?: File[];
   onPendingChange?: (files: File[]) => void;
+  bucket?: string;
+  tableName?: string;
+  invalidateKey?: unknown[];
+  sizeColumn?: string;
 }
 
-export function ImageViewerDialog({ open, onOpenChange, attachment, taskId, pending = [], onPendingChange }: Props) {
+export function ImageViewerDialog({
+  open, onOpenChange, attachment, taskId, pending = [], onPendingChange,
+  bucket = "task-attachments",
+  tableName = "task_attachments",
+  invalidateKey,
+  sizeColumn = "file_size",
+}: Props) {
   const { toast } = useToast();
   const qc = useQueryClient();
   const cropperRef = useRef<ReactCropperElement>(null);
