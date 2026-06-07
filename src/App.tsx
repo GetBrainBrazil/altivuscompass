@@ -41,6 +41,7 @@ import PublicItinerary from "./pages/PublicItinerary";
 import PublicItineraryPDF from "./pages/PublicItineraryPDF";
 import ServiceCenter from "./pages/ServiceCenter";
 import CRM from "./pages/CRM";
+import CRMDashboard from "./pages/CRMDashboard";
 import LeadDetail from "./pages/LeadDetail";
 import LeadNew from "./pages/LeadNew";
 import LeadConvert from "./pages/LeadConvert";
