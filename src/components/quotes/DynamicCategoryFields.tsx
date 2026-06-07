@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { CategoryField, CategoryFieldSchema } from "@/lib/category-schema";
+import { getEffectiveSpan, spanClass } from "@/lib/category-schema";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -34,13 +35,6 @@ interface Props {
   value: Record<string, any>;
   onChange: (next: Record<string, any>) => void;
 }
-
-const WIDTH_CLASS: Record<string, string> = {
-  full: "col-span-12",
-  half: "col-span-12 md:col-span-6",
-  third: "col-span-12 md:col-span-4",
-  quarter: "col-span-12 md:col-span-6 lg:col-span-3",
-};
 
 // Convenção: duration_auto é computada a partir de embarque/embarque_hora → chegada/chegada_hora
 function computeDuration(values: Record<string, any>): string | null {
@@ -106,7 +100,7 @@ export function DynamicCategoryFields({ schema, value, onChange }: Props) {
           )}
           <div className="grid grid-cols-12 gap-3">
             {fields.map((f) => (
-              <div key={f.key} className={cn(WIDTH_CLASS[f.width ?? "full"] ?? WIDTH_CLASS.full)}>
+              <div key={f.key} className={cn(spanClass(getEffectiveSpan(f)))}>
                 <FieldRenderer field={f} value={value?.[f.key]} onChange={(v) => setField(f.key, v)} />
               </div>
             ))}

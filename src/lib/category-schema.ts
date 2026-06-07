@@ -49,7 +49,10 @@ export interface CategoryField {
   key: string;
   label: string;
   type: FieldType;
+  /** Legado — enum (full|half|third|quarter). Mantido para compat. Quando `span` existe, ele tem precedência. */
   width?: FieldWidth;
+  /** Novo: 1..12 colunas no grid desktop. */
+  span?: number;
   required?: boolean;
   placeholder?: string;
   /** Para selects e checkbox-group */
@@ -61,6 +64,50 @@ export interface CategoryField {
 }
 
 export type CategoryFieldSchema = CategoryField[];
+
+const WIDTH_TO_SPAN: Record<FieldWidth, number> = {
+  full: 12,
+  half: 6,
+  third: 4,
+  quarter: 3,
+};
+
+/** Retorna o span efetivo do campo (1..12), derivando do legacy `width` se necessário. */
+export function getEffectiveSpan(field: Pick<CategoryField, "span" | "width">): number {
+  if (typeof field.span === "number" && field.span >= 1 && field.span <= 12) {
+    return Math.round(field.span);
+  }
+  if (field.width && WIDTH_TO_SPAN[field.width]) return WIDTH_TO_SPAN[field.width];
+  return 12;
+}
+
+/** Mapa estático de classes Tailwind por span (necessário para Tailwind detectar no bundle). */
+export const SPAN_DESKTOP_CLASS: Record<number, string> = {
+  1: "lg:col-span-1",
+  2: "lg:col-span-2",
+  3: "lg:col-span-3",
+  4: "lg:col-span-4",
+  5: "lg:col-span-5",
+  6: "lg:col-span-6",
+  7: "lg:col-span-7",
+  8: "lg:col-span-8",
+  9: "lg:col-span-9",
+  10: "lg:col-span-10",
+  11: "lg:col-span-11",
+  12: "lg:col-span-12",
+};
+
+/**
+ * Classe responsiva para o grid de 12 col:
+ * - mobile (<640): empilhado (col-span-12)
+ * - tablet (>=640): span ≤ 4 vira 6, > 4 vira 12
+ * - desktop (>=1024): respeita o span configurado
+ */
+export function spanClass(span: number): string {
+  const s = Math.max(1, Math.min(12, Math.round(span)));
+  const tablet = s <= 4 ? "sm:col-span-6" : "sm:col-span-12";
+  return `col-span-12 ${tablet} ${SPAN_DESKTOP_CLASS[s] ?? "lg:col-span-12"}`;
+}
 
 export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
   text: "Texto curto",
@@ -112,47 +159,47 @@ export const SEED_TEMPLATES: Record<string, { label: string; schema: CategoryFie
   voo: {
     label: "Voo",
     schema: [
-      // Linha 1
-      { key: "tipo", label: "Tipo", type: "select", width: "quarter", required: true, options: [
+      // Linha 1 — Tipo(2) Origem(5) Embarque(3) Hr Embarque(2)
+      { key: "tipo", label: "Tipo", type: "select", span: 2, required: true, options: [
         { value: "ida", label: "Ida" },
         { value: "volta", label: "Volta" },
         { value: "ida_volta", label: "Ida e Volta" },
         { value: "trecho", label: "Trecho" },
       ]},
-      { key: "origem", label: "Origem", type: "airport", width: "quarter", required: true },
-      { key: "embarque", label: "Embarque", type: "date", width: "quarter", required: true, mapsTo: "utilization_start" },
-      { key: "embarque_hora", label: "Horário Embarque", type: "time", width: "quarter" },
-      // Linha 2
-      { key: "duracao", label: "Duração", type: "duration_auto", width: "quarter" },
-      { key: "destino", label: "Destino", type: "airport", width: "quarter", required: true },
-      { key: "chegada", label: "Chegada", type: "date", width: "quarter", required: true, mapsTo: "utilization_end" },
-      { key: "chegada_hora", label: "Horário Chegada", type: "time", width: "quarter" },
-      // Linha 3
-      { key: "companhia", label: "Companhia Aérea", type: "airline", width: "quarter", required: true },
-      { key: "numero_voo", label: "Nº do Voo (Bilhete)", type: "text", width: "quarter" },
-      { key: "localizador", label: "Localizador", type: "text", width: "quarter" },
-      { key: "numero_compra", label: "Nº da Compra", type: "text", width: "quarter" },
-      // Linha 4
-      { key: "classe", label: "Classe", type: "select", width: "quarter", options: [
+      { key: "origem", label: "Origem", type: "airport", span: 5, required: true },
+      { key: "embarque", label: "Embarque", type: "date", span: 3, required: true, mapsTo: "utilization_start" },
+      { key: "embarque_hora", label: "Horário Embarque", type: "time", span: 2 },
+      // Linha 2 — Duração(2) Destino(5) Chegada(3) Hr Chegada(2)
+      { key: "duracao", label: "Duração", type: "duration_auto", span: 2 },
+      { key: "destino", label: "Destino", type: "airport", span: 5, required: true },
+      { key: "chegada", label: "Chegada", type: "date", span: 3, required: true, mapsTo: "utilization_end" },
+      { key: "chegada_hora", label: "Horário Chegada", type: "time", span: 2 },
+      // Linha 3 — Cia(4) Nº Voo(3) Localizador(3) Nº Compra(2)
+      { key: "companhia", label: "Companhia Aérea", type: "airline", span: 4, required: true },
+      { key: "numero_voo", label: "Nº do Voo (Bilhete)", type: "text", span: 3 },
+      { key: "localizador", label: "Localizador", type: "text", span: 3 },
+      { key: "numero_compra", label: "Nº da Compra", type: "text", span: 2 },
+      // Linha 4 — Classe(3) Conexões(3) Notif(3) Bagagens(3)
+      { key: "classe", label: "Classe", type: "select", span: 3, options: [
         { value: "economica", label: "Econômica" },
         { value: "premium_economica", label: "Premium Econômica" },
         { value: "executiva", label: "Executiva" },
         { value: "primeira", label: "Primeira Classe" },
       ]},
-      { key: "conexoes", label: "Conexões", type: "select", width: "quarter", options: [
+      { key: "conexoes", label: "Conexões", type: "select", span: 3, options: [
         { value: "direto", label: "Direto" },
         { value: "1_conexao", label: "1 conexão" },
         { value: "2_conexoes", label: "2 conexões" },
         { value: "3_ou_mais", label: "3 ou mais" },
       ]},
-      { key: "notificacao_checkin", label: "Notificação Check-in", type: "select", width: "quarter", options: [
+      { key: "notificacao_checkin", label: "Notificação Check-in", type: "select", span: 3, options: [
         { value: "nenhuma", label: "Nenhuma" },
         { value: "24h_antes", label: "24h antes" },
         { value: "48h_antes", label: "48h antes" },
       ]},
-      { key: "bagagens", label: "Bagagens", type: "baggage", width: "quarter" },
+      { key: "bagagens", label: "Bagagens", type: "baggage", span: 3 },
       // Linha 5
-      { key: "observacao", label: "Observação", type: "textarea", width: "full" },
+      { key: "observacao", label: "Observação", type: "textarea", span: 12 },
     ],
   },
   hospedagem: {

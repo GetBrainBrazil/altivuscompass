@@ -1,99 +1,87 @@
-# Fase 2 — Construtor Modular de Itens na Cotação
+# Editor visual de campos por categoria — Grid 12 colunas com drag & resize
 
-Retomando de onde paramos. **Fase 1 entregue** (campos por categoria + página `/registrations/categories/:id/fields`). Esta fase adiciona uma nova forma de montar a cotação convivendo com as abas fixas atuais — nada existente é removido.
+## Problema atual
+- Largura é um enum fixo de 4 valores (`full|half|third|quarter` → 100/50/33/25%). Não permite combinar 50% + 25% + 25% numa linha, nem ajustar Origem maior + Tipo/Embarque/Horário menores.
+- Edição é em formato de lista vertical de "cards de configuração" — pouco intuitivo. Difícil visualizar o resultado final ao mesmo tempo que se edita.
 
-Decisões já confirmadas:
-- Fluxo de adição: **busca global de produto, agrupado por categoria**, com atalho para criar produto novo
-- Layout: **lista + tela dedicada** (estilo Cofre/Categorias)
-- Nova aba convive com as abas fixas (Voo/Hotel/Transporte continuam)
+## Solução proposta
 
-## O que muda na UI
+Migrar para um modelo de **grid de 12 colunas com span configurável por campo (1–12)**, editado em uma tela **WYSIWYG com drag & resize** (handle lateral para redimensionar, arrastar para reordenar). Mantém compatibilidade com schemas existentes via migração automática dos enums.
 
-### 1. Nova aba "Itens" no editor de cotação (`src/pages/Quotes.tsx`)
-- Adicionar `<TabsTrigger value="modular">Itens</TabsTrigger>` logo após "Principal" e antes das abas dinâmicas por tipo.
-- `<TabsContent value="modular">` renderiza `<QuoteModularItemsList quoteId={...} items={items} onChanged={refetch} />`.
-- Nenhuma aba existente é tocada nesta fase.
+### Modelo de dados (mínimo, compatível)
 
-### 2. `src/components/quotes/QuoteModularItemsList.tsx` (novo)
-- Cabeçalho: botão **+ Adicionar item** (abre `ProductSearchDialog`).
-- Lista: cada linha mostra ícone da categoria, título do item, categoria, preço unitário, quantidade, total. Linha inteira clicável → `/quotes/:quoteId/items/:itemId`.
-- Drag handle para reordenar (`sort_order`).
-- Estado vazio: "Nenhum item adicionado" + CTA.
+Adicionar dois campos opcionais em `CategoryField` (em `src/lib/category-schema.ts`):
+- `span?: number` — 1 a 12 (colunas no grid desktop). Substitui `width` na prática.
+- `row?: number` — agrupamento por linha visual (opcional; senão, o grid faz o wrap automático).
 
-### 3. `src/components/quotes/ProductSearchDialog.tsx` (novo)
-Modal compacto, com 3 elementos no topo fixo:
-1. **Campo de busca global** (debounce 250ms) — filtra produtos por `name ilike` em todas as categorias ao mesmo tempo.
-2. Botão **+ Novo produto** no canto superior direito — abre o cadastro rápido já existente (reusa o `Dialog` interno do `QuoteItemProductPicker`, que insere em `products` com nome/custo/preço/categoria e devolve o registro pronto pra ser escolhido).
-3. Lista de resultados **agrupada por categoria** (`Voo`, `Hospedagem`, `Locação`, custom...): cabeçalho da categoria sticky, abaixo as opções daquele grupo com nome + preço-base à direita. Grupos vazios (sem match na busca) ficam ocultos.
+Manter `width` como **legado**: se `span` ausente, derivar de `width` (`full=12, half=6, third=4, quarter=3`). Ao salvar pela primeira vez no novo editor, gravar `span` e remover `width`.
 
-Comportamentos:
-- Sem texto digitado: lista todas as categorias com seus produtos (até 50 por grupo, com "ver mais" se houver mais).
-- Com texto: filtra por nome dentro de cada grupo; categorias sem match somem.
-- Rodapé: link discreto **"Criar item sem produto"** → abre um seletor simples de categoria e cria item solto (`product_id = null`).
-- Clicar num produto cria `quote_items` com:
-  - `quote_id`, `product_id`, `category_id` da categoria do produto, `item_type` derivado da categoria (mapeia `flight/hotel/transport/...` via `category-schema`; senão `other_service`), `title = product.name`, `unit_price = product.sale_price ?? 0`, `unit_cost = product.cost ?? 0`, `quantity = 1`, `details = {}`, `sort_order = max+1`.
-  - Em seguida, fecha o modal e navega para `/quotes/:quoteId/items/:itemId`.
+Sem migração SQL — `field_schema` é JSONB.
 
-### 4. `src/pages/QuoteItemEdit.tsx` (novo, tela dedicada)
-Rota: `/quotes/:quoteId/items/:itemId`. Botão **Voltar** leva a `/quotes/:quoteId?tab=modular`.
-
-Seções:
-1. **Cabeçalho** — categoria + produto vinculado (com link para trocar/desvincular) + botão Excluir.
-2. **Campos dinâmicos da categoria** — `<DynamicCategoryFields schema={category.field_schema} value={item.details} onChange={...} />`. Persiste em `quote_items.details`. Campos com `mapsTo` também atualizam a coluna estruturada correspondente (ex.: `checkin_data → utilization_start`).
-3. **Comercial** — reusa `<QuoteItemCommercialFields />`.
-4. **Anexos / link externo** — reusa `<QuoteItemAttachmentsV2 />`.
-5. **Reserva** — reusa `<QuoteItemReservationFields />` quando o tipo derivado tiver config.
-
-Autosave debounce 600ms + botão Salvar manual; toast no sucesso.
-
-### 5. `src/components/quotes/DynamicCategoryFields.tsx` (novo)
-Renderiza um `field_schema` em grid de 12 colunas respeitando `width` e `group`. Tipos:
-- `text`, `textarea`, `number`, `date`, `time`, `select`, `checkbox`, `currency` → inputs nativos do design system.
-- Especiais: `airport`, `airline`, `google_places`, `baggage`, `duration_auto` → componentes próprios reusando lógica já existente em `Quotes.tsx` (extraída em helpers compartilhados).
-- Campos com `mapsTo` espelham o valor na coluna estruturada do item ao salvar.
-
-### 6. Rota
-- `src/App.tsx`: adicionar `<Route path="/quotes/:quoteId/items/:itemId" element={<ProtectedRoute><AppLayout><QuoteItemEdit/></AppLayout></ProtectedRoute>} />`.
-
-## O que NÃO muda nesta fase
-- Abas Voo/Hotel/Transporte/etc. e seus formulários continuam funcionando exatamente como hoje.
-- `accept-quote`, snapshots, triggers de pós-venda, PDF público, WhatsApp summary — sem impacto (lêem os mesmos campos de `quote_items`).
-- Schema do banco: `product_categories.field_schema` e `quote_items.product_id/category_id/details` já existem. **Sem migration nesta fase.**
-
-## Detalhes técnicos
+### Responsividade (regra fixa, sem opção por campo)
 
 ```text
-Quotes.tsx
- └── Tabs
-     ├── Principal
-     ├── Itens (novo) ── QuoteModularItemsList
-     │                    ├─ + Adicionar item → ProductSearchDialog
-     │                    │     ├─ Busca global
-     │                    │     ├─ + Novo produto (cadastro rápido)
-     │                    │     └─ Resultados agrupados por categoria
-     │                    └─ row click → /quotes/:id/items/:itemId
-     ├── Voo / Hotel / Transporte / ... (intactas)
-     ├── Roteiro
-     └── ...
-
-QuoteItemEdit (página dedicada)
- ├── Header (categoria, produto, Excluir)
- ├── DynamicCategoryFields(schema, details)
- ├── QuoteItemCommercialFields
- ├── QuoteItemAttachmentsV2
- └── QuoteItemReservationFields
+Mobile  (<640px):  todos os campos col-span-12 (empilhados)
+Tablet  (≥640px):  span ≤ 4 vira span 6; span > 4 vira span 12
+Desktop (≥1024px): respeita o span configurado (1–12)
 ```
 
-Mapeamento `category → item_type` em `src/lib/category-schema.ts`: constante por categoria seed (Voo→flight, Hospedagem→hotel, Locação→transport) e fallback `other_service` para categorias customizadas.
+Implementação via classes Tailwind responsivas: `col-span-12 sm:col-span-{6|12} lg:col-span-{span}`. Mantém o "zero horizontal scroll" no mobile.
 
-## Critérios de aceitação
-1. Aba **Itens** abre, **+ Adicionar item** mostra modal com busca + grupos por categoria + atalho **+ Novo produto** funcionando.
-2. Criar item de Voo direto pela busca leva à tela dedicada já com os campos do template Voo.
-3. Editar campos da categoria persiste em `details`; `mapsTo` atualiza as colunas estruturadas (visível na aba Voo antiga).
-4. Excluir item volta para `/quotes/:id?tab=modular` sem o item.
-5. Abas fixas, PDF público e WhatsApp summary sem regressão.
+### Editor WYSIWYG (substitui a lista atual)
 
-## Fora de escopo (Fase 3)
-- Migrar itens criados pelas abas fixas para o modelo modular.
-- Esconder/desligar as abas fixas.
-- Duplicar item, transformar em opção (reaproveitar `QuoteOptionsManager` depois).
+Tela única em `CategoryFieldsEditor`:
+
+```text
+┌─ Toolbar ─────────────────────────────────────────────┐
+│ [Aplicar modelo ▼]  [+ Adicionar campo]   12 campos  │
+├─ Canvas (grid 12 col, igual ao runtime) ──────────────┤
+│ ┌─Tipo─┐┌─Origem─────┐┌─Embarque─┐┌─Hr Embarque─┐    │
+│ │ sp:2 ││ sp:5       ││ sp:3     ││ sp:2        │    │
+│ └──╫───┘└──╫─────────┘└──╫───────┘└──╫──────────┘    │
+│  drag handle = arrasta │ borda direita = resize       │
+└────────────────────────────────────────────────────────┘
+[Painel lateral aparece ao clicar no campo: label, key,
+ tipo, placeholder, obrigatório, opções, grupo]
+```
+
+Comportamentos:
+- **Arrastar** o card reordena no array `fields` (mantém ordem semântica = ordem de renderização).
+- **Redimensionar** pela borda direita: snap em incrementos de 1 coluna (1–12). Mostra "X/12" durante o drag.
+- **Clicar** no card abre painel lateral (Sheet) com config detalhada. Edição rápida de label inline (duplo-clique).
+- **+ Adicionar campo** insere card de span 6 no fim.
+- **Aplicar modelo Altivus** continua disponível; templates seed são atualizados para usar `span`.
+
+### Biblioteca
+
+- **Drag**: `@dnd-kit/core` + `@dnd-kit/sortable` (já é leve, sem deps novas pesadas; provavelmente já presente — verificar antes; senão `bun add`).
+- **Resize**: implementação própria com `pointerdown/move/up` calculando `Math.round(deltaX / colWidth)`. Sem libs.
+
+### Templates seed (atualização em `SEED_TEMPLATES`)
+
+Atualizar voo para refletir o pedido (Tipo menor, Origem maior):
+```text
+L1: Tipo(2) Origem(5) Embarque(3) Hr Embarque(2)
+L2: Duração(2) Destino(5) Chegada(3) Hr Chegada(2)
+L3: Cia Aérea(4) Nº Voo(3) Localizador(3) Nº Compra(2)
+L4: Classe(3) Conexões(3) Notif Checkin(3) Bagagens(3)
+L5: Observação(12)
+```
+
+Hospedagem e Locação: convertidos de `width` para `span` equivalente (sem mudança visual).
+
+### Runtime (`DynamicCategoryFields.tsx`)
+
+Substituir o mapa `WIDTH_CLASS` por uma função `spanClass(span)` que gera `col-span-12 sm:col-span-{...} lg:col-span-{1..12}`. Como Tailwind precisa das classes presentes no bundle, usar um switch que mapeia 1–12 para classes literais (safelist implícita).
+
+## Arquivos afetados
+
+- `src/lib/category-schema.ts` — adicionar `span`, helper `getEffectiveSpan(field)`, atualizar `SEED_TEMPLATES`.
+- `src/components/registrations/CategoryFieldsEditor.tsx` — reescrita do corpo para canvas WYSIWYG + Sheet de propriedades. Mantém imports/contrato externo.
+- `src/components/quotes/DynamicCategoryFields.tsx` — trocar `WIDTH_CLASS` por `spanClass()`.
+- (opcional) `bun add @dnd-kit/core @dnd-kit/sortable` se não estiverem instalados.
+
+## Fora do escopo
+- Resize livre por % (mantemos snap em colunas de 12 — suficiente e responsivo).
+- Configuração de breakpoints por campo (mantemos a regra fixa).
+- Drag entre "linhas" explícitas (linha é resultado do wrap natural do grid).
