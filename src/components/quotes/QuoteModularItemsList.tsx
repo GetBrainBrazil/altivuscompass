@@ -187,71 +187,84 @@ export function QuoteModularItemsList({ quoteId }: Props) {
         </div>
       ) : (
         <div className="rounded-lg border overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="min-w-[180px]">Item</TableHead>
-                <TableHead className="min-w-[200px]">Detalhes</TableHead>
-                <TableHead className="hidden md:table-cell">Categoria</TableHead>
-                <TableHead className="text-right w-[140px]">Preço un.</TableHead>
-                <TableHead className="text-right w-[80px]">Qtd</TableHead>
-                {discountsEnabled && (
-                  <TableHead className="text-right w-[180px]">Desconto</TableHead>
-                )}
-                <TableHead className="text-right w-[120px]">Total</TableHead>
-                <TableHead className="w-[40px]" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((it: any) => (
-                <ItemRow
-                  key={it.id}
-                  item={it}
-                  discountsEnabled={discountsEnabled}
-                  onEdit={() => navigate(`/quotes/${quoteId}/items/${it.id}`)}
-                  onChanged={() => refetch()}
-                />
-              ))}
-            </TableBody>
-            <TableFooter>
-              <TableRow>
-                <TableCell colSpan={3} className="text-xs text-muted-foreground">
-                  Total da cotação
-                </TableCell>
-                {discountsEnabled ? (
-                  <>
-                    <TableCell colSpan={2} className="text-right text-xs text-muted-foreground">
-                      Subtotal sem desconto {fmtBRL(itemsSubtotal)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <QuoteDiscountInput
-                        quoteId={quoteId}
-                        amount={Number(quote?.discount_amount ?? 0)}
-                        percent={Number(quote?.discount_percent ?? 0)}
-                        onChanged={() =>
-                          qc.invalidateQueries({ queryKey: ["quote-discount-cfg", quoteId] })
-                        }
-                      />
-                    </TableCell>
-                  </>
-                ) : (
-                  <TableCell colSpan={2} />
-                )}
-                <TableCell className="text-right">
-                  <div className="flex flex-col items-end leading-tight">
-                    <span className="font-semibold tabular-nums">{fmtBRL(grandTotal)}</span>
-                    {showTotalDiscount && (
-                      <span className="text-[10px] text-emerald-400 tabular-nums">
-                        −{fmtBRL(totalDiscount)}
-                        {totalDiscountPercent > 0.01 ? ` · ${totalDiscountPercent.toFixed(2)}%` : ""}
-                      </span>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell />
-              </TableRow>
-            </TableFooter>
-          </Table>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[32px]" />
+                  <TableHead className="min-w-[180px]">Item</TableHead>
+                  <TableHead className="min-w-[200px]">Detalhes</TableHead>
+                  <TableHead className="hidden md:table-cell">Categoria</TableHead>
+                  <TableHead className="text-right w-[140px]">Preço un.</TableHead>
+                  <TableHead className="text-right w-[80px]">Qtd</TableHead>
+                  {discountsEnabled && (
+                    <TableHead className="text-right w-[180px]">Desconto</TableHead>
+                  )}
+                  <TableHead className="text-right w-[120px]">Total</TableHead>
+                  <TableHead className="w-[40px]" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <SortableContext
+                  items={items.map((it: any) => it.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {items.map((it: any) => (
+                    <ItemRow
+                      key={it.id}
+                      item={it}
+                      discountsEnabled={discountsEnabled}
+                      onEdit={() => navigate(`/quotes/${quoteId}/items/${it.id}`)}
+                      onChanged={() => refetch()}
+                    />
+                  ))}
+                </SortableContext>
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell />
+                  <TableCell colSpan={3} className="text-xs text-muted-foreground">
+                    Total da cotação
+                  </TableCell>
+                  {discountsEnabled ? (
+                    <>
+                      <TableCell colSpan={2} className="text-right text-xs text-muted-foreground">
+                        Subtotal sem desconto {fmtBRL(itemsSubtotal)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <QuoteDiscountInput
+                          quoteId={quoteId}
+                          amount={Number(quote?.discount_amount ?? 0)}
+                          percent={Number(quote?.discount_percent ?? 0)}
+                          onChanged={() =>
+                            qc.invalidateQueries({ queryKey: ["quote-discount-cfg", quoteId] })
+                          }
+                        />
+                      </TableCell>
+                    </>
+                  ) : (
+                    <TableCell colSpan={2} />
+                  )}
+                  <TableCell className="text-right">
+                    <div className="flex flex-col items-end leading-tight">
+                      <span className="font-semibold tabular-nums">{fmtBRL(grandTotal)}</span>
+                      {showTotalDiscount && (
+                        <span className="text-[10px] text-emerald-400 tabular-nums">
+                          −{fmtBRL(totalDiscount)}
+                          {totalDiscountPercent > 0.01 ? ` · ${totalDiscountPercent.toFixed(2)}%` : ""}
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell />
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </DndContext>
         </div>
       )}
 
