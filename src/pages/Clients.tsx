@@ -966,6 +966,7 @@ export default function Clients() {
     setEditingId(null); setForm(emptyForm); setSelectedAirports([]); setSelectedTags([]); setSelectedDestinations([]); setActiveTab("contact");
     setPhones([]); setEmails([]); setSocials([]); setPassports([]); setMilesPrograms([]); setShowPasswords({});
     setLinkContactId(null); setContactLevel(null);
+    setPromoteFromPassengerId(null); setCpfMatchClient(null);
     setView("form");
   };
 
