@@ -518,7 +518,7 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
         onOpenChange={(o) => { if (!o) setImageViewer(null); }}
         attachment={imageViewer}
         taskId={clientId}
-        bucket={BUCKET}
+        bucket={imageViewer?.bucket || BUCKET}
         tableName="client_attachments"
         sizeColumn="size_bytes"
         invalidateKey={["client-attachments", clientId]}
