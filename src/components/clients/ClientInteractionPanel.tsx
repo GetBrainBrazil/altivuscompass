@@ -341,36 +341,13 @@ export function ClientInteractionPanel({ contactId, clientId }: Props) {
           rows={3}
           className="resize-y min-h-[80px] text-sm"
         />
-        {files.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {files.map((f, i) => (
-              <span key={i} className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-body">
-                <Paperclip className="h-3 w-3" />
-                <span className="max-w-[140px] truncate">{f.name}</span>
-                <button type="button" onClick={() => removeFile(i)} className="text-muted-foreground hover:text-destructive">
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
-        <div className="flex items-center justify-between gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-8 px-2 text-xs font-body"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Paperclip className="h-3.5 w-3.5 mr-1" /> Anexar
-          </Button>
-          <input ref={fileInputRef} type="file" multiple className="hidden" onChange={onPickFiles} />
+        <div className="flex items-center justify-end">
           <Button
             type="button"
             size="sm"
             className="h-8 px-3 text-xs font-body"
             onClick={submit}
-            disabled={submitting || (!content.trim() && files.length === 0)}
+            disabled={submitting || !content.trim()}
           >
             {submitting ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Send className="h-3.5 w-3.5 mr-1" />}
             Registrar
