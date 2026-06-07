@@ -1,6 +1,8 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { CurrencyInput } from "@/components/ui/currency-input";
+
 
 interface Props {
   quantity: number;
