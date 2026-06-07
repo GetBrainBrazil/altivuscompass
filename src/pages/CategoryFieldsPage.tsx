@@ -166,26 +166,11 @@ export default function CategoryFieldsPage() {
     onError: (e: any) => toast({ title: "Não foi possível excluir", description: e.message, variant: "destructive" }),
   });
 
-  const updateField = (idx: number, patch: Partial<CategoryField>) => {
-    setFields((prev) => prev.map((f, i) => (i === idx ? { ...f, ...patch } : f)));
-  };
-
-  const move = (idx: number, dir: -1 | 1) => {
-    setFields((prev) => {
-      const next = [...prev];
-      const j = idx + dir;
-      if (j < 0 || j >= next.length) return prev;
-      [next[idx], next[j]] = [next[j], next[idx]];
-      return next;
-    });
-  };
-
-  const remove = (idx: number) => setFields((prev) => prev.filter((_, i) => i !== idx));
   const addField = () => setFields((prev) => [...prev, newField(prev.map((f) => f.key))]);
   const applyTemplate = (key: keyof typeof SEED_TEMPLATES) => {
     const tpl = SEED_TEMPLATES[key];
     if (!tpl) return;
-    setFields(tpl.schema.map((f) => ({ ...f })));
+    setFields(normalize(tpl.schema.map((f) => ({ ...f }))));
     toast({ title: `Modelo "${tpl.label}" aplicado`, description: "Revise e salve para aplicar." });
   };
 
