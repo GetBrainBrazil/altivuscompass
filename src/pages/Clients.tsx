@@ -134,7 +134,11 @@ export default function Clients() {
   const [levelFilter, setLevelFilter] = useState<"all" | ContactLevel>("all");
   const [profileFilter, setProfileFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState<string[]>([]);
-  
+  const [pageSize, setPageSize] = useState<25 | 50 | 100 | "all">(25);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [allChunkSize, setAllChunkSize] = useState(50);
+  const scrollTriggerRef = useRef<HTMLDivElement>(null);
+
   const [sort, setSort] = useState<SortState>(null);
   const navigate = useNavigate();
   const [view, setView] = useState<"list" | "form">("list");
@@ -1030,6 +1034,36 @@ export default function Clients() {
         if (lr !== 0) return lr;
         return (a.full_name ?? "").localeCompare(b.full_name ?? "", "pt-BR", { sensitivity: "base" });
       });
+
+  const totalCount = filtered.length;
+
+  const paginatedData = useMemo(() => {
+    if (pageSize === "all") {
+      return filtered.slice(0, allChunkSize);
+    }
+    const start = (currentPage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, pageSize, currentPage, allChunkSize]);
+
+  const totalPages = pageSize === "all" ? 1 : Math.ceil(filtered.length / pageSize);
+
+  useEffect(() => {
+    setCurrentPage(1);
+    setAllChunkSize(50);
+  }, [search, levelFilter, profileFilter, tagFilter, sort, pageSize]);
+
+  useEffect(() => {
+    if (pageSize !== "all") return;
+    const el = scrollTriggerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && allChunkSize < filtered.length) {
+        setAllChunkSize((prev) => Math.min(prev + 50, filtered.length));
+      }
+    }, { rootMargin: "200px" });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [pageSize, allChunkSize, filtered.length]);
 
 
   const SortableHeader = ({ label, sortKey, className }: { label: string; sortKey: string; className?: string }) => {
@@ -2153,6 +2187,17 @@ export default function Clients() {
             )}
           </PopoverContent>
         </Popover>
+        <Select value={pageSize === "all" ? "all" : String(pageSize)} onValueChange={(v) => { setPageSize(v === "all" ? "all" : Number(v) as 25 | 50 | 100); setCurrentPage(1); setAllChunkSize(50); }}>
+          <SelectTrigger className="h-9 w-[140px] text-xs font-body">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="25">25 / página</SelectItem>
+            <SelectItem value="50">50 / página</SelectItem>
+            <SelectItem value="100">100 / página</SelectItem>
+            <SelectItem value="all">Todos</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Desktop table */}
@@ -2162,7 +2207,8 @@ export default function Clients() {
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground font-body">Nenhum cliente encontrado.</div>
         ) : (
-          <table className="w-full">
+          <>
+            <table className="w-full">
             <thead>
               <tr className="border-b border-border/50">
                 <th className="p-2 w-10"></th>
@@ -2181,7 +2227,7 @@ export default function Clients() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
-              {filtered.map((client: any) => {
+              {paginatedData.map((client: any) => {
                 const clientTravelersList = travelersByClient[client.id] ?? [];
                 const isExpanded = expandedClients.has(client.id);
                 const hasTravelers = clientTravelersList.length > 0;
@@ -2366,6 +2412,41 @@ export default function Clients() {
               })}
             </tbody>
           </table>
+          {pageSize !== "all" && totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border/50">
+              <span className="text-xs text-muted-foreground font-body">
+                Página {currentPage} de {totalPages} ({filtered.length} resultados)
+              </span>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs font-body" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
+                  Anterior
+                </Button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).slice(Math.max(0, currentPage - 4), currentPage + 3).map((p) => (
+                  <button key={p} onClick={() => setCurrentPage(p)}
+                    className={`h-7 w-7 rounded text-xs font-medium ${p === currentPage ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
+                    {p}
+                  </button>
+                ))}
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs font-body" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+                  Próxima
+                </Button>
+              </div>
+            </div>
+          )}
+          {pageSize === "all" && (
+            <>
+              {allChunkSize < filtered.length && (
+                <div ref={scrollTriggerRef} className="py-4 text-center">
+                  <span className="text-xs text-muted-foreground font-body">Carregando mais...</span>
+                </div>
+              )}
+              {allChunkSize >= filtered.length && filtered.length > 0 && (
+                <div className="py-2 text-center">
+                  <span className="text-xs text-muted-foreground font-body">{filtered.length} contatos carregados</span>
+                </div>
+              )}
+            </>
+          </>
         )}
       </div>
 
@@ -2376,7 +2457,7 @@ export default function Clients() {
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground font-body">Nenhum cliente encontrado.</div>
         ) : (
-          filtered.map((client: any) => {
+          paginatedData.map((client: any) => {
             const clientTravelersList = travelersByClient[client.id] ?? [];
             const isExpanded = expandedClients.has(client.id);
             const hasTravelers = clientTravelersList.length > 0;
@@ -2435,6 +2516,35 @@ export default function Clients() {
               </div>
             );
           })
+        )}
+        {pageSize !== "all" && totalPages > 1 && (
+          <div className="flex items-center justify-between px-2 py-3">
+            <span className="text-xs text-muted-foreground font-body">
+              Página {currentPage} de {totalPages}
+            </span>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs font-body" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
+                Anterior
+              </Button>
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs font-body" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+                Próxima
+              </Button>
+            </div>
+          </div>
+        )}
+        {pageSize === "all" && (
+          <>
+            {allChunkSize < filtered.length && (
+              <div ref={scrollTriggerRef} className="py-4 text-center">
+                <span className="text-xs text-muted-foreground font-body">Carregando mais...</span>
+              </div>
+            )}
+            {allChunkSize >= filtered.length && filtered.length > 0 && (
+              <div className="py-2 text-center">
+                <span className="text-xs text-muted-foreground font-body">{filtered.length} contatos carregados</span>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
