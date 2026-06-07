@@ -18,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus, ArrowLeft, Star, Trash2, AlertTriangle, AlertCircle, ShieldAlert, Info, ChevronRight, ChevronDown, Users, Eye, EyeOff, ExternalLink, Check, Search, CheckSquare, Bell } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus, ArrowLeft, Star, Trash2, AlertTriangle, AlertCircle, ShieldAlert, Info, ChevronRight, ChevronDown, Users, Eye, EyeOff, ExternalLink, Check, Search, CheckSquare, Bell, Paperclip } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCountries, useStates, useCities, useContinents, useCustomDestinations, useCustomDestinationItems } from "@/components/LocationsTab";
@@ -327,11 +327,12 @@ export default function Clients() {
   });
 
   // Active tasks + pending reminders per client/contact
-  const { data: activityCounts = { tasks: {} as Record<string, number>, reminders: {} as Record<string, number> } } = useQuery({
+  const { data: activityCounts = { tasks: {} as Record<string, number>, reminders: {} as Record<string, number>, attachments: {} as Record<string, number> } } = useQuery({
     queryKey: ["clients-activity-counts"],
     queryFn: async () => {
       const tasks: Record<string, number> = {};
       const reminders: Record<string, number> = {};
+      const attachments: Record<string, number> = {};
       const { data: tRows } = await supabase
         .from("tasks")
         .select("id, client_id, contact_id, status")
@@ -349,7 +350,13 @@ export default function Clients() {
         if (t?.client_id) reminders[`c:${t.client_id}`] = (reminders[`c:${t.client_id}`] ?? 0) + 1;
         if (t?.contact_id) reminders[`p:${t.contact_id}`] = (reminders[`p:${t.contact_id}`] ?? 0) + 1;
       }
-      return { tasks, reminders };
+      const { data: aRows } = await (supabase as any)
+        .from("client_attachments")
+        .select("client_id");
+      for (const a of ((aRows ?? []) as any[])) {
+        if (a.client_id) attachments[`c:${a.client_id}`] = (attachments[`c:${a.client_id}`] ?? 0) + 1;
+      }
+      return { tasks, reminders, attachments };
     },
     staleTime: 0,
   });
@@ -362,6 +369,9 @@ export default function Clients() {
         qc.invalidateQueries({ queryKey: ["clients-activity-counts"] });
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "task_reminders" }, () => {
+        qc.invalidateQueries({ queryKey: ["clients-activity-counts"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "client_attachments" }, () => {
         qc.invalidateQueries({ queryKey: ["clients-activity-counts"] });
       })
       .subscribe();
@@ -2267,7 +2277,8 @@ export default function Clients() {
                           const key = client._contactId ? `p:${client._contactId}` : `c:${client.id}`;
                           const tCount = activityCounts.tasks[key] ?? 0;
                           const rCount = activityCounts.reminders[key] ?? 0;
-                          if (tCount === 0 && rCount === 0) return <span className="text-xs text-muted-foreground">—</span>;
+                          const aCount = client._contactId ? 0 : (activityCounts.attachments[`c:${client.id}`] ?? 0);
+                          if (tCount === 0 && rCount === 0 && aCount === 0) return <span className="text-xs text-muted-foreground">—</span>;
                           return (
                             <div className="inline-flex items-center gap-2 text-xs font-body">
                               {tCount > 0 && (
@@ -2280,6 +2291,12 @@ export default function Clients() {
                                 <span className="inline-flex items-center gap-0.5 text-sky-600" title={`${rCount} lembrete(s) ativo(s)`}>
                                   <Bell className="h-3 w-3" />
                                   {rCount}
+                                </span>
+                              )}
+                              {aCount > 0 && (
+                                <span className="inline-flex items-center gap-0.5 text-foreground" title={`${aCount} anexo(s)`}>
+                                  <Paperclip className="h-3 w-3 text-muted-foreground" />
+                                  {aCount}
                                 </span>
                               )}
                             </div>
