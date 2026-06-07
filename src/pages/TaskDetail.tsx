@@ -67,6 +67,25 @@ export default function TaskDetail() {
   });
 
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const baselineRef = useRef<string>("");
+  const [confirmLeave, setConfirmLeave] = useState(false);
+
+  const snapshot = (f: typeof form, files: File[]) =>
+    JSON.stringify({
+      title: f.title,
+      description: f.description,
+      priority: f.priority,
+      status: f.status,
+      assigned_to: f.assigned_to,
+      quote_id: f.quote_id,
+      client_id: f.client_id,
+      due_date: f.due_date ? f.due_date.toISOString().slice(0, 10) : null,
+      start_date: f.start_date ? f.start_date.toISOString().slice(0, 10) : null,
+      files: files.length,
+    });
+
+  const isDirty = baselineRef.current !== "" && snapshot(form, pendingFiles) !== baselineRef.current;
+
 
   const { data: task, isLoading } = useQuery({
     queryKey: ["task", id],
