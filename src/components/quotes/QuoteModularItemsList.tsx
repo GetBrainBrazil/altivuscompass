@@ -198,20 +198,24 @@ export function QuoteModularItemsList({ quoteId }: Props) {
                 <TableCell colSpan={3} className="text-xs text-muted-foreground">
                   Total da cotação
                 </TableCell>
-                <TableCell colSpan={discountsEnabled ? 2 : 2} className="text-right text-xs text-muted-foreground">
-                  Subtotal {fmtBRL(itemsSubtotal)}
-                </TableCell>
-                {discountsEnabled && (
-                  <TableCell className="text-right">
-                    <QuoteDiscountInput
-                      quoteId={quoteId}
-                      amount={Number(quote?.discount_amount ?? 0)}
-                      percent={Number(quote?.discount_percent ?? 0)}
-                      onChanged={() =>
-                        qc.invalidateQueries({ queryKey: ["quote-discount-cfg", quoteId] })
-                      }
-                    />
-                  </TableCell>
+                {discountsEnabled ? (
+                  <>
+                    <TableCell colSpan={2} className="text-right text-xs text-muted-foreground">
+                      Subtotal {fmtBRL(itemsSubtotal)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <QuoteDiscountInput
+                        quoteId={quoteId}
+                        amount={Number(quote?.discount_amount ?? 0)}
+                        percent={Number(quote?.discount_percent ?? 0)}
+                        onChanged={() =>
+                          qc.invalidateQueries({ queryKey: ["quote-discount-cfg", quoteId] })
+                        }
+                      />
+                    </TableCell>
+                  </>
+                ) : (
+                  <TableCell colSpan={2} />
                 )}
                 <TableCell className="text-right font-semibold">{fmtBRL(grandTotal)}</TableCell>
                 <TableCell />
