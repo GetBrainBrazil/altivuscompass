@@ -2410,7 +2410,7 @@ export default function Clients() {
               })}
             </tbody>
           </table>
-          {pageSize !== "all" && totalPages > 1 && (
+          {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-border/50">
               <span className="text-xs text-muted-foreground font-body">
                 Página {currentPage} de {totalPages} ({filtered.length} resultados)
@@ -2430,20 +2430,6 @@ export default function Clients() {
                 </Button>
               </div>
             </div>
-          )}
-          {pageSize === "all" && (
-            <>
-              {allChunkSize < filtered.length && (
-                <div ref={scrollTriggerRef} className="py-4 text-center">
-                  <span className="text-xs text-muted-foreground font-body">Carregando mais...</span>
-                </div>
-              )}
-              {allChunkSize >= filtered.length && filtered.length > 0 && (
-                <div className="py-2 text-center">
-                  <span className="text-xs text-muted-foreground font-body">{filtered.length} contatos carregados</span>
-                </div>
-              )}
-            </>
           )}
           </>
         )}
