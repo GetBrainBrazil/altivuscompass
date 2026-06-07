@@ -81,33 +81,65 @@ export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
     },
   });
 
-  const addReminder = useMutation({
+  const resetDraft = () => {
+    const d = defaultDate();
+    setDraftDate(format(d, "yyyy-MM-dd"));
+    setDraftTime(format(d, "HH:mm"));
+    setDraftChannels(["system"]);
+    setDraftMsg("");
+  };
+
+  const startEdit = (r: Reminder) => {
+    const d = new Date(r.remind_at);
+    setDraftDate(format(d, "yyyy-MM-dd"));
+    setDraftTime(format(d, "HH:mm"));
+    setDraftChannels(r.channels?.length ? r.channels : ["system"]);
+    setDraftMsg(r.message ?? "");
+    setEditingId(r.id);
+    setAdding(false);
+  };
+
+  const cancelForm = () => {
+    setAdding(false);
+    setEditingId(null);
+    resetDraft();
+  };
+
+  const saveReminder = useMutation({
     mutationFn: async () => {
       if (!user?.id) return;
       const remindAt = new Date(`${draftDate}T${draftTime}:00`);
       if (isNaN(remindAt.getTime())) throw new Error("Data/hora inválida");
       const channels = draftChannels.includes("system") ? draftChannels : ["system", ...draftChannels];
-      const { error } = await supabase.from("task_reminders").insert({
-        task_id: taskId,
-        user_id: user.id,
-        remind_at: remindAt.toISOString(),
-        channels,
-        message: draftMsg.trim() || null,
-        status: "pending",
-      });
-      if (error) throw error;
+      if (editingId) {
+        const { error } = await supabase
+          .from("task_reminders")
+          .update({
+            remind_at: remindAt.toISOString(),
+            channels,
+            message: draftMsg.trim() || null,
+          })
+          .eq("id", editingId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("task_reminders").insert({
+          task_id: taskId,
+          user_id: user.id,
+          remind_at: remindAt.toISOString(),
+          channels,
+          message: draftMsg.trim() || null,
+          status: "pending",
+        });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["task-reminders", taskId] });
-      const d = defaultDate();
-      setDraftDate(format(d, "yyyy-MM-dd"));
-      setDraftTime(format(d, "HH:mm"));
-      setDraftChannels(["system"]);
-      setDraftMsg("");
-      setAdding(false);
-      toast({ title: "Lembrete criado" });
+      const wasEditing = !!editingId;
+      cancelForm();
+      toast({ title: wasEditing ? "Lembrete atualizado" : "Lembrete criado" });
     },
-    onError: (e: any) => toast({ title: "Erro ao criar lembrete", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: "Erro ao salvar lembrete", description: e.message, variant: "destructive" }),
   });
 
   const removeReminder = useMutation({
