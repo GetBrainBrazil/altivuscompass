@@ -106,6 +106,16 @@ export default function Tasks() {
     },
   });
 
+  const { data: attachmentCounts = {} } = useQuery({
+    queryKey: ["task-attachment-counts"],
+    queryFn: async () => {
+      const { data } = await supabase.from("task_attachments").select("task_id");
+      const counts: Record<string, number> = {};
+      (data ?? []).forEach((r: any) => { counts[r.task_id] = (counts[r.task_id] ?? 0) + 1; });
+      return counts;
+    },
+  });
+
   const { data: reminders = [] } = useQuery({
     queryKey: ["task-reminders", user?.id],
     queryFn: async () => {
