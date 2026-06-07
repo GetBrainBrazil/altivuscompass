@@ -89,7 +89,7 @@ export function ProductSearchDialog({ open, onOpenChange, quoteId }: Props) {
   const handleClose = () => {
     setQuery("");
     setNewProductOpen(false);
-    setNoProductOpen(false);
+    
     onOpenChange(false);
   };
 
