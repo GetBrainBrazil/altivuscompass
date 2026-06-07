@@ -16,7 +16,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Paperclip, Upload, Download, Trash2, FileText, FileImage, File as FileIcon, Loader2 } from "lucide-react";
 import { ImageViewerDialog, ViewerAttachment } from "@/components/ImageViewerDialog";
+import { PdfViewerDialog } from "@/components/PdfViewerDialog";
 import { cn } from "@/lib/utils";
+
+function isPdf(type?: string | null, name?: string) {
+  if (type === "application/pdf") return true;
+  if (name && /\.pdf$/i.test(name)) return true;
+  return false;
+}
 
 function isImage(type?: string | null, name?: string) {
   if (type?.startsWith("image/")) return true;
@@ -53,6 +60,7 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [viewer, setViewer] = useState<ViewerAttachment | null>(null);
+  const [pdfViewer, setPdfViewer] = useState<{ filePath: string | null; fileName: string; pendingFile?: File | null } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; path: string; name: string; type?: string | null; pending?: boolean; pendingIndex?: number; file?: File } | null>(null);
   const [confirmThumb, setConfirmThumb] = useState<string | null>(null);
 
@@ -223,14 +231,16 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
                     type="button"
                     onClick={() => {
                       if (img) openImage(a);
-                      else handleDownload(a.file_path, a.file_name);
+                      else if (isPdf(a.file_type, a.file_name)) {
+                        setPdfViewer({
+                          filePath: a._pending ? null : a.file_path,
+                          fileName: a.file_name,
+                          pendingFile: a._pending ? a._file : null,
+                        });
+                      } else handleDownload(a.file_path, a.file_name);
                     }}
-                    className={cn(
-                      "flex-1 truncate text-left",
-                      img && "hover:underline cursor-pointer",
-                      !img && "hover:underline cursor-pointer",
-                    )}
-                    title={img ? "Visualizar imagem" : "Abrir em nova guia"}
+                    className={cn("flex-1 truncate text-left hover:underline cursor-pointer")}
+                    title={img ? "Visualizar imagem" : isPdf(a.file_type, a.file_name) ? "Visualizar PDF" : "Abrir em nova guia"}
                   >
                     {a.file_name}
                   </button>
@@ -271,6 +281,13 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
         taskId={taskId}
         pending={pending}
         onPendingChange={onPendingChange}
+      />
+      <PdfViewerDialog
+        open={!!pdfViewer}
+        onOpenChange={(v) => !v && setPdfViewer(null)}
+        filePath={pdfViewer?.filePath ?? null}
+        fileName={pdfViewer?.fileName ?? ""}
+        pendingFile={pdfViewer?.pendingFile ?? null}
       />
 
       <AlertDialog open={!!confirmDelete} onOpenChange={(v) => !v && setConfirmDelete(null)}>
