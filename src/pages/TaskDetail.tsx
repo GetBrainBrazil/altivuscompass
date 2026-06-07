@@ -130,7 +130,7 @@ export default function TaskDetail() {
 
   useEffect(() => {
     if (task) {
-      setForm({
+      const next = {
         title: task.title ?? "",
         description: task.description ?? "",
         priority: task.priority ?? "medium",
@@ -140,12 +140,33 @@ export default function TaskDetail() {
         client_id: task.client_id ?? "none",
         due_date: task.due_date ? new Date(task.due_date) : null,
         start_date: task.start_date ? new Date(task.start_date) : new Date(),
-      });
+      };
+      setForm(next);
+      baselineRef.current = snapshot(next, []);
     } else if (isNew && user?.id && !form.assigned_to) {
-      setForm((f) => ({ ...f, assigned_to: user.id }));
+      const next = { ...form, assigned_to: user.id };
+      setForm(next);
+      baselineRef.current = snapshot(next, []);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task, isNew, user?.id]);
+
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!isDirty) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
+  const goBack = () => navigate("/tasks");
+  const handleBack = () => {
+    if (isDirty) setConfirmLeave(true);
+    else goBack();
+  };
+
 
   const assigneePhone = (profiles as any[]).find((p) => p.user_id === form.assigned_to)?.phone ?? null;
   const assigneeHasWhatsapp = isValidPhoneLength(assigneePhone);
