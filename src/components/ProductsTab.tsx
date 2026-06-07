@@ -103,9 +103,11 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState<any>({
     name: "", description: "", category_id: "", supplier_id: "",
-    currency: "BRL", cost: "", sale_price: "", commission_percent: "",
+    markup_type: "percent" as "percent" | "fixed",
+    markup_percent: "", markup_fixed: "",
     notes: "", is_active: true,
   });
+
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["products"],
