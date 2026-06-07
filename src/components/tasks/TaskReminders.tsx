@@ -18,6 +18,7 @@ interface Props {
   taskId: string;
   assigneePhone?: string | null;
   assigneeName?: string | null;
+  autoOpenIfEmpty?: boolean;
 }
 
 type Reminder = {
