@@ -13,6 +13,7 @@ import {
   MessageSquare, History, FileText, Loader2, X, Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ClientTasksPanel } from "./ClientTasksPanel";
 
 type Kind = "note" | "call" | "email" | "meeting" | "other";
 
