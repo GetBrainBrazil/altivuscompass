@@ -173,15 +173,8 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
     if (list.length) uploadFiles(list);
   };
 
-  const onOpen = async (row: AttachmentRow) => {
-    const { data, error } = await supabase.storage
-      .from(BUCKET)
-      .createSignedUrl(row.file_path, 60 * 60);
-    if (error || !data?.signedUrl) {
-      toast({ title: "Não foi possível abrir o anexo", variant: "destructive" });
-      return;
-    }
-    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  const onOpen = (row: AttachmentRow) => {
+    setPreviewRow(row);
   };
 
   const confirmDelete = async () => {
