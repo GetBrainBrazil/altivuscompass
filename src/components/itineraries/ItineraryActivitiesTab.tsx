@@ -72,7 +72,7 @@ export default function ItineraryActivitiesTab({ itineraryId }: Props) {
         {items.map((a: any) => (
           <TableRow key={a.id}>
             <TableCell><Input defaultValue={a.activity_name} onBlur={(e) => updateField(a.id, "activity_name", e.target.value)} className="h-8 text-xs" /></TableCell>
-            <TableCell><Input type="number" step="0.01" defaultValue={a.approx_price || ""} onBlur={(e) => updateField(a.id, "approx_price", e.target.value)} className="h-8 text-xs" /></TableCell>
+            <TableCell><CurrencyInput value={a.approx_price ?? null} onChange={(v) => updateField(a.id, "approx_price", v == null ? "" : String(v))} className="h-8 text-xs" /></TableCell>
             <TableCell><Input defaultValue={a.avg_duration || ""} onBlur={(e) => updateField(a.id, "avg_duration", e.target.value)} className="h-8 text-xs" /></TableCell>
             <TableCell><Input defaultValue={a.period || ""} onBlur={(e) => updateField(a.id, "period", e.target.value)} className="h-8 text-xs" /></TableCell>
             <TableCell><Input defaultValue={a.description || ""} onBlur={(e) => updateField(a.id, "description", e.target.value)} className="h-8 text-xs" /></TableCell>
