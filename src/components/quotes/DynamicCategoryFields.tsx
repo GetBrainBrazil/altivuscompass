@@ -355,6 +355,10 @@ function FieldRenderer({
         value && typeof value === "object"
           ? value
           : { mochila: 0, mao: 0, despachada: 0 };
+      const normalizePart = (raw: unknown) => {
+        const n = typeof raw === "number" ? raw : Number(raw ?? 0);
+        return Number.isFinite(n) ? Math.max(0, Math.trunc(n)) : 0;
+      };
       const setPart = (k: string, n: number) =>
         onChange({ ...v, [k]: Number.isFinite(n) ? n : 0 });
       const parts: Array<{ key: "mochila" | "mao" | "despachada"; lbl: string; full: string }> = [
@@ -367,7 +371,7 @@ function FieldRenderer({
           {label}
           <div className="grid grid-cols-3 gap-1">
             {parts.map((p) => {
-              const cur = Number((v as any)[p.key] ?? 0);
+              const cur = normalizePart((v as any)[p.key]);
               return (
                 <Tooltip key={p.key}>
                   <TooltipTrigger asChild>
@@ -376,19 +380,19 @@ function FieldRenderer({
                         {p.lbl}
                       </span>
                       <Input
-                        type="number"
+                        type="text"
                         inputMode="numeric"
-                        min={0}
-                        step={1}
-                        value={cur}
+                        pattern="[0-9]*"
+                        value={cur > 0 ? String(cur) : ""}
+                        placeholder=""
                         onFocus={(e) => e.currentTarget.select()}
                         onChange={(e) => {
-                          const raw = e.target.value;
-                          if (raw === "") return setPart(p.key, 0);
-                          const n = parseInt(raw, 10);
+                          const digits = e.target.value.replace(/\D+/g, "");
+                          if (!digits) return setPart(p.key, 0);
+                          const n = parseInt(digits, 10);
                           setPart(p.key, Number.isNaN(n) ? 0 : Math.max(0, n));
                         }}
-                        className="h-8 text-xs pl-[52px] pr-1.5 text-right text-foreground"
+                        className="h-8 text-xs pl-[52px] pr-2 text-right text-foreground [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                       />
                     </div>
                   </TooltipTrigger>
