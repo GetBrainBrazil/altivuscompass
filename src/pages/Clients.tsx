@@ -134,7 +134,11 @@ export default function Clients() {
   const [levelFilter, setLevelFilter] = useState<"all" | ContactLevel>("all");
   const [profileFilter, setProfileFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState<string[]>([]);
-  
+  const [pageSize, setPageSize] = useState<25 | 50 | 100 | "all">(25);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [allChunkSize, setAllChunkSize] = useState(50);
+  const scrollTriggerRef = useRef<HTMLDivElement>(null);
+
   const [sort, setSort] = useState<SortState>(null);
   const navigate = useNavigate();
   const [view, setView] = useState<"list" | "form">("list");
