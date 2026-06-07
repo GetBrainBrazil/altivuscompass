@@ -2411,6 +2411,7 @@ export default function Clients() {
               })}
             </tbody>
           </table>
+          </div>
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-border/50">
               <span className="text-xs text-muted-foreground font-body">
