@@ -73,7 +73,7 @@ export function ImageViewerDialog({
         setSrc(url);
       } else {
         const { data } = await supabase.storage
-          .from("task-attachments")
+          .from(bucket)
           .createSignedUrl((attachment as SavedAttachment).file_path, 60 * 10);
         setSrc(data?.signedUrl ?? null);
       }
