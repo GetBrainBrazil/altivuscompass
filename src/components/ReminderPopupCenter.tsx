@@ -148,9 +148,15 @@ export function ReminderPopupCenter() {
                   {item.message}
                 </p>
               )}
-              <div className="mt-2 flex gap-2">
+              <div className="mt-2 flex flex-wrap gap-1.5">
                 <Button size="sm" className="h-7 text-xs" onClick={() => openTask(item)}>
-                  <ExternalLink size={12} className="mr-1" /> Abrir tarefa
+                  <ExternalLink size={12} className="mr-1" /> Abrir
+                </Button>
+                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => snooze(item, 30)}>
+                  <Clock size={12} className="mr-1" /> Adiar 30min
+                </Button>
+                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => complete(item)}>
+                  <Check size={12} className="mr-1" /> Concluído
                 </Button>
                 <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => dismiss(item.id)}>
                   Dispensar
