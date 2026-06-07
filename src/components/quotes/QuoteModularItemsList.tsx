@@ -371,8 +371,31 @@ function ItemRow({ item, discountsEnabled, onEdit, onChanged }: ItemRowProps) {
   const categoryName =
     item.products?.product_categories?.name ?? ITEM_TYPE_LABEL[item.item_type] ?? item.item_type;
 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.id,
+  });
+  const rowStyle: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : undefined,
+    position: isDragging ? "relative" : undefined,
+    zIndex: isDragging ? 5 : undefined,
+  };
+
   return (
-    <TableRow>
+    <TableRow ref={setNodeRef} style={rowStyle}>
+      <TableCell className="align-top w-[32px] p-1">
+        <button
+          type="button"
+          className="h-7 w-7 inline-flex items-center justify-center text-muted-foreground/70 hover:text-foreground cursor-grab active:cursor-grabbing touch-none"
+          title="Arrastar para reordenar"
+          aria-label="Arrastar para reordenar"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="w-3.5 h-3.5" />
+        </button>
+      </TableCell>
       <TableCell className="font-medium align-top">
         <button
           type="button"
