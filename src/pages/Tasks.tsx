@@ -709,6 +709,7 @@ export default function Tasks() {
               {filteredTasks.map((task: any) => {
                 const status = STATUS_CONFIG[task.status] ?? STATUS_CONFIG.pending;
                 const priority = PRIORITY_CONFIG[task.priority] ?? PRIORITY_CONFIG.medium;
+                const isDueToday = task.due_date && !task.completed_at && (parseLocalDate(task.due_date)?.getTime() ?? Infinity) === new Date(new Date().setHours(0,0,0,0)).getTime();
                 const isOverdue = task.due_date && !task.completed_at && (parseLocalDate(task.due_date)?.getTime() ?? Infinity) < new Date(new Date().setHours(0,0,0,0)).getTime();
 
                 return (
