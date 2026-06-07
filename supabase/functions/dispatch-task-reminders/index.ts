@@ -29,46 +29,22 @@ function normalizePhone(raw: string | null | undefined): string | null {
 async function sendWhatsApp(
   phone: string,
   message: string,
-  links?: { complete: string; snooze: string } | null,
 ): Promise<{ ok: boolean; error?: string }> {
   const id = Deno.env.get('ZAPI_INSTANCE_ID')
   const token = Deno.env.get('ZAPI_TOKEN')
   const sec = Deno.env.get('ZAPI_SECURITY_TOKEN')
   if (!id || !token || !sec) return { ok: false, error: 'Z-API não configurada' }
 
-  const useButtons =
-    !!links &&
-    links.complete.startsWith('https://') &&
-    links.snooze.startsWith('https://')
-
-  async function postZapi(endpoint: string, body: any) {
-    const res = await fetch(`${ZAPI_BASE_URL}/instances/${id}/token/${token}/${endpoint}`, {
+  try {
+    const res = await fetch(`${ZAPI_BASE_URL}/instances/${id}/token/${token}/send-text`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Client-Token': sec },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ phone, message }),
     })
-    const txt = await res.text().catch(() => '')
-    return { ok: res.ok, status: res.status, body: txt }
-  }
-
-  try {
-    if (useButtons) {
-      const r = await postZapi('send-button-actions', {
-        phone,
-        message,
-        title: '🔔 Lembrete de tarefa',
-        footer: 'Altivus Compass',
-        buttonActions: [
-          { id: '1', type: 'URL', url: links!.complete, label: '✅ Concluir' },
-          { id: '2', type: 'URL', url: links!.snooze, label: '⏰ Adiar 30 min' },
-        ],
-      })
-      if (r.ok) return { ok: true }
-      // Fallback automático para texto simples se botões falharem
-      console.log(`[zapi] send-button-actions falhou (${r.status}): ${r.body.slice(0, 200)} — fallback para send-text`)
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '')
+      return { ok: false, error: `Z-API ${res.status}: ${txt.slice(0, 200)}` }
     }
-    const r2 = await postZapi('send-text', { phone, message })
-    if (!r2.ok) return { ok: false, error: `Z-API ${r2.status}: ${r2.body.slice(0, 200)}` }
     return { ok: true }
   } catch (e: any) {
     return { ok: false, error: e?.message ?? 'erro ao enviar WhatsApp' }
