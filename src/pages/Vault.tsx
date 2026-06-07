@@ -566,16 +566,19 @@ export default function Vault() {
         </div>
       )}
 
-      {/* Form Dialog */}
-      <Dialog open={formOpen} onOpenChange={(o) => (o ? setFormOpen(true) : closeForm())}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="font-display">
+      {/* Inline Form Panel */}
+      {formOpen && (
+        <div className="border border-border rounded-lg bg-card shadow-sm">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <h2 className="font-display text-lg text-foreground">
               {editingItem ? "Editar Item" : "Novo Item do Cofre"}
-            </DialogTitle>
-          </DialogHeader>
+            </h2>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={closeForm}>
+              <X size={16} />
+            </Button>
+          </div>
 
-          <div className="space-y-4">
+          <div className="p-4 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="font-body text-xs">Título *</Label>
@@ -763,7 +766,7 @@ export default function Vault() {
             )}
           </div>
 
-          <DialogFooter className="sm:justify-between gap-2">
+          <div className="flex items-center justify-between gap-2 px-4 py-3 border-t border-border bg-muted/20">
             <div>
               {editingItem && editingItem.created_by === currentUserId && (
                 <Button
@@ -783,9 +786,10 @@ export default function Vault() {
                 {saveMutation.isPending ? "Salvando..." : "Salvar"}
               </Button>
             </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      )}
+
 
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>
