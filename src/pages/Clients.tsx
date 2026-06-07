@@ -27,6 +27,7 @@ import { ImageEditor } from "@/components/ImageEditor";
 import { ClientTravelersTab } from "@/components/ClientTravelersTab";
 import ClientConversationsTab from "@/components/ClientConversationsTab";
 import { ClientInteractionPanel } from "@/components/clients/ClientInteractionPanel";
+import { ClientAttachments } from "@/components/clients/ClientAttachments";
 import { ListSkeleton, TableSkeleton } from "@/components/ui/loading-skeletons";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccessFeature } from "@/lib/permissions";
@@ -1756,6 +1757,8 @@ export default function Clients() {
                     );
                   })}
                 </div>
+
+                <ClientAttachments clientId={editingId} />
               </TabsContent>
 
               {/* Address Tab */}
