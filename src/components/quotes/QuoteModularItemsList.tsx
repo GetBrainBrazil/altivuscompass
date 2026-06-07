@@ -124,6 +124,9 @@ export function QuoteModularItemsList({ quoteId }: Props) {
     return amt;
   })();
   const grandTotal = Math.max(0, afterItemDiscount - quoteDiscountValue);
+  const totalDiscount = itemsSubtotal - grandTotal;
+  const totalDiscountPercent = itemsSubtotal > 0 ? (totalDiscount / itemsSubtotal) * 100 : 0;
+  const showTotalDiscount = totalDiscount > 0.01;
 
   return (
     <div className="space-y-3">
