@@ -101,7 +101,7 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState<any>({
-    name: "", description: "", category_id: "", supplier_id: "", sku: "",
+    name: "", description: "", category_id: "", supplier_id: "",
     currency: "BRL", cost: "", sale_price: "", commission_percent: "",
     notes: "", is_active: true,
   });
@@ -143,7 +143,6 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
         description: form.description || null,
         category_id: form.category_id || null,
         supplier_id: form.supplier_id || null,
-        sku: form.sku || null,
         currency: form.currency,
         cost: form.cost === "" ? null : Number(form.cost),
         sale_price: form.sale_price === "" ? null : Number(form.sale_price),
@@ -211,7 +210,7 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
     setDialogOpen(false);
     setEditing(null);
     setForm({
-      name: "", description: "", category_id: "", supplier_id: "", sku: "",
+      name: "", description: "", category_id: "", supplier_id: "",
       currency: "BRL", cost: "", sale_price: "", commission_percent: "",
       notes: "", is_active: true,
     });
@@ -224,7 +223,6 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
       description: p.description || "",
       category_id: p.category_id || "",
       supplier_id: p.supplier_id || "",
-      sku: p.sku || "",
       currency: p.currency || "BRL",
       cost: p.cost ?? "",
       sale_price: p.sale_price ?? "",
@@ -236,7 +234,7 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
   };
 
   const filtered = products.filter((p: any) =>
-    [p.name, p.sku, p.description, p.product_categories?.name, p.suppliers?.name].some((f: string) =>
+    [p.name, p.description, p.product_categories?.name, p.suppliers?.name].some((f: string) =>
       f?.toLowerCase().includes(search.toLowerCase())
     )
   );
@@ -264,9 +262,8 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>{editing ? "Editar Produto" : "Novo Produto"}</DialogTitle></DialogHeader>
             <div className="grid gap-4 py-2">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="sm:col-span-2"><Label>Nome <span className="text-destructive">*</span></Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ex: Transfer aeroporto GRU" /></div>
-                <div><Label>SKU/Código</Label><Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="PRD-001" /></div>
+              <div className="grid grid-cols-1 gap-3">
+                <div><Label>Nome <span className="text-destructive">*</span></Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ex: Transfer aeroporto GRU" /></div>
               </div>
               <div><Label>Descrição</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} /></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -387,7 +384,6 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
                 >
                   <TableCell>
                     <div className="font-medium">{p.name}</div>
-                    {p.sku && <div className="text-xs text-muted-foreground font-mono">{p.sku}</div>}
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-muted-foreground">{p.product_categories?.name || "—"}</TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground">{p.suppliers?.name || "—"}</TableCell>
