@@ -2638,6 +2638,12 @@ export default function Quotes() {
               })()}
             </TabsContent>
 
+            <TabsContent value="modular" className="mt-3">
+              <QuoteModularItemsList quoteId={editingQuote?.id ?? null} />
+            </TabsContent>
+
+
+
             {ITEM_TYPES.map((type) => (
               <TabsContent key={type.id} value={type.id} className="mt-3 space-y-2">
                 <QuoteOptionsManager<QuoteItem>
