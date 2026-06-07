@@ -913,9 +913,16 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                 </div>
               </div>
             )}
-            <Button onClick={() => savePassengerMutation.mutate()} disabled={!passengerForm.full_name || (!!passengerForm.cpf && !isValidCPF(passengerForm.cpf)) || savePassengerMutation.isPending} className="font-body">
-              {savePassengerMutation.isPending ? "Salvando..." : "Salvar"}
-            </Button>
+            <div className="flex gap-2">
+              {editingPassenger?.id && (
+                <Button type="button" variant="outline" className="font-body text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive" onClick={() => { setPassengerDialog(false); setDeletePassengerId(editingPassenger.id); }}>
+                  Excluir
+                </Button>
+              )}
+              <Button onClick={() => savePassengerMutation.mutate()} disabled={!passengerForm.full_name || (!!passengerForm.cpf && !isValidCPF(passengerForm.cpf)) || savePassengerMutation.isPending} className="font-body flex-1">
+                {savePassengerMutation.isPending ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
