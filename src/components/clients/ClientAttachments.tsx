@@ -10,6 +10,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ImageViewerDialog, ViewerAttachment } from "@/components/ImageViewerDialog";
 import { cn } from "@/lib/utils";
 
 interface AttachmentRow {
