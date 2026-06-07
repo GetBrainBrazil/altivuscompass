@@ -2079,8 +2079,7 @@ export default function Clients() {
                 onClick={(e) => {
                   e.preventDefault();
                   setConfirmCloseOpen(false);
-                  shouldGoBackRef.current = true;
-                  saveMutation.mutate();
+                  handleSaveClick(true);
                 }}
               >
                 Salvar e voltar
