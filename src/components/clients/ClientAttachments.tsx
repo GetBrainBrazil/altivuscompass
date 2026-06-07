@@ -382,6 +382,18 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
         </DialogContent>
       </Dialog>
 
+      <ImageViewerDialog
+        open={!!imageViewer}
+        onOpenChange={(o) => { if (!o) setImageViewer(null); }}
+        attachment={imageViewer}
+        taskId={clientId}
+        bucket={BUCKET}
+        tableName="client_attachments"
+        sizeColumn="size_bytes"
+        invalidateKey={["client-attachments", clientId]}
+      />
+
+
 
       <AlertDialog open={!!pendingDelete} onOpenChange={(o) => { if (!o) setPendingDelete(null); }}>
         <AlertDialogContent>
