@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import QuoteItemCommercialFields from "@/components/quotes/QuoteItemCommercialFields";
 import QuoteItemSupplierFields from "@/components/quotes/QuoteItemSupplierFields";
+import QuoteItemProductPicker from "@/components/quotes/QuoteItemProductPicker";
 import QuoteItemAttachments from "@/components/quotes/QuoteItemAttachments";
 
 import QuoteOptionsManager from "@/components/quotes/QuoteOptionsManager";
@@ -126,6 +127,7 @@ type QuoteItem = {
   commission_status?: string | null;
   attachment_urls?: string[] | null;
   external_url?: string | null;
+  product_id?: string | null;
   // Option grouping fields
   option_group?: string | null;
   option_label?: string | null;
@@ -957,6 +959,7 @@ export default function Quotes() {
             commission_status: item.commission_status || "pending",
             attachment_urls: item.attachment_urls ?? [],
             external_url: item.external_url || null,
+            product_id: item.product_id || null,
             option_group: item.option_group ?? null,
             option_label: item.option_label ?? null,
             option_order: item.option_order ?? null,
@@ -1635,6 +1638,7 @@ export default function Quotes() {
       commission_status: "pending",
       attachment_urls: [],
       external_url: null,
+      product_id: null,
       ...(extra || {}),
     }]);
   };
@@ -3227,6 +3231,18 @@ export default function Quotes() {
 
                       {/* Commercial fields shared across all item types */}
                       <div className="px-3 pb-3 space-y-3">
+                        <QuoteItemProductPicker
+                          itemType={item.item_type}
+                          productId={item.product_id ?? null}
+                          onSelect={(patch) =>
+                            updateItem(globalIdx, {
+                              product_id: patch.product_id,
+                              ...(patch.title && !item.title ? { title: patch.title } : {}),
+                              ...(patch.unit_cost !== undefined && !item.unit_cost ? { unit_cost: patch.unit_cost } : {}),
+                              ...(patch.unit_price !== undefined && !item.unit_price ? { unit_price: patch.unit_price } : {}),
+                            })
+                          }
+                        />
                         <QuoteItemCommercialFields
                           quantity={Number(item.quantity ?? 1)}
                           unitCost={Number(item.unit_cost ?? 0)}
