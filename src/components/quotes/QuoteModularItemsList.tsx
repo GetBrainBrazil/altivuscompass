@@ -106,6 +106,30 @@ export function QuoteModularItemsList({ quoteId }: Props) {
     },
   });
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  async function handleDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIdx = items.findIndex((it: any) => it.id === active.id);
+    const newIdx = items.findIndex((it: any) => it.id === over.id);
+    if (oldIdx < 0 || newIdx < 0) return;
+    const reordered = arrayMove(items as any[], oldIdx, newIdx);
+    // Optimistic update
+    qc.setQueryData(["quote-modular-items", quoteId], reordered);
+    // Persist sort_order sequentially (1-based)
+    await Promise.all(
+      reordered.map((it: any, idx: number) =>
+        supabase.from("quote_items").update({ sort_order: idx + 1 }).eq("id", it.id)
+      )
+    );
+    refetch();
+  }
+
+
   if (!quoteId) {
     return (
       <div className="rounded-lg border border-dashed border-border p-8 text-center">
