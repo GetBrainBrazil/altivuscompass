@@ -162,42 +162,6 @@ export function ProductSearchDialog({ open, onOpenChange, quoteId }: Props) {
     await createItemFromProduct(data as Product, cat);
   };
 
-  const handleCreateWithoutProduct = async () => {
-    if (!noProductCategory) {
-      toast({ title: "Escolha uma categoria", variant: "destructive" });
-      return;
-    }
-    setCreating(true);
-    const cat = categories.find((c) => c.id === noProductCategory) ?? null;
-    const itemType = deriveItemTypeFromCategoryName(cat?.name);
-    const { data: maxRow } = await supabase
-      .from("quote_items")
-      .select("sort_order")
-      .eq("quote_id", quoteId)
-      .order("sort_order", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    const nextSort = (maxRow?.sort_order ?? -1) + 1;
-    const { data, error } = await supabase
-      .from("quote_items")
-      .insert({
-        quote_id: quoteId,
-        item_type: itemType,
-        title: cat?.name ?? "Novo item",
-        quantity: 1,
-        details: {},
-        sort_order: nextSort,
-      })
-      .select("id")
-      .single();
-    setCreating(false);
-    if (error || !data) {
-      toast({ title: "Erro ao criar item", description: error?.message, variant: "destructive" });
-      return;
-    }
-    handleClose();
-    navigate(`/quotes/${quoteId}/items/${data.id}`);
-  };
 
   return (
     <>
