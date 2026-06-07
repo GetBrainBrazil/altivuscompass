@@ -2002,8 +2002,23 @@ export default function Clients() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel className="font-body">Cancelar</AlertDialogCancel>
-              <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-body" onClick={() => { setConfirmCloseOpen(false); performGoToList(); }}>
+              <AlertDialogAction
+                className="bg-muted text-foreground hover:bg-muted/80 font-body"
+                onClick={() => { setConfirmCloseOpen(false); performGoToList(); }}
+              >
                 Descartar
+              </AlertDialogAction>
+              <AlertDialogAction
+                className="font-body"
+                disabled={saveMutation.isPending}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setConfirmCloseOpen(false);
+                  shouldGoBackRef.current = true;
+                  saveMutation.mutate();
+                }}
+              >
+                Salvar e voltar
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
