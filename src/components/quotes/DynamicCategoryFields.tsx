@@ -380,15 +380,15 @@ function FieldRenderer({
                         inputMode="numeric"
                         min={0}
                         step={1}
-                        value={cur === 0 ? "" : cur}
-                        placeholder="0"
+                        value={cur}
+                        onFocus={(e) => e.currentTarget.select()}
                         onChange={(e) => {
                           const raw = e.target.value;
                           if (raw === "") return setPart(p.key, 0);
                           const n = parseInt(raw, 10);
                           setPart(p.key, Number.isNaN(n) ? 0 : Math.max(0, n));
                         }}
-                        className="h-8 text-xs pl-[52px] pr-1.5 text-right"
+                        className="h-8 text-xs pl-[52px] pr-1.5 text-right text-foreground"
                       />
                     </div>
                   </TooltipTrigger>
