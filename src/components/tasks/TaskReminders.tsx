@@ -18,6 +18,7 @@ interface Props {
   taskId: string;
   assigneePhone?: string | null;
   assigneeName?: string | null;
+  autoOpenIfEmpty?: boolean;
 }
 
 type Reminder = {
@@ -45,7 +46,7 @@ function defaultDate() {
   return d;
 }
 
-export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
+export function TaskReminders({ taskId, assigneePhone, assigneeName, autoOpenIfEmpty }: Props) {
   const { user } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -80,6 +81,14 @@ export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
       return (data ?? []) as Reminder[];
     },
   });
+
+  const activeCount = reminders.filter((r) => r.status !== "sent" && r.status !== "partial").length;
+  useEffect(() => {
+    if (autoOpenIfEmpty && !isNewTask && activeCount === 0 && !adding && !editingId) {
+      setAdding(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoOpenIfEmpty, isNewTask, activeCount]);
 
   const resetDraft = () => {
     const d = defaultDate();

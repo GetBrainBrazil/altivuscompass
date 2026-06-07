@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { CalendarIcon, Plus, Search, CheckCircle2, Clock, AlertCircle, Bell, ArrowUpDown, ArrowUp, ArrowDown, ChevronsUpDown, Check, LayoutGrid, Table as TableIcon, Paperclip } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FilterChip, SearchableList } from "@/components/tasks/FilterChip";
+import { TaskReminders } from "@/components/tasks/TaskReminders";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Aguardando Início", color: "bg-warning/10 text-warning border-warning/20", icon: Clock },
@@ -842,50 +843,21 @@ export default function Tasks() {
 
       {/* Reminder dialog */}
       <Dialog open={reminderDialogOpen} onOpenChange={setReminderDialogOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-display">{getTaskReminder(reminderTask?.id) ? "Editar Lembrete" : "Adicionar Lembrete"}</DialogTitle>
+            <DialogTitle className="font-display text-base">Lembretes</DialogTitle>
+            {reminderTask?.title && (
+              <p className="text-xs text-muted-foreground font-body truncate">{reminderTask.title}</p>
+            )}
           </DialogHeader>
-          <p className="text-sm text-muted-foreground font-body">
-            Tarefa: <strong>{reminderTask?.title}</strong>
-          </p>
-          <div className="space-y-3">
-            <div>
-              <Label className="font-body text-xs">Data do lembrete</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !reminderDate && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {reminderDate ? format(reminderDate, "dd/MM/yyyy") : "Selecione a data"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={reminderDate} onSelect={setReminderDate} className="p-3 pointer-events-auto" locale={ptBR} />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div>
-              <Label className="font-body text-xs">Hora</Label>
-              <Input type="time" value={reminderTime} onChange={(e) => setReminderTime(e.target.value)} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setReminderDialogOpen(false); setReminderTime("09:00"); }}>Cancelar</Button>
-            <Button
-              disabled={!reminderDate || saveReminderMutation.isPending}
-              onClick={() => {
-                if (reminderDate && reminderTask) {
-                  const [hours, minutes] = reminderTime.split(":").map(Number);
-                  const dateWithTime = new Date(reminderDate);
-                  dateWithTime.setHours(hours, minutes, 0, 0);
-                  const existing = getTaskReminder(reminderTask.id);
-                  saveReminderMutation.mutate({ taskId: reminderTask.id, remindAt: dateWithTime.toISOString(), existingId: existing?.id });
-                }
-              }}
-            >
-              Salvar Lembrete
-            </Button>
-          </DialogFooter>
+          {reminderTask && (
+            <TaskReminders
+              taskId={reminderTask.id}
+              assigneePhone={reminderTask.assignee_phone ?? null}
+              assigneeName={reminderTask.assigned_to ? getAssigneeName(reminderTask.assigned_to) : null}
+              autoOpenIfEmpty
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>
