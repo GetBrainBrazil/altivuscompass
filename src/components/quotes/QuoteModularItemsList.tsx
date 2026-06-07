@@ -201,7 +201,7 @@ export function QuoteModularItemsList({ quoteId }: Props) {
                 {discountsEnabled ? (
                   <>
                     <TableCell colSpan={2} className="text-right text-xs text-muted-foreground">
-                      Subtotal {fmtBRL(itemsSubtotal)}
+                      Subtotal sem desconto {fmtBRL(itemsSubtotal)}
                     </TableCell>
                     <TableCell className="text-right">
                       <QuoteDiscountInput
