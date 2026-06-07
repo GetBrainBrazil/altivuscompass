@@ -28,6 +28,7 @@ import UserDetail from "./pages/UserDetail";
 import Permissions from "./pages/Permissions";
 import Registrations from "./pages/Registrations";
 import CategoryFieldsPage from "./pages/CategoryFieldsPage";
+import QuoteItemEdit from "./pages/QuoteItemEdit";
 import Sales from "./pages/Sales";
 import FinanceClosedSales from "./pages/FinanceClosedSales";
 import MyProfile from "./pages/MyProfile";
