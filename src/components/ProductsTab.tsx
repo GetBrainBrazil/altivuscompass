@@ -213,27 +213,28 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
     setEditing(null);
     setForm({
       name: "", description: "", category_id: "", supplier_id: "",
-      currency: "BRL", cost: "", sale_price: "", commission_percent: "",
+      markup_type: "percent", markup_percent: "", markup_fixed: "",
       notes: "", is_active: true,
     });
   };
 
   const openEdit = (p: any) => {
     setEditing(p);
+    const hasFixed = p.markup_fixed != null;
     setForm({
       name: p.name,
       description: p.description || "",
       category_id: p.category_id || "",
       supplier_id: p.supplier_id || "",
-      currency: p.currency || "BRL",
-      cost: p.cost ?? "",
-      sale_price: p.sale_price ?? "",
-      commission_percent: p.commission_percent ?? "",
+      markup_type: hasFixed ? "fixed" : "percent",
+      markup_percent: p.markup_percent ?? "",
+      markup_fixed: p.markup_fixed ?? "",
       notes: p.notes || "",
       is_active: p.is_active,
     });
     setDialogOpen(true);
   };
+
 
   const filtered = products.filter((p: any) =>
     [p.name, p.description, p.product_categories?.name, p.suppliers?.name].some((f: string) =>
