@@ -1269,7 +1269,7 @@ export default function Clients() {
               <TabsList className="w-full justify-start flex-wrap h-auto">
                 <TabsTrigger value="contact" className="font-body text-xs">Contato</TabsTrigger>
                 <TabsTrigger value="address" className="font-body text-xs">Endereço</TabsTrigger>
-                <TabsTrigger value="documents" className="font-body text-xs">Documentos</TabsTrigger>
+                <TabsTrigger value="documents" className="font-body text-xs">Docs/Anexos</TabsTrigger>
                 <TabsTrigger value="travelers" className="font-body text-xs">Viajantes</TabsTrigger>
                 {canAccessFeature(userRole, "client_miles_tab") && (
                   <TabsTrigger value="miles" className="font-body text-xs">Milhas</TabsTrigger>
