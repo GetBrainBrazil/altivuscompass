@@ -45,6 +45,7 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<AttachmentRow | null>(null);
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["client-attachments", clientId],
@@ -123,8 +124,10 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   };
 
-  const onDelete = async (row: AttachmentRow) => {
-    if (!confirm(`Excluir "${row.file_name}"?`)) return;
+  const confirmDelete = async () => {
+    const row = pendingDelete;
+    if (!row) return;
+    setPendingDelete(null);
     const { error: stErr } = await supabase.storage.from(BUCKET).remove([row.file_path]);
     if (stErr) {
       toast({ title: "Falha ao excluir arquivo", description: stErr.message, variant: "destructive" });
@@ -139,6 +142,7 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
       return;
     }
     qc.invalidateQueries({ queryKey: ["client-attachments", clientId] });
+    toast({ title: "Anexo excluído" });
   };
 
   return (
