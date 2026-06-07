@@ -46,7 +46,7 @@ function defaultDate() {
   return d;
 }
 
-export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
+export function TaskReminders({ taskId, assigneePhone, assigneeName, autoOpenIfEmpty }: Props) {
   const { user } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
