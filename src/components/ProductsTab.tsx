@@ -403,8 +403,7 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
                 <TableHead>Nome</TableHead>
                 <TableHead className="hidden md:table-cell">Categoria</TableHead>
                 <TableHead className="hidden lg:table-cell">Fornecedor</TableHead>
-                <TableHead className="hidden sm:table-cell">Custo</TableHead>
-                <TableHead>Preço</TableHead>
+                <TableHead className="hidden sm:table-cell">Markup</TableHead>
                 <TableHead className="w-20">Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -420,8 +419,8 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-muted-foreground">{p.product_categories?.name || "—"}</TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground">{p.suppliers?.name || "—"}</TableCell>
-                  <TableCell className="hidden sm:table-cell text-muted-foreground">{formatCurrency(p.cost, p.currency)}</TableCell>
-                  <TableCell className="font-medium">{formatCurrency(p.sale_price, p.currency)}</TableCell>
+                  <TableCell className="hidden sm:table-cell text-muted-foreground tabular-nums">{formatMarkup(p)}</TableCell>
+
                   <TableCell>
                     <Badge variant={p.is_active ? "default" : "secondary"}>{p.is_active ? "Ativo" : "Inativo"}</Badge>
                   </TableCell>
