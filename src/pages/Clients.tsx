@@ -31,7 +31,7 @@ import { ListSkeleton, TableSkeleton } from "@/components/ui/loading-skeletons";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccessFeature } from "@/lib/permissions";
 import { logAuditEvent } from "@/lib/audit";
-import { isValidCPFOrCNPJ, cleanDigits } from "@/lib/validators";
+import { isValidCPFOrCNPJ, cleanDigits, formatCpfCnpj } from "@/lib/validators";
 import PrivateImage from "@/components/PrivateImage";
 
 type SortDir = "asc" | "desc";
@@ -1508,8 +1508,11 @@ export default function Clients() {
                       return (
                         <>
                           <Input
-                            value={raw}
-                            onChange={(e) => upd("cpf_cnpj", e.target.value)}
+                            value={formatCpfCnpj(raw)}
+                            onChange={(e) => upd("cpf_cnpj", formatCpfCnpj(e.target.value))}
+                            inputMode="numeric"
+                            maxLength={18}
+                            placeholder="000.000.000-00"
                             className={isInvalid ? "border-destructive focus-visible:ring-destructive" : ""}
                             aria-invalid={isInvalid}
                           />
