@@ -2206,6 +2206,7 @@ export default function Clients() {
           <div className="p-8 text-center text-muted-foreground font-body">Nenhum cliente encontrado.</div>
         ) : (
           <>
+            <div className="overflow-x-auto">
             <table className="w-full">
             <thead>
               <tr className="border-b border-border/50">
