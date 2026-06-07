@@ -3,6 +3,29 @@
  * Persistido em product_categories.field_schema (JSONB).
  */
 
+/**
+ * Mapeia o nome de uma categoria para o `item_type` legado usado por
+ * quote_items / pós-venda / PDF público. Fallback: "other_service".
+ */
+export function deriveItemTypeFromCategoryName(name?: string | null): string {
+  if (!name) return "other_service";
+  const n = name
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+  if (n.includes("voo") || n.includes("aere") || n.includes("flight")) return "flight";
+  if (n.includes("hosped") || n.includes("hotel") || n.includes("acomod") || n.includes("pousad")) return "hotel";
+  if (n.includes("locac") || n.includes("transp") || n.includes("transfer") || n.includes("carro") || n.includes("van")) return "transport";
+  if (n.includes("cruz") || n.includes("cruise")) return "cruise";
+  if (n.includes("experi") || n.includes("passeio") || n.includes("tour")) return "experience";
+  if (n.includes("seguro") || n.includes("insurance")) return "insurance";
+  return "other_service";
+}
+
+
+
 export type FieldType =
   | "text"
   | "textarea"

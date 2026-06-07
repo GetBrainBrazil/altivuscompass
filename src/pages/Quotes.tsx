@@ -20,11 +20,12 @@ import QuoteItemAttachments from "@/components/quotes/QuoteItemAttachments";
 import { QuoteItemReservationFields } from "@/components/quotes/QuoteItemReservationFields";
 
 import QuoteOptionsManager from "@/components/quotes/QuoteOptionsManager";
+import { QuoteModularItemsList } from "@/components/quotes/QuoteModularItemsList";
 import { LeadClientPicker, type LeadRecord } from "@/components/quotes/LeadClientPicker";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { LayoutGrid, Table as TableIcon, ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, Plus, Trash2, Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Image as ImageIcon, X, ChevronsUpDown, Check, ExternalLink, Copy, Wand2, Loader2, Info, CalendarIcon, History, ChevronDown, ChevronRight, Backpack, BriefcaseBusiness, Luggage, MessageCircle, FileText, MoreVertical, ClipboardCopy, Search, Archive, ArchiveRestore, TrendingUp, DollarSign, Target, Pencil, BookmarkPlus, LayoutTemplate, Eye, EyeOff } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { MetricCard } from "@/components/MetricCard";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { buildQuoteSummary, pickClientWhatsappNumber } from "@/lib/quote-summary";
@@ -201,6 +202,7 @@ export default function Quotes() {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
   const [form, setForm] = useState<Record<string, any>>({});
@@ -1471,6 +1473,34 @@ export default function Quotes() {
     // Snapshot captured shortly after, once items load (handled by effect below)
   };
 
+  // Auto-abre cotação quando vier por URL (ex.: voltar do QuoteItemEdit)
+  useEffect(() => {
+    const qId = searchParams.get("quoteId");
+    const tab = searchParams.get("tab");
+    if (!qId) return;
+    if (dialogOpen && editingQuote?.id === qId) {
+      if (tab) setActiveTab(tab);
+      return;
+    }
+    (async () => {
+      const { data } = await supabase
+        .from("quotes")
+        .select("*, clients(full_name)")
+        .eq("id", qId)
+        .maybeSingle();
+      if (data) {
+        openEdit({ ...(data as any), client_name: (data as any).clients?.full_name } as Quote);
+        if (tab) setTimeout(() => setActiveTab(tab), 0);
+      }
+      // limpa params para não reabrir em todo refresh
+      const next = new URLSearchParams(searchParams);
+      next.delete("quoteId");
+      next.delete("tab");
+      setSearchParams(next, { replace: true });
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   const buildEditorSnapshot = useCallback(() => {
     return JSON.stringify({
       form,
@@ -2078,6 +2108,10 @@ export default function Quotes() {
                 <FileText className="w-3 h-3" />
                 Principal
               </TabsTrigger>
+              <TabsTrigger value="modular" className="flex items-center gap-1 text-[11px] px-2 py-1">
+                <Package className="w-3 h-3" />
+                Itens
+              </TabsTrigger>
               {ITEM_TYPES.map((type) => {
                 const count = itemCount(type.id);
                 const Icon = type.icon;
@@ -2633,6 +2667,12 @@ export default function Quotes() {
                 );
               })()}
             </TabsContent>
+
+            <TabsContent value="modular" className="mt-3">
+              <QuoteModularItemsList quoteId={editingQuote?.id ?? null} />
+            </TabsContent>
+
+
 
             {ITEM_TYPES.map((type) => (
               <TabsContent key={type.id} value={type.id} className="mt-3 space-y-2">
