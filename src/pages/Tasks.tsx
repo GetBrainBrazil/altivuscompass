@@ -657,7 +657,7 @@ export default function Tasks() {
                                 {task.assigned_to ? getAssigneeName(task.assigned_to) : "Sem responsável"}
                               </span>
                               {task.due_date && (
-                                <span className={cn("text-[11px] font-body shrink-0 tabular-nums", isOverdue ? "text-destructive" : "text-muted-foreground")}>
+                                <span className={cn("text-[11px] font-body shrink-0 tabular-nums", isOverdue ? "text-destructive" : isDueToday ? "text-warning" : "text-muted-foreground")}>
                                   {task.due_date.split("-").reverse().slice(0, 2).join("/")}
                                 </span>
                               )}
