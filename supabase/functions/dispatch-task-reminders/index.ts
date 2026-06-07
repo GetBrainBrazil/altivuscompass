@@ -139,7 +139,10 @@ Deno.serve(async (req) => {
     }
 
     const text = (r.message?.trim() || task?.title || 'Lembrete de tarefa')
-    const waMessage = `🔔 *Lembrete de tarefa*\n\n${text}`
+    const linksText = links
+      ? `\n\n✅ Concluir: ${links.complete}\n⏰ Adiar 30 min: ${links.snooze}`
+      : ''
+    const waMessage = `🔔 *Lembrete de tarefa*\n\n${text}${linksText}`
 
     if (channels.includes('whatsapp')) {
       const phone = normalizePhone(assignee?.phone)
@@ -151,6 +154,7 @@ Deno.serve(async (req) => {
         else errors.push(`whatsapp: ${wa.error}`)
       }
     }
+
 
     if (channels.includes('email')) {
       const recipientEmail = assignee?.email
