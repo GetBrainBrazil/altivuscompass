@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -76,6 +76,12 @@ export default function Vault() {
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [showFormPassword, setShowFormPassword] = useState(false);
+  const formPanelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (formOpen && formPanelRef.current) {
+      formPanelRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [formOpen, editingItem?.id]);
 
   const { data: items = [], isLoading, error: itemsError, refetch: refetchItems } = useQuery({
     queryKey: ["vault-items"],
@@ -568,7 +574,7 @@ export default function Vault() {
 
       {/* Inline Form Panel */}
       {formOpen && (
-        <div className="border border-border rounded-lg bg-card shadow-sm">
+        <div ref={formPanelRef} className="border-2 border-primary/40 rounded-lg bg-card shadow-lg scroll-mt-4">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h2 className="font-display text-lg text-foreground">
               {editingItem ? "Editar Item" : "Novo Item do Cofre"}
