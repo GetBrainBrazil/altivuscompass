@@ -3276,6 +3276,8 @@ export type Database = {
           id: string
           is_active: boolean
           item_type: string | null
+          markup_fixed: number | null
+          markup_percent: number | null
           name: string
           notes: string | null
           sale_price: number | null
@@ -3293,6 +3295,8 @@ export type Database = {
           id?: string
           is_active?: boolean
           item_type?: string | null
+          markup_fixed?: number | null
+          markup_percent?: number | null
           name: string
           notes?: string | null
           sale_price?: number | null
@@ -3310,6 +3314,8 @@ export type Database = {
           id?: string
           is_active?: boolean
           item_type?: string | null
+          markup_fixed?: number | null
+          markup_percent?: number | null
           name?: string
           notes?: string | null
           sale_price?: number | null
