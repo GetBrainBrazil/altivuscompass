@@ -238,22 +238,6 @@ export default function QuoteItemEdit() {
         <DynamicCategoryFields schema={schema} value={details} onChange={setDetails} />
       </div>
 
-      {/* Comercial */}
-      <div className="rounded-lg border bg-card p-4">
-        <QuoteItemCommercialFields
-          quantity={Number(item.quantity ?? 1)}
-          unitCost={Number(item.unit_cost ?? 0)}
-          unitPrice={Number(item.unit_price ?? 0)}
-          onChange={(patch) =>
-            setField({
-              quantity: patch.quantity ?? item.quantity ?? 1,
-              unit_cost: patch.unitCost ?? item.unit_cost ?? 0,
-              unit_price: patch.unitPrice ?? item.unit_price ?? 0,
-            } as any)
-          }
-        />
-      </div>
-
       {/* Anexos */}
       <div className="rounded-lg border bg-card p-4">
         <QuoteItemAttachmentsV2
@@ -262,15 +246,6 @@ export default function QuoteItemEdit() {
           itemType={item.item_type}
           locator={details?.localizador ?? null}
           isNew={false}
-        />
-      </div>
-
-      {/* Reserva */}
-      <div className="rounded-lg border bg-card p-4">
-        <QuoteItemReservationFields
-          itemType={item.item_type}
-          details={details}
-          onChange={(d) => setDetails(d)}
         />
       </div>
 
