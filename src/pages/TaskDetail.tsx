@@ -138,8 +138,8 @@ export default function TaskDetail() {
         assigned_to: task.assigned_to ?? "",
         quote_id: task.quote_id ?? "none",
         client_id: task.client_id ?? "none",
-        due_date: task.due_date ? new Date(task.due_date) : null,
-        start_date: task.start_date ? new Date(task.start_date) : new Date(),
+        due_date: parseLocalDate(task.due_date),
+        start_date: parseLocalDate(task.start_date) ?? new Date(),
       };
       setForm(next);
       baselineRef.current = snapshot(next, []);
