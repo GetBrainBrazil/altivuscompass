@@ -54,6 +54,7 @@ export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
   const [draftChannels, setDraftChannels] = useState<string[]>(["system"]);
   const [draftMsg, setDraftMsg] = useState("");
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [showSent, setShowSent] = useState(false);
 
   const assigneeHasWhatsapp = isValidPhoneLength(assigneePhone);
