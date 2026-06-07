@@ -4568,6 +4568,44 @@ export type Database = {
           },
         ]
       }
+      task_reminder_action_codes: {
+        Row: {
+          action: string
+          code: string
+          created_at: string
+          expires_at: string
+          minutes: number
+          reminder_id: string
+          used_at: string | null
+        }
+        Insert: {
+          action: string
+          code: string
+          created_at?: string
+          expires_at?: string
+          minutes?: number
+          reminder_id: string
+          used_at?: string | null
+        }
+        Update: {
+          action?: string
+          code?: string
+          created_at?: string
+          expires_at?: string
+          minutes?: number
+          reminder_id?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_reminder_action_codes_reminder_id_fkey"
+            columns: ["reminder_id"]
+            isOneToOne: false
+            referencedRelation: "task_reminders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_reminders: {
         Row: {
           channels: string[]
