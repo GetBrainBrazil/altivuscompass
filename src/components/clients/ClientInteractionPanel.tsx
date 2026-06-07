@@ -139,7 +139,7 @@ export function ClientInteractionPanel({ contactId, clientId }: Props) {
     },
   });
 
-  // Timeline unificada
+  // Timeline unificada (com filtro)
   const timeline = useMemo(() => {
     const items: Array<
       | { type: "interaction"; row: InteractionRow; at: number }
@@ -147,8 +147,14 @@ export function ClientInteractionPanel({ contactId, clientId }: Props) {
     > = [];
     for (const r of interactions) items.push({ type: "interaction", row: r, at: new Date(r.created_at).getTime() });
     for (const r of auditLogs) items.push({ type: "audit", row: r, at: new Date(r.created_at).getTime() });
-    return items.sort((a, b) => b.at - a.at);
-  }, [interactions, auditLogs]);
+    const filtered = items.filter((it) => {
+      if (historyFilter === "all") return true;
+      if (historyFilter === "interactions") return it.type === "interaction";
+      if (historyFilter === "audit") return it.type === "audit";
+      return it.type === "interaction" && it.row.kind === historyFilter;
+    });
+    return filtered.sort((a, b) => b.at - a.at);
+  }, [interactions, auditLogs, historyFilter]);
 
   const onPickFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const list = Array.from(e.target.files ?? []);
