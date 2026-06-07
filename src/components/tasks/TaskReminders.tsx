@@ -195,13 +195,24 @@ export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
           {isFailed && (
             <Badge variant="destructive" className="h-5 text-[10px]">Falhou</Badge>
           )}
-          <button
-            onClick={() => removeReminder.mutate(r.id)}
-            className="ml-auto opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
-            aria-label="Remover lembrete"
-          >
-            <Trash2 size={12} />
-          </button>
+          <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {!isDone && (
+              <button
+                onClick={() => startEdit(r)}
+                className="text-muted-foreground hover:text-foreground"
+                aria-label="Editar lembrete"
+              >
+                <Pencil size={12} />
+              </button>
+            )}
+            <button
+              onClick={() => removeReminder.mutate(r.id)}
+              className="text-muted-foreground hover:text-destructive"
+              aria-label="Remover lembrete"
+            >
+              <Trash2 size={12} />
+            </button>
+          </div>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
           {r.channels.map((ch) => {
