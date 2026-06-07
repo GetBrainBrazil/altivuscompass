@@ -308,9 +308,9 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
                   </button>
                   <button
                     type="button"
-                    onClick={() => onOpen(r)}
+                    onClick={() => downloadRow(r)}
                     className="text-muted-foreground hover:text-foreground"
-                    title="Abrir / baixar"
+                    title="Baixar"
                   >
                     <Download className="h-3.5 w-3.5" />
                   </button>
