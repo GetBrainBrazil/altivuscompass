@@ -67,6 +67,7 @@ export default function CategoryFieldsPage() {
   }, [category]);
 
   const [fields, setFields] = useState<CategoryFieldSchema>(initial);
+  const [showTechnical, setShowTechnical] = useState(false);
 
   useEffect(() => {
     setFields(initial);
@@ -164,8 +165,15 @@ export default function CategoryFieldsPage() {
         <Button variant="outline" size="sm" className="gap-1.5" onClick={addField}>
           <Plus className="w-4 h-4" /> Adicionar campo
         </Button>
-        <span className="text-xs text-muted-foreground ml-auto">{fields.length} campo(s)</span>
+        <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-1.5">
+            <Switch checked={showTechnical} onCheckedChange={setShowTechnical} id="tech-toggle" />
+            <Label htmlFor="tech-toggle" className="text-xs cursor-pointer">Dados técnicos</Label>
+          </div>
+          <span className="text-xs text-muted-foreground">{fields.length} campo(s)</span>
+        </div>
       </div>
+
 
       <div className="space-y-3">
         {fields.length === 0 ? (
@@ -184,6 +192,7 @@ export default function CategoryFieldsPage() {
               onRemove={() => remove(idx)}
               isFirst={idx === 0}
               isLast={idx === fields.length - 1}
+              showTechnical={showTechnical}
             />
           ))
         )}
@@ -207,9 +216,10 @@ interface RowProps {
   onRemove: () => void;
   isFirst: boolean;
   isLast: boolean;
+  showTechnical: boolean;
 }
 
-function FieldRow({ field, takenKeys, onChange, onMoveUp, onMoveDown, onRemove, isFirst, isLast }: RowProps) {
+function FieldRow({ field, takenKeys, onChange, onMoveUp, onMoveDown, onRemove, isFirst, isLast, showTechnical }: RowProps) {
   const supportsOptions = field.type === "select" || field.type === "checkbox";
   const isLockedKey = !!field.mapsTo;
 
@@ -236,19 +246,21 @@ function FieldRow({ field, takenKeys, onChange, onMoveUp, onMoveDown, onRemove, 
         </div>
 
         <div className="flex-1 grid grid-cols-12 gap-2">
-          <div className="col-span-12 sm:col-span-4 space-y-0.5">
+          <div className={`col-span-12 ${showTechnical ? "sm:col-span-4" : "sm:col-span-5"} space-y-0.5`}>
             <Label className="text-[11px]">Rótulo</Label>
             <Input value={field.label} onChange={(e) => handleLabelChange(e.target.value)} className="h-8 text-xs" />
           </div>
-          <div className="col-span-6 sm:col-span-3 space-y-0.5">
-            <Label className="text-[11px]">Chave (key)</Label>
-            <Input
-              value={field.key}
-              onChange={(e) => onChange({ key: slugify(e.target.value) })}
-              disabled={isLockedKey}
-              className="h-8 text-xs font-mono"
-            />
-          </div>
+          {showTechnical && (
+            <div className="col-span-6 sm:col-span-3 space-y-0.5">
+              <Label className="text-[11px]">Chave (key)</Label>
+              <Input
+                value={field.key}
+                onChange={(e) => onChange({ key: slugify(e.target.value) })}
+                disabled={isLockedKey}
+                className="h-8 text-xs font-mono"
+              />
+            </div>
+          )}
           <div className="col-span-6 sm:col-span-3 space-y-0.5">
             <Label className="text-[11px]">Tipo</Label>
             <Select value={field.type} onValueChange={(v) => onChange({ type: v as FieldType })}>
@@ -272,24 +284,28 @@ function FieldRow({ field, takenKeys, onChange, onMoveUp, onMoveDown, onRemove, 
             </Select>
           </div>
 
-          <div className="col-span-12 sm:col-span-4 space-y-0.5">
-            <Label className="text-[11px]">Placeholder</Label>
-            <Input
-              value={field.placeholder ?? ""}
-              onChange={(e) => onChange({ placeholder: e.target.value || undefined })}
-              className="h-8 text-xs"
-            />
-          </div>
-          <div className="col-span-6 sm:col-span-3 space-y-0.5">
-            <Label className="text-[11px]">Grupo</Label>
-            <Input
-              value={field.group ?? ""}
-              onChange={(e) => onChange({ group: e.target.value || undefined })}
-              placeholder="Ex: Datas"
-              className="h-8 text-xs"
-            />
-          </div>
-          <div className="col-span-6 sm:col-span-3 flex items-end gap-2">
+          {showTechnical && (
+            <>
+              <div className="col-span-12 sm:col-span-4 space-y-0.5">
+                <Label className="text-[11px]">Placeholder</Label>
+                <Input
+                  value={field.placeholder ?? ""}
+                  onChange={(e) => onChange({ placeholder: e.target.value || undefined })}
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div className="col-span-6 sm:col-span-3 space-y-0.5">
+                <Label className="text-[11px]">Grupo</Label>
+                <Input
+                  value={field.group ?? ""}
+                  onChange={(e) => onChange({ group: e.target.value || undefined })}
+                  placeholder="Ex: Datas"
+                  className="h-8 text-xs"
+                />
+              </div>
+            </>
+          )}
+          <div className={`col-span-6 ${showTechnical ? "sm:col-span-3" : "sm:col-span-2"} flex items-end gap-2`}>
             <div className="flex items-center gap-1.5">
               <Switch checked={!!field.required} onCheckedChange={(v) => onChange({ required: v })} />
               <Label className="text-[11px]">Obrigatório</Label>
@@ -303,17 +319,18 @@ function FieldRow({ field, takenKeys, onChange, onMoveUp, onMoveDown, onRemove, 
 
           {supportsOptions && (
             <div className="col-span-12 space-y-1.5 border-t pt-2 mt-1">
-              <Label className="text-[11px]">Opções (uma por linha — formato <code>valor|rótulo</code> ou só o rótulo)</Label>
+              <Label className="text-[11px]">Opções (uma por linha — apenas o rótulo)</Label>
               <textarea
-                className="w-full text-xs font-mono rounded-md border border-input bg-background px-2 py-1.5 min-h-[80px]"
-                value={(field.options ?? [])
-                  .map((o) => (o.value === o.label ? o.label : `${o.value}|${o.label}`))
-                  .join("\n")}
+                className="w-full text-xs rounded-md border border-input bg-background px-2 py-1.5 min-h-[80px]"
+                placeholder={"direto\n1 conexão\n2 conexões"}
+                value={(field.options ?? []).map((o) => o.label).join("\n")}
                 onChange={(e) => {
                   const lines = e.target.value.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-                  const opts = lines.map((line) => {
-                    const [v, l] = line.includes("|") ? line.split("|") : [slugify(line), line];
-                    return { value: slugify(v || ""), label: (l || v || "").trim() };
+                  const seen: string[] = [];
+                  const opts = lines.map((label) => {
+                    const value = ensureUniqueKey(slugify(label), seen);
+                    seen.push(value);
+                    return { value, label };
                   });
                   onChange({ options: opts });
                 }}
@@ -321,7 +338,7 @@ function FieldRow({ field, takenKeys, onChange, onMoveUp, onMoveDown, onRemove, 
             </div>
           )}
 
-          {isLockedKey && (
+          {showTechnical && isLockedKey && (
             <div className="col-span-12 text-[11px] text-muted-foreground bg-muted/40 rounded px-2 py-1">
               Este campo sincroniza com a coluna <code>{field.mapsTo}</code> do item. A chave não pode ser alterada.
             </div>
@@ -331,3 +348,4 @@ function FieldRow({ field, takenKeys, onChange, onMoveUp, onMoveDown, onRemove, 
     </div>
   );
 }
+
