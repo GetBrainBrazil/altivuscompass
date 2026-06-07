@@ -1,11 +1,27 @@
 // Dispatch worker for task reminders (multi-channel)
 // Runs every minute via pg_cron and sends WhatsApp / Email for due reminders.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { signToken } from '../task-reminder-action/index.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+const FUNCTIONS_BASE = `${Deno.env.get('SUPABASE_URL')}/functions/v1/task-reminder-action`
+
+async function buildActionLinks(reminderId: string) {
+  const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7 // 7d
+  const [snoozeTok, completeTok] = await Promise.all([
+    signToken({ rid: reminderId, act: 'snooze', m: 30, exp }),
+    signToken({ rid: reminderId, act: 'complete', exp }),
+  ])
+  return {
+    snooze: `${FUNCTIONS_BASE}?t=${snoozeTok}`,
+    complete: `${FUNCTIONS_BASE}?t=${completeTok}`,
+  }
+}
+
 
 const ZAPI_BASE_URL = 'https://api.z-api.io'
 
