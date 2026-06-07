@@ -29,46 +29,22 @@ function normalizePhone(raw: string | null | undefined): string | null {
 async function sendWhatsApp(
   phone: string,
   message: string,
-  links?: { complete: string; snooze: string } | null,
 ): Promise<{ ok: boolean; error?: string }> {
   const id = Deno.env.get('ZAPI_INSTANCE_ID')
   const token = Deno.env.get('ZAPI_TOKEN')
   const sec = Deno.env.get('ZAPI_SECURITY_TOKEN')
   if (!id || !token || !sec) return { ok: false, error: 'Z-API não configurada' }
 
-  const useButtons =
-    !!links &&
-    links.complete.startsWith('https://') &&
-    links.snooze.startsWith('https://')
-
-  async function postZapi(endpoint: string, body: any) {
-    const res = await fetch(`${ZAPI_BASE_URL}/instances/${id}/token/${token}/${endpoint}`, {
+  try {
+    const res = await fetch(`${ZAPI_BASE_URL}/instances/${id}/token/${token}/send-text`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Client-Token': sec },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ phone, message }),
     })
-    const txt = await res.text().catch(() => '')
-    return { ok: res.ok, status: res.status, body: txt }
-  }
-
-  try {
-    if (useButtons) {
-      const r = await postZapi('send-button-actions', {
-        phone,
-        message,
-        title: '🔔 Lembrete de tarefa',
-        footer: 'Altivus Compass',
-        buttonActions: [
-          { id: '1', type: 'URL', url: links!.complete, label: '✅ Concluir' },
-          { id: '2', type: 'URL', url: links!.snooze, label: '⏰ Adiar 30 min' },
-        ],
-      })
-      if (r.ok) return { ok: true }
-      // Fallback automático para texto simples se botões falharem
-      console.log(`[zapi] send-button-actions falhou (${r.status}): ${r.body.slice(0, 200)} — fallback para send-text`)
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '')
+      return { ok: false, error: `Z-API ${res.status}: ${txt.slice(0, 200)}` }
     }
-    const r2 = await postZapi('send-text', { phone, message })
-    if (!r2.ok) return { ok: false, error: `Z-API ${r2.status}: ${r2.body.slice(0, 200)}` }
     return { ok: true }
   } catch (e: any) {
     return { ok: false, error: e?.message ?? 'erro ao enviar WhatsApp' }
@@ -126,37 +102,20 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Create short codes for action links
-    let links: { complete: string; snooze: string } | null = null
-    if (channels.includes('whatsapp') || channels.includes('email')) {
-      const completeCode = randomCode(8)
-      const snoozeCode = randomCode(8)
-      const { error: codeErr } = await supabase
-        .from('task_reminder_action_codes')
-        .insert([
-          { code: completeCode, reminder_id: r.id, action: 'complete' },
-          { code: snoozeCode, reminder_id: r.id, action: 'snooze', minutes: 30 },
-        ])
-      if (!codeErr) {
-        links = {
-          complete: `${APP_URL}/r/${completeCode}`,
-          snooze: `${APP_URL}/r/${snoozeCode}`,
-        }
-      }
-    }
-
-    const text = (r.message?.trim() || task?.title || 'Lembrete de tarefa')
-    const linksText = links
-      ? `\n\n✅ Concluir: ${links.complete}\n⏰ Adiar 30 min: ${links.snooze}`
-      : ''
-    const waMessage = `🔔 *Lembrete de tarefa*\n\n${text}${linksText}`
+    const taskTitle = task?.title?.trim() || 'Lembrete de tarefa'
+    const obs = r.message?.trim() || null
+    const taskUrl = `${APP_URL}/tasks/${r.task_id}`
+    const waMessage =
+      `🔔 *Lembrete de tarefa*\n\n*${taskTitle}*` +
+      (obs ? `\n\n${obs}` : '') +
+      `\n\n🔗 Abrir tarefa: ${taskUrl}`
 
     if (channels.includes('whatsapp')) {
       const phone = normalizePhone(assignee?.phone)
       if (!phone) {
         errors.push('whatsapp: responsável sem telefone válido')
       } else {
-        const wa = await sendWhatsApp(phone, waMessage, links)
+        const wa = await sendWhatsApp(phone, waMessage)
         if (wa.ok) delivered.push('whatsapp')
         else errors.push(`whatsapp: ${wa.error}`)
       }
@@ -174,7 +133,6 @@ Deno.serve(async (req) => {
             day: '2-digit', month: '2-digit', year: 'numeric',
             hour: '2-digit', minute: '2-digit',
           })
-          const taskUrl = `${APP_URL}/tasks/${r.task_id}`
           const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
           const resp = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
             method: 'POST',
@@ -188,13 +146,11 @@ Deno.serve(async (req) => {
               recipientEmail,
               idempotencyKey: `task-reminder-${r.id}`,
               templateData: {
-                taskTitle: task?.title ?? 'Tarefa',
-                message: r.message ?? null,
+                taskTitle: taskTitle,
+                message: obs,
                 remindAt,
                 taskUrl,
                 recipientName: assignee?.full_name ?? null,
-                completeUrl: links?.complete ?? null,
-                snoozeUrl: links?.snooze ?? null,
               },
             }),
           })
