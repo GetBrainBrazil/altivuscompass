@@ -176,7 +176,7 @@ export default function QuoteItemEdit() {
       {/* Header */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => navigate(`/quotes?quoteId=${quoteId}&tab=modular`)}>
+          <Button variant="ghost" size="sm" onClick={handleBackClick}>
             <ArrowLeft className="w-4 h-4 mr-1" /> Voltar para cotação
           </Button>
         </div>
