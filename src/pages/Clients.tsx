@@ -134,10 +134,8 @@ export default function Clients() {
   const [levelFilter, setLevelFilter] = useState<"all" | ContactLevel>("all");
   const [profileFilter, setProfileFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState<string[]>([]);
-  const [pageSize, setPageSize] = useState<25 | 50 | 100 | "all">(25);
+  const [pageSize, setPageSize] = useState<25 | 50 | 100>(25);
   const [currentPage, setCurrentPage] = useState(1);
-  const [allChunkSize, setAllChunkSize] = useState(50);
-  const scrollTriggerRef = useRef<HTMLDivElement>(null);
 
   const [sort, setSort] = useState<SortState>(null);
   const navigate = useNavigate();
@@ -1053,32 +1051,15 @@ export default function Clients() {
   const totalCount = filtered.length;
 
   const paginatedData = useMemo(() => {
-    if (pageSize === "all") {
-      return filtered.slice(0, allChunkSize);
-    }
     const start = (currentPage - 1) * pageSize;
     return filtered.slice(start, start + pageSize);
-  }, [filtered, pageSize, currentPage, allChunkSize]);
+  }, [filtered, pageSize, currentPage]);
 
-  const totalPages = pageSize === "all" ? 1 : Math.ceil(filtered.length / pageSize);
+  const totalPages = Math.ceil(filtered.length / pageSize);
 
   useEffect(() => {
     setCurrentPage(1);
-    setAllChunkSize(50);
   }, [search, levelFilter, profileFilter, tagFilter, sort, pageSize]);
-
-  useEffect(() => {
-    if (pageSize !== "all") return;
-    const el = scrollTriggerRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && allChunkSize < filtered.length) {
-        setAllChunkSize((prev) => Math.min(prev + 50, filtered.length));
-      }
-    }, { rootMargin: "200px" });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [pageSize, allChunkSize, filtered.length]);
 
 
   const SortableHeader = ({ label, sortKey, className }: { label: string; sortKey: string; className?: string }) => {
@@ -2205,7 +2186,7 @@ export default function Clients() {
             )}
           </PopoverContent>
         </Popover>
-        <Select value={pageSize === "all" ? "all" : String(pageSize)} onValueChange={(v) => { setPageSize(v === "all" ? "all" : Number(v) as 25 | 50 | 100); setCurrentPage(1); setAllChunkSize(50); }}>
+        <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v) as 25 | 50 | 100); setCurrentPage(1); }}>
           <SelectTrigger className="h-9 w-[140px] text-xs font-body">
             <SelectValue />
           </SelectTrigger>
@@ -2213,7 +2194,6 @@ export default function Clients() {
             <SelectItem value="25">25 / página</SelectItem>
             <SelectItem value="50">50 / página</SelectItem>
             <SelectItem value="100">100 / página</SelectItem>
-            <SelectItem value="all">Todos</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -2430,7 +2410,7 @@ export default function Clients() {
               })}
             </tbody>
           </table>
-          {pageSize !== "all" && totalPages > 1 && (
+          {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-border/50">
               <span className="text-xs text-muted-foreground font-body">
                 Página {currentPage} de {totalPages} ({filtered.length} resultados)
@@ -2450,20 +2430,6 @@ export default function Clients() {
                 </Button>
               </div>
             </div>
-          )}
-          {pageSize === "all" && (
-            <>
-              {allChunkSize < filtered.length && (
-                <div ref={scrollTriggerRef} className="py-4 text-center">
-                  <span className="text-xs text-muted-foreground font-body">Carregando mais...</span>
-                </div>
-              )}
-              {allChunkSize >= filtered.length && filtered.length > 0 && (
-                <div className="py-2 text-center">
-                  <span className="text-xs text-muted-foreground font-body">{filtered.length} contatos carregados</span>
-                </div>
-              )}
-            </>
           )}
           </>
         )}
@@ -2536,7 +2502,7 @@ export default function Clients() {
             );
           })
         )}
-        {pageSize !== "all" && totalPages > 1 && (
+        {totalPages > 1 && (
           <div className="flex items-center justify-between px-2 py-3">
             <span className="text-xs text-muted-foreground font-body">
               Página {currentPage} de {totalPages}
@@ -2550,20 +2516,6 @@ export default function Clients() {
               </Button>
             </div>
           </div>
-        )}
-        {pageSize === "all" && (
-          <>
-            {allChunkSize < filtered.length && (
-              <div ref={scrollTriggerRef} className="py-4 text-center">
-                <span className="text-xs text-muted-foreground font-body">Carregando mais...</span>
-              </div>
-            )}
-            {allChunkSize >= filtered.length && filtered.length > 0 && (
-              <div className="py-2 text-center">
-                <span className="text-xs text-muted-foreground font-body">{filtered.length} contatos carregados</span>
-              </div>
-            )}
-          </>
         )}
       </div>
     </div>
