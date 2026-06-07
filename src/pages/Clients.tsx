@@ -2447,6 +2447,8 @@ export default function Clients() {
               )}
             </>
           )}
+          </>
+        )}
       </div>
 
       {/* Mobile cards */}
