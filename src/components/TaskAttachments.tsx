@@ -282,6 +282,13 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
         pending={pending}
         onPendingChange={onPendingChange}
       />
+      <PdfViewerDialog
+        open={!!pdfViewer}
+        onOpenChange={(v) => !v && setPdfViewer(null)}
+        filePath={pdfViewer?.filePath ?? null}
+        fileName={pdfViewer?.fileName ?? ""}
+        pendingFile={pdfViewer?.pendingFile ?? null}
+      />
 
       <AlertDialog open={!!confirmDelete} onOpenChange={(v) => !v && setConfirmDelete(null)}>
         <AlertDialogContent>
