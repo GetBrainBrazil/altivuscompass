@@ -299,7 +299,7 @@ export default function Finance() {
                   </div>
                   <div className="space-y-2">
                     <Label className="font-body">Valor (R$) *</Label>
-                    <Input type="number" step="0.01" value={form.amount ?? ""} onChange={(e) => setForm({ ...form, amount: e.target.value })} required />
+                    <CurrencyInput value={form.amount === "" || form.amount == null ? null : Number(form.amount)} onChange={(v) => setForm({ ...form, amount: v == null ? "" : String(v) })} required />
                   </div>
                   <div className="space-y-2">
                     <Label className="font-body">Data</Label>
