@@ -14,6 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, Repeat, Layers, Upload, X, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { COMPANY_OPTIONS, DEFAULT_COMPANY, type CompanyBrand } from "@/lib/company";
+import { CurrencyInput } from "@/components/ui/currency-input";
+
 
 type TxType = "payable" | "receivable";
 
