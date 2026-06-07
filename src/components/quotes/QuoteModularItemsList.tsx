@@ -197,26 +197,6 @@ export function QuoteModularItemsList({ quoteId }: Props) {
               ))}
             </TableBody>
             <TableFooter>
-              {showTotalDiscount && (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-xs text-muted-foreground">
-                    Desconto total
-                  </TableCell>
-                  {discountsEnabled ? (
-                    <>
-                      <TableCell colSpan={2} />
-                      <TableCell />
-                    </>
-                  ) : (
-                    <TableCell colSpan={2} />
-                  )}
-                  <TableCell className="text-right text-xs text-emerald-400 tabular-nums">
-                    {totalDiscountPercent > 0.01 ? `${totalDiscountPercent.toFixed(2)}%` : ""}{" "}
-                    {fmtBRL(totalDiscount)}
-                  </TableCell>
-                  <TableCell />
-                </TableRow>
-              )}
               <TableRow>
                 <TableCell colSpan={3} className="text-xs text-muted-foreground">
                   Total da cotação
@@ -240,7 +220,17 @@ export function QuoteModularItemsList({ quoteId }: Props) {
                 ) : (
                   <TableCell colSpan={2} />
                 )}
-                <TableCell className="text-right font-semibold">{fmtBRL(grandTotal)}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex flex-col items-end leading-tight">
+                    <span className="font-semibold tabular-nums">{fmtBRL(grandTotal)}</span>
+                    {showTotalDiscount && (
+                      <span className="text-[10px] text-emerald-400 tabular-nums">
+                        −{fmtBRL(totalDiscount)}
+                        {totalDiscountPercent > 0.01 ? ` · ${totalDiscountPercent.toFixed(2)}%` : ""}
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell />
               </TableRow>
             </TableFooter>
