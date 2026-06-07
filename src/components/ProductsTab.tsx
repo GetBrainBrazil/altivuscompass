@@ -146,13 +146,12 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
         description: form.description || null,
         category_id: form.category_id || null,
         supplier_id: form.supplier_id || null,
-        currency: form.currency,
-        cost: form.cost === "" ? null : Number(form.cost),
-        sale_price: form.sale_price === "" ? null : Number(form.sale_price),
-        commission_percent: form.commission_percent === "" ? null : Number(form.commission_percent),
+        markup_percent: form.markup_type === "percent" && form.markup_percent !== "" ? Number(form.markup_percent) : null,
+        markup_fixed: form.markup_type === "fixed" && form.markup_fixed !== "" ? Number(form.markup_fixed) : null,
         notes: form.notes || null,
         is_active: form.is_active,
       };
+
       if (editing) {
         const { error } = await supabase.from("products").update(payload).eq("id", editing.id);
         if (error) throw error;
