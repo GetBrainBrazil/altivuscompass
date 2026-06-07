@@ -15,6 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { logAuditEvent } from "@/lib/audit";
+import CategoryFieldsEditor from "@/components/registrations/CategoryFieldsEditor";
+import { Layers } from "lucide-react";
 
 const CURRENCIES = ["BRL", "USD", "EUR", "GBP", "ARS", "CLP"];
 
@@ -25,6 +27,7 @@ function CategoriesSubTab({ isAdmin }: { isAdmin: boolean }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({ name: "", description: "", is_active: true });
+  const [fieldsEditing, setFieldsEditing] = useState<any>(null);
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["product_categories"],
@@ -138,6 +141,14 @@ function CategoriesSubTab({ isAdmin }: { isAdmin: boolean }) {
                   {isAdmin && (
                     <TableCell>
                       <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Campos do produto"
+                          onClick={() => setFieldsEditing(c)}
+                        >
+                          <Layers className="w-4 h-4" />
+                        </Button>
                         <Button variant="ghost" size="sm" onClick={() => openEdit(c)}>✏️</Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
@@ -163,6 +174,12 @@ function CategoriesSubTab({ isAdmin }: { isAdmin: boolean }) {
           </Table>
         </div>
       )}
+
+      <CategoryFieldsEditor
+        open={!!fieldsEditing}
+        onOpenChange={(o) => { if (!o) setFieldsEditing(null); }}
+        category={fieldsEditing}
+      />
     </div>
   );
 }
