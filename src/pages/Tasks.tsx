@@ -629,8 +629,8 @@ export default function Tasks() {
                                 <Bell size={12} className={getTaskReminder(task.id) ? "fill-current" : ""} />
                               </button>
                             </div>
-                            {task.description && (
-                              <p className="text-[11px] text-muted-foreground font-body line-clamp-2 mb-2">{task.description}</p>
+                            {task.description && task.description.replace(/<[^>]*>/g, "").trim() && (
+                              <p className="text-[11px] text-muted-foreground font-body line-clamp-2 mb-2">{task.description.replace(/<[^>]*>/g, "").trim()}</p>
                             )}
                             <div className="flex flex-wrap items-center gap-1.5 mb-2">
                               <Badge variant="outline" className={cn("text-[10px] font-body whitespace-nowrap", priority.color)}>{priority.label}</Badge>
