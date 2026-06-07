@@ -293,20 +293,48 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div>
-                  <Label>Moeda</Label>
-                  <Select value={form.currency} onValueChange={(v) => setForm({ ...form, currency: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {CURRENCIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div><Label>Custo</Label><Input type="number" step="0.01" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} placeholder="0,00" /></div>
-                <div><Label>Preço Venda</Label><Input type="number" step="0.01" value={form.sale_price} onChange={(e) => setForm({ ...form, sale_price: e.target.value })} placeholder="0,00" /></div>
-                <div><Label>Comissão (%)</Label><Input type="number" step="0.01" value={form.commission_percent} onChange={(e) => setForm({ ...form, commission_percent: e.target.value })} placeholder="0" /></div>
+              <div className="space-y-2">
+                <Label>Markup</Label>
+                <RadioGroup
+                  value={form.markup_type}
+                  onValueChange={(v) => setForm({ ...form, markup_type: v as "percent" | "fixed" })}
+                  className="flex flex-col sm:flex-row gap-3"
+                >
+                  <div className="flex-1 flex items-center gap-2 rounded-md border bg-background p-3">
+                    <RadioGroupItem value="percent" id="mk-percent" />
+                    <Label htmlFor="mk-percent" className="font-normal cursor-pointer whitespace-nowrap">
+                      Markup Percentual (%)
+                    </Label>
+                    <div className="ml-auto w-32">
+                      <CurrencyInput
+                        prefix=""
+                        decimals={2}
+                        value={form.markup_percent}
+                        onChange={(v) => setForm({ ...form, markup_type: "percent", markup_percent: v ?? "" })}
+                        placeholder="0,00"
+                        disabled={form.markup_type !== "percent"}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex-1 flex items-center gap-2 rounded-md border bg-background p-3">
+                    <RadioGroupItem value="fixed" id="mk-fixed" />
+                    <Label htmlFor="mk-fixed" className="font-normal cursor-pointer whitespace-nowrap">
+                      Markup Fixo (R$)
+                    </Label>
+                    <div className="ml-auto w-36">
+                      <CurrencyInput
+                        decimals={2}
+                        value={form.markup_fixed}
+                        onChange={(v) => setForm({ ...form, markup_type: "fixed", markup_fixed: v ?? "" })}
+                        placeholder="0,00"
+                        disabled={form.markup_type !== "fixed"}
+                      />
+                    </div>
+                  </div>
+                </RadioGroup>
+                <p className="text-xs text-muted-foreground">Defina um dos dois — percentual ou valor fixo.</p>
               </div>
+
               <div><Label>Observações</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
               <div className="flex items-center gap-2">
                 <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} />
