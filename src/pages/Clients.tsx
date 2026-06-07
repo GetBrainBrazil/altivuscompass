@@ -34,6 +34,7 @@ import { canAccessFeature } from "@/lib/permissions";
 import { logAuditEvent } from "@/lib/audit";
 import { isValidCPFOrCNPJ, cleanDigits, formatCpfCnpj } from "@/lib/validators";
 import PrivateImage from "@/components/PrivateImage";
+import { ClientNameSuggest, type PassengerSuggestion } from "@/components/clients/ClientNameSuggest";
 
 type SortDir = "asc" | "desc";
 type SortState = { key: string; dir: SortDir } | null;
