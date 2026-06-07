@@ -148,7 +148,7 @@ export function ImageViewerDialog({
         const saved = attachment as SavedAttachment;
         if (blob) {
           const { error: upErr } = await supabase.storage
-            .from("task-attachments")
+            .from(bucket)
             .upload(saved.file_path, blob, {
               contentType: attachment.file_type || "image/jpeg",
               upsert: true,
@@ -156,14 +156,14 @@ export function ImageViewerDialog({
           if (upErr) throw upErr;
         }
         const { error } = await supabase
-          .from("task_attachments")
+          .from(tableName as any)
           .update({
             file_name: newName,
-            ...(blob ? { file_size: blob.size } : {}),
+            ...(blob ? { [sizeColumn]: blob.size } : {}),
           })
           .eq("id", saved.id);
         if (error) throw error;
-        qc.invalidateQueries({ queryKey: ["task-attachments", taskId] });
+        qc.invalidateQueries({ queryKey: invalidateKey ?? ["task-attachments", taskId] });
       }
       toast({ title: "Imagem atualizada" });
       onOpenChange(false);
