@@ -2167,6 +2167,7 @@ export default function Clients() {
               <tr className="border-b border-border/50">
                 <th className="p-2 w-10"></th>
                 <SortableHeader label="Cliente" sortKey="full_name" />
+                <th className="text-center p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium whitespace-nowrap" title="Tarefas pendentes / Lembretes ativos">Ativ.</th>
                 {levelFilter === "all" && (
                   <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Nível</th>
                 )}
