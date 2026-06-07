@@ -131,14 +131,19 @@ Deno.serve(async (req) => {
     }
 
     const text = (r.message?.trim() || task?.title || 'Lembrete de tarefa')
-    const fullMessage = `🔔 *Lembrete de tarefa*\n\n${text}`
+    const links = (channels.includes('whatsapp') || channels.includes('email'))
+      ? await buildActionLinks(r.id)
+      : null
+    const waMessage = links
+      ? `🔔 *Lembrete de tarefa*\n\n${text}\n\n✅ Concluir: ${links.complete}\n⏰ Adiar 30 min: ${links.snooze}`
+      : `🔔 *Lembrete de tarefa*\n\n${text}`
 
     if (channels.includes('whatsapp')) {
       const phone = normalizePhone(assignee?.phone)
       if (!phone) {
         errors.push('whatsapp: responsável sem telefone válido')
       } else {
-        const wa = await sendWhatsApp(phone, fullMessage)
+        const wa = await sendWhatsApp(phone, waMessage)
         if (wa.ok) delivered.push('whatsapp')
         else errors.push(`whatsapp: ${wa.error}`)
       }
@@ -167,6 +172,8 @@ Deno.serve(async (req) => {
                 remindAt,
                 taskUrl,
                 recipientName: assignee?.full_name ?? null,
+                completeUrl: links?.complete ?? null,
+                snoozeUrl: links?.snooze ?? null,
               },
             },
           })
@@ -177,6 +184,7 @@ Deno.serve(async (req) => {
         }
       }
     }
+
 
     const allOk = channels.every((c) => delivered.includes(c))
     const anyOk = delivered.length > 0
