@@ -1,51 +1,30 @@
-## Editor de campos com toggle "Dados técnicos"
+## Objetivo
 
-Em vez de remover os campos avançados, vamos escondê-los por padrão e expor um **switch "Dados técnicos"** no topo da página. Quando desligado (padrão), a UI fica enxuta; quando ligado, mostra os controles de power-user.
+Unificar a edição da Categoria de Produto numa única tela (dados básicos + camadas/campos), abrir essa tela ao clicar na linha da tabela, e mover o botão **Excluir** para dentro dela — bloqueando a exclusão quando houver produtos vinculados.
 
-### Toggle global
+## Mudanças
 
-Novo controle no header da página (ao lado de "Aplicar modelo Altivus" / "Adicionar campo"):
+### 1. `src/pages/CategoryFieldsPage.tsx` (página unificada)
+- Adicionar bloco "Dados da categoria" no topo: inputs **Nome** (obrigatório), **Descrição** (textarea) e switch **Ativa**.
+- Estado `meta` inicializado a partir da categoria carregada.
+- `saveMutation` passa a salvar `name`, `description`, `is_active` e `field_schema` no mesmo update (com audit log).
+- **Suporte a criação**: quando `id === "new"`, mostra a mesma tela vazia; ao salvar pela 1ª vez faz `insert` e redireciona para `/registrations/categories/{novo-id}/fields`.
+- **Botão Excluir** no rodapé (lado esquerdo, ao lado do Salvar):
+  - Faz `SELECT count` em `products` por `category_id` ao carregar.
+  - Se `productCount > 0`: botão desabilitado, com tooltip e legenda *"Para excluir, remova ou troque a categoria dos N produto(s) vinculados."*
+  - Se `productCount === 0`: abre `AlertDialog` de confirmação e exclui; após sucesso, navega de volta para `/registrations`.
+  - Em modo "novo", o botão não aparece.
 
-```
-[ ] Dados técnicos
-```
+### 2. `src/components/ProductsTab.tsx` (CategoriesSubTab)
+- Tornar a `TableRow` clicável (`cursor-pointer`, hover, `onClick` → `/registrations/categories/${c.id}/fields`).
+- Remover a coluna **Ações** inteira (botões editar ✏️ e excluir 🗑️ e Dialog inline). Edição e exclusão acontecem somente na página dedicada.
+- Manter o contador de campos visível em uma coluna própria (ícone Layers + número), exibido na linha.
+- Botão **+ Categoria** passa a navegar para `/registrations/categories/new/fields` em vez de abrir Dialog.
+- Remover `saveMutation`, `deleteMutation`, `dialogOpen`, `editing`, `form` e o `<Dialog>` inteiro do componente.
 
-Estado mantido em `useState` local (não persiste). Default: **desligado**.
+### 3. Rota
+- `src/App.tsx`: rota `/registrations/categories/:id/fields` já é dinâmica; o componente trata `id === "new"`. Nenhuma alteração de rota necessária.
 
-### Campos sempre visíveis (modo simples)
-
-- Rótulo
-- Tipo
-- Largura
-- Obrigatório (switch)
-- Botões mover ↑ ↓ / remover
-- Textarea de Opções (quando tipo = select/checkbox)
-
-### Campos visíveis só com "Dados técnicos" ON
-
-- **Chave (key)** — input editável (com `slugify` no onChange, respeitando `mapsTo` que segue bloqueado)
-- **Placeholder**
-- **Grupo**
-
-### Simplificação das opções de select/checkbox
-
-Independente do toggle, o textarea de opções passa a aceitar **um rótulo por linha** (sem `valor|rótulo`):
-
-```
-direto
-1 conexão
-2 conexões
-3 ou mais
-```
-
-O `value` é derivado automaticamente via `slugify(label)` + `ensureUniqueKey` para garantir unicidade dentro do mesmo campo. Opções salvas anteriormente são exibidas mostrando apenas o `label`.
-
-### Auto-geração da key
-
-Hoje a key só é recalculada quando começa com `novo_campo` ou bate exatamente com o slug do label anterior. Vamos manter essa lógica (não quebra campos já renomeados manualmente por usuários avançados) — o toggle simplesmente esconde o input.
-
-### Arquivo afetado
-
-- `src/pages/CategoryFieldsPage.tsx` — adiciona `showTechnical` state + switch no header, condiciona renderização dos 3 inputs avançados, ajusta textarea de opções.
-
-Sem mudanças no schema do banco nem em outros arquivos.
+## Sem mudanças
+- Schema do banco, RLS, audit, demais módulos.
+- Aba Produtos da `ProductsTab`.
