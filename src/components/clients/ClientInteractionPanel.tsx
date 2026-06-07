@@ -161,6 +161,7 @@ export function ClientInteractionPanel({ contactId, clientId }: Props) {
   const [files, setFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [historyFilter, setHistoryFilter] = useState<"all" | "interactions" | "audit" | Kind>("all");
+  const [pendingDelete, setPendingDelete] = useState<InteractionRow | null>(null);
 
   // Interações
   const { data: interactions = [], isLoading: loadingInter } = useQuery({
@@ -280,8 +281,10 @@ export function ClientInteractionPanel({ contactId, clientId }: Props) {
     }
   };
 
-  const removeInteraction = async (row: InteractionRow) => {
-    if (!confirm("Excluir esta interação?")) return;
+  const confirmRemoveInteraction = async () => {
+    const row = pendingDelete;
+    if (!row) return;
+    setPendingDelete(null);
     const { error } = await supabase
       .from("client_interactions" as any)
       .delete()
@@ -297,6 +300,7 @@ export function ClientInteractionPanel({ contactId, clientId }: Props) {
       oldData: { kind: row.kind, content: row.content },
     });
     qc.invalidateQueries({ queryKey: ["client-interactions", contactId] });
+    toast({ title: "Interação excluída" });
   };
 
   const openAttachment = async (att: Attachment) => {
@@ -397,7 +401,7 @@ export function ClientInteractionPanel({ contactId, clientId }: Props) {
                 key={`i-${item.row.id}`}
                 row={item.row}
                 currentUserId={user?.id ?? null}
-                onDelete={() => removeInteraction(item.row)}
+                onDelete={() => setPendingDelete(item.row)}
                 onOpenAttachment={openAttachment}
               />
             ) : (
@@ -406,6 +410,32 @@ export function ClientInteractionPanel({ contactId, clientId }: Props) {
           )}
         </div>
       </div>
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(o) => { if (!o) setPendingDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir interação?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete && (
+                <>
+                  Esta ação não pode ser desfeita. O registro
+                  {pendingDelete.content ? ` "${pendingDelete.content.slice(0, 80)}${pendingDelete.content.length > 80 ? "…" : ""}"` : ""}
+                  {" "}será removido permanentemente do histórico.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmRemoveInteraction}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
