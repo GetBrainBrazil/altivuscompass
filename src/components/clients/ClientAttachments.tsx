@@ -50,6 +50,36 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [renaming, setRenaming] = useState(false);
+  const [previewRow, setPreviewRow] = useState<AttachmentRow | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  useEffect(() => {
+    if (!previewRow) { setPreviewUrl(null); return; }
+    let cancelled = false;
+    setPreviewLoading(true);
+    (async () => {
+      const { data, error } = await supabase.storage
+        .from(BUCKET)
+        .createSignedUrl(previewRow.file_path, 60 * 60);
+      if (cancelled) return;
+      setPreviewLoading(false);
+      if (error || !data?.signedUrl) {
+        toast({ title: "Não foi possível abrir o anexo", variant: "destructive" });
+        setPreviewRow(null);
+        return;
+      }
+      setPreviewUrl(data.signedUrl);
+    })();
+    return () => { cancelled = true; };
+  }, [previewRow, toast]);
+
+  const downloadRow = async (row: AttachmentRow) => {
+    const { data } = await supabase.storage
+      .from(BUCKET)
+      .createSignedUrl(row.file_path, 60 * 5, { download: row.file_name });
+    if (data?.signedUrl) window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  };
 
   const startRename = (r: AttachmentRow) => {
     setRenamingId(r.id);
