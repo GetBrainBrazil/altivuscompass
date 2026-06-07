@@ -80,18 +80,70 @@ const AUDIT_FIELD_LABELS: Record<string, string> = {
   birth_date: "Nascimento",
   gender: "Sexo",
   cpf_cnpj: "CPF/CNPJ",
+  cpf: "CPF",
+  rg: "RG",
+  rg_issuer: "Órgão emissor",
   rating: "Qualificação",
   travel_profile: "Perfil de viagem",
   website: "Site",
+  site: "Site",
   notes: "Observações",
   is_active: "Ativo",
   email: "E-mail",
   phone: "Telefone",
   address: "Endereço",
+  address_street: "Rua",
+  address_number: "Número",
+  address_complement: "Complemento",
+  neighborhood: "Bairro",
   city: "Cidade",
   state: "Estado",
   country: "País",
   zip_code: "CEP",
+  cep: "CEP",
+  nationality: "Nacionalidade",
+  marital_status: "Estado civil",
+  passport_status: "Passaporte",
+  seat_preference: "Preferência de assento",
+  preferred_airports: "Aeroportos preferidos",
+  accepts_email_comm: "Aceita e-mail",
+  accepts_whatsapp_comm: "Aceita WhatsApp",
+  tags: "Tags",
+  foreign_id: "Documento estrangeiro",
+};
+
+const IGNORED_AUDIT_FIELDS = new Set([
+  "_label", "updated_at", "created_at", "id", "user_id", "owner_id",
+]);
+
+const formatAuditValue = (v: any): string => {
+  if (v === null || v === undefined || v === "") return "—";
+  if (typeof v === "boolean") return v ? "Sim" : "Não";
+  if (Array.isArray(v)) return v.length === 0 ? "—" : v.join(", ");
+  if (typeof v === "object") {
+    try { return JSON.stringify(v); } catch { return String(v); }
+  }
+  const s = String(v);
+  return s.length > 60 ? s.slice(0, 57) + "…" : s;
+};
+
+const sameValue = (a: any, b: any): boolean => {
+  if (a === b) return true;
+  if (a == null && b == null) return true;
+  if (a == null || b == null) {
+    // treat "" / [] / null as equivalent emptiness
+    const emptyA = a == null || a === "" || (Array.isArray(a) && a.length === 0);
+    const emptyB = b == null || b === "" || (Array.isArray(b) && b.length === 0);
+    return emptyA && emptyB;
+  }
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) return false;
+    return a.every((x, i) => sameValue(x, b[i]));
+  }
+  if (typeof a === "object" && typeof b === "object") {
+    try { return JSON.stringify(a) === JSON.stringify(b); } catch { return false; }
+  }
+  return String(a) === String(b);
 };
 
 export function ClientInteractionPanel({ contactId, clientId }: Props) {
@@ -446,15 +498,42 @@ function InteractionItem({
 }
 
 function AuditItem({ row }: { row: AuditRow }) {
-  const fields = useMemo(() => {
+  const [expanded, setExpanded] = useState(false);
+
+  const changes = useMemo(() => {
     const nd = (row.new_data && typeof row.new_data === "object") ? row.new_data : {};
-    return Object.keys(nd)
-      .filter((k) => k !== "_label")
-      .map((k) => AUDIT_FIELD_LABELS[k] || k);
-  }, [row.new_data]);
+    const od = (row.old_data && typeof row.old_data === "object") ? row.old_data : {};
+    const keys = Array.from(new Set([...Object.keys(nd), ...Object.keys(od)]))
+      .filter((k) => !IGNORED_AUDIT_FIELDS.has(k));
+
+    if (row.action === "UPDATE") {
+      return keys
+        .filter((k) => !sameValue(od[k], nd[k]))
+        .map((k) => ({
+          key: k,
+          label: AUDIT_FIELD_LABELS[k] || k,
+          from: formatAuditValue(od[k]),
+          to: formatAuditValue(nd[k]),
+        }));
+    }
+    // CREATE / DELETE: show populated fields from new/old
+    const src = row.action === "DELETE" ? od : nd;
+    return keys
+      .filter((k) => src[k] !== null && src[k] !== undefined && src[k] !== "" && !(Array.isArray(src[k]) && src[k].length === 0))
+      .map((k) => ({
+        key: k,
+        label: AUDIT_FIELD_LABELS[k] || k,
+        from: "",
+        to: formatAuditValue(src[k]),
+      }));
+  }, [row.new_data, row.old_data, row.action]);
 
   const actionLabel = row.action === "CREATE" ? "Criou" : row.action === "DELETE" ? "Excluiu" : "Atualizou";
   const target = row.table_name === "clients" ? "cliente" : "contato";
+
+  const VISIBLE = 4;
+  const visibleChanges = expanded ? changes : changes.slice(0, VISIBLE);
+  const hidden = Math.max(0, changes.length - VISIBLE);
 
   return (
     <div className={cn("rounded-lg border border-dashed border-border/70 bg-muted/20 p-2.5")}>
@@ -466,7 +545,12 @@ function AuditItem({ row }: { row: AuditRow }) {
           <div className="flex items-center gap-2 flex-wrap text-[11px] font-body">
             <span className="font-medium text-foreground">{row.user_name || "Sistema"}</span>
             <span className="text-muted-foreground">·</span>
-            <span className="text-muted-foreground">{actionLabel} {target}</span>
+            <span className="text-muted-foreground">
+              {actionLabel} {target}
+              {row.action === "UPDATE" && changes.length > 0 && (
+                <> · <span className="text-foreground">{changes.length} {changes.length === 1 ? "alteração" : "alterações"}</span></>
+              )}
+            </span>
             <TooltipProvider delayDuration={200}>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -476,10 +560,38 @@ function AuditItem({ row }: { row: AuditRow }) {
               </Tooltip>
             </TooltipProvider>
           </div>
-          {fields.length > 0 && (
-            <p className="mt-1 text-[11px] text-muted-foreground font-body">
-              Campos: {fields.join(", ")}
-            </p>
+
+          {changes.length > 0 && (
+            <ul className="mt-1.5 space-y-1">
+              {visibleChanges.map((c) => (
+                <li key={c.key} className="text-[11px] font-body leading-snug">
+                  <span className="font-medium text-foreground">{c.label}:</span>{" "}
+                  {row.action === "UPDATE" ? (
+                    <>
+                      <span className="text-muted-foreground line-through">{c.from}</span>
+                      <span className="text-muted-foreground"> → </span>
+                      <span className="text-foreground">{c.to}</span>
+                    </>
+                  ) : (
+                    <span className="text-foreground">{c.to}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {hidden > 0 && (
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              className="mt-1 text-[10px] font-body text-primary hover:underline"
+            >
+              {expanded ? "Ver menos" : `Ver mais ${hidden} ${hidden === 1 ? "campo" : "campos"}`}
+            </button>
+          )}
+
+          {row.action === "UPDATE" && changes.length === 0 && (
+            <p className="mt-1 text-[11px] text-muted-foreground font-body italic">Sem alterações de valor</p>
           )}
         </div>
       </div>
