@@ -188,7 +188,7 @@ export default function OpsNew() {
 
   const isLeadOrProspectAttempt = selectedContact && selectedContact.level !== "cliente";
 
-  const handleCancel = () => navigate("/crm?tab=ops");
+  const handleCancel = () => navigate("/crm/ops?tab=ops");
 
   const handleSubmit = async () => {
     if (!selectedContact) {
@@ -232,7 +232,7 @@ export default function OpsNew() {
 
     toast.success(`Operação criada em "${OPS_STAGES.find((s) => s.id === stageId)?.title}".`);
     setSubmitting(false);
-    navigate("/crm?tab=ops");
+    navigate("/crm/ops?tab=ops");
   };
 
   return (

@@ -913,7 +913,7 @@ const CRMPanel = ({ conversation }: { conversation: Conversation }) => {
               </div>
               <button
                 type="button"
-                onClick={() => navigate(`/crm?tab=ops`)}
+                onClick={() => navigate(`/crm/ops?tab=ops`)}
                 className="w-full flex items-center justify-between gap-2 rounded-lg border bg-card p-3 text-left hover:bg-accent/40 transition-colors group"
               >
                 <div className="min-w-0">
@@ -950,7 +950,7 @@ const CRMPanel = ({ conversation }: { conversation: Conversation }) => {
               className="w-full gap-2 bg-[hsl(var(--navy))] text-[hsl(var(--cream))] hover:bg-[hsl(var(--navy))]/90"
               onClick={() => {
                 if (isPostSale) {
-                  navigate(`/crm?tab=ops`);
+                  navigate(`/crm/ops?tab=ops`);
                   return;
                 }
                 if (level === "cliente" && contactId) {

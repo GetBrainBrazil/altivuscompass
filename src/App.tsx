@@ -41,6 +41,7 @@ import PublicItinerary from "./pages/PublicItinerary";
 import PublicItineraryPDF from "./pages/PublicItineraryPDF";
 import ServiceCenter from "./pages/ServiceCenter";
 import CRM from "./pages/CRM";
+import CRMDashboard from "./pages/CRMDashboard";
 import LeadDetail from "./pages/LeadDetail";
 import LeadNew from "./pages/LeadNew";
 import LeadConvert from "./pages/LeadConvert";
@@ -113,7 +114,9 @@ const App = () => (
             <Route path="/service-center" element={<ProtectedRoute><AppLayout><ServiceCenter /></AppLayout></ProtectedRoute>} />
             <Route path="/atendimento" element={<ProtectedRoute><AppLayout><ServiceCenter /></AppLayout></ProtectedRoute>} />
             <Route path="/inbox" element={<ProtectedRoute><AppLayout><ServiceCenter /></AppLayout></ProtectedRoute>} />
-            <Route path="/crm" element={<ProtectedRoute><AppLayout><CRM /></AppLayout></ProtectedRoute>} />
+            <Route path="/crm" element={<ProtectedRoute><AppLayout><CRMDashboard /></AppLayout></ProtectedRoute>} />
+            <Route path="/crm/ops" element={<ProtectedRoute><AppLayout><CRM /></AppLayout></ProtectedRoute>} />
+            <Route path="/crm/sales" element={<ProtectedRoute><AppLayout><CRM /></AppLayout></ProtectedRoute>} />
             <Route path="/crm/lead/new" element={<ProtectedRoute><AppLayout><LeadNew /></AppLayout></ProtectedRoute>} />
             <Route path="/crm/ops/new" element={<ProtectedRoute><AppLayout><OpsNew /></AppLayout></ProtectedRoute>} />
             <Route path="/crm/lead/:id" element={<ProtectedRoute><AppLayout><LeadDetail /></AppLayout></ProtectedRoute>} />
