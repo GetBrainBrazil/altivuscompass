@@ -131,7 +131,7 @@ export default function Sales() {
               </div>
               <div className="space-y-2">
                 <Label className="font-body">Valor total (R$)</Label>
-                <Input type="number" step="0.01" value={form.total_value ?? ""} onChange={(e) => setForm({ ...form, total_value: e.target.value })} />
+                <CurrencyInput value={form.total_value === "" || form.total_value == null ? null : Number(form.total_value)} onChange={(v) => setForm({ ...form, total_value: v == null ? "" : String(v) })} />
               </div>
               <div className="space-y-2">
                 <Label className="font-body">Data ida</Label>
