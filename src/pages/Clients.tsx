@@ -2275,9 +2275,9 @@ export default function Clients() {
                       <td className="p-2 text-center">
                         {(() => {
                           const key = client._contactId ? `p:${client._contactId}` : `c:${client.id}`;
-                          const tCount = activityCounts.tasks[key] ?? 0;
-                          const rCount = activityCounts.reminders[key] ?? 0;
-                          const aCount = client._contactId ? 0 : (activityCounts.attachments[`c:${client.id}`] ?? 0);
+                          const tCount = activityCounts.tasks?.[key] ?? 0;
+                          const rCount = activityCounts.reminders?.[key] ?? 0;
+                          const aCount = client._contactId ? 0 : (activityCounts.attachments?.[`c:${client.id}`] ?? 0);
                           if (tCount === 0 && rCount === 0 && aCount === 0) return <span className="text-xs text-muted-foreground">—</span>;
                           return (
                             <div className="inline-flex items-center gap-2 text-xs font-body">
