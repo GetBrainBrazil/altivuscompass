@@ -430,7 +430,12 @@ function TaskItem({
           </TooltipContent>
         </Tooltip>
       )}
-      <Flag className={cn("h-3 w-3 shrink-0", prio.color)} aria-label={prio.label} />
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Flag className={cn("h-3 w-3 shrink-0", prio.color)} aria-label={prio.label} />
+        </TooltipTrigger>
+        <TooltipContent className="text-xs">Prioridade: {prio.label}</TooltipContent>
+      </Tooltip>
       {task.due_date && (
         <span className={cn("text-[10px] shrink-0", overdue ? "text-destructive font-medium" : "text-muted-foreground")}>
           {format(new Date(task.due_date + "T00:00:00"), "dd/MM", { locale: ptBR })}
