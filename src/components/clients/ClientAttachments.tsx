@@ -26,12 +26,33 @@ interface AttachmentRow {
   description: string | null;
   passport_id: string | null;
   visa_id: string | null;
+  category: string | null;
+  bucket: string | null;
   created_at: string;
 }
 
-type LinkOption = { value: string; label: string; passportId?: string; visaId?: string };
+type LinkOption = { value: string; label: string };
 
 const BUCKET = "client-attachments";
+
+const CATEGORY_OPTIONS: { value: string; label: string }[] = [
+  { value: "comp_residencia", label: "Comp. Residência" },
+  { value: "id_cpf_cnh", label: "ID/CPF/CNH" },
+  { value: "cnh", label: "CNH" },
+  { value: "ir", label: "IR" },
+  { value: "ir_receipt", label: "Recibo IR" },
+  { value: "ir_full", label: "IR + Recibo" },
+  { value: "marriage_cert", label: "Cert. Casamento" },
+  { value: "union_cert", label: "Cert. União Estável" },
+  { value: "birth_cert", label: "Cert. Nascimento" },
+  { value: "death_cert", label: "Cert. Óbito" },
+  { value: "other", label: "Outros" },
+];
+
+const categoryLabel = (v: string | null) =>
+  v ? CATEGORY_OPTIONS.find((o) => o.value === v)?.label ?? v : null;
+
+const bucketOf = (r: { bucket: string | null }) => r.bucket || BUCKET;
 
 const formatSize = (n: number | null) => {
   if (!n && n !== 0) return "";
@@ -67,7 +88,7 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
     setPreviewLoading(true);
     (async () => {
       const { data, error } = await supabase.storage
-        .from(BUCKET)
+        .from(bucketOf(previewRow))
         .createSignedUrl(previewRow.file_path, 60 * 60);
       if (cancelled) return;
       setPreviewLoading(false);
@@ -83,7 +104,7 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
 
   const downloadRow = async (row: AttachmentRow) => {
     const { data } = await supabase.storage
-      .from(BUCKET)
+      .from(bucketOf(row))
       .createSignedUrl(row.file_path, 60 * 5, { download: row.file_name });
     if (data?.signedUrl) window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   };
@@ -147,33 +168,33 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
       const opts: LinkOption[] = [];
       (passports ?? []).forEach((p: any, i: number) => {
         const label = `Passaporte ${i + 1}${p.passport_number ? ` — ${p.passport_number}` : ""}${p.nationality ? ` (${p.nationality})` : ""}`;
-        opts.push({ value: `p:${p.id}`, label, passportId: p.id });
+        opts.push({ value: `p:${p.id}`, label });
       });
       (visas ?? []).forEach((v: any, i: number) => {
         const parts = [v.country_region, v.visa_type].filter(Boolean).join(" — ");
         const label = `Visto ${i + 1}${parts ? ` — ${parts}` : ""}${v.visa_number ? ` · ${v.visa_number}` : ""}`;
-        opts.push({ value: `v:${v.id}`, label, visaId: v.id });
+        opts.push({ value: `v:${v.id}`, label });
       });
       return opts;
     },
   });
 
   const linkValueOf = (r: AttachmentRow) =>
-    r.visa_id ? `v:${r.visa_id}` : r.passport_id ? `p:${r.passport_id}` : "none";
+    r.visa_id ? `v:${r.visa_id}` : r.passport_id ? `p:${r.passport_id}` : r.category ? `c:${r.category}` : "";
 
   const linkLabelOf = (r: AttachmentRow) => {
-    if (r.visa_id) return linkOptions.find((o) => o.value === `v:${r.visa_id}`)?.label;
-    if (r.passport_id) return linkOptions.find((o) => o.value === `p:${r.passport_id}`)?.label;
+    if (r.visa_id) return linkOptions.find((o) => o.value === `v:${r.visa_id}`)?.label ?? "Visto";
+    if (r.passport_id) return linkOptions.find((o) => o.value === `p:${r.passport_id}`)?.label ?? "Passaporte";
+    if (r.category) return categoryLabel(r.category);
     return null;
   };
 
   const updateLink = async (r: AttachmentRow, value: string) => {
-    const patch: { passport_id: string | null; visa_id: string | null } =
-      value === "none"
-        ? { passport_id: null, visa_id: null }
-        : value.startsWith("p:")
-          ? { passport_id: value.slice(2), visa_id: null }
-          : { passport_id: null, visa_id: value.slice(2) };
+    let patch: { passport_id: string | null; visa_id: string | null; category: string | null };
+    if (value.startsWith("p:")) patch = { passport_id: value.slice(2), visa_id: null, category: null };
+    else if (value.startsWith("v:")) patch = { passport_id: null, visa_id: value.slice(2), category: null };
+    else if (value.startsWith("c:")) patch = { passport_id: null, visa_id: null, category: value.slice(2) };
+    else return;
     const { error } = await supabase.from("client_attachments" as any).update(patch).eq("id", r.id);
     if (error) {
       toast({ title: "Falha ao vincular", description: error.message, variant: "destructive" });
@@ -245,7 +266,7 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
     if (list.length) uploadFiles(list);
   };
 
-  const [imageViewer, setImageViewer] = useState<ViewerAttachment | null>(null);
+  const [imageViewer, setImageViewer] = useState<(ViewerAttachment & { bucket: string }) | null>(null);
 
   const onOpen = (row: AttachmentRow) => {
     if (row.mime_type?.startsWith("image/")) {
@@ -255,6 +276,7 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
         file_path: row.file_path,
         file_type: row.mime_type,
         _pending: false,
+        bucket: bucketOf(row),
       });
       return;
     }
@@ -265,7 +287,7 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
     const row = pendingDelete;
     if (!row) return;
     setPendingDelete(null);
-    const { error: stErr } = await supabase.storage.from(BUCKET).remove([row.file_path]);
+    const { error: stErr } = await supabase.storage.from(bucketOf(row)).remove([row.file_path]);
     if (stErr) {
       toast({ title: "Falha ao excluir arquivo", description: stErr.message, variant: "destructive" });
       return;
@@ -281,6 +303,7 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
     qc.invalidateQueries({ queryKey: ["client-attachments", clientId] });
     toast({ title: "Anexo excluído" });
   };
+
 
   return (
     <div className="border-t border-border/50 pt-4">
@@ -423,16 +446,24 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
                   className="flex-1 min-w-0 text-xs font-body bg-background border border-border/50 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
                 />
                 <Select value={linkValueOf(r)} onValueChange={(v) => updateLink(r, v)}>
-                  <SelectTrigger className="h-7 text-xs sm:w-[260px]">
-                    <SelectValue placeholder="Sem vínculo" />
+                  <SelectTrigger
+                    className={cn(
+                      "h-7 text-xs sm:w-[260px]",
+                      !linkValueOf(r) && "border-destructive ring-1 ring-destructive/40 text-destructive"
+                    )}
+                  >
+                    <SelectValue placeholder="Vínculo (obrigatório)" />
                   </SelectTrigger>
                   <SelectContent className="max-h-72">
-                    <SelectItem value="none">Sem vínculo</SelectItem>
-                    {linkOptions.length === 0 && (
-                      <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhum passaporte ou visto cadastrado</div>
+                    {linkOptions.length > 0 && (
+                      <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground">Documentos do cliente</div>
                     )}
                     {linkOptions.map((o) => (
                       <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    ))}
+                    <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground border-t mt-1">Categorias</div>
+                    {CATEGORY_OPTIONS.map((o) => (
+                      <SelectItem key={`c:${o.value}`} value={`c:${o.value}`}>{o.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -487,7 +518,7 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
         onOpenChange={(o) => { if (!o) setImageViewer(null); }}
         attachment={imageViewer}
         taskId={clientId}
-        bucket={BUCKET}
+        bucket={imageViewer?.bucket || BUCKET}
         tableName="client_attachments"
         sizeColumn="size_bytes"
         invalidateKey={["client-attachments", clientId]}
