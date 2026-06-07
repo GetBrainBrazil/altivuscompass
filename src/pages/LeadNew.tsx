@@ -182,7 +182,7 @@ export default function LeadNew() {
           ? "Lead criado e adicionado ao funil."
           : "Prospect criado em Novos Leads.",
       );
-      navigate("/crm?tab=sales");
+      navigate("/crm/sales?tab=sales");
     } catch (err: any) {
       toast.error(err?.message ?? "Erro ao criar lead.");
     } finally {
@@ -202,7 +202,7 @@ export default function LeadNew() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate("/crm?tab=sales")}
+            onClick={() => navigate("/crm/sales?tab=sales")}
             aria-label="Voltar ao CRM"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -395,7 +395,7 @@ export default function LeadNew() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate("/crm?tab=sales")}
+              onClick={() => navigate("/crm/sales?tab=sales")}
               disabled={saving}
             >
               Cancelar

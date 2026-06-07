@@ -784,7 +784,7 @@ export default function LeadDetail() {
                       // dispara as mesmas validações/modais do drag-and-drop
                       // (atribuição de responsável, motivo de perda, conversão
                       // para Cliente etc.) e move o card simultaneamente.
-                      navigate(`/crm?tab=sales&focus=${encodeURIComponent(id)}&moveTo=${encodeURIComponent(stage.id)}`);
+                      navigate(`/crm/sales?tab=sales&focus=${encodeURIComponent(id)}&moveTo=${encodeURIComponent(stage.id)}`);
                     };
 
                     return (
