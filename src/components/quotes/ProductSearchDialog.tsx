@@ -358,37 +358,6 @@ export function ProductSearchDialog({ open, onOpenChange, quoteId }: Props) {
         </DialogContent>
       </Dialog>
 
-      {/* Item sem produto */}
-      <Dialog open={noProductOpen} onOpenChange={setNoProductOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="font-display">Item sem produto</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-1">
-            <Label className="text-xs">Categoria</Label>
-            <Select value={noProductCategory} onValueChange={setNoProductCategory}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setNoProductOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="button" onClick={handleCreateWithoutProduct} disabled={creating}>
-              {creating ? "Criando..." : "Criar item"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
