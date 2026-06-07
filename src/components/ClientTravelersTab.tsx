@@ -818,8 +818,6 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                       </td>
                       <td className="p-3 text-sm font-body text-foreground">{r.client?.cpf_cnpj ? maskCPF(r.client.cpf_cnpj) : "—"}</td>
                       <td className="p-3 text-sm font-body text-foreground">{r.client?.birth_date ? new Date(r.client.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
-                      <td className="p-3 text-sm font-body text-foreground">{r.client?.nationality || "—"}</td>
-                      <td className="p-3 text-sm font-body text-foreground">{r._passports || "—"}</td>
                       <td className="p-3">
                         <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" title="Desvincular cliente"
                           onClick={(e) => { e.stopPropagation(); setDeleteRelId(r.id); }}>
