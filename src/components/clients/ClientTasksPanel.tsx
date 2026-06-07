@@ -27,11 +27,11 @@ type TaskRow = {
   completed_at: string | null;
 };
 
-const PRIORITY_META: Record<string, { label: string; color: string }> = {
-  low: { label: "Baixa", color: "text-muted-foreground" },
-  medium: { label: "Média", color: "text-blue-500" },
-  high: { label: "Alta", color: "text-orange-500" },
-  urgent: { label: "Urgente", color: "text-destructive" },
+const PRIORITY_META: Record<string, { label: string; color: string; border: string }> = {
+  low: { label: "Baixa", color: "text-muted-foreground", border: "border-l-muted-foreground/40" },
+  medium: { label: "Média", color: "text-blue-500", border: "border-l-blue-500" },
+  high: { label: "Alta", color: "text-orange-500", border: "border-l-orange-500" },
+  urgent: { label: "Urgente", color: "text-destructive", border: "border-l-destructive" },
 };
 
 export function ClientTasksPanel({ contactId, clientId }: Props) {
