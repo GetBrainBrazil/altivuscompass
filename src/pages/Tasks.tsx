@@ -741,8 +741,13 @@ export default function Tasks() {
                     </TableCell>
                     <TableCell>
                       <div className="min-w-0">
-                        <span className={cn("text-sm font-medium font-body", task.status === "completed" && "line-through text-muted-foreground")}>
+                        <span className={cn("text-sm font-medium font-body inline-flex items-center gap-1.5", task.status === "completed" && "line-through text-muted-foreground")}>
                           {task.title}
+                          {attachmentCounts[task.id] > 0 && (
+                            <span className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground font-body" title={`${attachmentCounts[task.id]} anexo(s)`}>
+                              <Paperclip size={11} />{attachmentCounts[task.id]}
+                            </span>
+                          )}
                         </span>
                         {task.description && task.description.replace(/<[^>]*>/g, "").trim() && (
                           <p className="text-xs text-muted-foreground font-body mt-0.5 line-clamp-1">{task.description.replace(/<[^>]*>/g, "").trim()}</p>
@@ -757,7 +762,7 @@ export default function Tasks() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className={cn("text-[10px] font-body whitespace-nowrap", status.color)}>{status.label}</Badge>
-                      {isDueToday && <Badge className="text-[10px] font-body ml-1 bg-warning text-warning-foreground border-0">Hoje</Badge>}
+                      {isDueToday && <Badge className="text-[10px] font-body ml-1 bg-success text-success-foreground border-0">Hoje</Badge>}
                       {isOverdue && <Badge variant="destructive" className="text-[10px] font-body ml-1">Atrasada</Badge>}
                       {task.completed_at && (
                         <p className="text-[10px] text-success font-body mt-0.5">
@@ -767,7 +772,7 @@ export default function Tasks() {
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       {task.due_date ? (
-                        <span className={cn("text-xs font-body whitespace-nowrap", isOverdue ? "text-destructive" : isDueToday ? "text-warning" : "text-muted-foreground")}>
+                        <span className={cn("text-xs font-body whitespace-nowrap", isOverdue ? "text-destructive" : isDueToday ? "text-success" : "text-muted-foreground")}>
                           {task.due_date.split("-").reverse().join("/")}
                         </span>
                       ) : (
