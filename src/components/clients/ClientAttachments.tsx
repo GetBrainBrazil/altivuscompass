@@ -46,6 +46,35 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
   const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<AttachmentRow | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [renaming, setRenaming] = useState(false);
+
+  const startRename = (r: AttachmentRow) => {
+    setRenamingId(r.id);
+    setRenameValue(r.file_name);
+  };
+  const cancelRename = () => {
+    setRenamingId(null);
+    setRenameValue("");
+  };
+  const confirmRename = async (r: AttachmentRow) => {
+    const newName = renameValue.trim();
+    if (!newName || newName === r.file_name) { cancelRename(); return; }
+    setRenaming(true);
+    const { error } = await supabase
+      .from("client_attachments" as any)
+      .update({ file_name: newName })
+      .eq("id", r.id);
+    setRenaming(false);
+    if (error) {
+      toast({ title: "Falha ao renomear", description: error.message, variant: "destructive" });
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["client-attachments", clientId] });
+    toast({ title: "Anexo renomeado" });
+    cancelRename();
+  };
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["client-attachments", clientId],
