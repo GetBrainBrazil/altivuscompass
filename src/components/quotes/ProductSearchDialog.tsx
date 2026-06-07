@@ -279,18 +279,12 @@ export function ProductSearchDialog({ open, onOpenChange, quoteId }: Props) {
             )}
           </div>
 
-          <DialogFooter className="sm:justify-between border-t pt-3">
-            <button
-              type="button"
-              onClick={() => setNoProductOpen(true)}
-              className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
-            >
-              Criar item sem produto
-            </button>
+          <DialogFooter className="border-t pt-3">
             <Button type="button" variant="ghost" onClick={handleClose}>
               Fechar
             </Button>
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
 
