@@ -218,41 +218,91 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
         ) : rows.length === 0 ? (
           <p className="text-xs text-muted-foreground font-body">Nenhum anexo.</p>
         ) : (
-          rows.map((r) => (
+          rows.map((r) => {
+            const isRenaming = renamingId === r.id;
+            return (
             <div key={r.id} className="flex items-center gap-2 rounded-md border border-border/50 bg-muted/20 px-3 py-2">
               <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-              <button
-                type="button"
-                onClick={() => onOpen(r)}
-                className="flex-1 min-w-0 text-left text-xs font-body text-foreground hover:text-primary truncate"
-                title={r.file_name}
-              >
-                {r.file_name}
-              </button>
+              {isRenaming ? (
+                <input
+                  autoFocus
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") { e.preventDefault(); confirmRename(r); }
+                    if (e.key === "Escape") { e.preventDefault(); cancelRename(); }
+                  }}
+                  disabled={renaming}
+                  className="flex-1 min-w-0 text-xs font-body bg-background border border-border/60 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onOpen(r)}
+                  className="flex-1 min-w-0 text-left text-xs font-body text-foreground hover:text-primary truncate"
+                  title={r.file_name}
+                >
+                  {r.file_name}
+                </button>
+              )}
               <span className="text-[10px] text-muted-foreground font-body whitespace-nowrap">
                 {formatSize(r.size_bytes)}
               </span>
               <span className="text-[10px] text-muted-foreground font-body whitespace-nowrap hidden sm:inline">
                 {r.user_name || "—"} · {formatDate(r.created_at)}
               </span>
-              <button
-                type="button"
-                onClick={() => onOpen(r)}
-                className="text-muted-foreground hover:text-foreground"
-                title="Abrir / baixar"
-              >
-                <Download className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setPendingDelete(r)}
-                className="text-muted-foreground hover:text-destructive"
-                title="Excluir"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
+              {isRenaming ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => confirmRename(r)}
+                    disabled={renaming}
+                    className="text-muted-foreground hover:text-primary"
+                    title="Salvar"
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancelRename}
+                    disabled={renaming}
+                    className="text-muted-foreground hover:text-foreground"
+                    title="Cancelar"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => startRename(r)}
+                    className="text-muted-foreground hover:text-foreground"
+                    title="Renomear"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onOpen(r)}
+                    className="text-muted-foreground hover:text-foreground"
+                    title="Abrir / baixar"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPendingDelete(r)}
+                    className="text-muted-foreground hover:text-destructive"
+                    title="Excluir"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </>
+              )}
             </div>
-          ))
+            );
+          })
         )}
       </div>
 
