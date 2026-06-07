@@ -115,13 +115,17 @@ export function NotificationBell() {
 
   // Lista unificada ordenada por data desc
   const items = useMemo<GenericItem[]>(() => {
-    const reminderItems: GenericItem[] = reminders.map((r: any) => ({
-      kind: "reminder",
-      id: r.id,
-      title: (r.tasks as any)?.title ?? "Tarefa",
-      description: `Lembrete: ${format(new Date(r.remind_at), "dd/MM/yyyy HH:mm")}`,
-      timestamp: r.remind_at,
-    }));
+    const reminderItems: GenericItem[] = reminders.map((r: any) => {
+      const when = `Lembrete: ${format(new Date(r.remind_at), "dd/MM/yyyy HH:mm")}`;
+      const obs = r.message?.trim();
+      return {
+        kind: "reminder",
+        id: r.id,
+        title: (r.tasks as any)?.title ?? "Tarefa",
+        description: obs ? `${when} — ${obs}` : when,
+        timestamp: r.remind_at,
+      };
+    });
     const notifItems: GenericItem[] = (notifications as any[]).map((n) => ({
       kind: "notification",
       id: n.id,
