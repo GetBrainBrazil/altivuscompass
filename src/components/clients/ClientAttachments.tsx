@@ -226,6 +226,28 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
           ))
         )}
       </div>
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(o) => { if (!o) setPendingDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir anexo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete && (
+                <>O arquivo <span className="font-medium text-foreground">"{pendingDelete.file_name}"</span> será removido permanentemente. Esta ação não pode ser desfeita.</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
