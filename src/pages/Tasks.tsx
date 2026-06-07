@@ -655,7 +655,7 @@ export default function Tasks() {
                             )}
                             <div className="flex flex-wrap items-center gap-1.5 mb-2">
                               <Badge variant="outline" className={cn("text-[10px] font-body whitespace-nowrap", priority.color)}>{priority.label}</Badge>
-                              {isDueToday && <Badge className="text-[10px] font-body bg-warning text-warning-foreground border-0">Hoje</Badge>}
+                              {isDueToday && <Badge className="text-[10px] font-body bg-success text-success-foreground border-0">Hoje</Badge>}
                               {isOverdue && <Badge variant="destructive" className="text-[10px] font-body">Atrasada</Badge>}
                             </div>
                             <div className="h-px bg-border/60 -mx-3" />
@@ -666,8 +666,13 @@ export default function Tasks() {
                               <span className="text-[11px] text-muted-foreground font-body truncate flex-1 min-w-0">
                                 {task.assigned_to ? getAssigneeName(task.assigned_to) : "Sem responsável"}
                               </span>
+                              {attachmentCounts[task.id] > 0 && (
+                                <span className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground font-body shrink-0" title={`${attachmentCounts[task.id]} anexo(s)`}>
+                                  <Paperclip size={11} />{attachmentCounts[task.id]}
+                                </span>
+                              )}
                               {task.due_date && (
-                                <span className={cn("text-[11px] font-body shrink-0 tabular-nums", isOverdue ? "text-destructive" : isDueToday ? "text-warning" : "text-muted-foreground")}>
+                                <span className={cn("text-[11px] font-body shrink-0 tabular-nums", isOverdue ? "text-destructive" : isDueToday ? "text-success" : "text-muted-foreground")}>
                                   {task.due_date.split("-").reverse().slice(0, 2).join("/")}
                                 </span>
                               )}
