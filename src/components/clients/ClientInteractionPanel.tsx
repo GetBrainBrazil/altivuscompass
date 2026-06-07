@@ -104,6 +104,7 @@ export function ClientInteractionPanel({ contactId, clientId }: Props) {
   const [content, setContent] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [historyFilter, setHistoryFilter] = useState<"all" | "interactions" | "audit" | Kind>("all");
 
   // Interações
   const { data: interactions = [], isLoading: loadingInter } = useQuery({
@@ -138,7 +139,7 @@ export function ClientInteractionPanel({ contactId, clientId }: Props) {
     },
   });
 
-  // Timeline unificada
+  // Timeline unificada (com filtro)
   const timeline = useMemo(() => {
     const items: Array<
       | { type: "interaction"; row: InteractionRow; at: number }
@@ -146,8 +147,14 @@ export function ClientInteractionPanel({ contactId, clientId }: Props) {
     > = [];
     for (const r of interactions) items.push({ type: "interaction", row: r, at: new Date(r.created_at).getTime() });
     for (const r of auditLogs) items.push({ type: "audit", row: r, at: new Date(r.created_at).getTime() });
-    return items.sort((a, b) => b.at - a.at);
-  }, [interactions, auditLogs]);
+    const filtered = items.filter((it) => {
+      if (historyFilter === "all") return true;
+      if (historyFilter === "interactions") return it.type === "interaction";
+      if (historyFilter === "audit") return it.type === "audit";
+      return it.type === "interaction" && it.row.kind === historyFilter;
+    });
+    return filtered.sort((a, b) => b.at - a.at);
+  }, [interactions, auditLogs, historyFilter]);
 
   const onPickFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const list = Array.from(e.target.files ?? []);
@@ -323,9 +330,24 @@ export function ClientInteractionPanel({ contactId, clientId }: Props) {
 
       {/* Histórico */}
       <div className="glass-card rounded-xl p-3">
-        <div className="flex items-center gap-2 mb-2">
-          <History className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-display font-semibold text-foreground">Histórico</h3>
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2">
+            <History className="h-4 w-4 text-muted-foreground" />
+            <h3 className="text-sm font-display font-semibold text-foreground">Histórico</h3>
+          </div>
+          <Select value={historyFilter} onValueChange={(v) => setHistoryFilter(v as any)}>
+            <SelectTrigger className="h-7 w-36 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tudo</SelectItem>
+              <SelectItem value="interactions">Interações</SelectItem>
+              <SelectItem value="audit">Alterações</SelectItem>
+              <SelectItem value="note">Notas</SelectItem>
+              <SelectItem value="call">Ligações</SelectItem>
+              <SelectItem value="email">E-mails</SelectItem>
+              <SelectItem value="meeting">Reuniões</SelectItem>
+              <SelectItem value="other">Outros</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="max-h-[60vh] overflow-y-auto pr-1 space-y-2">
           {loadingInter && (
