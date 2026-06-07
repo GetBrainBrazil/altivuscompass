@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -20,12 +21,8 @@ import { Layers } from "lucide-react";
 const CURRENCIES = ["BRL", "USD", "EUR", "GBP", "ARS", "CLP"];
 
 function CategoriesSubTab({ isAdmin }: { isAdmin: boolean }) {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState({ name: "", description: "", is_active: true });
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["product_categories"],
@@ -36,80 +33,18 @@ function CategoriesSubTab({ isAdmin }: { isAdmin: boolean }) {
     },
   });
 
-  const saveMutation = useMutation({
-    mutationFn: async () => {
-      if (editing) {
-        const { error } = await supabase.from("product_categories").update(form).eq("id", editing.id);
-        if (error) throw error;
-        await logAuditEvent({ action: "update", tableName: "product_categories", recordId: editing.id, recordLabel: form.name, oldData: editing, newData: form });
-      } else {
-        const { data, error } = await supabase.from("product_categories").insert(form).select("id").single();
-        if (error) throw error;
-        await logAuditEvent({ action: "create", tableName: "product_categories", recordId: data.id, recordLabel: form.name, newData: form });
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["product_categories"] });
-      toast({ title: editing ? "Categoria atualizada" : "Categoria adicionada" });
-      closeDialog();
-    },
-    onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const item = categories.find((c: any) => c.id === id);
-      const { error } = await supabase.from("product_categories").delete().eq("id", id);
-      if (error) throw error;
-      await logAuditEvent({ action: "delete", tableName: "product_categories", recordId: id, recordLabel: item?.name ?? id, oldData: item });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["product_categories"] });
-      toast({ title: "Categoria removida" });
-    },
-    onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
-  });
-
-  const closeDialog = () => {
-    setDialogOpen(false);
-    setEditing(null);
-    setForm({ name: "", description: "", is_active: true });
-  };
-
-  const openEdit = (c: any) => {
-    setEditing(c);
-    setForm({ name: c.name, description: c.description || "", is_active: c.is_active });
-    setDialogOpen(true);
-  };
-
   const filtered = categories.filter((c: any) =>
     [c.name, c.description].some((f: string) => f?.toLowerCase().includes(search.toLowerCase()))
   );
+
+  const openCategory = (id: string) => navigate(`/registrations/categories/${id}/fields`);
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <Input placeholder="Buscar categoria..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" />
         {isAdmin && (
-          <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) closeDialog(); else setDialogOpen(true); }}>
-            <DialogTrigger asChild>
-              <Button size="sm">+ Categoria</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>{editing ? "Editar Categoria" : "Nova Categoria"}</DialogTitle></DialogHeader>
-              <div className="grid gap-4 py-2">
-                <div><Label>Nome <span className="text-destructive">*</span></Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Passeio, Transfer, Seguro..." /></div>
-                <div><Label>Descrição</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} /></div>
-                <div className="flex items-center gap-2">
-                  <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} />
-                  <Label>Ativa</Label>
-                </div>
-                <Button onClick={() => saveMutation.mutate()} disabled={!form.name}>
-                  {editing ? "Salvar" : "Adicionar"}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button size="sm" onClick={() => navigate("/registrations/categories/new/fields")}>+ Categoria</Button>
         )}
       </div>
 
@@ -124,52 +59,30 @@ function CategoriesSubTab({ isAdmin }: { isAdmin: boolean }) {
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead className="hidden sm:table-cell">Descrição</TableHead>
+                <TableHead className="w-28">Campos</TableHead>
                 <TableHead className="w-24">Status</TableHead>
-                {isAdmin && <TableHead className="w-24">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((c: any) => (
-                <TableRow key={c.id}>
+                <TableRow
+                  key={c.id}
+                  className="cursor-pointer hover:bg-muted/40"
+                  onClick={() => openCategory(c.id)}
+                >
                   <TableCell className="font-medium">{c.name}</TableCell>
                   <TableCell className="hidden sm:table-cell text-muted-foreground">{c.description || "—"}</TableCell>
                   <TableCell>
+                    <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                      <Layers className="w-4 h-4" />
+                      <span className="text-xs tabular-nums">
+                        {Array.isArray(c.field_schema) ? c.field_schema.length : 0}
+                      </span>
+                    </span>
+                  </TableCell>
+                  <TableCell>
                     <Badge variant={c.is_active ? "default" : "secondary"}>{c.is_active ? "Ativa" : "Inativa"}</Badge>
                   </TableCell>
-                  {isAdmin && (
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          title="Campos do produto"
-                          className="gap-1"
-                          onClick={() => window.location.assign(`/registrations/categories/${c.id}/fields`)}
-                        >
-                          <Layers className="w-4 h-4" />
-                          <span className="text-xs tabular-nums text-muted-foreground">
-                            {Array.isArray(c.field_schema) ? c.field_schema.length : 0}
-                          </span>
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(c)}>✏️</Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm">🗑️</Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Excluir categoria?</AlertDialogTitle>
-                              <AlertDialogDescription>Tem certeza que deseja excluir "{c.name}"? Produtos vinculados ficarão sem categoria.</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => deleteMutation.mutate(c.id)}>Excluir</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  )}
                 </TableRow>
               ))}
             </TableBody>
