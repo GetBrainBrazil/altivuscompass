@@ -26,16 +26,38 @@ function normalizePhone(raw: string | null | undefined): string | null {
   return digits.startsWith('55') ? digits : `55${digits}`
 }
 
-async function sendWhatsApp(phone: string, message: string): Promise<{ ok: boolean; error?: string }> {
+async function sendWhatsApp(
+  phone: string,
+  message: string,
+  links?: { complete: string; snooze: string } | null,
+): Promise<{ ok: boolean; error?: string }> {
   const id = Deno.env.get('ZAPI_INSTANCE_ID')
   const token = Deno.env.get('ZAPI_TOKEN')
   const sec = Deno.env.get('ZAPI_SECURITY_TOKEN')
   if (!id || !token || !sec) return { ok: false, error: 'Z-API não configurada' }
+
+  const useButtons =
+    !!links &&
+    links.complete.startsWith('https://') &&
+    links.snooze.startsWith('https://')
+
+  const endpoint = useButtons ? 'send-button-actions' : 'send-text'
+  const body = useButtons
+    ? {
+        phone,
+        message,
+        buttonActions: [
+          { id: '1', type: 'URL', url: links!.complete, label: 'Concluir' },
+          { id: '2', type: 'URL', url: links!.snooze, label: 'Adiar 30 min' },
+        ],
+      }
+    : { phone, message }
+
   try {
-    const res = await fetch(`${ZAPI_BASE_URL}/instances/${id}/token/${token}/send-text`, {
+    const res = await fetch(`${ZAPI_BASE_URL}/instances/${id}/token/${token}/${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Client-Token': sec },
-      body: JSON.stringify({ phone, message }),
+      body: JSON.stringify(body),
     })
     if (!res.ok) {
       const txt = await res.text().catch(() => '')
@@ -117,16 +139,14 @@ Deno.serve(async (req) => {
     }
 
     const text = (r.message?.trim() || task?.title || 'Lembrete de tarefa')
-    const waMessage = links
-      ? `🔔 *Lembrete de tarefa*\n\n${text}\n\n✅ Concluir: ${links.complete}\n⏰ Adiar 30 min: ${links.snooze}`
-      : `🔔 *Lembrete de tarefa*\n\n${text}`
+    const waMessage = `🔔 *Lembrete de tarefa*\n\n${text}`
 
     if (channels.includes('whatsapp')) {
       const phone = normalizePhone(assignee?.phone)
       if (!phone) {
         errors.push('whatsapp: responsável sem telefone válido')
       } else {
-        const wa = await sendWhatsApp(phone, waMessage)
+        const wa = await sendWhatsApp(phone, waMessage, links)
         if (wa.ok) delivered.push('whatsapp')
         else errors.push(`whatsapp: ${wa.error}`)
       }
