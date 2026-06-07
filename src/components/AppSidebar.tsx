@@ -86,6 +86,7 @@ export function AppSidebar() {
   const { userRole } = useAuth();
   const location = useLocation();
   const { hasUnseen: changelogUnseen } = useChangelogUnseen();
+  const waUnread = useWaUnreadCount();
 
   const visibleItems = navItems.filter((item) => canAccess(userRole, item.url));
 
