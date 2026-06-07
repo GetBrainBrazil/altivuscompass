@@ -174,6 +174,12 @@ function CategoriesSubTab({ isAdmin }: { isAdmin: boolean }) {
           </Table>
         </div>
       )}
+
+      <CategoryFieldsEditor
+        open={!!fieldsEditing}
+        onOpenChange={(o) => { if (!o) setFieldsEditing(null); }}
+        category={fieldsEditing}
+      />
     </div>
   );
 }
