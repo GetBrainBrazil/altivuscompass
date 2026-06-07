@@ -16,7 +16,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Paperclip, Upload, Download, Trash2, FileText, FileImage, File as FileIcon, Loader2 } from "lucide-react";
 import { ImageViewerDialog, ViewerAttachment } from "@/components/ImageViewerDialog";
+import { PdfViewerDialog } from "@/components/PdfViewerDialog";
 import { cn } from "@/lib/utils";
+
+function isPdf(type?: string | null, name?: string) {
+  if (type === "application/pdf") return true;
+  if (name && /\.pdf$/i.test(name)) return true;
+  return false;
+}
 
 function isImage(type?: string | null, name?: string) {
   if (type?.startsWith("image/")) return true;
