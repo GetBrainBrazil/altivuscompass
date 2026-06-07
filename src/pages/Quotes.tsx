@@ -17,6 +17,7 @@ import QuoteItemCommercialFields from "@/components/quotes/QuoteItemCommercialFi
 import QuoteItemSupplierFields from "@/components/quotes/QuoteItemSupplierFields";
 import QuoteItemProductPicker from "@/components/quotes/QuoteItemProductPicker";
 import QuoteItemAttachments from "@/components/quotes/QuoteItemAttachments";
+import { QuoteItemReservationFields } from "@/components/quotes/QuoteItemReservationFields";
 
 import QuoteOptionsManager from "@/components/quotes/QuoteOptionsManager";
 import { LeadClientPicker, type LeadRecord } from "@/components/quotes/LeadClientPicker";
