@@ -514,11 +514,49 @@ export default function TaskDetail() {
 
       {/* Footer actions */}
       <div className="flex justify-end gap-2 pt-4 border-t border-border">
-        <Button variant="outline" onClick={() => navigate("/tasks")}>Cancelar</Button>
+        <Button variant="outline" onClick={handleBack}>Cancelar</Button>
         <Button onClick={handleSave} disabled={saveMutation.isPending}>
           {isNew ? "Criar Tarefa" : "Salvar Alterações"}
         </Button>
       </div>
+
+      <AlertDialog open={confirmLeave} onOpenChange={setConfirmLeave}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem alterações não salvas</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja salvar antes de voltar para a lista de tarefas? Se sair sem salvar, as alterações serão perdidas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-2">
+            <AlertDialogCancel>Continuar editando</AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setConfirmLeave(false);
+                goBack();
+              }}
+            >
+              Sair sem salvar
+            </Button>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                if (!form.title.trim()) {
+                  toast({ title: "Informe o título da tarefa", variant: "destructive" });
+                  return;
+                }
+                setConfirmLeave(false);
+                saveMutation.mutate();
+              }}
+              disabled={saveMutation.isPending}
+            >
+              {saveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
+              Salvar e voltar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
