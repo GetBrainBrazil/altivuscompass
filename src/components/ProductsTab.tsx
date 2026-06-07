@@ -447,9 +447,16 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
 export default function ProductsTab() {
   const { userRole } = useAuth();
   const isAdmin = userRole === "admin" || userRole === "manager";
+  const [tab, setTab] = useState<string>(() => {
+    try { return localStorage.getItem("registrations:products-tab") || "list"; } catch { return "list"; }
+  });
+  const handleTab = (v: string) => {
+    setTab(v);
+    try { localStorage.setItem("registrations:products-tab", v); } catch {}
+  };
 
   return (
-    <Tabs defaultValue="list" className="space-y-4">
+    <Tabs value={tab} onValueChange={handleTab} className="space-y-4">
       <TabsList>
         <TabsTrigger value="list">Produtos</TabsTrigger>
         <TabsTrigger value="categories">Categorias</TabsTrigger>
