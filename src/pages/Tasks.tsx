@@ -92,6 +92,23 @@ export default function Tasks() {
     start_date: new Date(),
   });
 
+  // Realtime: refresh kanban/table when tasks change anywhere (e.g. reminder action via WhatsApp link)
+  useEffect(() => {
+    const channel = supabase
+      .channel("tasks-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tasks" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["tasks"] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ["tasks", statusFilter],
     queryFn: async () => {
