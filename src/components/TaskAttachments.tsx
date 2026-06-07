@@ -231,14 +231,16 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
                     type="button"
                     onClick={() => {
                       if (img) openImage(a);
-                      else handleDownload(a.file_path, a.file_name);
+                      else if (isPdf(a.file_type, a.file_name)) {
+                        setPdfViewer({
+                          filePath: a._pending ? null : a.file_path,
+                          fileName: a.file_name,
+                          pendingFile: a._pending ? a._file : null,
+                        });
+                      } else handleDownload(a.file_path, a.file_name);
                     }}
-                    className={cn(
-                      "flex-1 truncate text-left",
-                      img && "hover:underline cursor-pointer",
-                      !img && "hover:underline cursor-pointer",
-                    )}
-                    title={img ? "Visualizar imagem" : "Abrir em nova guia"}
+                    className={cn("flex-1 truncate text-left hover:underline cursor-pointer")}
+                    title={img ? "Visualizar imagem" : isPdf(a.file_type, a.file_name) ? "Visualizar PDF" : "Abrir em nova guia"}
                   >
                     {a.file_name}
                   </button>
