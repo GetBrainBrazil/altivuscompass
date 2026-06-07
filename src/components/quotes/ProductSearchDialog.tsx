@@ -44,8 +44,6 @@ export function ProductSearchDialog({ open, onOpenChange, quoteId }: Props) {
   const [newProductOpen, setNewProductOpen] = useState(false);
   const [newProd, setNewProd] = useState({ name: "", category_id: "", cost: 0, sale_price: 0 });
 
-  const [noProductOpen, setNoProductOpen] = useState(false);
-  const [noProductCategory, setNoProductCategory] = useState<string>("");
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query.trim()), 250);
