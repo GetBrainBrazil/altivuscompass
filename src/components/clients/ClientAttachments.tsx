@@ -26,12 +26,33 @@ interface AttachmentRow {
   description: string | null;
   passport_id: string | null;
   visa_id: string | null;
+  category: string | null;
+  bucket: string | null;
   created_at: string;
 }
 
-type LinkOption = { value: string; label: string; passportId?: string; visaId?: string };
+type LinkOption = { value: string; label: string };
 
 const BUCKET = "client-attachments";
+
+const CATEGORY_OPTIONS: { value: string; label: string }[] = [
+  { value: "comp_residencia", label: "Comp. Residência" },
+  { value: "id_cpf_cnh", label: "ID/CPF/CNH" },
+  { value: "cnh", label: "CNH" },
+  { value: "ir", label: "IR" },
+  { value: "ir_receipt", label: "Recibo IR" },
+  { value: "ir_full", label: "IR + Recibo" },
+  { value: "marriage_cert", label: "Cert. Casamento" },
+  { value: "union_cert", label: "Cert. União Estável" },
+  { value: "birth_cert", label: "Cert. Nascimento" },
+  { value: "death_cert", label: "Cert. Óbito" },
+  { value: "other", label: "Outros" },
+];
+
+const categoryLabel = (v: string | null) =>
+  v ? CATEGORY_OPTIONS.find((o) => o.value === v)?.label ?? v : null;
+
+const bucketOf = (r: { bucket: string | null }) => r.bucket || BUCKET;
 
 const formatSize = (n: number | null) => {
   if (!n && n !== 0) return "";
