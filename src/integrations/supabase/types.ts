@@ -3068,6 +3068,7 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean
+          item_type: string | null
           name: string
           notes: string | null
           sale_price: number | null
@@ -3084,6 +3085,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          item_type?: string | null
           name: string
           notes?: string | null
           sale_price?: number | null
@@ -3100,6 +3102,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          item_type?: string | null
           name?: string
           notes?: string | null
           sale_price?: number | null
@@ -3436,6 +3439,7 @@ export type Database = {
           option_label: string | null
           option_order: number | null
           payment_source: string | null
+          product_id: string | null
           quantity: number | null
           quote_id: string
           sort_order: number | null
@@ -3462,6 +3466,7 @@ export type Database = {
           option_label?: string | null
           option_order?: number | null
           payment_source?: string | null
+          product_id?: string | null
           quantity?: number | null
           quote_id: string
           sort_order?: number | null
@@ -3488,6 +3493,7 @@ export type Database = {
           option_label?: string | null
           option_order?: number | null
           payment_source?: string | null
+          product_id?: string | null
           quantity?: number | null
           quote_id?: string
           sort_order?: number | null
@@ -3498,6 +3504,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "quote_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "quote_items_quote_id_fkey"
             columns: ["quote_id"]
@@ -4811,6 +4824,20 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      dry_run_backfill_product_id: {
+        Args: never
+        Returns: {
+          bucket: string
+          candidate_product_id: string
+          candidate_product_name: string
+          item_supplier_id: string
+          item_title: string
+          item_type: string
+          quote_item_id: string
+          same_supplier: boolean
+          similarity: number
+        }[]
+      }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
@@ -4839,6 +4866,7 @@ export type Database = {
         }
         Returns: number
       }
+      norm_text: { Args: { t: string }; Returns: string }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
@@ -4847,7 +4875,23 @@ export type Database = {
           read_ct: number
         }[]
       }
+      search_products: {
+        Args: { _type?: string; q: string }
+        Returns: {
+          cost: number
+          currency: string
+          id: string
+          item_type: string
+          name: string
+          sale_price: number
+          similarity: number
+          supplier_id: string
+        }[]
+      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       touch_lead_interaction: { Args: { _lead_id: string }; Returns: undefined }
+      unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "manager" | "sales_agent" | "operations"
