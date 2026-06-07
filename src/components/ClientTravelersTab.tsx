@@ -782,10 +782,6 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                               onClick={(e) => { e.stopPropagation(); setPromotePassenger(p); setPromoteRelType(p.relationship_type || "child"); }}>
                               <UserPlus className="h-3.5 w-3.5 text-primary" />
                             </Button>
-                            <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" title="Excluir passageiro"
-                              onClick={(e) => { e.stopPropagation(); setDeletePassengerId(p.id); }}>
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
                           </div>
                         </td>
                       </tr>
