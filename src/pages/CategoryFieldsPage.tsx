@@ -67,6 +67,7 @@ export default function CategoryFieldsPage() {
   }, [category]);
 
   const [fields, setFields] = useState<CategoryFieldSchema>(initial);
+  const [showTechnical, setShowTechnical] = useState(false);
 
   useEffect(() => {
     setFields(initial);
