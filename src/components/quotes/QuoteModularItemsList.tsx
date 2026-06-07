@@ -387,14 +387,16 @@ function DiscountField({
   onPercentChange,
 }: DiscountFieldProps) {
   return (
-    <div className="flex items-center gap-1 justify-end">
-      <div className="inline-flex rounded-md border border-input overflow-hidden text-[10px]">
+    <div className="flex items-center gap-1.5 justify-end">
+      <div className="inline-flex rounded-md border border-input overflow-hidden text-[11px] font-medium shrink-0">
         <button
           type="button"
           onClick={() => onModeChange("amount")}
           className={cn(
-            "px-1.5 h-7",
-            mode === "amount" ? "bg-primary text-primary-foreground" : "bg-muted/40"
+            "px-2.5 h-7 min-w-[34px] flex items-center justify-center transition-colors",
+            mode === "amount"
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted/40 hover:bg-muted"
           )}
         >
           R$
@@ -403,8 +405,10 @@ function DiscountField({
           type="button"
           onClick={() => onModeChange("percent")}
           className={cn(
-            "px-1.5 h-7",
-            mode === "percent" ? "bg-primary text-primary-foreground" : "bg-muted/40"
+            "px-2.5 h-7 min-w-[34px] flex items-center justify-center transition-colors border-l border-input",
+            mode === "percent"
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted/40 hover:bg-muted"
           )}
         >
           %
