@@ -195,7 +195,7 @@ export default function LeadConvert() {
         className="mb-4"
         items={[
           { label: "CRM", to: "/crm" },
-          { label: "Leads", to: "/crm" },
+          { label: "Leads", to: "/crm/sales?tab=sales" },
           { label: "Detalhes do Lead", to: routeId ? `/crm/lead/${routeId}` : "/crm" },
           { label: "Converter em Cliente" },
         ]}

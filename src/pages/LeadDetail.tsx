@@ -605,7 +605,7 @@ export default function LeadDetail() {
             className="mb-3"
             items={[
               { label: "CRM", to: "/crm" },
-              { label: "Leads", to: "/crm" },
+              { label: "Leads", to: "/crm/sales?tab=sales" },
               { label: "Detalhes do Lead" },
             ]}
           />
