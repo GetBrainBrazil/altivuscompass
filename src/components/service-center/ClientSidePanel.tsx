@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -494,7 +495,7 @@ function ClientTab({ level, contactId, leadId, clientId, contactName, phone }: P
                   <Input type="number" min={0} value={form.travelers_count || ""} onChange={(e) => set("travelers_count", e.target.value)} className="h-8" />
                 </Field>
                 <Field label="Orçamento (R$)">
-                  <Input type="number" min={0} step="0.01" value={form.budget_estimate || ""} onChange={(e) => set("budget_estimate", e.target.value)} className="h-8" />
+                  <CurrencyInput value={form.budget_estimate ? Number(form.budget_estimate) : null} onChange={(v) => set("budget_estimate", v == null ? "" : String(v))} className="h-8" />
                 </Field>
               </div>
               <div className="grid grid-cols-2 gap-2">

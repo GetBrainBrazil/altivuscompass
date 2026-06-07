@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { MetricCard } from "@/components/MetricCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -298,7 +299,7 @@ export default function Finance() {
                   </div>
                   <div className="space-y-2">
                     <Label className="font-body">Valor (R$) *</Label>
-                    <Input type="number" step="0.01" value={form.amount ?? ""} onChange={(e) => setForm({ ...form, amount: e.target.value })} required />
+                    <CurrencyInput value={form.amount === "" || form.amount == null ? null : Number(form.amount)} onChange={(v) => setForm({ ...form, amount: v == null ? "" : String(v) })} required />
                   </div>
                   <div className="space-y-2">
                     <Label className="font-body">Data</Label>

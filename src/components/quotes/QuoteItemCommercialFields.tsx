@@ -1,6 +1,8 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { CurrencyInput } from "@/components/ui/currency-input";
+
 
 interface Props {
   quantity: number;
@@ -37,38 +39,23 @@ export default function QuoteItemCommercialFields({ quantity, unitCost, unitPric
         </div>
         <div className="space-y-0.5">
           <Label className="text-[11px] font-body">Custo unitário</Label>
-          <div className="relative">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground pointer-events-none">
-              R$
-            </span>
-            <Input
-              type="number"
-              min={0}
-              step="0.01"
-              value={unitCost ?? 0}
-              onChange={(e) => onChange({ unitCost: Number(e.target.value) || 0 })}
-              className="h-8 text-xs pl-7"
-              placeholder="0,00"
-            />
-          </div>
+          <CurrencyInput
+            value={unitCost ?? 0}
+            onChange={(v) => onChange({ unitCost: v ?? 0 })}
+            className="h-8 text-xs"
+            placeholder="0,00"
+          />
         </div>
         <div className="space-y-0.5">
           <Label className="text-[11px] font-body">Preço de venda unitário</Label>
-          <div className="relative">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground pointer-events-none">
-              R$
-            </span>
-            <Input
-              type="number"
-              min={0}
-              step="0.01"
-              value={unitPrice ?? 0}
-              onChange={(e) => onChange({ unitPrice: Number(e.target.value) || 0 })}
-              className="h-8 text-xs pl-7"
-              placeholder="0,00"
-            />
-          </div>
+          <CurrencyInput
+            value={unitPrice ?? 0}
+            onChange={(v) => onChange({ unitPrice: v ?? 0 })}
+            className="h-8 text-xs"
+            placeholder="0,00"
+          />
         </div>
+
         <div className="space-y-0.5">
           <Label className="text-[11px] font-body">Subtotal</Label>
           <div className="h-8 text-xs px-2.5 rounded-md border border-input bg-muted/40 flex items-center font-medium text-foreground">

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -130,7 +131,7 @@ export default function Sales() {
               </div>
               <div className="space-y-2">
                 <Label className="font-body">Valor total (R$)</Label>
-                <Input type="number" step="0.01" value={form.total_value ?? ""} onChange={(e) => setForm({ ...form, total_value: e.target.value })} />
+                <CurrencyInput value={form.total_value === "" || form.total_value == null ? null : Number(form.total_value)} onChange={(v) => setForm({ ...form, total_value: v == null ? "" : String(v) })} />
               </div>
               <div className="space-y-2">
                 <Label className="font-body">Data ida</Label>

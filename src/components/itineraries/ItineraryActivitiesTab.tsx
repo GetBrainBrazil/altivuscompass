@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -71,7 +72,7 @@ export default function ItineraryActivitiesTab({ itineraryId }: Props) {
         {items.map((a: any) => (
           <TableRow key={a.id}>
             <TableCell><Input defaultValue={a.activity_name} onBlur={(e) => updateField(a.id, "activity_name", e.target.value)} className="h-8 text-xs" /></TableCell>
-            <TableCell><Input type="number" step="0.01" defaultValue={a.approx_price || ""} onBlur={(e) => updateField(a.id, "approx_price", e.target.value)} className="h-8 text-xs" /></TableCell>
+            <TableCell><CurrencyInput value={a.approx_price ?? null} onChange={(v) => updateField(a.id, "approx_price", v == null ? "" : String(v))} className="h-8 text-xs" /></TableCell>
             <TableCell><Input defaultValue={a.avg_duration || ""} onBlur={(e) => updateField(a.id, "avg_duration", e.target.value)} className="h-8 text-xs" /></TableCell>
             <TableCell><Input defaultValue={a.period || ""} onBlur={(e) => updateField(a.id, "period", e.target.value)} className="h-8 text-xs" /></TableCell>
             <TableCell><Input defaultValue={a.description || ""} onBlur={(e) => updateField(a.id, "description", e.target.value)} className="h-8 text-xs" /></TableCell>
@@ -81,7 +82,7 @@ export default function ItineraryActivitiesTab({ itineraryId }: Props) {
         ))}
         <TableRow className="bg-muted/30">
           <TableCell><Input value={newItem.activity_name} onChange={(e) => setNewItem({ ...newItem, activity_name: e.target.value })} placeholder="Nome *" className="h-8 text-xs" /></TableCell>
-          <TableCell><Input type="number" step="0.01" value={newItem.approx_price} onChange={(e) => setNewItem({ ...newItem, approx_price: e.target.value })} placeholder="R$" className="h-8 text-xs" /></TableCell>
+          <TableCell><CurrencyInput value={newItem.approx_price === "" ? null : Number(newItem.approx_price)} onChange={(v) => setNewItem({ ...newItem, approx_price: v == null ? "" : String(v) })} placeholder="0,00" className="h-8 text-xs" /></TableCell>
           <TableCell><Input value={newItem.avg_duration} onChange={(e) => setNewItem({ ...newItem, avg_duration: e.target.value })} placeholder="Ex: 2h" className="h-8 text-xs" /></TableCell>
           <TableCell><Input value={newItem.period} onChange={(e) => setNewItem({ ...newItem, period: e.target.value })} placeholder="Manhã/Tarde" className="h-8 text-xs" /></TableCell>
           <TableCell><Input value={newItem.description} onChange={(e) => setNewItem({ ...newItem, description: e.target.value })} placeholder="Descrição" className="h-8 text-xs" /></TableCell>

@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -416,7 +417,7 @@ export default function UserContractsTab({ userId }: Props) {
             </div>
             <div className="space-y-2">
               <Label className="font-body">Valor (R$)</Label>
-              <Input type="number" step="0.01" value={compForm.amount} onChange={(e) => setCompForm({ ...compForm, amount: e.target.value })} placeholder="0,00" />
+              <CurrencyInput value={compForm.amount === "" ? null : Number(compForm.amount)} onChange={(v) => setCompForm({ ...compForm, amount: v == null ? "" : String(v) })} placeholder="0,00" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">

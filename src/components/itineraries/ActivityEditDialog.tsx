@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -272,7 +273,7 @@ export default function ActivityEditDialog({ activity, dayId, open, onOpenChange
             <div className="grid grid-cols-2 gap-3 mt-2">
               <div>
                 <Label className="text-xs">Custo estimado</Label>
-                <Input type="number" step="0.01" value={form.transport_cost_estimate} onChange={(e) => set("transport_cost_estimate", e.target.value)} />
+                <CurrencyInput value={form.transport_cost_estimate === "" || form.transport_cost_estimate == null ? null : Number(form.transport_cost_estimate)} onChange={(v) => set("transport_cost_estimate", v == null ? "" : String(v))} />
               </div>
               <div>
                 <Label className="text-xs">Moeda</Label>

@@ -17,8 +17,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { logAuditEvent } from "@/lib/audit";
 import { Layers, Trash2 } from "lucide-react";
+import { CurrencyInput } from "@/components/ui/currency-input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-const CURRENCIES = ["BRL", "USD", "EUR", "GBP", "ARS", "CLP"];
 
 function CategoriesSubTab({ isAdmin }: { isAdmin: boolean }) {
   const navigate = useNavigate();
@@ -102,9 +103,11 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState<any>({
     name: "", description: "", category_id: "", supplier_id: "",
-    currency: "BRL", cost: "", sale_price: "", commission_percent: "",
+    markup_type: "percent" as "percent" | "fixed",
+    markup_percent: "", markup_fixed: "",
     notes: "", is_active: true,
   });
+
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["products"],
@@ -143,13 +146,12 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
         description: form.description || null,
         category_id: form.category_id || null,
         supplier_id: form.supplier_id || null,
-        currency: form.currency,
-        cost: form.cost === "" ? null : Number(form.cost),
-        sale_price: form.sale_price === "" ? null : Number(form.sale_price),
-        commission_percent: form.commission_percent === "" ? null : Number(form.commission_percent),
+        markup_percent: form.markup_type === "percent" && form.markup_percent !== "" ? Number(form.markup_percent) : null,
+        markup_fixed: form.markup_type === "fixed" && form.markup_fixed !== "" ? Number(form.markup_fixed) : null,
         notes: form.notes || null,
         is_active: form.is_active,
       };
+
       if (editing) {
         const { error } = await supabase.from("products").update(payload).eq("id", editing.id);
         if (error) throw error;
@@ -211,27 +213,28 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
     setEditing(null);
     setForm({
       name: "", description: "", category_id: "", supplier_id: "",
-      currency: "BRL", cost: "", sale_price: "", commission_percent: "",
+      markup_type: "percent", markup_percent: "", markup_fixed: "",
       notes: "", is_active: true,
     });
   };
 
   const openEdit = (p: any) => {
     setEditing(p);
+    const hasFixed = p.markup_fixed != null;
     setForm({
       name: p.name,
       description: p.description || "",
       category_id: p.category_id || "",
       supplier_id: p.supplier_id || "",
-      currency: p.currency || "BRL",
-      cost: p.cost ?? "",
-      sale_price: p.sale_price ?? "",
-      commission_percent: p.commission_percent ?? "",
+      markup_type: hasFixed ? "fixed" : "percent",
+      markup_percent: p.markup_percent ?? "",
+      markup_fixed: p.markup_fixed ?? "",
       notes: p.notes || "",
       is_active: p.is_active,
     });
     setDialogOpen(true);
   };
+
 
   const filtered = products.filter((p: any) =>
     [p.name, p.description, p.product_categories?.name, p.suppliers?.name].some((f: string) =>
@@ -239,14 +242,16 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
     )
   );
 
-  const formatCurrency = (value: number | null, currency: string) => {
+  const formatBRL = (value: number | null) => {
     if (value == null) return "—";
-    try {
-      return new Intl.NumberFormat("pt-BR", { style: "currency", currency }).format(value);
-    } catch {
-      return `${currency} ${value.toFixed(2)}`;
-    }
+    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
   };
+  const formatMarkup = (p: any) => {
+    if (p.markup_fixed != null) return formatBRL(Number(p.markup_fixed));
+    if (p.markup_percent != null) return `${Number(p.markup_percent).toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}%`;
+    return "—";
+  };
+
 
   return (
     <div className="space-y-4">
@@ -288,20 +293,48 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div>
-                  <Label>Moeda</Label>
-                  <Select value={form.currency} onValueChange={(v) => setForm({ ...form, currency: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {CURRENCIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div><Label>Custo</Label><Input type="number" step="0.01" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} placeholder="0,00" /></div>
-                <div><Label>Preço Venda</Label><Input type="number" step="0.01" value={form.sale_price} onChange={(e) => setForm({ ...form, sale_price: e.target.value })} placeholder="0,00" /></div>
-                <div><Label>Comissão (%)</Label><Input type="number" step="0.01" value={form.commission_percent} onChange={(e) => setForm({ ...form, commission_percent: e.target.value })} placeholder="0" /></div>
+              <div className="space-y-2">
+                <Label>Markup</Label>
+                <RadioGroup
+                  value={form.markup_type}
+                  onValueChange={(v) => setForm({ ...form, markup_type: v as "percent" | "fixed" })}
+                  className="flex flex-col sm:flex-row gap-3"
+                >
+                  <div className="flex-1 flex items-center gap-2 rounded-md border bg-background p-3">
+                    <RadioGroupItem value="percent" id="mk-percent" />
+                    <Label htmlFor="mk-percent" className="font-normal cursor-pointer whitespace-nowrap">
+                      Markup Percentual (%)
+                    </Label>
+                    <div className="ml-auto w-32">
+                      <CurrencyInput
+                        prefix=""
+                        decimals={2}
+                        value={form.markup_percent}
+                        onChange={(v) => setForm({ ...form, markup_type: "percent", markup_percent: v ?? "" })}
+                        placeholder="0,00"
+                        disabled={form.markup_type !== "percent"}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex-1 flex items-center gap-2 rounded-md border bg-background p-3">
+                    <RadioGroupItem value="fixed" id="mk-fixed" />
+                    <Label htmlFor="mk-fixed" className="font-normal cursor-pointer whitespace-nowrap">
+                      Markup Fixo (R$)
+                    </Label>
+                    <div className="ml-auto w-36">
+                      <CurrencyInput
+                        decimals={2}
+                        value={form.markup_fixed}
+                        onChange={(v) => setForm({ ...form, markup_type: "fixed", markup_fixed: v ?? "" })}
+                        placeholder="0,00"
+                        disabled={form.markup_type !== "fixed"}
+                      />
+                    </div>
+                  </div>
+                </RadioGroup>
+                <p className="text-xs text-muted-foreground">Defina um dos dois — percentual ou valor fixo.</p>
               </div>
+
               <div><Label>Observações</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
               <div className="flex items-center gap-2">
                 <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} />
@@ -370,8 +403,7 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
                 <TableHead>Nome</TableHead>
                 <TableHead className="hidden md:table-cell">Categoria</TableHead>
                 <TableHead className="hidden lg:table-cell">Fornecedor</TableHead>
-                <TableHead className="hidden sm:table-cell">Custo</TableHead>
-                <TableHead>Preço</TableHead>
+                <TableHead className="hidden sm:table-cell">Markup</TableHead>
                 <TableHead className="w-20">Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -387,8 +419,8 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-muted-foreground">{p.product_categories?.name || "—"}</TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground">{p.suppliers?.name || "—"}</TableCell>
-                  <TableCell className="hidden sm:table-cell text-muted-foreground">{formatCurrency(p.cost, p.currency)}</TableCell>
-                  <TableCell className="font-medium">{formatCurrency(p.sale_price, p.currency)}</TableCell>
+                  <TableCell className="hidden sm:table-cell text-muted-foreground tabular-nums">{formatMarkup(p)}</TableCell>
+
                   <TableCell>
                     <Badge variant={p.is_active ? "default" : "secondary"}>{p.is_active ? "Ativo" : "Inativo"}</Badge>
                   </TableCell>

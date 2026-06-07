@@ -1,0 +1,1 @@
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS markup_percent numeric(7,2), ADD COLUMN IF NOT EXISTS markup_fixed numeric(12,2);
