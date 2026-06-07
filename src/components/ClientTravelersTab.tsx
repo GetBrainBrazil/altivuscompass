@@ -776,8 +776,6 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                         </td>
                         <td className="p-3 text-sm font-body text-foreground">{p.cpf ? maskCPF(p.cpf) : "—"}</td>
                         <td className="p-3 text-sm font-body text-foreground">{p.birth_date ? new Date(p.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
-                        <td className="p-3 text-sm font-body text-foreground">{p.nationality || "—"}</td>
-                        <td className="p-3 text-sm font-body text-foreground">{p.passport_number || "—"}</td>
                         <td className="p-3">
                           <div className="flex gap-1">
                             <Button type="button" variant="ghost" size="icon" className="h-7 w-7" title="Promover a Cliente"
