@@ -245,24 +245,27 @@ export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
     );
   };
 
+  const showForm = adding || !!editingId;
+
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground font-body">
           <Bell size={12} /> Lembretes ({activeReminders.length})
         </div>
-        {!adding && (
-          <Button size="sm" variant="ghost" onClick={() => setAdding(true)} className="h-7 text-xs">
+        {!showForm && (
+          <Button size="sm" variant="ghost" onClick={() => { resetDraft(); setAdding(true); }} className="h-7 text-xs">
             <Plus size={14} className="mr-1" /> Adicionar
           </Button>
         )}
       </div>
 
       <div className="space-y-2">
-        {activeReminders.map(renderReminder)}
-
-        {adding && (
+        {showForm && (
           <div className="rounded-md border border-border bg-muted/20 p-3 space-y-2.5">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              {editingId ? "Editar lembrete" : "Novo lembrete"}
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-[10px] uppercase tracking-wide text-muted-foreground">Data</label>
@@ -317,20 +320,22 @@ export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
               className="min-h-[56px] text-xs resize-none"
             />
             <div className="flex items-center justify-end gap-2">
-              <Button size="sm" variant="ghost" onClick={() => setAdding(false)} className="h-7 text-xs">
+              <Button size="sm" variant="ghost" onClick={cancelForm} className="h-7 text-xs">
                 Cancelar
               </Button>
               <Button
                 size="sm"
-                onClick={() => addReminder.mutate()}
-                disabled={addReminder.isPending}
+                onClick={() => saveReminder.mutate()}
+                disabled={saveReminder.isPending}
                 className="h-7 text-xs"
               >
-                Salvar lembrete
+                {editingId ? "Salvar alterações" : "Salvar lembrete"}
               </Button>
             </div>
           </div>
         )}
+
+        {activeReminders.map(renderReminder)}
 
         {sentReminders.length > 0 && (
           <div className="space-y-2 pt-1">
@@ -345,8 +350,7 @@ export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
           </div>
         )}
 
-
-        {!adding && reminders.length === 0 && (
+        {!showForm && reminders.length === 0 && (
           <p className="text-xs text-muted-foreground font-body py-2">Nenhum lembrete.</p>
         )}
       </div>
