@@ -383,7 +383,8 @@ function TaskItem({
   return (
     <div
       className={cn(
-        "group flex items-center gap-2 rounded-md border border-border bg-card/40 px-2 py-1.5 text-xs font-body",
+        "group flex items-center gap-2 rounded-md border border-border border-l-4 bg-card/40 px-2 py-1.5 text-xs font-body",
+        prio.border,
         done && "opacity-60",
       )}
     >
