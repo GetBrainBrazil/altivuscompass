@@ -104,6 +104,7 @@ export function ClientInteractionPanel({ contactId, clientId }: Props) {
   const [content, setContent] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [historyFilter, setHistoryFilter] = useState<"all" | "interactions" | "audit" | Kind>("all");
 
   // Interações
   const { data: interactions = [], isLoading: loadingInter } = useQuery({
