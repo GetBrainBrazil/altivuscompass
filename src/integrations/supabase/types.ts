@@ -5309,6 +5309,17 @@ export type Database = {
       }
     }
     Functions: {
+      _smoke_etapa6_reset_phase: {
+        Args: {
+          _deal_id: string
+          _phase: Database["public"]["Enums"]["deal_phase"]
+        }
+        Returns: undefined
+      }
+      _smoke_etapa6_set_fulfilling: {
+        Args: { _deal_id: string }
+        Returns: undefined
+      }
       audit_deal_events_coverage: {
         Args: never
         Returns: {
