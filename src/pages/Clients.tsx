@@ -929,6 +929,29 @@ export default function Clients() {
     return Array.from(map.values());
   };
 
+  // Banner de CPF duplicado (apenas em novo cliente) — atualiza enquanto digita o CPF
+  useEffect(() => {
+    if (editingId) { setCpfMatchClient(null); return; }
+    const digits = cleanDigits(form.cpf_cnpj);
+    if (digits.length !== 11 && digits.length !== 14) {
+      setCpfMatchClient(null);
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      const { data } = await supabase
+        .from("clients")
+        .select("id, full_name")
+        .eq("cpf_cnpj", form.cpf_cnpj.trim())
+        .limit(1);
+      if (cancelled) return;
+      const row = (data ?? [])[0];
+      setCpfMatchClient(row ? { id: row.id, full_name: row.full_name } : null);
+    }, 300);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [form.cpf_cnpj, editingId]);
+
+
   const handleSaveClick = async (goBack: boolean) => {
     shouldGoBackRef.current = goBack;
     if (editingId) {
