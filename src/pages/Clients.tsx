@@ -874,8 +874,8 @@ export default function Clients() {
 
   const findDuplicateCandidates = async (): Promise<DupCandidate[]> => {
     const cpf = cleanDigits(form.cpf_cnpj || "");
-    const primaryEmail = (form.email || emails.find((e) => e.email)?.email || "").trim().toLowerCase();
-    const allPhones = [form.phone, ...phones.map((p) => p.phone)].filter(Boolean) as string[];
+    const primaryEmail = (emails.find((e) => e.is_primary)?.email || emails.find((e) => e.email)?.email || "").trim().toLowerCase();
+    const allPhones = phones.map((p) => p.phone).filter(Boolean) as string[];
     const phoneTails = Array.from(new Set(allPhones.map((p) => cleanDigits(p).slice(-9)).filter((t) => t.length >= 8)));
 
     const map = new Map<string, DupCandidate>();
