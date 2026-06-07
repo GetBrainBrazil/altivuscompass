@@ -1,41 +1,51 @@
-## Problema
+## Editor de campos com toggle "Dados técnicos"
 
-Ao editar uma cotação e remover o último item de um tipo (no caso, o último voo) sem salvar, o item volta a aparecer sozinho. Não é o backend recriando — é o editor recarregando os itens do banco em cima do estado local.
+Em vez de remover os campos avançados, vamos escondê-los por padrão e expor um **switch "Dados técnicos"** no topo da página. Quando desligado (padrão), a UI fica enxuta; quando ligado, mostra os controles de power-user.
 
-## Causa raiz
+### Toggle global
 
-`src/pages/Quotes.tsx`, useEffect das linhas 686–728 (hidratação dos `quote_items` ao abrir o editor):
+Novo controle no header da página (ao lado de "Aplicar modelo Altivus" / "Adicionar campo"):
 
-- Guarda: `if (editingQuote && items.length === 0) { ...fetch quote_items... setItems(loadedItems) }`
-- Dependências (linha 728): `[editingQuote, draftRestored, items.length]`
+```
+[ ] Dados técnicos
+```
 
-Como `items.length` está nas dependências, toda vez que o usuário apaga o último item e a lista fica vazia (`items.length === 0`), o effect dispara de novo, busca os `quote_items` do banco e repõe o item que o usuário acabou de remover. Reproduz exatamente o sintoma: deleta o voo → ele "reaparece" instantaneamente.
+Estado mantido em `useState` local (não persiste). Default: **desligado**.
 
-(O setItems na linha 707 usa o updater `current.length > 0 ? current : loadedItems`, que protege contra concorrência mas não contra o próprio effect ser re-disparado depois que current já zerou.)
+### Campos sempre visíveis (modo simples)
 
-## Correção
+- Rótulo
+- Tipo
+- Largura
+- Obrigatório (switch)
+- Botões mover ↑ ↓ / remover
+- Textarea de Opções (quando tipo = select/checkbox)
 
-Tornar a hidratação dos itens estritamente "uma vez por cotação aberta", desacoplada de `items.length`:
+### Campos visíveis só com "Dados técnicos" ON
 
-1. Adicionar um `useRef<string | null>(null)` — `hydratedQuoteIdRef` — com o id da cotação cuja hidratação já rodou.
-2. No effect (linhas 686–728):
-   - Sair cedo se `hydratedQuoteIdRef.current === editingQuote.id` (já hidratou esta cotação).
-   - Manter a guarda existente para draft restaurado.
-   - No `then()` da busca, marcar `hydratedQuoteIdRef.current = editingQuote.id` após `setItems`/`setSelectedPassengers`.
-3. Remover `items.length` do array de dependências (linha 728). Passa a depender apenas de `[editingQuote, draftRestored]`.
-4. Resetar `hydratedQuoteIdRef.current = null` quando o dialog fechar ou ao trocar `editingQuote?.id` (no mesmo effect já existente em 628–631 que zera `snapshotCapturedRef`).
+- **Chave (key)** — input editável (com `slugify` no onChange, respeitando `mapsTo` que segue bloqueado)
+- **Placeholder**
+- **Grupo**
 
-Resultado: a remoção do último item passa a ser respeitada localmente até o usuário salvar (que já cuida de deletar do banco corretamente, linhas 905–909). Re-hidratação só acontece ao abrir o editor de uma cotação diferente.
+### Simplificação das opções de select/checkbox
 
-## Escopo
+Independente do toggle, o textarea de opções passa a aceitar **um rótulo por linha** (sem `valor|rótulo`):
 
-- Apenas `src/pages/Quotes.tsx`. Sem migração, sem edge, sem triggers. Não toca a lógica de save/delete (linhas 905–975), que já está correta.
-- Não muda o comportamento de draft do localStorage.
-- Não toca `QuoteOptionsManager` nem a geração de tarefas de pós-venda da Etapa 6.
+```
+direto
+1 conexão
+2 conexões
+3 ou mais
+```
 
-## Validação manual
+O `value` é derivado automaticamente via `slugify(label)` + `ensureUniqueKey` para garantir unicidade dentro do mesmo campo. Opções salvas anteriormente são exibidas mostrando apenas o `label`.
 
-1. Abrir cotação existente que tem 1 voo. Remover o voo. Confirmar que ele não reaparece.
-2. Salvar. Reabrir. Confirmar que continua sem voo (delete persistido no banco).
-3. Em outra cotação com 1 voo + 1 hotel, remover apenas o voo. Hotel deve permanecer. Salvar e reabrir.
-4. Abrir cotação A (com voo), fechar sem salvar, abrir cotação B (com voo): B deve carregar seu próprio voo (hidratação dispara ao trocar de cotação).
+### Auto-geração da key
+
+Hoje a key só é recalculada quando começa com `novo_campo` ou bate exatamente com o slug do label anterior. Vamos manter essa lógica (não quebra campos já renomeados manualmente por usuários avançados) — o toggle simplesmente esconde o input.
+
+### Arquivo afetado
+
+- `src/pages/CategoryFieldsPage.tsx` — adiciona `showTechnical` state + switch no header, condiciona renderização dos 3 inputs avançados, ajusta textarea de opções.
+
+Sem mudanças no schema do banco nem em outros arquivos.

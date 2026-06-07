@@ -164,8 +164,15 @@ export default function CategoryFieldsPage() {
         <Button variant="outline" size="sm" className="gap-1.5" onClick={addField}>
           <Plus className="w-4 h-4" /> Adicionar campo
         </Button>
-        <span className="text-xs text-muted-foreground ml-auto">{fields.length} campo(s)</span>
+        <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-1.5">
+            <Switch checked={showTechnical} onCheckedChange={setShowTechnical} id="tech-toggle" />
+            <Label htmlFor="tech-toggle" className="text-xs cursor-pointer">Dados técnicos</Label>
+          </div>
+          <span className="text-xs text-muted-foreground">{fields.length} campo(s)</span>
+        </div>
       </div>
+
 
       <div className="space-y-3">
         {fields.length === 0 ? (
