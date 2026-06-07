@@ -192,6 +192,7 @@ export default function CategoryFieldsPage() {
               onRemove={() => remove(idx)}
               isFirst={idx === 0}
               isLast={idx === fields.length - 1}
+              showTechnical={showTechnical}
             />
           ))
         )}
