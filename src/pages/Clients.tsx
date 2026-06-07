@@ -2226,6 +2226,30 @@ export default function Clients() {
                           {client.is_active === false && <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-body">Inativo</span>}
                         </div>
                       </td>
+                      <td className="p-2 text-center">
+                        {(() => {
+                          const key = client._contactId ? `p:${client._contactId}` : `c:${client.id}`;
+                          const tCount = activityCounts.tasks[key] ?? 0;
+                          const rCount = activityCounts.reminders[key] ?? 0;
+                          if (tCount === 0 && rCount === 0) return <span className="text-xs text-muted-foreground">—</span>;
+                          return (
+                            <div className="inline-flex items-center gap-2 text-xs font-body">
+                              {tCount > 0 && (
+                                <span className="inline-flex items-center gap-0.5 text-foreground" title={`${tCount} tarefa(s) pendente(s)`}>
+                                  <CheckSquare className="h-3 w-3 text-muted-foreground" />
+                                  {tCount}
+                                </span>
+                              )}
+                              {rCount > 0 && (
+                                <span className="inline-flex items-center gap-0.5 text-sky-600" title={`${rCount} lembrete(s) ativo(s)`}>
+                                  <Bell className="h-3 w-3" />
+                                  {rCount}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </td>
                       {levelFilter === "all" && (
                         <td className="p-4">
                           <ContactLevelBadge level={client._level as ContactLevel} size="xs" />
