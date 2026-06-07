@@ -3231,6 +3231,18 @@ export default function Quotes() {
 
                       {/* Commercial fields shared across all item types */}
                       <div className="px-3 pb-3 space-y-3">
+                        <QuoteItemProductPicker
+                          itemType={item.item_type}
+                          productId={item.product_id ?? null}
+                          onSelect={(patch) =>
+                            updateItem(globalIdx, {
+                              product_id: patch.product_id,
+                              ...(patch.title && !item.title ? { title: patch.title } : {}),
+                              ...(patch.unit_cost !== undefined && !item.unit_cost ? { unit_cost: patch.unit_cost } : {}),
+                              ...(patch.unit_price !== undefined && !item.unit_price ? { unit_price: patch.unit_price } : {}),
+                            })
+                          }
+                        />
                         <QuoteItemCommercialFields
                           quantity={Number(item.quantity ?? 1)}
                           unitCost={Number(item.unit_cost ?? 0)}
