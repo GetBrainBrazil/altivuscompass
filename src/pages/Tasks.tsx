@@ -752,7 +752,7 @@ export default function Tasks() {
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       {task.due_date ? (
-                        <span className={cn("text-xs font-body whitespace-nowrap", isOverdue ? "text-destructive" : "text-muted-foreground")}>
+                        <span className={cn("text-xs font-body whitespace-nowrap", isOverdue ? "text-destructive" : isDueToday ? "text-warning" : "text-muted-foreground")}>
                           {task.due_date.split("-").reverse().join("/")}
                         </span>
                       ) : (
