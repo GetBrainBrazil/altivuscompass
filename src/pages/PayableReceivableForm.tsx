@@ -414,13 +414,13 @@ export default function PayableReceivableForm() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label>Valor (R$) *</Label>
-              <Input
-                type="number" step="0.01" min="0"
-                value={form.base_amount}
-                onChange={(e) => setForm({ ...form, base_amount: e.target.value })}
+              <CurrencyInput
+                value={form.base_amount === "" ? null : Number(form.base_amount)}
+                onChange={(v) => setForm({ ...form, base_amount: v == null ? "" : String(v) })}
                 placeholder="0,00"
               />
             </div>
+
             <div className="space-y-1">
               <Label>Total</Label>
               <div className="h-7 px-2 rounded-md border border-gray-200 bg-muted/30 flex items-center text-xs font-semibold">
