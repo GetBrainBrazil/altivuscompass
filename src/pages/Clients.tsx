@@ -880,7 +880,8 @@ export default function Clients() {
     const cpf = cleanDigits(form.cpf_cnpj || "");
     const primaryEmail = (emails.find((e) => e.is_primary)?.email || emails.find((e) => e.email)?.email || "").trim().toLowerCase();
     const allPhones = phones.map((p) => p.phone).filter(Boolean) as string[];
-    const phoneTails = Array.from(new Set(allPhones.map((p) => cleanDigits(p).slice(-9)).filter((t) => t.length >= 8)));
+    // Sufixo de 10–11 dígitos (DDD + número) — evita falso match por número solto que existe em DDDs diferentes
+    const phoneTails = Array.from(new Set(allPhones.map((p) => cleanDigits(p).slice(-11)).filter((t) => t.length >= 10)));
 
     const map = new Map<string, DupCandidate>();
     const addRow = (row: any, reason: string) => {
