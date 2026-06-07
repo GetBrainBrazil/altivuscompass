@@ -48,6 +48,7 @@ import OpsNew from "./pages/OpsNew";
 
 import AIAgentEdit from "./pages/AIAgentEdit";
 import Vault from "./pages/Vault";
+import VaultEdit from "./pages/VaultEdit";
 
 import { ReminderPopupCenter } from "@/components/ReminderPopupCenter";
 
