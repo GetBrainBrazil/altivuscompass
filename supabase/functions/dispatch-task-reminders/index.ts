@@ -133,7 +133,6 @@ Deno.serve(async (req) => {
             day: '2-digit', month: '2-digit', year: 'numeric',
             hour: '2-digit', minute: '2-digit',
           })
-          const taskUrl = `${APP_URL}/tasks/${r.task_id}`
           const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
           const resp = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
             method: 'POST',
@@ -147,13 +146,11 @@ Deno.serve(async (req) => {
               recipientEmail,
               idempotencyKey: `task-reminder-${r.id}`,
               templateData: {
-                taskTitle: task?.title ?? 'Tarefa',
-                message: r.message ?? null,
+                taskTitle: taskTitle,
+                message: obs,
                 remindAt,
                 taskUrl,
                 recipientName: assignee?.full_name ?? null,
-                completeUrl: links?.complete ?? null,
-                snoozeUrl: links?.snooze ?? null,
               },
             }),
           })
