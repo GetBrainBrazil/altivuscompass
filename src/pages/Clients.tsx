@@ -2446,6 +2446,7 @@ export default function Clients() {
                 </div>
               )}
             </>
+          )}
           </>
         )}
       </div>
