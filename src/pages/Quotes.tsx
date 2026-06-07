@@ -1473,6 +1473,34 @@ export default function Quotes() {
     // Snapshot captured shortly after, once items load (handled by effect below)
   };
 
+  // Auto-abre cotação quando vier por URL (ex.: voltar do QuoteItemEdit)
+  useEffect(() => {
+    const qId = searchParams.get("quoteId");
+    const tab = searchParams.get("tab");
+    if (!qId) return;
+    if (dialogOpen && editingQuote?.id === qId) {
+      if (tab) setActiveTab(tab);
+      return;
+    }
+    (async () => {
+      const { data } = await supabase
+        .from("quotes")
+        .select("*, clients(full_name)")
+        .eq("id", qId)
+        .maybeSingle();
+      if (data) {
+        openEdit({ ...(data as any), client_name: (data as any).clients?.full_name } as Quote);
+        if (tab) setTimeout(() => setActiveTab(tab), 0);
+      }
+      // limpa params para não reabrir em todo refresh
+      const next = new URLSearchParams(searchParams);
+      next.delete("quoteId");
+      next.delete("tab");
+      setSearchParams(next, { replace: true });
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   const buildEditorSnapshot = useCallback(() => {
     return JSON.stringify({
       form,
