@@ -18,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus, ArrowLeft, Star, Trash2, AlertTriangle, AlertCircle, ShieldAlert, Info, ChevronRight, ChevronDown, Users, Eye, EyeOff, ExternalLink, Check, Search } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, ChevronsUpDown, X, Plus, ArrowLeft, Star, Trash2, AlertTriangle, AlertCircle, ShieldAlert, Info, ChevronRight, ChevronDown, Users, Eye, EyeOff, ExternalLink, Check, Search, CheckSquare, Bell } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCountries, useStates, useCities, useContinents, useCustomDestinations, useCustomDestinationItems } from "@/components/LocationsTab";
@@ -320,6 +320,33 @@ export default function Clients() {
 
         return { ...c, _level: "cliente" as ContactLevel, _contactId: null as string | null, primary_phone: primaryPhone?.phone ?? null, primary_email: primaryEmail?.email ?? null, alerts };
       });
+    },
+  });
+
+  // Active tasks + pending reminders per client/contact
+  const { data: activityCounts = { tasks: {} as Record<string, number>, reminders: {} as Record<string, number> } } = useQuery({
+    queryKey: ["clients-activity-counts"],
+    queryFn: async () => {
+      const tasks: Record<string, number> = {};
+      const reminders: Record<string, number> = {};
+      const { data: tRows } = await supabase
+        .from("tasks")
+        .select("id, client_id, contact_id, status")
+        .neq("status", "completed");
+      for (const t of (tRows ?? []) as any[]) {
+        if (t.client_id) tasks[`c:${t.client_id}`] = (tasks[`c:${t.client_id}`] ?? 0) + 1;
+        if (t.contact_id) tasks[`p:${t.contact_id}`] = (tasks[`p:${t.contact_id}`] ?? 0) + 1;
+      }
+      const { data: rRows } = await supabase
+        .from("task_reminders")
+        .select("task_id, tasks!inner(client_id, contact_id)")
+        .eq("status", "pending");
+      for (const r of ((rRows ?? []) as any[])) {
+        const t = r.tasks;
+        if (t?.client_id) reminders[`c:${t.client_id}`] = (reminders[`c:${t.client_id}`] ?? 0) + 1;
+        if (t?.contact_id) reminders[`p:${t.contact_id}`] = (reminders[`p:${t.contact_id}`] ?? 0) + 1;
+      }
+      return { tasks, reminders };
     },
   });
 
@@ -2140,6 +2167,7 @@ export default function Clients() {
               <tr className="border-b border-border/50">
                 <th className="p-2 w-10"></th>
                 <SortableHeader label="Cliente" sortKey="full_name" />
+                <th className="text-center p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium whitespace-nowrap" title="Tarefas pendentes / Lembretes ativos">Ativ.</th>
                 {levelFilter === "all" && (
                   <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Nível</th>
                 )}
@@ -2197,6 +2225,30 @@ export default function Clients() {
                           </div>
                           {client.is_active === false && <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-body">Inativo</span>}
                         </div>
+                      </td>
+                      <td className="p-2 text-center">
+                        {(() => {
+                          const key = client._contactId ? `p:${client._contactId}` : `c:${client.id}`;
+                          const tCount = activityCounts.tasks[key] ?? 0;
+                          const rCount = activityCounts.reminders[key] ?? 0;
+                          if (tCount === 0 && rCount === 0) return <span className="text-xs text-muted-foreground">—</span>;
+                          return (
+                            <div className="inline-flex items-center gap-2 text-xs font-body">
+                              {tCount > 0 && (
+                                <span className="inline-flex items-center gap-0.5 text-foreground" title={`${tCount} tarefa(s) pendente(s)`}>
+                                  <CheckSquare className="h-3 w-3 text-muted-foreground" />
+                                  {tCount}
+                                </span>
+                              )}
+                              {rCount > 0 && (
+                                <span className="inline-flex items-center gap-0.5 text-sky-600" title={`${rCount} lembrete(s) ativo(s)`}>
+                                  <Bell className="h-3 w-3" />
+                                  {rCount}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </td>
                       {levelFilter === "all" && (
                         <td className="p-4">
@@ -2262,7 +2314,7 @@ export default function Clients() {
                     </tr>
                     {isExpanded && clientTravelersList.length > 0 && (
                       <tr className="bg-muted/10">
-                        <td colSpan={10} className="p-0">
+                        <td colSpan={11} className="p-0">
                           <div className="pl-12 pr-4 py-2">
                             <table className="w-full">
                               <thead>
