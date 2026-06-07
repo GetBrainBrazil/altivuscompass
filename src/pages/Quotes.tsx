@@ -20,6 +20,7 @@ import QuoteItemAttachments from "@/components/quotes/QuoteItemAttachments";
 import { QuoteItemReservationFields } from "@/components/quotes/QuoteItemReservationFields";
 
 import QuoteOptionsManager from "@/components/quotes/QuoteOptionsManager";
+import { QuoteModularItemsList } from "@/components/quotes/QuoteModularItemsList";
 import { LeadClientPicker, type LeadRecord } from "@/components/quotes/LeadClientPicker";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
