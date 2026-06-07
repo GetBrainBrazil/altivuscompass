@@ -318,6 +318,8 @@ export function ClientInteractionPanel({ contactId, clientId }: Props) {
           </Button>
         </div>
       </div>
+      {/* Tarefas */}
+      <ClientTasksPanel contactId={contactId} clientId={clientId} />
 
       {/* Histórico */}
       <div className="glass-card rounded-xl p-3">
