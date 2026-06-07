@@ -27,11 +27,11 @@ type TaskRow = {
   completed_at: string | null;
 };
 
-const PRIORITY_META: Record<string, { label: string; color: string }> = {
-  low: { label: "Baixa", color: "text-muted-foreground" },
-  medium: { label: "Média", color: "text-blue-500" },
-  high: { label: "Alta", color: "text-orange-500" },
-  urgent: { label: "Urgente", color: "text-destructive" },
+const PRIORITY_META: Record<string, { label: string; color: string; border: string }> = {
+  low: { label: "Baixa", color: "text-muted-foreground", border: "border-l-muted-foreground/40" },
+  medium: { label: "Média", color: "text-blue-500", border: "border-l-blue-500" },
+  high: { label: "Alta", color: "text-orange-500", border: "border-l-orange-500" },
+  urgent: { label: "Urgente", color: "text-destructive", border: "border-l-destructive" },
 };
 
 export function ClientTasksPanel({ contactId, clientId }: Props) {
@@ -383,7 +383,8 @@ function TaskItem({
   return (
     <div
       className={cn(
-        "group flex items-center gap-2 rounded-md border border-border bg-card/40 px-2 py-1.5 text-xs font-body",
+        "group flex items-center gap-2 rounded-md border border-border border-l-4 bg-card/40 px-2 py-1.5 text-xs font-body",
+        prio.border,
         done && "opacity-60",
       )}
     >
@@ -429,7 +430,12 @@ function TaskItem({
           </TooltipContent>
         </Tooltip>
       )}
-      <Flag className={cn("h-3 w-3 shrink-0", prio.color)} aria-label={prio.label} />
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Flag className={cn("h-3 w-3 shrink-0", prio.color)} aria-label={prio.label} />
+        </TooltipTrigger>
+        <TooltipContent className="text-xs">Prioridade: {prio.label}</TooltipContent>
+      </Tooltip>
       {task.due_date && (
         <span className={cn("text-[10px] shrink-0", overdue ? "text-destructive font-medium" : "text-muted-foreground")}>
           {format(new Date(task.due_date + "T00:00:00"), "dd/MM", { locale: ptBR })}
