@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { CalendarIcon, Plus, Search, CheckCircle2, Clock, AlertCircle, Bell, ArrowUpDown, ArrowUp, ArrowDown, ChevronsUpDown, Check, LayoutGrid, Table as TableIcon, Paperclip } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FilterChip, SearchableList } from "@/components/tasks/FilterChip";
+import { TaskReminders } from "@/components/tasks/TaskReminders";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Aguardando Início", color: "bg-warning/10 text-warning border-warning/20", icon: Clock },
