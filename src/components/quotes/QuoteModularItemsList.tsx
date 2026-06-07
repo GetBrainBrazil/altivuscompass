@@ -16,9 +16,26 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CurrencyInput } from "@/components/ui/currency-input";
-import { Plus, Package, Pencil } from "lucide-react";
+import { Plus, Package, Pencil, GripVertical } from "lucide-react";
 import { ProductSearchDialog } from "./ProductSearchDialog";
 import { cn } from "@/lib/utils";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface Props {
   quoteId: string | null | undefined;
