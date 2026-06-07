@@ -292,7 +292,7 @@ export default function TaskDetail() {
       <div className="flex items-start justify-between gap-6 pb-5 border-b border-border">
         <div className="flex items-start gap-3 min-w-0">
           <button
-            onClick={() => navigate("/tasks")}
+            onClick={handleBack}
             className="mt-1 p-1.5 -ml-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             aria-label="Voltar"
           >
