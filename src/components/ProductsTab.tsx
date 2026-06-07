@@ -143,9 +143,13 @@ function CategoriesSubTab({ isAdmin }: { isAdmin: boolean }) {
                           variant="ghost"
                           size="sm"
                           title="Campos do produto"
+                          className="gap-1"
                           onClick={() => window.location.assign(`/registrations/categories/${c.id}/fields`)}
                         >
                           <Layers className="w-4 h-4" />
+                          <span className="text-xs tabular-nums text-muted-foreground">
+                            {Array.isArray(c.field_schema) ? c.field_schema.length : 0}
+                          </span>
                         </Button>
                         <Button variant="ghost" size="sm" onClick={() => openEdit(c)}>✏️</Button>
                         <AlertDialog>
