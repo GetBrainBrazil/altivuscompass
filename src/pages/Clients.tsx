@@ -2209,9 +2209,7 @@ export default function Clients() {
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">CPF</th>
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Telefone</th>
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">E-mail</th>
-                <SortableHeader label="Localização" sortKey="city" />
                 <SortableHeader label="Perfil" sortKey="travel_profile" />
-                <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Aeroportos</th>
                 <th className="text-left p-4 text-[10px] uppercase tracking-widest text-muted-foreground font-body font-medium">Alertas</th>
               </tr>
             </thead>
@@ -2302,22 +2300,11 @@ export default function Clients() {
                         <p className="text-sm font-body text-foreground truncate max-w-[200px]">{client.primary_email || "—"}</p>
                       </td>
                       <td className="p-4">
-                        <p className="text-sm font-body text-foreground">{client.city}</p>
-                        <p className="text-xs text-muted-foreground font-body">{client.state}</p>
-                      </td>
-                      <td className="p-4">
                         {client.travel_profile && travelProfiles[client.travel_profile] && (
                           <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full font-body ${travelProfiles[client.travel_profile].color}`}>
                             {travelProfiles[client.travel_profile].label}
                           </span>
                         )}
-                      </td>
-                      <td className="p-4">
-                        <div className="flex gap-1 flex-wrap">
-                          {(client.preferred_airports ?? []).map((a: string) => (
-                            <span key={a} className="text-[10px] font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground font-body">{a}</span>
-                          ))}
-                        </div>
                       </td>
                       <td className="p-4">
                         <div className="flex flex-col gap-1">
