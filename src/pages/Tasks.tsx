@@ -46,6 +46,16 @@ const PRIORITY_CONFIG: Record<string, { label: string; color: string }> = {
 type SortField = "title" | "due_date" | "priority" | "status" | "assigned_to";
 type SortDir = "asc" | "desc" | null;
 
+function parseLocalDate(value: string | null | undefined): Date | null {
+  if (!value) return null;
+  const m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+}
+
 export default function Tasks() {
   const { user } = useAuth();
   const { toast } = useToast();
