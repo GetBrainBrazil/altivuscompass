@@ -21,6 +21,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronRight, Settings, Newspaper } from "lucide-react";
 import { useChangelogUnseen } from "@/hooks/useChangelogUnseen";
+import { useWaUnreadCount } from "@/hooks/useWaUnreadCount";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
