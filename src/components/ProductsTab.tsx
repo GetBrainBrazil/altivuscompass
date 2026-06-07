@@ -242,14 +242,16 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
     )
   );
 
-  const formatCurrency = (value: number | null, currency: string) => {
+  const formatBRL = (value: number | null) => {
     if (value == null) return "—";
-    try {
-      return new Intl.NumberFormat("pt-BR", { style: "currency", currency }).format(value);
-    } catch {
-      return `${currency} ${value.toFixed(2)}`;
-    }
+    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
   };
+  const formatMarkup = (p: any) => {
+    if (p.markup_fixed != null) return formatBRL(Number(p.markup_fixed));
+    if (p.markup_percent != null) return `${Number(p.markup_percent).toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}%`;
+    return "—";
+  };
+
 
   return (
     <div className="space-y-4">
