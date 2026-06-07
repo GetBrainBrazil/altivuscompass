@@ -1,0 +1,1 @@
+ALTER TABLE public.product_categories ADD COLUMN IF NOT EXISTS field_schema jsonb NOT NULL DEFAULT '[]'::jsonb;
