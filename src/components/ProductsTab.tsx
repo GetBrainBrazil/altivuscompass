@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { logAuditEvent } from "@/lib/audit";
-import { Layers } from "lucide-react";
+import { Layers, Trash2 } from "lucide-react";
 
 const CURRENCIES = ["BRL", "USD", "EUR", "GBP", "ARS", "CLP"];
 
