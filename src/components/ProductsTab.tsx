@@ -145,7 +145,7 @@ function CategoriesSubTab({ isAdmin }: { isAdmin: boolean }) {
                           variant="ghost"
                           size="sm"
                           title="Campos do produto"
-                          onClick={() => setFieldsEditing(c)}
+                          onClick={() => window.location.assign(`/registrations/categories/${c.id}/fields`)}
                         >
                           <Layers className="w-4 h-4" />
                         </Button>
@@ -175,11 +175,6 @@ function CategoriesSubTab({ isAdmin }: { isAdmin: boolean }) {
         </div>
       )}
 
-      <CategoryFieldsEditor
-        open={!!fieldsEditing}
-        onOpenChange={(o) => { if (!o) setFieldsEditing(null); }}
-        category={fieldsEditing}
-      />
     </div>
   );
 }

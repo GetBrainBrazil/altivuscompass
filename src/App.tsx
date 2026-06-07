@@ -27,6 +27,7 @@ import UserManagement from "./pages/UserManagement";
 import UserDetail from "./pages/UserDetail";
 import Permissions from "./pages/Permissions";
 import Registrations from "./pages/Registrations";
+import CategoryFieldsPage from "./pages/CategoryFieldsPage";
 import Sales from "./pages/Sales";
 import FinanceClosedSales from "./pages/FinanceClosedSales";
 import MyProfile from "./pages/MyProfile";
