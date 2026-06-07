@@ -330,9 +330,24 @@ export function ClientInteractionPanel({ contactId, clientId }: Props) {
 
       {/* Histórico */}
       <div className="glass-card rounded-xl p-3">
-        <div className="flex items-center gap-2 mb-2">
-          <History className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-display font-semibold text-foreground">Histórico</h3>
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2">
+            <History className="h-4 w-4 text-muted-foreground" />
+            <h3 className="text-sm font-display font-semibold text-foreground">Histórico</h3>
+          </div>
+          <Select value={historyFilter} onValueChange={(v) => setHistoryFilter(v as any)}>
+            <SelectTrigger className="h-7 w-36 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tudo</SelectItem>
+              <SelectItem value="interactions">Interações</SelectItem>
+              <SelectItem value="audit">Alterações</SelectItem>
+              <SelectItem value="note">Notas</SelectItem>
+              <SelectItem value="call">Ligações</SelectItem>
+              <SelectItem value="email">E-mails</SelectItem>
+              <SelectItem value="meeting">Reuniões</SelectItem>
+              <SelectItem value="other">Outros</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="max-h-[60vh] overflow-y-auto pr-1 space-y-2">
           {loadingInter && (
