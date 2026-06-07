@@ -108,17 +108,7 @@ export function DynamicCategoryFields({ schema, value, onChange }: Props) {
             <div className="grid grid-cols-12 gap-3">
               {fields.map((f) => (
                 <div key={f.key} className={cn(spanClass(getEffectiveSpan(f)))}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="w-full">
-                        <FieldRenderer field={f} value={value?.[f.key]} onChange={(v) => setField(f.key, v)} />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="text-[11px]">
-                      {f.label}
-                      {f.required && <span className="text-destructive ml-0.5">*</span>}
-                    </TooltipContent>
-                  </Tooltip>
+                  <FieldRenderer field={f} value={value?.[f.key]} onChange={(v) => setField(f.key, v)} />
                 </div>
               ))}
             </div>
