@@ -221,13 +221,16 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
                   <Icon size={14} className="text-muted-foreground shrink-0" />
                   <button
                     type="button"
-                    onClick={() => img && openImage(a)}
+                    onClick={() => {
+                      if (img) openImage(a);
+                      else handleDownload(a.file_path, a.file_name);
+                    }}
                     className={cn(
                       "flex-1 truncate text-left",
                       img && "hover:underline cursor-pointer",
-                      !img && "cursor-default",
+                      !img && "hover:underline cursor-pointer",
                     )}
-                    title={img ? "Visualizar imagem" : a.file_name}
+                    title={img ? "Visualizar imagem" : "Abrir em nova guia"}
                   >
                     {a.file_name}
                   </button>
