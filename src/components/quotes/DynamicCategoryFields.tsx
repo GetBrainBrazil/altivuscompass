@@ -363,28 +363,35 @@ function FieldRenderer({
     case "baggage": {
       const v = value ?? { mochila: 0, mao: 0, despachada: 0 };
       const setPart = (k: string, n: number) => onChange({ ...v, [k]: n });
-      const parts: Array<{ key: "mochila" | "mao" | "despachada"; lbl: string }> = [
-        { key: "mochila", lbl: "Mochila" },
-        { key: "mao", lbl: "Mão" },
-        { key: "despachada", lbl: "Desp." },
+      const parts: Array<{ key: "mochila" | "mao" | "despachada"; lbl: string; full: string }> = [
+        { key: "mochila", lbl: "Mochila", full: "Mochila" },
+        { key: "mao", lbl: "Mão", full: "Mala de Mão" },
+        { key: "despachada", lbl: "Desp.", full: "Mala Despachada" },
       ];
       return (
         <div className="space-y-1">
           {label}
           <div className="grid grid-cols-3 gap-1">
             {parts.map((p) => (
-              <div key={p.key} className="relative">
-                <span className="pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
-                  {p.lbl}
-                </span>
-                <Input
-                  type="number"
-                  min={0}
-                  value={(v as any)[p.key] ?? 0}
-                  onChange={(e) => setPart(p.key, Number(e.target.value) || 0)}
-                  className="h-8 text-xs pl-[52px] pr-1.5 text-right"
-                />
-              </div>
+              <Tooltip key={p.key}>
+                <TooltipTrigger asChild>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+                      {p.lbl}
+                    </span>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={(v as any)[p.key] ?? 0}
+                      onChange={(e) => setPart(p.key, Number(e.target.value) || 0)}
+                      className="h-8 text-xs pl-[52px] pr-1.5 text-right"
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" sideOffset={4} className="text-[11px]">
+                  {p.full}
+                </TooltipContent>
+              </Tooltip>
             ))}
           </div>
         </div>
