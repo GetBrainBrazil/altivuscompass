@@ -149,6 +149,8 @@ export default function Clients() {
   const [needsComplementaryData, setNeedsComplementaryData] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [activeTab, setActiveTab] = useState("contact");
+  const [promoteFromPassengerId, setPromoteFromPassengerId] = useState<string | null>(null);
+  const [cpfMatchClient, setCpfMatchClient] = useState<{ id: string; full_name: string } | null>(null);
   const [resolvedContactId, setResolvedContactId] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
