@@ -446,16 +446,24 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
                   className="flex-1 min-w-0 text-xs font-body bg-background border border-border/50 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
                 />
                 <Select value={linkValueOf(r)} onValueChange={(v) => updateLink(r, v)}>
-                  <SelectTrigger className="h-7 text-xs sm:w-[260px]">
-                    <SelectValue placeholder="Sem vínculo" />
+                  <SelectTrigger
+                    className={cn(
+                      "h-7 text-xs sm:w-[260px]",
+                      !linkValueOf(r) && "border-destructive ring-1 ring-destructive/40 text-destructive"
+                    )}
+                  >
+                    <SelectValue placeholder="Vínculo (obrigatório)" />
                   </SelectTrigger>
                   <SelectContent className="max-h-72">
-                    <SelectItem value="none">Sem vínculo</SelectItem>
-                    {linkOptions.length === 0 && (
-                      <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhum passaporte ou visto cadastrado</div>
+                    {linkOptions.length > 0 && (
+                      <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground">Documentos do cliente</div>
                     )}
                     {linkOptions.map((o) => (
                       <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    ))}
+                    <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground border-t mt-1">Categorias</div>
+                    {CATEGORY_OPTIONS.map((o) => (
+                      <SelectItem key={`c:${o.value}`} value={`c:${o.value}`}>{o.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
