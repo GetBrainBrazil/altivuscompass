@@ -645,6 +645,7 @@ export default function Tasks() {
                             )}
                             <div className="flex flex-wrap items-center gap-1.5 mb-2">
                               <Badge variant="outline" className={cn("text-[10px] font-body whitespace-nowrap", priority.color)}>{priority.label}</Badge>
+                              {isDueToday && <Badge className="text-[10px] font-body bg-warning text-warning-foreground border-0">Hoje</Badge>}
                               {isOverdue && <Badge variant="destructive" className="text-[10px] font-body">Atrasada</Badge>}
                             </div>
                             <div className="h-px bg-border/60 -mx-3" />
