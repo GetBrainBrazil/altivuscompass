@@ -100,7 +100,7 @@ export function DynamicCategoryFields({ schema, value, onChange }: Props) {
           )}
           <div className="grid grid-cols-12 gap-3">
             {fields.map((f) => (
-              <div key={f.key} className={cn(WIDTH_CLASS[f.width ?? "full"] ?? WIDTH_CLASS.full)}>
+              <div key={f.key} className={cn(spanClass(getEffectiveSpan(f)))}>
                 <FieldRenderer field={f} value={value?.[f.key]} onChange={(v) => setField(f.key, v)} />
               </div>
             ))}
