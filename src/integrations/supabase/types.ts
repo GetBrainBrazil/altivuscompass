@@ -3645,6 +3645,7 @@ export type Database = {
           details: Json | null
           discount_amount: number
           discount_amount_allocated: number
+          discount_percent: number
           external_url: string | null
           id: string
           is_recommended: boolean | null
@@ -3681,6 +3682,7 @@ export type Database = {
           details?: Json | null
           discount_amount?: number
           discount_amount_allocated?: number
+          discount_percent?: number
           external_url?: string | null
           id?: string
           is_recommended?: boolean | null
@@ -3717,6 +3719,7 @@ export type Database = {
           details?: Json | null
           discount_amount?: number
           discount_amount_allocated?: number
+          discount_percent?: number
           external_url?: string | null
           id?: string
           is_recommended?: boolean | null
@@ -3905,6 +3908,7 @@ export type Database = {
           details: string | null
           discount_amount: number | null
           discount_percent: number | null
+          discounts_enabled: boolean
           hotel_options: string | null
           id: string
           internal_due_date: string | null
@@ -3947,6 +3951,7 @@ export type Database = {
           details?: string | null
           discount_amount?: number | null
           discount_percent?: number | null
+          discounts_enabled?: boolean
           hotel_options?: string | null
           id?: string
           internal_due_date?: string | null
@@ -3989,6 +3994,7 @@ export type Database = {
           details?: string | null
           discount_amount?: number | null
           discount_percent?: number | null
+          discounts_enabled?: boolean
           hotel_options?: string | null
           id?: string
           internal_due_date?: string | null

@@ -1,0 +1,2 @@
+ALTER TABLE public.quote_items ADD COLUMN IF NOT EXISTS discount_percent numeric(5,2) NOT NULL DEFAULT 0;
+ALTER TABLE public.quotes ADD COLUMN IF NOT EXISTS discounts_enabled boolean NOT NULL DEFAULT false;
