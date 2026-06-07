@@ -216,7 +216,7 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
               </button>
               <button
                 type="button"
-                onClick={() => onDelete(r)}
+                onClick={() => setPendingDelete(r)}
                 className="text-muted-foreground hover:text-destructive"
                 title="Excluir"
               >
