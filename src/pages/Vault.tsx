@@ -240,34 +240,13 @@ export default function Vault() {
       toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
 
-  const openCreate = () => {
-    setEditingItem(null);
-    setForm({ is_favorite: false });
-    setDraftViewers([]);
-    setShowFormPassword(false);
-    setFormOpen(true);
-  };
+  const openCreate = () => navigate("/vault/new");
 
   const openEdit = (it: VaultItem) => {
     if (!canEditItem(it)) return;
-    setEditingItem(it);
-    setForm({ ...it });
-    setShowFormPassword(false);
-    setDraftViewers(
-      viewers
-        .filter((v) => v.vault_item_id === it.id)
-        .map((v) => ({ user_id: v.user_id, can_edit: v.can_edit })),
-    );
-    setFormOpen(true);
+    navigate(`/vault/${it.id}`);
   };
 
-  const closeForm = () => {
-    setFormOpen(false);
-    setEditingItem(null);
-    setForm({});
-    setDraftViewers([]);
-    setViewerSearch("");
-  };
 
   const addViewer = (uid: string) =>
     setDraftViewers((prev) =>
