@@ -867,6 +867,71 @@ export default function Clients() {
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
 
+  // ===== Detecção de duplicados (somente em novo cliente) =====
+  type DupCandidate = { id: string; full_name: string; cpf_cnpj: string | null; phone: string | null; email: string | null; reasons: string[] };
+  const [dupCandidates, setDupCandidates] = useState<DupCandidate[] | null>(null);
+  const [dupDialogOpen, setDupDialogOpen] = useState(false);
+
+  const findDuplicateCandidates = async (): Promise<DupCandidate[]> => {
+    const cpf = cleanDigits(form.cpf_cnpj || "");
+    const primaryEmail = (emails.find((e) => e.is_primary)?.email || emails.find((e) => e.email)?.email || "").trim().toLowerCase();
+    const allPhones = phones.map((p) => p.phone).filter(Boolean) as string[];
+    const phoneTails = Array.from(new Set(allPhones.map((p) => cleanDigits(p).slice(-9)).filter((t) => t.length >= 8)));
+
+    const map = new Map<string, DupCandidate>();
+    const addRow = (row: any, reason: string) => {
+      if (!row?.id) return;
+      const existing = map.get(row.id);
+      if (existing) {
+        if (!existing.reasons.includes(reason)) existing.reasons.push(reason);
+      } else {
+        map.set(row.id, {
+          id: row.id, full_name: row.full_name, cpf_cnpj: row.cpf_cnpj ?? null,
+          phone: row.phone ?? null, email: row.email ?? null, reasons: [reason],
+        });
+      }
+    };
+
+    // CPF/CNPJ (campo principal)
+    if (cpf.length >= 11) {
+      const { data } = await supabase.from("clients").select("id, full_name, cpf_cnpj, phone, email").eq("cpf_cnpj", form.cpf_cnpj.trim());
+      (data ?? []).forEach((r) => addRow(r, "Mesmo CPF/CNPJ"));
+    }
+    // E-mail principal
+    if (primaryEmail) {
+      const { data } = await supabase.from("clients").select("id, full_name, cpf_cnpj, phone, email").ilike("email", primaryEmail);
+      (data ?? []).forEach((r) => addRow(r, "Mesmo e-mail"));
+    }
+    // Telefone (campo principal + lista) — buscar por sufixo de 9 dígitos
+    for (const tail of phoneTails) {
+      const { data: byMain } = await supabase.from("clients").select("id, full_name, cpf_cnpj, phone, email").ilike("phone", `%${tail}%`);
+      (byMain ?? []).forEach((r) => addRow(r, "Mesmo telefone"));
+      const { data: byList } = await supabase.from("client_phones").select("client_id, phone, clients!inner(id, full_name, cpf_cnpj, phone, email)").ilike("phone", `%${tail}%`);
+      (byList ?? []).forEach((r: any) => r.clients && addRow(r.clients, "Mesmo telefone"));
+    }
+
+    return Array.from(map.values());
+  };
+
+  const handleSaveClick = async (goBack: boolean) => {
+    shouldGoBackRef.current = goBack;
+    if (editingId) {
+      saveMutation.mutate();
+      return;
+    }
+    try {
+      const candidates = await findDuplicateCandidates();
+      if (candidates.length > 0) {
+        setDupCandidates(candidates);
+        setDupDialogOpen(true);
+        return;
+      }
+    } catch (err) {
+      console.warn("[Clients] dup check failed", err);
+    }
+    saveMutation.mutate();
+  };
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { data: oldClient } = await supabase.from("clients").select("*").eq("id", id).single();
@@ -1153,7 +1218,7 @@ export default function Clients() {
           })()}
         </div>
 
-        <form onSubmit={(e) => { e.preventDefault(); if (saveMutation.isPending) return; saveMutation.mutate(); }} className="space-y-4">
+        <form onSubmit={(e) => { e.preventDefault(); if (saveMutation.isPending) return; handleSaveClick(!editingId); }} className="space-y-4">
           {/* ====== UPPER SECTION: Compact header with key data ====== */}
           <div className="glass-card rounded-xl p-4 space-y-3">
             {/* Row 1: Name + Rating + Birth + Gender + Active */}
@@ -1972,11 +2037,11 @@ export default function Clients() {
                 return (
                   <>
                     {editingId && (
-                      <Button type="button" disabled={disabled} className="font-body" variant="secondary" onClick={() => { shouldGoBackRef.current = true; saveMutation.mutate(); }}>
+                      <Button type="button" disabled={disabled} className="font-body" variant="secondary" onClick={() => handleSaveClick(true)}>
                         {saveMutation.isPending ? "Salvando..." : "Salvar e Voltar"}
                       </Button>
                     )}
-                    <Button type="button" disabled={disabled} className="font-body" onClick={() => { shouldGoBackRef.current = !editingId; saveMutation.mutate(); }}>
+                    <Button type="button" disabled={disabled} className="font-body" onClick={() => handleSaveClick(!editingId)}>
                       {saveMutation.isPending ? "Salvando..." : (editingId ? "Salvar" : "Criar Cliente")}
                     </Button>
                   </>
@@ -2014,8 +2079,7 @@ export default function Clients() {
                 onClick={(e) => {
                   e.preventDefault();
                   setConfirmCloseOpen(false);
-                  shouldGoBackRef.current = true;
-                  saveMutation.mutate();
+                  handleSaveClick(true);
                 }}
               >
                 Salvar e voltar
@@ -2023,6 +2087,60 @@ export default function Clients() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Duplicate detection dialog */}
+        <AlertDialog open={dupDialogOpen} onOpenChange={setDupDialogOpen}>
+          <AlertDialogContent className="max-w-xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="font-display flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+                Possível cliente duplicado
+              </AlertDialogTitle>
+              <AlertDialogDescription className="font-body">
+                Encontramos {dupCandidates?.length ?? 0} cadastro(s) que parecem ser a mesma pessoa. Deseja abrir um existente ou criar mesmo assim?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-2 max-h-72 overflow-y-auto">
+              {(dupCandidates ?? []).map((c) => (
+                <div key={c.id} className="border rounded-lg p-3 flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium font-body truncate">{c.full_name}</div>
+                    <div className="text-xs text-muted-foreground font-body space-y-0.5 mt-1">
+                      {c.cpf_cnpj && <div>CPF/CNPJ: {c.cpf_cnpj}</div>}
+                      {c.phone && <div>Telefone: {c.phone}</div>}
+                      {c.email && <div>E-mail: {c.email}</div>}
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {c.reasons.map((r) => (
+                        <span key={r} className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-400 rounded-full px-2 py-0.5 font-body">{r}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <Button
+                    type="button" size="sm" variant="outline" className="font-body shrink-0"
+                    onClick={() => {
+                      setDupDialogOpen(false);
+                      setSearchParams({ id: c.id }, { replace: true });
+                    }}
+                  >
+                    Abrir
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="font-body">Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                className="font-body"
+                onClick={(e) => { e.preventDefault(); setDupDialogOpen(false); saveMutation.mutate(); }}
+              >
+                Criar mesmo assim
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+
 
         {/* Quick-add location dialog */}
         <Dialog open={quickAddType !== null} onOpenChange={(o) => { if (!o) { setQuickAddType(null); setQuickAddName(""); } }}>
