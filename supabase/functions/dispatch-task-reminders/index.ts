@@ -102,37 +102,20 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Create short codes for action links
-    let links: { complete: string; snooze: string } | null = null
-    if (channels.includes('whatsapp') || channels.includes('email')) {
-      const completeCode = randomCode(8)
-      const snoozeCode = randomCode(8)
-      const { error: codeErr } = await supabase
-        .from('task_reminder_action_codes')
-        .insert([
-          { code: completeCode, reminder_id: r.id, action: 'complete' },
-          { code: snoozeCode, reminder_id: r.id, action: 'snooze', minutes: 30 },
-        ])
-      if (!codeErr) {
-        links = {
-          complete: `${APP_URL}/r/${completeCode}`,
-          snooze: `${APP_URL}/r/${snoozeCode}`,
-        }
-      }
-    }
-
-    const text = (r.message?.trim() || task?.title || 'Lembrete de tarefa')
-    const linksText = links
-      ? `\n\n✅ Concluir: ${links.complete}\n⏰ Adiar 30 min: ${links.snooze}`
-      : ''
-    const waMessage = `🔔 *Lembrete de tarefa*\n\n${text}${linksText}`
+    const taskTitle = task?.title?.trim() || 'Lembrete de tarefa'
+    const obs = r.message?.trim() || null
+    const taskUrl = `${APP_URL}/tasks/${r.task_id}`
+    const waMessage =
+      `🔔 *Lembrete de tarefa*\n\n*${taskTitle}*` +
+      (obs ? `\n\n${obs}` : '') +
+      `\n\n🔗 Abrir tarefa: ${taskUrl}`
 
     if (channels.includes('whatsapp')) {
       const phone = normalizePhone(assignee?.phone)
       if (!phone) {
         errors.push('whatsapp: responsável sem telefone válido')
       } else {
-        const wa = await sendWhatsApp(phone, waMessage, links)
+        const wa = await sendWhatsApp(phone, waMessage)
         if (wa.ok) delivered.push('whatsapp')
         else errors.push(`whatsapp: ${wa.error}`)
       }
