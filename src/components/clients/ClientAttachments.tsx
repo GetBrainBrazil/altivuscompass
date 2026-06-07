@@ -22,8 +22,13 @@ interface AttachmentRow {
   file_path: string;
   mime_type: string | null;
   size_bytes: number | null;
+  description: string | null;
+  passport_id: string | null;
+  visa_id: string | null;
   created_at: string;
 }
+
+type LinkOption = { value: string; label: string; passportId?: string; visaId?: string };
 
 const BUCKET = "client-attachments";
 
