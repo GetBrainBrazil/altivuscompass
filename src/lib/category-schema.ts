@@ -49,7 +49,10 @@ export interface CategoryField {
   key: string;
   label: string;
   type: FieldType;
+  /** Legado — enum (full|half|third|quarter). Mantido para compat. Quando `span` existe, ele tem precedência. */
   width?: FieldWidth;
+  /** Novo: 1..12 colunas no grid desktop. */
+  span?: number;
   required?: boolean;
   placeholder?: string;
   /** Para selects e checkbox-group */
@@ -61,6 +64,50 @@ export interface CategoryField {
 }
 
 export type CategoryFieldSchema = CategoryField[];
+
+const WIDTH_TO_SPAN: Record<FieldWidth, number> = {
+  full: 12,
+  half: 6,
+  third: 4,
+  quarter: 3,
+};
+
+/** Retorna o span efetivo do campo (1..12), derivando do legacy `width` se necessário. */
+export function getEffectiveSpan(field: Pick<CategoryField, "span" | "width">): number {
+  if (typeof field.span === "number" && field.span >= 1 && field.span <= 12) {
+    return Math.round(field.span);
+  }
+  if (field.width && WIDTH_TO_SPAN[field.width]) return WIDTH_TO_SPAN[field.width];
+  return 12;
+}
+
+/** Mapa estático de classes Tailwind por span (necessário para Tailwind detectar no bundle). */
+export const SPAN_DESKTOP_CLASS: Record<number, string> = {
+  1: "lg:col-span-1",
+  2: "lg:col-span-2",
+  3: "lg:col-span-3",
+  4: "lg:col-span-4",
+  5: "lg:col-span-5",
+  6: "lg:col-span-6",
+  7: "lg:col-span-7",
+  8: "lg:col-span-8",
+  9: "lg:col-span-9",
+  10: "lg:col-span-10",
+  11: "lg:col-span-11",
+  12: "lg:col-span-12",
+};
+
+/**
+ * Classe responsiva para o grid de 12 col:
+ * - mobile (<640): empilhado (col-span-12)
+ * - tablet (>=640): span ≤ 4 vira 6, > 4 vira 12
+ * - desktop (>=1024): respeita o span configurado
+ */
+export function spanClass(span: number): string {
+  const s = Math.max(1, Math.min(12, Math.round(span)));
+  const tablet = s <= 4 ? "sm:col-span-6" : "sm:col-span-12";
+  return `col-span-12 ${tablet} ${SPAN_DESKTOP_CLASS[s] ?? "lg:col-span-12"}`;
+}
 
 export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
   text: "Texto curto",
