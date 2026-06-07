@@ -2186,16 +2186,6 @@ export default function Clients() {
             )}
           </PopoverContent>
         </Popover>
-        <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v) as 25 | 50 | 100); setCurrentPage(1); }}>
-          <SelectTrigger className="h-9 w-[140px] text-xs font-body">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="25">25 / página</SelectItem>
-            <SelectItem value="50">50 / página</SelectItem>
-            <SelectItem value="100">100 / página</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       {/* Desktop table */}
@@ -2412,11 +2402,23 @@ export default function Clients() {
             </tbody>
           </table>
           </div>
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-border/50">
+          <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-border/50 flex-wrap">
+            <div className="flex items-center gap-3">
+              <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v) as 25 | 50 | 100); setCurrentPage(1); }}>
+                <SelectTrigger className="h-8 w-[130px] text-xs font-body">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="25">25 / página</SelectItem>
+                  <SelectItem value="50">50 / página</SelectItem>
+                  <SelectItem value="100">100 / página</SelectItem>
+                </SelectContent>
+              </Select>
               <span className="text-xs text-muted-foreground font-body">
                 Página {currentPage} de {totalPages} ({filtered.length} resultados)
               </span>
+            </div>
+            {totalPages > 1 && (
               <div className="flex items-center gap-1">
                 <Button variant="ghost" size="sm" className="h-7 px-2 text-xs font-body" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
                   Anterior
@@ -2431,8 +2433,8 @@ export default function Clients() {
                   Próxima
                 </Button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
           </>
         )}
       </div>
