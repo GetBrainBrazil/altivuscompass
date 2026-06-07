@@ -19,8 +19,6 @@ interface Props {
   remindAt?: string
   taskUrl?: string
   recipientName?: string
-  completeUrl?: string
-  snoozeUrl?: string
 }
 
 const Email = ({
@@ -29,8 +27,6 @@ const Email = ({
   remindAt,
   taskUrl,
   recipientName,
-  completeUrl,
-  snoozeUrl,
 }: Props) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
@@ -56,23 +52,9 @@ const Email = ({
             </Text>
           ) : null}
         </Section>
-        {(completeUrl || snoozeUrl) ? (
-          <Section style={{ textAlign: 'center', margin: '20px 0 8px' }}>
-            {completeUrl ? (
-              <Button href={completeUrl} style={buttonPrimary}>
-                ✅ Marcar concluída
-              </Button>
-            ) : null}
-            {snoozeUrl ? (
-              <Button href={snoozeUrl} style={buttonSecondary}>
-                ⏰ Adiar 30 min
-              </Button>
-            ) : null}
-          </Section>
-        ) : null}
         {taskUrl ? (
           <Section style={{ textAlign: 'center', margin: '16px 0 8px' }}>
-            <Button href={taskUrl} style={buttonGhost}>
+            <Button href={taskUrl} style={buttonPrimary}>
               Abrir tarefa
             </Button>
           </Section>
