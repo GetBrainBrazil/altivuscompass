@@ -574,7 +574,7 @@ export default function Vault() {
 
       {/* Inline Form Panel */}
       {formOpen && (
-        <div className="border border-border rounded-lg bg-card shadow-sm">
+        <div ref={formPanelRef} className="border-2 border-primary/40 rounded-lg bg-card shadow-lg scroll-mt-4">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h2 className="font-display text-lg text-foreground">
               {editingItem ? "Editar Item" : "Novo Item do Cofre"}
