@@ -2314,7 +2314,7 @@ export default function Clients() {
                     </tr>
                     {isExpanded && clientTravelersList.length > 0 && (
                       <tr className="bg-muted/10">
-                        <td colSpan={10} className="p-0">
+                        <td colSpan={11} className="p-0">
                           <div className="pl-12 pr-4 py-2">
                             <table className="w-full">
                               <thead>
