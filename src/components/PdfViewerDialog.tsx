@@ -18,19 +18,29 @@ export function PdfViewerDialog({ open, onOpenChange, filePath, fileName, pendin
   useEffect(() => {
     if (!open) { setSrc(null); return; }
     let revoke: string | null = null;
+    let cancelled = false;
     (async () => {
-      if (pendingFile) {
-        const url = URL.createObjectURL(pendingFile);
+      try {
+        let blob: Blob | null = null;
+        if (pendingFile) {
+          blob = pendingFile;
+        } else if (filePath) {
+          const { data, error } = await supabase.storage
+            .from("task-attachments")
+            .download(filePath);
+          if (error || !data) return;
+          blob = data;
+        }
+        if (!blob || cancelled) return;
+        const pdfBlob = blob.type === "application/pdf" ? blob : new Blob([blob], { type: "application/pdf" });
+        const url = URL.createObjectURL(pdfBlob);
         revoke = url;
         setSrc(url);
-      } else if (filePath) {
-        const { data } = await supabase.storage
-          .from("task-attachments")
-          .createSignedUrl(filePath, 60 * 10);
-        setSrc(data?.signedUrl ?? null);
+      } catch {
+        // ignore
       }
     })();
-    return () => { if (revoke) URL.revokeObjectURL(revoke); };
+    return () => { cancelled = true; if (revoke) URL.revokeObjectURL(revoke); };
   }, [open, filePath, pendingFile]);
 
   const handleDownload = async () => {
