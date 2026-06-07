@@ -2187,6 +2187,17 @@ export default function Clients() {
             )}
           </PopoverContent>
         </Popover>
+        <Select value={pageSize === "all" ? "all" : String(pageSize)} onValueChange={(v) => { setPageSize(v === "all" ? "all" : Number(v) as 25 | 50 | 100); setCurrentPage(1); setAllChunkSize(50); }}>
+          <SelectTrigger className="h-9 w-[140px] text-xs font-body">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="25">25 / página</SelectItem>
+            <SelectItem value="50">50 / página</SelectItem>
+            <SelectItem value="100">100 / página</SelectItem>
+            <SelectItem value="all">Todos</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Desktop table */}
