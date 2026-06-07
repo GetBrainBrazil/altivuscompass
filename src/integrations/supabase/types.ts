@@ -748,6 +748,8 @@ export type Database = {
       }
       client_attachments: {
         Row: {
+          bucket: string
+          category: string | null
           client_id: string
           created_at: string
           description: string | null
@@ -762,6 +764,8 @@ export type Database = {
           visa_id: string | null
         }
         Insert: {
+          bucket?: string
+          category?: string | null
           client_id: string
           created_at?: string
           description?: string | null
@@ -776,6 +780,8 @@ export type Database = {
           visa_id?: string | null
         }
         Update: {
+          bucket?: string
+          category?: string | null
           client_id?: string
           created_at?: string
           description?: string | null
