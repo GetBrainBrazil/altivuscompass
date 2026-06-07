@@ -3282,6 +3282,11 @@ export default function Quotes() {
                             })
                           }
                         />
+                        <QuoteItemReservationFields
+                          itemType={item.item_type}
+                          details={item.details}
+                          onChange={(newDetails) => updateItem(globalIdx, { details: newDetails })}
+                        />
                       </div>
                     </div>
                   );
