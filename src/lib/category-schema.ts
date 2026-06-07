@@ -112,23 +112,27 @@ export const SEED_TEMPLATES: Record<string, { label: string; schema: CategoryFie
   voo: {
     label: "Voo",
     schema: [
+      // Linha 1
       { key: "tipo", label: "Tipo", type: "select", width: "quarter", required: true, options: [
         { value: "ida", label: "Ida" },
         { value: "volta", label: "Volta" },
         { value: "ida_volta", label: "Ida e Volta" },
         { value: "trecho", label: "Trecho" },
       ]},
-      { key: "origem", label: "Origem", type: "airport", width: "half", required: true },
+      { key: "origem", label: "Origem", type: "airport", width: "quarter", required: true },
       { key: "embarque", label: "Embarque", type: "date", width: "quarter", required: true, mapsTo: "utilization_start" },
-      { key: "embarque_hora", label: "Horário", type: "time", width: "quarter" },
-      { key: "destino", label: "Destino", type: "airport", width: "half", required: true },
-      { key: "chegada", label: "Chegada", type: "date", width: "quarter", required: true, mapsTo: "utilization_end" },
-      { key: "chegada_hora", label: "Horário", type: "time", width: "quarter" },
+      { key: "embarque_hora", label: "Horário Embarque", type: "time", width: "quarter" },
+      // Linha 2
       { key: "duracao", label: "Duração", type: "duration_auto", width: "quarter" },
+      { key: "destino", label: "Destino", type: "airport", width: "quarter", required: true },
+      { key: "chegada", label: "Chegada", type: "date", width: "quarter", required: true, mapsTo: "utilization_end" },
+      { key: "chegada_hora", label: "Horário Chegada", type: "time", width: "quarter" },
+      // Linha 3
       { key: "companhia", label: "Companhia Aérea", type: "airline", width: "quarter", required: true },
-      { key: "numero_voo", label: "Nº do Voo", type: "text", width: "quarter" },
+      { key: "numero_voo", label: "Nº do Voo (Bilhete)", type: "text", width: "quarter" },
       { key: "localizador", label: "Localizador", type: "text", width: "quarter" },
       { key: "numero_compra", label: "Nº da Compra", type: "text", width: "quarter" },
+      // Linha 4
       { key: "classe", label: "Classe", type: "select", width: "quarter", options: [
         { value: "economica", label: "Econômica" },
         { value: "premium_economica", label: "Premium Econômica" },
@@ -146,8 +150,9 @@ export const SEED_TEMPLATES: Record<string, { label: string; schema: CategoryFie
         { value: "24h_antes", label: "24h antes" },
         { value: "48h_antes", label: "48h antes" },
       ]},
-      { key: "observacao", label: "Observação", type: "text", width: "quarter" },
-      { key: "bagagens", label: "Bagagens", type: "baggage", width: "full" },
+      { key: "bagagens", label: "Bagagens", type: "baggage", width: "quarter" },
+      // Linha 5
+      { key: "observacao", label: "Observação", type: "textarea", width: "full" },
     ],
   },
   hospedagem: {
