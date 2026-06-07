@@ -31,7 +31,7 @@ import { ListSkeleton, TableSkeleton } from "@/components/ui/loading-skeletons";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccessFeature } from "@/lib/permissions";
 import { logAuditEvent } from "@/lib/audit";
-import { isValidCPFOrCNPJ, cleanDigits } from "@/lib/validators";
+import { isValidCPFOrCNPJ, cleanDigits, formatCpfCnpj } from "@/lib/validators";
 import PrivateImage from "@/components/PrivateImage";
 
 type SortDir = "asc" | "desc";
