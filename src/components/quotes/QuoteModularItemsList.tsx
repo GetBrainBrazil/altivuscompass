@@ -124,6 +124,9 @@ export function QuoteModularItemsList({ quoteId }: Props) {
     return amt;
   })();
   const grandTotal = Math.max(0, afterItemDiscount - quoteDiscountValue);
+  const totalDiscount = itemsSubtotal - grandTotal;
+  const totalDiscountPercent = itemsSubtotal > 0 ? (totalDiscount / itemsSubtotal) * 100 : 0;
+  const showTotalDiscount = totalDiscount > 0.01;
 
   return (
     <div className="space-y-3">
@@ -194,6 +197,26 @@ export function QuoteModularItemsList({ quoteId }: Props) {
               ))}
             </TableBody>
             <TableFooter>
+              {showTotalDiscount && (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-xs text-muted-foreground">
+                    Desconto total
+                  </TableCell>
+                  {discountsEnabled ? (
+                    <>
+                      <TableCell colSpan={2} />
+                      <TableCell />
+                    </>
+                  ) : (
+                    <TableCell colSpan={2} />
+                  )}
+                  <TableCell className="text-right text-xs text-emerald-400 tabular-nums">
+                    {totalDiscountPercent > 0.01 ? `${totalDiscountPercent.toFixed(2)}%` : ""}{" "}
+                    {fmtBRL(totalDiscount)}
+                  </TableCell>
+                  <TableCell />
+                </TableRow>
+              )}
               <TableRow>
                 <TableCell colSpan={3} className="text-xs text-muted-foreground">
                   Total da cotação
