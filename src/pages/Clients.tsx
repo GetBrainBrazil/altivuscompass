@@ -34,6 +34,7 @@ import { canAccessFeature } from "@/lib/permissions";
 import { logAuditEvent } from "@/lib/audit";
 import { isValidCPFOrCNPJ, cleanDigits, formatCpfCnpj } from "@/lib/validators";
 import PrivateImage from "@/components/PrivateImage";
+import { ClientNameSuggest, type PassengerSuggestion } from "@/components/clients/ClientNameSuggest";
 
 type SortDir = "asc" | "desc";
 type SortState = { key: string; dir: SortDir } | null;
@@ -148,6 +149,8 @@ export default function Clients() {
   const [needsComplementaryData, setNeedsComplementaryData] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [activeTab, setActiveTab] = useState("contact");
+  const [promoteFromPassengerId, setPromoteFromPassengerId] = useState<string | null>(null);
+  const [cpfMatchClient, setCpfMatchClient] = useState<{ id: string; full_name: string } | null>(null);
   const [resolvedContactId, setResolvedContactId] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -722,6 +725,7 @@ export default function Clients() {
     setView("list"); setEditingId(null); setForm(emptyForm); setActiveTab("contact");
     setSelectedAirports([]); setSelectedTags([]); setSelectedDestinations([]); setPhones([]); setEmails([]); setSocials([]); setPassports([]); setMilesPrograms([]); setShowPasswords({});
     setLinkContactId(null); setContactLevel(null);
+    setPromoteFromPassengerId(null); setCpfMatchClient(null);
     initialClientSnapshotRef.current = "";
     // Clean URL params so we don't auto-reopen
     if (searchParams.get("contact") || searchParams.get("id") || searchParams.get("new")) {
@@ -851,6 +855,14 @@ export default function Clients() {
             setNeedsComplementaryData(false);
           }
         }
+
+        // Promoção de viajante → cliente: vincula o passenger existente ao novo cliente criado
+        if (!editingId && promoteFromPassengerId) {
+          await supabase
+            .from("passengers")
+            .update({ client_id: clientId })
+            .eq("id", promoteFromPassengerId);
+        }
       }
     },
     onSuccess: () => {
@@ -863,6 +875,9 @@ export default function Clients() {
         initialClientSnapshotRef.current = buildClientSnapshot();
       }
       shouldGoBackRef.current = false;
+      setPromoteFromPassengerId(null);
+      setCpfMatchClient(null);
+      qc.invalidateQueries({ queryKey: ["client-passengers"] });
     },
     onError: (err: Error) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
   });
@@ -876,7 +891,8 @@ export default function Clients() {
     const cpf = cleanDigits(form.cpf_cnpj || "");
     const primaryEmail = (emails.find((e) => e.is_primary)?.email || emails.find((e) => e.email)?.email || "").trim().toLowerCase();
     const allPhones = phones.map((p) => p.phone).filter(Boolean) as string[];
-    const phoneTails = Array.from(new Set(allPhones.map((p) => cleanDigits(p).slice(-9)).filter((t) => t.length >= 8)));
+    // Sufixo de 10–11 dígitos (DDD + número) — evita falso match por número solto que existe em DDDs diferentes
+    const phoneTails = Array.from(new Set(allPhones.map((p) => cleanDigits(p).slice(-11)).filter((t) => t.length >= 10)));
 
     const map = new Map<string, DupCandidate>();
     const addRow = (row: any, reason: string) => {
@@ -902,7 +918,7 @@ export default function Clients() {
       const { data } = await supabase.from("clients").select("id, full_name, cpf_cnpj, phone, email").ilike("email", primaryEmail);
       (data ?? []).forEach((r) => addRow(r, "Mesmo e-mail"));
     }
-    // Telefone (campo principal + lista) — buscar por sufixo de 9 dígitos
+    // Telefone (campo principal + lista) — sufixo com DDD (10–11 dígitos)
     for (const tail of phoneTails) {
       const { data: byMain } = await supabase.from("clients").select("id, full_name, cpf_cnpj, phone, email").ilike("phone", `%${tail}%`);
       (byMain ?? []).forEach((r) => addRow(r, "Mesmo telefone"));
@@ -912,6 +928,29 @@ export default function Clients() {
 
     return Array.from(map.values());
   };
+
+  // Banner de CPF duplicado (apenas em novo cliente) — atualiza enquanto digita o CPF
+  useEffect(() => {
+    if (editingId) { setCpfMatchClient(null); return; }
+    const digits = cleanDigits(form.cpf_cnpj);
+    if (digits.length !== 11 && digits.length !== 14) {
+      setCpfMatchClient(null);
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      const { data } = await supabase
+        .from("clients")
+        .select("id, full_name")
+        .eq("cpf_cnpj", form.cpf_cnpj.trim())
+        .limit(1);
+      if (cancelled) return;
+      const row = (data ?? [])[0];
+      setCpfMatchClient(row ? { id: row.id, full_name: row.full_name } : null);
+    }, 300);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [form.cpf_cnpj, editingId]);
+
 
   const handleSaveClick = async (goBack: boolean) => {
     shouldGoBackRef.current = goBack;
@@ -962,6 +1001,7 @@ export default function Clients() {
     setEditingId(null); setForm(emptyForm); setSelectedAirports([]); setSelectedTags([]); setSelectedDestinations([]); setActiveTab("contact");
     setPhones([]); setEmails([]); setSocials([]); setPassports([]); setMilesPrograms([]); setShowPasswords({});
     setLinkContactId(null); setContactLevel(null);
+    setPromoteFromPassengerId(null); setCpfMatchClient(null);
     setView("form");
   };
 
@@ -1219,13 +1259,75 @@ export default function Clients() {
         </div>
 
         <form onSubmit={(e) => { e.preventDefault(); if (saveMutation.isPending) return; handleSaveClick(!editingId); }} className="space-y-4">
+          {/* Banner de CPF já cadastrado (real-time) */}
+          {!editingId && cpfMatchClient && (
+            <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-100 px-4 py-3 flex items-center gap-3 flex-wrap">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <p className="text-sm font-body flex-1 min-w-0">
+                Já existe um cliente com este CPF/CNPJ: <strong>{cpfMatchClient.full_name}</strong>
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="border-amber-500/40"
+                onClick={() => {
+                  setSearchParams({ id: cpfMatchClient.id }, { replace: true });
+                }}
+              >
+                Abrir cliente
+              </Button>
+            </div>
+          )}
           {/* ====== UPPER SECTION: Compact header with key data ====== */}
           <div className="glass-card rounded-xl p-4 space-y-3">
             {/* Row 1: Name + Rating + Birth + Gender + Active */}
             <div className="grid grid-cols-12 gap-3 items-end">
               <div className="col-span-12 sm:col-span-4 space-y-1">
                 <Label className="font-body text-xs">Nome completo *</Label>
-                <Input value={form.full_name} onChange={(e) => upd("full_name", e.target.value)} required className="h-9" />
+                {editingId ? (
+                  <Input value={form.full_name} onChange={(e) => upd("full_name", e.target.value)} required className="h-9" />
+                ) : (
+                  <ClientNameSuggest
+                    value={form.full_name}
+                    onChange={(v) => upd("full_name", v)}
+                    required
+                    inputClassName="h-9"
+                    onPickClient={(id, name) => {
+                      if (window.confirm(`"${name}" já está cadastrado como cliente. Abrir esse cliente em vez de criar um novo?`)) {
+                        setSearchParams({ id }, { replace: true });
+                      }
+                    }}
+                    onPickPassengerLinked={(clientId, clientName) => {
+                      if (window.confirm(`Esse viajante já pertence ao cliente "${clientName}". Abrir esse cliente?`)) {
+                        setSearchParams({ id: clientId }, { replace: true });
+                      }
+                    }}
+                    onPickPassengerFree={(p: PassengerSuggestion) => {
+                      if (!window.confirm(`"${p.full_name}" é um viajante ainda sem cadastro de cliente. Promover a cliente preenchendo os dados existentes?`)) return;
+                      setPromoteFromPassengerId(p.id);
+                      setForm((prev) => ({
+                        ...prev,
+                        full_name: p.full_name,
+                        cpf_cnpj: p.cpf || prev.cpf_cnpj,
+                        birth_date: p.birth_date || prev.birth_date,
+                        nationality: p.nationality || prev.nationality,
+                      }));
+                      if (p.passport_number) {
+                        setPassports((prev) => prev.length > 0 ? prev : [{
+                          passport_number: p.passport_number || "",
+                          issue_date: "",
+                          expiry_date: p.passport_expiry || "",
+                          nationality: p.nationality || "",
+                          status: "valid",
+                          visas: [],
+                          image_urls: [],
+                        }]);
+                      }
+                      toast({ title: "Viajante carregado", description: "Complete os dados e salve para promover a cliente." });
+                    }}
+                  />
+                )}
               </div>
               <div className="col-span-6 sm:col-span-2 space-y-1">
                 <Label className="font-body text-xs">Nascimento</Label>
