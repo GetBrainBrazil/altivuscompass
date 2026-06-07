@@ -85,19 +85,31 @@ export function ReminderPopupCenter() {
   };
 
   const snooze = async (item: Item, minutes = 30) => {
+    if (!user?.id) return;
     setItems((cur) => cur.filter((i) => i.id !== item.id));
     const next = new Date(Date.now() + minutes * 60 * 1000).toISOString();
-    const { error } = await supabase
-      .from("task_reminders")
-      .update({ remind_at: next, is_read: false })
-      .eq("id", item.id);
-    if (error) {
+    const [{ error: insErr }, { error: updErr }] = await Promise.all([
+      supabase.from("task_reminders").insert({
+        task_id: item.task_id,
+        user_id: user.id,
+        remind_at: next,
+        channels: item.channels?.length ? item.channels : ["system"],
+        message: item.message,
+        status: "pending",
+      }),
+      supabase
+        .from("task_reminders")
+        .update({ is_read: true, status: "sent", sent_at: new Date().toISOString() })
+        .eq("id", item.id),
+    ]);
+    if (insErr || updErr) {
       toast.error("Não foi possível adiar o lembrete");
       fetchDue();
     } else {
       toast.success(`Lembrete adiado por ${minutes} min`);
     }
   };
+
 
   const complete = async (item: Item) => {
     setItems((cur) => cur.filter((i) => i.id !== item.id));
