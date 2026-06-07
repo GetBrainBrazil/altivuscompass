@@ -168,33 +168,33 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
       const opts: LinkOption[] = [];
       (passports ?? []).forEach((p: any, i: number) => {
         const label = `Passaporte ${i + 1}${p.passport_number ? ` — ${p.passport_number}` : ""}${p.nationality ? ` (${p.nationality})` : ""}`;
-        opts.push({ value: `p:${p.id}`, label, passportId: p.id });
+        opts.push({ value: `p:${p.id}`, label });
       });
       (visas ?? []).forEach((v: any, i: number) => {
         const parts = [v.country_region, v.visa_type].filter(Boolean).join(" — ");
         const label = `Visto ${i + 1}${parts ? ` — ${parts}` : ""}${v.visa_number ? ` · ${v.visa_number}` : ""}`;
-        opts.push({ value: `v:${v.id}`, label, visaId: v.id });
+        opts.push({ value: `v:${v.id}`, label });
       });
       return opts;
     },
   });
 
   const linkValueOf = (r: AttachmentRow) =>
-    r.visa_id ? `v:${r.visa_id}` : r.passport_id ? `p:${r.passport_id}` : "none";
+    r.visa_id ? `v:${r.visa_id}` : r.passport_id ? `p:${r.passport_id}` : r.category ? `c:${r.category}` : "";
 
   const linkLabelOf = (r: AttachmentRow) => {
-    if (r.visa_id) return linkOptions.find((o) => o.value === `v:${r.visa_id}`)?.label;
-    if (r.passport_id) return linkOptions.find((o) => o.value === `p:${r.passport_id}`)?.label;
+    if (r.visa_id) return linkOptions.find((o) => o.value === `v:${r.visa_id}`)?.label ?? "Visto";
+    if (r.passport_id) return linkOptions.find((o) => o.value === `p:${r.passport_id}`)?.label ?? "Passaporte";
+    if (r.category) return categoryLabel(r.category);
     return null;
   };
 
   const updateLink = async (r: AttachmentRow, value: string) => {
-    const patch: { passport_id: string | null; visa_id: string | null } =
-      value === "none"
-        ? { passport_id: null, visa_id: null }
-        : value.startsWith("p:")
-          ? { passport_id: value.slice(2), visa_id: null }
-          : { passport_id: null, visa_id: value.slice(2) };
+    let patch: { passport_id: string | null; visa_id: string | null; category: string | null };
+    if (value.startsWith("p:")) patch = { passport_id: value.slice(2), visa_id: null, category: null };
+    else if (value.startsWith("v:")) patch = { passport_id: null, visa_id: value.slice(2), category: null };
+    else if (value.startsWith("c:")) patch = { passport_id: null, visa_id: null, category: value.slice(2) };
+    else return;
     const { error } = await supabase.from("client_attachments" as any).update(patch).eq("id", r.id);
     if (error) {
       toast({ title: "Falha ao vincular", description: error.message, variant: "destructive" });
