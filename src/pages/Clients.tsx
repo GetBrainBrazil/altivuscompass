@@ -907,7 +907,7 @@ export default function Clients() {
       const { data } = await supabase.from("clients").select("id, full_name, cpf_cnpj, phone, email").ilike("email", primaryEmail);
       (data ?? []).forEach((r) => addRow(r, "Mesmo e-mail"));
     }
-    // Telefone (campo principal + lista) — buscar por sufixo de 9 dígitos
+    // Telefone (campo principal + lista) — sufixo com DDD (10–11 dígitos)
     for (const tail of phoneTails) {
       const { data: byMain } = await supabase.from("clients").select("id, full_name, cpf_cnpj, phone, email").ilike("phone", `%${tail}%`);
       (byMain ?? []).forEach((r) => addRow(r, "Mesmo telefone"));
