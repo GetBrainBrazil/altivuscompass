@@ -44,8 +44,6 @@ export function ProductSearchDialog({ open, onOpenChange, quoteId }: Props) {
   const [newProductOpen, setNewProductOpen] = useState(false);
   const [newProd, setNewProd] = useState({ name: "", category_id: "", cost: 0, sale_price: 0 });
 
-  const [noProductOpen, setNoProductOpen] = useState(false);
-  const [noProductCategory, setNoProductCategory] = useState<string>("");
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query.trim()), 250);
@@ -91,7 +89,7 @@ export function ProductSearchDialog({ open, onOpenChange, quoteId }: Props) {
   const handleClose = () => {
     setQuery("");
     setNewProductOpen(false);
-    setNoProductOpen(false);
+    
     onOpenChange(false);
   };
 
@@ -164,42 +162,6 @@ export function ProductSearchDialog({ open, onOpenChange, quoteId }: Props) {
     await createItemFromProduct(data as Product, cat);
   };
 
-  const handleCreateWithoutProduct = async () => {
-    if (!noProductCategory) {
-      toast({ title: "Escolha uma categoria", variant: "destructive" });
-      return;
-    }
-    setCreating(true);
-    const cat = categories.find((c) => c.id === noProductCategory) ?? null;
-    const itemType = deriveItemTypeFromCategoryName(cat?.name);
-    const { data: maxRow } = await supabase
-      .from("quote_items")
-      .select("sort_order")
-      .eq("quote_id", quoteId)
-      .order("sort_order", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    const nextSort = (maxRow?.sort_order ?? -1) + 1;
-    const { data, error } = await supabase
-      .from("quote_items")
-      .insert({
-        quote_id: quoteId,
-        item_type: itemType,
-        title: cat?.name ?? "Novo item",
-        quantity: 1,
-        details: {},
-        sort_order: nextSort,
-      })
-      .select("id")
-      .single();
-    setCreating(false);
-    if (error || !data) {
-      toast({ title: "Erro ao criar item", description: error?.message, variant: "destructive" });
-      return;
-    }
-    handleClose();
-    navigate(`/quotes/${quoteId}/items/${data.id}`);
-  };
 
   return (
     <>
@@ -279,18 +241,12 @@ export function ProductSearchDialog({ open, onOpenChange, quoteId }: Props) {
             )}
           </div>
 
-          <DialogFooter className="sm:justify-between border-t pt-3">
-            <button
-              type="button"
-              onClick={() => setNoProductOpen(true)}
-              className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
-            >
-              Criar item sem produto
-            </button>
+          <DialogFooter className="border-t pt-3">
             <Button type="button" variant="ghost" onClick={handleClose}>
               Fechar
             </Button>
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
 
@@ -364,37 +320,6 @@ export function ProductSearchDialog({ open, onOpenChange, quoteId }: Props) {
         </DialogContent>
       </Dialog>
 
-      {/* Item sem produto */}
-      <Dialog open={noProductOpen} onOpenChange={setNoProductOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="font-display">Item sem produto</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-1">
-            <Label className="text-xs">Categoria</Label>
-            <Select value={noProductCategory} onValueChange={setNoProductCategory}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setNoProductOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="button" onClick={handleCreateWithoutProduct} disabled={creating}>
-              {creating ? "Criando..." : "Criar item"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
