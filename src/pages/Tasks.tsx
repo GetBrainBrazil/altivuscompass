@@ -231,6 +231,8 @@ export default function Tasks() {
   });
 
   const getTaskReminder = (taskId: string) => reminders.find((r: any) => r.task_id === taskId);
+  const getActiveReminderCount = (taskId: string) =>
+    reminders.filter((r: any) => r.task_id === taskId && r.status === "pending").length;
 
   const openReminderDialog = (task: any) => {
     setReminderTask(task);
@@ -644,10 +646,13 @@ export default function Tasks() {
                               </p>
                               <button
                                 onClick={(e) => { e.stopPropagation(); openReminderDialog(task); }}
-                                className={cn("shrink-0 p-1 rounded hover:bg-muted transition-colors", getTaskReminder(task.id) ? "text-foreground" : "text-muted-foreground/60 hover:text-foreground")}
-                                title={getTaskReminder(task.id) ? "Editar lembrete" : "Adicionar lembrete"}
+                                className={cn("shrink-0 inline-flex items-center gap-0.5 p-1 rounded hover:bg-muted transition-colors", getActiveReminderCount(task.id) > 0 ? "text-foreground" : "text-muted-foreground/60 hover:text-foreground")}
+                                title={getActiveReminderCount(task.id) > 0 ? `${getActiveReminderCount(task.id)} lembrete(s) ativo(s)` : "Adicionar lembrete"}
                               >
-                                <Bell size={12} className={getTaskReminder(task.id) ? "fill-current" : ""} />
+                                <Bell size={12} className={getActiveReminderCount(task.id) > 0 ? "fill-current" : ""} />
+                                {getActiveReminderCount(task.id) > 0 && (
+                                  <span className="text-[10px] font-semibold leading-none">{getActiveReminderCount(task.id)}</span>
+                                )}
                               </button>
                             </div>
                             {task.description && task.description.replace(/<[^>]*>/g, "").trim() && (
@@ -794,14 +799,15 @@ export default function Tasks() {
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       {(() => {
-                        const hasReminder = !!getTaskReminder(task.id);
+                        const count = getActiveReminderCount(task.id);
                         return (
                           <button
                             onClick={() => openReminderDialog(task)}
-                            className={cn("p-1.5 rounded-md hover:bg-muted transition-colors", hasReminder ? "text-foreground" : "text-muted-foreground hover:text-foreground")}
-                            title={hasReminder ? "Editar lembrete" : "Adicionar lembrete"}
+                            className={cn("inline-flex items-center gap-0.5 p-1.5 rounded-md hover:bg-muted transition-colors", count > 0 ? "text-foreground" : "text-muted-foreground hover:text-foreground")}
+                            title={count > 0 ? `${count} lembrete(s) ativo(s)` : "Adicionar lembrete"}
                           >
-                            {hasReminder ? <Bell size={14} className="fill-current" /> : <Bell size={14} />}
+                            <Bell size={14} className={count > 0 ? "fill-current" : ""} />
+                            {count > 0 && <span className="text-[11px] font-semibold leading-none">{count}</span>}
                           </button>
                         );
                       })()}
