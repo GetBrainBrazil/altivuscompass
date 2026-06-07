@@ -744,7 +744,7 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
           <p className="text-xs text-muted-foreground font-body italic">Nenhum viajante cadastrado.</p>
         ) : (
           <div className="border border-border/50 rounded-lg overflow-x-auto">
-            <table className="w-full min-w-[900px]">
+            <table className="w-full">
               <thead>
                 <tr className="border-b border-border/50 bg-muted/30">
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleTravelerSort("_name")}>Nome<SortIcon columnKey="_name" sort={travelerSort} /></th>
@@ -752,8 +752,6 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleTravelerSort("_relLabel")}>Vínculo<SortIcon columnKey="_relLabel" sort={travelerSort} /></th>
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleTravelerSort("_cpf")}>CPF<SortIcon columnKey="_cpf" sort={travelerSort} /></th>
                   <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleTravelerSort("_birth_date")}>Nascimento<SortIcon columnKey="_birth_date" sort={travelerSort} /></th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleTravelerSort("_nationality")}>Nacionalidade<SortIcon columnKey="_nationality" sort={travelerSort} /></th>
-                  <th className="text-left p-3 text-[10px] uppercase tracking-widest text-muted-foreground font-body cursor-pointer select-none" onClick={() => toggleTravelerSort("_passport")}>Passaporte<SortIcon columnKey="_passport" sort={travelerSort} /></th>
                   <th className="p-3 w-20"></th>
                 </tr>
               </thead>
@@ -778,8 +776,6 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                         </td>
                         <td className="p-3 text-sm font-body text-foreground">{p.cpf ? maskCPF(p.cpf) : "—"}</td>
                         <td className="p-3 text-sm font-body text-foreground">{p.birth_date ? new Date(p.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
-                        <td className="p-3 text-sm font-body text-foreground">{p.nationality || "—"}</td>
-                        <td className="p-3 text-sm font-body text-foreground">{p.passport_number || "—"}</td>
                         <td className="p-3">
                           <div className="flex gap-1">
                             <Button type="button" variant="ghost" size="icon" className="h-7 w-7" title="Promover a Cliente"
@@ -822,8 +818,6 @@ export function ClientTravelersTab({ clientId, onNavigateToClient }: ClientTrave
                       </td>
                       <td className="p-3 text-sm font-body text-foreground">{r.client?.cpf_cnpj ? maskCPF(r.client.cpf_cnpj) : "—"}</td>
                       <td className="p-3 text-sm font-body text-foreground">{r.client?.birth_date ? new Date(r.client.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
-                      <td className="p-3 text-sm font-body text-foreground">{r.client?.nationality || "—"}</td>
-                      <td className="p-3 text-sm font-body text-foreground">{r._passports || "—"}</td>
                       <td className="p-3">
                         <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" title="Desvincular cliente"
                           onClick={(e) => { e.stopPropagation(); setDeleteRelId(r.id); }}>
