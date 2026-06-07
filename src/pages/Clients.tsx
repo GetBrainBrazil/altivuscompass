@@ -352,7 +352,22 @@ export default function Clients() {
       }
       return { tasks, reminders };
     },
+    staleTime: 0,
   });
+
+  // Realtime: atualiza contadores de tarefas/lembretes sem refresh
+  useEffect(() => {
+    const channel = supabase
+      .channel("clients-activity-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, () => {
+        qc.invalidateQueries({ queryKey: ["clients-activity-counts"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "task_reminders" }, () => {
+        qc.invalidateQueries({ queryKey: ["clients-activity-counts"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [qc]);
 
   // Fetch contacts (prospects + leads) to display alongside clients
   const { data: contactsRows = [] } = useQuery({
