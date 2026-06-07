@@ -5,6 +5,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, FileText, Download, Trash2, Paperclip } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
 interface AttachmentRow {
@@ -41,6 +45,7 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<AttachmentRow | null>(null);
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["client-attachments", clientId],
@@ -119,8 +124,10 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   };
 
-  const onDelete = async (row: AttachmentRow) => {
-    if (!confirm(`Excluir "${row.file_name}"?`)) return;
+  const confirmDelete = async () => {
+    const row = pendingDelete;
+    if (!row) return;
+    setPendingDelete(null);
     const { error: stErr } = await supabase.storage.from(BUCKET).remove([row.file_path]);
     if (stErr) {
       toast({ title: "Falha ao excluir arquivo", description: stErr.message, variant: "destructive" });
@@ -135,6 +142,7 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
       return;
     }
     qc.invalidateQueries({ queryKey: ["client-attachments", clientId] });
+    toast({ title: "Anexo excluído" });
   };
 
   return (
@@ -208,7 +216,7 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
               </button>
               <button
                 type="button"
-                onClick={() => onDelete(r)}
+                onClick={() => setPendingDelete(r)}
                 className="text-muted-foreground hover:text-destructive"
                 title="Excluir"
               >
@@ -218,6 +226,28 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
           ))
         )}
       </div>
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(o) => { if (!o) setPendingDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir anexo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete && (
+                <>O arquivo <span className="font-medium text-foreground">"{pendingDelete.file_name}"</span> será removido permanentemente. Esta ação não pode ser desfeita.</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
