@@ -2411,6 +2411,41 @@ export default function Clients() {
               })}
             </tbody>
           </table>
+          {pageSize !== "all" && totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border/50">
+              <span className="text-xs text-muted-foreground font-body">
+                Página {currentPage} de {totalPages} ({filtered.length} resultados)
+              </span>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs font-body" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
+                  Anterior
+                </Button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).slice(Math.max(0, currentPage - 4), currentPage + 3).map((p) => (
+                  <button key={p} onClick={() => setCurrentPage(p)}
+                    className={`h-7 w-7 rounded text-xs font-medium ${p === currentPage ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
+                    {p}
+                  </button>
+                ))}
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs font-body" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+                  Próxima
+                </Button>
+              </div>
+            </div>
+          )}
+          {pageSize === "all" && (
+            <>
+              {allChunkSize < filtered.length && (
+                <div ref={scrollTriggerRef} className="py-4 text-center">
+                  <span className="text-xs text-muted-foreground font-body">Carregando mais...</span>
+                </div>
+              )}
+              {allChunkSize >= filtered.length && filtered.length > 0 && (
+                <div className="py-2 text-center">
+                  <span className="text-xs text-muted-foreground font-body">{filtered.length} contatos carregados</span>
+                </div>
+              )}
+            </>
+          )}
         )}
       </div>
 
