@@ -204,7 +204,7 @@ export default function QuoteItemEdit() {
           >
             <Trash2 className="w-3.5 h-3.5" /> Excluir item
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={saving} className="gap-1">
+          <Button size="sm" onClick={() => handleSave()} disabled={saving} className="gap-1">
             {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
             Salvar
           </Button>
@@ -277,7 +277,7 @@ export default function QuoteItemEdit() {
       <Separator />
 
       <div className="flex justify-end">
-        <Button size="sm" onClick={handleSave} disabled={saving} className="gap-1">
+        <Button size="sm" onClick={() => handleSave()} disabled={saving} className="gap-1">
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
           Salvar
         </Button>
