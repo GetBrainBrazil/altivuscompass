@@ -330,6 +330,46 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
         )}
       </div>
 
+      <Dialog open={!!previewRow} onOpenChange={(o) => { if (!o) setPreviewRow(null); }}>
+        <DialogContent className="max-w-[95vw] w-[95vw] sm:max-w-5xl max-h-[95vh] h-[95vh] p-0 gap-0 overflow-hidden flex flex-col">
+          <DialogHeader className="p-4 pb-3 border-b shrink-0 flex flex-row items-center justify-between gap-2">
+            <DialogTitle className="font-display text-base truncate">{previewRow?.file_name}</DialogTitle>
+            <div className="flex gap-2 mr-6">
+              <Button type="button" variant="outline" size="sm" onClick={() => previewUrl && window.open(previewUrl, "_blank", "noopener,noreferrer")} disabled={!previewUrl}>
+                <ExternalLink size={14} className="mr-1.5" /> Nova guia
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => previewRow && downloadRow(previewRow)}>
+                <Download size={14} className="mr-1.5" /> Baixar
+              </Button>
+            </div>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 bg-muted/30 flex items-center justify-center overflow-auto">
+            {previewLoading || !previewUrl ? (
+              <Loader2 size={20} className="animate-spin text-muted-foreground" />
+            ) : previewRow?.mime_type?.startsWith("image/") ? (
+              <img src={previewUrl} alt={previewRow.file_name} className="max-w-full max-h-full object-contain" />
+            ) : previewRow?.mime_type === "application/pdf" ? (
+              <iframe src={previewUrl} title={previewRow.file_name} className="w-full h-full border-0" />
+            ) : previewRow?.mime_type?.startsWith("video/") ? (
+              <video src={previewUrl} controls className="max-w-full max-h-full" />
+            ) : previewRow?.mime_type?.startsWith("audio/") ? (
+              <audio src={previewUrl} controls />
+            ) : (
+              <div className="text-center p-6 space-y-3">
+                <FileText className="h-12 w-12 mx-auto text-muted-foreground" />
+                <p className="text-sm text-muted-foreground font-body">
+                  Pré-visualização não disponível para este tipo de arquivo.
+                </p>
+                <Button type="button" size="sm" onClick={() => previewRow && downloadRow(previewRow)}>
+                  <Download size={14} className="mr-1.5" /> Baixar arquivo
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+
       <AlertDialog open={!!pendingDelete} onOpenChange={(o) => { if (!o) setPendingDelete(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
