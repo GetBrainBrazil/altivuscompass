@@ -292,8 +292,9 @@ function ItemRow({ item, discountsEnabled, onEdit, onChanged }: ItemRowProps) {
   );
 
   const subtotal = unitPrice * (quantity || 0);
-  const itemDisc =
-    discMode === "percent" ? (subtotal * (discPercent || 0)) / 100 : discAmount || 0;
+  const itemDisc = discountsEnabled
+    ? (discMode === "percent" ? (subtotal * (discPercent || 0)) / 100 : discAmount || 0)
+    : 0;
   const total = Math.max(0, subtotal - itemDisc);
 
   const categoryName =
