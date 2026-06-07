@@ -2078,6 +2078,10 @@ export default function Quotes() {
                 <FileText className="w-3 h-3" />
                 Principal
               </TabsTrigger>
+              <TabsTrigger value="modular" className="flex items-center gap-1 text-[11px] px-2 py-1">
+                <Package className="w-3 h-3" />
+                Itens
+              </TabsTrigger>
               {ITEM_TYPES.map((type) => {
                 const count = itemCount(type.id);
                 const Icon = type.icon;
