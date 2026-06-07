@@ -2421,7 +2421,7 @@ export default function Clients() {
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground font-body">Nenhum cliente encontrado.</div>
         ) : (
-          filtered.map((client: any) => {
+          paginatedData.map((client: any) => {
             const clientTravelersList = travelersByClient[client.id] ?? [];
             const isExpanded = expandedClients.has(client.id);
             const hasTravelers = clientTravelersList.length > 0;
