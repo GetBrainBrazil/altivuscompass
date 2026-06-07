@@ -31,6 +31,16 @@ import {
 import { Loader2 } from "lucide-react";
 import { isValidPhoneLength } from "@/lib/validators";
 
+function parseLocalDate(value: string | null | undefined): Date | null {
+  if (!value) return null;
+  const m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+}
+
 const STATUS_OPTIONS = [
   { value: "pending", label: "A iniciar", dot: "bg-warning" },
   { value: "in_progress", label: "Em andamento", dot: "bg-soft-blue" },
@@ -138,8 +148,8 @@ export default function TaskDetail() {
         assigned_to: task.assigned_to ?? "",
         quote_id: task.quote_id ?? "none",
         client_id: task.client_id ?? "none",
-        due_date: task.due_date ? new Date(task.due_date) : null,
-        start_date: task.start_date ? new Date(task.start_date) : new Date(),
+        due_date: parseLocalDate(task.due_date),
+        start_date: parseLocalDate(task.start_date) ?? new Date(),
       };
       setForm(next);
       baselineRef.current = snapshot(next, []);

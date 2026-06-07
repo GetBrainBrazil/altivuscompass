@@ -46,6 +46,16 @@ const PRIORITY_CONFIG: Record<string, { label: string; color: string }> = {
 type SortField = "title" | "due_date" | "priority" | "status" | "assigned_to";
 type SortDir = "asc" | "desc" | null;
 
+function parseLocalDate(value: string | null | undefined): Date | null {
+  if (!value) return null;
+  const m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+}
+
 export default function Tasks() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -295,7 +305,7 @@ export default function Tasks() {
         const today = new Date(); today.setHours(0,0,0,0);
         const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
         const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate()+7);
-        const due = t.due_date ? new Date(t.due_date) : null;
+        const due = parseLocalDate(t.due_date);
         if (dueFilter === "none" && due) return false;
         if (dueFilter === "overdue" && !(due && due < today && t.status !== "completed")) return false;
         if (dueFilter === "today" && !(due && due.getTime() === today.getTime())) return false;
@@ -574,7 +584,7 @@ export default function Tasks() {
                   ) : (
                     stageTasks.map((task: any) => {
                       const priority = PRIORITY_CONFIG[task.priority] ?? PRIORITY_CONFIG.medium;
-                      const isOverdue = task.due_date && !task.completed_at && new Date(task.due_date) < new Date();
+                      const isOverdue = task.due_date && !task.completed_at && (parseLocalDate(task.due_date)?.getTime() ?? Infinity) < new Date(new Date().setHours(0,0,0,0)).getTime();
                       const isDragging = draggingTaskId === task.id;
                       return (
                         <div
@@ -697,7 +707,7 @@ export default function Tasks() {
               {filteredTasks.map((task: any) => {
                 const status = STATUS_CONFIG[task.status] ?? STATUS_CONFIG.pending;
                 const priority = PRIORITY_CONFIG[task.priority] ?? PRIORITY_CONFIG.medium;
-                const isOverdue = task.due_date && !task.completed_at && new Date(task.due_date) < new Date();
+                const isOverdue = task.due_date && !task.completed_at && (parseLocalDate(task.due_date)?.getTime() ?? Infinity) < new Date(new Date().setHours(0,0,0,0)).getTime();
 
                 return (
                   <TableRow
