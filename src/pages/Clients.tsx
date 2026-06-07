@@ -2037,11 +2037,11 @@ export default function Clients() {
                 return (
                   <>
                     {editingId && (
-                      <Button type="button" disabled={disabled} className="font-body" variant="secondary" onClick={() => { shouldGoBackRef.current = true; saveMutation.mutate(); }}>
+                      <Button type="button" disabled={disabled} className="font-body" variant="secondary" onClick={() => handleSaveClick(true)}>
                         {saveMutation.isPending ? "Salvando..." : "Salvar e Voltar"}
                       </Button>
                     )}
-                    <Button type="button" disabled={disabled} className="font-body" onClick={() => { shouldGoBackRef.current = !editingId; saveMutation.mutate(); }}>
+                    <Button type="button" disabled={disabled} className="font-body" onClick={() => handleSaveClick(!editingId)}>
                       {saveMutation.isPending ? "Salvando..." : (editingId ? "Salvar" : "Criar Cliente")}
                     </Button>
                   </>
