@@ -1637,6 +1637,7 @@ export default function Quotes() {
       commission_status: "pending",
       attachment_urls: [],
       external_url: null,
+      product_id: null,
       ...(extra || {}),
     }]);
   };
