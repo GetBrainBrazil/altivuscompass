@@ -2206,6 +2206,7 @@ export default function Clients() {
           <div className="p-8 text-center text-muted-foreground font-body">Nenhum cliente encontrado.</div>
         ) : (
           <>
+            <div className="overflow-x-auto">
             <table className="w-full">
             <thead>
               <tr className="border-b border-border/50">
@@ -2410,6 +2411,7 @@ export default function Clients() {
               })}
             </tbody>
           </table>
+          </div>
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-border/50">
               <span className="text-xs text-muted-foreground font-body">
