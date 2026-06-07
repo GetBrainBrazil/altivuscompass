@@ -725,6 +725,7 @@ export default function Clients() {
     setView("list"); setEditingId(null); setForm(emptyForm); setActiveTab("contact");
     setSelectedAirports([]); setSelectedTags([]); setSelectedDestinations([]); setPhones([]); setEmails([]); setSocials([]); setPassports([]); setMilesPrograms([]); setShowPasswords({});
     setLinkContactId(null); setContactLevel(null);
+    setPromoteFromPassengerId(null); setCpfMatchClient(null);
     initialClientSnapshotRef.current = "";
     // Clean URL params so we don't auto-reopen
     if (searchParams.get("contact") || searchParams.get("id") || searchParams.get("new")) {
