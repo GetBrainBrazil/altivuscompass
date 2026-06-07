@@ -716,8 +716,8 @@ export default function Tasks() {
                         <span className={cn("text-sm font-medium font-body", task.status === "completed" && "line-through text-muted-foreground")}>
                           {task.title}
                         </span>
-                        {task.description && (
-                          <p className="text-xs text-muted-foreground font-body mt-0.5 line-clamp-1">{task.description}</p>
+                        {task.description && task.description.replace(/<[^>]*>/g, "").trim() && (
+                          <p className="text-xs text-muted-foreground font-body mt-0.5 line-clamp-1">{task.description.replace(/<[^>]*>/g, "").trim()}</p>
                         )}
                       </div>
                     </TableCell>
