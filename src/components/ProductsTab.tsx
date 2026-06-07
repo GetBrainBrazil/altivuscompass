@@ -183,6 +183,20 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
     onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
 
+  const { data: quoteCount = 0 } = useQuery({
+    queryKey: ["products", editing?.id, "quote_count"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("quote_items")
+        .select("quote_id")
+        .eq("product_id", editing!.id);
+      if (error) throw error;
+      const unique = new Set((data ?? []).map((r: any) => r.quote_id).filter(Boolean));
+      return unique.size;
+    },
+    enabled: !!editing?.id,
+  });
+
   const closeDialog = () => {
     setDialogOpen(false);
     setEditing(null);
