@@ -21,6 +21,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronRight, Settings, Newspaper } from "lucide-react";
 import { useChangelogUnseen } from "@/hooks/useChangelogUnseen";
+import { useWaUnreadCount } from "@/hooks/useWaUnreadCount";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -85,6 +86,7 @@ export function AppSidebar() {
   const { userRole } = useAuth();
   const location = useLocation();
   const { hasUnseen: changelogUnseen } = useChangelogUnseen();
+  const waUnread = useWaUnreadCount();
 
   const visibleItems = navItems.filter((item) => canAccess(userRole, item.url));
 
@@ -251,8 +253,20 @@ export function AppSidebar() {
                         <TooltipTrigger asChild>
                           <SidebarMenuButton asChild className={cn("h-9 rounded-md", activeBase)} data-active={isItemActive}>
                             <Link to={item.url} className={cn(linkBase, isItemActive && linkActive)}>
-                              <item.icon />
-                              {!collapsed && <span className="text-[13px] font-body tracking-[0.01em]">{item.title}</span>}
+                              <div className="relative">
+                                <item.icon />
+                                {collapsed && item.url === "/service-center" && waUnread > 0 && (
+                                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-semibold flex items-center justify-center leading-none">
+                                    {waUnread > 99 ? "99+" : waUnread}
+                                  </span>
+                                )}
+                              </div>
+                              {!collapsed && <span className="text-[13px] font-body tracking-[0.01em] flex-1">{item.title}</span>}
+                              {!collapsed && item.url === "/service-center" && waUnread > 0 && (
+                                <span className="min-w-[18px] h-[18px] px-1.5 rounded-full bg-red-500 text-white text-[10px] font-semibold flex items-center justify-center leading-none">
+                                  {waUnread > 99 ? "99+" : waUnread}
+                                </span>
+                              )}
                             </Link>
                           </SidebarMenuButton>
                         </TooltipTrigger>
