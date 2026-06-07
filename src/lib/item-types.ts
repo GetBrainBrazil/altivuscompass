@@ -44,10 +44,8 @@ export const ITEM_TYPES: Record<ItemTypeKey, ItemTypeConfig> = {
   flight: {
     label: "Voo",
     utilizationLabel: { start: "Data do voo", end: "Data de chegada" },
-    reservationFields: [
-      { key: "localizador", label: "Localizador (PNR)", placeholder: "Ex: ABC123" },
-      { key: "numero_bilhete", label: "Número do bilhete", placeholder: "Ex: 045-1234567890" },
-    ],
+    // Campos de localizador/bilhete já estão no schema dinâmico da categoria Voo — evita duplicidade.
+    reservationFields: [],
     postSaleTasks: [
       { key: "checkin_online", title: "Realizar check-in online", offsetDays: -2 },
       { key: "confirmar_emissao", title: "Confirmar emissão do bilhete", offsetDays: -7 },
