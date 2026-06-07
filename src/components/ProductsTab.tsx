@@ -15,7 +15,6 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { logAuditEvent } from "@/lib/audit";
-import CategoryFieldsEditor from "@/components/registrations/CategoryFieldsEditor";
 import { Layers } from "lucide-react";
 
 const CURRENCIES = ["BRL", "USD", "EUR", "GBP", "ARS", "CLP"];
@@ -27,7 +26,6 @@ function CategoriesSubTab({ isAdmin }: { isAdmin: boolean }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({ name: "", description: "", is_active: true });
-  const [fieldsEditing, setFieldsEditing] = useState<any>(null);
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["product_categories"],
