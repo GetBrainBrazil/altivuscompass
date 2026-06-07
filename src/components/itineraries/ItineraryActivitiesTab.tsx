@@ -82,7 +82,7 @@ export default function ItineraryActivitiesTab({ itineraryId }: Props) {
         ))}
         <TableRow className="bg-muted/30">
           <TableCell><Input value={newItem.activity_name} onChange={(e) => setNewItem({ ...newItem, activity_name: e.target.value })} placeholder="Nome *" className="h-8 text-xs" /></TableCell>
-          <TableCell><Input type="number" step="0.01" value={newItem.approx_price} onChange={(e) => setNewItem({ ...newItem, approx_price: e.target.value })} placeholder="R$" className="h-8 text-xs" /></TableCell>
+          <TableCell><CurrencyInput value={newItem.approx_price === "" ? null : Number(newItem.approx_price)} onChange={(v) => setNewItem({ ...newItem, approx_price: v == null ? "" : String(v) })} placeholder="0,00" className="h-8 text-xs" /></TableCell>
           <TableCell><Input value={newItem.avg_duration} onChange={(e) => setNewItem({ ...newItem, avg_duration: e.target.value })} placeholder="Ex: 2h" className="h-8 text-xs" /></TableCell>
           <TableCell><Input value={newItem.period} onChange={(e) => setNewItem({ ...newItem, period: e.target.value })} placeholder="Manhã/Tarde" className="h-8 text-xs" /></TableCell>
           <TableCell><Input value={newItem.description} onChange={(e) => setNewItem({ ...newItem, description: e.target.value })} placeholder="Descrição" className="h-8 text-xs" /></TableCell>
