@@ -640,6 +640,17 @@ function TagsTab() {
 // ── Main Page ──
 
 export default function Registrations() {
+  const [tab, setTab] = useState<string>(() => {
+    try {
+      return localStorage.getItem("registrations:tab") || "suppliers";
+    } catch {
+      return "suppliers";
+    }
+  });
+  const handleTabChange = (v: string) => {
+    setTab(v);
+    try { localStorage.setItem("registrations:tab", v); } catch {}
+  };
   return (
     <div className="space-y-6">
       <div>
@@ -647,7 +658,7 @@ export default function Registrations() {
         <p className="text-sm text-muted-foreground mt-1">Gerencie localidades, aeroportos, companhias aéreas, fornecedores, produtos e etiquetas</p>
       </div>
 
-      <Tabs defaultValue="suppliers" className="space-y-4">
+      <Tabs value={tab} onValueChange={handleTabChange} className="space-y-4">
         <TabsList>
           <TabsTrigger value="suppliers">Fornecedores</TabsTrigger>
           <TabsTrigger value="products">Produtos</TabsTrigger>
