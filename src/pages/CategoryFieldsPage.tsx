@@ -36,23 +36,24 @@ import { logAuditEvent } from "@/lib/audit";
 import {
   CategoryField,
   CategoryFieldSchema,
-  FIELD_TYPE_LABELS,
-  FIELD_WIDTH_LABELS,
-  FieldType,
-  FieldWidth,
   SEED_TEMPLATES,
   ensureUniqueKey,
+  getEffectiveSpan,
   isValidSchema,
-  slugify,
 } from "@/lib/category-schema";
-import { ArrowDown, ArrowLeft, ArrowUp, Layers, Plus, Sparkles, Trash2 } from "lucide-react";
+import { ArrowLeft, Layers, Plus, Sparkles, Trash2 } from "lucide-react";
+import { CategoryFieldsCanvas } from "@/components/registrations/CategoryFieldsCanvas";
 
 const newField = (taken: string[]): CategoryField => ({
   key: ensureUniqueKey("novo_campo", taken),
   label: "Novo campo",
   type: "text",
-  width: "half",
+  span: 6,
 });
+
+function normalize(fields: CategoryFieldSchema): CategoryFieldSchema {
+  return fields.map((f) => ({ ...f, span: getEffectiveSpan(f), width: undefined }));
+}
 
 export default function CategoryFieldsPage() {
   const { id } = useParams<{ id: string }>();
