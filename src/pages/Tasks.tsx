@@ -18,7 +18,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, Plus, Search, CheckCircle2, Clock, AlertCircle, Bell, ArrowUpDown, ArrowUp, ArrowDown, ChevronsUpDown, Check, LayoutGrid, Table as TableIcon } from "lucide-react";
+import { CalendarIcon, Plus, Search, CheckCircle2, Clock, AlertCircle, Bell, ArrowUpDown, ArrowUp, ArrowDown, ChevronsUpDown, Check, LayoutGrid, Table as TableIcon, Paperclip } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FilterChip, SearchableList } from "@/components/tasks/FilterChip";
 
@@ -103,6 +103,16 @@ export default function Tasks() {
       const { data, error } = await query;
       if (error) throw error;
       return data ?? [];
+    },
+  });
+
+  const { data: attachmentCounts = {} } = useQuery({
+    queryKey: ["task-attachment-counts"],
+    queryFn: async () => {
+      const { data } = await supabase.from("task_attachments").select("task_id");
+      const counts: Record<string, number> = {};
+      (data ?? []).forEach((r: any) => { counts[r.task_id] = (counts[r.task_id] ?? 0) + 1; });
+      return counts;
     },
   });
 
@@ -645,7 +655,7 @@ export default function Tasks() {
                             )}
                             <div className="flex flex-wrap items-center gap-1.5 mb-2">
                               <Badge variant="outline" className={cn("text-[10px] font-body whitespace-nowrap", priority.color)}>{priority.label}</Badge>
-                              {isDueToday && <Badge className="text-[10px] font-body bg-warning text-warning-foreground border-0">Hoje</Badge>}
+                              {isDueToday && <Badge className="text-[10px] font-body bg-success text-success-foreground border-0">Hoje</Badge>}
                               {isOverdue && <Badge variant="destructive" className="text-[10px] font-body">Atrasada</Badge>}
                             </div>
                             <div className="h-px bg-border/60 -mx-3" />
@@ -656,8 +666,13 @@ export default function Tasks() {
                               <span className="text-[11px] text-muted-foreground font-body truncate flex-1 min-w-0">
                                 {task.assigned_to ? getAssigneeName(task.assigned_to) : "Sem responsável"}
                               </span>
+                              {attachmentCounts[task.id] > 0 && (
+                                <span className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground font-body shrink-0" title={`${attachmentCounts[task.id]} anexo(s)`}>
+                                  <Paperclip size={11} />{attachmentCounts[task.id]}
+                                </span>
+                              )}
                               {task.due_date && (
-                                <span className={cn("text-[11px] font-body shrink-0 tabular-nums", isOverdue ? "text-destructive" : isDueToday ? "text-warning" : "text-muted-foreground")}>
+                                <span className={cn("text-[11px] font-body shrink-0 tabular-nums", isOverdue ? "text-destructive" : isDueToday ? "text-success" : "text-muted-foreground")}>
                                   {task.due_date.split("-").reverse().slice(0, 2).join("/")}
                                 </span>
                               )}
@@ -726,8 +741,13 @@ export default function Tasks() {
                     </TableCell>
                     <TableCell>
                       <div className="min-w-0">
-                        <span className={cn("text-sm font-medium font-body", task.status === "completed" && "line-through text-muted-foreground")}>
+                        <span className={cn("text-sm font-medium font-body inline-flex items-center gap-1.5", task.status === "completed" && "line-through text-muted-foreground")}>
                           {task.title}
+                          {attachmentCounts[task.id] > 0 && (
+                            <span className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground font-body" title={`${attachmentCounts[task.id]} anexo(s)`}>
+                              <Paperclip size={11} />{attachmentCounts[task.id]}
+                            </span>
+                          )}
                         </span>
                         {task.description && task.description.replace(/<[^>]*>/g, "").trim() && (
                           <p className="text-xs text-muted-foreground font-body mt-0.5 line-clamp-1">{task.description.replace(/<[^>]*>/g, "").trim()}</p>
@@ -742,7 +762,7 @@ export default function Tasks() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className={cn("text-[10px] font-body whitespace-nowrap", status.color)}>{status.label}</Badge>
-                      {isDueToday && <Badge className="text-[10px] font-body ml-1 bg-warning text-warning-foreground border-0">Hoje</Badge>}
+                      {isDueToday && <Badge className="text-[10px] font-body ml-1 bg-success text-success-foreground border-0">Hoje</Badge>}
                       {isOverdue && <Badge variant="destructive" className="text-[10px] font-body ml-1">Atrasada</Badge>}
                       {task.completed_at && (
                         <p className="text-[10px] text-success font-body mt-0.5">
@@ -752,7 +772,7 @@ export default function Tasks() {
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       {task.due_date ? (
-                        <span className={cn("text-xs font-body whitespace-nowrap", isOverdue ? "text-destructive" : isDueToday ? "text-warning" : "text-muted-foreground")}>
+                        <span className={cn("text-xs font-body whitespace-nowrap", isOverdue ? "text-destructive" : isDueToday ? "text-success" : "text-muted-foreground")}>
                           {task.due_date.split("-").reverse().join("/")}
                         </span>
                       ) : (
