@@ -60,6 +60,7 @@ export function TaskAttachments({ taskId, pending = [], onPendingChange }: Props
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [viewer, setViewer] = useState<ViewerAttachment | null>(null);
+  const [pdfViewer, setPdfViewer] = useState<{ filePath: string | null; fileName: string; pendingFile?: File | null } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; path: string; name: string; type?: string | null; pending?: boolean; pendingIndex?: number; file?: File } | null>(null);
   const [confirmThumb, setConfirmThumb] = useState<string | null>(null);
 
