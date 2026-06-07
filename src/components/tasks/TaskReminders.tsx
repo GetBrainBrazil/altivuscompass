@@ -54,6 +54,7 @@ export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
   const [draftChannels, setDraftChannels] = useState<string[]>(["system"]);
   const [draftMsg, setDraftMsg] = useState("");
   const [adding, setAdding] = useState(false);
+  const [showSent, setShowSent] = useState(false);
 
   const assigneeHasWhatsapp = isValidPhoneLength(assigneePhone);
 
@@ -135,11 +136,76 @@ export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
     );
   }
 
+  const activeReminders = reminders.filter((r) => r.status !== "sent" && r.status !== "partial");
+  const sentReminders = reminders.filter((r) => r.status === "sent" || r.status === "partial");
+
+  const renderReminder = (r: Reminder) => {
+    const isDone = r.status === "sent" || r.status === "partial";
+    const isFailed = r.status === "failed";
+    return (
+      <div
+        key={r.id}
+        className={cn(
+          "rounded-md border border-border bg-card/30 p-2.5 text-xs space-y-1 group",
+          isDone && "opacity-60"
+        )}
+      >
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-medium text-foreground">
+            {format(new Date(r.remind_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+          </span>
+          {isDone && (
+            <Badge variant="secondary" className="h-5 text-[10px] gap-1">
+              <Check size={10} /> Enviado
+            </Badge>
+          )}
+          {isFailed && (
+            <Badge variant="destructive" className="h-5 text-[10px]">Falhou</Badge>
+          )}
+          <button
+            onClick={() => removeReminder.mutate(r.id)}
+            className="ml-auto opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+            aria-label="Remover lembrete"
+          >
+            <Trash2 size={12} />
+          </button>
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {r.channels.map((ch) => {
+            const meta = (CHANNEL_META as any)[ch];
+            if (!meta) return null;
+            const delivered = r.delivered_channels?.includes(ch);
+            const Icon = meta.Icon;
+            return (
+              <span
+                key={ch}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px]",
+                  delivered
+                    ? "bg-success/10 text-success"
+                    : "bg-muted text-muted-foreground"
+                )}
+              >
+                <Icon size={10} /> {meta.label}
+              </span>
+            );
+          })}
+        </div>
+        {r.message && (
+          <p className="text-muted-foreground whitespace-pre-wrap break-words">{r.message}</p>
+        )}
+        {isFailed && r.error && (
+          <p className="text-destructive/80 text-[10px]">{r.error}</p>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground font-body">
-          <Bell size={12} /> Lembretes ({reminders.length})
+          <Bell size={12} /> Lembretes ({activeReminders.length})
         </div>
         {!adding && (
           <Button size="sm" variant="ghost" onClick={() => setAdding(true)} className="h-7 text-xs">
@@ -149,67 +215,20 @@ export function TaskReminders({ taskId, assigneePhone, assigneeName }: Props) {
       </div>
 
       <div className="space-y-2">
-        {reminders.map((r) => {
-          const isDone = r.status === "sent" || r.status === "partial";
-          const isFailed = r.status === "failed";
-          return (
-            <div
-              key={r.id}
-              className={cn(
-                "rounded-md border border-border bg-card/30 p-2.5 text-xs space-y-1 group",
-                isDone && "opacity-60"
-              )}
+        {activeReminders.map(renderReminder)}
+
+        {sentReminders.length > 0 && (
+          <div className="space-y-2 pt-1">
+            <button
+              type="button"
+              onClick={() => setShowSent((v) => !v)}
+              className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
             >
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-medium text-foreground">
-                  {format(new Date(r.remind_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                </span>
-                {isDone && (
-                  <Badge variant="secondary" className="h-5 text-[10px] gap-1">
-                    <Check size={10} /> Enviado
-                  </Badge>
-                )}
-                {isFailed && (
-                  <Badge variant="destructive" className="h-5 text-[10px]">Falhou</Badge>
-                )}
-                <button
-                  onClick={() => removeReminder.mutate(r.id)}
-                  className="ml-auto opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
-                  aria-label="Remover lembrete"
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {r.channels.map((ch) => {
-                  const meta = (CHANNEL_META as any)[ch];
-                  if (!meta) return null;
-                  const delivered = r.delivered_channels?.includes(ch);
-                  const Icon = meta.Icon;
-                  return (
-                    <span
-                      key={ch}
-                      className={cn(
-                        "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px]",
-                        delivered
-                          ? "bg-success/10 text-success"
-                          : "bg-muted text-muted-foreground"
-                      )}
-                    >
-                      <Icon size={10} /> {meta.label}
-                    </span>
-                  );
-                })}
-              </div>
-              {r.message && (
-                <p className="text-muted-foreground whitespace-pre-wrap break-words">{r.message}</p>
-              )}
-              {isFailed && r.error && (
-                <p className="text-destructive/80 text-[10px]">{r.error}</p>
-              )}
-            </div>
-          );
-        })}
+              {showSent ? "Ocultar" : "Ver"} lembretes enviados ({sentReminders.length})
+            </button>
+            {showSent && sentReminders.map(renderReminder)}
+          </div>
+        )}
 
         {adding && (
           <div className="rounded-md border border-border bg-muted/20 p-3 space-y-2.5">
