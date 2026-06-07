@@ -1508,8 +1508,11 @@ export default function Clients() {
                       return (
                         <>
                           <Input
-                            value={raw}
-                            onChange={(e) => upd("cpf_cnpj", e.target.value)}
+                            value={formatCpfCnpj(raw)}
+                            onChange={(e) => upd("cpf_cnpj", formatCpfCnpj(e.target.value))}
+                            inputMode="numeric"
+                            maxLength={18}
+                            placeholder="000.000.000-00"
                             className={isInvalid ? "border-destructive focus-visible:ring-destructive" : ""}
                             aria-invalid={isInvalid}
                           />
