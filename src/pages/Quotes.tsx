@@ -959,6 +959,7 @@ export default function Quotes() {
             commission_status: item.commission_status || "pending",
             attachment_urls: item.attachment_urls ?? [],
             external_url: item.external_url || null,
+            product_id: item.product_id || null,
             option_group: item.option_group ?? null,
             option_label: item.option_label ?? null,
             option_order: item.option_order ?? null,
