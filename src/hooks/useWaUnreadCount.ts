@@ -12,7 +12,7 @@ export function useWaUnreadCount() {
         .from("wa_conversations")
         .select("unread_count");
       if (cancelled || error || !data) return;
-      const total = data.reduce((s, r: any) => s + (r.unread_count || 0), 0);
+      const total = data.reduce((s, r: any) => s + ((r.unread_count || 0) > 0 ? 1 : 0), 0);
       setCount(total);
     };
 
