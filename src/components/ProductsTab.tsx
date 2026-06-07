@@ -172,6 +172,15 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const item = products.find((p: any) => p.id === id);
+      const { data: linked, error: linkErr } = await supabase
+        .from("quote_items")
+        .select("quote_id")
+        .eq("product_id", id);
+      if (linkErr) throw linkErr;
+      const uniqueDeals = new Set((linked ?? []).map((r: any) => r.quote_id).filter(Boolean)).size;
+      if (uniqueDeals > 0) {
+        throw new Error(`Existem ${uniqueDeals} negócio(s) vinculado(s) a este produto.`);
+      }
       const { error } = await supabase.from("products").delete().eq("id", id);
       if (error) throw error;
       await logAuditEvent({ action: "delete", tableName: "products", recordId: id, recordLabel: item?.name ?? id, oldData: item });
@@ -179,8 +188,9 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       toast({ title: "Produto removido" });
+      closeDialog();
     },
-    onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: "Não foi possível excluir", description: e.message, variant: "destructive" }),
   });
 
   const { data: quoteCount = 0 } = useQuery({
