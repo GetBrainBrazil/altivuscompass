@@ -329,7 +329,8 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
           rows.map((r) => {
             const isRenaming = renamingId === r.id;
             return (
-            <div key={r.id} className="flex items-center gap-2 rounded-md border border-border/50 bg-muted/20 px-3 py-2">
+            <div key={r.id} className="rounded-md border border-border/50 bg-muted/20 px-3 py-2 space-y-1.5">
+              <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
               {isRenaming ? (
                 <input
