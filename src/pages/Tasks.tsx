@@ -584,6 +584,7 @@ export default function Tasks() {
                   ) : (
                     stageTasks.map((task: any) => {
                       const priority = PRIORITY_CONFIG[task.priority] ?? PRIORITY_CONFIG.medium;
+                      const isDueToday = task.due_date && !task.completed_at && (parseLocalDate(task.due_date)?.getTime() ?? Infinity) === new Date(new Date().setHours(0,0,0,0)).getTime();
                       const isOverdue = task.due_date && !task.completed_at && (parseLocalDate(task.due_date)?.getTime() ?? Infinity) < new Date(new Date().setHours(0,0,0,0)).getTime();
                       const isDragging = draggingTaskId === task.id;
                       return (
@@ -644,6 +645,7 @@ export default function Tasks() {
                             )}
                             <div className="flex flex-wrap items-center gap-1.5 mb-2">
                               <Badge variant="outline" className={cn("text-[10px] font-body whitespace-nowrap", priority.color)}>{priority.label}</Badge>
+                              {isDueToday && <Badge className="text-[10px] font-body bg-warning text-warning-foreground border-0">Hoje</Badge>}
                               {isOverdue && <Badge variant="destructive" className="text-[10px] font-body">Atrasada</Badge>}
                             </div>
                             <div className="h-px bg-border/60 -mx-3" />
@@ -655,7 +657,7 @@ export default function Tasks() {
                                 {task.assigned_to ? getAssigneeName(task.assigned_to) : "Sem responsável"}
                               </span>
                               {task.due_date && (
-                                <span className={cn("text-[11px] font-body shrink-0 tabular-nums", isOverdue ? "text-destructive" : "text-muted-foreground")}>
+                                <span className={cn("text-[11px] font-body shrink-0 tabular-nums", isOverdue ? "text-destructive" : isDueToday ? "text-warning" : "text-muted-foreground")}>
                                   {task.due_date.split("-").reverse().slice(0, 2).join("/")}
                                 </span>
                               )}
@@ -707,6 +709,7 @@ export default function Tasks() {
               {filteredTasks.map((task: any) => {
                 const status = STATUS_CONFIG[task.status] ?? STATUS_CONFIG.pending;
                 const priority = PRIORITY_CONFIG[task.priority] ?? PRIORITY_CONFIG.medium;
+                const isDueToday = task.due_date && !task.completed_at && (parseLocalDate(task.due_date)?.getTime() ?? Infinity) === new Date(new Date().setHours(0,0,0,0)).getTime();
                 const isOverdue = task.due_date && !task.completed_at && (parseLocalDate(task.due_date)?.getTime() ?? Infinity) < new Date(new Date().setHours(0,0,0,0)).getTime();
 
                 return (
@@ -739,6 +742,7 @@ export default function Tasks() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className={cn("text-[10px] font-body whitespace-nowrap", status.color)}>{status.label}</Badge>
+                      {isDueToday && <Badge className="text-[10px] font-body ml-1 bg-warning text-warning-foreground border-0">Hoje</Badge>}
                       {isOverdue && <Badge variant="destructive" className="text-[10px] font-body ml-1">Atrasada</Badge>}
                       {task.completed_at && (
                         <p className="text-[10px] text-success font-body mt-0.5">
@@ -748,7 +752,7 @@ export default function Tasks() {
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       {task.due_date ? (
-                        <span className={cn("text-xs font-body whitespace-nowrap", isOverdue ? "text-destructive" : "text-muted-foreground")}>
+                        <span className={cn("text-xs font-body whitespace-nowrap", isOverdue ? "text-destructive" : isDueToday ? "text-warning" : "text-muted-foreground")}>
                           {task.due_date.split("-").reverse().join("/")}
                         </span>
                       ) : (
