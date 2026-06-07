@@ -76,6 +76,12 @@ export default function Vault() {
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [showFormPassword, setShowFormPassword] = useState(false);
+  const formPanelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (formOpen && formPanelRef.current) {
+      formPanelRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [formOpen, editingItem?.id]);
 
   const { data: items = [], isLoading, error: itemsError, refetch: refetchItems } = useQuery({
     queryKey: ["vault-items"],
