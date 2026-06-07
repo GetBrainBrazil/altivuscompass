@@ -371,6 +371,9 @@ export default function Clients() {
       .on("postgres_changes", { event: "*", schema: "public", table: "task_reminders" }, () => {
         qc.invalidateQueries({ queryKey: ["clients-activity-counts"] });
       })
+      .on("postgres_changes", { event: "*", schema: "public", table: "client_attachments" }, () => {
+        qc.invalidateQueries({ queryKey: ["clients-activity-counts"] });
+      })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [qc]);
