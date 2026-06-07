@@ -129,27 +129,42 @@ export default function QuoteItemEdit() {
     return patch;
   };
 
-  const handleSave = async () => {
-    if (!item) return;
+  const handleSave = async (opts?: { thenBack?: boolean }) => {
+    if (!item) return false;
     setSaving(true);
     const mapped = applyMappedColumns(details);
-    const payload: any = {
+    const nextItem: ItemRow = {
+      ...item,
       title: mapped.title ?? item.title,
-      details,
       quantity: item.quantity ?? 1,
       unit_cost: item.unit_cost ?? 0,
       unit_price: item.unit_price ?? 0,
       utilization_start: mapped.utilization_start ?? item.utilization_start,
       utilization_end: mapped.utilization_end ?? item.utilization_end,
     };
+    const payload: any = {
+      title: nextItem.title,
+      details,
+      quantity: nextItem.quantity,
+      unit_cost: nextItem.unit_cost,
+      unit_price: nextItem.unit_price,
+      utilization_start: nextItem.utilization_start,
+      utilization_end: nextItem.utilization_end,
+    };
     const { error } = await supabase.from("quote_items").update(payload).eq("id", item.id);
     setSaving(false);
     if (error) {
       toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
-      return;
+      return false;
     }
     toast({ title: "Item salvo" });
-    refetch();
+    lastSavedRef.current = buildSnapshot(nextItem, details);
+    if (opts?.thenBack) {
+      goBack();
+    } else {
+      refetch();
+    }
+    return true;
   };
 
   const handleDelete = async () => {
