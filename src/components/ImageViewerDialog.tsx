@@ -33,9 +33,19 @@ interface Props {
   taskId: string | null;
   pending?: File[];
   onPendingChange?: (files: File[]) => void;
+  bucket?: string;
+  tableName?: string;
+  invalidateKey?: unknown[];
+  sizeColumn?: string;
 }
 
-export function ImageViewerDialog({ open, onOpenChange, attachment, taskId, pending = [], onPendingChange }: Props) {
+export function ImageViewerDialog({
+  open, onOpenChange, attachment, taskId, pending = [], onPendingChange,
+  bucket = "task-attachments",
+  tableName = "task_attachments",
+  invalidateKey,
+  sizeColumn = "file_size",
+}: Props) {
   const { toast } = useToast();
   const qc = useQueryClient();
   const cropperRef = useRef<ReactCropperElement>(null);
@@ -63,7 +73,7 @@ export function ImageViewerDialog({ open, onOpenChange, attachment, taskId, pend
         setSrc(url);
       } else {
         const { data } = await supabase.storage
-          .from("task-attachments")
+          .from(bucket)
           .createSignedUrl((attachment as SavedAttachment).file_path, 60 * 10);
         setSrc(data?.signedUrl ?? null);
       }
@@ -138,7 +148,7 @@ export function ImageViewerDialog({ open, onOpenChange, attachment, taskId, pend
         const saved = attachment as SavedAttachment;
         if (blob) {
           const { error: upErr } = await supabase.storage
-            .from("task-attachments")
+            .from(bucket)
             .upload(saved.file_path, blob, {
               contentType: attachment.file_type || "image/jpeg",
               upsert: true,
@@ -146,14 +156,14 @@ export function ImageViewerDialog({ open, onOpenChange, attachment, taskId, pend
           if (upErr) throw upErr;
         }
         const { error } = await supabase
-          .from("task_attachments")
+          .from(tableName as any)
           .update({
             file_name: newName,
-            ...(blob ? { file_size: blob.size } : {}),
+            ...(blob ? { [sizeColumn]: blob.size } : {}),
           })
           .eq("id", saved.id);
         if (error) throw error;
-        qc.invalidateQueries({ queryKey: ["task-attachments", taskId] });
+        qc.invalidateQueries({ queryKey: invalidateKey ?? ["task-attachments", taskId] });
       }
       toast({ title: "Imagem atualizada" });
       onOpenChange(false);

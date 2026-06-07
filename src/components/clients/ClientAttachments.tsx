@@ -10,6 +10,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ImageViewerDialog, ViewerAttachment } from "@/components/ImageViewerDialog";
 import { cn } from "@/lib/utils";
 
 interface AttachmentRow {
@@ -173,7 +174,19 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
     if (list.length) uploadFiles(list);
   };
 
+  const [imageViewer, setImageViewer] = useState<ViewerAttachment | null>(null);
+
   const onOpen = (row: AttachmentRow) => {
+    if (row.mime_type?.startsWith("image/")) {
+      setImageViewer({
+        id: row.id,
+        file_name: row.file_name,
+        file_path: row.file_path,
+        file_type: row.mime_type,
+        _pending: false,
+      });
+      return;
+    }
     setPreviewRow(row);
   };
 
@@ -368,6 +381,18 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ImageViewerDialog
+        open={!!imageViewer}
+        onOpenChange={(o) => { if (!o) setImageViewer(null); }}
+        attachment={imageViewer}
+        taskId={clientId}
+        bucket={BUCKET}
+        tableName="client_attachments"
+        sizeColumn="size_bytes"
+        invalidateKey={["client-attachments", clientId]}
+      />
+
 
 
       <AlertDialog open={!!pendingDelete} onOpenChange={(o) => { if (!o) setPendingDelete(null); }}>
