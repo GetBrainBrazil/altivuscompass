@@ -2088,6 +2088,60 @@ export default function Clients() {
           </AlertDialogContent>
         </AlertDialog>
 
+        {/* Duplicate detection dialog */}
+        <AlertDialog open={dupDialogOpen} onOpenChange={setDupDialogOpen}>
+          <AlertDialogContent className="max-w-xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="font-display flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+                Possível cliente duplicado
+              </AlertDialogTitle>
+              <AlertDialogDescription className="font-body">
+                Encontramos {dupCandidates?.length ?? 0} cadastro(s) que parecem ser a mesma pessoa. Deseja abrir um existente ou criar mesmo assim?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-2 max-h-72 overflow-y-auto">
+              {(dupCandidates ?? []).map((c) => (
+                <div key={c.id} className="border rounded-lg p-3 flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium font-body truncate">{c.full_name}</div>
+                    <div className="text-xs text-muted-foreground font-body space-y-0.5 mt-1">
+                      {c.cpf_cnpj && <div>CPF/CNPJ: {c.cpf_cnpj}</div>}
+                      {c.phone && <div>Telefone: {c.phone}</div>}
+                      {c.email && <div>E-mail: {c.email}</div>}
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {c.reasons.map((r) => (
+                        <span key={r} className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-400 rounded-full px-2 py-0.5 font-body">{r}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <Button
+                    type="button" size="sm" variant="outline" className="font-body shrink-0"
+                    onClick={() => {
+                      setDupDialogOpen(false);
+                      setSearchParams({ id: c.id }, { replace: true });
+                    }}
+                  >
+                    Abrir
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="font-body">Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                className="font-body"
+                onClick={(e) => { e.preventDefault(); setDupDialogOpen(false); saveMutation.mutate(); }}
+              >
+                Criar mesmo assim
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+
+
         {/* Quick-add location dialog */}
         <Dialog open={quickAddType !== null} onOpenChange={(o) => { if (!o) { setQuickAddType(null); setQuickAddName(""); } }}>
           <DialogContent>
