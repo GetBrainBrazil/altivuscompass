@@ -92,7 +92,8 @@ export default function CategoryFieldsPage() {
   const initial = useMemo<CategoryFieldSchema>(() => {
     if (isNew) return [];
     if (!category) return [];
-    return isValidSchema(category.field_schema) ? (category.field_schema as CategoryFieldSchema) : [];
+    const base = isValidSchema(category.field_schema) ? (category.field_schema as CategoryFieldSchema) : [];
+    return normalize(base);
   }, [category, isNew]);
 
   const [fields, setFields] = useState<CategoryFieldSchema>(initial);
