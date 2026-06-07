@@ -174,7 +174,19 @@ export function ClientAttachments({ clientId }: { clientId: string | null }) {
     if (list.length) uploadFiles(list);
   };
 
+  const [imageViewer, setImageViewer] = useState<ViewerAttachment | null>(null);
+
   const onOpen = (row: AttachmentRow) => {
+    if (row.mime_type?.startsWith("image/")) {
+      setImageViewer({
+        id: row.id,
+        file_name: row.file_name,
+        file_path: row.file_path,
+        file_type: row.mime_type,
+        _pending: false,
+      });
+      return;
+    }
     setPreviewRow(row);
   };
 
