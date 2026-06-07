@@ -97,7 +97,7 @@ export default function CategoryFieldsPage() {
   }, [category, isNew]);
 
   const [fields, setFields] = useState<CategoryFieldSchema>(initial);
-  const [meta_unused, _unused] = [null, null]; // placeholder to keep line numbering minimal
+  
   const [meta, setMeta] = useState({ name: "", description: "", is_active: true });
 
   useEffect(() => {
