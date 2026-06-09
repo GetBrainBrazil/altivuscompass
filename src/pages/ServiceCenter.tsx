@@ -615,7 +615,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
         ) : mt === "sticker" && message.mediaUrl ? (
           <img src={message.mediaUrl} alt="sticker" className="h-32 w-32 object-contain" />
         ) : (
-          <p className="whitespace-pre-wrap break-words">{displayContent}</p>
+          <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{displayContent}</p>
         )}
       </div>
       <div className={cn("flex items-center gap-1.5 px-2 flex-wrap", isLead ? "" : "justify-end")}>
