@@ -150,6 +150,8 @@ interface Conversation {
   groupSubject?: string;
   /** ID do grupo no WhatsApp. */
   groupId?: string;
+  /** Foto de perfil do WhatsApp (capturada via webhook). */
+  photoUrl?: string;
 }
 
 // Conversas reais vêm do banco (wa_conversations / wa_messages) via Realtime.
