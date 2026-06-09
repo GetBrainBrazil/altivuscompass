@@ -508,6 +508,7 @@ interface ChatBubbleProps {
   linkedQuotes?: { id: string; title: string | null; destination: string | null }[];
   onLinkClick?: () => void;
   onOpenQuote?: (id: string) => void;
+  onImageClick?: (url: string, caption?: string | null) => void;
 }
 
 const AGENT_LABEL_RE = /^\*([^\n*]{1,60})\*\n?/;
