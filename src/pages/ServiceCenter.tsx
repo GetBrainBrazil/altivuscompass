@@ -2255,8 +2255,13 @@ export default function ServiceCenter() {
         clientId={selected?.crm.clientId ?? null}
         leadId={selected?.leadId ?? null}
       />
-      
-      
+
+      <ImageLightbox
+        open={!!lightbox}
+        onOpenChange={(o) => { if (!o) setLightbox(null); }}
+        url={lightbox?.url ?? null}
+        caption={lightbox?.caption ?? null}
+      />
     </div>
   );
 }
