@@ -2070,8 +2070,8 @@ export default function ServiceCenter() {
             <ContactBanner conversation={selected} />
 
             {/* Messages */}
-            <ScrollArea className="flex-1 px-6 py-5">
-              <div className="space-y-4 max-w-3xl mx-auto">
+            <ScrollArea className="flex-1 px-6 py-5 min-w-0">
+              <div className="space-y-4 max-w-3xl mx-auto min-w-0">
                 {selected.messages.map((m) => (
                   <div key={m.id} className="space-y-4">
                     {m.isInternal ? (
