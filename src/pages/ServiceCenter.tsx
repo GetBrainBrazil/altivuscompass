@@ -1878,7 +1878,7 @@ export default function ServiceCenter() {
 
       <div className="flex flex-1 overflow-hidden">
       {/* ===== Left column: conversation list ===== */}
-      <aside className="w-[340px] shrink-0 border-r flex flex-col">
+      <aside className="w-[360px] shrink-0 border-r flex flex-col">
         <div className="p-4 border-b space-y-3">
           <div className="flex items-center justify-between gap-2">
             <h1 className="text-lg font-semibold truncate">Atendimento</h1>
