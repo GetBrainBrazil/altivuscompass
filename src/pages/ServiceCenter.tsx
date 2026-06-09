@@ -573,14 +573,19 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
           />
         ) : mt === "image" && message.mediaUrl ? (
           <div className="space-y-1">
-            <a href={message.mediaUrl} target="_blank" rel="noreferrer">
+            <button
+              type="button"
+              onClick={() => onImageClick?.(message.mediaUrl!, message.mediaCaption)}
+              className="block w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-2xl overflow-hidden"
+              title="Ampliar imagem"
+            >
               <img
                 src={message.mediaUrl}
                 alt={message.mediaCaption || "Imagem"}
-                className="rounded-2xl max-h-[280px] w-auto object-cover"
+                className="rounded-2xl max-h-[280px] w-auto object-cover cursor-zoom-in"
                 loading="lazy"
               />
-            </a>
+            </button>
             {displayCaption && (
               <p className={cn("whitespace-pre-wrap break-words px-3 pb-1", isLead ? "" : "")}>
                 {displayCaption}
