@@ -390,7 +390,7 @@ const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = fa
           className="absolute left-0 top-0 bottom-0 w-[3px] rounded-r bg-amber-500"
         />
       )}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <Avatar className="h-10 w-10 shrink-0 self-center">
           {conversation.photoUrl && <AvatarImage src={conversation.photoUrl} alt={conversation.leadName} />}
           <AvatarFallback className="text-xs font-medium">
