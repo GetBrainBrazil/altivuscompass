@@ -1402,6 +1402,7 @@ export default function ServiceCenter() {
         isGroup,
         groupSubject: c.group_subject ?? undefined,
         groupId: c.group_id ?? undefined,
+        photoUrl: c.profile_photo_url ?? undefined,
       };
     });
   }, [convoRows, msgRows, selectedId, contactMetaById]);
