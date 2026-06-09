@@ -1003,19 +1003,10 @@ const ContactBanner = ({ conversation }: { conversation: Conversation }) => {
     openLead({ leadId, contactId, name: leadName, phone });
   };
 
-  const CRMButton = (
-    <>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={openInCRM}
-        className="h-7 px-2.5 text-[11px] gap-1 shrink-0"
-      >
-        <ExternalLink className="h-3 w-3" />
-        Abrir no CRM
-      </Button>
-      {missingLeadDialog}
-    </>
+  // "Abrir no CRM" removido da faixa do topo a pedido — acesso ainda disponível
+  // pela ficha lateral (botão "Abrir ficha completa" / "Abrir no CRM (Vendas)").
+  const CRMButton: React.ReactNode = (
+    <>{missingLeadDialog}</>
   );
 
   const ContactDates = (firstContactAt || lastContactAt) ? (
