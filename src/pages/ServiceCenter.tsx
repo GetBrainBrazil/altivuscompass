@@ -587,7 +587,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
               />
             </button>
             {displayCaption && (
-              <p className={cn("whitespace-pre-wrap break-words px-3 pb-1", isLead ? "" : "")}>
+              <p className={cn("whitespace-pre-wrap [overflow-wrap:anywhere] px-3 pb-1", isLead ? "" : "")}>
                 {displayCaption}
               </p>
             )}
@@ -596,7 +596,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
           <div className="space-y-1">
             <video controls src={message.mediaUrl} className="rounded-2xl max-h-[280px] w-auto" preload="metadata" />
             {displayCaption && (
-              <p className="whitespace-pre-wrap break-words px-3 pb-1">{displayCaption}</p>
+              <p className="whitespace-pre-wrap [overflow-wrap:anywhere] px-3 pb-1">{displayCaption}</p>
             )}
           </div>
         ) : mt === "document" && message.mediaUrl ? (
@@ -615,7 +615,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
         ) : mt === "sticker" && message.mediaUrl ? (
           <img src={message.mediaUrl} alt="sticker" className="h-32 w-32 object-contain" />
         ) : (
-          <p className="whitespace-pre-wrap break-words">{displayContent}</p>
+          <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{displayContent}</p>
         )}
       </div>
       <div className={cn("flex items-center gap-1.5 px-2 flex-wrap", isLead ? "" : "justify-end")}>
@@ -2070,8 +2070,8 @@ export default function ServiceCenter() {
             <ContactBanner conversation={selected} />
 
             {/* Messages */}
-            <ScrollArea className="flex-1 px-6 py-5">
-              <div className="space-y-4 max-w-3xl mx-auto">
+            <ScrollArea className="flex-1 px-6 py-5 min-w-0">
+              <div className="space-y-4 max-w-3xl mx-auto min-w-0">
                 {selected.messages.map((m) => (
                   <div key={m.id} className="space-y-4">
                     {m.isInternal ? (
