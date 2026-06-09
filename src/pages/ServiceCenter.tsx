@@ -1929,6 +1929,7 @@ export default function ServiceCenter() {
             <header className="px-6 py-3 border-b bg-white/80 backdrop-blur-sm flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
                 <Avatar className="h-10 w-10">
+                  {selected.photoUrl && <AvatarImage src={selected.photoUrl} alt={selected.leadName} />}
                   <AvatarFallback className="text-xs font-medium bg-secondary text-secondary-foreground">
                     {getInitials(selected.leadName)}
                   </AvatarFallback>
