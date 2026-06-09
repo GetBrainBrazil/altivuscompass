@@ -2092,6 +2092,7 @@ export default function ServiceCenter() {
                         linkedQuotes={linksByMessage.get(m.id)}
                         onLinkClick={() => setLinkDialogMessages([m.id])}
                         onOpenQuote={(qid) => navigate(`/quotes?id=${qid}`)}
+                        onImageClick={(url, caption) => setLightbox({ url, caption })}
                       />
                     )}
                     {selected.handoffAfterMessageId === m.id && <HandoffDivider />}
