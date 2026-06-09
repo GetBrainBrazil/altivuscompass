@@ -1606,6 +1606,82 @@ export default function ServiceCenter() {
     try { mediaRecorderRef.current?.stop(); } catch {}
   };
 
+  // ===== Image lightbox =====
+  const [lightbox, setLightbox] = useState<{ url: string; caption?: string | null } | null>(null);
+
+  // ===== File attachments (image / document) =====
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [sendingAttachment, setSendingAttachment] = useState(false);
+
+  const handleAttachClick = () => {
+    if (sending || sendingAudio || sendingAttachment || recording) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleAttachmentSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !selectedId) return;
+    const convo = convoRows.find((c: any) => c.id === selectedId);
+    if (!convo?.phone) {
+      toast.error("Telefone da conversa não encontrado.");
+      return;
+    }
+    const isImage = file.type.startsWith("image/");
+    const isPdf = file.type === "application/pdf";
+    if (!isImage && !isPdf) {
+      toast.error("Envie imagens ou PDF.");
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("Arquivo acima de 20MB.");
+      return;
+    }
+    setSendingAttachment(true);
+    try {
+      const safeName = file.name.replace(/[^\w.\-]+/g, "_");
+      const folder = isImage ? "wa-images" : "wa-docs";
+      const path = `${folder}/${convo.phone}/${Date.now()}-${safeName}`;
+      const { error: upErr } = await supabase.storage
+        .from("quote-images")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("quote-images").getPublicUrl(path);
+      const url = pub.publicUrl;
+      const caption = draft.trim();
+      const { data, error } = await supabase.functions.invoke("send-whatsapp", {
+        body: isImage
+          ? {
+              action: "send-image",
+              phone: convo.phone,
+              image_url: url,
+              message: caption || undefined,
+              is_group: !!convo.is_group,
+              group_id: convo.group_id ?? undefined,
+            }
+          : {
+              action: "send-document",
+              phone: convo.phone,
+              document_url: url,
+              document_name: file.name,
+              message: caption || undefined,
+              is_group: !!convo.is_group,
+              group_id: convo.group_id ?? undefined,
+            },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setDraft("");
+      scrollToBottom();
+      qc.invalidateQueries({ queryKey: ["wa_messages", selectedId] });
+      qc.invalidateQueries({ queryKey: ["wa_conversations"] });
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao enviar anexo");
+    } finally {
+      setSendingAttachment(false);
+    }
+  };
+
   const cancelRecording = () => {
     if (!recording) return;
     cancelRecordingRef.current = true;
