@@ -198,6 +198,8 @@ Deno.serve(async (req) => {
       ? (body.participantPhone || body.participant || body.author || null)
       : null
     const isFromMe = body.fromMe === true
+    // Foto de perfil do remetente (Z-API envia em senderPhoto/photo)
+    const senderPhotoUrl: string | null = (!isFromMe && (body.senderPhoto || body.photo || body.profilePicUrl)) || null
 
     // ===== Espelha mensagem (recebida OU enviada) na Central de Atendimento =====
     try {
