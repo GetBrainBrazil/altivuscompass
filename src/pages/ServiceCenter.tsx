@@ -368,7 +368,7 @@ const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = fa
       type="button"
       onClick={onClick}
       className={cn(
-        "relative w-full text-left px-4 py-3.5 rounded-xl border transition-all duration-200 overflow-hidden",
+        "relative w-full text-left px-3 py-3 rounded-xl border transition-all duration-200 overflow-hidden",
         "border-gray-200 bg-white shadow-sm hover:shadow-md hover:bg-gray-50/80",
         active && "bg-gray-50 border-gray-300 shadow-md ring-1 ring-gray-200",
         hasUnread &&
