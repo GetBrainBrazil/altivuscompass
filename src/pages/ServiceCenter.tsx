@@ -568,7 +568,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
           <audio
             controls
             src={message.mediaUrl}
-            className="w-[260px] max-w-full"
+            className="w-full max-w-[240px]"
             preload="metadata"
           />
         ) : mt === "image" && message.mediaUrl ? (
