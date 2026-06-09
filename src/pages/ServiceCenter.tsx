@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -150,6 +150,8 @@ interface Conversation {
   groupSubject?: string;
   /** ID do grupo no WhatsApp. */
   groupId?: string;
+  /** Foto de perfil do WhatsApp (capturada via webhook). */
+  photoUrl?: string;
 }
 
 // Conversas reais vêm do banco (wa_conversations / wa_messages) via Realtime.
@@ -389,6 +391,7 @@ const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = fa
       )}
       <div className="flex items-center gap-3">
         <Avatar className="h-10 w-10 shrink-0 self-center">
+          {conversation.photoUrl && <AvatarImage src={conversation.photoUrl} alt={conversation.leadName} />}
           <AvatarFallback className="text-xs font-medium">
             {getInitials(conversation.leadName)}
           </AvatarFallback>
@@ -1399,6 +1402,7 @@ export default function ServiceCenter() {
         isGroup,
         groupSubject: c.group_subject ?? undefined,
         groupId: c.group_id ?? undefined,
+        photoUrl: c.profile_photo_url ?? undefined,
       };
     });
   }, [convoRows, msgRows, selectedId, contactMetaById]);
@@ -1925,6 +1929,7 @@ export default function ServiceCenter() {
             <header className="px-6 py-3 border-b bg-white/80 backdrop-blur-sm flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
                 <Avatar className="h-10 w-10">
+                  {selected.photoUrl && <AvatarImage src={selected.photoUrl} alt={selected.leadName} />}
                   <AvatarFallback className="text-xs font-medium bg-secondary text-secondary-foreground">
                     {getInitials(selected.leadName)}
                   </AvatarFallback>
