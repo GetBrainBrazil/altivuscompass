@@ -596,7 +596,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
           <div className="space-y-1">
             <video controls src={message.mediaUrl} className="rounded-2xl max-h-[280px] w-auto" preload="metadata" />
             {displayCaption && (
-              <p className="whitespace-pre-wrap break-words px-3 pb-1">{displayCaption}</p>
+              <p className="whitespace-pre-wrap [overflow-wrap:anywhere] px-3 pb-1">{displayCaption}</p>
             )}
           </div>
         ) : mt === "document" && message.mediaUrl ? (
