@@ -884,7 +884,8 @@ export function ClientSidePanel(props: Props) {
       base.push({ value: "sales", label: "Vendas", icon: ShoppingBag });
       base.push({ value: "post-sale", label: "Pós-venda", icon: LifeBuoy });
     }
-    base.push({ value: "summary", label: "Resumo IA", icon: Sparkles });
+    // Resumo IA temporariamente desativado — pode ser reativado adicionando esta linha novamente.
+    // base.push({ value: "summary", label: "Resumo IA", icon: Sparkles });
     return base;
   }, [level]);
 

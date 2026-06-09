@@ -368,7 +368,7 @@ const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = fa
       type="button"
       onClick={onClick}
       className={cn(
-        "relative w-full text-left px-4 py-3.5 rounded-xl border transition-all duration-200 overflow-hidden",
+        "relative w-full text-left px-3 py-3 rounded-xl border transition-all duration-200 overflow-hidden",
         "border-gray-200 bg-white shadow-sm hover:shadow-md hover:bg-gray-50/80",
         active && "bg-gray-50 border-gray-300 shadow-md ring-1 ring-gray-200",
         hasUnread &&
@@ -390,7 +390,7 @@ const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = fa
           className="absolute left-0 top-0 bottom-0 w-[3px] rounded-r bg-amber-500"
         />
       )}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <Avatar className="h-10 w-10 shrink-0 self-center">
           {conversation.photoUrl && <AvatarImage src={conversation.photoUrl} alt={conversation.leadName} />}
           <AvatarFallback className="text-xs font-medium">
@@ -1878,7 +1878,7 @@ export default function ServiceCenter() {
 
       <div className="flex flex-1 overflow-hidden">
       {/* ===== Left column: conversation list ===== */}
-      <aside className="w-[340px] shrink-0 border-r flex flex-col">
+      <aside className="w-[360px] shrink-0 border-r flex flex-col">
         <div className="p-4 border-b space-y-3">
           <div className="flex items-center justify-between gap-2">
             <h1 className="text-lg font-semibold truncate">Atendimento</h1>
@@ -1959,7 +1959,7 @@ export default function ServiceCenter() {
         </div>
 
         <ScrollArea className="flex-1">
-          <div className="px-4 py-3 space-y-3">
+          <div className="px-3 py-3 space-y-2.5">
             {isLoadingConvos && filtered.length === 0 ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <div key={`sk-${i}`} className="flex items-start gap-3 p-3 rounded-lg border border-border/40 bg-card/40 animate-fade-in">
