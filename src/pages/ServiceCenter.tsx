@@ -2128,6 +2128,25 @@ export default function ServiceCenter() {
               ) : (
                 <>
                   <div className="flex items-center gap-3 max-w-3xl mx-auto">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*,application/pdf"
+                      className="hidden"
+                      onChange={handleAttachmentSelected}
+                    />
+                    {!recording && (
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={handleAttachClick}
+                        disabled={sending || sendingAudio || sendingAttachment}
+                        className="h-11 w-11 rounded-full shrink-0"
+                        title="Anexar imagem ou PDF"
+                      >
+                        {sendingAttachment ? <Loader2 className="h-5 w-5 animate-spin" /> : <Paperclip className="h-5 w-5" />}
+                      </Button>
+                    )}
                     {recording ? (
                       <div className="flex-1 flex items-center gap-3 h-11 rounded-full px-5 bg-red-50 border border-red-200">
                         <span className="relative flex h-2.5 w-2.5">
@@ -2141,7 +2160,7 @@ export default function ServiceCenter() {
                       </div>
                     ) : (
                       <Input
-                        placeholder={sendingAudio ? "Enviando áudio…" : "Digite uma mensagem..."}
+                        placeholder={sendingAudio ? "Enviando áudio…" : sendingAttachment ? "Enviando anexo…" : "Digite uma mensagem..."}
                         value={draft}
                         onChange={(e) => setDraft(e.target.value)}
                         onKeyDown={(e) => {
@@ -2150,7 +2169,7 @@ export default function ServiceCenter() {
                             handleSend();
                           }
                         }}
-                        disabled={sending || sendingAudio}
+                        disabled={sending || sendingAudio || sendingAttachment}
                         className="h-11 rounded-full px-5 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-ring"
                       />
                     )}
