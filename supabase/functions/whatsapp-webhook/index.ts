@@ -302,6 +302,7 @@ Deno.serve(async (req) => {
           ...contactLink,
         }
         if (trustedDisplayName) convoUpsert.contact_name = trustedDisplayName
+        if (senderPhotoUrl) convoUpsert.profile_photo_url = senderPhotoUrl
         const { data, error } = await supabase
           .from('wa_conversations')
           .upsert(convoUpsert, { onConflict: 'phone' })
