@@ -5117,6 +5117,7 @@ export type Database = {
           last_resumed_at: string | null
           lead_id: string | null
           phone: string
+          profile_photo_url: string | null
           resumed_from_status: string | null
           status: string
           summary: string | null
@@ -5142,6 +5143,7 @@ export type Database = {
           last_resumed_at?: string | null
           lead_id?: string | null
           phone: string
+          profile_photo_url?: string | null
           resumed_from_status?: string | null
           status?: string
           summary?: string | null
@@ -5167,6 +5169,7 @@ export type Database = {
           last_resumed_at?: string | null
           lead_id?: string | null
           phone?: string
+          profile_photo_url?: string | null
           resumed_from_status?: string | null
           status?: string
           summary?: string | null
