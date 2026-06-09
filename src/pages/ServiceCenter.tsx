@@ -568,7 +568,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
           <audio
             controls
             src={message.mediaUrl}
-            className="w-[260px] max-w-full"
+            className="w-full max-w-[240px]"
             preload="metadata"
           />
         ) : mt === "image" && message.mediaUrl ? (
@@ -1869,7 +1869,7 @@ export default function ServiceCenter() {
 
       <div className="flex flex-1 overflow-hidden">
       {/* ===== Left column: conversation list ===== */}
-      <aside className="w-[360px] shrink-0 border-r flex flex-col">
+      <aside className="w-[300px] xl:w-[340px] 2xl:w-[360px] shrink-0 border-r flex flex-col">
         <div className="p-4 border-b space-y-3">
           <div className="flex items-center justify-between gap-2">
             <h1 className="text-lg font-semibold truncate">Atendimento</h1>
@@ -2216,7 +2216,7 @@ export default function ServiceCenter() {
 
       {/* ===== Right column: lead summary + CRM panel ===== */}
       {selected && summaryOpen && (
-        <aside className="w-[340px] xl:w-[420px] shrink-0 border-l hidden lg:flex flex-col bg-white">
+        <aside className="w-[300px] xl:w-[360px] 2xl:w-[400px] shrink-0 border-l hidden lg:flex flex-col bg-white min-w-0">
           <ClientSidePanel
             level={selected.level}
             contactId={selected.contactId}
