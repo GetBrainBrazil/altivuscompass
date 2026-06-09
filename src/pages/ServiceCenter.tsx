@@ -587,7 +587,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
               />
             </button>
             {displayCaption && (
-              <p className={cn("whitespace-pre-wrap break-words px-3 pb-1", isLead ? "" : "")}>
+              <p className={cn("whitespace-pre-wrap [overflow-wrap:anywhere] px-3 pb-1", isLead ? "" : "")}>
                 {displayCaption}
               </p>
             )}
