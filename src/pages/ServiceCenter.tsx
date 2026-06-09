@@ -39,7 +39,8 @@ import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/Cont
 import { NewMessageDialog } from "@/components/service-center/NewMessageDialog";
 import { ClientSidePanel } from "@/components/service-center/ClientSidePanel";
 import { MessageLinkDialog } from "@/components/service-center/MessageLinkDialog";
-import { Plus, Info, Bot, Check, CheckCheck, Clock, Mic, Square, Trash2, Loader2, Link2, MoreVertical, Pencil } from "lucide-react";
+import { ImageLightbox } from "@/components/service-center/ImageLightbox";
+import { Plus, Info, Bot, Check, CheckCheck, Clock, Mic, Square, Trash2, Loader2, Link2, MoreVertical, Pencil, Paperclip } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -507,6 +508,7 @@ interface ChatBubbleProps {
   linkedQuotes?: { id: string; title: string | null; destination: string | null }[];
   onLinkClick?: () => void;
   onOpenQuote?: (id: string) => void;
+  onImageClick?: (url: string, caption?: string | null) => void;
 }
 
 const AGENT_LABEL_RE = /^\*([^\n*]{1,60})\*\n?/;
@@ -517,7 +519,7 @@ const extractAgentLabel = (text?: string | null): { label: string | null; rest: 
   return { label: null, rest: t };
 };
 
-const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuote }: ChatBubbleProps) => {
+const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuote, onImageClick }: ChatBubbleProps) => {
   const isLead = message.sender === "lead";
   const isAgent = message.sender === "agent";
   const isAi = message.sender === "ai";
@@ -571,14 +573,19 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
           />
         ) : mt === "image" && message.mediaUrl ? (
           <div className="space-y-1">
-            <a href={message.mediaUrl} target="_blank" rel="noreferrer">
+            <button
+              type="button"
+              onClick={() => onImageClick?.(message.mediaUrl!, message.mediaCaption)}
+              className="block w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-2xl overflow-hidden"
+              title="Ampliar imagem"
+            >
               <img
                 src={message.mediaUrl}
                 alt={message.mediaCaption || "Imagem"}
-                className="rounded-2xl max-h-[280px] w-auto object-cover"
+                className="rounded-2xl max-h-[280px] w-auto object-cover cursor-zoom-in"
                 loading="lazy"
               />
-            </a>
+            </button>
             {displayCaption && (
               <p className={cn("whitespace-pre-wrap break-words px-3 pb-1", isLead ? "" : "")}>
                 {displayCaption}
@@ -1599,6 +1606,82 @@ export default function ServiceCenter() {
     try { mediaRecorderRef.current?.stop(); } catch {}
   };
 
+  // ===== Image lightbox =====
+  const [lightbox, setLightbox] = useState<{ url: string; caption?: string | null } | null>(null);
+
+  // ===== File attachments (image / document) =====
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [sendingAttachment, setSendingAttachment] = useState(false);
+
+  const handleAttachClick = () => {
+    if (sending || sendingAudio || sendingAttachment || recording) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleAttachmentSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !selectedId) return;
+    const convo = convoRows.find((c: any) => c.id === selectedId);
+    if (!convo?.phone) {
+      toast.error("Telefone da conversa não encontrado.");
+      return;
+    }
+    const isImage = file.type.startsWith("image/");
+    const isPdf = file.type === "application/pdf";
+    if (!isImage && !isPdf) {
+      toast.error("Envie imagens ou PDF.");
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("Arquivo acima de 20MB.");
+      return;
+    }
+    setSendingAttachment(true);
+    try {
+      const safeName = file.name.replace(/[^\w.\-]+/g, "_");
+      const folder = isImage ? "wa-images" : "wa-docs";
+      const path = `${folder}/${convo.phone}/${Date.now()}-${safeName}`;
+      const { error: upErr } = await supabase.storage
+        .from("quote-images")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("quote-images").getPublicUrl(path);
+      const url = pub.publicUrl;
+      const caption = draft.trim();
+      const { data, error } = await supabase.functions.invoke("send-whatsapp", {
+        body: isImage
+          ? {
+              action: "send-image",
+              phone: convo.phone,
+              image_url: url,
+              message: caption || undefined,
+              is_group: !!convo.is_group,
+              group_id: convo.group_id ?? undefined,
+            }
+          : {
+              action: "send-document",
+              phone: convo.phone,
+              document_url: url,
+              document_name: file.name,
+              message: caption || undefined,
+              is_group: !!convo.is_group,
+              group_id: convo.group_id ?? undefined,
+            },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setDraft("");
+      scrollToBottom();
+      qc.invalidateQueries({ queryKey: ["wa_messages", selectedId] });
+      qc.invalidateQueries({ queryKey: ["wa_conversations"] });
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao enviar anexo");
+    } finally {
+      setSendingAttachment(false);
+    }
+  };
+
   const cancelRecording = () => {
     if (!recording) return;
     cancelRecordingRef.current = true;
@@ -2009,6 +2092,7 @@ export default function ServiceCenter() {
                         linkedQuotes={linksByMessage.get(m.id)}
                         onLinkClick={() => setLinkDialogMessages([m.id])}
                         onOpenQuote={(qid) => navigate(`/quotes?id=${qid}`)}
+                        onImageClick={(url, caption) => setLightbox({ url, caption })}
                       />
                     )}
                     {selected.handoffAfterMessageId === m.id && <HandoffDivider />}
@@ -2044,6 +2128,25 @@ export default function ServiceCenter() {
               ) : (
                 <>
                   <div className="flex items-center gap-3 max-w-3xl mx-auto">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*,application/pdf"
+                      className="hidden"
+                      onChange={handleAttachmentSelected}
+                    />
+                    {!recording && (
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={handleAttachClick}
+                        disabled={sending || sendingAudio || sendingAttachment}
+                        className="h-11 w-11 rounded-full shrink-0"
+                        title="Anexar imagem ou PDF"
+                      >
+                        {sendingAttachment ? <Loader2 className="h-5 w-5 animate-spin" /> : <Paperclip className="h-5 w-5" />}
+                      </Button>
+                    )}
                     {recording ? (
                       <div className="flex-1 flex items-center gap-3 h-11 rounded-full px-5 bg-red-50 border border-red-200">
                         <span className="relative flex h-2.5 w-2.5">
@@ -2057,7 +2160,7 @@ export default function ServiceCenter() {
                       </div>
                     ) : (
                       <Input
-                        placeholder={sendingAudio ? "Enviando áudio…" : "Digite uma mensagem..."}
+                        placeholder={sendingAudio ? "Enviando áudio…" : sendingAttachment ? "Enviando anexo…" : "Digite uma mensagem..."}
                         value={draft}
                         onChange={(e) => setDraft(e.target.value)}
                         onKeyDown={(e) => {
@@ -2066,7 +2169,7 @@ export default function ServiceCenter() {
                             handleSend();
                           }
                         }}
-                        disabled={sending || sendingAudio}
+                        disabled={sending || sendingAudio || sendingAttachment}
                         className="h-11 rounded-full px-5 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-ring"
                       />
                     )}
@@ -2152,8 +2255,13 @@ export default function ServiceCenter() {
         clientId={selected?.crm.clientId ?? null}
         leadId={selected?.leadId ?? null}
       />
-      
-      
+
+      <ImageLightbox
+        open={!!lightbox}
+        onOpenChange={(o) => { if (!o) setLightbox(null); }}
+        url={lightbox?.url ?? null}
+        caption={lightbox?.caption ?? null}
+      />
     </div>
   );
 }
