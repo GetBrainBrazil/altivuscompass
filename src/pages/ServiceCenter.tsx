@@ -2216,7 +2216,7 @@ export default function ServiceCenter() {
 
       {/* ===== Right column: lead summary + CRM panel ===== */}
       {selected && summaryOpen && (
-        <aside className="w-[340px] xl:w-[420px] shrink-0 border-l hidden lg:flex flex-col bg-white">
+        <aside className="w-[300px] xl:w-[360px] 2xl:w-[400px] shrink-0 border-l hidden lg:flex flex-col bg-white min-w-0">
           <ClientSidePanel
             level={selected.level}
             contactId={selected.contactId}
