@@ -39,7 +39,8 @@ import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/Cont
 import { NewMessageDialog } from "@/components/service-center/NewMessageDialog";
 import { ClientSidePanel } from "@/components/service-center/ClientSidePanel";
 import { MessageLinkDialog } from "@/components/service-center/MessageLinkDialog";
-import { Plus, Info, Bot, Check, CheckCheck, Clock, Mic, Square, Trash2, Loader2, Link2, MoreVertical, Pencil } from "lucide-react";
+import { ImageLightbox } from "@/components/service-center/ImageLightbox";
+import { Plus, Info, Bot, Check, CheckCheck, Clock, Mic, Square, Trash2, Loader2, Link2, MoreVertical, Pencil, Paperclip } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
