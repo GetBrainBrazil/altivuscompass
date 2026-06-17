@@ -462,7 +462,7 @@ export default function PublicQuote() {
             {/* Title centered */}
             <div className="flex-1 text-center sm:order-2">
               <h1 className="pq-fs-base sm:text-xl font-display font-bold text-gray-900 tracking-wide uppercase">
-                {t.travelQuote}
+                {["confirmed", "completed"].includes(quote.stage) ? t.travelItinerary : t.travelQuote}
               </h1>
               <div className="mt-1">
                 <Badge variant="outline" className="font-body pq-fs-xs sm:text-xs px-3 py-0.5 font-medium border-gray-300 text-gray-700">
