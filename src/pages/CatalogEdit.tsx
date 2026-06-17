@@ -15,6 +15,14 @@ import { Badge } from "@/components/ui/badge";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { ArrowLeft, ChevronRight, Loader2, Upload, X } from "lucide-react";
 import PrivateImage from "@/components/PrivateImage";
+import { DynamicCategoryFields } from "@/components/quotes/DynamicCategoryFields";
+import {
+  hasTypeSchema,
+  getTypeSchema,
+  getTemplateFields,
+  isValidCategoryForType,
+  asCategorySchema,
+} from "@/lib/type-schema";
 
 const TYPE_OPTIONS = [
   { value: "voo", label: "Voo" },
