@@ -15,6 +15,7 @@ export function getFlagUrl(countryCode: string) {
 
 type TranslationKeys = {
   travelQuote: string;
+  travelItinerary: string;
   quote: string;
   client: string;
   totalValue: string;
@@ -245,6 +246,7 @@ const flightIt = {
 const translations: Record<QuoteLang, TranslationKeys> = {
   pt: {
     travelQuote: "Orçamento de Viagem",
+    travelItinerary: "Itinerário de Viagem",
     quote: "Cotação",
     client: "Cliente",
     totalValue: "Valor Total",
@@ -280,6 +282,7 @@ const translations: Record<QuoteLang, TranslationKeys> = {
   },
   en: {
     travelQuote: "Travel Quote",
+    travelItinerary: "Travel Itinerary",
     quote: "Quote",
     client: "Client",
     totalValue: "Total Value",
@@ -315,6 +318,7 @@ const translations: Record<QuoteLang, TranslationKeys> = {
   },
   es: {
     travelQuote: "Presupuesto de Viaje",
+    travelItinerary: "Itinerario de Viaje",
     quote: "Cotización",
     client: "Cliente",
     totalValue: "Valor Total",
@@ -350,6 +354,7 @@ const translations: Record<QuoteLang, TranslationKeys> = {
   },
   fr: {
     travelQuote: "Devis de Voyage",
+    travelItinerary: "Itinéraire de Voyage",
     quote: "Devis",
     client: "Client",
     totalValue: "Valeur Totale",
@@ -385,6 +390,7 @@ const translations: Record<QuoteLang, TranslationKeys> = {
   },
   de: {
     travelQuote: "Reiseangebot",
+    travelItinerary: "Reiseitinerar",
     quote: "Angebot",
     client: "Kunde",
     totalValue: "Gesamtwert",
@@ -420,6 +426,7 @@ const translations: Record<QuoteLang, TranslationKeys> = {
   },
   it: {
     travelQuote: "Preventivo di Viaggio",
+    travelItinerary: "Itinerario di Viaggio",
     quote: "Preventivo",
     client: "Cliente",
     totalValue: "Valore Totale",
