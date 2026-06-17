@@ -127,17 +127,18 @@ export const TIPO_SCHEMA: Record<TypeKey, TypeSchemaDef> = {
         label: "Bagagem de mão",
         type: "number",
         span: 6,
-        group: "Bagagem",
-        scope: "template",
+        group: "Bagagem (instância)",
+        scope: "instancia",
       },
       {
         key: "bagagem_despachada",
         label: "Bagagem despachada",
         type: "number",
         span: 6,
-        group: "Bagagem",
-        scope: "template",
+        group: "Bagagem (instância)",
+        scope: "instancia",
       },
+
       // ---------- instância ----------
       {
         key: "data_embarque",
