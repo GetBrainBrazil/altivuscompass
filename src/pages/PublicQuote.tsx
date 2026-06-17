@@ -660,6 +660,11 @@ export default function PublicQuote() {
                                   {getConnectionsLabel(lang, d.connections)}
                                 </span>
                               )}
+                              {d.locator && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full pq-fs-3xs font-body border border-gray-300 text-gray-700 bg-gray-50 font-medium">
+                                  {t.locator}: {d.locator}
+                                </span>
+                              )}
                             </div>
 
                             {/* Detailed connection stops */}
