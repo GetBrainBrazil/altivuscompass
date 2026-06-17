@@ -1,55 +1,123 @@
+# Módulo Catálogo de Produtos — v1 (aditivo, não-destrutivo)
+
 ## Objetivo
+Adicionar um catálogo de produtos reutilizáveis (hospedagem, experiência, seguro, transporte, cruzeiro, outros) que o agente pode PUXAR para dentro de uma cotação para pré-preencher os campos, em vez de digitar tudo à mão.
 
-Evitar cadastros duplicados de clientes mostrando sugestões em tempo real enquanto o usuário digita o nome no formulário "Novo Cliente". A busca cobre tanto clientes existentes quanto passageiros (viajantes) que ainda não são clientes, podendo ser promovidos.
+## Princípios inegociáveis
 
-## Escopo
+### 1. Não pode quebrar o fluxo atual
+O fluxo de hoje (agente abre a cotação e digita o item manualmente nas abas Voos/Hospedagem/etc) continua exatamente igual. O catálogo é 100% opcional e aditivo:
+- Nenhuma aba, campo ou comportamento existente da cotação é removido ou alterado.
+- Se o catálogo estiver vazio, o sistema funciona idêntico a hoje.
+- O caminho manual NUNCA depende do catálogo.
 
-Apenas o formulário "Novo Cliente" em `src/pages/Clients.tsx` (campo `Nome completo`, linha 1228). Sem alterações em modo edição.
+### 2. Snapshot, não vínculo vivo
+Ao puxar um produto, o sistema COPIA custo, preço e descrição como valores editáveis no item da cotação, e guarda apenas `product_id` como rastreio.
+- O agente pode sobrescrever qualquer valor.
+- Editar o produto no catálogo depois NÃO altera nenhuma cotação já criada.
+- Preço do catálogo é apenas SUGESTÃO de default.
 
-## Comportamento da busca em tempo real
+## Situação atual no código (importante)
 
-1. A partir de 3 caracteres digitados em `Nome completo`, com debounce ~250ms, abre um popover sob o input com até 8 sugestões.
-2. Busca paralela em duas fontes:
-   - `clients` por `full_name ilike %query%` (limite 5).
-   - `passengers` por `full_name ilike %query%` (limite 5), trazendo o `client` vinculado quando houver.
-3. Cada sugestão exibe:
-   - Nome + badge `Cliente` ou `Viajante`.
-   - Indicadores secundários: CPF (mascarado), telefone formatado, e-mail — só quando existirem.
-   - Se a sugestão for um viajante já vinculado a outro cliente, mostra "Viajante de: {nome do cliente}".
+Já existe a tabela `products` (17 colunas) e o componente `src/components/quotes/QuoteItemProductPicker.tsx` que faz busca via RPC `search_products` e seleciona produto pré-preenchendo título, custo e preço. A coluna `quote_items.product_id` JÁ existe. Também existe `src/components/ProductsTab.tsx` (dentro de Cadastros) e `src/components/quotes/ProductSearchDialog.tsx`.
 
-## Pontos de verificação (hierarquia de decisão)
+Ou seja: a infraestrutura básica já está pronta. Esta v1 vai **consolidar e expor o catálogo como módulo de primeira classe**, garantir snapshot puro, restringir custo por papel e padronizar o "Puxar do catálogo" em todas as abas de item.
 
-Para reforçar a unicidade, a busca por nome é complementada por matches fortes assim que o usuário preenche outros campos (CPF, telefone, e-mail) ainda dentro do form de criação:
+## Banco de dados (Supabase)
 
-- **CPF** (decisivo): match exato em `clients.cpf_cnpj` ou `passengers.cpf`. Quando há match exato, exibe banner amarelo acima do form: "Já existe um cliente com este CPF — abrir registro" + botão.
-- **Celular** (ponto de verificação, considerando DDD): match por sufixo de **10 ou 11 dígitos** (DDD + número, p.ex. `11987654321`) em `clients.phone` e `client_phones.phone`. O mesmo número sem DDD pode existir em estados diferentes, então o sufixo curto (8–9 dígitos) **não** é usado para esse match. Mostrado como sugestão regular (não bloqueia).
-- **E-mail** (auxiliar): match em `clients.email` e `client_emails.email`. Mostrado como sugestão com nota "pode ser compartilhado".
+### Tabela `products` — ajustes mínimos
+Auditar colunas existentes e, se faltarem, adicionar (NULLABLE):
+- `description` (text)
+- `destination` (text)
+- `category_id` (uuid, fk → product_categories)
+- `tags` (text[])
+- `images` (text[])
+- `attributes` (jsonb default '{}') — campos específicos por tipo
+- `is_active` (boolean default true) — confirmar nome
+- `created_by` (uuid)
 
-A validação final no `handleSaveClick` (já existente em `findDuplicateCandidates`, linha 875) permanece como rede de segurança e também será ajustada para usar sufixo de 10–11 dígitos no telefone.
+Enum de tipos suportados (`item_type`): `hotel`, `experience`, `transport`, `cruise`, `insurance`, `other_service`.
+**Voo fica FORA do catálogo** (dinâmico por data/classe/tarifa).
 
-## Ações ao clicar numa sugestão
+### `quote_items.product_id`
+Já existe. Nada a alterar no schema. Toda linha existente permanece com `product_id = null`. Itens manuais continuam com `product_id = null`. **Financeiro e relatórios continuam lendo custo/preço da própria linha do item** — nunca do catálogo.
 
-- **Cliente existente** → confirma com diálogo: "Abrir este cliente em vez de criar um novo?" Se sim, navega para `?id={clientId}` (modo edição). Se não, fecha sugestões e mantém digitação.
-- **Viajante sem cliente** → confirma: "Este viajante ainda não é cliente. Promover a cliente preenchendo os dados?" Se sim, pré-preenche o form com `full_name`, `cpf`, `birth_date`, `nationality`, `passport_number`, `passport_expiry` e marca um estado `promoteFromPassengerId` para que, ao salvar, o `passengers.client_id` seja atualizado para o novo cliente criado.
-- **Viajante já vinculado a outro cliente** → confirma: "Este viajante já pertence ao cliente X. Abrir cliente X?" e navega para o cliente vinculado.
+### RLS — modelo de sensibilidade (igual ao de milhas/senhas)
+- `admin` / `manager`: CRUD total em `products`; veem e editam `cost`.
+- `sales_agent`: leitura de `products` e uso na cotação; vê `sale_price` mas **NÃO vê `cost`**.
+- `operations`: somente leitura.
 
-## Detalhes técnicos
+Implementação do bloqueio de `cost`:
+- Policy de SELECT permite leitura geral, mas a coluna `cost` é mascarada via VIEW `products_safe` (sem `cost`) usada pelo papel `sales_agent` no frontend.
+- Frontend nunca renderiza `cost` para `sales_agent` (gating via `useUserRole`).
 
-- Novo componente `src/components/clients/ClientNameSuggest.tsx` (Popover + lista, padrão visual do `LeadClientPicker`).
-- Hook `useQuery` com `queryKey: ["client-name-suggest", debouncedQuery]`, `enabled: debouncedQuery.length >= 3`.
-- Debounce inline com `useEffect` + `setTimeout` (sem nova dependência).
-- Reuso de `ContactLevelBadge` para "Cliente" e novo estilo para "Viajante".
-- Promoção de viajante: dentro de `saveMutation.onSuccess`, se `promoteFromPassengerId` estiver setado, executar `update passengers set client_id = newClient.id where id = promoteFromPassengerId`.
-- Banner de CPF duplicado: bloco condicional acima do card do form, só aparece com CPF de 11/14 dígitos e match exato.
-- Match de telefone usa `cleanDigits(...).slice(-11)` (mín. 10) — garante que o DDD entra na comparação.
+## Navegação
+Novo item de menu **"Catálogo"** na sidebar (ícone Package), posicionado entre "Cadastros" e "Roteiros".
+- Path: `/catalog`
+- Permissão: `admin`, `manager`, `sales_agent`, `operations` (leitura para operations).
+- Adicionar em `src/lib/permissions.ts` e em `src/components/AppSidebar.tsx`.
+
+A aba "Produtos" dentro de Cadastros (`ProductsTab`) permanece por compatibilidade, mas o módulo dedicado vira o caminho recomendado.
+
+## Telas
+
+### 1. `/catalog` — Lista de Produtos
+- Grid de cards (ou tabela alternativa via toggle) com: imagem, nome, badge de tipo, preço de venda, fornecedor, status.
+- Filtros: tipo, categoria, busca por nome/destino, toggle "ver inativos".
+- Botão "+ Novo Produto" (admin/manager).
+- Coluna/linha de **custo só renderiza para admin+manager**.
+- Linha clicável abre edição (padrão do projeto).
+
+### 2. Cadastro/Edição de Produto
+Modal fullscreen em mobile, dialog em desktop. Grupos:
+- **Identificação:** nome*, tipo*, descrição, destino, categoria, tags.
+- **Comercial:** custo_base [gerente+], preço_venda_base, moeda (default BRL), fornecedor.
+- **Mídia:** upload de imagens (bucket existente).
+- **Atributos por tipo:** renderização condicional via schema simples:
+  - hotel → `{ regime, estrelas }`
+  - experience → `{ duracao_horas, idioma }`
+  - transport → `{ veiculo, capacidade }`
+  - cruise → `{ companhia, cabine }`
+  - insurance → `{ cobertura, faixa_etaria }`
+  - other_service → livre
+- Validação: nome e tipo obrigatórios.
+
+### 3. Integração na Cotação
+Em cada aba de item suportada (Hospedagem, Experiências, Seguros, Transporte, Cruzeiro, Outros Serviços), garantir o botão **"Puxar do catálogo"** ao lado do "Adicionar item manual".
+- Reuso de `QuoteItemProductPicker` / `ProductSearchDialog`, padronizando o trigger visual.
+- Ao selecionar: cria item com `title`, `unit_cost`, `unit_price`, `description` (se existir) COPIADOS, e `product_id` preenchido. Todos os campos ficam editáveis.
+- **Aba Voo: sem botão de catálogo.**
+- Manual continua intacto.
 
 ## Arquivos afetados
 
-- `src/pages/Clients.tsx` — integrar componente no input de nome, estado `promoteFromPassengerId`, ajuste no `saveMutation`, banner CPF, ajuste do sufixo no `findDuplicateCandidates`.
-- `src/components/clients/ClientNameSuggest.tsx` — novo componente.
+**Novos:**
+- `src/pages/Catalog.tsx` — lista/grid de produtos.
+- `src/components/catalog/ProductFormDialog.tsx` — cadastro/edição (extrai lógica de `ProductsTab` se útil).
+- `src/components/catalog/ProductTypeAttributes.tsx` — render condicional de atributos por tipo.
 
-## Fora do escopo
+**Editados:**
+- `src/lib/permissions.ts` — adicionar `/catalog` e feature `catalog_view_cost`.
+- `src/components/AppSidebar.tsx` — novo item de menu.
+- `src/App.tsx` — rota `/catalog`.
+- `src/components/quotes/QuoteModularItemsList.tsx` (ou onde estão as abas) — garantir botão "Puxar do catálogo" em todas as abas elegíveis (exceto Voo).
+- `src/components/quotes/QuoteItemProductPicker.tsx` — esconder `cost` para `sales_agent`.
 
-- Mudanças no modo edição.
-- Merge automático de registros existentes.
-- Mudanças em RLS, schema ou outros formulários (leads, contatos).
+**Migração (apenas se colunas faltarem):**
+- ALTER TABLE `products` ADD COLUMN IF NOT EXISTS para `description, destination, category_id, tags, images, attributes, is_active, created_by`.
+- Policies RLS revisadas para o modelo acima.
+- VIEW `products_safe` sem coluna `cost` (opcional, se optarmos por mascarar no banco).
+
+## Critérios de aceite
+1. Com catálogo vazio, criar cotação e adicionar itens manualmente funciona idêntico a antes.
+2. Cotações antigas abrem sem erro (`product_id = null` em todos os itens).
+3. Puxar produto preenche os campos; editar depois o produto no catálogo NÃO altera a cotação já feita.
+4. `sales_agent` não enxerga `cost` em nenhuma tela do catálogo nem no picker.
+5. Financeiro/relatórios continuam calculando margem a partir dos valores do item da cotação, sem ler o catálogo.
+6. Item "Catálogo" aparece na sidebar para todos os papéis com permissão.
+
+## Fora de escopo (v1)
+- Pacotes / produtos compostos (próximo plano).
+- Preço por temporada ou por fornecedor.
+- Versionamento, analytics, multimoeda avançada.
+- Catalogar voos.
