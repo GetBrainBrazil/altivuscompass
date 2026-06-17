@@ -49,6 +49,7 @@ type FormState = {
   sale_price: string;
   currency: string;
   supplier_id: string;
+  cover_image: string;
   images: string[];
   attributes: Record<string, any>;
   is_active: boolean;
@@ -65,10 +66,12 @@ const EMPTY: FormState = {
   sale_price: "",
   currency: "BRL",
   supplier_id: "",
+  cover_image: "",
   images: [],
   attributes: {},
   is_active: true,
 };
+
 
 export default function CatalogEdit() {
   const { id } = useParams<{ id: string }>();
