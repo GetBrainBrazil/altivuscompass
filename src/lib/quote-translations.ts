@@ -71,6 +71,7 @@ type TranslationKeys = {
   observation: string;
   connectionIn: string;
   layover: string;
+  locator: string;
 };
 
 const flightPt = {
@@ -98,6 +99,7 @@ const flightPt = {
   observation: "Observação",
   connectionIn: "Conexão em",
   layover: "de parada",
+  locator: "Localizador",
 };
 
 const flightEn = {
@@ -125,6 +127,7 @@ const flightEn = {
   observation: "Note",
   connectionIn: "Connection in",
   layover: "layover",
+  locator: "PNR",
 };
 
 const flightEs = {
@@ -152,6 +155,7 @@ const flightEs = {
   observation: "Observación",
   connectionIn: "Conexión en",
   layover: "de escala",
+  locator: "Localizador",
 };
 
 const flightFr = {
@@ -179,6 +183,7 @@ const flightFr = {
   observation: "Observation",
   connectionIn: "Correspondance à",
   layover: "d'escale",
+  locator: "Réf.",
 };
 
 const flightDe = {
@@ -206,6 +211,7 @@ const flightDe = {
   observation: "Bemerkung",
   connectionIn: "Umstieg in",
   layover: "Aufenthalt",
+  locator: "Buchungscode",
 };
 
 const flightIt = {
@@ -233,6 +239,7 @@ const flightIt = {
   observation: "Osservazione",
   connectionIn: "Scalo a",
   layover: "di scalo",
+  locator: "Codice",
 };
 
 const translations: Record<QuoteLang, TranslationKeys> = {
