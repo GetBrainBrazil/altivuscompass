@@ -3340,17 +3340,13 @@ export type Database = {
       }
       products: {
         Row: {
-          attributes: Json
           category_id: string | null
           commission_percent: number | null
           cost: number | null
           created_at: string
-          created_by: string | null
           currency: string
           description: string | null
-          destination: string | null
           id: string
-          images: string[] | null
           is_active: boolean
           item_type: string | null
           markup_fixed: number | null
@@ -3360,21 +3356,16 @@ export type Database = {
           sale_price: number | null
           sku: string | null
           supplier_id: string | null
-          tags: string[] | null
           updated_at: string
         }
         Insert: {
-          attributes?: Json
           category_id?: string | null
           commission_percent?: number | null
           cost?: number | null
           created_at?: string
-          created_by?: string | null
           currency?: string
           description?: string | null
-          destination?: string | null
           id?: string
-          images?: string[] | null
           is_active?: boolean
           item_type?: string | null
           markup_fixed?: number | null
@@ -3384,21 +3375,16 @@ export type Database = {
           sale_price?: number | null
           sku?: string | null
           supplier_id?: string | null
-          tags?: string[] | null
           updated_at?: string
         }
         Update: {
-          attributes?: Json
           category_id?: string | null
           commission_percent?: number | null
           cost?: number | null
           created_at?: string
-          created_by?: string | null
           currency?: string
           description?: string | null
-          destination?: string | null
           id?: string
-          images?: string[] | null
           is_active?: boolean
           item_type?: string | null
           markup_fixed?: number | null
@@ -3408,7 +3394,6 @@ export type Database = {
           sale_price?: number | null
           sku?: string | null
           supplier_id?: string | null
-          tags?: string[] | null
           updated_at?: string
         }
         Relationships: [
