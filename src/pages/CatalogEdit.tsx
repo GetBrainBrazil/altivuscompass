@@ -153,12 +153,12 @@ export default function CatalogEdit() {
       }
 
       if (isEdit) {
-        const { error } = await supabase.from("products").update(basePayload).eq("id", id!);
+        const { error } = await supabase.from("products").update(basePayload as any).eq("id", id!);
         if (error) throw error;
         await logAuditEvent({ action: "update", tableName: "products", recordId: id!, recordLabel: basePayload.name, oldData: product, newData: basePayload });
         return id!;
       } else {
-        const { data, error } = await supabase.from("products").insert(basePayload).select("id").single();
+        const { data, error } = await supabase.from("products").insert(basePayload as any).select("id").single();
         if (error) throw error;
         await logAuditEvent({ action: "create", tableName: "products", recordId: data.id, recordLabel: basePayload.name, newData: basePayload });
         return data.id as string;
