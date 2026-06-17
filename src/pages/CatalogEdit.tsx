@@ -220,46 +220,34 @@ export default function CatalogEdit() {
   const setAttr = (key: string, value: any) =>
     setForm((f) => ({ ...f, attributes: { ...(f.attributes ?? {}), [key]: value } }));
 
+  // Render dinâmico via TIPO_SCHEMA (template-only) para tipos com schema.
+  // Tipos sem schema mostram bloco simples de "Observações" em attributes.notas.
+  const typedSchema = useMemo(() => getTypeSchema(form.item_type || null), [form.item_type]);
   const typeAttributesUI = useMemo(() => {
-    switch (form.item_type) {
-      case "hospedagem":
-        return (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <Field label="Regime">
-              <Input value={form.attributes.regime ?? ""} onChange={(e) => setAttr("regime", e.target.value)} placeholder="Café da manhã, All inclusive..." />
-            </Field>
-            <Field label="Check-in">
-              <Input type="time" value={form.attributes.check_in ?? ""} onChange={(e) => setAttr("check_in", e.target.value)} />
-            </Field>
-            <Field label="Check-out">
-              <Input type="time" value={form.attributes.check_out ?? ""} onChange={(e) => setAttr("check_out", e.target.value)} />
-            </Field>
-          </div>
-        );
-      case "experiencia":
-        return (
-          <Field label="Duração">
-            <Input value={form.attributes.duracao ?? ""} onChange={(e) => setAttr("duracao", e.target.value)} placeholder="Ex.: 3 horas, dia inteiro..." />
-          </Field>
-        );
-      case "seguro":
-        return (
-          <Field label="Cobertura">
-            <Textarea value={form.attributes.cobertura ?? ""} onChange={(e) => setAttr("cobertura", e.target.value)} rows={3} placeholder="Resumo das coberturas..." />
-          </Field>
-        );
-      case "transporte":
-      case "cruzeiro":
-      case "outro":
-        return (
-          <Field label="Observações específicas">
-            <Textarea value={form.attributes.notas ?? ""} onChange={(e) => setAttr("notas", e.target.value)} rows={3} placeholder="Detalhes livres deste produto..." />
-          </Field>
-        );
-      default:
-        return <p className="text-xs text-muted-foreground">Selecione um tipo para ver os campos específicos.</p>;
+    if (typedSchema) {
+      return (
+        <DynamicCategoryFields
+          schema={asCategorySchema(typedSchema)}
+          value={form.attributes}
+          onChange={(next) => setForm((f) => ({ ...f, attributes: next }))}
+          scopeFilter="template"
+        />
+      );
     }
-  }, [form.item_type, form.attributes]);
+    if (!form.item_type) {
+      return <p className="text-xs text-muted-foreground">Selecione um tipo para ver os campos específicos.</p>;
+    }
+    return (
+      <Field label="Observações específicas">
+        <Textarea
+          value={form.attributes.notas ?? ""}
+          onChange={(e) => setAttr("notas", e.target.value)}
+          rows={3}
+          placeholder="Detalhes livres deste produto..."
+        />
+      </Field>
+    );
+  }, [typedSchema, form.item_type, form.attributes]);
 
   const isValid = form.name.trim().length > 0 && !!form.item_type;
   const breadcrumbName = isEdit ? (product?.name ?? "Editar produto") : "Novo produto";
