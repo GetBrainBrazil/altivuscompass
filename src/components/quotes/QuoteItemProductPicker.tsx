@@ -27,12 +27,14 @@ type Suggestion = {
 interface Props {
   itemType: string;
   productId: string | null | undefined;
-  /** Permite que o picker pré-preencha custo/preço a partir do catálogo */
+  /** Permite que o picker pré-preencha custo/preço e atributos a partir do catálogo */
   onSelect: (patch: {
     product_id: string | null;
     title?: string;
     unit_cost?: number;
     unit_price?: number;
+    /** Snapshot dos atributos template (apenas) do produto. */
+    attributes?: Record<string, any>;
   }) => void;
 }
 
