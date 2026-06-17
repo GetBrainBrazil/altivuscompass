@@ -266,7 +266,7 @@ export default function CatalogEdit() {
   return (
     <div className="pb-32">
       {/* Header */}
-      <div className="max-w-[900px] mx-auto space-y-4">
+      <div className="space-y-4">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Link to="/catalog" className="hover:text-foreground transition-colors">Catálogo</Link>
           <ChevronRight className="w-3 h-3" />
@@ -289,7 +289,7 @@ export default function CatalogEdit() {
       </div>
 
       {/* Body */}
-      <div className="max-w-[900px] mx-auto mt-6 space-y-5">
+      <div className="mt-6 space-y-5">
         {/* Identificação */}
         <Section title="Identificação" description="Como esse produto é encontrado no catálogo e exibido nas cotações.">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -445,7 +445,7 @@ export default function CatalogEdit() {
 
       {/* Sticky footer */}
       <div className="fixed bottom-0 left-0 right-0 z-30 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <div className="max-w-[900px] mx-auto px-4 py-3 flex items-center justify-between gap-3">
+        <div className="px-4 py-3 flex items-center justify-between gap-3">
           <p className="text-[11px] text-muted-foreground hidden sm:block">
             Valores aqui são <strong>referência de catálogo</strong>. Ao puxar o produto para uma cotação, custo e preço viram cópia editável dentro do item.
           </p>
