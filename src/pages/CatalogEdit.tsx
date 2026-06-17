@@ -134,7 +134,9 @@ export default function CatalogEdit() {
       sale_price: product.sale_price != null ? String(product.sale_price) : "",
       currency: product.currency ?? "BRL",
       supplier_id: product.supplier_id ?? "",
+      cover_image: (product as any).cover_image ?? "",
       images: Array.isArray(product.images) ? product.images : [],
+
       attributes: (product.attributes && typeof product.attributes === "object" ? product.attributes : {}) as Record<string, any>,
       is_active: !!product.is_active,
     });
