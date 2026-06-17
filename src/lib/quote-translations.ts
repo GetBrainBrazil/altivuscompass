@@ -71,6 +71,7 @@ type TranslationKeys = {
   observation: string;
   connectionIn: string;
   layover: string;
+  locator: string;
 };
 
 const flightPt = {
