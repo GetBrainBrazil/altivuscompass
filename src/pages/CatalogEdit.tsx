@@ -164,7 +164,7 @@ export default function CatalogEdit() {
         item_type: form.item_type,
         description: form.description || null,
         destination: form.destination || null,
-        category_id: form.category_id || null,
+        category_id: hasTypeSchema(form.item_type) ? null : (form.category_id || null),
         supplier_id: form.supplier_id || null,
         tags: form.tags.length ? form.tags : null,
         sale_price: form.sale_price !== "" ? Number(form.sale_price) : null,
