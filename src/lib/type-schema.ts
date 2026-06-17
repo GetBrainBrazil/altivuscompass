@@ -255,6 +255,16 @@ export const TIPO_SCHEMA: Record<TypeKey, TypeSchemaDef> = {
         placeholder: "Bairro, cidade...",
       },
       {
+        key: "endereco",
+        label: "Endereço completo",
+        type: "textarea",
+        span: 12,
+        group: "Detalhes da hospedagem",
+        scope: "template",
+        placeholder: "Rua, número, complemento — usado em roteiro e transfer",
+      },
+
+      {
         key: "regime",
         label: "Regime",
         type: "select",
