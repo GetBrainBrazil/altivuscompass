@@ -98,18 +98,8 @@ function CategoriesSubTab({ isAdmin }: { isAdmin: boolean }) {
 }
 
 function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState<any>({
-    name: "", description: "", category_id: "", supplier_id: "",
-    markup_type: "percent" as "percent" | "fixed",
-    markup_percent: "", markup_fixed: "",
-    notes: "", is_active: true,
-  });
-
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["products"],
@@ -123,123 +113,8 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
     },
   });
 
-  const { data: categories = [] } = useQuery({
-    queryKey: ["product_categories", "active"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("product_categories").select("id, name").eq("is_active", true).order("name");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: suppliers = [] } = useQuery({
-    queryKey: ["suppliers", "for-products"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("suppliers").select("id, name").order("name");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const saveMutation = useMutation({
-    mutationFn: async () => {
-      const payload = {
-        name: form.name,
-        description: form.description || null,
-        category_id: form.category_id || null,
-        supplier_id: form.supplier_id || null,
-        markup_percent: form.markup_type === "percent" && form.markup_percent !== "" ? Number(form.markup_percent) : null,
-        markup_fixed: form.markup_type === "fixed" && form.markup_fixed !== "" ? Number(form.markup_fixed) : null,
-        notes: form.notes || null,
-        is_active: form.is_active,
-      };
-
-      if (editing) {
-        const { error } = await supabase.from("products").update(payload).eq("id", editing.id);
-        if (error) throw error;
-        await logAuditEvent({ action: "update", tableName: "products", recordId: editing.id, recordLabel: payload.name, oldData: editing, newData: payload });
-      } else {
-        const { data, error } = await supabase.from("products").insert(payload).select("id").single();
-        if (error) throw error;
-        await logAuditEvent({ action: "create", tableName: "products", recordId: data.id, recordLabel: payload.name, newData: payload });
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast({ title: editing ? "Produto atualizado" : "Produto adicionado" });
-      closeDialog();
-    },
-    onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const item = products.find((p: any) => p.id === id);
-      const { data: linked, error: linkErr } = await supabase
-        .from("quote_items")
-        .select("quote_id")
-        .eq("product_id", id);
-      if (linkErr) throw linkErr;
-      const uniqueDeals = new Set((linked ?? []).map((r: any) => r.quote_id).filter(Boolean)).size;
-      if (uniqueDeals > 0) {
-        throw new Error(`Existem ${uniqueDeals} negócio(s) vinculado(s) a este produto.`);
-      }
-      const { error } = await supabase.from("products").delete().eq("id", id);
-      if (error) throw error;
-      await logAuditEvent({ action: "delete", tableName: "products", recordId: id, recordLabel: item?.name ?? id, oldData: item });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast({ title: "Produto removido" });
-      closeDialog();
-    },
-    onError: (e: any) => toast({ title: "Não foi possível excluir", description: e.message, variant: "destructive" }),
-  });
-
-  const { data: quoteCount = 0 } = useQuery({
-    queryKey: ["products", editing?.id, "quote_count"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("quote_items")
-        .select("quote_id")
-        .eq("product_id", editing!.id);
-      if (error) throw error;
-      const unique = new Set((data ?? []).map((r: any) => r.quote_id).filter(Boolean));
-      return unique.size;
-    },
-    enabled: !!editing?.id,
-  });
-
-  const closeDialog = () => {
-    setDialogOpen(false);
-    setEditing(null);
-    setForm({
-      name: "", description: "", category_id: "", supplier_id: "",
-      markup_type: "percent", markup_percent: "", markup_fixed: "",
-      notes: "", is_active: true,
-    });
-  };
-
-  const openEdit = (p: any) => {
-    setEditing(p);
-    const hasFixed = p.markup_fixed != null;
-    setForm({
-      name: p.name,
-      description: p.description || "",
-      category_id: p.category_id || "",
-      supplier_id: p.supplier_id || "",
-      markup_type: hasFixed ? "fixed" : "percent",
-      markup_percent: p.markup_percent ?? "",
-      markup_fixed: p.markup_fixed ?? "",
-      notes: p.notes || "",
-      is_active: p.is_active,
-    });
-    setDialogOpen(true);
-  };
-
-
   const filtered = products.filter((p: any) =>
-    [p.name, p.description, p.product_categories?.name, p.suppliers?.name].some((f: string) =>
+    [p.name, p.description, p.product_categories?.name, p.suppliers?.name, p.item_type].some((f: string) =>
       f?.toLowerCase().includes(search.toLowerCase())
     )
   );
@@ -248,11 +123,16 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
     if (value == null) return "—";
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
   };
-  const formatMarkup = (p: any) => {
-    if (p.markup_fixed != null) return formatBRL(Number(p.markup_fixed));
-    if (p.markup_percent != null) return `${Number(p.markup_percent).toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}%`;
-    return "—";
+
+  const TYPE_LABEL: Record<string, string> = {
+    hospedagem: "Hospedagem",
+    experiencia: "Experiência",
+    seguro: "Seguro",
+    transporte: "Transporte",
+    cruzeiro: "Cruzeiro",
+    outro: "Outro",
   };
+
 
 
   return (
