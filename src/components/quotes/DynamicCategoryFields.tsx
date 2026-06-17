@@ -40,6 +40,8 @@ interface Props {
   schema: CategoryFieldSchema | null | undefined;
   value: Record<string, any>;
   onChange: (next: Record<string, any>) => void;
+  /** Filtra campos pelo scope (estende CategoryField com `scope`). Default: "all". */
+  scopeFilter?: "template" | "instancia" | "all";
 }
 
 // Convenção: duration_auto é computada a partir de embarque/embarque_hora → chegada/chegada_hora
