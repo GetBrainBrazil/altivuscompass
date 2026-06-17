@@ -239,6 +239,26 @@ export default function CatalogEdit() {
     setForm((f) => ({ ...f, images: f.images.filter((s) => s !== src) }));
   };
 
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const handleCoverUpload = async (files: FileList | null) => {
+    const file = files?.[0];
+    if (!file) return;
+    setUploadingCover(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from(BUCKET).upload(path, file, { cacheControl: "3600", upsert: false });
+      if (error) throw error;
+      setForm((f) => ({ ...f, cover_image: path }));
+      toast({ title: "Capa atualizada" });
+    } catch (e: any) {
+      toast({ title: "Falha no upload", description: e.message, variant: "destructive" });
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+
   // ---- Attributes by type ----
   const setAttr = (key: string, value: any) =>
     setForm((f) => ({ ...f, attributes: { ...(f.attributes ?? {}), [key]: value } }));
