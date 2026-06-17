@@ -107,15 +107,27 @@ export default function QuoteItemProductPicker({ itemType, productId, onSelect }
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const pick = (p: Suggestion) => {
+  const pick = async (p: Suggestion) => {
     setSelectedName(p.name);
     setQuery("");
     setOpen(false);
+    // Busca atributos do produto para snapshot no item
+    let attributes: Record<string, any> | undefined;
+    try {
+      const { data } = await supabase
+        .from("products")
+        .select("attributes")
+        .eq("id", p.id)
+        .maybeSingle();
+      const raw = (data as any)?.attributes;
+      attributes = raw && typeof raw === "object" ? pickTemplateAttributes(itemType, raw) : undefined;
+    } catch { /* segue sem atributos */ }
     onSelect({
       product_id: p.id,
       title: p.name,
       unit_cost: Number(p.cost ?? 0) || undefined,
       unit_price: Number(p.sale_price ?? 0) || undefined,
+      attributes,
     });
   };
 
