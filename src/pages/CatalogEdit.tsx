@@ -143,6 +143,22 @@ export default function CatalogEdit() {
       if (!form.name.trim()) throw new Error("Informe o nome do produto.");
       if (!form.item_type) throw new Error("Selecione o tipo do produto.");
 
+      // Validação dos campos template do TIPO_SCHEMA (quando aplicável)
+      const tplFields = getTemplateFields(form.item_type);
+      for (const f of tplFields) {
+        if (!f.required) continue;
+        const v = (form.attributes ?? {})[f.key];
+        const empty = v === undefined || v === null || v === "" || (Array.isArray(v) && v.length === 0);
+        if (empty) throw new Error(`Preencha o campo "${f.label}".`);
+      }
+      if (hasTypeSchema(form.item_type)) {
+        const cat = (form.attributes ?? {}).categoria;
+        if (cat != null && cat !== "" && !isValidCategoryForType(form.item_type, cat)) {
+          throw new Error("Categoria inválida para o tipo selecionado.");
+        }
+      }
+
+
       const basePayload: Record<string, any> = {
         name: form.name.trim(),
         item_type: form.item_type,
