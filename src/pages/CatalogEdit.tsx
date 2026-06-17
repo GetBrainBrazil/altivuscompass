@@ -17,6 +17,7 @@ import { ArrowLeft, ChevronRight, Loader2, Upload, X } from "lucide-react";
 import PrivateImage from "@/components/PrivateImage";
 
 const TYPE_OPTIONS = [
+  { value: "voo", label: "Voo" },
   { value: "hospedagem", label: "Hospedagem" },
   { value: "experiencia", label: "Experiência" },
   { value: "seguro", label: "Seguro" },
