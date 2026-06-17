@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, Package, AlertTriangle, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { pickTemplateAttributes } from "@/lib/type-schema";
 
 type Suggestion = {
   id: string;
