@@ -15,6 +15,7 @@ export function getFlagUrl(countryCode: string) {
 
 type TranslationKeys = {
   travelQuote: string;
+  travelItinerary: string;
   quote: string;
   client: string;
   totalValue: string;
