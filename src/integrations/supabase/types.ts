@@ -3344,6 +3344,7 @@ export type Database = {
           category_id: string | null
           commission_percent: number | null
           cost: number | null
+          cover_image: string | null
           created_at: string
           created_by: string | null
           currency: string
@@ -3368,6 +3369,7 @@ export type Database = {
           category_id?: string | null
           commission_percent?: number | null
           cost?: number | null
+          cover_image?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string
@@ -3392,6 +3394,7 @@ export type Database = {
           category_id?: string | null
           commission_percent?: number | null
           cost?: number | null
+          cover_image?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string

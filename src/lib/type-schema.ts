@@ -127,17 +127,18 @@ export const TIPO_SCHEMA: Record<TypeKey, TypeSchemaDef> = {
         label: "Bagagem de mão",
         type: "number",
         span: 6,
-        group: "Bagagem",
-        scope: "template",
+        group: "Bagagem (instância)",
+        scope: "instancia",
       },
       {
         key: "bagagem_despachada",
         label: "Bagagem despachada",
         type: "number",
         span: 6,
-        group: "Bagagem",
-        scope: "template",
+        group: "Bagagem (instância)",
+        scope: "instancia",
       },
+
       // ---------- instância ----------
       {
         key: "data_embarque",
@@ -253,6 +254,16 @@ export const TIPO_SCHEMA: Record<TypeKey, TypeSchemaDef> = {
         scope: "template",
         placeholder: "Bairro, cidade...",
       },
+      {
+        key: "endereco",
+        label: "Endereço completo",
+        type: "textarea",
+        span: 12,
+        group: "Detalhes da hospedagem",
+        scope: "template",
+        placeholder: "Rua, número, complemento — usado em roteiro e transfer",
+      },
+
       {
         key: "regime",
         label: "Regime",

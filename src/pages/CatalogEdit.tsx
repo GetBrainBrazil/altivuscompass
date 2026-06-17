@@ -49,6 +49,7 @@ type FormState = {
   sale_price: string;
   currency: string;
   supplier_id: string;
+  cover_image: string;
   images: string[];
   attributes: Record<string, any>;
   is_active: boolean;
@@ -65,10 +66,12 @@ const EMPTY: FormState = {
   sale_price: "",
   currency: "BRL",
   supplier_id: "",
+  cover_image: "",
   images: [],
   attributes: {},
   is_active: true,
 };
+
 
 export default function CatalogEdit() {
   const { id } = useParams<{ id: string }>();
@@ -131,7 +134,9 @@ export default function CatalogEdit() {
       sale_price: product.sale_price != null ? String(product.sale_price) : "",
       currency: product.currency ?? "BRL",
       supplier_id: product.supplier_id ?? "",
+      cover_image: (product as any).cover_image ?? "",
       images: Array.isArray(product.images) ? product.images : [],
+
       attributes: (product.attributes && typeof product.attributes === "object" ? product.attributes : {}) as Record<string, any>,
       is_active: !!product.is_active,
     });
@@ -170,6 +175,8 @@ export default function CatalogEdit() {
         sale_price: form.sale_price !== "" ? Number(form.sale_price) : null,
         currency: form.currency || "BRL",
         images: form.images.length ? form.images : null,
+        cover_image: form.cover_image || null,
+
         attributes: form.attributes ?? {},
         is_active: form.is_active,
       };
@@ -231,6 +238,26 @@ export default function CatalogEdit() {
   const removeImage = async (src: string) => {
     setForm((f) => ({ ...f, images: f.images.filter((s) => s !== src) }));
   };
+
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const handleCoverUpload = async (files: FileList | null) => {
+    const file = files?.[0];
+    if (!file) return;
+    setUploadingCover(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from(BUCKET).upload(path, file, { cacheControl: "3600", upsert: false });
+      if (error) throw error;
+      setForm((f) => ({ ...f, cover_image: path }));
+      toast({ title: "Capa atualizada" });
+    } catch (e: any) {
+      toast({ title: "Falha no upload", description: e.message, variant: "destructive" });
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
 
   // ---- Attributes by type ----
   const setAttr = (key: string, value: any) =>
@@ -384,7 +411,43 @@ export default function CatalogEdit() {
               </div>
             )}
           </Field>
+          <Field label="Imagem de capa" hint="Imagem principal exibida no card da lista. A galeria de mídia abaixo é para fotos adicionais.">
+            <div className="flex items-center gap-3">
+              <div className="relative w-28 h-20 rounded-md overflow-hidden border bg-muted shrink-0">
+                {form.cover_image ? (
+                  <>
+                    <PrivateImage bucket={BUCKET} source={form.cover_image} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, cover_image: "" }))}
+                      className="absolute top-0.5 right-0.5 rounded-full bg-black/60 text-white p-0.5"
+                      title="Remover capa"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground">Sem capa</div>
+                )}
+              </div>
+              <label
+                htmlFor="product-cover-input"
+                className={`inline-flex items-center gap-2 rounded-md border border-input bg-background hover:bg-muted/40 px-3 py-2 text-sm cursor-pointer transition-colors ${uploadingCover ? "opacity-50 pointer-events-none" : ""}`}
+              >
+                {uploadingCover ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                {uploadingCover ? "Enviando..." : (form.cover_image ? "Trocar capa" : "Enviar capa")}
+              </label>
+              <input
+                id="product-cover-input"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => { handleCoverUpload(e.target.files); e.currentTarget.value = ""; }}
+              />
+            </div>
+          </Field>
         </Section>
+
 
         {/* Comercial */}
         <Section title="Comercial" description="Valores de referência. Quando o produto for puxado para uma cotação, custo e preço viram cópia editável dentro do item — alterações futuras no catálogo não mudam cotações já criadas.">

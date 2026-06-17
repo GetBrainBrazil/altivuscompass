@@ -20,6 +20,9 @@ import { Layers, Trash2 } from "lucide-react";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
+import PrivateImage from "@/components/PrivateImage";
+import { ImageIcon } from "lucide-react";
+
 
 
 
@@ -153,6 +156,7 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-16"></TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead className="w-32">Tipo</TableHead>
                 <TableHead className="hidden md:table-cell">Categoria</TableHead>
@@ -169,8 +173,18 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
                   onClick={isAdmin ? () => navigate(`/catalog/${p.id}/edit`) : undefined}
                 >
                   <TableCell>
+                    <div className="w-12 h-12 rounded-md overflow-hidden border bg-muted flex items-center justify-center">
+                      {p.cover_image ? (
+                        <PrivateImage bucket="product-images" source={p.cover_image} className="w-full h-full object-cover" />
+                      ) : (
+                        <ImageIcon className="w-4 h-4 text-muted-foreground/60" />
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
                     <div className="font-medium">{p.name}</div>
                   </TableCell>
+
                   <TableCell>
                     {p.item_type ? (
                       <Badge variant="outline">{TYPE_LABEL[p.item_type] ?? p.item_type}</Badge>
