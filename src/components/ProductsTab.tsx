@@ -20,6 +20,9 @@ import { Layers, Trash2 } from "lucide-react";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
+import PrivateImage from "@/components/PrivateImage";
+import { ImageIcon } from "lucide-react";
+
 
 
 
