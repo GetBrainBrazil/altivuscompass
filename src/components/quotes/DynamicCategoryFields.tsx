@@ -61,16 +61,21 @@ function computeDuration(values: Record<string, any>): string | null {
   return `${h}h${m.toString().padStart(2, "0")}`;
 }
 
-export function DynamicCategoryFields({ schema, value, onChange }: Props) {
+export function DynamicCategoryFields({ schema, value, onChange, scopeFilter = "all" }: Props) {
   const groups = useMemo(() => {
     const map = new Map<string, CategoryField[]>();
-    for (const f of schema ?? []) {
+    const filtered = (schema ?? []).filter((f) => {
+      if (scopeFilter === "all") return true;
+      const sc = (f as any).scope ?? "template";
+      return sc === scopeFilter;
+    });
+    for (const f of filtered) {
       const g = f.group ?? "";
       if (!map.has(g)) map.set(g, []);
       map.get(g)!.push(f);
     }
     return Array.from(map.entries());
-  }, [schema]);
+  }, [schema, scopeFilter]);
 
   // Auto-compute durations on relevant changes
   useEffect(() => {
