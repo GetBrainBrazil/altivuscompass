@@ -28,6 +28,7 @@ import UserDetail from "./pages/UserDetail";
 import Permissions from "./pages/Permissions";
 import Registrations from "./pages/Registrations";
 import Catalog from "./pages/Catalog";
+import CatalogEdit from "./pages/CatalogEdit";
 import CategoryFieldsPage from "./pages/CategoryFieldsPage";
 import QuoteItemEdit from "./pages/QuoteItemEdit";
 import Sales from "./pages/Sales";
@@ -111,6 +112,8 @@ const App = () => (
             <Route path="/permissions" element={<ProtectedRoute><AppLayout><Permissions /></AppLayout></ProtectedRoute>} />
             <Route path="/registrations" element={<ProtectedRoute><AppLayout><Registrations /></AppLayout></ProtectedRoute>} />
             <Route path="/catalog" element={<ProtectedRoute><AppLayout><Catalog /></AppLayout></ProtectedRoute>} />
+            <Route path="/catalog/new" element={<ProtectedRoute><AppLayout><CatalogEdit /></AppLayout></ProtectedRoute>} />
+            <Route path="/catalog/:id/edit" element={<ProtectedRoute><AppLayout><CatalogEdit /></AppLayout></ProtectedRoute>} />
             <Route path="/registrations/categories/:id/fields" element={<ProtectedRoute><AppLayout><CategoryFieldsPage /></AppLayout></ProtectedRoute>} />
             <Route path="/itineraries" element={<ProtectedRoute><AppLayout><Itineraries /></AppLayout></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><AppLayout><MyProfile /></AppLayout></ProtectedRoute>} />
