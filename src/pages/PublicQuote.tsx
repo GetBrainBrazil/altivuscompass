@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Globe, Loader2, Backpack, Briefcase, Luggage, Plus, Minus, MapPin, ExternalLink, Clock, Download, Tag } from "lucide-react";
+import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Printer, Globe, Loader2, Backpack, Briefcase, Luggage, Plus, Minus, MapPin, ExternalLink, Clock, Download, Tag } from "lucide-react";
 import logoAltivusFallback from "@/assets/logo-altivus.png";
 import { QuoteAcceptance } from "@/components/quotes/QuoteAcceptance";
 import { type QuoteLang, LANG_OPTIONS, getTranslations, getItemTypeLabel, getRelationshipLabel, getFlagUrl, getCabinClassLabel, getConnectionsLabel, getFlightDirectionLabel } from "@/lib/quote-translations";
