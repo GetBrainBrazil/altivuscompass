@@ -298,7 +298,16 @@ export default function CatalogEdit() {
               />
             </Field>
             <Field label="Tipo" required>
-              <Select value={form.item_type || undefined} onValueChange={(v) => setForm((f) => ({ ...f, item_type: v as TypeValue }))}>
+              <Select
+                value={form.item_type || undefined}
+                onValueChange={(v) =>
+                  setForm((f) =>
+                    f.item_type === v
+                      ? f
+                      : { ...f, item_type: v as TypeValue, attributes: {}, category_id: "" }
+                  )
+                }
+              >
                 <SelectTrigger><SelectValue placeholder="Selecione o tipo" /></SelectTrigger>
                 <SelectContent>
                   {TYPE_OPTIONS.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
