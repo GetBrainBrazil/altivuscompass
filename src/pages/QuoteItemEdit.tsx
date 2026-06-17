@@ -13,6 +13,7 @@ import QuoteItemCommercialFields from "@/components/quotes/QuoteItemCommercialFi
 import QuoteItemAttachmentsV2 from "@/components/quotes/QuoteItemAttachmentsV2";
 import { QuoteItemReservationFields } from "@/components/quotes/QuoteItemReservationFields";
 import type { CategoryFieldSchema, CategoryField } from "@/lib/category-schema";
+import { getTypeSchema, asCategorySchema } from "@/lib/type-schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -106,9 +107,13 @@ export default function QuoteItemEdit() {
   const category = (data as any)?.products?.product_categories ?? null;
   const productName = (data as any)?.products?.name ?? null;
   const schema: CategoryFieldSchema = useMemo(() => {
+    // 1) Prioriza TIPO_SCHEMA (motor tipado) — Voo/Hospedagem na v1
+    const typed = getTypeSchema(item?.item_type ?? null);
+    if (typed) return asCategorySchema(typed);
+    // 2) Fallback: schema da categoria do produto (legado)
     const raw = category?.field_schema;
     return Array.isArray(raw) ? raw : [];
-  }, [category]);
+  }, [category, item?.item_type]);
 
   const setField = (patch: Partial<ItemRow>) => {
     setItem((cur) => (cur ? { ...cur, ...patch } : cur));

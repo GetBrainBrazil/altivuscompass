@@ -15,8 +15,17 @@ import { Badge } from "@/components/ui/badge";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { ArrowLeft, ChevronRight, Loader2, Upload, X } from "lucide-react";
 import PrivateImage from "@/components/PrivateImage";
+import { DynamicCategoryFields } from "@/components/quotes/DynamicCategoryFields";
+import {
+  hasTypeSchema,
+  getTypeSchema,
+  getTemplateFields,
+  isValidCategoryForType,
+  asCategorySchema,
+} from "@/lib/type-schema";
 
 const TYPE_OPTIONS = [
+  { value: "voo", label: "Voo" },
   { value: "hospedagem", label: "Hospedagem" },
   { value: "experiencia", label: "Experiência" },
   { value: "seguro", label: "Seguro" },
@@ -134,12 +143,28 @@ export default function CatalogEdit() {
       if (!form.name.trim()) throw new Error("Informe o nome do produto.");
       if (!form.item_type) throw new Error("Selecione o tipo do produto.");
 
+      // Validação dos campos template do TIPO_SCHEMA (quando aplicável)
+      const tplFields = getTemplateFields(form.item_type);
+      for (const f of tplFields) {
+        if (!f.required) continue;
+        const v = (form.attributes ?? {})[f.key];
+        const empty = v === undefined || v === null || v === "" || (Array.isArray(v) && v.length === 0);
+        if (empty) throw new Error(`Preencha o campo "${f.label}".`);
+      }
+      if (hasTypeSchema(form.item_type)) {
+        const cat = (form.attributes ?? {}).categoria;
+        if (cat != null && cat !== "" && !isValidCategoryForType(form.item_type, cat)) {
+          throw new Error("Categoria inválida para o tipo selecionado.");
+        }
+      }
+
+
       const basePayload: Record<string, any> = {
         name: form.name.trim(),
         item_type: form.item_type,
         description: form.description || null,
         destination: form.destination || null,
-        category_id: form.category_id || null,
+        category_id: hasTypeSchema(form.item_type) ? null : (form.category_id || null),
         supplier_id: form.supplier_id || null,
         tags: form.tags.length ? form.tags : null,
         sale_price: form.sale_price !== "" ? Number(form.sale_price) : null,
@@ -211,46 +236,34 @@ export default function CatalogEdit() {
   const setAttr = (key: string, value: any) =>
     setForm((f) => ({ ...f, attributes: { ...(f.attributes ?? {}), [key]: value } }));
 
+  // Render dinâmico via TIPO_SCHEMA (template-only) para tipos com schema.
+  // Tipos sem schema mostram bloco simples de "Observações" em attributes.notas.
+  const typedSchema = useMemo(() => getTypeSchema(form.item_type || null), [form.item_type]);
   const typeAttributesUI = useMemo(() => {
-    switch (form.item_type) {
-      case "hospedagem":
-        return (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <Field label="Regime">
-              <Input value={form.attributes.regime ?? ""} onChange={(e) => setAttr("regime", e.target.value)} placeholder="Café da manhã, All inclusive..." />
-            </Field>
-            <Field label="Check-in">
-              <Input type="time" value={form.attributes.check_in ?? ""} onChange={(e) => setAttr("check_in", e.target.value)} />
-            </Field>
-            <Field label="Check-out">
-              <Input type="time" value={form.attributes.check_out ?? ""} onChange={(e) => setAttr("check_out", e.target.value)} />
-            </Field>
-          </div>
-        );
-      case "experiencia":
-        return (
-          <Field label="Duração">
-            <Input value={form.attributes.duracao ?? ""} onChange={(e) => setAttr("duracao", e.target.value)} placeholder="Ex.: 3 horas, dia inteiro..." />
-          </Field>
-        );
-      case "seguro":
-        return (
-          <Field label="Cobertura">
-            <Textarea value={form.attributes.cobertura ?? ""} onChange={(e) => setAttr("cobertura", e.target.value)} rows={3} placeholder="Resumo das coberturas..." />
-          </Field>
-        );
-      case "transporte":
-      case "cruzeiro":
-      case "outro":
-        return (
-          <Field label="Observações específicas">
-            <Textarea value={form.attributes.notas ?? ""} onChange={(e) => setAttr("notas", e.target.value)} rows={3} placeholder="Detalhes livres deste produto..." />
-          </Field>
-        );
-      default:
-        return <p className="text-xs text-muted-foreground">Selecione um tipo para ver os campos específicos.</p>;
+    if (typedSchema) {
+      return (
+        <DynamicCategoryFields
+          schema={asCategorySchema(typedSchema)}
+          value={form.attributes}
+          onChange={(next) => setForm((f) => ({ ...f, attributes: next }))}
+          scopeFilter="template"
+        />
+      );
     }
-  }, [form.item_type, form.attributes]);
+    if (!form.item_type) {
+      return <p className="text-xs text-muted-foreground">Selecione um tipo para ver os campos específicos.</p>;
+    }
+    return (
+      <Field label="Observações específicas">
+        <Textarea
+          value={form.attributes.notas ?? ""}
+          onChange={(e) => setAttr("notas", e.target.value)}
+          rows={3}
+          placeholder="Detalhes livres deste produto..."
+        />
+      </Field>
+    );
+  }, [typedSchema, form.item_type, form.attributes]);
 
   const isValid = form.name.trim().length > 0 && !!form.item_type;
   const breadcrumbName = isEdit ? (product?.name ?? "Editar produto") : "Novo produto";
@@ -301,7 +314,16 @@ export default function CatalogEdit() {
               />
             </Field>
             <Field label="Tipo" required>
-              <Select value={form.item_type || undefined} onValueChange={(v) => setForm((f) => ({ ...f, item_type: v as TypeValue }))}>
+              <Select
+                value={form.item_type || undefined}
+                onValueChange={(v) =>
+                  setForm((f) =>
+                    f.item_type === v
+                      ? f
+                      : { ...f, item_type: v as TypeValue, attributes: {}, category_id: "" }
+                  )
+                }
+              >
                 <SelectTrigger><SelectValue placeholder="Selecione o tipo" /></SelectTrigger>
                 <SelectContent>
                   {TYPE_OPTIONS.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
@@ -321,15 +343,17 @@ export default function CatalogEdit() {
             <Field label="Destino / Local">
               <Input value={form.destination} onChange={(e) => setForm((f) => ({ ...f, destination: e.target.value }))} placeholder="Rio de Janeiro, Paris..." />
             </Field>
-            <Field label="Categoria">
-              <Select value={form.category_id || "none"} onValueChange={(v) => setForm((f) => ({ ...f, category_id: v === "none" ? "" : v }))}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">— Sem categoria —</SelectItem>
-                  {categories.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </Field>
+            {!typedSchema && (
+              <Field label="Categoria">
+                <Select value={form.category_id || "none"} onValueChange={(v) => setForm((f) => ({ ...f, category_id: v === "none" ? "" : v }))}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— Sem categoria —</SelectItem>
+                    {categories.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </Field>
+            )}
           </div>
           <Field label="Tags" hint="Pressione Enter ou vírgula para adicionar.">
             <Input

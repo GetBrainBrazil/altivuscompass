@@ -1,55 +1,91 @@
-## Objetivo
+# Catálogo tipado — motor TIPO_SCHEMA (v1: Voo + Hospedagem)
 
-Evitar cadastros duplicados de clientes mostrando sugestões em tempo real enquanto o usuário digita o nome no formulário "Novo Cliente". A busca cobre tanto clientes existentes quanto passageiros (viajantes) que ainda não são clientes, podendo ser promovidos.
+## Estratégia
 
-## Escopo
+Reaproveitar a infraestrutura que já existe (`src/lib/category-schema.ts` + `DynamicCategoryFields`) em vez de criar um motor paralelo. Hoje o schema é por **categoria** (linha em `product_categories`); vamos transformá-lo em schema por **TIPO** (constante em código), e Categoria vira um **campo select** dentro do schema do tipo. Nada novo no banco — tudo continua em `products.attributes` (jsonb) e `quote_items.details` (jsonb).
 
-Apenas o formulário "Novo Cliente" em `src/pages/Clients.tsx` (campo `Nome completo`, linha 1228). Sem alterações em modo edição.
+## 1. Nova fonte única de verdade: `src/lib/type-schema.ts`
 
-## Comportamento da busca em tempo real
+Objeto `TIPO_SCHEMA: Record<TypeKey, TypeSchemaDef>` onde cada campo estende o `CategoryField` atual com:
 
-1. A partir de 3 caracteres digitados em `Nome completo`, com debounce ~250ms, abre um popover sob o input com até 8 sugestões.
-2. Busca paralela em duas fontes:
-   - `clients` por `full_name ilike %query%` (limite 5).
-   - `passengers` por `full_name ilike %query%` (limite 5), trazendo o `client` vinculado quando houver.
-3. Cada sugestão exibe:
-   - Nome + badge `Cliente` ou `Viajante`.
-   - Indicadores secundários: CPF (mascarado), telefone formatado, e-mail — só quando existirem.
-   - Se a sugestão for um viajante já vinculado a outro cliente, mostra "Viajante de: {nome do cliente}".
+- `scope: "template" | "instancia"` (default `"template"`)
+- Tipos de input reaproveitados do enum existente: `text | textarea | number | currency | date | time | select | checkbox | airport | airline | google_places | baggage | duration_auto`
+- O campo `categoria` é sempre um `select` `scope: "template"` cujas `options` são as categorias válidas daquele tipo
 
-## Pontos de verificação (hierarquia de decisão)
+### v1 — dois tipos populados
 
-Para reforçar a unicidade, a busca por nome é complementada por matches fortes assim que o usuário preenche outros campos (CPF, telefone, e-mail) ainda dentro do form de criação:
+**voo** (categoria: Nacional, Internacional, Fretado)
+- Template: `categoria`, `companhia` (airline, required), `classe` (select), `origem` (airport, required), `destino` (airport, required), `conexao` (select), `bagagem_mao` (number), `bagagem_despachada` (number)
+- Instância: `data_embarque` (date), `horario_embarque` (time), `data_chegada` (date), `horario_chegada` (time), `numero_voo` (text), `localizador` (text), `numero_compra` (text)
 
-- **CPF** (decisivo): match exato em `clients.cpf_cnpj` ou `passengers.cpf`. Quando há match exato, exibe banner amarelo acima do form: "Já existe um cliente com este CPF — abrir registro" + botão.
-- **Celular** (ponto de verificação, considerando DDD): match por sufixo de **10 ou 11 dígitos** (DDD + número, p.ex. `11987654321`) em `clients.phone` e `client_phones.phone`. O mesmo número sem DDD pode existir em estados diferentes, então o sufixo curto (8–9 dígitos) **não** é usado para esse match. Mostrado como sugestão regular (não bloqueia).
-- **E-mail** (auxiliar): match em `clients.email` e `client_emails.email`. Mostrado como sugestão com nota "pode ser compartilhado".
+**hospedagem** (categoria: Hotel, Resort, Pousada, Apart-hotel, Villa)
+- Template: `categoria`, `localizacao` (text required), `estrelas` (select 1–5), `tipo_acomodacao` (text), `regime` (select), `comodidades` (checkbox multi)
+- Instância: `check_in` (date), `check_out` (date), `num_noites` (number), `num_quartos` (number), `num_hospedes` (number)
 
-A validação final no `handleSaveClick` (já existente em `findDuplicateCandidates`, linha 875) permanece como rede de segurança e também será ajustada para usar sufixo de 10–11 dígitos no telefone.
+Helpers exportados: `getTypeSchema(type)`, `getTemplateFields(type)`, `getInstanceFields(type)`, `getCategoryOptions(type)`, `isValidCategoryForType(type, cat)`.
 
-## Ações ao clicar numa sugestão
+## 2. Adaptar o renderer
 
-- **Cliente existente** → confirma com diálogo: "Abrir este cliente em vez de criar um novo?" Se sim, navega para `?id={clientId}` (modo edição). Se não, fecha sugestões e mantém digitação.
-- **Viajante sem cliente** → confirma: "Este viajante ainda não é cliente. Promover a cliente preenchendo os dados?" Se sim, pré-preenche o form com `full_name`, `cpf`, `birth_date`, `nationality`, `passport_number`, `passport_expiry` e marca um estado `promoteFromPassengerId` para que, ao salvar, o `passengers.client_id` seja atualizado para o novo cliente criado.
-- **Viajante já vinculado a outro cliente** → confirma: "Este viajante já pertence ao cliente X. Abrir cliente X?" e navega para o cliente vinculado.
+`src/components/quotes/DynamicCategoryFields.tsx` ganha prop opcional `scopeFilter?: "template" | "all"` (default `all`). Filtra `schema` antes de agrupar. Tipos `airport`/`airline`/`baggage` já são suportados — sem mudança visual.
 
-## Detalhes técnicos
+## 3. Form do catálogo (`src/pages/CatalogEdit.tsx`)
 
-- Novo componente `src/components/clients/ClientNameSuggest.tsx` (Popover + lista, padrão visual do `LeadClientPicker`).
-- Hook `useQuery` com `queryKey: ["client-name-suggest", debouncedQuery]`, `enabled: debouncedQuery.length >= 3`.
-- Debounce inline com `useEffect` + `setTimeout` (sem nova dependência).
-- Reuso de `ContactLevelBadge` para "Cliente" e novo estilo para "Viajante".
-- Promoção de viajante: dentro de `saveMutation.onSuccess`, se `promoteFromPassengerId` estiver setado, executar `update passengers set client_id = newClient.id where id = promoteFromPassengerId`.
-- Banner de CPF duplicado: bloco condicional acima do card do form, só aparece com CPF de 11/14 dígitos e match exato.
-- Match de telefone usa `cleanDigits(...).slice(-11)` (mín. 10) — garante que o DDD entra na comparação.
+- Adicionar `voo` em `TYPE_OPTIONS` (com label "Voo").
+- Remover do `Catalog.tsx` o aviso "Voos não entram no catálogo" (subtítulo).
+- Substituir o bloco `typeAttributesUI` (switch hard-coded) e o select de Categoria global por **uma única seção "Detalhes do {Tipo}"** que renderiza `<DynamicCategoryFields schema={getTemplateFields(form.item_type)} value={form.attributes} onChange={...} scopeFilter="template" />`.
+- Categoria deixa de ler `product_categories`; passa a ser o campo `categoria` dentro de `attributes`. Manter `category_id` no payload como `null` (não removemos a coluna, mas paramos de usá-la para tipos com TIPO_SCHEMA).
+- Ao trocar `item_type`, **resetar `attributes`** (descarta categoria/atributos antigos para evitar combinação inválida).
+- Validação: além de Nome+Tipo, validar `required` dos campos template e `isValidCategoryForType`.
 
-## Arquivos afetados
+## 4. Item da cotação
 
-- `src/pages/Clients.tsx` — integrar componente no input de nome, estado `promoteFromPassengerId`, ajuste no `saveMutation`, banner CPF, ajuste do sufixo no `findDuplicateCandidates`.
-- `src/components/clients/ClientNameSuggest.tsx` — novo componente.
+Onde hoje renderizamos `DynamicCategoryFields` a partir de `product_categories.field_schema`, passar a usar `getTypeSchema(item.item_type)` quando o tipo tiver entrada em `TIPO_SCHEMA` (Voo e Hospedagem nesta v1). Fallback ao schema antigo para tipos ainda não migrados — não quebra cotações existentes.
 
-## Fora do escopo
+Render no item = `schema completo` (template + instancia), sem `scopeFilter`. Mantém edição livre de qualquer campo.
 
-- Mudanças no modo edição.
-- Merge automático de registros existentes.
-- Mudanças em RLS, schema ou outros formulários (leads, contatos).
+### "Puxar do catálogo" (`QuoteItemProductPicker.tsx` + `pick`)
+
+Estender o callback `onSelect` para receber também `attributes` do produto. No handler do item:
+
+```
+unit_cost / unit_price ← cost / sale_price do produto (como hoje)
+details ← { ...details, ...produto.attributes }   // só template, instancia fica vazia
+product_id ← produto.id
+```
+
+Snapshot por cópia: edição posterior do produto não afeta a cotação (já é o comportamento, só precisamos garantir que **não** lemos `products.attributes` na hora de renderizar — sempre lemos `quote_items.details`).
+
+Remover aviso "produto não cadastrado" quando `product_id` existir (já existe a checagem; só validar).
+
+## 5. Permissões
+
+Custo-base (`cost`) continua escondido para non-admin/manager (`canSeeCost` já existe em `CatalogEdit` e nos itens da cotação via `QuoteItemCommercialFields`). Nenhuma mudança.
+
+## 6. Migração de dados — nenhuma
+
+`products.attributes`, `products.item_type`, `quote_items.details` já existem. Produtos antigos sem `attributes.categoria` continuam funcionando (campo vazio). Cotações antigas continuam usando o schema por categoria via fallback.
+
+## Critérios de aceite (mapeados)
+
+1. Troca de Tipo no form → re-render da seção Detalhes + reset de Categoria (via reset de `attributes`). ✓
+2. Tentar salvar Hospedagem com categoria de Transporte é impossível: as opções vêm do próprio schema do tipo. ✓
+3. Voo GOL GIG→SCL Executiva: cadastra → puxa no item → companhia/classe/aeroportos/bagagem preenchidos; data/hora/localizador vazios (são `scope:"instancia"`, não copiados). ✓
+4. Snapshot via cópia em `quote_items.details`. ✓
+5. Itens sem `product_id` continuam editáveis manualmente como hoje. ✓
+6. `canSeeCost` controla visibilidade do custo. ✓
+
+## Arquivos tocados
+
+- **novo** `src/lib/type-schema.ts` — TIPO_SCHEMA + helpers
+- `src/components/quotes/DynamicCategoryFields.tsx` — prop `scopeFilter`
+- `src/pages/CatalogEdit.tsx` — adicionar "voo" no TYPE_OPTIONS, trocar `typeAttributesUI` e Categoria por `DynamicCategoryFields` com schema do tipo, reset ao trocar tipo
+- `src/pages/Catalog.tsx` — remover aviso "Voos não entram no catálogo"
+- `src/components/quotes/QuoteItemProductPicker.tsx` — incluir `attributes` no `onSelect`
+- Local onde o item de cotação chama `DynamicCategoryFields` (ex.: `QuoteItemEdit.tsx` / `QuoteModularItemsList.tsx`) — passar a usar `getTypeSchema` quando disponível, com fallback ao schema da categoria
+- Handler que recebe `onSelect` do picker — fazer merge de `attributes` em `details`
+
+## Fora de escopo (confirmado)
+
+- Tipos seguro, transporte, experiência, cruzeiro, outro (entram só adicionando entradas no TIPO_SCHEMA depois).
+- Pacotes.
+- Preço por temporada/fornecedor.

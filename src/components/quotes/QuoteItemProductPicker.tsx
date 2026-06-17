@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, Package, AlertTriangle, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { pickTemplateAttributes } from "@/lib/type-schema";
 
 type Suggestion = {
   id: string;
@@ -27,12 +28,14 @@ type Suggestion = {
 interface Props {
   itemType: string;
   productId: string | null | undefined;
-  /** Permite que o picker pré-preencha custo/preço a partir do catálogo */
+  /** Permite que o picker pré-preencha custo/preço e atributos a partir do catálogo */
   onSelect: (patch: {
     product_id: string | null;
     title?: string;
     unit_cost?: number;
     unit_price?: number;
+    /** Snapshot dos atributos template (apenas) do produto. */
+    attributes?: Record<string, any>;
   }) => void;
 }
 
@@ -105,15 +108,27 @@ export default function QuoteItemProductPicker({ itemType, productId, onSelect }
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const pick = (p: Suggestion) => {
+  const pick = async (p: Suggestion) => {
     setSelectedName(p.name);
     setQuery("");
     setOpen(false);
+    // Busca atributos do produto para snapshot no item
+    let attributes: Record<string, any> | undefined;
+    try {
+      const { data } = await supabase
+        .from("products")
+        .select("attributes")
+        .eq("id", p.id)
+        .maybeSingle();
+      const raw = (data as any)?.attributes;
+      attributes = raw && typeof raw === "object" ? pickTemplateAttributes(itemType, raw) : undefined;
+    } catch { /* segue sem atributos */ }
     onSelect({
       product_id: p.id,
       title: p.name,
       unit_cost: Number(p.cost ?? 0) || undefined,
       unit_price: Number(p.sale_price ?? 0) || undefined,
+      attributes,
     });
   };
 

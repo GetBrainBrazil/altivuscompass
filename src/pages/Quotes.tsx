@@ -3287,6 +3287,9 @@ export default function Quotes() {
                               ...(patch.title && !item.title ? { title: patch.title } : {}),
                               ...(patch.unit_cost !== undefined && !item.unit_cost ? { unit_cost: patch.unit_cost } : {}),
                               ...(patch.unit_price !== undefined && !item.unit_price ? { unit_price: patch.unit_price } : {}),
+                              ...(patch.attributes && Object.keys(patch.attributes).length
+                                ? { details: { ...(item.details ?? {}), ...patch.attributes } }
+                                : {}),
                             })
                           }
                         />
