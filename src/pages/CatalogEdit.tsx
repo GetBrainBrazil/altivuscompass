@@ -117,7 +117,7 @@ export default function CatalogEdit() {
       description: product.description ?? "",
       destination: product.destination ?? "",
       category_id: product.category_id ?? "",
-      tags: Array.isArray(product.tags) ? (product.tags as string[]) : [],
+      tags: Array.isArray((product as any).tags) ? ((product as any).tags as string[]) : [],
       cost: product.cost != null ? String(product.cost) : "",
       sale_price: product.sale_price != null ? String(product.sale_price) : "",
       currency: product.currency ?? "BRL",
