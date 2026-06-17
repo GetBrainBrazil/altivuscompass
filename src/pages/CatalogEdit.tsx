@@ -117,7 +117,7 @@ export default function CatalogEdit() {
       description: product.description ?? "",
       destination: product.destination ?? "",
       category_id: product.category_id ?? "",
-      tags: Array.isArray(product.tags) ? product.tags : [],
+      tags: Array.isArray(product.tags) ? (product.tags as string[]) : [],
       cost: product.cost != null ? String(product.cost) : "",
       sale_price: product.sale_price != null ? String(product.sale_price) : "",
       currency: product.currency ?? "BRL",
@@ -367,11 +367,11 @@ export default function CatalogEdit() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {canSeeCost && (
               <Field label="Custo-base (R$)">
-                <CurrencyInput value={form.cost} onChange={(v) => setForm((f) => ({ ...f, cost: v ?? "" }))} placeholder="0,00" />
+                <CurrencyInput value={form.cost} onChange={(v) => setForm((f) => ({ ...f, cost: v == null ? "" : String(v) }))} placeholder="0,00" />
               </Field>
             )}
             <Field label="Preço-base (R$)">
-              <CurrencyInput value={form.sale_price} onChange={(v) => setForm((f) => ({ ...f, sale_price: v ?? "" }))} placeholder="0,00" />
+              <CurrencyInput value={form.sale_price} onChange={(v) => setForm((f) => ({ ...f, sale_price: v == null ? "" : String(v) }))} placeholder="0,00" />
             </Field>
             <Field label="Moeda">
               <Select value={form.currency} onValueChange={(v) => setForm((f) => ({ ...f, currency: v }))}>
