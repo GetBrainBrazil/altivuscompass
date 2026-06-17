@@ -13,6 +13,7 @@ import QuoteItemCommercialFields from "@/components/quotes/QuoteItemCommercialFi
 import QuoteItemAttachmentsV2 from "@/components/quotes/QuoteItemAttachmentsV2";
 import { QuoteItemReservationFields } from "@/components/quotes/QuoteItemReservationFields";
 import type { CategoryFieldSchema, CategoryField } from "@/lib/category-schema";
+import { getTypeSchema, asCategorySchema } from "@/lib/type-schema";
 import {
   AlertDialog,
   AlertDialogAction,
