@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Printer, Globe, Loader2, Backpack, Briefcase, Luggage, Plus, Minus, MapPin, ExternalLink, Clock, Download } from "lucide-react";
+import { Plane, Hotel, Bus, Ship, Sparkles, Shield, Package, CalendarDays, Map, Phone, Mail, Instagram, Globe, Loader2, Backpack, Briefcase, Luggage, Plus, Minus, MapPin, ExternalLink, Clock, Download, Tag } from "lucide-react";
 import logoAltivusFallback from "@/assets/logo-altivus.png";
 import { QuoteAcceptance } from "@/components/quotes/QuoteAcceptance";
 import { type QuoteLang, LANG_OPTIONS, getTranslations, getItemTypeLabel, getRelationshipLabel, getFlagUrl, getCabinClassLabel, getConnectionsLabel, getFlightDirectionLabel } from "@/lib/quote-translations";
@@ -661,8 +661,9 @@ export default function PublicQuote() {
                                 </span>
                               )}
                               {d.locator && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full pq-fs-3xs font-body border border-gray-300 text-gray-700 bg-gray-50 font-medium">
-                                  {t.locator}: {d.locator}
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-body font-semibold tracking-wide bg-slate-800 text-white border border-slate-700 shadow-sm">
+                                  <Tag className="w-3 h-3 text-slate-300" />
+                                  {d.locator}
                                 </span>
                               )}
                             </div>
