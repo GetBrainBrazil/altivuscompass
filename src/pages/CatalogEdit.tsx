@@ -175,6 +175,8 @@ export default function CatalogEdit() {
         sale_price: form.sale_price !== "" ? Number(form.sale_price) : null,
         currency: form.currency || "BRL",
         images: form.images.length ? form.images : null,
+        cover_image: form.cover_image || null,
+
         attributes: form.attributes ?? {},
         is_active: form.is_active,
       };
