@@ -22,7 +22,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import PrivateImage from "@/components/PrivateImage";
 import { ImageIcon } from "lucide-react";
-import { getCategoryOptions } from "@/lib/type-schema";
+import { getCategoryOptions, getTypeIcon } from "@/lib/type-schema";
 
 
 
