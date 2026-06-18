@@ -448,6 +448,48 @@ export default function TaskDetail() {
                 </Command>
               </PopoverContent>
             </Popover>
+            {form.quote_id !== "none" && (() => {
+              const q: any = quotes.find((x: any) => x.id === form.quote_id);
+              if (!q) return null;
+              const fmtDate = (d: string | null) => (d ? format(parseLocalDate(d) ?? new Date(d), "dd/MM/yyyy") : null);
+              const start = fmtDate(q.travel_date_start);
+              const end = fmtDate(q.travel_date_end);
+              const period = start && end ? `${start} → ${end}` : start || end || null;
+              const value = typeof q.total_value === "number" ? q.total_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : null;
+              return (
+                <div className="mt-2 rounded-md border border-border bg-muted/30 p-2.5 text-xs font-body space-y-1.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-1.5 font-medium text-foreground truncate">
+                      <Plane size={12} className="text-muted-foreground shrink-0" />
+                      <span className="truncate">{q.destination ?? q.title ?? "Sem destino"}</span>
+                    </div>
+                    <a
+                      href={`/quotes/${q.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-muted-foreground hover:text-foreground shrink-0"
+                      title="Abrir cotação"
+                    >
+                      <ExternalLink size={12} />
+                    </a>
+                  </div>
+                  {q.clients?.full_name && (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <UserIcon size={11} /> <span className="truncate">{q.clients.full_name}</span>
+                    </div>
+                  )}
+                  {period && (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <CalendarIcon size={11} /> {period}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between gap-2 text-muted-foreground">
+                    {q.stage && <span className="capitalize">{String(q.stage).replace(/_/g, " ")}</span>}
+                    {value && <span className="font-medium text-foreground">{value}</span>}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
           <div>
             <Label className="font-body text-xs uppercase tracking-wide text-muted-foreground">Cliente vinculado</Label>
@@ -491,6 +533,45 @@ export default function TaskDetail() {
                 </Command>
               </PopoverContent>
             </Popover>
+            {form.client_id !== "none" && (() => {
+              const c: any = clients.find((x: any) => x.id === form.client_id);
+              if (!c) return null;
+              const loc = [c.city, c.state].filter(Boolean).join(", ");
+              return (
+                <div className="mt-2 rounded-md border border-border bg-muted/30 p-2.5 text-xs font-body space-y-1.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-1.5 font-medium text-foreground truncate">
+                      <UserIcon size={12} className="text-muted-foreground shrink-0" />
+                      <span className="truncate">{c.full_name}</span>
+                    </div>
+                    <a
+                      href={`/clients?id=${c.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-muted-foreground hover:text-foreground shrink-0"
+                      title="Abrir cliente"
+                    >
+                      <ExternalLink size={12} />
+                    </a>
+                  </div>
+                  {c.email && (
+                    <div className="flex items-center gap-1.5 text-muted-foreground truncate">
+                      <Mail size={11} /> <span className="truncate">{c.email}</span>
+                    </div>
+                  )}
+                  {c.phone && (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Phone size={11} /> {c.phone}
+                    </div>
+                  )}
+                  {loc && (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <MapPin size={11} /> {loc}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
 
