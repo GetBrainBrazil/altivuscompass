@@ -81,6 +81,8 @@ export default function TaskDetail() {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const baselineRef = useRef<string>("");
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [quotePreviewOpen, setQuotePreviewOpen] = useState(false);
+  const [clientPreviewOpen, setClientPreviewOpen] = useState(false);
 
   const snapshot = (f: typeof form, files: File[]) =>
     JSON.stringify({
