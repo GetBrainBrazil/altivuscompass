@@ -555,7 +555,19 @@ export default function TaskDetail() {
               if (!c) return null;
               const loc = [c.city, c.state].filter(Boolean).join(", ");
               return (
-                <div className="mt-2 rounded-md border border-border bg-muted/30 p-2.5 text-xs font-body space-y-1.5">
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setClientPreviewOpen(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setClientPreviewOpen(true);
+                    }
+                  }}
+                  className="mt-2 rounded-md border border-border bg-muted/30 p-2.5 text-xs font-body space-y-1.5 cursor-pointer hover:bg-muted/50 hover:border-foreground/20 transition-colors text-left"
+                  title="Ver resumo do cliente"
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-1.5 font-medium text-foreground truncate">
                       <UserIcon size={12} className="text-muted-foreground shrink-0" />
@@ -565,6 +577,7 @@ export default function TaskDetail() {
                       href={`/clients?id=${c.id}`}
                       target="_blank"
                       rel="noreferrer"
+                      onClick={(e) => e.stopPropagation()}
                       className="text-muted-foreground hover:text-foreground shrink-0"
                       title="Abrir cliente"
                     >
