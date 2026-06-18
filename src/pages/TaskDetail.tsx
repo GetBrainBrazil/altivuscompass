@@ -480,7 +480,7 @@ export default function TaskDetail() {
                       <span className="truncate">{q.destination ?? q.title ?? "Sem destino"}</span>
                     </div>
                     <a
-                      href={`/quotes/${q.id}`}
+                      href={`/quotes?quoteId=${q.id}`}
                       target="_blank"
                       rel="noreferrer"
                       onClick={(e) => e.stopPropagation()}
