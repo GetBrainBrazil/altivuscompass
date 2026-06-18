@@ -121,6 +121,7 @@ export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
   checkbox: "Caixa de seleção",
   airport: "Aeroporto (autocomplete)",
   airline: "Companhia aérea",
+  airport_list: "Lista de escalas (aeroportos)",
   google_places: "Endereço (Google Places)",
   baggage: "Bagagens (mochila/mão/despachada)",
   duration_auto: "Duração (calculada)",
