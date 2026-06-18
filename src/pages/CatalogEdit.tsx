@@ -554,11 +554,14 @@ export default function CatalogEdit() {
   );
 }
 
-function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
+function Section({ title, description, icon: Icon, children }: { title: string; description?: string; icon?: React.ComponentType<{ className?: string }>; children: React.ReactNode }) {
   return (
     <section className="rounded-lg border bg-card">
       <header className="px-5 py-3 border-b">
-        <h2 className="text-sm font-display font-semibold tracking-wide uppercase text-foreground/90">{title}</h2>
+        <h2 className="text-sm font-display font-semibold tracking-wide uppercase text-foreground/90 inline-flex items-center gap-2">
+          {Icon && <Icon className="w-4 h-4 text-muted-foreground" />}
+          {title}
+        </h2>
         {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
       </header>
       <div className="p-5 space-y-4">{children}</div>
