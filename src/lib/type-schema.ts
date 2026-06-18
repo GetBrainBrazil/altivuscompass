@@ -240,6 +240,7 @@ export const TIPO_SCHEMA: Record<TypeKey, TypeSchemaDef> = {
   },
   hospedagem: {
     label: "Hospedagem",
+    icone: "bed",
     schema: [
       // ---------- template ----------
       {
