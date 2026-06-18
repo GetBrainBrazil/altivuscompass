@@ -286,7 +286,10 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
                         {p.cover_image ? (
                           <PrivateImage bucket="product-images" source={p.cover_image} className="w-full h-full object-cover" />
                         ) : (
-                          <ImageIcon className="w-4 h-4 text-muted-foreground/60" />
+                          (() => {
+                            const Icon = p.item_type ? getTypeIcon(p.item_type) : ImageIcon;
+                            return <Icon className="w-5 h-5 text-muted-foreground/60" />;
+                          })()
                         )}
                       </div>
                     </TableCell>
@@ -294,9 +297,15 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
                       <div className="font-medium">{p.name}</div>
                     </TableCell>
                     <TableCell>
-                      {p.item_type ? (
-                        <Badge variant="outline">{TYPE_LABEL[p.item_type] ?? p.item_type}</Badge>
-                      ) : (
+                      {p.item_type ? (() => {
+                        const Icon = getTypeIcon(p.item_type);
+                        return (
+                          <Badge variant="outline" className="inline-flex items-center gap-1.5">
+                            <Icon className="w-3.5 h-3.5" />
+                            {TYPE_LABEL[p.item_type] ?? p.item_type}
+                          </Badge>
+                        );
+                      })() : (
                         <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
