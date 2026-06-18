@@ -22,7 +22,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import PrivateImage from "@/components/PrivateImage";
 import { ImageIcon } from "lucide-react";
-import { getCategoryOptions } from "@/lib/type-schema";
+import { getCategoryOptions, getTypeIcon } from "@/lib/type-schema";
 
 
 
@@ -212,9 +212,17 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
             <SelectTrigger className="sm:w-44"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os tipos</SelectItem>
-              {TYPE_KEYS.map((k) => (
-                <SelectItem key={k} value={k}>{TYPE_LABEL[k]}</SelectItem>
-              ))}
+              {TYPE_KEYS.map((k) => {
+                const Icon = getTypeIcon(k);
+                return (
+                  <SelectItem key={k} value={k}>
+                    <span className="inline-flex items-center gap-2">
+                      <Icon className="w-4 h-4 text-muted-foreground" />
+                      {TYPE_LABEL[k]}
+                    </span>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
           <Select
@@ -278,7 +286,10 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
                         {p.cover_image ? (
                           <PrivateImage bucket="product-images" source={p.cover_image} className="w-full h-full object-cover" />
                         ) : (
-                          <ImageIcon className="w-4 h-4 text-muted-foreground/60" />
+                          (() => {
+                            const Icon = p.item_type ? getTypeIcon(p.item_type) : ImageIcon;
+                            return <Icon className="w-5 h-5 text-muted-foreground/60" />;
+                          })()
                         )}
                       </div>
                     </TableCell>
@@ -286,9 +297,15 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
                       <div className="font-medium">{p.name}</div>
                     </TableCell>
                     <TableCell>
-                      {p.item_type ? (
-                        <Badge variant="outline">{TYPE_LABEL[p.item_type] ?? p.item_type}</Badge>
-                      ) : (
+                      {p.item_type ? (() => {
+                        const Icon = getTypeIcon(p.item_type);
+                        return (
+                          <Badge variant="outline" className="inline-flex items-center gap-1.5">
+                            <Icon className="w-3.5 h-3.5" />
+                            {TYPE_LABEL[p.item_type] ?? p.item_type}
+                          </Badge>
+                        );
+                      })() : (
                         <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>

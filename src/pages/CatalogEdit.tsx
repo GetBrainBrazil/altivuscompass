@@ -22,6 +22,7 @@ import {
   getTemplateFields,
   isValidCategoryForType,
   asCategorySchema,
+  getTypeIcon,
 } from "@/lib/type-schema";
 
 const TYPE_OPTIONS = [
@@ -523,8 +524,9 @@ export default function CatalogEdit() {
 
         {/* Atributos específicos */}
         <Section
-          title="Atributos específicos"
+          title={form.item_type ? `Detalhes de ${TYPE_LABEL[form.item_type]}` : "Atributos específicos"}
           description={form.item_type ? `Campos próprios para ${TYPE_LABEL[form.item_type]}.` : "Selecione um tipo para ver os campos específicos."}
+          icon={form.item_type ? getTypeIcon(form.item_type) : undefined}
         >
           {typeAttributesUI}
         </Section>
@@ -552,11 +554,14 @@ export default function CatalogEdit() {
   );
 }
 
-function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
+function Section({ title, description, icon: Icon, children }: { title: string; description?: string; icon?: React.ComponentType<{ className?: string }>; children: React.ReactNode }) {
   return (
     <section className="rounded-lg border bg-card">
       <header className="px-5 py-3 border-b">
-        <h2 className="text-sm font-display font-semibold tracking-wide uppercase text-foreground/90">{title}</h2>
+        <h2 className="text-sm font-display font-semibold tracking-wide uppercase text-foreground/90 inline-flex items-center gap-2">
+          {Icon && <Icon className="w-4 h-4 text-muted-foreground" />}
+          {title}
+        </h2>
         {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
       </header>
       <div className="p-5 space-y-4">{children}</div>

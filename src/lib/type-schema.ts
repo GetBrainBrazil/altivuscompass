@@ -12,6 +12,16 @@
  */
 
 import type { CategoryField, CategoryFieldSchema } from "@/lib/category-schema";
+import {
+  Bed,
+  Plane,
+  Car,
+  Ticket,
+  ShieldCheck,
+  Ship,
+  Package,
+  type LucideIcon,
+} from "lucide-react";
 
 export type FieldScope = "template" | "instancia";
 
@@ -25,8 +35,35 @@ export type TypedSchema = TypedField[];
 export interface TypeSchemaDef {
   /** Label do tipo */
   label: string;
+  /** Nome do ícone lucide-react associado ao tipo */
+  icone: string;
   /** Schema completo (template + instância) */
   schema: TypedSchema;
+}
+
+/**
+ * Registro central de ícones por TIPO. Inclui TODOS os tipos do catálogo,
+ * mesmo os que ainda não têm schema completo. Qualquer componente que
+ * exibir o tipo deve ler o ícone daqui (via `getTypeIcon`).
+ */
+export const TYPE_ICONS: Record<string, LucideIcon> = {
+  hospedagem: Bed,
+  hotel: Bed,
+  voo: Plane,
+  flight: Plane,
+  transporte: Car,
+  experiencia: Ticket,
+  seguro: ShieldCheck,
+  cruzeiro: Ship,
+  outro: Package,
+};
+
+/** Ícone fallback neutro para tipos legados/inválidos. */
+export const FALLBACK_TYPE_ICON: LucideIcon = Package;
+
+export function getTypeIcon(itemType: string | null | undefined): LucideIcon {
+  if (!itemType) return FALLBACK_TYPE_ICON;
+  return TYPE_ICONS[itemType.toLowerCase()] ?? FALLBACK_TYPE_ICON;
 }
 
 /** Chaves canônicas do TIPO no CATÁLOGO (PT). */
@@ -51,6 +88,7 @@ export function resolveTypeKey(itemType: string | null | undefined): TypeKey | n
 export const TIPO_SCHEMA: Record<TypeKey, TypeSchemaDef> = {
   voo: {
     label: "Voo",
+    icone: "plane",
     schema: [
       // ---------- template ----------
       {
@@ -202,6 +240,7 @@ export const TIPO_SCHEMA: Record<TypeKey, TypeSchemaDef> = {
   },
   hospedagem: {
     label: "Hospedagem",
+    icone: "bed",
     schema: [
       // ---------- template ----------
       {
