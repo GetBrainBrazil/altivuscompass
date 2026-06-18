@@ -90,6 +90,26 @@ export function TaskNotesHistory({ taskId, assigneePhone, assigneeName }: Props)
     },
   });
 
+  useEffect(() => {
+    if (!taskId) return;
+    const channel = supabase
+      .channel(`task-history-${taskId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "task_notes", filter: `task_id=eq.${taskId}` },
+        () => qc.invalidateQueries({ queryKey: ["task-notes", taskId] }),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "task_activity", filter: `task_id=eq.${taskId}` },
+        () => qc.invalidateQueries({ queryKey: ["task-activity", taskId] }),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [taskId, qc]);
+
   const addNote = useMutation({
     mutationFn: async () => {
       const content = note.trim();
