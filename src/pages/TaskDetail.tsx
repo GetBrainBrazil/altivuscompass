@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Calendar } from "@/components/ui/calendar";
-import { ArrowLeft, CalendarIcon, CheckSquare, ChevronsUpDown, Check, FileText } from "lucide-react";
+import { ArrowLeft, CalendarIcon, CheckSquare, ChevronsUpDown, Check, FileText, Plane, MapPin, User as UserIcon, Mail, Phone, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
