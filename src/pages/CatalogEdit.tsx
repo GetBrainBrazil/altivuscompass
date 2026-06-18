@@ -524,8 +524,9 @@ export default function CatalogEdit() {
 
         {/* Atributos específicos */}
         <Section
-          title="Atributos específicos"
+          title={form.item_type ? `Detalhes de ${TYPE_LABEL[form.item_type]}` : "Atributos específicos"}
           description={form.item_type ? `Campos próprios para ${TYPE_LABEL[form.item_type]}.` : "Selecione um tipo para ver os campos específicos."}
+          icon={form.item_type ? getTypeIcon(form.item_type) : undefined}
         >
           {typeAttributesUI}
         </Section>
