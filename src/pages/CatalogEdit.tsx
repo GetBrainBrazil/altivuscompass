@@ -22,6 +22,7 @@ import {
   getTemplateFields,
   isValidCategoryForType,
   asCategorySchema,
+  getTypeIcon,
 } from "@/lib/type-schema";
 
 const TYPE_OPTIONS = [
