@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { Plane, User as UserIcon, CalendarIcon, ExternalLink } from "lucide-react";
 
 const ITEM_TYPE_LABEL: Record<string, string> = {
