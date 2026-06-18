@@ -439,6 +439,61 @@ function FieldRenderer({
           <AirlineCombobox value={value ?? ""} onChange={onChange} placeholder={field.placeholder} />
         </div>
       );
+    case "airport_list": {
+      const list: string[] = Array.isArray(value) ? value.filter((v) => typeof v === "string") : [];
+      const update = (next: string[]) => onChange(next.length ? next : []);
+      const setAt = (i: number, v: string | null) => {
+        const next = [...list];
+        next[i] = v ?? "";
+        update(next);
+      };
+      const removeAt = (i: number) => update(list.filter((_, idx) => idx !== i));
+      const add = () => update([...list, ""]);
+      return (
+        <div className="space-y-1.5">
+          {label}
+          {list.length === 0 ? (
+            <div className="text-[11px] text-muted-foreground italic flex items-center gap-1.5 px-2 py-1.5 border border-dashed rounded-md">
+              <Plane className="w-3 h-3" /> Voo direto (sem escalas)
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              {list.map((ap, i) => (
+                <div key={i} className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-muted-foreground w-5 text-center">{i + 1}.</span>
+                  <div className="flex-1 min-w-0">
+                    <AirportCombobox
+                      value={ap}
+                      onChange={(v) => setAt(i, v)}
+                      placeholder={field.placeholder ?? "Aeroporto da escala"}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive shrink-0"
+                    onClick={() => removeAt(i)}
+                    aria-label="Remover escala"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs gap-1"
+            onClick={add}
+          >
+            <Plus className="w-3 h-3" /> Adicionar escala
+          </Button>
+        </div>
+      );
+    }
     case "google_places":
     case "text":
     default:
