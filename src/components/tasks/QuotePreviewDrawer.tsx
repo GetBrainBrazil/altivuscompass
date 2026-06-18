@@ -106,7 +106,7 @@ export function QuotePreviewDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-[min(90vw,448px)] max-w-none flex flex-col p-0 overflow-hidden"
+        className="w-[min(90vw,448px)] sm:max-w-none flex flex-col p-0 overflow-hidden"
       >
         <SheetHeader className="px-6 pt-6 pb-3 border-b shrink-0">
           <SheetTitle className="font-display text-lg flex items-center gap-2">
