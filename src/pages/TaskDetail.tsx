@@ -461,7 +461,19 @@ export default function TaskDetail() {
               const period = start && end ? `${start} → ${end}` : start || end || null;
               const value = typeof q.total_value === "number" ? q.total_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : null;
               return (
-                <div className="mt-2 rounded-md border border-border bg-muted/30 p-2.5 text-xs font-body space-y-1.5">
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setQuotePreviewOpen(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setQuotePreviewOpen(true);
+                    }
+                  }}
+                  className="mt-2 rounded-md border border-border bg-muted/30 p-2.5 text-xs font-body space-y-1.5 cursor-pointer hover:bg-muted/50 hover:border-foreground/20 transition-colors text-left"
+                  title="Ver resumo da cotação"
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-1.5 font-medium text-foreground truncate">
                       <Plane size={12} className="text-muted-foreground shrink-0" />
@@ -471,6 +483,7 @@ export default function TaskDetail() {
                       href={`/quotes/${q.id}`}
                       target="_blank"
                       rel="noreferrer"
+                      onClick={(e) => e.stopPropagation()}
                       className="text-muted-foreground hover:text-foreground shrink-0"
                       title="Abrir cotação"
                     >
