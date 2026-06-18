@@ -234,7 +234,7 @@ export function QuotePreviewDrawer({
           <Button
             className="w-full"
             onClick={() => {
-              if (quoteId) navigate(`/quotes/${quoteId}`);
+              if (quoteId) navigate(`/quotes?edit=${quoteId}`);
             }}
             disabled={!quoteId}
           >
