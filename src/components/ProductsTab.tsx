@@ -212,9 +212,17 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
             <SelectTrigger className="sm:w-44"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os tipos</SelectItem>
-              {TYPE_KEYS.map((k) => (
-                <SelectItem key={k} value={k}>{TYPE_LABEL[k]}</SelectItem>
-              ))}
+              {TYPE_KEYS.map((k) => {
+                const Icon = getTypeIcon(k);
+                return (
+                  <SelectItem key={k} value={k}>
+                    <span className="inline-flex items-center gap-2">
+                      <Icon className="w-4 h-4 text-muted-foreground" />
+                      {TYPE_LABEL[k]}
+                    </span>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
           <Select
