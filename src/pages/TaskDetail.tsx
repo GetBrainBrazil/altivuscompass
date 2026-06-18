@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { TaskAttachments } from "@/components/TaskAttachments";
 import { TaskNotesHistory } from "@/components/tasks/TaskNotesHistory";
+import { QuotePreviewDrawer } from "@/components/tasks/QuotePreviewDrawer";
+import { ClientPreviewDrawer } from "@/components/tasks/ClientPreviewDrawer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
