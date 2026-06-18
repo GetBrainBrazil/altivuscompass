@@ -274,12 +274,12 @@ export default function TaskDetail() {
         }
       }
     },
-    onSuccess: () => {
+    onSuccess: (_data, _vars, _ctx) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["task", id] });
       queryClient.invalidateQueries({ queryKey: ["task-activity", id] });
       toast({ title: isNew ? "Tarefa criada" : "Tarefa atualizada" });
-      navigate("/tasks");
+      if (isNew) navigate("/tasks");
     },
     onError: () => toast({ title: "Erro ao salvar tarefa", variant: "destructive" }),
   });
