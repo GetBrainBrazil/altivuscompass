@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { Plane, User as UserIcon, CalendarIcon, ExternalLink } from "lucide-react";
 
 const ITEM_TYPE_LABEL: Record<string, string> = {
@@ -106,17 +106,17 @@ export function QuotePreviewDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-[min(90vw,448px)] flex flex-col p-0 overflow-hidden"
+        className="w-[min(90vw,448px)] sm:max-w-none flex flex-col p-0 overflow-hidden"
       >
-        <SheetHeader className="px-6 pt-6 pb-3 border-b">
+        <SheetHeader className="px-6 pt-6 pb-3 border-b shrink-0">
           <SheetTitle className="font-display text-lg flex items-center gap-2">
-            <Plane size={16} className="text-muted-foreground" />
+            <Plane size={16} className="text-muted-foreground shrink-0" />
             Resumo da cotação
           </SheetTitle>
         </SheetHeader>
 
-        <ScrollArea className="flex-1 w-full">
-          <div className="px-6 py-4 space-y-4 font-body text-sm min-w-0">
+        <div className="flex-1 overflow-y-auto min-w-0">
+          <div className="px-6 py-4 space-y-4 font-body text-sm min-w-0 max-w-full w-full overflow-x-hidden">
             {isLoading || !q ? (
               <PreviewSkeleton />
             ) : (
@@ -156,7 +156,7 @@ export function QuotePreviewDrawer({
                   </section>
                 )}
 
-                <section className="flex items-center gap-2 flex-wrap">
+                <section className="flex items-center gap-2 flex-wrap min-w-0">
                   <Badge variant="secondary" className="text-[10px] uppercase">
                     {derivePhase(q.stage)}
                   </Badge>
@@ -168,26 +168,26 @@ export function QuotePreviewDrawer({
                 </section>
 
                 <section className="rounded-md border bg-muted/30 p-3 space-y-1 min-w-0">
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center justify-between gap-3 min-w-0">
                     <span className="text-xs text-muted-foreground">Valor total</span>
-                    <span className="font-medium text-foreground">{total}</span>
+                    <span className="font-medium text-foreground shrink-0">{total}</span>
                   </div>
                   {discount && (
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center justify-between gap-3 min-w-0">
                       <span className="text-xs text-muted-foreground">Desconto</span>
-                      <span className="text-foreground">−{discount}</span>
+                      <span className="text-foreground shrink-0">−{discount}</span>
                     </div>
                   )}
                 </section>
 
-                <section className="space-y-2 min-w-0">
+                <section className="space-y-2 min-w-0 overflow-x-hidden">
                   <div className="text-xs uppercase tracking-wide text-muted-foreground">
                     Itens ({items.length})
                   </div>
                   {items.length === 0 ? (
                     <div className="text-xs text-muted-foreground italic">Nenhum item.</div>
                   ) : (
-                    <ul className="space-y-1.5 min-w-0">
+                    <ul className="space-y-1.5 min-w-0 w-full max-w-full overflow-x-hidden">
                       {items.map((it) => {
                         const typeLabel = ITEM_TYPE_LABEL[it.item_type] ?? it.item_type;
                         const productName = it.products?.name ?? null;
@@ -195,9 +195,9 @@ export function QuotePreviewDrawer({
                         return (
                           <li
                             key={it.id}
-                            className="rounded-md border border-border/60 bg-card px-2.5 py-1.5 text-xs min-w-0 overflow-hidden"
+                            className="w-full max-w-full box-border rounded-md border border-border/60 bg-card px-2.5 py-1.5 text-xs min-w-0 overflow-hidden"
                           >
-                            <div className="flex items-center gap-1.5 text-muted-foreground min-w-0">
+                            <div className="flex items-center gap-1.5 text-muted-foreground min-w-0 max-w-full">
                               <span className="font-medium text-foreground shrink-0">
                                 {typeLabel}
                               </span>
@@ -205,7 +205,7 @@ export function QuotePreviewDrawer({
                                 <>
                                   <span className="shrink-0">›</span>
                                   <span
-                                    className="truncate"
+                                    className="truncate min-w-0"
                                     title={productName}
                                   >
                                     {productName}
@@ -214,7 +214,7 @@ export function QuotePreviewDrawer({
                               )}
                             </div>
                             <div
-                              className="text-foreground truncate"
+                              className="text-foreground truncate max-w-full"
                               title={itemLabel}
                             >
                               {itemLabel}
@@ -228,9 +228,9 @@ export function QuotePreviewDrawer({
               </>
             )}
           </div>
-        </ScrollArea>
+        </div>
 
-        <SheetFooter className="px-6 py-3 border-t">
+        <SheetFooter className="px-6 py-3 border-t shrink-0">
           <Button
             className="w-full"
             onClick={() => {
@@ -238,7 +238,7 @@ export function QuotePreviewDrawer({
             }}
             disabled={!quoteId}
           >
-            <ExternalLink size={14} className="mr-2" />
+            <ExternalLink size={14} className="mr-2 shrink-0" />
             Abrir cotação completa
           </Button>
         </SheetFooter>
