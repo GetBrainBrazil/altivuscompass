@@ -34,9 +34,10 @@ const STAGE_LABEL: Record<string, string> = {
   canceled: "Cancelada",
 };
 
-function fmtBRL(v: number | null | undefined): string | null {
-  if (v == null || isNaN(Number(v))) return null;
-  return Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+function fmtBRL(v: number | null | undefined): string {
+  const n = Number(v ?? 0);
+  if (isNaN(n)) return "R$ 0,00";
+  return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 function fmtDate(d: string | null | undefined): string | null {
@@ -103,7 +104,10 @@ export function QuotePreviewDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md flex flex-col p-0">
+      <SheetContent
+        side="right"
+        className="w-[min(90vw,448px)] flex flex-col p-0 overflow-hidden"
+      >
         <SheetHeader className="px-6 pt-6 pb-3 border-b">
           <SheetTitle className="font-display text-lg flex items-center gap-2">
             <Plane size={16} className="text-muted-foreground" />
@@ -111,35 +115,43 @@ export function QuotePreviewDrawer({
           </SheetTitle>
         </SheetHeader>
 
-        <ScrollArea className="flex-1">
-          <div className="px-6 py-4 space-y-4 font-body text-sm">
+        <ScrollArea className="flex-1 w-full">
+          <div className="px-6 py-4 space-y-4 font-body text-sm min-w-0">
             {isLoading || !q ? (
               <PreviewSkeleton />
             ) : (
               <>
-                <section className="space-y-1.5">
-                  <div className="text-xs uppercase tracking-wide text-muted-foreground">Destino</div>
-                  <div className="font-medium text-foreground">
+                <section className="space-y-1.5 min-w-0">
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Destino
+                  </div>
+                  <div className="font-medium text-foreground break-words">
                     {q.destination || q.title || "Sem destino"}
                   </div>
                 </section>
 
                 {q.clients?.full_name && (
-                  <section className="space-y-1.5">
-                    <div className="text-xs uppercase tracking-wide text-muted-foreground">Cliente</div>
-                    <div className="flex items-center gap-1.5 text-foreground">
-                      <UserIcon size={12} className="text-muted-foreground" />
-                      {q.clients.full_name}
+                  <section className="space-y-1.5 min-w-0">
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Cliente
+                    </div>
+                    <div className="flex items-center gap-1.5 text-foreground min-w-0">
+                      <UserIcon size={12} className="text-muted-foreground shrink-0" />
+                      <span className="truncate" title={q.clients.full_name}>
+                        {q.clients.full_name}
+                      </span>
                     </div>
                   </section>
                 )}
 
                 {period && (
-                  <section className="space-y-1.5">
-                    <div className="text-xs uppercase tracking-wide text-muted-foreground">Período</div>
-                    <div className="flex items-center gap-1.5 text-foreground">
-                      <CalendarIcon size={12} className="text-muted-foreground" />
-                      {period}
+                  <section className="space-y-1.5 min-w-0">
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Período
+                    </div>
+                    <div className="flex items-center gap-1.5 text-foreground min-w-0">
+                      <CalendarIcon size={12} className="text-muted-foreground shrink-0" />
+                      <span className="truncate">{period}</span>
                     </div>
                   </section>
                 )}
@@ -155,27 +167,27 @@ export function QuotePreviewDrawer({
                   )}
                 </section>
 
-                <section className="rounded-md border bg-muted/30 p-3 space-y-1">
-                  <div className="flex items-center justify-between">
+                <section className="rounded-md border bg-muted/30 p-3 space-y-1 min-w-0">
+                  <div className="flex items-center justify-between gap-3">
                     <span className="text-xs text-muted-foreground">Valor total</span>
-                    <span className="font-medium text-foreground">{total ?? "—"}</span>
+                    <span className="font-medium text-foreground">{total}</span>
                   </div>
                   {discount && (
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-3">
                       <span className="text-xs text-muted-foreground">Desconto</span>
                       <span className="text-foreground">−{discount}</span>
                     </div>
                   )}
                 </section>
 
-                <section className="space-y-2">
+                <section className="space-y-2 min-w-0">
                   <div className="text-xs uppercase tracking-wide text-muted-foreground">
                     Itens ({items.length})
                   </div>
                   {items.length === 0 ? (
                     <div className="text-xs text-muted-foreground italic">Nenhum item.</div>
                   ) : (
-                    <ul className="space-y-1.5">
+                    <ul className="space-y-1.5 min-w-0">
                       {items.map((it) => {
                         const typeLabel = ITEM_TYPE_LABEL[it.item_type] ?? it.item_type;
                         const productName = it.products?.name ?? null;
@@ -183,18 +195,30 @@ export function QuotePreviewDrawer({
                         return (
                           <li
                             key={it.id}
-                            className="rounded-md border border-border/60 bg-card px-2.5 py-1.5 text-xs"
+                            className="rounded-md border border-border/60 bg-card px-2.5 py-1.5 text-xs min-w-0 overflow-hidden"
                           >
-                            <div className="flex items-center gap-1.5 text-muted-foreground">
-                              <span className="font-medium text-foreground">{typeLabel}</span>
+                            <div className="flex items-center gap-1.5 text-muted-foreground min-w-0">
+                              <span className="font-medium text-foreground shrink-0">
+                                {typeLabel}
+                              </span>
                               {productName && (
                                 <>
-                                  <span>›</span>
-                                  <span className="truncate">{productName}</span>
+                                  <span className="shrink-0">›</span>
+                                  <span
+                                    className="truncate"
+                                    title={productName}
+                                  >
+                                    {productName}
+                                  </span>
                                 </>
                               )}
                             </div>
-                            <div className="text-foreground truncate">{itemLabel}</div>
+                            <div
+                              className="text-foreground truncate"
+                              title={itemLabel}
+                            >
+                              {itemLabel}
+                            </div>
                           </li>
                         );
                       })}
