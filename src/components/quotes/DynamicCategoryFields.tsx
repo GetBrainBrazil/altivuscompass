@@ -24,7 +24,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Plus, X, Plane } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
