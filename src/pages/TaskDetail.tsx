@@ -678,6 +678,17 @@ export default function TaskDetail() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <QuotePreviewDrawer
+        quoteId={form.quote_id && form.quote_id !== "none" ? form.quote_id : null}
+        open={quotePreviewOpen}
+        onOpenChange={setQuotePreviewOpen}
+      />
+      <ClientPreviewDrawer
+        clientId={form.client_id && form.client_id !== "none" ? form.client_id : null}
+        open={clientPreviewOpen}
+        onOpenChange={setClientPreviewOpen}
+      />
     </div>
   );
 }
