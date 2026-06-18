@@ -148,17 +148,13 @@ export const TIPO_SCHEMA: Record<TypeKey, TypeSchemaDef> = {
         scope: "template",
       },
       {
-        key: "conexao",
-        label: "Conexões",
-        type: "select",
-        span: 4,
+        key: "escalas",
+        label: "Escalas",
+        type: "airport_list",
+        span: 12,
         group: "Rota",
         scope: "template",
-        options: [
-          { value: "direto", label: "Voo direto" },
-          { value: "1_conexao", label: "1 conexão" },
-          { value: "2_mais", label: "2+ conexões" },
-        ],
+        placeholder: "Adicione na ordem da rota (vazio = voo direto)",
       },
       {
         key: "bagagem_mao",
