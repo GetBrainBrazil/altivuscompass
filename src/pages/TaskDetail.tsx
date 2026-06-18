@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { TaskAttachments } from "@/components/TaskAttachments";
 import { TaskNotesHistory } from "@/components/tasks/TaskNotesHistory";
+import { QuotePreviewDrawer } from "@/components/tasks/QuotePreviewDrawer";
+import { ClientPreviewDrawer } from "@/components/tasks/ClientPreviewDrawer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -79,6 +81,8 @@ export default function TaskDetail() {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const baselineRef = useRef<string>("");
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [quotePreviewOpen, setQuotePreviewOpen] = useState(false);
+  const [clientPreviewOpen, setClientPreviewOpen] = useState(false);
 
   const snapshot = (f: typeof form, files: File[]) =>
     JSON.stringify({
@@ -457,7 +461,19 @@ export default function TaskDetail() {
               const period = start && end ? `${start} → ${end}` : start || end || null;
               const value = typeof q.total_value === "number" ? q.total_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : null;
               return (
-                <div className="mt-2 rounded-md border border-border bg-muted/30 p-2.5 text-xs font-body space-y-1.5">
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setQuotePreviewOpen(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setQuotePreviewOpen(true);
+                    }
+                  }}
+                  className="mt-2 rounded-md border border-border bg-muted/30 p-2.5 text-xs font-body space-y-1.5 cursor-pointer hover:bg-muted/50 hover:border-foreground/20 transition-colors text-left"
+                  title="Ver resumo da cotação"
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-1.5 font-medium text-foreground truncate">
                       <Plane size={12} className="text-muted-foreground shrink-0" />
@@ -467,6 +483,7 @@ export default function TaskDetail() {
                       href={`/quotes/${q.id}`}
                       target="_blank"
                       rel="noreferrer"
+                      onClick={(e) => e.stopPropagation()}
                       className="text-muted-foreground hover:text-foreground shrink-0"
                       title="Abrir cotação"
                     >
@@ -538,7 +555,19 @@ export default function TaskDetail() {
               if (!c) return null;
               const loc = [c.city, c.state].filter(Boolean).join(", ");
               return (
-                <div className="mt-2 rounded-md border border-border bg-muted/30 p-2.5 text-xs font-body space-y-1.5">
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setClientPreviewOpen(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setClientPreviewOpen(true);
+                    }
+                  }}
+                  className="mt-2 rounded-md border border-border bg-muted/30 p-2.5 text-xs font-body space-y-1.5 cursor-pointer hover:bg-muted/50 hover:border-foreground/20 transition-colors text-left"
+                  title="Ver resumo do cliente"
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-1.5 font-medium text-foreground truncate">
                       <UserIcon size={12} className="text-muted-foreground shrink-0" />
@@ -548,6 +577,7 @@ export default function TaskDetail() {
                       href={`/clients?id=${c.id}`}
                       target="_blank"
                       rel="noreferrer"
+                      onClick={(e) => e.stopPropagation()}
                       className="text-muted-foreground hover:text-foreground shrink-0"
                       title="Abrir cliente"
                     >
@@ -648,6 +678,17 @@ export default function TaskDetail() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <QuotePreviewDrawer
+        quoteId={form.quote_id && form.quote_id !== "none" ? form.quote_id : null}
+        open={quotePreviewOpen}
+        onOpenChange={setQuotePreviewOpen}
+      />
+      <ClientPreviewDrawer
+        clientId={form.client_id && form.client_id !== "none" ? form.client_id : null}
+        open={clientPreviewOpen}
+        onOpenChange={setClientPreviewOpen}
+      />
     </div>
   );
 }
