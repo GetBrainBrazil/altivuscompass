@@ -88,6 +88,7 @@ export function resolveTypeKey(itemType: string | null | undefined): TypeKey | n
 export const TIPO_SCHEMA: Record<TypeKey, TypeSchemaDef> = {
   voo: {
     label: "Voo",
+    icone: "plane",
     schema: [
       // ---------- template ----------
       {
