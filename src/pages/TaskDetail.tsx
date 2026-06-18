@@ -121,7 +121,7 @@ export default function TaskDetail() {
     queryFn: async () => {
       const { data } = await supabase
         .from("quotes")
-        .select("id, title, destination, clients(full_name)")
+        .select("id, title, destination, stage, total_value, travel_date_start, travel_date_end, clients(full_name)")
         .eq("is_template", false)
         .is("archived_at", null)
         .order("created_at", { ascending: false })
@@ -133,7 +133,7 @@ export default function TaskDetail() {
   const { data: clients = [] } = useQuery({
     queryKey: ["clients-list-for-tasks"],
     queryFn: async () => {
-      const { data } = await supabase.from("clients").select("id, full_name").order("full_name").limit(200);
+      const { data } = await supabase.from("clients").select("id, full_name, email, phone, city, state").order("full_name").limit(200);
       return data ?? [];
     },
   });
