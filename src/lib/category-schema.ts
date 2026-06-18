@@ -38,6 +38,7 @@ export type FieldType =
   // tipos especiais com componente próprio (Fase 2):
   | "airport"
   | "airline"
+  | "airport_list"
   | "google_places"
   | "baggage"
   | "duration_auto";
