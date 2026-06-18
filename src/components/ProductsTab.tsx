@@ -156,8 +156,6 @@ function ProductsListSubTab({ isAdmin }: { isAdmin: boolean }) {
     },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { getCategoryOptions } = require("@/lib/type-schema") as typeof import("@/lib/type-schema");
 
   const categoryOptionsForType = (type: string | null | undefined): { value: string; label: string }[] => {
     if (!type) return [];
