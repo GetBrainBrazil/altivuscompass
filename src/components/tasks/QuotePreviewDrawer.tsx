@@ -180,14 +180,14 @@ export function QuotePreviewDrawer({
                   )}
                 </section>
 
-                <section className="space-y-2 min-w-0">
+                <section className="space-y-2 min-w-0 overflow-x-hidden">
                   <div className="text-xs uppercase tracking-wide text-muted-foreground">
                     Itens ({items.length})
                   </div>
                   {items.length === 0 ? (
                     <div className="text-xs text-muted-foreground italic">Nenhum item.</div>
                   ) : (
-                    <ul className="space-y-1.5 min-w-0 w-full max-w-full">
+                    <ul className="space-y-1.5 min-w-0 w-full max-w-full overflow-x-hidden">
                       {items.map((it) => {
                         const typeLabel = ITEM_TYPE_LABEL[it.item_type] ?? it.item_type;
                         const productName = it.products?.name ?? null;
