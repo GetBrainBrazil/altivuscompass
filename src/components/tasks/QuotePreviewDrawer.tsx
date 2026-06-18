@@ -116,7 +116,7 @@ export function QuotePreviewDrawer({
         </SheetHeader>
 
         <ScrollArea className="flex-1 w-full min-w-0">
-          <div className="px-6 py-4 space-y-4 font-body text-sm min-w-0 max-w-full">
+          <div className="px-6 py-4 space-y-4 font-body text-sm min-w-0 max-w-full w-full overflow-x-hidden">
             {isLoading || !q ? (
               <PreviewSkeleton />
             ) : (
