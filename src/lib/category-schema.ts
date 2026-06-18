@@ -38,6 +38,7 @@ export type FieldType =
   // tipos especiais com componente próprio (Fase 2):
   | "airport"
   | "airline"
+  | "airport_list"
   | "google_places"
   | "baggage"
   | "duration_auto";
@@ -120,6 +121,7 @@ export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
   checkbox: "Caixa de seleção",
   airport: "Aeroporto (autocomplete)",
   airline: "Companhia aérea",
+  airport_list: "Lista de escalas (aeroportos)",
   google_places: "Endereço (Google Places)",
   baggage: "Bagagens (mochila/mão/despachada)",
   duration_auto: "Duração (calculada)",
