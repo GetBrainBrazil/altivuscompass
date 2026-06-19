@@ -1222,6 +1222,7 @@ async function handleLeadCapture(
   // ===== Detecção: Perguntar ao cliente no início =====
   if (
     detectionMode === 'ask' &&
+    !agentInitiated &&
     !sessionState.classification_asked &&
     (sessionState.messages?.length ?? 0) <= 1
   ) {
