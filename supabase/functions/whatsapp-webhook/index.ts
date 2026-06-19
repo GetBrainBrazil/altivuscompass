@@ -1132,9 +1132,21 @@ async function handleLeadCapture(
     if (sessionState.awaiting_menu_choice) {
       const choice = parseMenuChoice(messageText)
       if (!choice) {
-        const reprompt = 'Por favor, responda apenas com o número da opção (1 a 5).\n\n' + MENU_TEXT
+        // Reprompt curto — não reenviar o menu inteiro a cada mensagem
+        const repromptCount = (sessionState.menu_reprompt_count ?? 0) + 1
+        const reprompt = repromptCount >= 3
+          ? 'Não consegui entender. Vou te transferir para um(a) atendente humano(a). 🙌'
+          : 'Por favor, responda apenas com o número da opção (1 a 5).'
         await sendZapiText(zapiInstanceId, zapiToken, zapiSecurityToken, phone, reprompt)
         sessionState.messages = [...(sessionState.messages || []), { role: 'assistant', content: reprompt }]
+        sessionState.menu_reprompt_count = repromptCount
+        if (repromptCount >= 3) {
+          await escalateConversation(
+            supabase, zapiInstanceId, zapiToken, zapiSecurityToken,
+            phone, leadId, leadSession!.id, sessionState, '', 'menu: 3 tentativas inválidas — handoff automático',
+          )
+          return { status: 'lead_capture_handoff', lead_id: leadId }
+        }
         await supabase.from('whatsapp_sessions').update({
           state: sessionState,
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
