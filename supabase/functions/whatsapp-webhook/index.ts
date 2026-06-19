@@ -1106,8 +1106,43 @@ async function handleLeadCapture(
     }
   }
 
+  // ===== Se o agente já iniciou a conversa manualmente, pular menu/ask inicial =====
+  // Detecta se já existem mensagens outbound (agente) anteriores nesta conversa.
+  // Nesse caso, o cliente está apenas respondendo a um contato prévio — não faz
+  // sentido enviar o menu de boas-vindas/classificação. A IA deve responder no fluxo natural.
+  let agentInitiated = false
+  if (!sessionState.menu_sent && !sessionState.classification_asked) {
+    try {
+      const { data: convoRow } = await supabase
+        .from('wa_conversations')
+        .select('id')
+        .eq('phone', phone)
+        .maybeSingle()
+      if (convoRow?.id) {
+        const { count } = await supabase
+          .from('wa_messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('conversation_id', convoRow.id)
+          .eq('direction', 'out')
+        if ((count ?? 0) > 0) {
+          agentInitiated = true
+          sessionState.menu_sent = true
+          sessionState.awaiting_menu_choice = false
+          sessionState.classification_asked = true
+          await supabase.from('whatsapp_sessions').update({
+            state: sessionState,
+            expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          }).eq('id', leadSession!.id)
+          console.log(`[whatsapp-webhook] Agente já iniciou conversa com ${phone} — pulando menu/ask.`)
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao verificar histórico outbound:', (e as Error)?.message)
+    }
+  }
+
   // ===== Detecção: Menu numerado de opções =====
-  if (detectionMode === 'menu') {
+  if (detectionMode === 'menu' && !agentInitiated) {
     const MENU_TEXT =
       'Olá! 👋 Para te direcionar mais rápido, escolha uma opção respondendo apenas com o número:\n\n' +
       '1 - Nova Cotação\n' +
@@ -1187,6 +1222,7 @@ async function handleLeadCapture(
   // ===== Detecção: Perguntar ao cliente no início =====
   if (
     detectionMode === 'ask' &&
+    !agentInitiated &&
     !sessionState.classification_asked &&
     (sessionState.messages?.length ?? 0) <= 1
   ) {
