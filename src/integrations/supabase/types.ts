@@ -5118,6 +5118,7 @@ export type Database = {
       wa_conversations: {
         Row: {
           ai_enabled: boolean
+          chat_lid: string | null
           client_context_snapshot: Json | null
           client_id: string | null
           collected_data: Json
@@ -5144,6 +5145,7 @@ export type Database = {
         }
         Insert: {
           ai_enabled?: boolean
+          chat_lid?: string | null
           client_context_snapshot?: Json | null
           client_id?: string | null
           collected_data?: Json
@@ -5170,6 +5172,7 @@ export type Database = {
         }
         Update: {
           ai_enabled?: boolean
+          chat_lid?: string | null
           client_context_snapshot?: Json | null
           client_id?: string | null
           collected_data?: Json

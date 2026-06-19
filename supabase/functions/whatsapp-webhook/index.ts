@@ -296,20 +296,71 @@ Deno.serve(async (req) => {
         convo = data as any
         convoErr = error as any
       } else {
-        const convoUpsert: Record<string, unknown> = {
-          ...baseConvo,
-          phone,
-          ...contactLink,
+        // === LID handling ===
+        // Z-API pode entregar `phone` como um identificador @lid (privacidade do
+        // WhatsApp). Para não duplicar conversas (real-phone X lid), tentamos
+        // resolver para uma conversa já existente antes de fazer upsert por `phone`.
+        const chatLidRaw: string | null =
+          (body.chatLid && typeof body.chatLid === 'string' ? body.chatLid : null) ||
+          (typeof phone === 'string' && /@lid$/i.test(phone) ? phone : null)
+        const phoneIsLid = typeof phone === 'string' && /@lid$/i.test(phone)
+
+        let resolvedConvoId: string | null = null
+
+        // 1) Outbound recém-enviado pela Central: a send-whatsapp já gravou a
+        //    wa_message com zapi_message_id e a conversation_id correta. Reusar.
+        const incomingMsgId = body.messageId || body.id || null
+        if (isFromMe && incomingMsgId) {
+          const { data: priorMsg } = await supabase
+            .from('wa_messages')
+            .select('conversation_id')
+            .eq('zapi_message_id', incomingMsgId)
+            .maybeSingle()
+          if (priorMsg?.conversation_id) resolvedConvoId = priorMsg.conversation_id as string
         }
-        if (trustedDisplayName) convoUpsert.contact_name = trustedDisplayName
-        if (senderPhotoUrl) convoUpsert.profile_photo_url = senderPhotoUrl
-        const { data, error } = await supabase
-          .from('wa_conversations')
-          .upsert(convoUpsert, { onConflict: 'phone' })
-          .select('id, unread_count')
-          .single()
-        convo = data as any
-        convoErr = error as any
+
+        // 2) Phone veio como @lid → procura conversa existente pelo chat_lid.
+        if (!resolvedConvoId && chatLidRaw) {
+          const { data: byLid } = await supabase
+            .from('wa_conversations')
+            .select('id')
+            .eq('chat_lid', chatLidRaw)
+            .maybeSingle()
+          if (byLid?.id) resolvedConvoId = byLid.id as string
+        }
+
+        if (resolvedConvoId) {
+          const updatePayload: Record<string, unknown> = { ...baseConvo }
+          if (chatLidRaw) updatePayload.chat_lid = chatLidRaw
+          if (trustedDisplayName) updatePayload.contact_name = trustedDisplayName
+          if (senderPhotoUrl) updatePayload.profile_photo_url = senderPhotoUrl
+          const { data, error } = await supabase
+            .from('wa_conversations')
+            .update(updatePayload)
+            .eq('id', resolvedConvoId)
+            .select('id, unread_count')
+            .single()
+          convo = data as any
+          convoErr = error as any
+        } else {
+          const convoUpsert: Record<string, unknown> = {
+            ...baseConvo,
+            phone,
+            ...contactLink,
+          }
+          if (chatLidRaw) convoUpsert.chat_lid = chatLidRaw
+          if (trustedDisplayName) convoUpsert.contact_name = trustedDisplayName
+          if (senderPhotoUrl) convoUpsert.profile_photo_url = senderPhotoUrl
+          const { data, error } = await supabase
+            .from('wa_conversations')
+            .upsert(convoUpsert, { onConflict: 'phone' })
+            .select('id, unread_count')
+            .single()
+          convo = data as any
+          convoErr = error as any
+        }
+        // Suppress unused-var warning for phoneIsLid in environments that check it.
+        void phoneIsLid
       }
 
       if (convoErr) {
