@@ -1224,7 +1224,19 @@ export default function ServiceCenter() {
         .order("last_message_at", { ascending: false, nullsFirst: false })
         .limit(200);
       if (error) throw error;
-      return data ?? [];
+      // Filtra "LIDs" do WhatsApp (identificadores internos que não são
+      // números reais — costumam terminar em @lid ou ser puramente numéricos
+      // com 14+ dígitos sem prefixo de país válido). A Central deve refletir
+      // apenas os números reais ativos na instância.
+      const isLidPhone = (p: string | null | undefined) => {
+        if (!p) return false;
+        if (p.includes("@lid")) return true;
+        const digits = p.replace(/\D/g, "");
+        // Telefones reais (E.164) têm no máx. 15 dígitos, mas em prática
+        // BR/EU ficam entre 10 e 13. LIDs do WhatsApp são 14-15 dígitos.
+        return /^\d+$/.test(p) && digits.length >= 14;
+      };
+      return (data ?? []).filter((c: any) => !(isLidPhone(c.phone) && !c.is_group));
     },
     refetchInterval: 5000,
     refetchIntervalInBackground: true,
