@@ -527,11 +527,18 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
   const isMedia = mt !== "text" && !!message.mediaUrl;
 
   // For agent messages, prefer the label persisted inline (`*Nome*\n...`)
-  // so historic messages keep the original sender even if nickname changes.
+  // so historic messages keep the original sender mesmo se o nickname mudar.
+  // Mensagens enviadas direto pelo app WhatsApp (espelhadas via webhook) trazem
+  // sender_name preenchido (ex.: "WhatsApp") — usamos isso quando não há label inline.
   const parsedText = isAgent && mt === "text" ? extractAgentLabel(message.content) : { label: null, rest: message.content ?? "" };
   const parsedCaption = isAgent && isMedia ? extractAgentLabel(message.mediaCaption) : { label: null, rest: message.mediaCaption ?? "" };
   const persistedLabel = parsedText.label || parsedCaption.label;
-  const displayLabel = isAgent ? (persistedLabel || agentLabel || "Agente") : (agentLabel || "Agente");
+  const externalSenderName = isAgent ? (message.senderName || null) : null;
+  // Sem label inline + sem nome externo conhecido → assumimos envio direto pelo WhatsApp
+  const sentViaWhatsApp = isAgent && !persistedLabel && (!externalSenderName || externalSenderName === "WhatsApp");
+  const displayLabel = isAgent
+    ? (persistedLabel || externalSenderName || (sentViaWhatsApp ? "WhatsApp" : (agentLabel || "Agente")))
+    : (agentLabel || "Agente");
   const displayContent = isAgent && mt === "text" ? parsedText.rest : message.content;
   const displayCaption = isAgent && isMedia ? parsedCaption.rest : message.mediaCaption;
 
@@ -561,7 +568,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
             isMedia && "px-3 pt-1",
             isAi ? "text-[hsl(var(--cream))]" : "text-emerald-50",
           )}>
-            {isAi ? "🤖 IA" : `👤 ${displayLabel}`}
+            {isAi ? "🤖 IA" : sentViaWhatsApp ? `📱 WhatsApp` : `👤 ${displayLabel}`}
           </p>
         )}
         {mt === "audio" && message.mediaUrl ? (
@@ -620,7 +627,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
       </div>
       <div className={cn("flex items-center gap-1.5 px-2 flex-wrap", isLead ? "" : "justify-end")}>
         <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-          {isAi ? "IA · " : isAgent ? "Agente · " : ""}
+          {isAi ? "IA · " : isAgent ? (sentViaWhatsApp ? "WhatsApp · " : `${displayLabel} · `) : ""}
           {formatTime(message.timestamp)}
           {!isLead && message.status && <MessageStatusTicks status={message.status} />}
         </span>
