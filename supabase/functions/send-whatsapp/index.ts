@@ -70,13 +70,10 @@ Deno.serve(async (req) => {
       if (candidate) agentLabel = candidate
     } catch (_) { /* ignore — fallback to "Atendente" */ }
 
-    const prefixWithAgent = (txt?: string | null) => {
-      const t = (txt ?? '').toString()
-      return t ? `*${agentLabel}*\n${t}` : `*${agentLabel}*`
-    }
-
-    const textWithAgent = prefixWithAgent(message)
-    const captionWithAgent = (image_url || document_url) ? prefixWithAgent(message) : message
+    // O nome do agente NÃO é mais embutido no texto enviado ao cliente.
+    // Ele é gravado apenas em wa_messages.sender_name para exibição interna na Central.
+    const outgoingText = (message ?? '').toString()
+    const outgoingCaption = (image_url || document_url) ? ((message ?? '').toString()) : (message ?? null)
 
     // Clean phone number - remove non-digits
     const cleanPhone = phone.replace(/\D/g, '')
