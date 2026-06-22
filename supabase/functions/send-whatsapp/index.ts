@@ -335,6 +335,7 @@ Deno.serve(async (req) => {
             conversation_id: convo.id,
             direction: 'out',
             sender: 'agent',
+            sender_name: agentLabel,
             message_type: messageType,
             content,
             media_url: mediaUrl,
