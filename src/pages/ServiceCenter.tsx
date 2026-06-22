@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -2169,8 +2170,8 @@ export default function ServiceCenter() {
                         <span className="ml-auto text-[11px] text-red-600/80">Máx 2:00</span>
                       </div>
                     ) : (
-                      <Input
-                        placeholder={sendingAudio ? "Enviando áudio…" : sendingAttachment ? "Enviando anexo…" : "Digite uma mensagem..."}
+                      <Textarea
+                        placeholder={sendingAudio ? "Enviando áudio…" : sendingAttachment ? "Enviando anexo…" : "Digite uma mensagem... (Shift+Enter para nova linha)"}
                         value={draft}
                         onChange={(e) => setDraft(e.target.value)}
                         onKeyDown={(e) => {
@@ -2180,8 +2181,10 @@ export default function ServiceCenter() {
                           }
                         }}
                         disabled={sending || sendingAudio || sendingAttachment}
-                        className="h-11 rounded-full px-5 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-ring"
+                        rows={1}
+                        className="min-h-11 max-h-40 rounded-2xl px-5 py-2.5 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-ring resize-none leading-6"
                       />
+
                     )}
 
                     {recording ? (
