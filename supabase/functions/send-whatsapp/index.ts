@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
           headers: zapiHeaders,
           body: JSON.stringify({
             phone: cleanPhone,
-            message: textWithAgent,
+            message: outgoingText,
           }),
         })
         result = await response.json()
@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             phone: cleanPhone,
             image: image_url,
-            caption: captionWithAgent || '',
+            caption: outgoingCaption || '',
           }),
         })
         result = await response.json()
@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
             phone: cleanPhone,
             document: document_url,
             fileName: document_name || 'documento.pdf',
-            caption: captionWithAgent || '',
+            caption: outgoingCaption || '',
           }),
         })
         result = await response.json()
@@ -183,7 +183,7 @@ Deno.serve(async (req) => {
           headers: zapiHeaders,
           body: JSON.stringify({
             phone: cleanPhone,
-            message: textWithAgent,
+            message: outgoingText,
             image: image_url || '',
             linkUrl: body.link_url || '',
             title: body.link_title || '',
@@ -246,17 +246,17 @@ Deno.serve(async (req) => {
         )
 
         let messageType = 'text'
-        let content: string | null = textWithAgent ?? null
+        let content: string | null = outgoingText ?? null
         let mediaUrl: string | null = null
         let mediaCaption: string | null = null
         if (action === 'send-image') {
-          messageType = 'image'; mediaUrl = image_url ?? null; mediaCaption = captionWithAgent ?? null; content = null
+          messageType = 'image'; mediaUrl = image_url ?? null; mediaCaption = outgoingCaption ?? null; content = null
         } else if (action === 'send-document') {
-          messageType = 'document'; mediaUrl = document_url ?? null; mediaCaption = captionWithAgent ?? null; content = null
+          messageType = 'document'; mediaUrl = document_url ?? null; mediaCaption = outgoingCaption ?? null; content = null
         } else if (action === 'send-audio') {
           messageType = 'audio'; mediaUrl = audio_url ?? null; content = null
         } else if (action === 'send-link') {
-          messageType = 'text'; content = `${textWithAgent ?? ''}\n${body.link_url ?? ''}`.trim()
+          messageType = 'text'; content = `${outgoingText ?? ''}\n${body.link_url ?? ''}`.trim()
         }
 
         const preview =
