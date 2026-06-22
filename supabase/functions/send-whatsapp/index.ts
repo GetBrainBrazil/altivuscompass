@@ -70,13 +70,10 @@ Deno.serve(async (req) => {
       if (candidate) agentLabel = candidate
     } catch (_) { /* ignore — fallback to "Atendente" */ }
 
-    const prefixWithAgent = (txt?: string | null) => {
-      const t = (txt ?? '').toString()
-      return t ? `*${agentLabel}*\n${t}` : `*${agentLabel}*`
-    }
-
-    const textWithAgent = prefixWithAgent(message)
-    const captionWithAgent = (image_url || document_url) ? prefixWithAgent(message) : message
+    // O nome do agente NÃO é mais embutido no texto enviado ao cliente.
+    // Ele é gravado apenas em wa_messages.sender_name para exibição interna na Central.
+    const outgoingText = (message ?? '').toString()
+    const outgoingCaption = (image_url || document_url) ? ((message ?? '').toString()) : (message ?? null)
 
     // Clean phone number - remove non-digits
     const cleanPhone = phone.replace(/\D/g, '')
@@ -104,7 +101,7 @@ Deno.serve(async (req) => {
           headers: zapiHeaders,
           body: JSON.stringify({
             phone: cleanPhone,
-            message: textWithAgent,
+            message: outgoingText,
           }),
         })
         result = await response.json()
@@ -124,7 +121,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             phone: cleanPhone,
             image: image_url,
-            caption: captionWithAgent || '',
+            caption: outgoingCaption || '',
           }),
         })
         result = await response.json()
@@ -145,7 +142,7 @@ Deno.serve(async (req) => {
             phone: cleanPhone,
             document: document_url,
             fileName: document_name || 'documento.pdf',
-            caption: captionWithAgent || '',
+            caption: outgoingCaption || '',
           }),
         })
         result = await response.json()
@@ -186,7 +183,7 @@ Deno.serve(async (req) => {
           headers: zapiHeaders,
           body: JSON.stringify({
             phone: cleanPhone,
-            message: textWithAgent,
+            message: outgoingText,
             image: image_url || '',
             linkUrl: body.link_url || '',
             title: body.link_title || '',
@@ -249,17 +246,17 @@ Deno.serve(async (req) => {
         )
 
         let messageType = 'text'
-        let content: string | null = textWithAgent ?? null
+        let content: string | null = outgoingText ?? null
         let mediaUrl: string | null = null
         let mediaCaption: string | null = null
         if (action === 'send-image') {
-          messageType = 'image'; mediaUrl = image_url ?? null; mediaCaption = captionWithAgent ?? null; content = null
+          messageType = 'image'; mediaUrl = image_url ?? null; mediaCaption = outgoingCaption ?? null; content = null
         } else if (action === 'send-document') {
-          messageType = 'document'; mediaUrl = document_url ?? null; mediaCaption = captionWithAgent ?? null; content = null
+          messageType = 'document'; mediaUrl = document_url ?? null; mediaCaption = outgoingCaption ?? null; content = null
         } else if (action === 'send-audio') {
           messageType = 'audio'; mediaUrl = audio_url ?? null; content = null
         } else if (action === 'send-link') {
-          messageType = 'text'; content = `${textWithAgent ?? ''}\n${body.link_url ?? ''}`.trim()
+          messageType = 'text'; content = `${outgoingText ?? ''}\n${body.link_url ?? ''}`.trim()
         }
 
         const preview =
@@ -338,6 +335,7 @@ Deno.serve(async (req) => {
             conversation_id: convo.id,
             direction: 'out',
             sender: 'agent',
+            sender_name: agentLabel,
             message_type: messageType,
             content,
             media_url: mediaUrl,
