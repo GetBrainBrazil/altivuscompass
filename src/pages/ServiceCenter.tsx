@@ -1970,7 +1970,7 @@ export default function ServiceCenter() {
         </div>
 
         <ScrollArea className="flex-1">
-          <div className="px-3 py-3 space-y-2.5">
+          <div className="px-3 py-3 pr-5 space-y-2.5">
             {isLoadingConvos && filtered.length === 0 ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <div key={`sk-${i}`} className="flex items-start gap-3 p-3 rounded-lg border border-border/40 bg-card/40 animate-fade-in">
