@@ -457,6 +457,7 @@ interface ChatBubbleProps {
   onLinkClick?: () => void;
   onOpenQuote?: (id: string) => void;
   onImageClick?: (url: string, caption?: string | null) => void;
+  onForward?: () => void;
 }
 
 const AGENT_LABEL_RE = /^\*([^\n*]{1,60})\*\n?/;
@@ -467,7 +468,7 @@ const extractAgentLabel = (text?: string | null): { label: string | null; rest: 
   return { label: null, rest: t };
 };
 
-const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuote, onImageClick }: ChatBubbleProps) => {
+const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuote, onImageClick, onForward }: ChatBubbleProps) => {
   const isLead = message.sender === "lead";
   const isAgent = message.sender === "agent";
   const isAi = message.sender === "ai";
