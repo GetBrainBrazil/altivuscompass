@@ -369,133 +369,79 @@ const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = fa
       type="button"
       onClick={onClick}
       className={cn(
-        "relative w-full text-left px-3 py-3 rounded-xl border transition-all duration-200 overflow-hidden",
-        "border-gray-200 bg-white shadow-sm hover:shadow-md hover:bg-gray-50/80",
-        active && "bg-gray-50 border-gray-300 shadow-md ring-1 ring-gray-200",
-        hasUnread &&
-          "bg-amber-50 border-amber-300 hover:bg-amber-50 ring-1 ring-amber-200 shadow-[0_0_0_1px_hsl(var(--warning)/0.15)]",
+        "relative w-full text-left border-b border-border/30 transition-colors duration-150",
+        "hover:bg-muted/20",
+        active && "bg-muted/40",
+        hasUnread && "bg-amber-50/30 hover:bg-amber-50/50",
       )}
     >
-      {active && (
-        <span
-          aria-hidden
-          className={cn(
-            "absolute left-0 top-0 bottom-0 w-[3px] rounded-r",
-            isAi ? "bg-success" : "bg-warning",
+      <div className="flex items-start gap-3 px-4 py-3">
+        <div className="relative shrink-0 self-center">
+          <Avatar className="h-11 w-11">
+            {conversation.photoUrl && <AvatarImage src={conversation.photoUrl} alt={conversation.leadName} />}
+            <AvatarFallback className="text-xs font-medium bg-muted text-muted-foreground">
+              {getInitials(conversation.leadName)}
+            </AvatarFallback>
+          </Avatar>
+          {hasUnread && (
+            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-amber-500 border-2 border-background" />
           )}
-        />
-      )}
-      {hasUnread && !active && (
-        <span
-          aria-hidden
-          className="absolute left-0 top-0 bottom-0 w-[3px] rounded-r bg-amber-500"
-        />
-      )}
-      <div className="flex items-center gap-2.5">
-        <Avatar className="h-10 w-10 shrink-0 self-center">
-          {conversation.photoUrl && <AvatarImage src={conversation.photoUrl} alt={conversation.leadName} />}
-          <AvatarFallback className="text-xs font-medium">
-            {getInitials(conversation.leadName)}
-          </AvatarFallback>
-        </Avatar>
-        <div className="min-w-0 flex-1 py-0.5">
+          {active && (
+            <span
+              aria-hidden
+              className={cn(
+                "absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background",
+                isAi ? "bg-emerald-500" : "bg-amber-500",
+              )}
+            />
+          )}
+        </div>
+        <div className="min-w-0 flex-1 self-center">
           <div className="flex items-center justify-between gap-2">
-            <div className="min-w-0 flex-1">
-              <p className={cn("font-medium text-sm truncate", hasUnread && "font-semibold text-amber-950")}>
-                {conversation.leadName}
-              </p>
-              {!conversation.isGroup && conversation.phone && conversation.phone !== conversation.leadName && (
-                <p className="text-[11px] text-muted-foreground truncate font-mono">
-                  {formatPhoneDisplay(conversation.phone)}
-                </p>
-              )}
-            </div>
-            <span className="text-[11px] text-muted-foreground shrink-0 flex items-center gap-1.5">
-              {hasUnread && (
-                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold">
-                  {conversation.unreadCount! > 99 ? "99+" : conversation.unreadCount}
-                </span>
-              )}
+            <p className={cn("text-sm truncate", hasUnread ? "font-semibold text-foreground" : "font-medium text-foreground")}>
+              {conversation.leadName}
+            </p>
+            <span className="text-[11px] text-muted-foreground shrink-0 tabular-nums">
               {formatConversationTime(last.timestamp)}
             </span>
           </div>
           <p className={cn(
-            "text-xs line-clamp-2 mt-1 leading-relaxed",
-            hasUnread ? "text-amber-900 font-medium" : "text-muted-foreground",
+            "text-xs line-clamp-1 mt-0.5 leading-snug",
+            hasUnread ? "text-foreground font-medium" : "text-muted-foreground",
           )}>
             {last.sender === "ai" ? "IA: " : last.sender === "agent" ? "Você: " : ""}
             {last.content}
           </p>
-          <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-            {conversation.isGroup ? (
-              <span
-                title="Conversa de grupo do WhatsApp. A IA não responde em grupos."
-                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-violet-100 text-violet-700 border border-violet-300 uppercase tracking-wide"
-              >
+          <div className="mt-1 flex items-center gap-2 flex-wrap">
+            {conversation.isGroup && (
+              <span className="text-[10px] font-medium text-violet-600">
                 👥 Grupo
               </span>
-            ) : (
-              <span
-                title={
-                  conversation.level === "cliente"
-                    ? "Cliente: já fechou ao menos uma cotação."
-                    : conversation.level === "lead"
-                    ? "Lead: contato qualificado em negociação."
-                    : "Prospect: contato novo, ainda não qualificado."
-                }
-                className="inline-flex"
-              >
-                <ContactLevelBadge level={conversation.level} size="xs" />
+            )}
+            {!conversation.isGroup && (
+              <span className={cn(
+                "text-[10px] font-medium",
+                conversation.level === "cliente" ? "text-amber-600" :
+                conversation.level === "lead" ? "text-sky-600" : "text-slate-500",
+              )}>
+                {conversation.level === "cliente" ? "Cliente" : conversation.level === "lead" ? "Lead" : "Prospect"}
               </span>
             )}
             {conversation.isNew && (
-              <span
-                title="Conversa nova — ainda não foi aberta/lida na Central."
-                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300 uppercase tracking-wide"
-              >
-                Novo
-              </span>
+              <span className="text-[10px] font-medium text-emerald-600">Novo</span>
             )}
             {conversation.isTraveling && (
-              <span
-                title="Cliente em viagem no momento."
-                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-800 border border-amber-300"
-              >
-                <Plane className="w-2.5 h-2.5" />
-                Em viagem
-              </span>
+              <span className="text-[10px] font-medium text-amber-600">Em viagem</span>
             )}
             {conversation.category === "post-sale" && !conversation.isTraveling && (
-              <span
-                title="Atendimento de pós-venda: suporte após a viagem ou contratação."
-                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-rose-50 text-rose-700 border border-rose-200"
-              >
-                <LifeBuoy className="w-2.5 h-2.5" />
-                Pós-venda
-              </span>
+              <span className="text-[10px] font-medium text-rose-500">Pós-venda</span>
             )}
-            {/* Status humano/IA */}
-            {isAi ? (
-              <span
-                title="IA ativa: a inteligência artificial está respondendo automaticamente esta conversa."
-                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-success/15 text-success border border-success/25"
-              >
-                <span className="w-1 h-1 rounded-full bg-success" />
-                IA
-              </span>
-            ) : (
-              <span
-                title={
-                  aiGloballyPaused
-                    ? "Modo manual: a IA está desativada globalmente. Apenas atendentes humanos respondem."
-                    : "Atendimento humano: esta conversa foi assumida por um atendente e a IA está pausada para este contato."
-                }
-                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-warning/20 text-warning border border-warning/30"
-              >
-                <span className="w-1 h-1 rounded-full bg-warning" />
-                Humano
-              </span>
-            )}
+            <span className={cn(
+              "text-[10px] font-medium",
+              isAi ? "text-emerald-600" : "text-amber-600",
+            )}>
+              {isAi ? "IA" : "Humano"}
+            </span>
           </div>
         </div>
       </div>
@@ -1970,18 +1916,18 @@ export default function ServiceCenter() {
         </div>
 
         <ScrollArea className="flex-1">
-          <div className="px-3 py-3 pr-6 space-y-2.5 min-w-0">
+          <div className="min-w-0">
             {isLoadingConvos && filtered.length === 0 ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <div key={`sk-${i}`} className="flex items-start gap-3 p-3 rounded-lg border border-border/40 bg-card/40 animate-fade-in">
-                  <Skeleton className="h-10 w-10 rounded-full shrink-0" />
-                  <div className="flex-1 space-y-2 min-w-0">
+                <div key={`sk-${i}`} className="flex items-start gap-3 px-4 py-3 border-b border-border/20 animate-fade-in">
+                  <Skeleton className="h-11 w-11 rounded-full shrink-0" />
+                  <div className="flex-1 space-y-1.5 min-w-0 self-center">
                     <div className="flex items-center justify-between gap-2">
-                      <Skeleton className="h-3 w-28" />
+                      <Skeleton className="h-3.5 w-28" />
                       <Skeleton className="h-2.5 w-10" />
                     </div>
-                    <Skeleton className="h-2.5 w-full max-w-[180px]" />
-                    <Skeleton className="h-2.5 w-1/2" />
+                    <Skeleton className="h-2.5 w-full max-w-[200px]" />
+                    <Skeleton className="h-2 w-16" />
                   </div>
                 </div>
               ))
