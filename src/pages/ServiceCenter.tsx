@@ -42,7 +42,7 @@ import { ClientSidePanel } from "@/components/service-center/ClientSidePanel";
 import { MessageLinkDialog } from "@/components/service-center/MessageLinkDialog";
 import { ForwardMessageDialog, type ForwardableMessage, type ForwardTarget } from "@/components/service-center/ForwardMessageDialog";
 import { ImageLightbox } from "@/components/service-center/ImageLightbox";
-import { Plus, Info, Bot, Check, CheckCheck, Clock, Mic, Square, Trash2, Loader2, Link2, MoreVertical, Pencil, Paperclip } from "lucide-react";
+import { Plus, Info, Bot, Check, CheckCheck, Clock, Mic, Square, Trash2, Loader2, Link2, MoreVertical, Pencil, Paperclip, Forward } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
