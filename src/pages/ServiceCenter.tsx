@@ -40,8 +40,9 @@ import { ContactLevelBadge, type ContactLevel } from "@/components/contacts/Cont
 import { NewMessageDialog } from "@/components/service-center/NewMessageDialog";
 import { ClientSidePanel } from "@/components/service-center/ClientSidePanel";
 import { MessageLinkDialog } from "@/components/service-center/MessageLinkDialog";
+import { ForwardMessageDialog, type ForwardableMessage, type ForwardTarget } from "@/components/service-center/ForwardMessageDialog";
 import { ImageLightbox } from "@/components/service-center/ImageLightbox";
-import { Plus, Info, Bot, Check, CheckCheck, Clock, Mic, Square, Trash2, Loader2, Link2, MoreVertical, Pencil, Paperclip } from "lucide-react";
+import { Plus, Info, Bot, Check, CheckCheck, Clock, Mic, Square, Trash2, Loader2, Link2, MoreVertical, Pencil, Paperclip, Forward } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -456,6 +457,7 @@ interface ChatBubbleProps {
   onLinkClick?: () => void;
   onOpenQuote?: (id: string) => void;
   onImageClick?: (url: string, caption?: string | null) => void;
+  onForward?: () => void;
 }
 
 const AGENT_LABEL_RE = /^\*([^\n*]{1,60})\*\n?/;
@@ -466,7 +468,7 @@ const extractAgentLabel = (text?: string | null): { label: string | null; rest: 
   return { label: null, rest: t };
 };
 
-const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuote, onImageClick }: ChatBubbleProps) => {
+const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuote, onImageClick, onForward }: ChatBubbleProps) => {
   const isLead = message.sender === "lead";
   const isAgent = message.sender === "agent";
   const isAi = message.sender === "ai";
@@ -590,7 +592,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
             {q.title || q.destination || "Cotação"}
           </button>
         ))}
-        {onLinkClick && (
+        {(onLinkClick || onForward) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -602,10 +604,18 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align={isLead ? "start" : "end"}>
-              <DropdownMenuItem onClick={onLinkClick}>
-                <Link2 className="h-3.5 w-3.5 mr-2" />
-                Vincular a cotação…
-              </DropdownMenuItem>
+              {onForward && (
+                <DropdownMenuItem onClick={onForward}>
+                  <Forward className="h-3.5 w-3.5 mr-2" />
+                  Encaminhar…
+                </DropdownMenuItem>
+              )}
+              {onLinkClick && (
+                <DropdownMenuItem onClick={onLinkClick}>
+                  <Link2 className="h-3.5 w-3.5 mr-2" />
+                  Vincular a cotação…
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}
@@ -1109,6 +1119,7 @@ export default function ServiceCenter() {
   const [sidePanelTab, setSidePanelTab] = useState<"summary" | "crm">("summary");
   const [newMsgOpen, setNewMsgOpen] = useState(false);
   const [linkDialogMessages, setLinkDialogMessages] = useState<string[]>([]);
+  const [forwardMessage, setForwardMessage] = useState<ForwardableMessage | null>(null);
 
   // Apelido/nome do atendente logado (para exibir nas mensagens enviadas)
   const { data: myProfile } = useQuery({
@@ -2089,6 +2100,13 @@ export default function ServiceCenter() {
                           onLinkClick={() => setLinkDialogMessages([m.id])}
                           onOpenQuote={(qid) => navigate(`/quotes?id=${qid}`)}
                           onImageClick={(url, caption) => setLightbox({ url, caption })}
+                          onForward={() => setForwardMessage({
+                            id: m.id,
+                            messageType: m.messageType,
+                            content: m.content,
+                            mediaUrl: m.mediaUrl ?? null,
+                            mediaCaption: m.mediaCaption ?? null,
+                          })}
                         />
                       )}
                       {selected.handoffAfterMessageId === m.id && <HandoffDivider />}
@@ -2254,6 +2272,25 @@ export default function ServiceCenter() {
         messageIds={linkDialogMessages}
         clientId={selected?.crm.clientId ?? null}
         leadId={selected?.leadId ?? null}
+      />
+
+      <ForwardMessageDialog
+        open={!!forwardMessage}
+        onOpenChange={(o) => { if (!o) setForwardMessage(null); }}
+        message={forwardMessage}
+        excludeId={selected?.id}
+        targets={conversations.map<ForwardTarget>((c) => ({
+          id: c.id,
+          name: c.isGroup ? (c.groupSubject || c.leadName) : c.leadName,
+          phone: c.phone,
+          isGroup: c.isGroup,
+          groupId: c.groupId,
+          photoUrl: c.photoUrl,
+        }))}
+        onSent={() => {
+          qc.invalidateQueries({ queryKey: ["wa_conversations"] });
+          if (selectedId) qc.invalidateQueries({ queryKey: ["wa_messages", selectedId] });
+        }}
       />
 
       <ImageLightbox
