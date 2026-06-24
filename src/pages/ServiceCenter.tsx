@@ -592,7 +592,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
             {q.title || q.destination || "Cotação"}
           </button>
         ))}
-        {onLinkClick && (
+        {(onLinkClick || onForward) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -604,10 +604,18 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align={isLead ? "start" : "end"}>
-              <DropdownMenuItem onClick={onLinkClick}>
-                <Link2 className="h-3.5 w-3.5 mr-2" />
-                Vincular a cotação…
-              </DropdownMenuItem>
+              {onForward && (
+                <DropdownMenuItem onClick={onForward}>
+                  <Forward className="h-3.5 w-3.5 mr-2" />
+                  Encaminhar…
+                </DropdownMenuItem>
+              )}
+              {onLinkClick && (
+                <DropdownMenuItem onClick={onLinkClick}>
+                  <Link2 className="h-3.5 w-3.5 mr-2" />
+                  Vincular a cotação…
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}
