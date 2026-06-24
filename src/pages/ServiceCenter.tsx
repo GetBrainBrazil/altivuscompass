@@ -1916,18 +1916,18 @@ export default function ServiceCenter() {
         </div>
 
         <ScrollArea className="flex-1">
-          <div className="px-3 py-3 pr-6 space-y-2.5 min-w-0">
+          <div className="min-w-0">
             {isLoadingConvos && filtered.length === 0 ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <div key={`sk-${i}`} className="flex items-start gap-3 p-3 rounded-lg border border-border/40 bg-card/40 animate-fade-in">
-                  <Skeleton className="h-10 w-10 rounded-full shrink-0" />
-                  <div className="flex-1 space-y-2 min-w-0">
+                <div key={`sk-${i}`} className="flex items-start gap-3 px-4 py-3 border-b border-border/20 animate-fade-in">
+                  <Skeleton className="h-11 w-11 rounded-full shrink-0" />
+                  <div className="flex-1 space-y-1.5 min-w-0 self-center">
                     <div className="flex items-center justify-between gap-2">
-                      <Skeleton className="h-3 w-28" />
+                      <Skeleton className="h-3.5 w-28" />
                       <Skeleton className="h-2.5 w-10" />
                     </div>
-                    <Skeleton className="h-2.5 w-full max-w-[180px]" />
-                    <Skeleton className="h-2.5 w-1/2" />
+                    <Skeleton className="h-2.5 w-full max-w-[200px]" />
+                    <Skeleton className="h-2 w-16" />
                   </div>
                 </div>
               ))
