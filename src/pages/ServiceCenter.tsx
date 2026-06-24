@@ -689,6 +689,45 @@ const HandoffDivider = () => (
   </div>
 );
 
+const isSameDay = (a?: string, b?: string) => {
+  if (!a || !b) return false;
+  const da = new Date(a);
+  const db = new Date(b);
+  return (
+    da.getFullYear() === db.getFullYear() &&
+    da.getMonth() === db.getMonth() &&
+    da.getDate() === db.getDate()
+  );
+};
+
+const formatDateSeparator = (iso: string) => {
+  const d = new Date(iso);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  if (isSameDay(d.toISOString(), today.toISOString())) return "Hoje";
+  if (isSameDay(d.toISOString(), yesterday.toISOString())) return "Ontem";
+  const diffDays = (today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24);
+  if (diffDays < 7 && d < today) {
+    return d.toLocaleDateString("pt-BR", { weekday: "long" });
+  }
+  return d.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
+
+const DateSeparator = ({ timestamp }: { timestamp: string }) => (
+  <div className="flex justify-center py-2" role="separator">
+    <span className="px-3 py-1 rounded-full bg-muted/60 text-[11px] font-medium text-muted-foreground capitalize shadow-sm">
+      {formatDateSeparator(timestamp)}
+    </span>
+  </div>
+);
+
+
+
 // ============= Lead Summary Panel =============
 interface SummaryFieldProps {
   icon: React.ComponentType<{ className?: string }>;
@@ -2038,24 +2077,31 @@ export default function ServiceCenter() {
             {/* Messages */}
             <ScrollArea className="flex-1 px-6 py-5 min-w-0">
               <div className="space-y-4 max-w-3xl mx-auto min-w-0">
-                {selected.messages.map((m) => (
-                  <div key={m.id} className="space-y-4">
-                    {m.isInternal ? (
-                      <InternalNote message={m} />
-                    ) : (
-                      <ChatBubble
-                        message={m}
-                        agentLabel={myAgentLabel}
-                        linkedQuotes={linksByMessage.get(m.id)}
-                        onLinkClick={() => setLinkDialogMessages([m.id])}
-                        onOpenQuote={(qid) => navigate(`/quotes?id=${qid}`)}
-                        onImageClick={(url, caption) => setLightbox({ url, caption })}
-                      />
-                    )}
-                    {selected.handoffAfterMessageId === m.id && <HandoffDivider />}
-                  </div>
-                ))}
+                {selected.messages.map((m, idx) => {
+                  const prev = idx > 0 ? selected.messages[idx - 1] : null;
+                  const showDate =
+                    !prev || !isSameDay(prev.timestamp, m.timestamp);
+                  return (
+                    <div key={m.id} className="space-y-4">
+                      {showDate && <DateSeparator timestamp={m.timestamp} />}
+                      {m.isInternal ? (
+                        <InternalNote message={m} />
+                      ) : (
+                        <ChatBubble
+                          message={m}
+                          agentLabel={myAgentLabel}
+                          linkedQuotes={linksByMessage.get(m.id)}
+                          onLinkClick={() => setLinkDialogMessages([m.id])}
+                          onOpenQuote={(qid) => navigate(`/quotes?id=${qid}`)}
+                          onImageClick={(url, caption) => setLightbox({ url, caption })}
+                        />
+                      )}
+                      {selected.handoffAfterMessageId === m.id && <HandoffDivider />}
+                    </div>
+                  );
+                })}
                 <div ref={messagesEndRef} />
+
               </div>
             </ScrollArea>
 
