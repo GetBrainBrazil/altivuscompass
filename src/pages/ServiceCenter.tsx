@@ -701,21 +701,16 @@ const isSameDay = (a?: string, b?: string) => {
 };
 
 const formatDateSeparator = (iso: string) => {
-  const d = new Date(iso);
+  const d  d = new Date(iso);
   const today = new Date();
   const yesterday = new Date();
   yesterday.setDate(today.getDate() - 1);
   if (isSameDay(d.toISOString(), today.toISOString())) return "Hoje";
   if (isSameDay(d.toISOString(), yesterday.toISOString())) return "Ontem";
-  const diffDays = (today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24);
-  if (diffDays < 7 && d < today) {
-    return d.toLocaleDateString("pt-BR", { weekday: "long" });
-  }
-  return d.toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  const weekday = d.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "");
+  const day = d.toLocaleDateString("pt-BR", { day: "numeric" });
+  const month = d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
+  return `${weekday}, ${day} de ${month}`;
 };
 
 const DateSeparator = ({ timestamp }: { timestamp: string }) => (
