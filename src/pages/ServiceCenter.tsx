@@ -1889,7 +1889,7 @@ export default function ServiceCenter() {
 
       <div className="flex flex-1 overflow-hidden">
       {/* ===== Left column: conversation list ===== */}
-      <aside className="w-[300px] xl:w-[340px] 2xl:w-[360px] shrink-0 border-r flex flex-col">
+      <aside className="w-[380px] xl:w-[420px] 2xl:w-[460px] max-w-[44vw] shrink-0 border-r flex flex-col">
         <div className="p-4 border-b space-y-3">
           <div className="flex items-center justify-between gap-2">
             <h1 className="text-lg font-semibold truncate">Atendimento</h1>
@@ -1970,7 +1970,7 @@ export default function ServiceCenter() {
         </div>
 
         <ScrollArea className="flex-1">
-          <div className="px-3 py-3 pr-5 space-y-2.5">
+          <div className="px-3 py-3 pr-6 space-y-2.5 min-w-0">
             {isLoadingConvos && filtered.length === 0 ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <div key={`sk-${i}`} className="flex items-start gap-3 p-3 rounded-lg border border-border/40 bg-card/40 animate-fade-in">
