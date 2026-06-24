@@ -2274,6 +2274,25 @@ export default function ServiceCenter() {
         leadId={selected?.leadId ?? null}
       />
 
+      <ForwardMessageDialog
+        open={!!forwardMessage}
+        onOpenChange={(o) => { if (!o) setForwardMessage(null); }}
+        message={forwardMessage}
+        excludeId={selected?.id}
+        targets={conversations.map<ForwardTarget>((c) => ({
+          id: c.id,
+          name: c.isGroup ? (c.groupSubject || c.leadName) : c.leadName,
+          phone: c.phone,
+          isGroup: c.isGroup,
+          groupId: c.groupId,
+          photoUrl: c.photoUrl,
+        }))}
+        onSent={() => {
+          qc.invalidateQueries({ queryKey: ["wa_conversations"] });
+          if (selectedId) qc.invalidateQueries({ queryKey: ["wa_messages", selectedId] });
+        }}
+      />
+
       <ImageLightbox
         open={!!lightbox}
         onOpenChange={(o) => { if (!o) setLightbox(null); }}
