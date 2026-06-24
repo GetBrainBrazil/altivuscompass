@@ -2100,6 +2100,13 @@ export default function ServiceCenter() {
                           onLinkClick={() => setLinkDialogMessages([m.id])}
                           onOpenQuote={(qid) => navigate(`/quotes?id=${qid}`)}
                           onImageClick={(url, caption) => setLightbox({ url, caption })}
+                          onForward={() => setForwardMessage({
+                            id: m.id,
+                            messageType: m.messageType,
+                            content: m.content,
+                            mediaUrl: m.mediaUrl ?? null,
+                            mediaCaption: m.mediaCaption ?? null,
+                          })}
                         />
                       )}
                       {selected.handoffAfterMessageId === m.id && <HandoffDivider />}
