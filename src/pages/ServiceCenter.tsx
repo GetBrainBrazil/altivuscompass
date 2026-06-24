@@ -701,7 +701,7 @@ const isSameDay = (a?: string, b?: string) => {
 };
 
 const formatDateSeparator = (iso: string) => {
-  const d  d = new Date(iso);
+  const d = new Date(iso);
   const today = new Date();
   const yesterday = new Date();
   yesterday.setDate(today.getDate() - 1);
