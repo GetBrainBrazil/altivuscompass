@@ -39,6 +39,7 @@ const PERMISSION_GROUPS: PermGroup[] = [
   { id: "vault", label: "Cofre de Senhas", paths: ["/vault"] },
   { id: "catalogo", label: "Catálogo", paths: ["/catalog"] },
   { id: "cadastros", label: "Cadastros", paths: ["/registrations"] },
+  { id: "service-center", label: "Central de Atendimento", paths: ["/service-center"] },
   { id: "ai", label: "Agentes IA", paths: ["/ai-agents"] },
   { id: "sistema", label: "Sistema", paths: ["/system", "/users", "/permissions"] },
 
