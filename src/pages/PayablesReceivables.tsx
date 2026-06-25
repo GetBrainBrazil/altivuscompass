@@ -509,7 +509,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
         </div>
 
         {/* Period selector */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
           <Select
             value={period}
             onValueChange={(v) => {
@@ -519,7 +519,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
               if (p === "custom") setCustomPopoverOpen(true);
             }}
           >
-            <SelectTrigger className="w-[180px] h-9">
+            <SelectTrigger className="w-[180px]">
               <CalendarDays className="h-4 w-4 mr-1 text-muted-foreground" />
               <SelectValue placeholder="Período" />
             </SelectTrigger>
@@ -533,7 +533,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
           {period === "custom" && (
             <Popover open={customPopoverOpen} onOpenChange={setCustomPopoverOpen}>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-9 gap-2">
+                <Button variant="outline" className="h-10 gap-2">
                   <CalendarDays className="h-4 w-4" />
                   {customRange?.from && customRange?.to
                     ? `${format(customRange.from, "dd/MM/yyyy")} – ${format(customRange.to, "dd/MM/yyyy")}`
@@ -556,20 +556,8 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
               </PopoverContent>
             </Popover>
           )}
-
-          {period !== "this_month" && (
-            <div className="hidden lg:flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/40 px-2 py-1.5 rounded-md">
-              <span className="font-medium">{periodLabel}</span>
-              <button
-                onClick={resetPeriod}
-                className="ml-1 text-muted-foreground/70 hover:text-foreground"
-                aria-label="Limpar período"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </div>
-          )}
         </div>
+
 
 
         <div className="flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-background">
@@ -619,6 +607,22 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
           </SelectContent>
         </Select>
       </div>
+
+      {period !== "this_month" && (
+        <div className="flex">
+          <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/40 px-2 py-1.5 rounded-md">
+            <span className="font-medium">{periodLabel}</span>
+            <button
+              onClick={resetPeriod}
+              className="ml-1 text-muted-foreground/70 hover:text-foreground"
+              aria-label="Limpar período"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
+      )}
+
 
       {/* Table */}
       <div className="rounded-xl border border-border overflow-hidden bg-card">

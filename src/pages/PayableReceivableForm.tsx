@@ -351,7 +351,7 @@ export default function PayableReceivableForm() {
             </div>
 
             <div className="space-y-1 col-span-12 md:col-span-6">
-              <div className="flex items-center justify-between h-4">
+              <div className="flex items-center justify-between">
                 <Label>Centro de Custo</Label>
                 <div className="flex items-center gap-1.5">
                   <span className="text-[10px] text-muted-foreground">Rateio</span>
@@ -427,7 +427,7 @@ export default function PayableReceivableForm() {
 
             <div className="space-y-1">
               <Label>Total</Label>
-              <div className="h-7 px-2 rounded-md border border-gray-200 bg-muted/30 flex items-center text-xs font-semibold">
+              <div className="h-10 px-3 rounded-md border border-input bg-muted/30 flex items-center text-sm font-semibold">
                 {brl(baseAmountNum)}
               </div>
             </div>
