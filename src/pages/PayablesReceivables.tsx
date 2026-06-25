@@ -340,18 +340,58 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
   const endIdx = Math.min(startIdx + pageSize, totalRecords);
   const pageRows = filtered.slice(startIdx, endIdx);
 
+  // ----- confirm dialog -----
+  const [confirmTarget, setConfirmTarget] = useState<ConfirmPaymentTarget | null>(null);
+
+  const openConfirm = (t: any) => {
+    setConfirmTarget({
+      id: t.id,
+      type: t.type,
+      description: t.description,
+      bank_account_id: t.bank_account_id,
+      payment_method: t.payment_method,
+      payment_date: t.payment_date,
+      amount: t.amount,
+      base_amount: t.base_amount,
+      attachment_urls: t.attachment_urls,
+      attachment_notes: t.attachment_notes,
+      status: t.status,
+    });
+  };
+
   // ----- mutations -----
-  const markPaidMutation = useMutation({
+  const reconcileMutation = useMutation({
+    mutationFn: async ({ id, value }: { id: string; value: boolean }) => {
+      const payload: any = value
+        ? { is_reconciled: true, reconciled_at: new Date().toISOString() }
+        : { is_reconciled: false, reconciled_at: null, reconciled_by: null };
+      const { error } = await (supabase.from("financial_transactions") as any)
+        .update(payload).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      toast({ title: vars.value ? "Lançamento conciliado" : "Conciliação desfeita" });
+      qc.invalidateQueries({ queryKey: ["finance-transactions"] });
+    },
+    onError: (e: any) =>
+      toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+  const reopenMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await (supabase.from("financial_transactions") as any)
-        .update({ status: "paid", payment_date: todayStr }).eq("id", id);
+        .update({ status: "pending", payment_date: null }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Marcado como pago" });
+      toast({ title: "Lançamento reaberto" });
       qc.invalidateQueries({ queryKey: ["finance-transactions"] });
     },
+    onError: (e: any) =>
+      toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
+
+
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
