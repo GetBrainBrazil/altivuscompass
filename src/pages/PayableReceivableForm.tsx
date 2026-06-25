@@ -113,8 +113,12 @@ export default function PayableReceivableForm() {
 
   const [form, setForm] = useState<typeof emptyForm>({ ...emptyForm, type: initialType });
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [attachmentNotesNew, setAttachmentNotesNew] = useState<string[]>([]);
   const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
+  const [existingNotes, setExistingNotes] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [pdfViewer, setPdfViewer] = useState<{ path: string | null; name: string; pendingFile?: File | null } | null>(null);
+  const [imgViewer, setImgViewer] = useState<ViewerAttachment | null>(null);
 
   const isReceivable = form.type === "receivable";
 
