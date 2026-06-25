@@ -22,27 +22,30 @@ export function PdfViewerDialog({ open, onOpenChange, filePath, fileName, pendin
     let cancelled = false;
     (async () => {
       try {
-        let blob: Blob | null = null;
         if (pendingFile) {
-          blob = pendingFile;
-        } else if (filePath) {
-          const { data, error } = await supabase.storage
-            .from(bucket)
-            .download(filePath);
-          if (error || !data) return;
-          blob = data;
+          const pdfBlob = pendingFile.type === "application/pdf"
+            ? pendingFile
+            : new Blob([pendingFile], { type: "application/pdf" });
+          const url = URL.createObjectURL(pdfBlob);
+          revoke = url;
+          if (!cancelled) setSrc(url);
+          return;
         }
-        if (!blob || cancelled) return;
-        const pdfBlob = blob.type === "application/pdf" ? blob : new Blob([blob], { type: "application/pdf" });
-        const url = URL.createObjectURL(pdfBlob);
-        revoke = url;
-        setSrc(url);
+        if (filePath) {
+          // Use a signed URL directly — blob: iframes are blocked by Chrome
+          // when the app itself runs inside a sandboxed iframe (preview).
+          const { data } = await supabase.storage
+            .from(bucket)
+            .createSignedUrl(filePath, 60 * 10);
+          if (!cancelled && data?.signedUrl) setSrc(data.signedUrl);
+        }
       } catch {
         // ignore
       }
     })();
     return () => { cancelled = true; if (revoke) URL.revokeObjectURL(revoke); };
-  }, [open, filePath, pendingFile]);
+  }, [open, filePath, pendingFile, bucket]);
+
 
   const handleDownload = async () => {
     if (pendingFile) {
