@@ -55,6 +55,7 @@ import Vault from "./pages/Vault";
 import VaultEdit from "./pages/VaultEdit";
 
 import { ReminderPopupCenter } from "@/components/ReminderPopupCenter";
+import RouteAuditLogger from "@/components/RouteAuditLogger";
 
 import Unsubscribe from "./pages/Unsubscribe";
 import ReminderAction from "./pages/ReminderAction";
