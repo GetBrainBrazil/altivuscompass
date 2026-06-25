@@ -54,7 +54,7 @@ export function PdfViewerDialog({ open, onOpenChange, filePath, fileName, pendin
     }
     if (!filePath) return;
     const { data } = await supabase.storage
-      .from("task-attachments")
+      .from(bucket)
       .createSignedUrl(filePath, 60 * 5, { download: fileName });
     if (data?.signedUrl) window.open(data.signedUrl, "_blank");
   };
