@@ -41,7 +41,7 @@ const PERMISSION_GROUPS: PermGroup[] = [
   { id: "cadastros", label: "Cadastros", paths: ["/registrations"] },
   { id: "ai", label: "Agentes IA", paths: ["/ai-agents"] },
   { id: "sistema", label: "Sistema", paths: ["/system", "/users", "/permissions"] },
-  { id: "perfil", label: "Meu Perfil", paths: ["/profile"] },
+
 ];
 
 export default function Permissions({ embedded = false }: { embedded?: boolean }) {
