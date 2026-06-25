@@ -455,8 +455,8 @@ export default function CatalogEdit() {
 
 
         {/* Comercial */}
-        <Section title="Comercial" description="Valores de referência. Quando o produto for puxado para uma cotação, custo e preço viram cópia editável dentro do item — alterações futuras no catálogo não mudam cotações já criadas.">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Section title="Comercial" description="Valores de referência. Ao puxar para uma cotação, custo e preço viram cópia editável.">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {canSeeCost && (
               <Field label="Custo-base (R$)">
                 <CurrencyInput value={form.cost} onChange={(v) => setForm((f) => ({ ...f, cost: v == null ? "" : String(v) }))} placeholder="0,00" />
@@ -475,16 +475,16 @@ export default function CatalogEdit() {
                 </SelectContent>
               </Select>
             </Field>
+            <Field label="Fornecedor">
+              <Select value={form.supplier_id || "none"} onValueChange={(v) => setForm((f) => ({ ...f, supplier_id: v === "none" ? "" : v }))}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— Sem fornecedor —</SelectItem>
+                  {suppliers.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
           </div>
-          <Field label="Fornecedor">
-            <Select value={form.supplier_id || "none"} onValueChange={(v) => setForm((f) => ({ ...f, supplier_id: v === "none" ? "" : v }))}>
-              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">— Sem fornecedor —</SelectItem>
-                {suppliers.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </Field>
         </Section>
 
         {/* Mídia */}
