@@ -2178,6 +2178,7 @@ export type Database = {
         Row: {
           admin_fee_amount: number | null
           amount: number
+          attachment_notes: string[] | null
           attachment_urls: string[] | null
           bank_account_id: string | null
           base_amount: number | null
@@ -2217,6 +2218,7 @@ export type Database = {
         Insert: {
           admin_fee_amount?: number | null
           amount: number
+          attachment_notes?: string[] | null
           attachment_urls?: string[] | null
           bank_account_id?: string | null
           base_amount?: number | null
@@ -2256,6 +2258,7 @@ export type Database = {
         Update: {
           admin_fee_amount?: number | null
           amount?: number
+          attachment_notes?: string[] | null
           attachment_urls?: string[] | null
           bank_account_id?: string | null
           base_amount?: number | null

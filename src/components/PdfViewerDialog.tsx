@@ -10,9 +10,10 @@ interface Props {
   filePath: string | null;
   fileName: string;
   pendingFile?: File | null;
+  bucket?: string;
 }
 
-export function PdfViewerDialog({ open, onOpenChange, filePath, fileName, pendingFile }: Props) {
+export function PdfViewerDialog({ open, onOpenChange, filePath, fileName, pendingFile, bucket = "task-attachments" }: Props) {
   const [src, setSrc] = useState<string | null>(null);
 
   useEffect(() => {
@@ -26,7 +27,7 @@ export function PdfViewerDialog({ open, onOpenChange, filePath, fileName, pendin
           blob = pendingFile;
         } else if (filePath) {
           const { data, error } = await supabase.storage
-            .from("task-attachments")
+            .from(bucket)
             .download(filePath);
           if (error || !data) return;
           blob = data;
@@ -53,7 +54,7 @@ export function PdfViewerDialog({ open, onOpenChange, filePath, fileName, pendin
     }
     if (!filePath) return;
     const { data } = await supabase.storage
-      .from("task-attachments")
+      .from(bucket)
       .createSignedUrl(filePath, 60 * 5, { download: fileName });
     if (data?.signedUrl) window.open(data.signedUrl, "_blank");
   };
