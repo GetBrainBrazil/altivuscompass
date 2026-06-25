@@ -276,7 +276,7 @@ export default function PayableReceivableForm() {
   const backTo = isReceivable ? "/finance/receivables" : "/finance/payables";
 
   return (
-    <div className="space-y-3 px-8 py-4 w-full max-w-none">
+    <div className="space-y-2 px-8 py-3 w-full max-w-none">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate(backTo)}>
