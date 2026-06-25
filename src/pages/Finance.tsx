@@ -24,6 +24,7 @@ type Transaction = {
   party_name?: string | null; created_at: string;
   is_reconciled?: boolean; virtual_account_owner?: string | null;
   observations?: string | null; payment_account?: string | null;
+  client_id?: string | null; supplier_id?: string | null;
 };
 
 const typeLabels: Record<string, string> = {
