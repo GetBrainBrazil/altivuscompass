@@ -608,6 +608,22 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
         </Select>
       </div>
 
+      {period !== "this_month" && (
+        <div className="flex">
+          <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/40 px-2 py-1.5 rounded-md">
+            <span className="font-medium">{periodLabel}</span>
+            <button
+              onClick={resetPeriod}
+              className="ml-1 text-muted-foreground/70 hover:text-foreground"
+              aria-label="Limpar período"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
+      )}
+
+
       {/* Table */}
       <div className="rounded-xl border border-border overflow-hidden bg-card">
         <div className="overflow-x-auto">
