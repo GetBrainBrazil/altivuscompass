@@ -689,7 +689,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
                           aria-label="Selecionar linha"
                         />
                       </td>
-                      <td className="px-3 py-3 whitespace-nowrap">{fmtDate(t.due_date)}</td>
+                      <td className="px-3 py-3 whitespace-nowrap">{fmtDate(t._effDate ?? t.due_date)}</td>
                       <td className="px-3 py-3 whitespace-nowrap text-muted-foreground">{fmtDate(t.payment_date)}</td>
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-2 max-w-[280px]">
