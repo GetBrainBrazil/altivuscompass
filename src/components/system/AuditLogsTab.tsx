@@ -31,11 +31,21 @@ type DatePreset = "all" | "today" | "yesterday" | "this_week" | "this_month" | "
 const ACTION_LABELS: Record<string, string> = {
   INSERT: "Criação", UPDATE: "Alteração", DELETE: "Remoção",
   CREATE: "Criação", create: "Criação", update: "Alteração", delete: "Remoção",
+  VIEW: "Visualização", view: "Visualização",
+  NAVIGATE: "Acesso", navigate: "Acesso",
+  SEND: "Envio", send: "Envio",
+  EXPORT: "Exportação", export: "Exportação",
+  PRINT: "Impressão", print: "Impressão",
 };
 
 const ACTION_COLORS: Record<string, string> = {
   INSERT: "bg-success/10 text-success", UPDATE: "bg-soft-blue/10 text-soft-blue", DELETE: "bg-destructive/10 text-destructive",
   CREATE: "bg-success/10 text-success", create: "bg-success/10 text-success", update: "bg-soft-blue/10 text-soft-blue", delete: "bg-destructive/10 text-destructive",
+  VIEW: "bg-muted text-muted-foreground", view: "bg-muted text-muted-foreground",
+  NAVIGATE: "bg-muted/60 text-muted-foreground", navigate: "bg-muted/60 text-muted-foreground",
+  SEND: "bg-primary/10 text-primary", send: "bg-primary/10 text-primary",
+  EXPORT: "bg-warning/10 text-warning", export: "bg-warning/10 text-warning",
+  PRINT: "bg-warning/10 text-warning", print: "bg-warning/10 text-warning",
 };
 
 const TABLE_LABELS: Record<string, string> = {
@@ -45,6 +55,10 @@ const TABLE_LABELS: Record<string, string> = {
   profiles: "Perfis", user_roles: "Funções", financial_categories: "Categorias Financeiras",
   financial_parties: "Partes Financeiras", airports: "Aeroportos", airlines: "Companhias Aéreas",
   tags: "Tags", sessions: "Sessão",
+  tasks: "Tarefas", leads: "Leads", contacts: "Contatos", deals: "Negócios",
+  itineraries: "Roteiros", wa_conversations: "Atendimentos", products: "Catálogo",
+  vault_items: "Cofre", ai_agents: "Agentes IA", ops_cards: "Operações",
+  pages: "Página", sales: "Vendas",
 };
 
 const SESSION_EVENT_LABELS: Record<string, string> = {
