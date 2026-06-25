@@ -11,7 +11,8 @@ type PermGroup = { id: string; label: string; paths: string[] };
 const PERMISSION_GROUPS: PermGroup[] = [
   { id: "painel", label: "Painel", paths: ["/"] },
   { id: "tarefas", label: "Tarefas", paths: ["/tasks"] },
-  { id: "atualizacoes", label: "Atualizações", paths: ["/changelog"] },
+  { id: "menu-superior", label: "Menu Superior", paths: ["/profile", "/changelog"] },
+
   { id: "clientes", label: "Clientes", paths: ["/clients"] },
   {
     id: "crm",
