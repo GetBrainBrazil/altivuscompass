@@ -518,24 +518,58 @@ export default function PayableReceivableForm() {
               placeholder="Notas internas"
               rows={3}
               className="text-xs resize-none" />
-            <label
-              htmlFor="pr-attachments"
-              className="flex items-center justify-center gap-2 rounded-md border border-dashed border-gray-300 bg-muted/20 px-3 py-2 cursor-pointer hover:bg-muted/40 transition-colors text-xs"
-            >
-              <Upload className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">Anexar arquivos</span>
-              <span className="text-muted-foreground">(PDF, JPG, PNG)</span>
-              <input
-                id="pr-attachments"
-                type="file"
-                multiple
-                className="hidden"
-                onChange={(e) => {
-                  const files = Array.from(e.target.files ?? []);
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragging(true);
+              }}
+              onDragEnter={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragging(true);
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragging(false);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragging(false);
+                const files = Array.from(e.dataTransfer.files ?? []);
+                if (files.length > 0) {
                   setAttachments((prev) => [...prev, ...files]);
-                }}
-              />
-            </label>
+                }
+              }}
+            >
+              <label
+                htmlFor="pr-attachments"
+                className={cn(
+                  "flex items-center justify-center gap-2 rounded-md border border-dashed px-3 py-2 cursor-pointer transition-colors text-xs select-none",
+                  isDragging
+                    ? "border-primary bg-primary/5"
+                    : "border-gray-300 bg-muted/20 hover:bg-muted/40"
+                )}
+              >
+                <Upload className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">
+                  {isDragging ? "Solte os arquivos aqui" : "Anexar arquivos"}
+                </span>
+                <span className="text-muted-foreground">(PDF, JPG, PNG)</span>
+                <input
+                  id="pr-attachments"
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files ?? []);
+                    setAttachments((prev) => [...prev, ...files]);
+                  }}
+                />
+              </label>
+            </div>
           </div>
 
           {attachments.length > 0 && (
