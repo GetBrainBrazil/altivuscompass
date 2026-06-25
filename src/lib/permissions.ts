@@ -15,6 +15,7 @@ export const PAGE_PERMISSIONS: PagePermission[] = [
   { path: "/", label: "Painel", allowedRoles: ["admin", "manager", "sales_agent", "operations"] },
   { path: "/tasks", label: "Tarefas", allowedRoles: ["admin", "manager", "sales_agent", "operations"] },
   { path: "/changelog", label: "Atualizações", allowedRoles: ["admin", "manager", "sales_agent", "operations"] },
+  { path: "/crm", label: "CRM", allowedRoles: ["admin", "manager", "sales_agent", "operations"] },
   { path: "/crm/dashboard", label: "Dashboard CRM", allowedRoles: ["admin", "manager", "sales_agent", "operations"] },
   { path: "/crm/sales?tab=sales", label: "CRM — Funil de Vendas", allowedRoles: ["admin", "manager", "sales_agent"] },
   { path: "/crm/ops?tab=ops", label: "CRM — Pós-Venda", allowedRoles: ["admin", "manager", "operations"] },
