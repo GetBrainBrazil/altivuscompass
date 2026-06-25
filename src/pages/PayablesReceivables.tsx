@@ -391,12 +391,12 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
     }
   };
 
-  const navMonth = (delta: number) => {
-    const d = new Date(year, month + delta, 1);
-    setYear(d.getFullYear());
-    setMonth(d.getMonth());
+  const resetPeriod = () => {
+    setPeriod("this_month");
+    setCustomRange(undefined);
     setPage(1);
   };
+
 
   const toggleAllOnPage = (checked: boolean) => {
     setSelected((prev) => {
