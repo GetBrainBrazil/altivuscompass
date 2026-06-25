@@ -514,7 +514,7 @@ export default function PayableReceivableForm() {
 
         {/* OBS + ANEXOS */}
         <Section title="Observações e anexos">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <Textarea value={form.observations}
               onChange={(e) => setForm({ ...form, observations: e.target.value })}
               placeholder="Notas internas"
