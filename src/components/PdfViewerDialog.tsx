@@ -10,9 +10,10 @@ interface Props {
   filePath: string | null;
   fileName: string;
   pendingFile?: File | null;
+  bucket?: string;
 }
 
-export function PdfViewerDialog({ open, onOpenChange, filePath, fileName, pendingFile }: Props) {
+export function PdfViewerDialog({ open, onOpenChange, filePath, fileName, pendingFile, bucket = "task-attachments" }: Props) {
   const [src, setSrc] = useState<string | null>(null);
 
   useEffect(() => {
