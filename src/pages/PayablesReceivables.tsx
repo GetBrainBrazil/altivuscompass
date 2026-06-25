@@ -257,14 +257,15 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
   // ----- compute effective status per tx -----
   const enriched = useMemo(() => {
     return transactions
-      .filter((t: any) => mode === "all" ? true : t.type === mode)
+      .filter((t: any) => matchesMode(t, mode))
       .map((t: any) => {
+        const eff = effectiveDate(t);
         let status: TxStatus = (t.status as TxStatus) || "pending";
-        if (status === "pending" && t.due_date && t.due_date < todayStr) status = "overdue";
+        if (status === "pending" && eff && eff < todayStr) status = "overdue";
         const partyName =
           clientsMap[t.client_id] || suppliersMap[t.supplier_id] || t.party_name || "—";
         const total = computeTotal(t);
-        return { ...t, _status: status, _party: partyName, _total: total };
+        return { ...t, _status: status, _party: partyName, _total: total, _effDate: eff };
       });
   }, [transactions, clientsMap, suppliersMap, todayStr, mode]);
 
@@ -272,7 +273,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
   const summary = useMemo(() => {
     let vencidos = 0, vencemHoje = 0, aVencer = 0, pagos = 0, totalPeriodo = 0;
     for (const t of enriched) {
-      const d = t.due_date as string | null;
+      const d = t._effDate as string | null;
       if (!d) continue;
       if (d < range.from || d > range.to) continue;
       if (t._status === "cancelled") continue;
@@ -293,8 +294,9 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
   // ----- filter + sort -----
   const filtered = useMemo(() => {
     const rows = enriched.filter((t: any) => {
-      if (!t.due_date) return false;
-      if (t.due_date < range.from || t.due_date > range.to) return false;
+      const d = t._effDate as string | null;
+      if (!d) return false;
+      if (d < range.from || d > range.to) return false;
       if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
       if (!matchesCompanyFilter(companyFilter, t.company)) return false;
       if (search) {
@@ -309,7 +311,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
     rows.sort((a: any, b: any) => {
       let av: any, bv: any;
       switch (sortKey) {
-        case "due_date": av = a.due_date || ""; bv = b.due_date || ""; break;
+        case "due_date": av = a._effDate || ""; bv = b._effDate || ""; break;
         case "payment_date": av = a.payment_date || ""; bv = b.payment_date || ""; break;
         case "description": av = (a.description || "").toLowerCase(); bv = (b.description || "").toLowerCase(); break;
         case "party": av = a._party.toLowerCase(); bv = b._party.toLowerCase(); break;
