@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { COUNTRIES_STATES, COUNTRY_LIST } from "@/lib/countries-states";
 import { logAuditEvent } from "@/lib/audit";
 import LocationsTab from "@/components/LocationsTab";
-import SuppliersTab from "@/components/SuppliersTab";
+
 import ProductsTab from "@/components/ProductsTab";
 
 import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
