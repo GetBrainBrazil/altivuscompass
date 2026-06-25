@@ -302,6 +302,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
       if (!d) return false;
       if (d < range.from || d > range.to) return false;
       if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
+      if (partyKindFilter !== "all" && t._partyKind !== partyKindFilter) return false;
       if (!matchesCompanyFilter(companyFilter, t.company)) return false;
       if (search) {
         const q = search.toLowerCase();
