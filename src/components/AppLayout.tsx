@@ -215,7 +215,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                           Ver como...
                         </DropdownMenuItem>
                       ) : (
-                        <DropdownMenuSub>
+                        <DropdownMenuSub onOpenChange={(open) => { if (open) refetchUsersList(); }}>
                           <DropdownMenuSubTrigger className="flex items-center gap-2 cursor-pointer">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
