@@ -82,7 +82,6 @@ const emptyForm = {
   description: "",
   category: "",
   cost_center: "",
-  cost_center_split: false,
   client_id: "",
   supplier_id: "",
   party_name_free: "" as string, // usado quando a contraparte for "Outra parte"
@@ -395,16 +394,7 @@ export default function PayableReceivableForm() {
             </div>
 
             <div className="space-y-0.5 col-span-12 md:col-span-4">
-              <div className="flex items-center justify-between">
-                <Label>Centro de Custo</Label>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] text-muted-foreground">Rateio</span>
-                  <Switch
-                    checked={form.cost_center_split}
-                    onCheckedChange={(v) => setForm({ ...form, cost_center_split: v })}
-                  />
-                </div>
-              </div>
+              <Label>Centro de Custo</Label>
               <Select value={form.cost_center} onValueChange={(v) => {
                 if (v === "__add__") { window.open("/finance/registrations?tab=cost-centers", "_blank"); return; }
                 setForm({ ...form, cost_center: v });
