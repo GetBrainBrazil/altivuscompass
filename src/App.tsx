@@ -20,6 +20,7 @@ import PayablesReceivables from "./pages/PayablesReceivables";
 import Payables from "./pages/Payables";
 import Receivables from "./pages/Receivables";
 import PayableReceivableForm from "./pages/PayableReceivableForm";
+import Reconciliation from "./pages/Reconciliation";
 import Miles from "./pages/Miles";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
