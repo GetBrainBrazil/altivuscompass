@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle2, ChevronsUpDown, Check, ChevronRight } from "lucide-react";
+import { CheckCircle2, ChevronsUpDown, Check, ChevronRight, Paperclip } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import CounterpartySelect, { type CounterpartyValue, EMPTY_COUNTERPARTY, CounterpartyTypeBadge } from "@/components/finance/CounterpartySelect";
