@@ -5490,6 +5490,7 @@ export type Database = {
         Args: { _item_id: string; _user_id: string }
         Returns: boolean
       }
+      cleanup_old_audit_logs: { Args: never; Returns: undefined }
       current_user_display_name: { Args: never; Returns: string }
       deal_event_phase_of: { Args: { _stage: string }; Returns: string }
       delete_email: {
