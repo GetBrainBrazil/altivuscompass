@@ -347,7 +347,42 @@ export default function PayableReceivableForm() {
             {titleAction} {titleNoun}
           </h1>
         </div>
+        {editingId && existing && (
+          <div className="flex items-center gap-2">
+            <StatusChip status={existing.status} isReconciled={existing.is_reconciled} type={existing.type} />
+            {existing.status !== "paid" && existing.status !== "received" ? (
+              <Button size="sm" className="gap-1" onClick={() => setConfirmOpen(true)}>
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Confirmar {isReceivable ? "recebimento" : "pagamento"}
+              </Button>
+            ) : null}
+          </div>
+        )}
       </div>
+
+      {editingId && existing && (existing.status === "paid" || existing.status === "received") && (
+        <div className="rounded-md border border-success/30 bg-success/5 px-3 py-2 text-xs flex flex-wrap items-center gap-x-4 gap-y-1">
+          <span className="flex items-center gap-1 text-success font-medium">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            {isReceivable ? "Recebido" : "Pago"}
+            {existing.payment_date ? ` em ${new Date(existing.payment_date + "T00:00:00").toLocaleDateString("pt-BR")}` : ""}
+          </span>
+          {existing.payment_method && <span className="text-muted-foreground">Forma: {existing.payment_method}</span>}
+          {existing.bank_account_id ? (
+            <span className="text-muted-foreground">Conta vinculada</span>
+          ) : (
+            <span className="text-amber-700 flex items-center gap-1">
+              <AlertCircle className="h-3 w-3" /> Sem conta bancária
+            </span>
+          )}
+          {!existing.is_reconciled && (
+            <span className="text-amber-700 flex items-center gap-1">
+              <AlertCircle className="h-3 w-3" /> A conciliar
+            </span>
+          )}
+        </div>
+      )}
+
 
       <FormBody>
         {/* DADOS PRINCIPAIS */}
