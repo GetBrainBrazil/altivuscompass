@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { KanbanSkeleton } from "@/components/ui/loading-skeletons";
+import { SalesFinancialSummaryCard } from "@/components/sales/SalesFinancialSummaryCard";
 
 const saleStages = [
   { id: "issued", label: "Bilhete Emitido", color: "bg-soft-blue" },
