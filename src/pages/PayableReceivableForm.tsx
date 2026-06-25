@@ -181,6 +181,7 @@ export default function PayableReceivableForm() {
       observations: existing.observations ?? "",
       company: (existing.company as CompanyBrand) ?? DEFAULT_COMPANY,
     }));
+    setExistingAttachments(Array.isArray(existing.attachment_urls) ? existing.attachment_urls : []);
   }, [existing]);
 
   const clientsMap = useMemo(
