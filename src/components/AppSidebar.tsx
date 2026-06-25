@@ -29,6 +29,7 @@ type NavItem = {
   url: string;
   icon: () => JSX.Element;
   group: number;
+  nonNavigable?: boolean; // when true, clicking parent only toggles submenu
   subItems?: { title: string; url: string }[];
 };
 
@@ -64,14 +65,15 @@ const navItems: NavItem[] = [
 
   // Group 3 — Financeiro
   {
-    title: "Financeiro", url: "/finance", group: 3,
+    title: "Financeiro", url: "/finance", group: 3, nonNavigable: true,
     icon: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 17l4-4 4 4 4-6 4 2 4-4" /><path d="M2 21h20" /></svg>,
     subItems: [
+      { title: "Dashboard Financeiro", url: "/finance/reports" },
+      { title: "Extrato", url: "/finance" },
       { title: "Contas a Pagar", url: "/finance/payables" },
       { title: "Contas a Receber", url: "/finance/receivables" },
       { title: "Vendas Fechadas", url: "/finance/closed-sales" },
       { title: "Cadastros Financeiros", url: "/finance/registrations" },
-      { title: "Relatórios", url: "/finance/reports" },
     ],
   },
 
@@ -139,7 +141,13 @@ export function AppSidebar() {
 
   // Track which collapsibles are open. Auto-open whenever a parent or any of its
   // children matches the current route, while still letting the user toggle manually.
-  const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
+  const [openMap, setOpenMap] = useState<Record<string, boolean>>(() => {
+    try {
+      const raw = localStorage.getItem("sidebar:openMap");
+      if (raw) return JSON.parse(raw);
+    } catch { /* ignore */ }
+    return {};
+  });
   useEffect(() => {
     setOpenMap((prev) => {
       const next = { ...prev };
@@ -154,6 +162,9 @@ export function AppSidebar() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectivePath, location.search]);
+  useEffect(() => {
+    try { localStorage.setItem("sidebar:openMap", JSON.stringify(openMap)); } catch { /* ignore */ }
+  }, [openMap]);
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border/30 bg-gradient-to-b from-sidebar to-[hsl(220_55%_8%)]">
@@ -178,8 +189,12 @@ export function AppSidebar() {
                 const isItemActive = item.url === "/"
                   ? effectivePath === "/"
                   : effectivePath === item.url || effectivePath.startsWith(item.url + "/");
-                const prev = visibleItems[idx - 1];
                 const showDivider = false;
+                const nonNavigable = !!item.nonNavigable;
+                // Highlight parent only when parent is non-navigable and one of its
+                // children is active (to mark the section visually), or when its own
+                // route is active and it IS navigable.
+                const parentHighlight = nonNavigable ? isParentActive : isItemActive;
 
                 // Elegant active: subtle white-tinted bg + gold left accent bar; soft hover
                 const linkBase = "relative flex items-center gap-3 px-3 text-sidebar-foreground/85 hover:bg-white/[0.04] hover:text-white transition-all duration-200 rounded-md";
@@ -196,19 +211,34 @@ export function AppSidebar() {
                         className="group/collapsible"
                       >
                         <SidebarMenuItem>
-                          <div className="flex items-center gap-0.5">
-                            <SidebarMenuButton asChild className={cn("h-9 rounded-md flex-1", activeBase)} data-active={isItemActive}>
-                              <Link to={item.url} className={cn(linkBase, isItemActive && linkActive)}>
-                                <item.icon />
-                                <span className="text-[13px] font-body flex-1 tracking-[0.01em]">{item.title}</span>
-                              </Link>
-                            </SidebarMenuButton>
+                          {nonNavigable ? (
                             <CollapsibleTrigger asChild>
-                              <button className="h-7 w-7 flex items-center justify-center text-sidebar-foreground/50 hover:text-white transition-colors rounded-md hover:bg-white/[0.05]">
-                                <ChevronRight size={13} className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                              </button>
+                              <SidebarMenuButton
+                                className={cn("h-9 rounded-md w-full", activeBase)}
+                                data-active={parentHighlight}
+                              >
+                                <div className={cn(linkBase, "w-full cursor-pointer", parentHighlight && linkActive)}>
+                                  <item.icon />
+                                  <span className="text-[13px] font-body flex-1 tracking-[0.01em]">{item.title}</span>
+                                  <ChevronRight size={13} className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 text-sidebar-foreground/50" />
+                                </div>
+                              </SidebarMenuButton>
                             </CollapsibleTrigger>
-                          </div>
+                          ) : (
+                            <div className="flex items-center gap-0.5">
+                              <SidebarMenuButton asChild className={cn("h-9 rounded-md flex-1", activeBase)} data-active={isItemActive}>
+                                <Link to={item.url} className={cn(linkBase, isItemActive && linkActive)}>
+                                  <item.icon />
+                                  <span className="text-[13px] font-body flex-1 tracking-[0.01em]">{item.title}</span>
+                                </Link>
+                              </SidebarMenuButton>
+                              <CollapsibleTrigger asChild>
+                                <button className="h-7 w-7 flex items-center justify-center text-sidebar-foreground/50 hover:text-white transition-colors rounded-md hover:bg-white/[0.05]">
+                                  <ChevronRight size={13} className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                                </button>
+                              </CollapsibleTrigger>
+                            </div>
+                          )}
                         </SidebarMenuItem>
                         <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
                           <ul className="mt-1 ml-[18px] pl-3 border-l border-sidebar-border/40 flex flex-col gap-0.5">

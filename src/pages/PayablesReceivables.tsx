@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,14 +13,22 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   Clock, TrendingUp, AlertTriangle, CalendarDays, CheckCircle2, ArrowDown, ArrowUp,
   Search, MoreHorizontal, Pencil, Trash2, Copy, ChevronLeft, ChevronRight,
-  ArrowUpDown, ArrowUp as ArrUp, ArrowDown as ArrDown, User, Inbox,
+  ArrowUpDown, ArrowUp as ArrUp, ArrowDown as ArrDown, User, Inbox, X,
 } from "lucide-react";
+import {
+  format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
+  startOfQuarter, endOfQuarter, startOfYear, endOfYear, subDays, subMonths, subYears, subWeeks,
+} from "date-fns";
+import { ptBR } from "date-fns/locale";
+import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { COMPANY_OPTIONS } from "@/lib/company";
 import { CompanyBadge } from "@/components/company/CompanyBadge";
@@ -43,11 +51,6 @@ const brl = (v: number) =>
 const fmtDate = (d?: string | null) =>
   d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—";
 
-const monthNames = [
-  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
-];
-
 function computeTotal(t: any): number {
   if (t.base_amount != null) {
     const b = Number(t.base_amount) || 0;
@@ -60,7 +63,77 @@ function computeTotal(t: any): number {
   return Number(t.amount) || 0;
 }
 
+// Map tipo do banco → tipo lógico do filtro
+function matchesMode(t: any, mode: Mode): boolean {
+  if (mode === "all") return true;
+  const type = String(t.type ?? "").toLowerCase();
+  if (mode === "payable") return type === "payable" || type === "expense";
+  if (mode === "receivable") return type === "receivable" || type === "income";
+  return true;
+}
+
+// Data efetiva da transação: vencimento, com fallback para data do lançamento.
+function effectiveDate(t: any): string | null {
+  return (t.due_date as string | null) || (t.date as string | null) || null;
+}
+
 type Mode = "all" | "payable" | "receivable";
+
+// ----- Period selector -----
+type PeriodPreset =
+  | "today" | "yesterday"
+  | "this_week" | "last_week" | "last_7_days" | "last_30_days"
+  | "this_month" | "last_month"
+  | "this_quarter" | "this_year" | "last_year"
+  | "all_time" | "custom";
+
+const PERIOD_OPTIONS: { value: PeriodPreset; label: string }[] = [
+  { value: "today", label: "Hoje" },
+  { value: "yesterday", label: "Ontem" },
+  { value: "this_week", label: "Esta semana" },
+  { value: "last_week", label: "Semana passada" },
+  { value: "last_7_days", label: "Últimos 7 dias" },
+  { value: "last_30_days", label: "Últimos 30 dias" },
+  { value: "this_month", label: "Este mês" },
+  { value: "last_month", label: "Mês passado" },
+  { value: "this_quarter", label: "Este trimestre" },
+  { value: "this_year", label: "Este ano" },
+  { value: "last_year", label: "Ano passado" },
+  { value: "all_time", label: "Todo período" },
+  { value: "custom", label: "Personalizado…" },
+];
+
+function computePresetRange(preset: PeriodPreset, today: Date): { from: string; to: string } | null {
+  const fmt = (d: Date) => format(d, "yyyy-MM-dd");
+  switch (preset) {
+    case "today": return { from: fmt(startOfDay(today)), to: fmt(endOfDay(today)) };
+    case "yesterday": {
+      const y = subDays(today, 1);
+      return { from: fmt(startOfDay(y)), to: fmt(endOfDay(y)) };
+    }
+    case "this_week":
+      return { from: fmt(startOfWeek(today, { weekStartsOn: 1 })), to: fmt(endOfWeek(today, { weekStartsOn: 1 })) };
+    case "last_week": {
+      const lw = subWeeks(today, 1);
+      return { from: fmt(startOfWeek(lw, { weekStartsOn: 1 })), to: fmt(endOfWeek(lw, { weekStartsOn: 1 })) };
+    }
+    case "last_7_days": return { from: fmt(subDays(today, 6)), to: fmt(today) };
+    case "last_30_days": return { from: fmt(subDays(today, 29)), to: fmt(today) };
+    case "this_month": return { from: fmt(startOfMonth(today)), to: fmt(endOfMonth(today)) };
+    case "last_month": {
+      const lm = subMonths(today, 1);
+      return { from: fmt(startOfMonth(lm)), to: fmt(endOfMonth(lm)) };
+    }
+    case "this_quarter": return { from: fmt(startOfQuarter(today)), to: fmt(endOfQuarter(today)) };
+    case "this_year": return { from: fmt(startOfYear(today)), to: fmt(endOfYear(today)) };
+    case "last_year": {
+      const ly = subYears(today, 1);
+      return { from: fmt(startOfYear(ly)), to: fmt(endOfYear(ly)) };
+    }
+    case "all_time": return { from: "0001-01-01", to: "9999-12-31" };
+    case "custom": return null;
+  }
+}
 
 export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = {}) {
   const navigate = useNavigate();
@@ -70,10 +143,33 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
 
+  const periodStorageKey = `pr:period:${mode}`;
+
   // ----- UI state -----
   const [search, setSearch] = useState("");
-  const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth()); // 0-indexed
+  const [period, setPeriod] = useState<PeriodPreset>(() => {
+    try {
+      const raw = localStorage.getItem(periodStorageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.preset) return parsed.preset as PeriodPreset;
+      }
+    } catch { /* ignore */ }
+    return "this_month";
+  });
+  const [customRange, setCustomRange] = useState<DateRange | undefined>(() => {
+    try {
+      const raw = localStorage.getItem(periodStorageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.from && parsed?.to) {
+          return { from: new Date(parsed.from), to: new Date(parsed.to) };
+        }
+      }
+    } catch { /* ignore */ }
+    return undefined;
+  });
+  const [customPopoverOpen, setCustomPopoverOpen] = useState(false);
   const [showPartialBalances, setShowPartialBalances] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [companyFilter, setCompanyFilter] = useCompanyFilter("payables-receivables");
@@ -84,12 +180,43 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
   const [page, setPage] = useState(1);
   const [gotoPage, setGotoPage] = useState("");
 
-  // ----- date range from month/year -----
+  // ----- date range from period -----
   const range = useMemo(() => {
-    const from = new Date(year, month, 1).toISOString().slice(0, 10);
-    const to = new Date(year, month + 1, 0).toISOString().slice(0, 10);
-    return { from, to };
-  }, [year, month]);
+    if (period === "custom") {
+      if (customRange?.from && customRange?.to) {
+        return {
+          from: format(customRange.from, "yyyy-MM-dd"),
+          to: format(customRange.to, "yyyy-MM-dd"),
+        };
+      }
+      // sem range escolhido → mostra mês atual
+      return {
+        from: format(startOfMonth(today), "yyyy-MM-dd"),
+        to: format(endOfMonth(today), "yyyy-MM-dd"),
+      };
+    }
+    const r = computePresetRange(period, today);
+    return r ?? { from: format(startOfMonth(today), "yyyy-MM-dd"), to: format(endOfMonth(today), "yyyy-MM-dd") };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [period, customRange]);
+
+  // Persist period choice
+  useEffect(() => {
+    try {
+      const payload: any = { preset: period };
+      if (period === "custom" && customRange?.from && customRange?.to) {
+        payload.from = customRange.from.toISOString();
+        payload.to = customRange.to.toISOString();
+      }
+      localStorage.setItem(periodStorageKey, JSON.stringify(payload));
+    } catch { /* ignore */ }
+  }, [period, customRange, periodStorageKey]);
+
+  const periodLabel = useMemo(() => {
+    if (period === "all_time") return "Todo período";
+    const fmt = (s: string) => format(new Date(s + "T00:00:00"), "dd/MM/yyyy");
+    return `${fmt(range.from)} – ${fmt(range.to)}`;
+  }, [period, range]);
 
   // ----- data -----
   const { data: transactions = [], isLoading } = useQuery({
@@ -130,14 +257,15 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
   // ----- compute effective status per tx -----
   const enriched = useMemo(() => {
     return transactions
-      .filter((t: any) => mode === "all" ? true : t.type === mode)
+      .filter((t: any) => matchesMode(t, mode))
       .map((t: any) => {
+        const eff = effectiveDate(t);
         let status: TxStatus = (t.status as TxStatus) || "pending";
-        if (status === "pending" && t.due_date && t.due_date < todayStr) status = "overdue";
+        if (status === "pending" && eff && eff < todayStr) status = "overdue";
         const partyName =
           clientsMap[t.client_id] || suppliersMap[t.supplier_id] || t.party_name || "—";
         const total = computeTotal(t);
-        return { ...t, _status: status, _party: partyName, _total: total };
+        return { ...t, _status: status, _party: partyName, _total: total, _effDate: eff };
       });
   }, [transactions, clientsMap, suppliersMap, todayStr, mode]);
 
@@ -145,7 +273,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
   const summary = useMemo(() => {
     let vencidos = 0, vencemHoje = 0, aVencer = 0, pagos = 0, totalPeriodo = 0;
     for (const t of enriched) {
-      const d = t.due_date as string | null;
+      const d = t._effDate as string | null;
       if (!d) continue;
       if (d < range.from || d > range.to) continue;
       if (t._status === "cancelled") continue;
@@ -166,8 +294,9 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
   // ----- filter + sort -----
   const filtered = useMemo(() => {
     const rows = enriched.filter((t: any) => {
-      if (!t.due_date) return false;
-      if (t.due_date < range.from || t.due_date > range.to) return false;
+      const d = t._effDate as string | null;
+      if (!d) return false;
+      if (d < range.from || d > range.to) return false;
       if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
       if (!matchesCompanyFilter(companyFilter, t.company)) return false;
       if (search) {
@@ -182,7 +311,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
     rows.sort((a: any, b: any) => {
       let av: any, bv: any;
       switch (sortKey) {
-        case "due_date": av = a.due_date || ""; bv = b.due_date || ""; break;
+        case "due_date": av = a._effDate || ""; bv = b._effDate || ""; break;
         case "payment_date": av = a.payment_date || ""; bv = b.payment_date || ""; break;
         case "description": av = (a.description || "").toLowerCase(); bv = (b.description || "").toLowerCase(); break;
         case "party": av = a._party.toLowerCase(); bv = b._party.toLowerCase(); break;
@@ -264,12 +393,12 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
     }
   };
 
-  const navMonth = (delta: number) => {
-    const d = new Date(year, month + delta, 1);
-    setYear(d.getFullYear());
-    setMonth(d.getMonth());
+  const resetPeriod = () => {
+    setPeriod("this_month");
+    setCustomRange(undefined);
     setPage(1);
   };
+
 
   const toggleAllOnPage = (checked: boolean) => {
     setSelected((prev) => {
@@ -377,18 +506,69 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
           />
         </div>
 
-        {/* Month/year navigator */}
-        <div className="flex items-center gap-1 border border-border rounded-md bg-background">
-          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navMonth(-1)} aria-label="Mês anterior">
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <div className="px-2 min-w-[140px] text-center text-sm font-medium capitalize">
-            {monthNames[month]} {year}
-          </div>
-          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navMonth(1)} aria-label="Próximo mês">
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+        {/* Period selector */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Select
+            value={period}
+            onValueChange={(v) => {
+              const p = v as PeriodPreset;
+              setPeriod(p);
+              setPage(1);
+              if (p === "custom") setCustomPopoverOpen(true);
+            }}
+          >
+            <SelectTrigger className="w-[180px] h-9">
+              <CalendarDays className="h-4 w-4 mr-1 text-muted-foreground" />
+              <SelectValue placeholder="Período" />
+            </SelectTrigger>
+            <SelectContent>
+              {PERIOD_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {period === "custom" && (
+            <Popover open={customPopoverOpen} onOpenChange={setCustomPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9 gap-2">
+                  <CalendarDays className="h-4 w-4" />
+                  {customRange?.from && customRange?.to
+                    ? `${format(customRange.from, "dd/MM/yyyy")} – ${format(customRange.to, "dd/MM/yyyy")}`
+                    : "Escolher datas"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="range"
+                  numberOfMonths={2}
+                  selected={customRange}
+                  onSelect={(r) => {
+                    setCustomRange(r);
+                    setPage(1);
+                    if (r?.from && r?.to) setCustomPopoverOpen(false);
+                  }}
+                  locale={ptBR}
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          )}
+
+          {period !== "this_month" && (
+            <div className="hidden lg:flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/40 px-2 py-1.5 rounded-md">
+              <span className="font-medium">{periodLabel}</span>
+              <button
+                onClick={resetPeriod}
+                className="ml-1 text-muted-foreground/70 hover:text-foreground"
+                aria-label="Limpar período"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          )}
         </div>
+
 
         <div className="flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-background">
           <Switch
@@ -509,7 +689,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
                           aria-label="Selecionar linha"
                         />
                       </td>
-                      <td className="px-3 py-3 whitespace-nowrap">{fmtDate(t.due_date)}</td>
+                      <td className="px-3 py-3 whitespace-nowrap">{fmtDate(t._effDate ?? t.due_date)}</td>
                       <td className="px-3 py-3 whitespace-nowrap text-muted-foreground">{fmtDate(t.payment_date)}</td>
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-2 max-w-[280px]">

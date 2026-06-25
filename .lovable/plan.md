@@ -1,91 +1,74 @@
-# Catálogo tipado — motor TIPO_SCHEMA (v1: Voo + Hospedagem)
+## Plano completo — Financeiro (menu + Contas a Pagar/Receber)
 
-## Estratégia
+Dois blocos independentes que serão entregues juntos.
 
-Reaproveitar a infraestrutura que já existe (`src/lib/category-schema.ts` + `DynamicCategoryFields`) em vez de criar um motor paralelo. Hoje o schema é por **categoria** (linha em `product_categories`); vamos transformá-lo em schema por **TIPO** (constante em código), e Categoria vira um **campo select** dentro do schema do tipo. Nada novo no banco — tudo continua em `products.attributes` (jsonb) e `quote_items.details` (jsonb).
+---
 
-## 1. Nova fonte única de verdade: `src/lib/type-schema.ts`
+# Bloco A — Reorganização do menu Financeiro
 
-Objeto `TIPO_SCHEMA: Record<TypeKey, TypeSchemaDef>` onde cada campo estende o `CategoryField` atual com:
+### Arquivo: `src/components/AppSidebar.tsx` (e `src/lib/permissions.ts`)
 
-- `scope: "template" | "instancia"` (default `"template"`)
-- Tipos de input reaproveitados do enum existente: `text | textarea | number | currency | date | time | select | checkbox | airport | airline | google_places | baggage | duration_auto`
-- O campo `categoria` é sempre um `select` `scope: "template"` cujas `options` são as categorias válidas daquele tipo
+1. **"Financeiro" deixa de ser link.** Vira apenas um cabeçalho de grupo expansível/recolhível (chevron). Clicar não navega — só abre/fecha o submenu. Estado persistido em `localStorage` e auto-aberto quando a rota atual está dentro de `/finance/*`.
 
-### v1 — dois tipos populados
+2. **Nova ordem do submenu Financeiro:**
+   1. **Dashboard Financeiro** *(renomeado de "Relatórios")* → `/finance/reports`
+   2. **Extrato** *(novo item)* → `/finance` (tela que hoje abre ao clicar em "Financeiro")
+   3. **Contas a Pagar** → `/finance/payables`
+   4. **Contas a Receber** → `/finance/receivables`
+   5. **Vendas Fechadas** → `/finance/closed-sales` *(ver Bloco A.3)*
+   6. **Cadastros Financeiros** → `/finance/registrations`
 
-**voo** (categoria: Nacional, Internacional, Fretado)
-- Template: `categoria`, `companhia` (airline, required), `classe` (select), `origem` (airport, required), `destino` (airport, required), `conexao` (select), `bagagem_mao` (number), `bagagem_despachada` (number)
-- Instância: `data_embarque` (date), `horario_embarque` (time), `data_chegada` (date), `horario_chegada` (time), `numero_voo` (text), `localizador` (text), `numero_compra` (text)
+3. **"Vendas Fechadas" — manter as duas telas, com papéis distintos:**
 
-**hospedagem** (categoria: Hotel, Resort, Pousada, Apart-hotel, Villa)
-- Template: `categoria`, `localizacao` (text required), `estrelas` (select 1–5), `tipo_acomodacao` (text), `regime` (select), `comodidades` (checkbox multi)
-- Instância: `check_in` (date), `check_out` (date), `num_noites` (number), `num_quartos` (number), `num_hospedes` (number)
+   | Tela | Caminho | Foco | Quem usa |
+   |---|---|---|---|
+   | CRM → Vendas | `/sales` (kanban) | Pipeline operacional: cotações em negociação até ganhar/perder | Comercial |
+   | Financeiro → Vendas Fechadas | `/finance/closed-sales` | Lista contábil somente de vendas com status `won`, com colunas financeiras (valor, comissão, fatura, recebido, margem) e filtros por período | Financeiro |
 
-Helpers exportados: `getTypeSchema(type)`, `getTemplateFields(type)`, `getInstanceFields(type)`, `getCategoryOptions(type)`, `isValidCategoryForType(type, cat)`.
+   **Justificativa:** mesma fonte (`quotes`), mas recortes diferentes — uma é fluxo de trabalho (kanban), a outra é visão de receita realizada para conciliação. Remover qualquer uma força um perfil a usar a tela do outro.
 
-## 2. Adaptar o renderer
+   **Ação:** sem mudança de código nas telas; apenas mantemos os dois itens nos menus corretos (CRM e Financeiro).
 
-`src/components/quotes/DynamicCategoryFields.tsx` ganha prop opcional `scopeFilter?: "template" | "all"` (default `all`). Filtra `schema` antes de agrupar. Tipos `airport`/`airline`/`baggage` já são suportados — sem mudança visual.
+4. **`src/lib/permissions.ts`:** renomear o label `"Relatórios Financeiros"` para `"Dashboard Financeiro"` e adicionar entrada para `/finance` rotulada como `"Extrato"` (mesma allowedRoles do grupo financeiro).
 
-## 3. Form do catálogo (`src/pages/CatalogEdit.tsx`)
+---
 
-- Adicionar `voo` em `TYPE_OPTIONS` (com label "Voo").
-- Remover do `Catalog.tsx` o aviso "Voos não entram no catálogo" (subtítulo).
-- Substituir o bloco `typeAttributesUI` (switch hard-coded) e o select de Categoria global por **uma única seção "Detalhes do {Tipo}"** que renderiza `<DynamicCategoryFields schema={getTemplateFields(form.item_type)} value={form.attributes} onChange={...} scopeFilter="template" />`.
-- Categoria deixa de ler `product_categories`; passa a ser o campo `categoria` dentro de `attributes`. Manter `category_id` no payload como `null` (não removemos a coluna, mas paramos de usá-la para tipos com TIPO_SCHEMA).
-- Ao trocar `item_type`, **resetar `attributes`** (descarta categoria/atributos antigos para evitar combinação inválida).
-- Validação: além de Nome+Tipo, validar `required` dos campos template e `isValidCategoryForType`.
+# Bloco B — Contas a Pagar/Receber: lançamentos não aparecem + seletor de período ampliado
 
-## 4. Item da cotação
+### Diagnóstico (causa do "vazio em Outubro/2025")
 
-Onde hoje renderizamos `DynamicCategoryFields` a partir de `product_categories.field_schema`, passar a usar `getTypeSchema(item.item_type)` quando o tipo tiver entrada em `TIPO_SCHEMA` (Voo e Hospedagem nesta v1). Fallback ao schema antigo para tipos ainda não migrados — não quebra cotações existentes.
+Inspecionei `financial_transactions`: existem 18 registros com `type='expense'` e 1 com `type='receivable'`. **Dois bugs** em `PayablesReceivables.tsx`:
 
-Render no item = `schema completo` (template + instancia), sem `scopeFilter`. Mantém edição livre de qualquer campo.
+- **Bug 1:** filtra por `t.type === 'payable'`, mas o banco usa `'expense'`. Nenhum bate.
+- **Bug 2:** descarta lançamentos sem `due_date`. 16 dos 19 não têm `due_date` — só aparecem 3 (todos em 2026), então Outubro/2025 fica vazio.
 
-### "Puxar do catálogo" (`QuoteItemProductPicker.tsx` + `pick`)
+### Arquivo: `src/pages/PayablesReceivables.tsx`
 
-Estender o callback `onSelect` para receber também `attributes` do produto. No handler do item:
+1. **Mapeamento de tipos:**
+   - `mode='payable'` aceita `type IN ('payable','expense')`
+   - `mode='receivable'` aceita `type IN ('receivable','income')`
+   - `mode='all'` aceita todos
 
-```
-unit_cost / unit_price ← cost / sale_price do produto (como hoje)
-details ← { ...details, ...produto.attributes }   // só template, instancia fica vazia
-product_id ← produto.id
-```
+2. **Fallback de data:** usar `due_date ?? date` como "data efetiva" em filtro de período, cards de resumo, ordenação e coluna "Vencimento" (com marcador sutil "(lançamento)" quando vier do fallback).
 
-Snapshot por cópia: edição posterior do produto não afeta a cotação (já é o comportamento, só precisamos garantir que **não** lemos `products.attributes` na hora de renderizar — sempre lemos `quote_items.details`).
+3. **Seletor de período ampliado** — substituir a navegação `← Mês →` por:
+   - **Presets:** Hoje · Ontem · Esta semana · Semana passada · Últimos 7 dias · Últimos 30 dias · Este mês *(padrão)* · Mês passado · Este trimestre · Este ano · Ano passado · Todo período · **Personalizado…**
+   - **Personalizado:** popover com `Calendar mode="range"` (dois calendários, formato `dd/MM/yyyy`).
+   - Chip exibindo o range aplicado + botão "Limpar".
+   - Escolha persistida em `localStorage` por modo (`payables` / `receivables` / `all`).
+   - Cards de resumo (Vencidos/Hoje/A vencer/Pagos/Total) refletem o range.
+   - Cálculo via `date-fns` (`startOfWeek`, `startOfMonth`, `startOfQuarter`, `startOfYear`, `subDays`).
 
-Remover aviso "produto não cadastrado" quando `product_id` existir (já existe a checagem; só validar).
+### Verificação esperada
 
-## 5. Permissões
+Em **Contas a Pagar** filtrando **Outubro/2025** devem aparecer pelo menos: Domínio altivusturismo.com.br (R$ 76,00 · 21/10), Taxa JUCERJA (R$ 600,00 · 20/10), Taxa Alvará (R$ 1.218,10 · 21/10).
 
-Custo-base (`cost`) continua escondido para non-admin/manager (`canSeeCost` já existe em `CatalogEdit` e nos itens da cotação via `QuoteItemCommercialFields`). Nenhuma mudança.
+---
 
-## 6. Migração de dados — nenhuma
+## Arquivos tocados (resumo)
 
-`products.attributes`, `products.item_type`, `quote_items.details` já existem. Produtos antigos sem `attributes.categoria` continuam funcionando (campo vazio). Cotações antigas continuam usando o schema por categoria via fallback.
+- `src/components/AppSidebar.tsx` — grupo Financeiro não-clicável, nova ordem, item "Extrato", rename "Relatórios" → "Dashboard Financeiro".
+- `src/lib/permissions.ts` — label + entrada "/finance" como "Extrato".
+- `src/pages/PayablesReceivables.tsx` — fix de tipos, fallback de data, seletor de período.
 
-## Critérios de aceite (mapeados)
-
-1. Troca de Tipo no form → re-render da seção Detalhes + reset de Categoria (via reset de `attributes`). ✓
-2. Tentar salvar Hospedagem com categoria de Transporte é impossível: as opções vêm do próprio schema do tipo. ✓
-3. Voo GOL GIG→SCL Executiva: cadastra → puxa no item → companhia/classe/aeroportos/bagagem preenchidos; data/hora/localizador vazios (são `scope:"instancia"`, não copiados). ✓
-4. Snapshot via cópia em `quote_items.details`. ✓
-5. Itens sem `product_id` continuam editáveis manualmente como hoje. ✓
-6. `canSeeCost` controla visibilidade do custo. ✓
-
-## Arquivos tocados
-
-- **novo** `src/lib/type-schema.ts` — TIPO_SCHEMA + helpers
-- `src/components/quotes/DynamicCategoryFields.tsx` — prop `scopeFilter`
-- `src/pages/CatalogEdit.tsx` — adicionar "voo" no TYPE_OPTIONS, trocar `typeAttributesUI` e Categoria por `DynamicCategoryFields` com schema do tipo, reset ao trocar tipo
-- `src/pages/Catalog.tsx` — remover aviso "Voos não entram no catálogo"
-- `src/components/quotes/QuoteItemProductPicker.tsx` — incluir `attributes` no `onSelect`
-- Local onde o item de cotação chama `DynamicCategoryFields` (ex.: `QuoteItemEdit.tsx` / `QuoteModularItemsList.tsx`) — passar a usar `getTypeSchema` quando disponível, com fallback ao schema da categoria
-- Handler que recebe `onSelect` do picker — fazer merge de `attributes` em `details`
-
-## Fora de escopo (confirmado)
-
-- Tipos seguro, transporte, experiência, cruzeiro, outro (entram só adicionando entradas no TIPO_SCHEMA depois).
-- Pacotes.
-- Preço por temporada/fornecedor.
+Sem alterações de schema de banco. Sem mudança nas rotas em `App.tsx`.
