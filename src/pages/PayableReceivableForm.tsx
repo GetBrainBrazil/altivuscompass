@@ -145,6 +145,7 @@ export default function PayableReceivableForm() {
       cost_center: existing.cost_center ?? "",
       client_id: existing.client_id ?? "",
       supplier_id: existing.supplier_id ?? "",
+      party_name_free: !existing.client_id && !existing.supplier_id ? (existing.party_name ?? "") : "",
       competence_date: existing.competence_date ?? existing.date ?? todayStr(),
       due_date: existing.due_date ?? todayStr(),
       bank_account_id: existing.bank_account_id ?? "",
