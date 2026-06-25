@@ -19,6 +19,9 @@ import CounterpartySelect, { type CounterpartyValue, EMPTY_COUNTERPARTY } from "
 import { getSignedUrl, extractStoragePath } from "@/lib/private-storage";
 import { PdfViewerDialog } from "@/components/PdfViewerDialog";
 import { ImageViewerDialog, type ViewerAttachment } from "@/components/ImageViewerDialog";
+import { ConfirmPaymentDialog, type ConfirmPaymentTarget } from "@/components/finance/ConfirmPaymentDialog";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, AlertCircle } from "lucide-react";
 
 const FIN_BUCKET = "financial-attachments";
 
@@ -119,6 +122,7 @@ export default function PayableReceivableForm() {
   const [isDragging, setIsDragging] = useState(false);
   const [pdfViewer, setPdfViewer] = useState<{ path: string | null; name: string; pendingFile?: File | null } | null>(null);
   const [imgViewer, setImgViewer] = useState<ViewerAttachment | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const isReceivable = form.type === "receivable";
 
@@ -217,7 +221,8 @@ export default function PayableReceivableForm() {
         date: form.competence_date || todayStr(),
         observations: form.observations || null,
         recurrence_type: form.recurrence_enabled ? form.recurrence_period : null,
-        status: "pending",
+        // status: preservar quando editar; novo lançamento sempre começa "pending"
+        ...(editingId ? {} : { status: "pending" as const }),
         party_name:
           (form.client_id && clientsMap[form.client_id]) ||
           (form.supplier_id && suppliersMap[form.supplier_id]) ||
@@ -342,7 +347,42 @@ export default function PayableReceivableForm() {
             {titleAction} {titleNoun}
           </h1>
         </div>
+        {editingId && existing && (
+          <div className="flex items-center gap-2">
+            <StatusChip status={existing.status} isReconciled={existing.is_reconciled} type={existing.type} />
+            {existing.status !== "paid" && existing.status !== "received" ? (
+              <Button size="sm" className="gap-1" onClick={() => setConfirmOpen(true)}>
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Confirmar {isReceivable ? "recebimento" : "pagamento"}
+              </Button>
+            ) : null}
+          </div>
+        )}
       </div>
+
+      {editingId && existing && (existing.status === "paid" || existing.status === "received") && (
+        <div className="rounded-md border border-success/30 bg-success/5 px-3 py-2 text-xs flex flex-wrap items-center gap-x-4 gap-y-1">
+          <span className="flex items-center gap-1 text-success font-medium">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            {isReceivable ? "Recebido" : "Pago"}
+            {existing.payment_date ? ` em ${new Date(existing.payment_date + "T00:00:00").toLocaleDateString("pt-BR")}` : ""}
+          </span>
+          {existing.payment_method && <span className="text-muted-foreground">Forma: {existing.payment_method}</span>}
+          {existing.bank_account_id ? (
+            <span className="text-muted-foreground">Conta vinculada</span>
+          ) : (
+            <span className="text-amber-700 flex items-center gap-1">
+              <AlertCircle className="h-3 w-3" /> Sem conta bancária
+            </span>
+          )}
+          {!existing.is_reconciled && (
+            <span className="text-amber-700 flex items-center gap-1">
+              <AlertCircle className="h-3 w-3" /> A conciliar
+            </span>
+          )}
+        </div>
+      )}
+
 
       <FormBody>
         {/* DADOS PRINCIPAIS */}
@@ -771,9 +811,43 @@ export default function PayableReceivableForm() {
         tableName="financial_transactions"
         invalidateKey={["finance-tx", editingId]}
       />
+
+      <ConfirmPaymentDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        target={existing ? {
+          id: existing.id,
+          type: existing.type,
+          description: existing.description,
+          bank_account_id: existing.bank_account_id,
+          payment_method: existing.payment_method,
+          payment_date: existing.payment_date,
+          amount: existing.amount,
+          base_amount: existing.base_amount,
+          attachment_urls: existing.attachment_urls,
+          attachment_notes: existing.attachment_notes,
+          status: existing.status,
+        } : null}
+      />
     </div>
   );
 }
+
+function StatusChip({ status, isReconciled, type }: { status?: string | null; isReconciled?: boolean | null; type?: string }) {
+  const paid = status === "paid" || status === "received";
+  const isReceivable = type === "receivable";
+  if (status === "cancelled") {
+    return <Badge variant="outline" className="border-border text-muted-foreground">Cancelado</Badge>;
+  }
+  if (paid && isReconciled) {
+    return <Badge variant="outline" className="border-success/40 bg-success/10 text-success">Conciliado</Badge>;
+  }
+  if (paid) {
+    return <Badge variant="outline" className="border-success/40 bg-success/10 text-success">{isReceivable ? "Recebido" : "Pago"}</Badge>;
+  }
+  return <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-700">Provisionado</Badge>;
+}
+
 
 // ----- helpers -----
 function nextDate(start: string, interval: string, offset: number): string {

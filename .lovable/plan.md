@@ -1,61 +1,76 @@
+
 ## Objetivo
 
-Permitir lançar Contas a Pagar, Contas a Receber e lançamentos manuais do Extrato escolhendo **Cliente OU Fornecedor** (e demais partes já existentes em `financial_parties`) na mesma seleção, sem unificar as tabelas `clients` e `suppliers`.
+Estruturar Contas a Pagar/Receber em **3 etapas claras** com regras consistentes:
 
-Resolve o caso concreto: estorno recebido de um fornecedor pode ser lançado em Contas a Receber apontando para o fornecedor como contraparte.
+```text
+1) Lançamento/Provisão  →  2) Confirmação (Pago/Recebido)  →  3) Conciliação Bancária
+   (status: pendente)        (status: pago/recebido)            (is_reconciled = true)
+```
 
-## Por que não unificar as tabelas (decisão registrada)
+## Regras de negócio
 
-`clients` carrega dados sensíveis de viajante (passaporte, visto, passageiros, anexos, interações de CRM) e tem público de acesso diferente de `suppliers` (contratos, comissões, compras). Unificar exigiria RLS por coluna e migração com risco alto sobre FKs financeiras. O problema real é só de UI no seletor — vamos resolver ali.
+- **Conta bancária**: opcional no lançamento, **obrigatória ao confirmar** pagamento/recebimento.
+- **Comprovante**: opcional, mas se a confirmação for feita sem anexo, mostrar **badge "sem comprovante"** no item, na lista e no detalhe.
+- **Conciliação**: só pode ser feita em transações já confirmadas (status pago/recebido) e que tenham `bank_account_id`. Conciliar/desconciliar é manual (uma tela dedicada por conta bancária). Importação de OFX/CSV fica para uma próxima etapa.
+- **Status visuais**:
+  - `pendente` (cinza) — provisão / aguardando
+  - `pago` ou `recebido` (verde) — confirmado, ainda **não conciliado**
+  - `pago + conciliado` (verde com selo ✓) — bate com o extrato
+  - `atrasado` (vermelho) — vencido e ainda pendente
+- **Reabertura**: ao "desconfirmar" um pagamento, automaticamente desconcilia. Ao excluir/editar valor ou conta de uma transação **conciliada**, exigir confirmação e desconciliar.
 
-## Mudanças
+## Mudanças de UI
 
-### 1. Novo componente `CounterpartySelect`
+### 1. Lista de Contas a Pagar/Receber
+- Nova coluna/badge de **etapa do fluxo**: Pendente · Pago · Conciliado.
+- Botão de ação rápida na linha:
+  - Se pendente → **"Confirmar pagamento"** / **"Confirmar recebimento"** (abre dialog).
+  - Se pago/não conciliado → link **"Conciliar"** (leva até a tela de conciliação já filtrada).
+- Filtro adicional: `Etapa = Todas / Pendentes / Confirmadas / Conciliadas / Sem comprovante`.
 
-`src/components/finance/CounterpartySelect.tsx` — Combobox único que lista, com agrupamento e busca:
+### 2. Dialog "Confirmar pagamento/recebimento"
+Aberto pela ação rápida e também por um botão no formulário (quando editando):
+- Data do pagamento (default = hoje)
+- **Conta bancária (obrigatória)**
+- Forma de pagamento
+- Valor efetivo (default = valor da transação; permite ajustar e gera/atualiza juros, multa, desconto)
+- Upload de comprovante (opcional, drag & drop, mesmo padrão dos anexos atuais)
+- Observação
 
-- **Clientes** (de `clients`, ativos)
-- **Fornecedores** (de `suppliers`, ativos)
-- **Outras partes** (de `financial_parties` — sócios, governo, funcionários etc.)
-- Atalhos no topo: "+ Cadastrar novo cliente", "+ Cadastrar novo fornecedor"
+Ao salvar: atualiza `status`, `payment_date`, `bank_account_id`, `payment_method`, valores ajustados e adiciona o comprovante a `attachment_urls/notes`.
 
-Props: `value: { kind: 'client'|'supplier'|'party'|null; id: string|null; name: string|null }`, `onChange`, `allowedKinds?` (default todos), `label`, `placeholder`.
+### 3. Nova tela: **Conciliação Bancária** (`/finance/reconciliation`)
+- Seletor de **conta bancária** + período (default mês atual).
+- Cabeçalho com **saldo do período**: confirmadas no período · conciliadas · diferença a conciliar.
+- Lista de transações **confirmadas** da conta selecionada, com checkbox para marcar/desmarcar como conciliada (em lote ou individual).
+- Linha mostra: data · descrição · contraparte · entrada/saída · valor · comprovante.
+- Botão **"Marcar selecionadas como conciliadas"** / **"Desconciliar"**.
+- Placeholder visível para a etapa futura: botão desabilitado **"Importar extrato (OFX/CSV) – em breve"**.
 
-Cada item exibe um chip discreto à direita indicando o tipo (Cliente / Fornecedor / Outro) para o usuário não confundir homônimos. Busca por nome, nome fantasia e documento.
+### 4. Sidebar (menu Financeiro)
+Inserir **Conciliação Bancária** logo abaixo de **Contas a Receber**.
 
-### 2. `PayableReceivableForm` — usar o seletor único
+## Mudanças de dados
 
-`src/pages/PayableReceivableForm.tsx`:
+Tudo cabe em `financial_transactions` (já existem `bank_account_id`, `payment_date`, `payment_method`, `is_reconciled`, `attachment_urls/notes`). Acrescentar apenas:
+- `reconciled_at` (timestamptz, nullable)
+- `reconciled_by` (uuid, nullable)
+- `payment_proof_indexes` (int[]) — índices em `attachment_urls` que identificam quais arquivos são comprovantes (para badge "sem comprovante" e destaque visual). Alternativa simples: marcar via prefixo na nota (`[comprovante]`). Decidir na implementação a mais leve.
 
-- Substituir os dois `Select` separados (linhas ~305–331) por um único `CounterpartySelect`.
-- Label dinâmica: "Contraparte" (Cliente, Fornecedor ou outro).
-- Ao salvar, gravar `client_id` **ou** `supplier_id` conforme o tipo escolhido, e sempre preencher `party_name` com o rótulo legível. Se for "Outra parte", gravar só `party_name` (mesma coluna textual que já existe).
-- Remover a restrição implícita atual ("Receivable só mostra clientes / Payable só mostra fornecedores"). Por padrão todos os tipos ficam disponíveis em ambos os modos, mas o tipo "natural" do modo aparece pré-expandido no topo da lista (Clientes primeiro em Receivable; Fornecedores primeiro em Payable).
+Validações via **trigger** (não CHECK, por dependência de data):
+- Não permitir `status='pago'/'recebido'` sem `bank_account_id` e `payment_date`.
+- Não permitir `is_reconciled=true` se `status` não for confirmado.
+- Ao mudar `status` de confirmado → pendente, zerar `is_reconciled`, `reconciled_at`, `reconciled_by`.
 
-### 3. Extrato (`Finance.tsx`) — mesmo seletor
+## Fora do escopo (próxima etapa)
 
-Substituir o Popover atual (linhas ~387–420) pelo `CounterpartySelect`. Comportamento idêntico ao do form de AP/AR; grava `client_id`/`supplier_id` quando aplicável (hoje só grava `party_name`).
+- Importação de extrato OFX/CSV e auto-match.
+- Conciliação de transferências entre contas próprias.
+- Relatório de divergências por conta.
 
-### 4. Listagens — mostrar o tipo da contraparte
+## Pergunta respondida
 
-`PayablesReceivables.tsx` e `Finance.tsx`:
+> Conta bancária deve ser obrigatória?
 
-- Na coluna de contraparte, adicionar chip pequeno "Cliente" / "Fornecedor" / "Outro" ao lado do nome quando o lançamento tem `client_id` ou `supplier_id` (ou nenhum dos dois).
-- Atualizar o cabeçalho da coluna em AP/AR para "Contraparte" em vez de "Cliente"/"Fornecedor" (continua filtrável pela busca atual).
-
-### 5. Filtro opcional na listagem
-
-Adicionar em `PayablesReceivables.tsx` um filtro "Tipo de contraparte" (Todos / Cliente / Fornecedor / Outro) ao lado dos filtros existentes, para não poluir mas dar como sair de cenários como "quero ver só recebimentos de fornecedores".
-
-## Fora de escopo
-
-- Unificar `clients` + `suppliers` no banco.
-- Migrar lançamentos antigos para preencher `client_id`/`supplier_id` retroativamente (mantemos `party_name` como fallback de leitura).
-- Mudanças de RLS (as policies atuais de `clients`, `suppliers` e `financial_parties` continuam válidas; quem já enxergava cada tabela continua enxergando).
-
-## Detalhes técnicos
-
-- Queries com React Query, chaves `["counterparty-clients"]`, `["counterparty-suppliers"]`, `["counterparty-parties"]`, reaproveitadas onde já existem.
-- Sem migração de schema. `financial_transactions` já tem `client_id`, `supplier_id` e `party_name`; estamos só usando melhor.
-- Componente shadcn `Command` + `Popover` para o combobox agrupado, mesmo padrão do popover atual no Extrato.
-- Linha de leitura em listagens usa `client_id ? 'Cliente' : supplier_id ? 'Fornecedor' : 'Outro'` para o chip.
+**Não no lançamento, sim na confirmação.** Isso preserva a flexibilidade para provisionar contas futuras (quando ainda não se sabe de qual conta vai sair) e garante rastreabilidade total no momento em que o dinheiro realmente entra/sai — que é o que importa para a conciliação.

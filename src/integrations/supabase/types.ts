@@ -2206,8 +2206,11 @@ export type Database = {
           payment_account: string | null
           payment_date: string | null
           payment_method: string | null
+          payment_proof_indexes: number[] | null
           project: string | null
           quote_id: string | null
+          reconciled_at: string | null
+          reconciled_by: string | null
           recurrence_group_id: string | null
           recurrence_type: string | null
           status: string | null
@@ -2246,8 +2249,11 @@ export type Database = {
           payment_account?: string | null
           payment_date?: string | null
           payment_method?: string | null
+          payment_proof_indexes?: number[] | null
           project?: string | null
           quote_id?: string | null
+          reconciled_at?: string | null
+          reconciled_by?: string | null
           recurrence_group_id?: string | null
           recurrence_type?: string | null
           status?: string | null
@@ -2286,8 +2292,11 @@ export type Database = {
           payment_account?: string | null
           payment_date?: string | null
           payment_method?: string | null
+          payment_proof_indexes?: number[] | null
           project?: string | null
           quote_id?: string | null
+          reconciled_at?: string | null
+          reconciled_by?: string | null
           recurrence_group_id?: string | null
           recurrence_type?: string | null
           status?: string | null

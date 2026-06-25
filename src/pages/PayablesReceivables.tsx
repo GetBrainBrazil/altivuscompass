@@ -34,6 +34,7 @@ import { COMPANY_OPTIONS } from "@/lib/company";
 import { CompanyBadge } from "@/components/company/CompanyBadge";
 import { useCompanyFilter, matchesCompanyFilter } from "@/hooks/useCompanyFilter";
 import { CounterpartyTypeBadge } from "@/components/finance/CounterpartySelect";
+import { ConfirmPaymentDialog, type ConfirmPaymentTarget } from "@/components/finance/ConfirmPaymentDialog";
 
 // ----- types & constants -----
 type TxType = "payable" | "receivable";
@@ -339,18 +340,58 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
   const endIdx = Math.min(startIdx + pageSize, totalRecords);
   const pageRows = filtered.slice(startIdx, endIdx);
 
+  // ----- confirm dialog -----
+  const [confirmTarget, setConfirmTarget] = useState<ConfirmPaymentTarget | null>(null);
+
+  const openConfirm = (t: any) => {
+    setConfirmTarget({
+      id: t.id,
+      type: t.type,
+      description: t.description,
+      bank_account_id: t.bank_account_id,
+      payment_method: t.payment_method,
+      payment_date: t.payment_date,
+      amount: t.amount,
+      base_amount: t.base_amount,
+      attachment_urls: t.attachment_urls,
+      attachment_notes: t.attachment_notes,
+      status: t.status,
+    });
+  };
+
   // ----- mutations -----
-  const markPaidMutation = useMutation({
+  const reconcileMutation = useMutation({
+    mutationFn: async ({ id, value }: { id: string; value: boolean }) => {
+      const payload: any = value
+        ? { is_reconciled: true, reconciled_at: new Date().toISOString() }
+        : { is_reconciled: false, reconciled_at: null, reconciled_by: null };
+      const { error } = await (supabase.from("financial_transactions") as any)
+        .update(payload).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      toast({ title: vars.value ? "Lançamento conciliado" : "Conciliação desfeita" });
+      qc.invalidateQueries({ queryKey: ["finance-transactions"] });
+    },
+    onError: (e: any) =>
+      toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+  const reopenMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await (supabase.from("financial_transactions") as any)
-        .update({ status: "paid", payment_date: todayStr }).eq("id", id);
+        .update({ status: "pending", payment_date: null }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Marcado como pago" });
+      toast({ title: "Lançamento reaberto" });
       qc.invalidateQueries({ queryKey: ["finance-transactions"] });
     },
+    onError: (e: any) =>
+      toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
+
+
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -735,7 +776,25 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
                         {isPayable ? "− " : "+ "}{brl(t._total)}
                       </td>
                       <td className="px-3 py-3">
-                        <Badge variant="outline" className={cn("border", sb.cls)}>{sb.label}</Badge>
+                        <div className="flex flex-col items-start gap-1">
+                          <Badge variant="outline" className={cn("border", sb.cls)}>{sb.label}</Badge>
+                          {(status === "paid") && (
+                            t.is_reconciled ? (
+                              <Badge variant="outline" className="border-success/30 bg-success/10 text-success text-[10px] py-0">
+                                Conciliado
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-700 text-[10px] py-0">
+                                A conciliar
+                              </Badge>
+                            )
+                          )}
+                          {status === "paid" && (!t.attachment_urls || t.attachment_urls.length === 0) && (
+                            <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-700 text-[10px] py-0">
+                              Sem comprovante
+                            </Badge>
+                          )}
+                        </div>
                       </td>
                       <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
@@ -749,8 +808,24 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
                               <Pencil className="h-4 w-4 mr-2" /> Editar
                             </DropdownMenuItem>
                             {status !== "paid" && (
-                              <DropdownMenuItem onClick={() => markPaidMutation.mutate(t.id)}>
-                                <CheckCircle2 className="h-4 w-4 mr-2" /> Marcar como pago
+                              <DropdownMenuItem onClick={() => openConfirm(t)}>
+                                <CheckCircle2 className="h-4 w-4 mr-2" />
+                                Confirmar {t.type === "receivable" ? "recebimento" : "pagamento"}
+                              </DropdownMenuItem>
+                            )}
+                            {status === "paid" && !t.is_reconciled && (
+                              <DropdownMenuItem onClick={() => reconcileMutation.mutate({ id: t.id, value: true })}>
+                                <CheckCircle2 className="h-4 w-4 mr-2" /> Marcar como conciliado
+                              </DropdownMenuItem>
+                            )}
+                            {status === "paid" && t.is_reconciled && (
+                              <DropdownMenuItem onClick={() => reconcileMutation.mutate({ id: t.id, value: false })}>
+                                <X className="h-4 w-4 mr-2" /> Desfazer conciliação
+                              </DropdownMenuItem>
+                            )}
+                            {status === "paid" && (
+                              <DropdownMenuItem onClick={() => reopenMutation.mutate(t.id)}>
+                                <ArrowUpDown className="h-4 w-4 mr-2" /> Reabrir (voltar para pendente)
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuItem onClick={() => duplicateMutation.mutate(t.id)}>
@@ -766,6 +841,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>
+
                     </tr>
                   );
                 })
@@ -839,6 +915,12 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
           </div>
         )}
       </div>
+
+      <ConfirmPaymentDialog
+        open={!!confirmTarget}
+        onOpenChange={(v) => { if (!v) setConfirmTarget(null); }}
+        target={confirmTarget}
+      />
     </div>
   );
 }

@@ -20,6 +20,7 @@ import PayablesReceivables from "./pages/PayablesReceivables";
 import Payables from "./pages/Payables";
 import Receivables from "./pages/Receivables";
 import PayableReceivableForm from "./pages/PayableReceivableForm";
+import Reconciliation from "./pages/Reconciliation";
 import Miles from "./pages/Miles";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
@@ -109,6 +110,7 @@ const App = () => (
             <Route path="/finance/reports" element={<ProtectedRoute><AppLayout><FinancialReports /></AppLayout></ProtectedRoute>} />
             <Route path="/finance/closed-sales" element={<ProtectedRoute><AppLayout><FinanceClosedSales /></AppLayout></ProtectedRoute>} />
             <Route path="/finance/suppliers" element={<ProtectedRoute><AppLayout><Suppliers /></AppLayout></ProtectedRoute>} />
+            <Route path="/finance/reconciliation" element={<ProtectedRoute><AppLayout><Reconciliation /></AppLayout></ProtectedRoute>} />
             <Route path="/miles" element={<ProtectedRoute><AppLayout><Miles /></AppLayout></ProtectedRoute>} />
             <Route path="/users" element={<ProtectedRoute><AppLayout><UserManagement /></AppLayout></ProtectedRoute>} />
             <Route path="/users/new" element={<ProtectedRoute><AppLayout><UserDetail /></AppLayout></ProtectedRoute>} />
