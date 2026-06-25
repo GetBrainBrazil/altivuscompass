@@ -266,8 +266,10 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
         if (status === "pending" && eff && eff < todayStr) status = "overdue";
         const partyName =
           clientsMap[t.client_id] || suppliersMap[t.supplier_id] || t.party_name || "—";
+        const partyKind: "client" | "supplier" | "party" | null =
+          t.client_id ? "client" : t.supplier_id ? "supplier" : (t.party_name ? "party" : null);
         const total = computeTotal(t);
-        return { ...t, _status: status, _party: partyName, _total: total, _effDate: eff };
+        return { ...t, _status: status, _party: partyName, _partyKind: partyKind, _total: total, _effDate: eff };
       });
   }, [transactions, clientsMap, suppliersMap, todayStr, mode]);
 
