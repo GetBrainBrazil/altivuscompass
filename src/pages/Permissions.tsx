@@ -237,7 +237,7 @@ export default function Permissions({ embedded = false }: { embedded?: boolean }
                           })}
                         </TableRow>
                       ))}
-                  </>
+                  </React.Fragment>
                 );
               })}
               {ungrouped.map((page) => (
