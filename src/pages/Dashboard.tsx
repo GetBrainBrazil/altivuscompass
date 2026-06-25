@@ -126,7 +126,7 @@ export default function Dashboard() {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-gold"><circle cx="12" cy="8" r="4" /><path d="M5 20c0-4 3.5-7 7-7s7 3 7 7" /></svg>
         } />
         <MetricCard title="Milhas Expirando" value={String(expiringMiles)} trend={expiringMiles > 0 ? { value: "Alerta", positive: false } : undefined} icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-destructive"><path d="M22 2L2 8.5l7 3.5 3.5 7L22 2z" /></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" className="text-destructive"><circle cx="12" cy="12" r="9"/><path d="M12 3a13 13 0 0 1 0 18M12 3a13 13 0 0 0 0 18M3 12h18"/></svg>
         } />
       </div>
 
