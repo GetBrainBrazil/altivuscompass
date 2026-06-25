@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Clock, TrendingUp, AlertTriangle, CalendarDays, CheckCircle2, ArrowDown, ArrowUp,
   Search, MoreHorizontal, Pencil, Trash2, Copy, ChevronLeft, ChevronRight,
-  ArrowUpDown, ArrowUp as ArrUp, ArrowDown as ArrDown, User, Inbox, X,
+  ArrowUpDown, ArrowUp as ArrUp, ArrowDown as ArrDown, User, Inbox, X, Paperclip,
 } from "lucide-react";
 import {
   format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
