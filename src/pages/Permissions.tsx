@@ -61,6 +61,10 @@ export default function Permissions({ embedded = false }: { embedded?: boolean }
       const original = PAGE_PERMISSIONS.find((p) => p.path === u.path);
       if (original) original.allowedRoles = [...u.allowedRoles];
     });
+    savePermissionOverrides().catch((e) => {
+      console.error(e);
+      notify.error("Não foi possível salvar a permissão");
+    });
   };
 
   const togglePageRole = (page: PagePermission, role: AppRole, next: boolean) => {
