@@ -220,7 +220,8 @@ export default function PayableReceivableForm() {
         date: form.competence_date || todayStr(),
         observations: form.observations || null,
         recurrence_type: form.recurrence_enabled ? form.recurrence_period : null,
-        status: "pending",
+        // status: preservar quando editar; novo lançamento sempre começa "pending"
+        ...(editingId ? {} : { status: "pending" as const }),
         party_name:
           (form.client_id && clientsMap[form.client_id]) ||
           (form.supplier_id && suppliersMap[form.supplier_id]) ||
