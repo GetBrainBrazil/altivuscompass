@@ -11,12 +11,14 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Repeat, Layers, Upload, X, FileText } from "lucide-react";
+import { ArrowLeft, Plus, Repeat, Layers, Upload, X, FileText, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { COMPANY_OPTIONS, DEFAULT_COMPANY, type CompanyBrand } from "@/lib/company";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import CounterpartySelect, { type CounterpartyValue, EMPTY_COUNTERPARTY } from "@/components/finance/CounterpartySelect";
 import { getSignedUrl, extractStoragePath } from "@/lib/private-storage";
+import { PdfViewerDialog } from "@/components/PdfViewerDialog";
+import { ImageViewerDialog, type ViewerAttachment } from "@/components/ImageViewerDialog";
 
 const FIN_BUCKET = "financial-attachments";
 
