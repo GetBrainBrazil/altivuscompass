@@ -62,6 +62,7 @@ const emptyForm = {
   cost_center_split: false,
   client_id: "",
   supplier_id: "",
+  party_name_free: "" as string, // usado quando a contraparte for "Outra parte"
   competence_date: todayStr(),
   due_date: todayStr(),
   bank_account_id: "",
