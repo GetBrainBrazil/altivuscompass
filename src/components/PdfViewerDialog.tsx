@@ -27,7 +27,7 @@ export function PdfViewerDialog({ open, onOpenChange, filePath, fileName, pendin
           blob = pendingFile;
         } else if (filePath) {
           const { data, error } = await supabase.storage
-            .from("task-attachments")
+            .from(bucket)
             .download(filePath);
           if (error || !data) return;
           blob = data;
