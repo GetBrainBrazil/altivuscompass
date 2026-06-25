@@ -119,6 +119,7 @@ export default function FinanceClosedSales() {
 
         return {
           id: s.id,
+          quote_id: s.quote_id,
           client_id: s.client_id,
           client_name: s.clients?.full_name ?? "Sem cliente",
           destination: s.destination,
