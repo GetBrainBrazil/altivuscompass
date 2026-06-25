@@ -1642,6 +1642,15 @@ export default function Quotes() {
       toast({ title: "✅ Mensagem enviada!", description: `WhatsApp enviado com sucesso para ${whatsappPhone}.` });
       setWhatsappOpen(false);
       queryClient.invalidateQueries({ queryKey: ["quote-history"] });
+
+      // Audit log: quote sent via WhatsApp
+      logBusinessEvent({
+        action: "send",
+        tableName: "quotes",
+        recordId: savedQuoteId,
+        recordLabel: `Cotação enviada por WhatsApp para ${whatsappPhone}`,
+        metadata: { channel: "whatsapp", phone: whatsappPhone, link: quoteUrl },
+      });
     } catch (err: any) {
       toast({ title: "❌ Falha ao enviar WhatsApp", description: err.message || "Verifique o número e tente novamente.", variant: "destructive" });
     } finally {
