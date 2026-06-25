@@ -329,7 +329,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
       return 0;
     });
     return rows;
-  }, [enriched, range, categoryFilter, companyFilter, search, sortKey, sortDir]);
+  }, [enriched, range, categoryFilter, partyKindFilter, companyFilter, search, sortKey, sortDir]);
 
   // ----- pagination -----
   const totalRecords = filtered.length;
