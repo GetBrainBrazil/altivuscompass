@@ -179,7 +179,8 @@ export default function Permissions({ embedded = false }: { embedded?: boolean }
                 }
 
                 return (
-                  <>
+                  <React.Fragment key={group.id}>
+
                     <TableRow className="bg-slate-50/60 hover:bg-slate-100/60 transition-colors">
 
                       <TableCell className="font-body text-sm font-semibold">
