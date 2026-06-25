@@ -182,6 +182,28 @@ export default function FinanceClosedSales() {
     return <Badge variant="outline" className={v.cls}>{v.label}</Badge>;
   };
 
+  // Highlight + scroll para linha quando vier via ?quote=<id>
+  useEffect(() => {
+    if (!highlightQuote || filtered.length === 0) return;
+    const match = filtered.find((r) => r.quote_id === highlightQuote);
+    if (!match) return;
+    const el = rowRefs.current[match.id];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setFlashId(match.id);
+      const t = setTimeout(() => {
+        setFlashId(null);
+        const sp = new URLSearchParams(searchParams);
+        sp.delete("quote");
+        setSearchParams(sp, { replace: true });
+      }, 2500);
+      return () => clearTimeout(t);
+    }
+  }, [highlightQuote, filtered, searchParams, setSearchParams]);
+
+  const goToSale = (saleId: string) => navigate(`/sales?open=${saleId}`);
+
+
   return (
     <div className="p-6 space-y-6">
       <div>
