@@ -719,7 +719,8 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-2">
                           <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                          <span className="truncate max-w-[180px]">{t._party}</span>
+                          <span className="truncate max-w-[160px]">{t._party}</span>
+                          {t._partyKind && <CounterpartyTypeBadge kind={t._partyKind} />}
                         </div>
                       </td>
                       <td className="px-3 py-3 text-muted-foreground">{t.category || "—"}</td>
