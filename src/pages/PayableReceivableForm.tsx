@@ -615,6 +615,7 @@ export default function PayableReceivableForm() {
                   onChange={(e) => {
                     const files = Array.from(e.target.files ?? []);
                     setAttachments((prev) => [...prev, ...files]);
+                    setAttachmentNotesNew((prev) => [...prev, ...files.map(() => "")]);
                   }}
                 />
               </label>
@@ -622,46 +623,120 @@ export default function PayableReceivableForm() {
           </div>
 
           {(existingAttachments.length > 0 || attachments.length > 0) && (
-            <ul className="space-y-1 mt-2">
-              {existingAttachments.map((p, i) => (
-                <li key={`ex-${i}`} className="flex items-center justify-between rounded-md border border-gray-200 px-2 py-1 text-xs">
-                  <button
-                    type="button"
-                    className="flex items-center gap-2 min-w-0 text-left hover:underline"
-                    onClick={async () => {
-                      const url = await getSignedUrl(FIN_BUCKET, p);
-                      window.open(url, "_blank");
-                    }}
-                  >
-                    <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                    <span className="truncate">{fileNameFromPath(p)}</span>
-                  </button>
-                  <Button
-                    type="button" variant="ghost" size="icon" className="h-6 w-6"
-                    onClick={() => setExistingAttachments((prev) => prev.filter((_, idx) => idx !== i))}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                </li>
-              ))}
-              {attachments.map((f, i) => (
-                <li key={`new-${i}`} className="flex items-center justify-between rounded-md border border-gray-200 px-2 py-1 text-xs">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                    <span className="truncate">{f.name}</span>
-                    <span className="text-[10px] text-muted-foreground shrink-0">
-                      {(f.size / 1024).toFixed(0)} KB
-                    </span>
-                    <span className="text-[10px] text-primary shrink-0">novo</span>
-                  </div>
-                  <Button
-                    type="button" variant="ghost" size="icon" className="h-6 w-6"
-                    onClick={() => setAttachments((prev) => prev.filter((_, idx) => idx !== i))}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                </li>
-              ))}
+            <ul className="space-y-1.5 mt-2">
+              {existingAttachments.map((p, i) => {
+                const name = fileNameFromPath(p);
+                const isPdf = /\.pdf$/i.test(name);
+                const isImg = /\.(jpe?g|png|gif|webp|bmp|heic)$/i.test(name);
+                const openPreview = async () => {
+                  if (isPdf) {
+                    const path = extractStoragePath(FIN_BUCKET, p) ?? p;
+                    setPdfViewer({ path, name });
+                  } else if (isImg) {
+                    const path = extractStoragePath(FIN_BUCKET, p) ?? p;
+                    setImgViewer({ id: `ex-${i}`, file_name: name, file_path: path, file_type: null } as ViewerAttachment);
+                  } else {
+                    const url = await getSignedUrl(FIN_BUCKET, p);
+                    window.open(url, "_blank");
+                  }
+                };
+                return (
+                  <li key={`ex-${i}`} className="rounded-md border border-gray-200 px-2 py-1.5 text-xs space-y-1">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="flex items-center gap-2 min-w-0 text-left hover:underline flex-1"
+                        onClick={openPreview}
+                      >
+                        <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <span className="truncate">{name}</span>
+                      </button>
+                      <Button
+                        type="button" variant="ghost" size="icon" className="h-6 w-6" title="Visualizar"
+                        onClick={openPreview}
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        type="button" variant="ghost" size="icon" className="h-6 w-6"
+                        onClick={() => {
+                          setExistingAttachments((prev) => prev.filter((_, idx) => idx !== i));
+                          setExistingNotes((prev) => prev.filter((_, idx) => idx !== i));
+                        }}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                    <Input
+                      value={existingNotes[i] ?? ""}
+                      onChange={(e) => setExistingNotes((prev) => {
+                        const next = [...prev];
+                        while (next.length < existingAttachments.length) next.push("");
+                        next[i] = e.target.value;
+                        return next;
+                      })}
+                      placeholder="Observação do anexo (opcional)"
+                    />
+                  </li>
+                );
+              })}
+              {attachments.map((f, i) => {
+                const isPdf = f.type === "application/pdf" || /\.pdf$/i.test(f.name);
+                const isImg = f.type.startsWith("image/") || /\.(jpe?g|png|gif|webp|bmp)$/i.test(f.name);
+                const openPreview = () => {
+                  if (isPdf) {
+                    setPdfViewer({ path: null, name: f.name, pendingFile: f });
+                  } else if (isImg) {
+                    setImgViewer({ id: `new-${i}`, file_name: f.name, file_type: f.type, _pending: true, _file: f } as ViewerAttachment);
+                  } else {
+                    const url = URL.createObjectURL(f);
+                    window.open(url, "_blank");
+                  }
+                };
+                return (
+                  <li key={`new-${i}`} className="rounded-md border border-gray-200 px-2 py-1.5 text-xs space-y-1">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="flex items-center gap-2 min-w-0 text-left hover:underline flex-1"
+                        onClick={openPreview}
+                      >
+                        <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <span className="truncate">{f.name}</span>
+                        <span className="text-[10px] text-muted-foreground shrink-0">
+                          {(f.size / 1024).toFixed(0)} KB
+                        </span>
+                        <span className="text-[10px] text-primary shrink-0">novo</span>
+                      </button>
+                      <Button
+                        type="button" variant="ghost" size="icon" className="h-6 w-6" title="Visualizar"
+                        onClick={openPreview}
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        type="button" variant="ghost" size="icon" className="h-6 w-6"
+                        onClick={() => {
+                          setAttachments((prev) => prev.filter((_, idx) => idx !== i));
+                          setAttachmentNotesNew((prev) => prev.filter((_, idx) => idx !== i));
+                        }}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                    <Input
+                      value={attachmentNotesNew[i] ?? ""}
+                      onChange={(e) => setAttachmentNotesNew((prev) => {
+                        const next = [...prev];
+                        while (next.length <= i) next.push("");
+                        next[i] = e.target.value;
+                        return next;
+                      })}
+                      placeholder="Observação do anexo (opcional)"
+                    />
+                  </li>
+                );
+              })}
             </ul>
           )}
         </Section>
@@ -676,6 +751,24 @@ export default function PayableReceivableForm() {
           {saveMutation.isPending ? "Salvando…" : "Salvar e Fechar"}
         </Button>
       </div>
+
+      <PdfViewerDialog
+        open={!!pdfViewer}
+        onOpenChange={(v) => { if (!v) setPdfViewer(null); }}
+        filePath={pdfViewer?.path ?? null}
+        fileName={pdfViewer?.name ?? ""}
+        pendingFile={pdfViewer?.pendingFile ?? null}
+        bucket={FIN_BUCKET}
+      />
+      <ImageViewerDialog
+        open={!!imgViewer}
+        onOpenChange={(v) => { if (!v) setImgViewer(null); }}
+        attachment={imgViewer}
+        taskId={null}
+        bucket={FIN_BUCKET}
+        tableName="financial_transactions"
+        invalidateKey={["finance-tx", editingId]}
+      />
     </div>
   );
 }
