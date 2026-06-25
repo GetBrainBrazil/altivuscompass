@@ -42,9 +42,14 @@ const fmtDate = (s: string | null) =>
   s ? new Date(s + (s.length === 10 ? "T00:00:00" : "")).toLocaleDateString("pt-BR") : "—";
 
 export default function FinanceClosedSales() {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const highlightQuote = searchParams.get("quote");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [periodFilter, setPeriodFilter] = useState<string>("all");
+  const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
+  const [flashId, setFlashId] = useState<string | null>(null);
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["finance", "closed-sales"],
