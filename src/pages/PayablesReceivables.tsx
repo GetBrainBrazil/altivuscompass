@@ -34,6 +34,7 @@ import { COMPANY_OPTIONS } from "@/lib/company";
 import { CompanyBadge } from "@/components/company/CompanyBadge";
 import { useCompanyFilter, matchesCompanyFilter } from "@/hooks/useCompanyFilter";
 import { CounterpartyTypeBadge } from "@/components/finance/CounterpartySelect";
+import { ConfirmPaymentDialog, type ConfirmPaymentTarget } from "@/components/finance/ConfirmPaymentDialog";
 
 // ----- types & constants -----
 type TxType = "payable" | "receivable";
