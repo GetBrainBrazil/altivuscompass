@@ -79,7 +79,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   // Changelog unseen indicator (badge no menu); toast pop-up desativado a pedido.
   const { hasUnseen, latest } = useChangelogUnseen();
 
-  const queryClient = useQueryClient();
+  useQueryClient();
   const { data: usersWithRoles = [], refetch: refetchUsersList } = useQuery({
     queryKey: ["impersonate-users-list"],
     queryFn: async () => {
