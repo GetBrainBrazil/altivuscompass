@@ -16,6 +16,32 @@ import { cn } from "@/lib/utils";
 import { COMPANY_OPTIONS, DEFAULT_COMPANY, type CompanyBrand } from "@/lib/company";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import CounterpartySelect, { type CounterpartyValue, EMPTY_COUNTERPARTY } from "@/components/finance/CounterpartySelect";
+import { getSignedUrl, extractStoragePath } from "@/lib/private-storage";
+
+const FIN_BUCKET = "financial-attachments";
+
+function fileNameFromPath(p: string): string {
+  const path = extractStoragePath(FIN_BUCKET, p) ?? p;
+  const base = path.split("/").pop() ?? path;
+  // strip leading "<timestamp>-"
+  return base.replace(/^\d{10,}-/, "");
+}
+
+async function uploadFinanceFiles(txId: string, files: File[]): Promise<string[]> {
+  const { data: auth } = await supabase.auth.getUser();
+  const userId = auth?.user?.id ?? "anon";
+  const paths: string[] = [];
+  for (const f of files) {
+    const safe = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `${userId}/${txId}/${Date.now()}-${safe}`;
+    const { error } = await supabase.storage.from(FIN_BUCKET).upload(path, f, {
+      cacheControl: "3600", upsert: false, contentType: f.type || undefined,
+    });
+    if (error) throw error;
+    paths.push(path);
+  }
+  return paths;
+}
 
 
 type TxType = "payable" | "receivable";
