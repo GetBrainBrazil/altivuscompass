@@ -595,6 +595,18 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
           </SelectContent>
         </Select>
 
+        <Select value={partyKindFilter} onValueChange={(v) => { setPartyKindFilter(v as any); setPage(1); }}>
+          <SelectTrigger className="w-full lg:w-48">
+            <SelectValue placeholder="Tipo de contraparte" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas contrapartes</SelectItem>
+            <SelectItem value="client">Clientes</SelectItem>
+            <SelectItem value="supplier">Fornecedores</SelectItem>
+            <SelectItem value="party">Outras partes</SelectItem>
+          </SelectContent>
+        </Select>
+
         <Select value={companyFilter} onValueChange={(v) => { setCompanyFilter(v as any); setPage(1); }}>
           <SelectTrigger className="w-full lg:w-44">
             <SelectValue placeholder="Empresa" />
