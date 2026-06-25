@@ -112,6 +112,7 @@ export default function PayableReceivableForm() {
 
   const [form, setForm] = useState<typeof emptyForm>({ ...emptyForm, type: initialType });
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
   const isReceivable = form.type === "receivable";
