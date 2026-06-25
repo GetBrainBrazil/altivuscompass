@@ -582,22 +582,14 @@ export default function PayableReceivableForm() {
                 e.stopPropagation();
                 setIsDragging(false);
               }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsDragging(false);
-                  const files = Array.from(e.dataTransfer.files ?? []);
-                  if (files.length > 0) {
-                    setAttachments((prev) => [...prev, ...files]);
-                    setAttachmentNotesNew((prev) => [...prev, ...files.map(() => "")]);
-                  }
-                }}
+              onDrop={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 setIsDragging(false);
                 const files = Array.from(e.dataTransfer.files ?? []);
                 if (files.length > 0) {
                   setAttachments((prev) => [...prev, ...files]);
+                  setAttachmentNotesNew((prev) => [...prev, ...files.map(() => "")]);
                 }
               }}
             >
