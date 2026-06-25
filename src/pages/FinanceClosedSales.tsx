@@ -19,6 +19,7 @@ import {
 
 type ClosedSale = {
   id: string;
+  quote_id: string | null;
   client_id: string | null;
   client_name: string;
   destination: string | null;
