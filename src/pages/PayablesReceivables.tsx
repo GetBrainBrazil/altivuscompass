@@ -173,6 +173,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
   const [customPopoverOpen, setCustomPopoverOpen] = useState(false);
   const [showPartialBalances, setShowPartialBalances] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [partyKindFilter, setPartyKindFilter] = useState<"all" | "client" | "supplier" | "party">("all");
   const [companyFilter, setCompanyFilter] = useCompanyFilter("payables-receivables");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sortKey, setSortKey] = useState<SortKey>("due_date");
