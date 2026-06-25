@@ -122,6 +122,7 @@ export default function PayableReceivableForm() {
   const [isDragging, setIsDragging] = useState(false);
   const [pdfViewer, setPdfViewer] = useState<{ path: string | null; name: string; pendingFile?: File | null } | null>(null);
   const [imgViewer, setImgViewer] = useState<ViewerAttachment | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const isReceivable = form.type === "receivable";
 
