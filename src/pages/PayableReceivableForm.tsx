@@ -327,34 +327,14 @@ export default function PayableReceivableForm() {
 
             <div className="space-y-1 col-span-12 md:col-span-5">
               <Label>{partyLabel}</Label>
-              {isReceivable ? (
-                <Select value={form.client_id} onValueChange={(v) => {
-                  if (v === "__add__") { window.open("/clients", "_blank"); return; }
-                  setForm({ ...form, client_id: v });
-                }}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__add__" className="text-primary font-medium">+ Cadastrar novo cliente</SelectItem>
-                    {clients.map((c: any) => (
-                      <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Select value={form.supplier_id} onValueChange={(v) => {
-                  if (v === "__add__") { window.open("/registrations?tab=suppliers", "_blank"); return; }
-                  setForm({ ...form, supplier_id: v });
-                }}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__add__" className="text-primary font-medium">+ Cadastrar novo fornecedor</SelectItem>
-                    {suppliers.map((s: any) => (
-                      <SelectItem key={s.id} value={s.id}>{s.trade_name || s.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+              <CounterpartySelect
+                value={counterpartyValue}
+                onChange={handleCounterpartyChange}
+                preferred={isReceivable ? "client" : "supplier"}
+                placeholder="Selecione cliente, fornecedor ou outra parte"
+              />
             </div>
+
 
             <div className="space-y-1 col-span-12 md:col-span-6">
               <Label>Categoria *</Label>
