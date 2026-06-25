@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle2, ChevronsUpDown, Check, ChevronRight } from "lucide-react";
+import { CheckCircle2, ChevronsUpDown, Check, ChevronRight, Paperclip } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import CounterpartySelect, { type CounterpartyValue, EMPTY_COUNTERPARTY, CounterpartyTypeBadge } from "@/components/finance/CounterpartySelect";
@@ -25,6 +25,7 @@ type Transaction = {
   is_reconciled?: boolean; virtual_account_owner?: string | null;
   observations?: string | null; payment_account?: string | null;
   client_id?: string | null; supplier_id?: string | null;
+  attachment_urls?: string[] | null;
 };
 
 const typeLabels: Record<string, string> = {
@@ -613,7 +614,16 @@ export default function Finance() {
                     <td className="p-3 text-center">
                       {t.is_reconciled && <CheckCircle2 size={14} className="text-success mx-auto" />}
                     </td>
-                    <td className="p-3 font-body font-medium text-foreground">{t.description}</td>
+                    <td className="p-3 font-body font-medium text-foreground">
+                      <div className="flex items-center gap-1.5">
+                        {t.description}
+                        {Array.isArray(t.attachment_urls) && t.attachment_urls.length > 0 && (
+                          <span title={`${t.attachment_urls.length} anexo(s)`}>
+                            <Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="p-3 font-body text-xs text-muted-foreground">{(t.payment_account && bankAccountMap.get(t.payment_account)) || t.payment_account || "-"}</td>
                     <td className="p-3 font-body text-xs text-muted-foreground max-w-[200px] truncate" title={categoryPathMap.get(t.category || "") || t.category || ""}>{categoryPathMap.get(t.category || "") || t.category || "-"}</td>
                     <td className="p-3 font-body text-xs text-muted-foreground">
@@ -656,6 +666,11 @@ export default function Finance() {
                     <div className="flex items-center gap-1.5">
                       {t.is_reconciled && <CheckCircle2 size={12} className="text-success shrink-0" />}
                       <p className="text-sm font-medium font-body text-foreground truncate">{t.description}</p>
+                      {Array.isArray(t.attachment_urls) && t.attachment_urls.length > 0 && (
+                        <span title={`${t.attachment_urls.length} anexo(s)`}>
+                          <Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground font-body">{t.category || t.type}{t.party_name ? ` · ${t.party_name}` : ""}</p>
                   </div>
