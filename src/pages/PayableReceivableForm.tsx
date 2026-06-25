@@ -872,14 +872,15 @@ function FormBody({ children }: { children: React.ReactNode }) {
 
 function Section({ title, children }: { title?: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-2">
+    <section className="rounded-lg border bg-card">
       {title && (
-        <div className="flex items-center gap-2">
-          <h3 className="text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400 whitespace-nowrap">{title}</h3>
-          <div className="flex-1 h-px bg-gray-200" />
-        </div>
+        <header className="px-4 py-2.5 border-b">
+          <h3 className="text-sm font-display font-semibold tracking-wide uppercase text-foreground/90">
+            {title}
+          </h3>
+        </header>
       )}
-      {children}
-    </div>
+      <div className="p-4 space-y-3">{children}</div>
+    </section>
   );
 }
