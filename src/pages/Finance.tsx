@@ -55,23 +55,6 @@ export default function Finance() {
   const [customDateFrom, setCustomDateFrom] = useState("");
   const [customDateTo, setCustomDateTo] = useState("");
 
-  const { data: clients = [] } = useQuery({
-    queryKey: ["clients-list"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("clients").select("id, full_name").eq("is_active", true).order("full_name");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: suppliers = [] } = useQuery({
-    queryKey: ["suppliers-list"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("suppliers").select("id, name, trade_name").eq("is_active", true).order("name");
-      if (error) throw error;
-      return data;
-    },
-  });
 
   const { data: financialCategories = [] } = useQuery({
     queryKey: ["financial-categories"],
