@@ -427,7 +427,7 @@ export default function PayableReceivableForm() {
 
             <div className="space-y-1">
               <Label>Total</Label>
-              <div className="h-7 px-2 rounded-md border border-gray-200 bg-muted/30 flex items-center text-xs font-semibold">
+              <div className="h-10 px-3 rounded-md border border-input bg-muted/30 flex items-center text-sm font-semibold">
                 {brl(baseAmountNum)}
               </div>
             </div>
