@@ -450,6 +450,7 @@ export default function CatalogEdit() {
               />
             </div>
           </Field>
+          </div>
         </Section>
 
 
