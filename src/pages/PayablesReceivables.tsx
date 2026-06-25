@@ -533,7 +533,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
           {period === "custom" && (
             <Popover open={customPopoverOpen} onOpenChange={setCustomPopoverOpen}>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-9 gap-2">
+                <Button variant="outline" className="h-10 gap-2">
                   <CalendarDays className="h-4 w-4" />
                   {customRange?.from && customRange?.to
                     ? `${format(customRange.from, "dd/MM/yyyy")} – ${format(customRange.to, "dd/MM/yyyy")}`
