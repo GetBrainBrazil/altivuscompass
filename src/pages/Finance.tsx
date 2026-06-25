@@ -122,6 +122,8 @@ export default function Finance() {
         amount: Number(form.amount), date: form.date || new Date().toISOString().split("T")[0],
         status: form.status || "pending", category: form.category || form.type || "receivable",
         due_date: form.due_date || null, party_name: form.party_name || null,
+        client_id: form.client_id || null,
+        supplier_id: form.supplier_id || null,
         is_reconciled: form.is_reconciled ?? false,
         observations: form.observations || null,
         payment_account: form.payment_account || null,
