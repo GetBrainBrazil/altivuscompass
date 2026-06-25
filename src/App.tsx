@@ -33,6 +33,7 @@ import CategoryFieldsPage from "./pages/CategoryFieldsPage";
 import QuoteItemEdit from "./pages/QuoteItemEdit";
 import Sales from "./pages/Sales";
 import FinanceClosedSales from "./pages/FinanceClosedSales";
+import Suppliers from "./pages/Suppliers";
 import MyProfile from "./pages/MyProfile";
 import System from "./pages/System";
 import Tasks from "./pages/Tasks";
@@ -107,6 +108,7 @@ const App = () => (
             <Route path="/finance/registrations" element={<ProtectedRoute><AppLayout><FinancialRegistrations /></AppLayout></ProtectedRoute>} />
             <Route path="/finance/reports" element={<ProtectedRoute><AppLayout><FinancialReports /></AppLayout></ProtectedRoute>} />
             <Route path="/finance/closed-sales" element={<ProtectedRoute><AppLayout><FinanceClosedSales /></AppLayout></ProtectedRoute>} />
+            <Route path="/finance/suppliers" element={<ProtectedRoute><AppLayout><Suppliers /></AppLayout></ProtectedRoute>} />
             <Route path="/miles" element={<ProtectedRoute><AppLayout><Miles /></AppLayout></ProtectedRoute>} />
             <Route path="/users" element={<ProtectedRoute><AppLayout><UserManagement /></AppLayout></ProtectedRoute>} />
             <Route path="/users/new" element={<ProtectedRoute><AppLayout><UserDetail /></AppLayout></ProtectedRoute>} />

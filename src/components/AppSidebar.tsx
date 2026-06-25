@@ -73,6 +73,7 @@ const navItems: NavItem[] = [
       { title: "Contas a Pagar", url: "/finance/payables" },
       { title: "Contas a Receber", url: "/finance/receivables" },
       { title: "Vendas Fechadas", url: "/finance/closed-sales" },
+      { title: "Fornecedores", url: "/finance/suppliers" },
       { title: "Cadastros Financeiros", url: "/finance/registrations" },
     ],
   },

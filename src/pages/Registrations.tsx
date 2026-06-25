@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { COUNTRIES_STATES, COUNTRY_LIST } from "@/lib/countries-states";
 import { logAuditEvent } from "@/lib/audit";
 import LocationsTab from "@/components/LocationsTab";
-import SuppliersTab from "@/components/SuppliersTab";
+
 import ProductsTab from "@/components/ProductsTab";
 
 import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
@@ -642,9 +642,10 @@ function TagsTab() {
 export default function Registrations() {
   const [tab, setTab] = useState<string>(() => {
     try {
-      return localStorage.getItem("registrations:tab") || "suppliers";
+      const saved = localStorage.getItem("registrations:tab") || "products";
+      return saved === "suppliers" ? "products" : saved;
     } catch {
-      return "suppliers";
+      return "products";
     }
   });
   const handleTabChange = (v: string) => {
@@ -655,19 +656,17 @@ export default function Registrations() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-display font-bold text-foreground">Cadastros</h1>
-        <p className="text-sm text-muted-foreground mt-1">Gerencie localidades, aeroportos, companhias aéreas, fornecedores, produtos e etiquetas</p>
+        <p className="text-sm text-muted-foreground mt-1">Gerencie localidades, aeroportos, companhias aéreas, produtos e etiquetas</p>
       </div>
 
       <Tabs value={tab} onValueChange={handleTabChange} className="space-y-4">
         <TabsList>
-          <TabsTrigger value="suppliers">Fornecedores</TabsTrigger>
           <TabsTrigger value="products">Produtos</TabsTrigger>
           <TabsTrigger value="locations">Localidades</TabsTrigger>
           <TabsTrigger value="airports">Aeroportos</TabsTrigger>
           <TabsTrigger value="airlines">Cias Aéreas & Programas</TabsTrigger>
           <TabsTrigger value="tags">Etiquetas</TabsTrigger>
         </TabsList>
-        <TabsContent value="suppliers"><SuppliersTab /></TabsContent>
         <TabsContent value="products"><ProductsTab /></TabsContent>
         <TabsContent value="locations"><LocationsTab /></TabsContent>
         <TabsContent value="airports"><AirportsTab /></TabsContent>
@@ -677,3 +676,4 @@ export default function Registrations() {
     </div>
   );
 }
+
