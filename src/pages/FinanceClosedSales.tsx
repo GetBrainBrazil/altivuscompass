@@ -297,8 +297,25 @@ export default function FinanceClosedSales() {
                 <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">Nenhuma venda fechada encontrada.</TableCell></TableRow>
               )}
               {filtered.map((r) => (
-                <TableRow key={r.id} className="hover:bg-muted/40">
-                  <TableCell className="font-medium">{r.client_name}</TableCell>
+                <TableRow
+                  key={r.id}
+                  ref={(el) => { rowRefs.current[r.id] = el; }}
+                  onClick={() => goToSale(r.id)}
+                  className={`cursor-pointer hover:bg-muted/40 transition-colors ${flashId === r.id ? "bg-soft-blue/15" : ""}`}
+                >
+                  <TableCell className="font-medium">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex items-center gap-1.5 group">
+                            {r.client_name}
+                            <ExternalLink className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>Abrir venda no CRM</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableCell>
                   <TableCell>{r.destination ?? "—"}</TableCell>
                   <TableCell className="text-right">{fmtBRL(r.total_value)}</TableCell>
                   <TableCell className="text-right">{fmtBRL(r.total_cost)}</TableCell>
