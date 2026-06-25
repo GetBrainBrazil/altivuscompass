@@ -187,7 +187,10 @@ export default function PayableReceivableForm() {
         recurrence_type: form.recurrence_enabled ? form.recurrence_period : null,
         status: "pending",
         party_name:
-          (form.type === "payable" ? suppliersMap[form.supplier_id] : clientsMap[form.client_id]) ?? null,
+          (form.client_id && clientsMap[form.client_id]) ||
+          (form.supplier_id && suppliersMap[form.supplier_id]) ||
+          form.party_name_free ||
+          null,
         company: (form.company as CompanyBrand) || DEFAULT_COMPANY,
       };
 
