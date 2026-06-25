@@ -165,6 +165,7 @@ export default function Sales() {
               <div className="sm:col-span-2 space-y-2">
                 <Label className="font-body">Observações</Label>
                 <Textarea value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
+              </div>
             </div>
 
             {editingSale && (
@@ -177,7 +178,6 @@ export default function Sales() {
                 }
               />
             )}
-            </div>
             <div className="flex gap-2 justify-end">
               <Button type="button" variant="outline" onClick={closeDialog} className="font-body">Cancelar</Button>
               <Button type="submit" disabled={saveMutation.isPending} className="font-body">
