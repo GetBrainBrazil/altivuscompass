@@ -30,10 +30,11 @@ export default function UserManagement({ embedded = false }: { embedded?: boolea
       const { data: profilesData, error } = await supabase.from("profiles").select("*");
       if (error) throw error;
       const { data: rolesData } = await supabase.from("user_roles").select("*");
-      return (profilesData ?? []).map((p: any) => ({
+      const mapped = (profilesData ?? []).map((p: any) => ({
         ...p,
         role: rolesData?.find((r: any) => r.user_id === p.user_id)?.role ?? "sem função",
       })) as ProfileWithRole[];
+      return mapped.sort((a, b) => a.full_name.localeCompare(b.full_name, "pt-BR", { sensitivity: "base" }));
     },
   });
 

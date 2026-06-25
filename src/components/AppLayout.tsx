@@ -104,7 +104,10 @@ export function AppLayout({ children }: AppLayoutProps) {
     refetchOnWindowFocus: true,
   });
 
-  const filteredUsers = usersWithRoles.filter((u) => {
+  const sortedUsers = usersWithRoles.slice().sort((a, b) =>
+    a.full_name.localeCompare(b.full_name, "pt-BR", { sensitivity: "base" })
+  );
+  const filteredUsers = sortedUsers.filter((u) => {
     if (!userSearch.trim()) return true;
     const q = userSearch.toLowerCase();
     const roleLabel = ROLE_LABELS[u.role] ?? u.role;
