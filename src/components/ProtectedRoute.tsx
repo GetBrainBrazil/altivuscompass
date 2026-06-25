@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { useEffect } from "react";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccess, getAccessiblePages } from "@/lib/permissions";
 import { Skeleton } from "@/components/ui/skeleton";
