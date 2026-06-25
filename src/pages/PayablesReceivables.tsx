@@ -504,18 +504,69 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
           />
         </div>
 
-        {/* Month/year navigator */}
-        <div className="flex items-center gap-1 border border-border rounded-md bg-background">
-          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navMonth(-1)} aria-label="Mês anterior">
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <div className="px-2 min-w-[140px] text-center text-sm font-medium capitalize">
-            {monthNames[month]} {year}
-          </div>
-          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navMonth(1)} aria-label="Próximo mês">
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+        {/* Period selector */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Select
+            value={period}
+            onValueChange={(v) => {
+              const p = v as PeriodPreset;
+              setPeriod(p);
+              setPage(1);
+              if (p === "custom") setCustomPopoverOpen(true);
+            }}
+          >
+            <SelectTrigger className="w-[180px] h-9">
+              <CalendarDays className="h-4 w-4 mr-1 text-muted-foreground" />
+              <SelectValue placeholder="Período" />
+            </SelectTrigger>
+            <SelectContent>
+              {PERIOD_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {period === "custom" && (
+            <Popover open={customPopoverOpen} onOpenChange={setCustomPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9 gap-2">
+                  <CalendarDays className="h-4 w-4" />
+                  {customRange?.from && customRange?.to
+                    ? `${format(customRange.from, "dd/MM/yyyy")} – ${format(customRange.to, "dd/MM/yyyy")}`
+                    : "Escolher datas"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="range"
+                  numberOfMonths={2}
+                  selected={customRange}
+                  onSelect={(r) => {
+                    setCustomRange(r);
+                    setPage(1);
+                    if (r?.from && r?.to) setCustomPopoverOpen(false);
+                  }}
+                  locale={ptBR}
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          )}
+
+          {period !== "this_month" && (
+            <div className="hidden lg:flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/40 px-2 py-1.5 rounded-md">
+              <span className="font-medium">{periodLabel}</span>
+              <button
+                onClick={resetPeriod}
+                className="ml-1 text-muted-foreground/70 hover:text-foreground"
+                aria-label="Limpar período"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          )}
         </div>
+
 
         <div className="flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-background">
           <Switch
