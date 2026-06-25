@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { notify } from "@/lib/notify";
 import { PAGE_PERMISSIONS, FEATURE_PERMISSIONS, ROLE_LABELS, type AppRole, type PagePermission, type FeaturePermission } from "@/lib/permissions";
+import { savePermissionOverrides } from "@/lib/permissionSync";
 
 // Agrupamento conforme menu lateral. `paths` referencia páginas em PAGE_PERMISSIONS.
 type PermGroup = { id: string; label: string; paths: string[] };
@@ -59,6 +60,10 @@ export default function Permissions({ embedded = false }: { embedded?: boolean }
     updates.forEach((u) => {
       const original = PAGE_PERMISSIONS.find((p) => p.path === u.path);
       if (original) original.allowedRoles = [...u.allowedRoles];
+    });
+    savePermissionOverrides().catch((e) => {
+      console.error(e);
+      notify.error("Não foi possível salvar a permissão");
     });
   };
 
@@ -116,6 +121,10 @@ export default function Permissions({ embedded = false }: { embedded?: boolean }
     setFeaturePermissions(updated);
     const original = FEATURE_PERMISSIONS.find((f) => f.key === feature.key);
     if (original) original.allowedRoles = [...newRoles];
+    savePermissionOverrides().catch((e) => {
+      console.error(e);
+      notify.error("Não foi possível salvar a permissão");
+    });
     notify.success(
       `${ROLE_LABELS[role]} ${next ? "agora tem" : "perdeu"} acesso a "${feature.label}"`,
     );
