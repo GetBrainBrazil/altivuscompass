@@ -9,9 +9,9 @@ import { PAGE_PERMISSIONS, FEATURE_PERMISSIONS, ROLE_LABELS, type AppRole, type 
 // Agrupamento conforme menu lateral. `paths` referencia páginas em PAGE_PERMISSIONS.
 type PermGroup = { id: string; label: string; paths: string[] };
 const PERMISSION_GROUPS: PermGroup[] = [
+  { id: "menu-superior", label: "Menu Superior", paths: ["/profile", "/changelog"] },
   { id: "painel", label: "Painel", paths: ["/"] },
   { id: "tarefas", label: "Tarefas", paths: ["/tasks"] },
-  { id: "menu-superior", label: "Menu Superior", paths: ["/profile", "/changelog"] },
 
   { id: "clientes", label: "Clientes", paths: ["/clients"] },
   {
