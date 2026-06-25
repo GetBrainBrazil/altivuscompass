@@ -9,7 +9,7 @@ import { useInactivityLogout } from "@/hooks/useInactivityLogout";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccess } from "@/lib/permissions";
 import { ROLE_LABELS } from "@/lib/permissions";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Search, Moon, Sun } from "lucide-react";
