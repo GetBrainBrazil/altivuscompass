@@ -754,7 +754,9 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
                         <div className="flex items-center gap-2 max-w-[280px]">
                           <span className="truncate">{t.description || "—"}</span>
                           {Array.isArray(t.attachment_urls) && t.attachment_urls.length > 0 && (
-                            <Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" title={`${t.attachment_urls.length} anexo(s)`} />
+                            <span title={`${t.attachment_urls.length} anexo(s)`}>
+                              <Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                            </span>
                           )}
                           <CompanyBadge company={t.company} />
                         </div>
