@@ -15,7 +15,7 @@ export default function FinancialRegistrations() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
+    <div className="w-full space-y-4 sm:space-y-6">
       <div className="flex items-center gap-3">
         <Link to="/finance">
           <Button variant="ghost" size="icon" className="h-8 w-8">
