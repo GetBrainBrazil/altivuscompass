@@ -180,7 +180,8 @@ export default function Permissions({ embedded = false }: { embedded?: boolean }
 
                 return (
                   <>
-                    <TableRow key={group.id} className="bg-slate-50/60 hover:bg-slate-100/60 transition-colors">
+                    <TableRow className="bg-slate-50/60 hover:bg-slate-100/60 transition-colors">
+
                       <TableCell className="font-body text-sm font-semibold">
                         <button
                           type="button"
