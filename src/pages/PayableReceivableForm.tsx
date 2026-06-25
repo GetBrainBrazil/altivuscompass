@@ -221,8 +221,13 @@ export default function PayableReceivableForm() {
       };
 
       if (editingId) {
+        let attachmentUrls = [...existingAttachments];
+        if (attachments.length > 0) {
+          const uploaded = await uploadFinanceFiles(editingId, attachments);
+          attachmentUrls = [...attachmentUrls, ...uploaded];
+        }
         const { error } = await (supabase.from("financial_transactions") as any)
-          .update({ ...rowBase, due_date: form.due_date }).eq("id", editingId);
+          .update({ ...rowBase, due_date: form.due_date, attachment_urls: attachmentUrls }).eq("id", editingId);
         if (error) throw error;
         return;
       }
@@ -246,20 +251,31 @@ export default function PayableReceivableForm() {
             description: `${form.description} (${i + 1}/${count})`,
           };
         });
-        const { error } = await (supabase.from("financial_transactions") as any).insert(rows);
+        const { data: inserted, error } = await (supabase.from("financial_transactions") as any)
+          .insert(rows).select("id");
         if (error) throw error;
+        if (attachments.length > 0 && inserted?.[0]?.id) {
+          const uploaded = await uploadFinanceFiles(inserted[0].id, attachments);
+          await (supabase.from("financial_transactions") as any)
+            .update({ attachment_urls: uploaded }).eq("id", inserted[0].id);
+        }
         return;
       }
 
-      const { error } = await (supabase.from("financial_transactions") as any).insert([{
+      const { data: inserted, error } = await (supabase.from("financial_transactions") as any).insert([{
         ...rowBase,
         due_date: form.due_date,
         installment_number: null,
         installment_total: null,
         installment_group_id: null,
         is_future_recurrence: false,
-      }]);
+      }]).select("id").single();
       if (error) throw error;
+      if (attachments.length > 0 && inserted?.id) {
+        const uploaded = await uploadFinanceFiles(inserted.id, attachments);
+        await (supabase.from("financial_transactions") as any)
+          .update({ attachment_urls: uploaded }).eq("id", inserted.id);
+      }
     },
     onSuccess: () => {
       toast({ title: editingId ? "Movimentação atualizada" : "Movimentação criada" });
