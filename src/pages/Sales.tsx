@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { KanbanSkeleton } from "@/components/ui/loading-skeletons";
+import { SalesFinancialSummaryCard } from "@/components/sales/SalesFinancialSummaryCard";
 
 const saleStages = [
   { id: "issued", label: "Bilhete Emitido", color: "bg-soft-blue" },
@@ -37,6 +39,7 @@ type Sale = {
 export default function Sales() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [form, setForm] = useState<Record<string, any>>({});
@@ -87,7 +90,25 @@ export default function Sales() {
     });
     setDialogOpen(true);
   };
-  const closeDialog = () => { setDialogOpen(false); setEditingSale(null); setForm({}); };
+  const closeDialog = () => {
+    setDialogOpen(false);
+    setEditingSale(null);
+    setForm({});
+    if (searchParams.get("open")) {
+      const sp = new URLSearchParams(searchParams);
+      sp.delete("open");
+      setSearchParams(sp, { replace: true });
+    }
+  };
+
+  // Deep link: ?open=<sale_id>
+  useEffect(() => {
+    const openId = searchParams.get("open");
+    if (!openId || sales.length === 0 || dialogOpen) return;
+    const s = sales.find((x: Sale) => x.id === openId);
+    if (s) openEdit(s);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, sales]);
 
   const formatCurrency = (value: number | null) => {
     if (!value) return "R$ 0";
@@ -146,6 +167,17 @@ export default function Sales() {
                 <Textarea value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
               </div>
             </div>
+
+            {editingSale && (
+              <SalesFinancialSummaryCard
+                quoteId={editingSale.quote_id}
+                totalValue={
+                  form.total_value === "" || form.total_value == null
+                    ? Number(editingSale.total_value ?? 0)
+                    : Number(form.total_value)
+                }
+              />
+            )}
             <div className="flex gap-2 justify-end">
               <Button type="button" variant="outline" onClick={closeDialog} className="font-body">Cancelar</Button>
               <Button type="submit" disabled={saveMutation.isPending} className="font-body">

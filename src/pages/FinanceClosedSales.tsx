@@ -1,10 +1,13 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { ExternalLink } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Table,
   TableBody,
@@ -16,6 +19,7 @@ import {
 
 type ClosedSale = {
   id: string;
+  quote_id: string | null;
   client_id: string | null;
   client_name: string;
   destination: string | null;
@@ -38,9 +42,14 @@ const fmtDate = (s: string | null) =>
   s ? new Date(s + (s.length === 10 ? "T00:00:00" : "")).toLocaleDateString("pt-BR") : "—";
 
 export default function FinanceClosedSales() {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const highlightQuote = searchParams.get("quote");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [periodFilter, setPeriodFilter] = useState<string>("all");
+  const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
+  const [flashId, setFlashId] = useState<string | null>(null);
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["finance", "closed-sales"],
@@ -115,6 +124,7 @@ export default function FinanceClosedSales() {
 
         return {
           id: s.id,
+          quote_id: s.quote_id,
           client_id: s.client_id,
           client_name: s.clients?.full_name ?? "Sem cliente",
           destination: s.destination,
@@ -171,6 +181,28 @@ export default function FinanceClosedSales() {
     const v = map[s];
     return <Badge variant="outline" className={v.cls}>{v.label}</Badge>;
   };
+
+  // Highlight + scroll para linha quando vier via ?quote=<id>
+  useEffect(() => {
+    if (!highlightQuote || filtered.length === 0) return;
+    const match = filtered.find((r) => r.quote_id === highlightQuote);
+    if (!match) return;
+    const el = rowRefs.current[match.id];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setFlashId(match.id);
+      const t = setTimeout(() => {
+        setFlashId(null);
+        const sp = new URLSearchParams(searchParams);
+        sp.delete("quote");
+        setSearchParams(sp, { replace: true });
+      }, 2500);
+      return () => clearTimeout(t);
+    }
+  }, [highlightQuote, filtered, searchParams, setSearchParams]);
+
+  const goToSale = (saleId: string) => navigate(`/sales?open=${saleId}`);
+
 
   return (
     <div className="p-6 space-y-6">
@@ -265,8 +297,25 @@ export default function FinanceClosedSales() {
                 <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">Nenhuma venda fechada encontrada.</TableCell></TableRow>
               )}
               {filtered.map((r) => (
-                <TableRow key={r.id} className="hover:bg-muted/40">
-                  <TableCell className="font-medium">{r.client_name}</TableCell>
+                <TableRow
+                  key={r.id}
+                  ref={(el) => { rowRefs.current[r.id] = el; }}
+                  onClick={() => goToSale(r.id)}
+                  className={`cursor-pointer hover:bg-muted/40 transition-colors ${flashId === r.id ? "bg-soft-blue/15" : ""}`}
+                >
+                  <TableCell className="font-medium">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex items-center gap-1.5 group">
+                            {r.client_name}
+                            <ExternalLink className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>Abrir venda no CRM</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableCell>
                   <TableCell>{r.destination ?? "—"}</TableCell>
                   <TableCell className="text-right">{fmtBRL(r.total_value)}</TableCell>
                   <TableCell className="text-right">{fmtBRL(r.total_cost)}</TableCell>
