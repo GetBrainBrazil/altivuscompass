@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { COMPANY_OPTIONS } from "@/lib/company";
 import { CompanyBadge } from "@/components/company/CompanyBadge";
 import { useCompanyFilter, matchesCompanyFilter } from "@/hooks/useCompanyFilter";
+import { CounterpartyTypeBadge } from "@/components/finance/CounterpartySelect";
 
 // ----- types & constants -----
 type TxType = "payable" | "receivable";
