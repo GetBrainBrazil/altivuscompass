@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,14 +13,22 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   Clock, TrendingUp, AlertTriangle, CalendarDays, CheckCircle2, ArrowDown, ArrowUp,
   Search, MoreHorizontal, Pencil, Trash2, Copy, ChevronLeft, ChevronRight,
-  ArrowUpDown, ArrowUp as ArrUp, ArrowDown as ArrDown, User, Inbox,
+  ArrowUpDown, ArrowUp as ArrUp, ArrowDown as ArrDown, User, Inbox, X,
 } from "lucide-react";
+import {
+  format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
+  startOfQuarter, endOfQuarter, startOfYear, endOfYear, subDays, subMonths, subYears, subWeeks,
+} from "date-fns";
+import { ptBR } from "date-fns/locale";
+import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { COMPANY_OPTIONS } from "@/lib/company";
 import { CompanyBadge } from "@/components/company/CompanyBadge";
