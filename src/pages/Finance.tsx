@@ -46,7 +46,7 @@ export default function Finance() {
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [form, setForm] = useState<Record<string, any>>({});
   const [filter, setFilter] = useState("all");
-  const [partyPopoverOpen, setPartyPopoverOpen] = useState(false);
+  
   const [accountFilter, setAccountFilter] = useState<Set<string>>(new Set());
   const [accountFilterOpen, setAccountFilterOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
