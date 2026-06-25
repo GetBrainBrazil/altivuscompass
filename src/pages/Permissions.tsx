@@ -146,7 +146,99 @@ export default function Permissions({ embedded = false }: { embedded?: boolean }
               </TableRow>
             </TableHeader>
             <TableBody>
-              {permissions.map((page) => (
+              {PERMISSION_GROUPS.map((group) => {
+                const childPages = group.paths
+                  .map((path) => permissions.find((p) => p.path === path))
+                  .filter((p): p is PagePermission => !!p);
+                const isSingleton = childPages.length === 1 && childPages[0].label === group.label;
+                const isOpen = !collapsed[group.id];
+
+                if (isSingleton) {
+                  const page = childPages[0];
+                  return (
+                    <TableRow key={group.id} className="hover:bg-slate-50 transition-colors">
+                      <TableCell className="font-body text-sm font-medium">{page.label}</TableCell>
+                      {allRoles.map((role) => {
+                        const isAdmin = role === "admin";
+                        const checked = isAdmin || page.allowedRoles.includes(role);
+                        return (
+                          <TableCell key={role} className="text-center">
+                            <div className="flex justify-center">
+                              <Switch
+                                checked={checked}
+                                disabled={isAdmin}
+                                onCheckedChange={(v) => togglePageRole(page, role, v)}
+                                aria-label={`${ROLE_LABELS[role]} - ${page.label}`}
+                              />
+                            </div>
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  );
+                }
+
+                return (
+                  <>
+                    <TableRow key={group.id} className="bg-slate-50/60 hover:bg-slate-100/60 transition-colors">
+                      <TableCell className="font-body text-sm font-semibold">
+                        <button
+                          type="button"
+                          onClick={() => setCollapsed((c) => ({ ...c, [group.id]: !c[group.id] }))}
+                          className="inline-flex items-center gap-1 hover:text-primary"
+                          aria-label={isOpen ? "Recolher" : "Expandir"}
+                        >
+                          {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                          {group.label}
+                        </button>
+                      </TableCell>
+                      {allRoles.map((role) => {
+                        const isAdmin = role === "admin";
+                        const state = groupState(group, role);
+                        const checked = isAdmin || state === "all";
+                        return (
+                          <TableCell key={role} className="text-center">
+                            <div className="flex justify-center">
+                              <Switch
+                                checked={checked}
+                                disabled={isAdmin}
+                                onCheckedChange={(v) => toggleGroupRole(group, role, v)}
+                                aria-label={`${ROLE_LABELS[role]} - ${group.label} (todos)`}
+                                className={!isAdmin && state === "some" ? "opacity-60 ring-2 ring-primary/40" : ""}
+                              />
+                            </div>
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                    {isOpen &&
+                      childPages.map((page) => (
+                        <TableRow key={page.path} className="hover:bg-slate-50 transition-colors">
+                          <TableCell className="font-body text-sm pl-10 text-muted-foreground">
+                            {page.label}
+                          </TableCell>
+                          {allRoles.map((role) => {
+                            const isAdmin = role === "admin";
+                            const checked = isAdmin || page.allowedRoles.includes(role);
+                            return (
+                              <TableCell key={role} className="text-center">
+                                <div className="flex justify-center">
+                                  <Switch
+                                    checked={checked}
+                                    disabled={isAdmin}
+                                    onCheckedChange={(v) => togglePageRole(page, role, v)}
+                                    aria-label={`${ROLE_LABELS[role]} - ${page.label}`}
+                                  />
+                                </div>
+                              </TableCell>
+                            );
+                          })}
+                        </TableRow>
+                      ))}
+                  </>
+                );
+              })}
+              {ungrouped.map((page) => (
                 <TableRow key={page.path} className="hover:bg-slate-50 transition-colors">
                   <TableCell className="font-body text-sm font-medium">{page.label}</TableCell>
                   {allRoles.map((role) => {
@@ -168,6 +260,7 @@ export default function Permissions({ embedded = false }: { embedded?: boolean }
                 </TableRow>
               ))}
             </TableBody>
+
           </Table>
         </div>
       </div>
