@@ -90,7 +90,25 @@ export default function Sales() {
     });
     setDialogOpen(true);
   };
-  const closeDialog = () => { setDialogOpen(false); setEditingSale(null); setForm({}); };
+  const closeDialog = () => {
+    setDialogOpen(false);
+    setEditingSale(null);
+    setForm({});
+    if (searchParams.get("open")) {
+      const sp = new URLSearchParams(searchParams);
+      sp.delete("open");
+      setSearchParams(sp, { replace: true });
+    }
+  };
+
+  // Deep link: ?open=<sale_id>
+  useEffect(() => {
+    const openId = searchParams.get("open");
+    if (!openId || sales.length === 0 || dialogOpen) return;
+    const s = sales.find((x: Sale) => x.id === openId);
+    if (s) openEdit(s);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, sales]);
 
   const formatCurrency = (value: number | null) => {
     if (!value) return "R$ 0";
