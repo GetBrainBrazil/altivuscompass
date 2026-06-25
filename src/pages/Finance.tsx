@@ -636,7 +636,14 @@ export default function Finance() {
                     <td className="p-3 font-body font-medium text-foreground">{t.description}</td>
                     <td className="p-3 font-body text-xs text-muted-foreground">{(t.payment_account && bankAccountMap.get(t.payment_account)) || t.payment_account || "-"}</td>
                     <td className="p-3 font-body text-xs text-muted-foreground max-w-[200px] truncate" title={categoryPathMap.get(t.category || "") || t.category || ""}>{categoryPathMap.get(t.category || "") || t.category || "-"}</td>
-                    <td className="p-3 font-body text-xs text-muted-foreground">{t.party_name || "-"}</td>
+                    <td className="p-3 font-body text-xs text-muted-foreground">
+                      {t.party_name ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className="truncate max-w-[140px]">{t.party_name}</span>
+                          <CounterpartyTypeBadge kind={t.client_id ? "client" : t.supplier_id ? "supplier" : "party"} />
+                        </span>
+                      ) : "-"}
+                    </td>
                     <td className={`p-3 font-body text-sm font-medium text-right whitespace-nowrap ${isExpense ? "text-destructive" : "text-success"}`}>
                       {isExpense ? `(${formatCurrency(Number(t.amount))})` : formatCurrency(Number(t.amount))}
                     </td>
