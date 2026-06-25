@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
@@ -84,8 +84,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setLoading(true);
             fetchUserRole(session.user.id);
           }
-          // Log login event once per session
-          if (!hasLoggedLoginRef.current) {
+          // Log LOGIN only on a real sign-in event (not on token refresh, tab focus, or initial restore)
+          if (event === "SIGNED_IN" && !hasLoggedLoginRef.current) {
             hasLoggedLoginRef.current = true;
             logAuditEvent({
               action: "create",
