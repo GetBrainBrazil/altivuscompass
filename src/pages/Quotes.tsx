@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logBusinessEvent } from "@/lib/audit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1641,6 +1642,15 @@ export default function Quotes() {
       toast({ title: "✅ Mensagem enviada!", description: `WhatsApp enviado com sucesso para ${whatsappPhone}.` });
       setWhatsappOpen(false);
       queryClient.invalidateQueries({ queryKey: ["quote-history"] });
+
+      // Audit log: quote sent via WhatsApp
+      logBusinessEvent({
+        action: "send",
+        tableName: "quotes",
+        recordId: savedQuoteId,
+        recordLabel: `Cotação enviada por WhatsApp para ${whatsappPhone}`,
+        metadata: { channel: "whatsapp", phone: whatsappPhone, link: quoteUrl },
+      });
     } catch (err: any) {
       toast({ title: "❌ Falha ao enviar WhatsApp", description: err.message || "Verifique o número e tente novamente.", variant: "destructive" });
     } finally {

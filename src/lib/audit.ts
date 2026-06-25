@@ -1,5 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
 
+// Extended action types
+export type AuditAction =
+  | "create" | "update" | "delete"
+  | "view" | "navigate"
+  | "send" | "export" | "print";
+
 export async function logAuditEvent({
   action,
   tableName,
@@ -8,7 +14,7 @@ export async function logAuditEvent({
   oldData,
   newData,
 }: {
-  action: "create" | "update" | "delete";
+  action: AuditAction;
   tableName: string;
   recordId?: string;
   recordLabel?: string;
@@ -61,4 +67,37 @@ export async function logAuditEvent({
   } catch (e) {
     console.error("Failed to log audit event:", e);
   }
+}
+
+/** Convenience: register a view of a single record */
+export function logViewEvent(tableName: string, recordId: string, recordLabel?: string) {
+  return logAuditEvent({ action: "view", tableName, recordId, recordLabel });
+}
+
+/** Convenience: register navigation to a page */
+export function logNavigationEvent(path: string, pageLabel: string) {
+  return logAuditEvent({
+    action: "navigate",
+    tableName: "pages",
+    recordId: path,
+    recordLabel: pageLabel,
+    newData: { path, page: pageLabel },
+  });
+}
+
+/** Convenience: register a business action like sending a quote or exporting */
+export function logBusinessEvent(opts: {
+  action: "send" | "export" | "print";
+  tableName: string;
+  recordId?: string;
+  recordLabel?: string;
+  metadata?: Record<string, any>;
+}) {
+  return logAuditEvent({
+    action: opts.action,
+    tableName: opts.tableName,
+    recordId: opts.recordId,
+    recordLabel: opts.recordLabel,
+    newData: opts.metadata ?? null,
+  });
 }
