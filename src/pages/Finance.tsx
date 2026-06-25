@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CheckCircle2, ChevronsUpDown, Check, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import CounterpartySelect, { type CounterpartyValue, EMPTY_COUNTERPARTY, CounterpartyTypeBadge } from "@/components/finance/CounterpartySelect";
 
 type Transaction = {
   id: string; description: string; type: string; amount: number; date: string;
@@ -23,6 +24,7 @@ type Transaction = {
   party_name?: string | null; created_at: string;
   is_reconciled?: boolean; virtual_account_owner?: string | null;
   observations?: string | null; payment_account?: string | null;
+  client_id?: string | null; supplier_id?: string | null;
 };
 
 const typeLabels: Record<string, string> = {
@@ -44,7 +46,7 @@ export default function Finance() {
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [form, setForm] = useState<Record<string, any>>({});
   const [filter, setFilter] = useState("all");
-  const [partyPopoverOpen, setPartyPopoverOpen] = useState(false);
+  
   const [accountFilter, setAccountFilter] = useState<Set<string>>(new Set());
   const [accountFilterOpen, setAccountFilterOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -53,23 +55,6 @@ export default function Finance() {
   const [customDateFrom, setCustomDateFrom] = useState("");
   const [customDateTo, setCustomDateTo] = useState("");
 
-  const { data: clients = [] } = useQuery({
-    queryKey: ["clients-list"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("clients").select("id, full_name").eq("is_active", true).order("full_name");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: suppliers = [] } = useQuery({
-    queryKey: ["suppliers-list"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("suppliers").select("id, name, trade_name").eq("is_active", true).order("name");
-      if (error) throw error;
-      return data;
-    },
-  });
 
   const { data: financialCategories = [] } = useQuery({
     queryKey: ["financial-categories"],
@@ -98,11 +83,8 @@ export default function Finance() {
     },
   });
 
-  const partyOptions = useMemo(() => {
-    const clientOpts = clients.map(c => ({ value: c.full_name, label: c.full_name, group: "Clientes" }));
-    const supplierOpts = suppliers.map(s => ({ value: s.trade_name || s.name, label: s.trade_name ? `${s.name} (${s.trade_name})` : s.name, group: "Fornecedores" }));
-    return { clients: clientOpts, suppliers: supplierOpts };
-  }, [clients, suppliers]);
+
+
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ["financial-transactions"],
@@ -120,6 +102,8 @@ export default function Finance() {
         amount: Number(form.amount), date: form.date || new Date().toISOString().split("T")[0],
         status: form.status || "pending", category: form.category || form.type || "receivable",
         due_date: form.due_date || null, party_name: form.party_name || null,
+        client_id: form.client_id || null,
+        supplier_id: form.supplier_id || null,
         is_reconciled: form.is_reconciled ?? false,
         observations: form.observations || null,
         payment_account: form.payment_account || null,
@@ -164,6 +148,8 @@ export default function Finance() {
       description: t.description, type: t.type, amount: t.amount, date: t.date,
       status: t.status ?? "pending", category: t.category ?? t.type,
       due_date: t.due_date ?? "", party_name: t.party_name ?? "",
+      client_id: t.client_id ?? "",
+      supplier_id: t.supplier_id ?? "",
       is_reconciled: t.is_reconciled ?? false,
       observations: t.observations ?? "",
       payment_account: t.payment_account ?? "",
@@ -383,44 +369,28 @@ export default function Finance() {
                     </Popover>
                   </div>
                   <div className="space-y-2">
-                    <Label className="font-body">Cliente / Fornecedor</Label>
-                    <Popover open={partyPopoverOpen} onOpenChange={setPartyPopoverOpen}>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
-                          {form.party_name || <span className="text-muted-foreground">Selecione...</span>}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                        <Command>
-                          <CommandInput placeholder="Buscar cliente ou fornecedor..." />
-                          <CommandList>
-                            <CommandEmpty>Nenhum resultado.</CommandEmpty>
-                            {partyOptions.clients.length > 0 && (
-                              <CommandGroup heading="Clientes">
-                                {partyOptions.clients.map(o => (
-                                  <CommandItem key={`c-${o.value}`} value={o.label} onSelect={() => { setForm({ ...form, party_name: o.value }); setPartyPopoverOpen(false); }}>
-                                    <Check className={cn("mr-2 h-4 w-4", form.party_name === o.value ? "opacity-100" : "opacity-0")} />
-                                    {o.label}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            )}
-                            {partyOptions.suppliers.length > 0 && (
-                              <CommandGroup heading="Fornecedores">
-                                {partyOptions.suppliers.map(o => (
-                                  <CommandItem key={`s-${o.value}`} value={o.label} onSelect={() => { setForm({ ...form, party_name: o.value }); setPartyPopoverOpen(false); }}>
-                                    <Check className={cn("mr-2 h-4 w-4", form.party_name === o.value ? "opacity-100" : "opacity-0")} />
-                                    {o.label}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            )}
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                    <Label className="font-body">Contraparte</Label>
+                    <CounterpartySelect
+                      value={
+                        form.client_id
+                          ? { kind: "client", id: form.client_id, name: form.party_name ?? null }
+                          : form.supplier_id
+                          ? { kind: "supplier", id: form.supplier_id, name: form.party_name ?? null }
+                          : form.party_name
+                          ? { kind: "party", id: null, name: form.party_name }
+                          : EMPTY_COUNTERPARTY
+                      }
+                      onChange={(v) => setForm({
+                        ...form,
+                        client_id: v.kind === "client" ? v.id : null,
+                        supplier_id: v.kind === "supplier" ? v.id : null,
+                        party_name: v.name ?? "",
+                      })}
+                      preferred={(form.type === "payable" || form.type === "expense") ? "supplier" : "client"}
+                      placeholder="Selecione cliente, fornecedor ou outra parte"
+                    />
                   </div>
+
                   <div className="space-y-2">
                     <Label className="font-body">Conta</Label>
                     <Select value={form.payment_account ?? ""} onValueChange={(v) => setForm({ ...form, payment_account: v === "none" ? null : v })}>
@@ -646,7 +616,14 @@ export default function Finance() {
                     <td className="p-3 font-body font-medium text-foreground">{t.description}</td>
                     <td className="p-3 font-body text-xs text-muted-foreground">{(t.payment_account && bankAccountMap.get(t.payment_account)) || t.payment_account || "-"}</td>
                     <td className="p-3 font-body text-xs text-muted-foreground max-w-[200px] truncate" title={categoryPathMap.get(t.category || "") || t.category || ""}>{categoryPathMap.get(t.category || "") || t.category || "-"}</td>
-                    <td className="p-3 font-body text-xs text-muted-foreground">{t.party_name || "-"}</td>
+                    <td className="p-3 font-body text-xs text-muted-foreground">
+                      {t.party_name ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className="truncate max-w-[140px]">{t.party_name}</span>
+                          <CounterpartyTypeBadge kind={t.client_id ? "client" : t.supplier_id ? "supplier" : "party"} />
+                        </span>
+                      ) : "-"}
+                    </td>
                     <td className={`p-3 font-body text-sm font-medium text-right whitespace-nowrap ${isExpense ? "text-destructive" : "text-success"}`}>
                       {isExpense ? `(${formatCurrency(Number(t.amount))})` : formatCurrency(Number(t.amount))}
                     </td>

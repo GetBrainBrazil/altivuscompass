@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { COMPANY_OPTIONS } from "@/lib/company";
 import { CompanyBadge } from "@/components/company/CompanyBadge";
 import { useCompanyFilter, matchesCompanyFilter } from "@/hooks/useCompanyFilter";
+import { CounterpartyTypeBadge } from "@/components/finance/CounterpartySelect";
 
 // ----- types & constants -----
 type TxType = "payable" | "receivable";
@@ -172,6 +173,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
   const [customPopoverOpen, setCustomPopoverOpen] = useState(false);
   const [showPartialBalances, setShowPartialBalances] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [partyKindFilter, setPartyKindFilter] = useState<"all" | "client" | "supplier" | "party">("all");
   const [companyFilter, setCompanyFilter] = useCompanyFilter("payables-receivables");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sortKey, setSortKey] = useState<SortKey>("due_date");
@@ -264,8 +266,10 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
         if (status === "pending" && eff && eff < todayStr) status = "overdue";
         const partyName =
           clientsMap[t.client_id] || suppliersMap[t.supplier_id] || t.party_name || "—";
+        const partyKind: "client" | "supplier" | "party" | null =
+          t.client_id ? "client" : t.supplier_id ? "supplier" : (t.party_name ? "party" : null);
         const total = computeTotal(t);
-        return { ...t, _status: status, _party: partyName, _total: total, _effDate: eff };
+        return { ...t, _status: status, _party: partyName, _partyKind: partyKind, _total: total, _effDate: eff };
       });
   }, [transactions, clientsMap, suppliersMap, todayStr, mode]);
 
@@ -298,6 +302,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
       if (!d) return false;
       if (d < range.from || d > range.to) return false;
       if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
+      if (partyKindFilter !== "all" && t._partyKind !== partyKindFilter) return false;
       if (!matchesCompanyFilter(companyFilter, t.company)) return false;
       if (search) {
         const q = search.toLowerCase();
@@ -324,7 +329,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
       return 0;
     });
     return rows;
-  }, [enriched, range, categoryFilter, companyFilter, search, sortKey, sortDir]);
+  }, [enriched, range, categoryFilter, partyKindFilter, companyFilter, search, sortKey, sortDir]);
 
   // ----- pagination -----
   const totalRecords = filtered.length;
@@ -422,10 +427,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
     isPayableMode ? "Gerencie suas despesas e pagamentos a fornecedores" :
     isReceivableMode ? "Gerencie seus recebíveis e cobranças de clientes" :
     "Gerencie todas as movimentações financeiras da agência";
-  const partyColLabel =
-    isPayableMode ? "Fornecedor" :
-    isReceivableMode ? "Cliente" :
-    "Fornecedor/Cliente";
+  const partyColLabel = "Contraparte";
   const paidCardLabel = isReceivableMode ? "Recebidos" : "Pagos";
   const paymentColLabel = isReceivableMode ? "Recebimento" : "Pagamento";
 
@@ -593,6 +595,18 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
           </SelectContent>
         </Select>
 
+        <Select value={partyKindFilter} onValueChange={(v) => { setPartyKindFilter(v as any); setPage(1); }}>
+          <SelectTrigger className="w-full lg:w-48">
+            <SelectValue placeholder="Tipo de contraparte" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas contrapartes</SelectItem>
+            <SelectItem value="client">Clientes</SelectItem>
+            <SelectItem value="supplier">Fornecedores</SelectItem>
+            <SelectItem value="party">Outras partes</SelectItem>
+          </SelectContent>
+        </Select>
+
         <Select value={companyFilter} onValueChange={(v) => { setCompanyFilter(v as any); setPage(1); }}>
           <SelectTrigger className="w-full lg:w-44">
             <SelectValue placeholder="Empresa" />
@@ -705,7 +719,8 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-2">
                           <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                          <span className="truncate max-w-[180px]">{t._party}</span>
+                          <span className="truncate max-w-[160px]">{t._party}</span>
+                          {t._partyKind && <CounterpartyTypeBadge kind={t._partyKind} />}
                         </div>
                       </td>
                       <td className="px-3 py-3 text-muted-foreground">{t.category || "—"}</td>

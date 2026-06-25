@@ -15,6 +15,7 @@ import { ArrowLeft, Plus, Repeat, Layers, Upload, X, FileText } from "lucide-rea
 import { cn } from "@/lib/utils";
 import { COMPANY_OPTIONS, DEFAULT_COMPANY, type CompanyBrand } from "@/lib/company";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import CounterpartySelect, { type CounterpartyValue, EMPTY_COUNTERPARTY } from "@/components/finance/CounterpartySelect";
 
 
 type TxType = "payable" | "receivable";
@@ -61,6 +62,7 @@ const emptyForm = {
   cost_center_split: false,
   client_id: "",
   supplier_id: "",
+  party_name_free: "" as string, // usado quando a contraparte for "Outra parte"
   competence_date: todayStr(),
   due_date: todayStr(),
   bank_account_id: "",
@@ -143,6 +145,7 @@ export default function PayableReceivableForm() {
       cost_center: existing.cost_center ?? "",
       client_id: existing.client_id ?? "",
       supplier_id: existing.supplier_id ?? "",
+      party_name_free: !existing.client_id && !existing.supplier_id ? (existing.party_name ?? "") : "",
       competence_date: existing.competence_date ?? existing.date ?? todayStr(),
       due_date: existing.due_date ?? todayStr(),
       bank_account_id: existing.bank_account_id ?? "",
@@ -184,7 +187,10 @@ export default function PayableReceivableForm() {
         recurrence_type: form.recurrence_enabled ? form.recurrence_period : null,
         status: "pending",
         party_name:
-          (form.type === "payable" ? suppliersMap[form.supplier_id] : clientsMap[form.client_id]) ?? null,
+          (form.client_id && clientsMap[form.client_id]) ||
+          (form.supplier_id && suppliersMap[form.supplier_id]) ||
+          form.party_name_free ||
+          null,
         company: (form.company as CompanyBrand) || DEFAULT_COMPANY,
       };
 
@@ -246,7 +252,25 @@ export default function PayableReceivableForm() {
     saveMutation.mutate();
   };
 
-  const partyLabel = isReceivable ? "Cliente" : "Fornecedor";
+  const partyLabel = "Contraparte";
+
+  const counterpartyValue: CounterpartyValue = form.client_id
+    ? { kind: "client", id: form.client_id, name: clientsMap[form.client_id] ?? null }
+    : form.supplier_id
+    ? { kind: "supplier", id: form.supplier_id, name: suppliersMap[form.supplier_id] ?? null }
+    : form.party_name_free
+    ? { kind: "party", id: null, name: form.party_name_free }
+    : EMPTY_COUNTERPARTY;
+
+  const handleCounterpartyChange = (v: CounterpartyValue) => {
+    setForm({
+      ...form,
+      client_id: v.kind === "client" ? (v.id ?? "") : "",
+      supplier_id: v.kind === "supplier" ? (v.id ?? "") : "",
+      party_name_free: v.kind === "party" ? (v.name ?? "") : "",
+    });
+  };
+
   const titleAction = editingId ? "Editar" : "Nova";
   const titleNoun = isReceivable ? "Conta a Receber" : "Conta a Pagar";
   const backTo = isReceivable ? "/finance/receivables" : "/finance/payables";
@@ -303,34 +327,14 @@ export default function PayableReceivableForm() {
 
             <div className="space-y-1 col-span-12 md:col-span-5">
               <Label>{partyLabel}</Label>
-              {isReceivable ? (
-                <Select value={form.client_id} onValueChange={(v) => {
-                  if (v === "__add__") { window.open("/clients", "_blank"); return; }
-                  setForm({ ...form, client_id: v });
-                }}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__add__" className="text-primary font-medium">+ Cadastrar novo cliente</SelectItem>
-                    {clients.map((c: any) => (
-                      <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Select value={form.supplier_id} onValueChange={(v) => {
-                  if (v === "__add__") { window.open("/registrations?tab=suppliers", "_blank"); return; }
-                  setForm({ ...form, supplier_id: v });
-                }}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__add__" className="text-primary font-medium">+ Cadastrar novo fornecedor</SelectItem>
-                    {suppliers.map((s: any) => (
-                      <SelectItem key={s.id} value={s.id}>{s.trade_name || s.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+              <CounterpartySelect
+                value={counterpartyValue}
+                onChange={handleCounterpartyChange}
+                preferred={isReceivable ? "client" : "supplier"}
+                placeholder="Selecione cliente, fornecedor ou outra parte"
+              />
             </div>
+
 
             <div className="space-y-1 col-span-12 md:col-span-6">
               <Label>Categoria *</Label>
