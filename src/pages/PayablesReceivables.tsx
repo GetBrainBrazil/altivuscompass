@@ -519,7 +519,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
               if (p === "custom") setCustomPopoverOpen(true);
             }}
           >
-            <SelectTrigger className="w-[180px] h-9">
+            <SelectTrigger className="w-[180px]">
               <CalendarDays className="h-4 w-4 mr-1 text-muted-foreground" />
               <SelectValue placeholder="Período" />
             </SelectTrigger>
