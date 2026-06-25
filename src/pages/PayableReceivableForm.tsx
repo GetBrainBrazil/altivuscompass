@@ -285,8 +285,9 @@ export default function PayableReceivableForm() {
       if (error) throw error;
       if (attachments.length > 0 && inserted?.id) {
         const uploaded = await uploadFinanceFiles(inserted.id, attachments);
+        const notes = attachments.map((_, i) => attachmentNotesNew[i] ?? "");
         await (supabase.from("financial_transactions") as any)
-          .update({ attachment_urls: uploaded }).eq("id", inserted.id);
+          .update({ attachment_urls: uploaded, attachment_notes: notes }).eq("id", inserted.id);
       }
     },
     onSuccess: () => {
