@@ -703,7 +703,7 @@ export default function PayableReceivableForm() {
                         onClick={openPreview}
                       >
                         <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                        <span className="truncate max-w-[140px] sm:max-w-[200px]">{f.name}</span>
+                        <span className="truncate max-w-[140px] sm:max-w-[200px]" title={f.name}>{f.name}</span>
                         <span className="text-[10px] text-muted-foreground shrink-0">
                           {(f.size / 1024).toFixed(0)} KB
                         </span>
