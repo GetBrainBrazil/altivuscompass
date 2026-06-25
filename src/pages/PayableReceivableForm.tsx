@@ -82,7 +82,6 @@ const emptyForm = {
   description: "",
   category: "",
   cost_center: "",
-  cost_center_split: false,
   client_id: "",
   supplier_id: "",
   party_name_free: "" as string, // usado quando a contraparte for "Outra parte"
