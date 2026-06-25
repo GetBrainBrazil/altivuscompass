@@ -695,15 +695,15 @@ export default function PayableReceivableForm() {
                   }
                 };
                 return (
-                  <li key={`new-${i}`} className="rounded-md border border-gray-200 px-2 py-1.5 text-xs space-y-1">
-                    <div className="flex items-center gap-2">
+                  <li key={`new-${i}`} className="rounded-md border border-gray-200 px-2 py-1.5 text-xs flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       <button
                         type="button"
-                        className="flex items-center gap-2 min-w-0 text-left hover:underline flex-1"
+                        className="flex items-center gap-2 min-w-0 text-left hover:underline"
                         onClick={openPreview}
                       >
                         <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                        <span className="truncate">{f.name}</span>
+                        <span className="truncate max-w-[140px] sm:max-w-[200px]">{f.name}</span>
                         <span className="text-[10px] text-muted-foreground shrink-0">
                           {(f.size / 1024).toFixed(0)} KB
                         </span>
@@ -726,6 +726,7 @@ export default function PayableReceivableForm() {
                       </Button>
                     </div>
                     <Input
+                      className="flex-1 min-w-[180px] h-7 text-xs"
                       value={attachmentNotesNew[i] ?? ""}
                       onChange={(e) => setAttachmentNotesNew((prev) => {
                         const next = [...prev];
