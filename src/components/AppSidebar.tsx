@@ -215,14 +215,15 @@ export function AppSidebar() {
                           {nonNavigable ? (
                             <CollapsibleTrigger asChild>
                               <SidebarMenuButton
-                                className={cn("h-9 rounded-md w-full", activeBase)}
+                                asChild
+                                className={cn("h-9 rounded-md w-full p-0", activeBase)}
                                 data-active={parentHighlight}
                               >
-                                <div className={cn(linkBase, "w-full cursor-pointer", parentHighlight && linkActive)}>
+                                <button type="button" className={cn(linkBase, "w-full cursor-pointer", parentHighlight && linkActive)}>
                                   <item.icon />
-                                  <span className="text-[13px] font-body flex-1 tracking-[0.01em]">{item.title}</span>
+                                  <span className="text-[13px] font-body flex-1 tracking-[0.01em] text-left">{item.title}</span>
                                   <ChevronRight size={13} className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 text-sidebar-foreground/50" />
-                                </div>
+                                </button>
                               </SidebarMenuButton>
                             </CollapsibleTrigger>
                           ) : (
