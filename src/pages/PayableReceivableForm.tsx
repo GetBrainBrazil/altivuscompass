@@ -16,6 +16,32 @@ import { cn } from "@/lib/utils";
 import { COMPANY_OPTIONS, DEFAULT_COMPANY, type CompanyBrand } from "@/lib/company";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import CounterpartySelect, { type CounterpartyValue, EMPTY_COUNTERPARTY } from "@/components/finance/CounterpartySelect";
+import { getSignedUrl, extractStoragePath } from "@/lib/private-storage";
+
+const FIN_BUCKET = "financial-attachments";
+
+function fileNameFromPath(p: string): string {
+  const path = extractStoragePath(FIN_BUCKET, p) ?? p;
+  const base = path.split("/").pop() ?? path;
+  // strip leading "<timestamp>-"
+  return base.replace(/^\d{10,}-/, "");
+}
+
+async function uploadFinanceFiles(txId: string, files: File[]): Promise<string[]> {
+  const { data: auth } = await supabase.auth.getUser();
+  const userId = auth?.user?.id ?? "anon";
+  const paths: string[] = [];
+  for (const f of files) {
+    const safe = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `${userId}/${txId}/${Date.now()}-${safe}`;
+    const { error } = await supabase.storage.from(FIN_BUCKET).upload(path, f, {
+      cacheControl: "3600", upsert: false, contentType: f.type || undefined,
+    });
+    if (error) throw error;
+    paths.push(path);
+  }
+  return paths;
+}
 
 
 type TxType = "payable" | "receivable";
@@ -86,6 +112,7 @@ export default function PayableReceivableForm() {
 
   const [form, setForm] = useState<typeof emptyForm>({ ...emptyForm, type: initialType });
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
   const isReceivable = form.type === "receivable";
@@ -154,6 +181,7 @@ export default function PayableReceivableForm() {
       observations: existing.observations ?? "",
       company: (existing.company as CompanyBrand) ?? DEFAULT_COMPANY,
     }));
+    setExistingAttachments(Array.isArray(existing.attachment_urls) ? existing.attachment_urls : []);
   }, [existing]);
 
   const clientsMap = useMemo(
@@ -193,8 +221,13 @@ export default function PayableReceivableForm() {
       };
 
       if (editingId) {
+        let attachmentUrls = [...existingAttachments];
+        if (attachments.length > 0) {
+          const uploaded = await uploadFinanceFiles(editingId, attachments);
+          attachmentUrls = [...attachmentUrls, ...uploaded];
+        }
         const { error } = await (supabase.from("financial_transactions") as any)
-          .update({ ...rowBase, due_date: form.due_date }).eq("id", editingId);
+          .update({ ...rowBase, due_date: form.due_date, attachment_urls: attachmentUrls }).eq("id", editingId);
         if (error) throw error;
         return;
       }
@@ -218,20 +251,31 @@ export default function PayableReceivableForm() {
             description: `${form.description} (${i + 1}/${count})`,
           };
         });
-        const { error } = await (supabase.from("financial_transactions") as any).insert(rows);
+        const { data: inserted, error } = await (supabase.from("financial_transactions") as any)
+          .insert(rows).select("id");
         if (error) throw error;
+        if (attachments.length > 0 && inserted?.[0]?.id) {
+          const uploaded = await uploadFinanceFiles(inserted[0].id, attachments);
+          await (supabase.from("financial_transactions") as any)
+            .update({ attachment_urls: uploaded }).eq("id", inserted[0].id);
+        }
         return;
       }
 
-      const { error } = await (supabase.from("financial_transactions") as any).insert([{
+      const { data: inserted, error } = await (supabase.from("financial_transactions") as any).insert([{
         ...rowBase,
         due_date: form.due_date,
         installment_number: null,
         installment_total: null,
         installment_group_id: null,
         is_future_recurrence: false,
-      }]);
+      }]).select("id").single();
       if (error) throw error;
+      if (attachments.length > 0 && inserted?.id) {
+        const uploaded = await uploadFinanceFiles(inserted.id, attachments);
+        await (supabase.from("financial_transactions") as any)
+          .update({ attachment_urls: uploaded }).eq("id", inserted.id);
+      }
     },
     onSuccess: () => {
       toast({ title: editingId ? "Movimentação atualizada" : "Movimentação criada" });
@@ -572,16 +616,38 @@ export default function PayableReceivableForm() {
             </div>
           </div>
 
-          {attachments.length > 0 && (
+          {(existingAttachments.length > 0 || attachments.length > 0) && (
             <ul className="space-y-1 mt-2">
+              {existingAttachments.map((p, i) => (
+                <li key={`ex-${i}`} className="flex items-center justify-between rounded-md border border-gray-200 px-2 py-1 text-xs">
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 min-w-0 text-left hover:underline"
+                    onClick={async () => {
+                      const url = await getSignedUrl(FIN_BUCKET, p);
+                      window.open(url, "_blank");
+                    }}
+                  >
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <span className="truncate">{fileNameFromPath(p)}</span>
+                  </button>
+                  <Button
+                    type="button" variant="ghost" size="icon" className="h-6 w-6"
+                    onClick={() => setExistingAttachments((prev) => prev.filter((_, idx) => idx !== i))}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </li>
+              ))}
               {attachments.map((f, i) => (
-                <li key={i} className="flex items-center justify-between rounded-md border border-gray-200 px-2 py-1 text-xs">
+                <li key={`new-${i}`} className="flex items-center justify-between rounded-md border border-gray-200 px-2 py-1 text-xs">
                   <div className="flex items-center gap-2 min-w-0">
                     <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                     <span className="truncate">{f.name}</span>
                     <span className="text-[10px] text-muted-foreground shrink-0">
                       {(f.size / 1024).toFixed(0)} KB
                     </span>
+                    <span className="text-[10px] text-primary shrink-0">novo</span>
                   </div>
                   <Button
                     type="button" variant="ghost" size="icon" className="h-6 w-6"
