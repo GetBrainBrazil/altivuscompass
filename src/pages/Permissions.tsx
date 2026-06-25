@@ -2,30 +2,106 @@ import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { notify } from "@/lib/notify";
 import { PAGE_PERMISSIONS, FEATURE_PERMISSIONS, ROLE_LABELS, type AppRole, type PagePermission, type FeaturePermission } from "@/lib/permissions";
+
+// Agrupamento conforme menu lateral. `paths` referencia páginas em PAGE_PERMISSIONS.
+type PermGroup = { id: string; label: string; paths: string[] };
+const PERMISSION_GROUPS: PermGroup[] = [
+  { id: "painel", label: "Painel", paths: ["/"] },
+  { id: "tarefas", label: "Tarefas", paths: ["/tasks"] },
+  { id: "atualizacoes", label: "Atualizações", paths: ["/changelog"] },
+  { id: "clientes", label: "Clientes", paths: ["/clients"] },
+  {
+    id: "crm",
+    label: "CRM",
+    paths: ["/crm", "/crm/dashboard", "/quotes", "/crm/sales?tab=sales", "/crm/ops?tab=ops", "/sales"],
+  },
+  { id: "roteiros", label: "Roteiros", paths: ["/itineraries"] },
+  { id: "campanhas", label: "Campanhas", paths: ["/campaigns"] },
+  { id: "milhas", label: "Milhas", paths: ["/miles"] },
+  {
+    id: "financeiro",
+    label: "Financeiro",
+    paths: [
+      "/finance/reports",
+      "/finance",
+      "/finance/payables-receivables",
+      "/finance/payables",
+      "/finance/receivables",
+      "/finance/closed-sales",
+      "/finance/suppliers",
+      "/finance/registrations",
+    ],
+  },
+  { id: "vault", label: "Cofre de Senhas", paths: ["/vault"] },
+  { id: "catalogo", label: "Catálogo", paths: ["/catalog"] },
+  { id: "cadastros", label: "Cadastros", paths: ["/registrations"] },
+  { id: "ai", label: "Agentes IA", paths: ["/ai-agents"] },
+  { id: "sistema", label: "Sistema", paths: ["/system", "/users", "/permissions"] },
+  { id: "perfil", label: "Meu Perfil", paths: ["/profile"] },
+];
 
 export default function Permissions({ embedded = false }: { embedded?: boolean }) {
   const [permissions, setPermissions] = useState<PagePermission[]>(PAGE_PERMISSIONS);
   const [featurePermissions, setFeaturePermissions] = useState<FeaturePermission[]>(FEATURE_PERMISSIONS);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   const allRoles: AppRole[] = ["admin", "manager", "sales_agent", "operations"];
+
+  const applyPageUpdates = (updates: Array<{ path: string; allowedRoles: AppRole[] }>) => {
+    const map = new Map(updates.map((u) => [u.path, u.allowedRoles]));
+    const updated = permissions.map((p) => (map.has(p.path) ? { ...p, allowedRoles: map.get(p.path)! } : p));
+    setPermissions(updated);
+    updates.forEach((u) => {
+      const original = PAGE_PERMISSIONS.find((p) => p.path === u.path);
+      if (original) original.allowedRoles = [...u.allowedRoles];
+    });
+  };
 
   const togglePageRole = (page: PagePermission, role: AppRole, next: boolean) => {
     if (role === "admin") return;
     const newRoles = next
       ? Array.from(new Set([...page.allowedRoles, role]))
       : page.allowedRoles.filter((r) => r !== role);
-    const updated = permissions.map((p) =>
-      p.path === page.path ? { ...p, allowedRoles: newRoles } : p,
-    );
-    setPermissions(updated);
-    const original = PAGE_PERMISSIONS.find((p) => p.path === page.path);
-    if (original) original.allowedRoles = [...newRoles];
+    applyPageUpdates([{ path: page.path, allowedRoles: newRoles }]);
     notify.success(
       `${ROLE_LABELS[role]} ${next ? "agora tem" : "perdeu"} acesso a "${page.label}"`,
     );
   };
+
+  const toggleGroupRole = (group: PermGroup, role: AppRole, next: boolean) => {
+    if (role === "admin") return;
+    const updates = group.paths
+      .map((path) => permissions.find((p) => p.path === path))
+      .filter((p): p is PagePermission => !!p)
+      .map((p) => ({
+        path: p.path,
+        allowedRoles: next
+          ? (Array.from(new Set([...p.allowedRoles, role])) as AppRole[])
+          : p.allowedRoles.filter((r) => r !== role),
+      }));
+    applyPageUpdates(updates);
+    notify.success(
+      `${ROLE_LABELS[role]} ${next ? "agora tem" : "perdeu"} acesso a "${group.label}" (todos os itens)`,
+    );
+  };
+
+  const groupState = (group: PermGroup, role: AppRole): "all" | "none" | "some" => {
+    const pages = group.paths
+      .map((path) => permissions.find((p) => p.path === path))
+      .filter((p): p is PagePermission => !!p);
+    if (pages.length === 0) return "none";
+    const onCount = pages.filter((p) => p.allowedRoles.includes(role)).length;
+    if (onCount === 0) return "none";
+    if (onCount === pages.length) return "all";
+    return "some";
+  };
+
+  const groupedPaths = new Set(PERMISSION_GROUPS.flatMap((g) => g.paths));
+  const ungrouped = permissions.filter((p) => !groupedPaths.has(p.path));
+
 
   const toggleFeatureRole = (feature: FeaturePermission, role: AppRole, next: boolean) => {
     if (role === "admin") return;
