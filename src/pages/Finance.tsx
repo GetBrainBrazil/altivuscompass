@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CheckCircle2, ChevronsUpDown, Check, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import CounterpartySelect, { type CounterpartyValue, EMPTY_COUNTERPARTY, CounterpartyTypeBadge } from "@/components/finance/CounterpartySelect";
 
 type Transaction = {
   id: string; description: string; type: string; amount: number; date: string;
