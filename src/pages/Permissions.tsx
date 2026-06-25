@@ -11,7 +11,8 @@ type PermGroup = { id: string; label: string; paths: string[] };
 const PERMISSION_GROUPS: PermGroup[] = [
   { id: "painel", label: "Painel", paths: ["/"] },
   { id: "tarefas", label: "Tarefas", paths: ["/tasks"] },
-  { id: "atualizacoes", label: "Atualizações", paths: ["/changelog"] },
+  { id: "menu-superior", label: "Menu Superior", paths: ["/profile", "/changelog"] },
+
   { id: "clientes", label: "Clientes", paths: ["/clients"] },
   {
     id: "crm",
@@ -40,7 +41,7 @@ const PERMISSION_GROUPS: PermGroup[] = [
   { id: "cadastros", label: "Cadastros", paths: ["/registrations"] },
   { id: "ai", label: "Agentes IA", paths: ["/ai-agents"] },
   { id: "sistema", label: "Sistema", paths: ["/system", "/users", "/permissions"] },
-  { id: "perfil", label: "Meu Perfil", paths: ["/profile"] },
+
 ];
 
 export default function Permissions({ embedded = false }: { embedded?: boolean }) {
