@@ -776,7 +776,25 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
                         {isPayable ? "− " : "+ "}{brl(t._total)}
                       </td>
                       <td className="px-3 py-3">
-                        <Badge variant="outline" className={cn("border", sb.cls)}>{sb.label}</Badge>
+                        <div className="flex flex-col items-start gap-1">
+                          <Badge variant="outline" className={cn("border", sb.cls)}>{sb.label}</Badge>
+                          {(status === "paid") && (
+                            t.is_reconciled ? (
+                              <Badge variant="outline" className="border-success/30 bg-success/10 text-success text-[10px] py-0">
+                                Conciliado
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-700 text-[10px] py-0">
+                                A conciliar
+                              </Badge>
+                            )
+                          )}
+                          {status === "paid" && (!t.attachment_urls || t.attachment_urls.length === 0) && (
+                            <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-700 text-[10px] py-0">
+                              Sem comprovante
+                            </Badge>
+                          )}
+                        </div>
                       </td>
                       <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
@@ -790,8 +808,24 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
                               <Pencil className="h-4 w-4 mr-2" /> Editar
                             </DropdownMenuItem>
                             {status !== "paid" && (
-                              <DropdownMenuItem onClick={() => markPaidMutation.mutate(t.id)}>
-                                <CheckCircle2 className="h-4 w-4 mr-2" /> Marcar como pago
+                              <DropdownMenuItem onClick={() => openConfirm(t)}>
+                                <CheckCircle2 className="h-4 w-4 mr-2" />
+                                Confirmar {t.type === "receivable" ? "recebimento" : "pagamento"}
+                              </DropdownMenuItem>
+                            )}
+                            {status === "paid" && !t.is_reconciled && (
+                              <DropdownMenuItem onClick={() => reconcileMutation.mutate({ id: t.id, value: true })}>
+                                <CheckCircle2 className="h-4 w-4 mr-2" /> Marcar como conciliado
+                              </DropdownMenuItem>
+                            )}
+                            {status === "paid" && t.is_reconciled && (
+                              <DropdownMenuItem onClick={() => reconcileMutation.mutate({ id: t.id, value: false })}>
+                                <X className="h-4 w-4 mr-2" /> Desfazer conciliação
+                              </DropdownMenuItem>
+                            )}
+                            {status === "paid" && (
+                              <DropdownMenuItem onClick={() => reopenMutation.mutate(t.id)}>
+                                <ArrowUpDown className="h-4 w-4 mr-2" /> Reabrir (voltar para pendente)
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuItem onClick={() => duplicateMutation.mutate(t.id)}>
@@ -807,6 +841,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>
+
                     </tr>
                   );
                 })
