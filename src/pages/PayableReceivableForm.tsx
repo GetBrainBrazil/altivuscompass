@@ -49,9 +49,6 @@ const paymentMethods = [
   "Transferência", "Dinheiro", "Outros",
 ];
 
-const brl = (v: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
-
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
 const emptyForm = {
