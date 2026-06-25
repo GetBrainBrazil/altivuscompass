@@ -915,6 +915,12 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
           </div>
         )}
       </div>
+
+      <ConfirmPaymentDialog
+        open={!!confirmTarget}
+        onOpenChange={(v) => { if (!v) setConfirmTarget(null); }}
+        target={confirmTarget}
+      />
     </div>
   );
 }
