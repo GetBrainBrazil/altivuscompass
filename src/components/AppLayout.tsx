@@ -79,19 +79,29 @@ export function AppLayout({ children }: AppLayoutProps) {
   // Changelog unseen indicator (badge no menu); toast pop-up desativado a pedido.
   const { hasUnseen, latest } = useChangelogUnseen();
 
-  const { data: usersWithRoles = [] } = useQuery({
+  const queryClient = useQueryClient();
+  const { data: usersWithRoles = [], refetch: refetchUsersList } = useQuery({
     queryKey: ["impersonate-users-list"],
     queryFn: async () => {
       const [{ data: profilesData }, { data: rolesData }] = await Promise.all([
         supabase.from("profiles").select("*"),
         supabase.from("user_roles").select("*"),
       ]);
+      // Prefer the non-admin role for users that somehow have multiple rows, so the label matches what the Users tab shows.
+      const roleByUser = new Map<string, string>();
+      (rolesData ?? []).forEach((r: Tables<"user_roles">) => {
+        const existing = roleByUser.get(r.user_id);
+        if (!existing || existing === "admin") roleByUser.set(r.user_id, r.role);
+      });
       return (profilesData ?? []).map((p: Tables<"profiles">) => ({
         ...p,
-        role: rolesData?.find((r: Tables<"user_roles">) => r.user_id === p.user_id)?.role ?? "",
+        role: roleByUser.get(p.user_id) ?? "",
       }));
     },
     enabled: isRealAdmin,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   const filteredUsers = usersWithRoles.filter((u) => {
