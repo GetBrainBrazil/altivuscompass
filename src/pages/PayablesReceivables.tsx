@@ -509,7 +509,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
         </div>
 
         {/* Period selector */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
           <Select
             value={period}
             onValueChange={(v) => {
@@ -556,20 +556,8 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
               </PopoverContent>
             </Popover>
           )}
-
-          {period !== "this_month" && (
-            <div className="hidden lg:flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/40 px-2 py-1.5 rounded-md">
-              <span className="font-medium">{periodLabel}</span>
-              <button
-                onClick={resetPeriod}
-                className="ml-1 text-muted-foreground/70 hover:text-foreground"
-                aria-label="Limpar período"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </div>
-          )}
         </div>
+
 
 
         <div className="flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-background">
