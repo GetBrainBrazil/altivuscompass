@@ -375,7 +375,7 @@ export default function FinancialReports() {
   }, [budgetRows]);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">Relatórios Financeiros</h1>
