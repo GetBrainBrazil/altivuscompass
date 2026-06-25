@@ -389,44 +389,28 @@ export default function Finance() {
                     </Popover>
                   </div>
                   <div className="space-y-2">
-                    <Label className="font-body">Cliente / Fornecedor</Label>
-                    <Popover open={partyPopoverOpen} onOpenChange={setPartyPopoverOpen}>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
-                          {form.party_name || <span className="text-muted-foreground">Selecione...</span>}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                        <Command>
-                          <CommandInput placeholder="Buscar cliente ou fornecedor..." />
-                          <CommandList>
-                            <CommandEmpty>Nenhum resultado.</CommandEmpty>
-                            {partyOptions.clients.length > 0 && (
-                              <CommandGroup heading="Clientes">
-                                {partyOptions.clients.map(o => (
-                                  <CommandItem key={`c-${o.value}`} value={o.label} onSelect={() => { setForm({ ...form, party_name: o.value }); setPartyPopoverOpen(false); }}>
-                                    <Check className={cn("mr-2 h-4 w-4", form.party_name === o.value ? "opacity-100" : "opacity-0")} />
-                                    {o.label}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            )}
-                            {partyOptions.suppliers.length > 0 && (
-                              <CommandGroup heading="Fornecedores">
-                                {partyOptions.suppliers.map(o => (
-                                  <CommandItem key={`s-${o.value}`} value={o.label} onSelect={() => { setForm({ ...form, party_name: o.value }); setPartyPopoverOpen(false); }}>
-                                    <Check className={cn("mr-2 h-4 w-4", form.party_name === o.value ? "opacity-100" : "opacity-0")} />
-                                    {o.label}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            )}
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                    <Label className="font-body">Contraparte</Label>
+                    <CounterpartySelect
+                      value={
+                        form.client_id
+                          ? { kind: "client", id: form.client_id, name: form.party_name ?? null }
+                          : form.supplier_id
+                          ? { kind: "supplier", id: form.supplier_id, name: form.party_name ?? null }
+                          : form.party_name
+                          ? { kind: "party", id: null, name: form.party_name }
+                          : EMPTY_COUNTERPARTY
+                      }
+                      onChange={(v) => setForm({
+                        ...form,
+                        client_id: v.kind === "client" ? v.id : null,
+                        supplier_id: v.kind === "supplier" ? v.id : null,
+                        party_name: v.name ?? "",
+                      })}
+                      preferred={(form.type === "payable" || form.type === "expense") ? "supplier" : "client"}
+                      placeholder="Selecione cliente, fornecedor ou outra parte"
+                    />
                   </div>
+
                   <div className="space-y-2">
                     <Label className="font-body">Conta</Label>
                     <Select value={form.payment_account ?? ""} onValueChange={(v) => setForm({ ...form, payment_account: v === "none" ? null : v })}>
