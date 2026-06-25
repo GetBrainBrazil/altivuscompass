@@ -165,7 +165,18 @@ export default function Sales() {
               <div className="sm:col-span-2 space-y-2">
                 <Label className="font-body">Observações</Label>
                 <Textarea value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
-              </div>
+            </div>
+
+            {editingSale && (
+              <SalesFinancialSummaryCard
+                quoteId={editingSale.quote_id}
+                totalValue={
+                  form.total_value === "" || form.total_value == null
+                    ? Number(editingSale.total_value ?? 0)
+                    : Number(form.total_value)
+                }
+              />
+            )}
             </div>
             <div className="flex gap-2 justify-end">
               <Button type="button" variant="outline" onClick={closeDialog} className="font-body">Cancelar</Button>
