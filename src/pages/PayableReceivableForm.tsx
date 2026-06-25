@@ -292,8 +292,9 @@ export default function PayableReceivableForm() {
       <FormBody>
         {/* DADOS PRINCIPAIS */}
         <Section title="Dados principais">
-          <div className="grid grid-cols-12 gap-3">
-            <div className="space-y-1 col-span-12">
+          <div className="grid grid-cols-12 gap-2">
+            {/* Linha 1: Empresa + Tipo (implícito pelo título, mas mantém o toggle) */}
+            <div className="space-y-0.5 col-span-12">
               <Label>Empresa *</Label>
               <div className="inline-flex rounded-md border border-border bg-muted/30 p-0.5">
                 {COMPANY_OPTIONS.map((o) => {
@@ -314,8 +315,10 @@ export default function PayableReceivableForm() {
                 })}
               </div>
             </div>
-            <div className="space-y-1 col-span-12 md:col-span-7">
-              <Label>Descrição da movimentação *</Label>
+
+            {/* Linha 2: Descrição + Contraparte */}
+            <div className="space-y-0.5 col-span-12 md:col-span-7">
+              <Label>Descrição *</Label>
               <Input
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -324,8 +327,7 @@ export default function PayableReceivableForm() {
                   : "Ex.: Reserva de hotel — Fornecedor X"}
               />
             </div>
-
-            <div className="space-y-1 col-span-12 md:col-span-5">
+            <div className="space-y-0.5 col-span-12 md:col-span-5">
               <Label>{partyLabel}</Label>
               <CounterpartySelect
                 value={counterpartyValue}
@@ -335,8 +337,8 @@ export default function PayableReceivableForm() {
               />
             </div>
 
-
-            <div className="space-y-1 col-span-12 md:col-span-6">
+            {/* Linha 3: Categoria + Centro de Custo + Valor */}
+            <div className="space-y-0.5 col-span-12 md:col-span-4">
               <Label>Categoria *</Label>
               <Select value={form.category} onValueChange={(v) => {
                 if (v === "__add__") { window.open("/finance/registrations?tab=categories", "_blank"); return; }
@@ -350,7 +352,7 @@ export default function PayableReceivableForm() {
               </Select>
             </div>
 
-            <div className="space-y-1 col-span-12 md:col-span-6">
+            <div className="space-y-0.5 col-span-12 md:col-span-4">
               <div className="flex items-center justify-between">
                 <Label>Centro de Custo</Label>
                 <div className="flex items-center gap-1.5">
@@ -372,23 +374,32 @@ export default function PayableReceivableForm() {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="space-y-0.5 col-span-12 md:col-span-4">
+              <Label>Valor (R$) *</Label>
+              <CurrencyInput
+                value={form.base_amount === "" ? null : Number(form.base_amount)}
+                onChange={(v) => setForm({ ...form, base_amount: v == null ? "" : String(v) })}
+                placeholder="0,00"
+              />
+            </div>
           </div>
         </Section>
 
         {/* DATAS E CONDIÇÕES */}
         <Section title="Datas e condições">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="space-y-1">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="space-y-0.5">
               <Label>Data de competência *</Label>
               <Input type="date" value={form.competence_date}
                 onChange={(e) => setForm({ ...form, competence_date: e.target.value })} />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <Label>Data de vencimento *</Label>
               <Input type="date" value={form.due_date}
                 onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <Label>Forma de pagamento</Label>
               <Select value={form.payment_method}
                 onValueChange={(v) => setForm({ ...form, payment_method: v })}>
@@ -398,7 +409,7 @@ export default function PayableReceivableForm() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <Label>Conta bancária</Label>
               <Select value={form.bank_account_id}
                 onValueChange={(v) => setForm({ ...form, bank_account_id: v })}>
@@ -409,27 +420,6 @@ export default function PayableReceivableForm() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-          </div>
-        </Section>
-
-        {/* VALOR */}
-        <Section title="Valor">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label>Valor (R$) *</Label>
-              <CurrencyInput
-                value={form.base_amount === "" ? null : Number(form.base_amount)}
-                onChange={(v) => setForm({ ...form, base_amount: v == null ? "" : String(v) })}
-                placeholder="0,00"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label>Total</Label>
-              <div className="h-10 px-3 rounded-md border border-input bg-muted/30 flex items-center text-sm font-semibold">
-                {brl(baseAmountNum)}
-              </div>
             </div>
           </div>
         </Section>
