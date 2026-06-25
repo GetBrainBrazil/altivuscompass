@@ -168,6 +168,8 @@ export default function Finance() {
       description: t.description, type: t.type, amount: t.amount, date: t.date,
       status: t.status ?? "pending", category: t.category ?? t.type,
       due_date: t.due_date ?? "", party_name: t.party_name ?? "",
+      client_id: t.client_id ?? "",
+      supplier_id: t.supplier_id ?? "",
       is_reconciled: t.is_reconciled ?? false,
       observations: t.observations ?? "",
       payment_account: t.payment_account ?? "",
