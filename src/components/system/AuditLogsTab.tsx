@@ -276,6 +276,10 @@ export default function AuditLogsTab() {
             <SelectItem value="INSERT">Criação</SelectItem>
             <SelectItem value="UPDATE">Alteração</SelectItem>
             <SelectItem value="DELETE">Remoção</SelectItem>
+            <SelectItem value="VIEW">Visualização</SelectItem>
+            <SelectItem value="NAVIGATE">Acesso a página</SelectItem>
+            <SelectItem value="SEND">Envio</SelectItem>
+            <SelectItem value="EXPORT">Exportação</SelectItem>
           </SelectContent>
         </Select>
       </div>
