@@ -19,6 +19,9 @@ import CounterpartySelect, { type CounterpartyValue, EMPTY_COUNTERPARTY } from "
 import { getSignedUrl, extractStoragePath } from "@/lib/private-storage";
 import { PdfViewerDialog } from "@/components/PdfViewerDialog";
 import { ImageViewerDialog, type ViewerAttachment } from "@/components/ImageViewerDialog";
+import { ConfirmPaymentDialog, type ConfirmPaymentTarget } from "@/components/finance/ConfirmPaymentDialog";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, AlertCircle } from "lucide-react";
 
 const FIN_BUCKET = "financial-attachments";
 
