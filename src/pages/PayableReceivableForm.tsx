@@ -811,9 +811,43 @@ export default function PayableReceivableForm() {
         tableName="financial_transactions"
         invalidateKey={["finance-tx", editingId]}
       />
+
+      <ConfirmPaymentDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        target={existing ? {
+          id: existing.id,
+          type: existing.type,
+          description: existing.description,
+          bank_account_id: existing.bank_account_id,
+          payment_method: existing.payment_method,
+          payment_date: existing.payment_date,
+          amount: existing.amount,
+          base_amount: existing.base_amount,
+          attachment_urls: existing.attachment_urls,
+          attachment_notes: existing.attachment_notes,
+          status: existing.status,
+        } : null}
+      />
     </div>
   );
 }
+
+function StatusChip({ status, isReconciled, type }: { status?: string | null; isReconciled?: boolean | null; type?: string }) {
+  const paid = status === "paid" || status === "received";
+  const isReceivable = type === "receivable";
+  if (status === "cancelled") {
+    return <Badge variant="outline" className="border-border text-muted-foreground">Cancelado</Badge>;
+  }
+  if (paid && isReconciled) {
+    return <Badge variant="outline" className="border-success/40 bg-success/10 text-success">Conciliado</Badge>;
+  }
+  if (paid) {
+    return <Badge variant="outline" className="border-success/40 bg-success/10 text-success">{isReceivable ? "Recebido" : "Pago"}</Badge>;
+  }
+  return <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-700">Provisionado</Badge>;
+}
+
 
 // ----- helpers -----
 function nextDate(start: string, interval: string, offset: number): string {
