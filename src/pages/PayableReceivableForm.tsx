@@ -252,7 +252,25 @@ export default function PayableReceivableForm() {
     saveMutation.mutate();
   };
 
-  const partyLabel = isReceivable ? "Cliente" : "Fornecedor";
+  const partyLabel = "Contraparte";
+
+  const counterpartyValue: CounterpartyValue = form.client_id
+    ? { kind: "client", id: form.client_id, name: clientsMap[form.client_id] ?? null }
+    : form.supplier_id
+    ? { kind: "supplier", id: form.supplier_id, name: suppliersMap[form.supplier_id] ?? null }
+    : form.party_name_free
+    ? { kind: "party", id: null, name: form.party_name_free }
+    : EMPTY_COUNTERPARTY;
+
+  const handleCounterpartyChange = (v: CounterpartyValue) => {
+    setForm({
+      ...form,
+      client_id: v.kind === "client" ? (v.id ?? "") : "",
+      supplier_id: v.kind === "supplier" ? (v.id ?? "") : "",
+      party_name_free: v.kind === "party" ? (v.name ?? "") : "",
+    });
+  };
+
   const titleAction = editingId ? "Editar" : "Nova";
   const titleNoun = isReceivable ? "Conta a Receber" : "Conta a Pagar";
   const backTo = isReceivable ? "/finance/receivables" : "/finance/payables";
