@@ -649,7 +649,7 @@ export default function PayableReceivableForm() {
                         onClick={openPreview}
                       >
                         <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                        <span className="truncate max-w-[140px] sm:max-w-[200px]">{name}</span>
+                        <span className="truncate max-w-[140px] sm:max-w-[200px]" title={name}>{name}</span>
                       </button>
                       <Button
                         type="button" variant="ghost" size="icon" className="h-6 w-6" title="Visualizar"
