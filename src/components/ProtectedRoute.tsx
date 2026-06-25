@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom";
+
 import { useAuth } from "@/contexts/AuthContext";
-import { canAccess } from "@/lib/permissions";
+import { canAccess, getAccessiblePages } from "@/lib/permissions";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ProtectedRouteProps {
@@ -45,6 +46,15 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!canAccess(userRole, location.pathname)) {
+    // Redireciona para o Painel se permitido, senão para a primeira página acessível.
+    if (canAccess(userRole, "/")) {
+      return <Navigate to="/" replace />;
+    }
+    const accessible = getAccessiblePages(userRole).filter((p) => p.path !== "/profile" && p.path !== "/changelog");
+    const fallback = accessible[0]?.path;
+    if (fallback && fallback !== location.pathname) {
+      return <Navigate to={fallback} replace />;
+    }
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-2">

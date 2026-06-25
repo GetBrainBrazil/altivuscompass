@@ -40,6 +40,7 @@ export const PAGE_PERMISSIONS: PagePermission[] = [
   { path: "/system", label: "Sistema", allowedRoles: ["admin"] },
   { path: "/vault", label: "Cofre de Senhas", allowedRoles: ["admin", "manager", "sales_agent", "operations"] },
   { path: "/ai-agents", label: "Agentes IA", allowedRoles: ["admin", "manager"] },
+  { path: "/service-center", label: "Central de Atendimento", allowedRoles: ["admin", "manager", "sales_agent", "operations"] },
   { path: "/profile", label: "Meu Perfil", allowedRoles: ["admin", "manager", "sales_agent", "operations"] },
 ];
 
