@@ -3281,6 +3281,27 @@ export type Database = {
           },
         ]
       }
+      permission_settings: {
+        Row: {
+          data: Json
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          data?: Json
+          id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          data?: Json
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       platform_changelog: {
         Row: {
           category: Database["public"]["Enums"]["changelog_category"]
