@@ -121,6 +121,10 @@ export default function Permissions({ embedded = false }: { embedded?: boolean }
     setFeaturePermissions(updated);
     const original = FEATURE_PERMISSIONS.find((f) => f.key === feature.key);
     if (original) original.allowedRoles = [...newRoles];
+    savePermissionOverrides().catch((e) => {
+      console.error(e);
+      notify.error("Não foi possível salvar a permissão");
+    });
     notify.success(
       `${ROLE_LABELS[role]} ${next ? "agora tem" : "perdeu"} acesso a "${feature.label}"`,
     );
