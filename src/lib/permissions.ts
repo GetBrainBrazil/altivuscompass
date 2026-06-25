@@ -25,6 +25,7 @@ export const PAGE_PERMISSIONS: PagePermission[] = [
   { path: "/finance/payables-receivables", label: "Contas a Pagar / Receber", allowedRoles: ["admin", "manager"] },
   { path: "/finance/payables", label: "Contas a Pagar", allowedRoles: ["admin", "manager"] },
   { path: "/finance/receivables", label: "Contas a Receber", allowedRoles: ["admin", "manager"] },
+  { path: "/finance/suppliers", label: "Fornecedores", allowedRoles: ["admin", "manager"] },
   { path: "/finance/registrations", label: "Cadastros Financeiros", allowedRoles: ["admin", "manager"] },
   { path: "/finance/closed-sales", label: "Vendas Fechadas", allowedRoles: ["admin", "manager"] },
   { path: "/finance/reports", label: "Dashboard Financeiro", allowedRoles: ["admin", "manager"] },
