@@ -228,12 +228,17 @@ export default function PayableReceivableForm() {
 
       if (editingId) {
         let attachmentUrls = [...existingAttachments];
+        let notes = [...existingNotes];
+        // pad notes to match existing urls
+        while (notes.length < attachmentUrls.length) notes.push("");
+        notes = notes.slice(0, attachmentUrls.length);
         if (attachments.length > 0) {
           const uploaded = await uploadFinanceFiles(editingId, attachments);
           attachmentUrls = [...attachmentUrls, ...uploaded];
+          notes = [...notes, ...attachments.map((_, i) => attachmentNotesNew[i] ?? "")];
         }
         const { error } = await (supabase.from("financial_transactions") as any)
-          .update({ ...rowBase, due_date: form.due_date, attachment_urls: attachmentUrls }).eq("id", editingId);
+          .update({ ...rowBase, due_date: form.due_date, attachment_urls: attachmentUrls, attachment_notes: notes }).eq("id", editingId);
         if (error) throw error;
         return;
       }
