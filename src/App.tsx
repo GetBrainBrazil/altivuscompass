@@ -128,6 +128,8 @@ const App = () => (
             <Route path="/atendimento" element={<ProtectedRoute><AppLayout><ServiceCenter /></AppLayout></ProtectedRoute>} />
             <Route path="/inbox" element={<ProtectedRoute><AppLayout><ServiceCenter /></AppLayout></ProtectedRoute>} />
             <Route path="/crm" element={<ProtectedRoute><AppLayout><CRMDashboard /></AppLayout></ProtectedRoute>} />
+            <Route path="/crm/dashboard" element={<ProtectedRoute><AppLayout><CRMDashboard /></AppLayout></ProtectedRoute>} />
+
             <Route path="/crm/ops" element={<ProtectedRoute><AppLayout><CRM /></AppLayout></ProtectedRoute>} />
             <Route path="/crm/sales" element={<ProtectedRoute><AppLayout><CRM /></AppLayout></ProtectedRoute>} />
             <Route path="/crm/lead/new" element={<ProtectedRoute><AppLayout><LeadNew /></AppLayout></ProtectedRoute>} />
