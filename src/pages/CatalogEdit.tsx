@@ -330,10 +330,10 @@ export default function CatalogEdit() {
       </div>
 
       {/* Body */}
-      <div className="mt-6 space-y-5">
+      <div className="mt-5 space-y-4">
         {/* Identificação */}
         <Section title="Identificação" description="Como esse produto é encontrado no catálogo e exibido nas cotações.">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Nome" required>
               <Input
                 value={form.name}
@@ -359,82 +359,85 @@ export default function CatalogEdit() {
               </Select>
             </Field>
           </div>
-          <Field label="Descrição">
-            <Textarea
-              value={form.description}
-              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              rows={3}
-              placeholder="Resumo do produto, diferenciais, condições..."
-            />
-          </Field>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Destino / Local">
-              <Input value={form.destination} onChange={(e) => setForm((f) => ({ ...f, destination: e.target.value }))} placeholder="Rio de Janeiro, Paris..." />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field label="Descrição">
+              <Textarea
+                value={form.description}
+                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                rows={2}
+                placeholder="Resumo do produto, diferenciais, condições..."
+              />
             </Field>
-            {!typedSchema && (
-              <Field label="Categoria">
-                <Select value={form.category_id || "none"} onValueChange={(v) => setForm((f) => ({ ...f, category_id: v === "none" ? "" : v }))}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">— Sem categoria —</SelectItem>
-                    {categories.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+            <div className="space-y-3">
+              <Field label="Destino / Local">
+                <Input value={form.destination} onChange={(e) => setForm((f) => ({ ...f, destination: e.target.value }))} placeholder="Rio de Janeiro, Paris..." />
               </Field>
-            )}
+              {!typedSchema && (
+                <Field label="Categoria">
+                  <Select value={form.category_id || "none"} onValueChange={(v) => setForm((f) => ({ ...f, category_id: v === "none" ? "" : v }))}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— Sem categoria —</SelectItem>
+                      {categories.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              )}
+            </div>
           </div>
-          <Field label="Tags" hint="Pressione Enter ou vírgula para adicionar.">
-            <Input
-              value={tagsInput}
-              onChange={(e) => {
-                const v = e.target.value;
-                if (v.includes(",")) { commitTags(v); } else { setTagsInput(v); }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") { e.preventDefault(); commitTags(tagsInput); }
-                if (e.key === "Backspace" && !tagsInput && form.tags.length) {
-                  removeTag(form.tags[form.tags.length - 1]);
-                }
-              }}
-              onBlur={() => commitTags(tagsInput)}
-              placeholder="luxo, lua-de-mel, praia..."
-            />
-            {form.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {form.tags.map((t) => (
-                  <Badge key={t} variant="secondary" className="gap-1">
-                    {t}
-                    <button type="button" onClick={() => removeTag(t)} className="hover:text-destructive">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </Field>
-          <Field label="Imagem de capa" hint="Imagem principal exibida no card da lista. A galeria de mídia abaixo é para fotos adicionais.">
-            <div className="flex items-center gap-3">
-              <div className="relative w-28 h-20 rounded-md overflow-hidden border bg-muted shrink-0">
-                {form.cover_image ? (
-                  <>
-                    <PrivateImage bucket={BUCKET} source={form.cover_image} className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => setForm((f) => ({ ...f, cover_image: "" }))}
-                      className="absolute top-0.5 right-0.5 rounded-full bg-black/60 text-white p-0.5"
-                      title="Remover capa"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground">Sem capa</div>
-                )}
-              </div>
-              <label
-                htmlFor="product-cover-input"
-                className={`inline-flex items-center gap-2 rounded-md border border-input bg-background hover:bg-muted/40 px-3 py-2 text-sm cursor-pointer transition-colors ${uploadingCover ? "opacity-50 pointer-events-none" : ""}`}
-              >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field label="Tags" hint="Enter ou vírgula para adicionar.">
+              <Input
+                value={tagsInput}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v.includes(",")) { commitTags(v); } else { setTagsInput(v); }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { e.preventDefault(); commitTags(tagsInput); }
+                  if (e.key === "Backspace" && !tagsInput && form.tags.length) {
+                    removeTag(form.tags[form.tags.length - 1]);
+                  }
+                }}
+                onBlur={() => commitTags(tagsInput)}
+                placeholder="luxo, lua-de-mel, praia..."
+              />
+              {form.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {form.tags.map((t) => (
+                    <Badge key={t} variant="secondary" className="gap-1">
+                      {t}
+                      <button type="button" onClick={() => removeTag(t)} className="hover:text-destructive">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </Field>
+            <Field label="Imagem de capa" hint="Principal no card da lista. Galeria abaixo para fotos extras.">
+              <div className="flex items-center gap-3">
+                <div className="relative w-24 h-16 rounded-md overflow-hidden border bg-muted shrink-0">
+                  {form.cover_image ? (
+                    <>
+                      <PrivateImage bucket={BUCKET} source={form.cover_image} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setForm((f) => ({ ...f, cover_image: "" }))}
+                        className="absolute top-0.5 right-0.5 rounded-full bg-black/60 text-white p-0.5"
+                        title="Remover capa"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground">Sem capa</div>
+                  )}
+                </div>
+                <label
+                  htmlFor="product-cover-input"
+                  className={`inline-flex items-center gap-2 rounded-md border border-input bg-background hover:bg-muted/40 px-3 py-2 text-sm cursor-pointer transition-colors ${uploadingCover ? "opacity-50 pointer-events-none" : ""}`}
+                >
                 {uploadingCover ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                 {uploadingCover ? "Enviando..." : (form.cover_image ? "Trocar capa" : "Enviar capa")}
               </label>
