@@ -63,6 +63,9 @@ import Unsubscribe from "./pages/Unsubscribe";
 import ReminderAction from "./pages/ReminderAction";
 import NotFound from "./pages/NotFound";
 
+import { useEffect, useState } from "react";
+import { loadPermissionOverrides, subscribePermissionOverrides } from "@/lib/permissionSync";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -70,6 +73,24 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+function PermissionsGate({ children }: { children: React.ReactNode }) {
+  const [version, setVersion] = useState(0);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    let mounted = true;
+    loadPermissionOverrides().finally(() => {
+      if (mounted) setReady(true);
+    });
+    const unsub = subscribePermissionOverrides(() => setVersion((v) => v + 1));
+    return () => {
+      mounted = false;
+      unsub();
+    };
+  }, []);
+  if (!ready) return null;
+  return <div key={version} style={{ display: "contents" }}>{children}</div>;
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -80,6 +101,7 @@ const App = () => (
         <AuthProvider>
           <ThemeProvider>
           <RouteAuditLogger />
+          <PermissionsGate>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/quote/:id" element={<PublicQuote />} />
