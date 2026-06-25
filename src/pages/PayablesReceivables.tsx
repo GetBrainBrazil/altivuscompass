@@ -427,10 +427,7 @@ export default function PayablesReceivables({ mode = "all" }: { mode?: Mode } = 
     isPayableMode ? "Gerencie suas despesas e pagamentos a fornecedores" :
     isReceivableMode ? "Gerencie seus recebíveis e cobranças de clientes" :
     "Gerencie todas as movimentações financeiras da agência";
-  const partyColLabel =
-    isPayableMode ? "Fornecedor" :
-    isReceivableMode ? "Cliente" :
-    "Fornecedor/Cliente";
+  const partyColLabel = "Contraparte";
   const paidCardLabel = isReceivableMode ? "Recebidos" : "Pagos";
   const paymentColLabel = isReceivableMode ? "Recebimento" : "Pagamento";
 
