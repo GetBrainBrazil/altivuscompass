@@ -39,6 +39,7 @@ type Sale = {
 export default function Sales() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [form, setForm] = useState<Record<string, any>>({});
