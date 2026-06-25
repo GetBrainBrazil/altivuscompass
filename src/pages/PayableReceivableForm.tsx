@@ -616,16 +616,38 @@ export default function PayableReceivableForm() {
             </div>
           </div>
 
-          {attachments.length > 0 && (
+          {(existingAttachments.length > 0 || attachments.length > 0) && (
             <ul className="space-y-1 mt-2">
+              {existingAttachments.map((p, i) => (
+                <li key={`ex-${i}`} className="flex items-center justify-between rounded-md border border-gray-200 px-2 py-1 text-xs">
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 min-w-0 text-left hover:underline"
+                    onClick={async () => {
+                      const url = await getSignedUrl(FIN_BUCKET, p);
+                      window.open(url, "_blank");
+                    }}
+                  >
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <span className="truncate">{fileNameFromPath(p)}</span>
+                  </button>
+                  <Button
+                    type="button" variant="ghost" size="icon" className="h-6 w-6"
+                    onClick={() => setExistingAttachments((prev) => prev.filter((_, idx) => idx !== i))}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </li>
+              ))}
               {attachments.map((f, i) => (
-                <li key={i} className="flex items-center justify-between rounded-md border border-gray-200 px-2 py-1 text-xs">
+                <li key={`new-${i}`} className="flex items-center justify-between rounded-md border border-gray-200 px-2 py-1 text-xs">
                   <div className="flex items-center gap-2 min-w-0">
                     <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                     <span className="truncate">{f.name}</span>
                     <span className="text-[10px] text-muted-foreground shrink-0">
                       {(f.size / 1024).toFixed(0)} KB
                     </span>
+                    <span className="text-[10px] text-primary shrink-0">novo</span>
                   </div>
                   <Button
                     type="button" variant="ghost" size="icon" className="h-6 w-6"
