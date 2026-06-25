@@ -205,7 +205,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                       <DropdownMenuSeparator />
                       {isMobile ? (
                         <DropdownMenuItem
-                          onClick={() => setImpersonateDialogOpen(true)}
+                          onClick={() => { refetchUsersList(); setImpersonateDialogOpen(true); }}
                           className="flex items-center gap-2 cursor-pointer"
                         >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
