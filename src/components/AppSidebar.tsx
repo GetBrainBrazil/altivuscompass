@@ -196,7 +196,8 @@ export function AppSidebar() {
                 // Highlight parent only when parent is non-navigable and one of its
                 // children is active (to mark the section visually), or when its own
                 // route is active and it IS navigable.
-                const parentHighlight = nonNavigable ? isParentActive : isItemActive;
+                const isOpen = openMap[item.title] ?? isParentActive;
+                const parentHighlight = nonNavigable ? (isParentActive || isOpen) : isItemActive;
 
                 // Elegant active: subtle white-tinted bg + gold left accent bar; soft hover
                 const linkBase = "relative flex items-center gap-3 px-3 text-sidebar-foreground/85 hover:bg-white/[0.04] hover:text-white transition-all duration-200 rounded-md";
