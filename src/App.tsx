@@ -33,6 +33,7 @@ import CategoryFieldsPage from "./pages/CategoryFieldsPage";
 import QuoteItemEdit from "./pages/QuoteItemEdit";
 import Sales from "./pages/Sales";
 import FinanceClosedSales from "./pages/FinanceClosedSales";
+import Suppliers from "./pages/Suppliers";
 import MyProfile from "./pages/MyProfile";
 import System from "./pages/System";
 import Tasks from "./pages/Tasks";
