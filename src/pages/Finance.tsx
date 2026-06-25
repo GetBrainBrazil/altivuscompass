@@ -100,11 +100,8 @@ export default function Finance() {
     },
   });
 
-  const partyOptions = useMemo(() => {
-    const clientOpts = clients.map(c => ({ value: c.full_name, label: c.full_name, group: "Clientes" }));
-    const supplierOpts = suppliers.map(s => ({ value: s.trade_name || s.name, label: s.trade_name ? `${s.name} (${s.trade_name})` : s.name, group: "Fornecedores" }));
-    return { clients: clientOpts, suppliers: supplierOpts };
-  }, [clients, suppliers]);
+
+
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ["financial-transactions"],
