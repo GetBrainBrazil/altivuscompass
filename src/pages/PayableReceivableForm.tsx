@@ -351,7 +351,7 @@ export default function PayableReceivableForm() {
             </div>
 
             <div className="space-y-1 col-span-12 md:col-span-6">
-              <div className="flex items-center justify-between h-4">
+              <div className="flex items-center justify-between">
                 <Label>Centro de Custo</Label>
                 <div className="flex items-center gap-1.5">
                   <span className="text-[10px] text-muted-foreground">Rateio</span>
