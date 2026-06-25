@@ -15,6 +15,7 @@ import { ArrowLeft, Plus, Repeat, Layers, Upload, X, FileText } from "lucide-rea
 import { cn } from "@/lib/utils";
 import { COMPANY_OPTIONS, DEFAULT_COMPANY, type CompanyBrand } from "@/lib/company";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import CounterpartySelect, { type CounterpartyValue, EMPTY_COUNTERPARTY } from "@/components/finance/CounterpartySelect";
 
 
 type TxType = "payable" | "receivable";
