@@ -48,6 +48,8 @@ import { QuoteKanbanCard } from "@/components/quotes/QuoteKanbanCard";
 import QuoteAcceptanceInfo from "@/components/quotes/QuoteAcceptanceInfo";
 import ItineraryTimeline from "@/components/itineraries/ItineraryTimeline";
 import ItineraryMapView from "@/components/itineraries/ItineraryMapView";
+import ItineraryForm from "@/components/itineraries/ItineraryForm";
+
 import { ClientDataCompletionDialog } from "@/components/contacts/ClientDataCompletionDialog";
 import { COMPANY_OPTIONS, DEFAULT_COMPANY, type CompanyBrand } from "@/lib/company";
 import { CompanyBadge } from "@/components/company/CompanyBadge";
