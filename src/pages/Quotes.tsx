@@ -3358,10 +3358,10 @@ export default function Quotes() {
             <TabsContent value="roteiro" className="mt-3">
               {linkedItinerary ? (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-semibold">{linkedItinerary.title}</h3>
-                      <p className="text-xs text-muted-foreground">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-semibold truncate">{linkedItinerary.title}</h3>
+                      <p className="text-xs text-muted-foreground truncate">
                         {[
                           linkedItinerary.destination,
                           linkedItinerary.travel_date_start ? format(parseISO(linkedItinerary.travel_date_start), "dd/MM/yyyy") : null,
@@ -3369,68 +3369,28 @@ export default function Quotes() {
                         ].filter(Boolean).join(" — ")}
                       </p>
                     </div>
-                    <div className="flex gap-1.5 flex-wrap">
-                      <Button variant="outline" size="sm" className="text-xs h-7 gap-1" onClick={async () => {
-                        const { data: existing } = await supabase.from("itinerary_days").select("id").eq("itinerary_id", linkedItinerary.id);
-                        const { error } = await supabase.from("itinerary_days").insert({
-                          itinerary_id: linkedItinerary.id,
-                          sort_order: existing?.length ?? 0,
-                        });
-                        if (error) { toast({ title: "Erro ao adicionar dia", description: error.message, variant: "destructive" }); return; }
-                        queryClient.invalidateQueries({ queryKey: ["itinerary-days", linkedItinerary.id] });
-                        toast({ title: "Dia adicionado" });
-                      }}>
-                        <Plus className="w-3 h-3" /> Adicionar Dia
-                      </Button>
-                      <Button variant="outline" size="sm" className="text-xs h-7 gap-1" onClick={async () => {
-                        toast({ title: "Gerando roteiro com IA..." });
-                        const { data, error } = await supabase.functions.invoke("generate-itinerary", {
-                          body: { itinerary_id: linkedItinerary.id, mode: "full" },
-                        });
-                        if (error || data?.error) { toast({ title: "Erro ao gerar roteiro", description: error?.message || data?.error, variant: "destructive" }); return; }
-                        queryClient.invalidateQueries({ queryKey: ["itinerary-days", linkedItinerary.id] });
-                        queryClient.invalidateQueries({ queryKey: ["itinerary-day-activities"] });
-                        toast({ title: `Roteiro gerado! ${data?.days_count ?? 0} dias criados.` });
-                      }}>
-                        <Sparkles className="w-3 h-3" /> Gerar com IA
-                      </Button>
-                      <Button variant="outline" size="sm" className="text-xs h-7 gap-1" onClick={() => window.open(`/itineraries?edit=${linkedItinerary.id}`, "_blank")}>
-                        <ExternalLink className="w-3 h-3" /> Abrir Roteiro
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-xs h-7 text-destructive hover:text-destructive gap-1" onClick={async () => {
-                        if (!confirm("Desvincular roteiro desta cotação?")) return;
-                        await supabase.from("itinerary_days").select("id").eq("itinerary_id", linkedItinerary.id);
-                        await supabase.from("itineraries").update({ quote_id: null }).eq("id", linkedItinerary.id);
+                    <Button variant="ghost" size="sm" className="text-xs h-7 text-destructive hover:text-destructive gap-1" onClick={async () => {
+                      if (!confirm("Desvincular roteiro desta cotação?")) return;
+                      await supabase.from("itineraries").update({ quote_id: null }).eq("id", linkedItinerary.id);
+                      refetchLinkedItinerary();
+                      queryClient.invalidateQueries({ queryKey: ["itineraries-for-link"] });
+                      toast({ title: "Roteiro desvinculado" });
+                    }}>
+                      <X className="w-3 h-3" /> Desvincular
+                    </Button>
+                  </div>
+                  <div className="border rounded-lg p-3 bg-card">
+                    <ItineraryForm
+                      key={linkedItinerary.id}
+                      itineraryId={linkedItinerary.id}
+                      onClose={() => {
                         refetchLinkedItinerary();
                         queryClient.invalidateQueries({ queryKey: ["itineraries-for-link"] });
-                        toast({ title: "Roteiro desvinculado" });
-                      }}>
-                        <X className="w-3 h-3" /> Desvincular
-                      </Button>
-                    </div>
-
-                  </div>
-                  <div className="flex gap-3 min-h-[400px]">
-                    <div className="w-1/2 overflow-y-auto max-h-[500px] pr-2">
-                      <ItineraryTimeline
-                        itineraryId={linkedItinerary.id}
-                        selectedDayId={selectedDayId}
-                        onSelectDay={setSelectedDayId}
-                        selectedActivityId={selectedActivityId}
-                        onSelectActivity={setSelectedActivityId}
-                      />
-                    </div>
-                    <div className="w-1/2">
-                      <ItineraryMapView
-                        itineraryId={linkedItinerary.id}
-                        selectedDayId={selectedDayId}
-                        selectedActivityId={selectedActivityId}
-                        onSelectActivity={setSelectedActivityId}
-                        height="h-[500px]"
-                      />
-                    </div>
+                      }}
+                    />
                   </div>
                 </div>
+
               ) : (
                 <div className="space-y-3">
                   <p className="text-sm text-muted-foreground">Nenhum roteiro associado a esta cotação.</p>
