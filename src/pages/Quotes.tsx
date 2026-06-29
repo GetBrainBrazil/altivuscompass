@@ -494,6 +494,18 @@ export default function Quotes() {
         return;
       }
 
+      // Only restore draft on page reload; on SPA navigation back to /quotes, discard it.
+      const navEntry = (window.performance?.getEntriesByType?.("navigation") as any[])?.[0];
+      const isReload =
+        navEntry?.type === "reload" ||
+        (typeof (window.performance as any)?.navigation?.type === "number" &&
+         (window.performance as any).navigation.type === 1);
+      if (!isReload) {
+        localStorage.removeItem(QUOTE_EDITOR_DRAFT_KEY);
+        setDraftRestored(true);
+        return;
+      }
+
       const draft = JSON.parse(storedDraft) as QuoteEditorDraft;
       if (!draft?.dialogOpen) {
         setDraftRestored(true);
