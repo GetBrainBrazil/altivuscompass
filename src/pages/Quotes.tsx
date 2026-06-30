@@ -622,10 +622,13 @@ export default function Quotes() {
           const place = autocomplete.getPlace();
           if (!place) return;
           const addr = place.formatted_address || place.name || "";
-          const newDetails = { ...items[globalIdx].details, address: addr };
-          const updated = [...items];
-          updated[globalIdx] = { ...updated[globalIdx], details: newDetails };
-          setItems(updated);
+          setItems((prev) => {
+            const updated = [...prev];
+            const cur = updated[globalIdx];
+            if (!cur) return prev;
+            updated[globalIdx] = { ...cur, details: { ...(cur.details || {}), address: addr } };
+            return updated;
+          });
         });
         hotelAutocompleteRefs.current.set(inputId, autocomplete);
       });
