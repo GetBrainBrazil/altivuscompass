@@ -1646,9 +1646,21 @@ export default function ServiceCenter() {
 
   // Ref para auto-scroll no chat
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+    messagesEndRef.current?.scrollIntoView({ behavior, block: "end" });
   };
+
+  // Scroll inicial instantâneo ao abrir conversa (evita "pulo" do topo)
+  const [initialScrollConvId, setInitialScrollConvId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!selectedId || messagesFetching || msgRows.length === 0) return;
+    if (initialScrollConvId === selectedId) return;
+    setInitialScrollConvId(selectedId);
+    // Defer para garantir que o DOM já renderizou
+    requestAnimationFrame(() => {
+      scrollToBottom("auto");
+    });
+  }, [selectedId, messagesFetching, msgRows.length, initialScrollConvId]);
 
   const handleSend = async () => {
     if (!selectedId || !draft.trim() || sending) return;
