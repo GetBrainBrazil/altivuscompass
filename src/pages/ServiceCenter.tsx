@@ -580,7 +580,7 @@ const extractRawSharedContact = (raw?: any): { name: string; phones: string[] } 
   return first ? { name: first.name || "Contato compartilhado", phones: first.phones } : null;
 };
 
-const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuote, onImageClick, onForward }: ChatBubbleProps) => {
+const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuote, onImageClick, onForward, groupedWithPrev = false, groupedWithNext = false }: ChatBubbleProps & { groupedWithPrev?: boolean; groupedWithNext?: boolean }) => {
   const isLead = message.sender === "lead";
   const isAgent = message.sender === "agent";
   const isAi = message.sender === "ai";
@@ -612,12 +612,17 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
           "max-w-[75%] rounded-3xl text-sm leading-relaxed shadow-sm overflow-hidden",
           !isMedia && "px-5 py-3",
           isMedia && "p-2",
-          isLead && "bg-white text-foreground rounded-bl-md border border-border/40",
-          isAi && "bg-[hsl(var(--navy))] text-[hsl(var(--cream))] rounded-br-md",
-          isAgent && "bg-emerald-600 text-white rounded-br-md",
+          isLead && "bg-white text-foreground border border-border/40",
+          isAi && "bg-[hsl(var(--navy))] text-[hsl(var(--cream))]",
+          isAgent && "bg-emerald-600 text-white",
+          // Corner rounding compact when grouped (WhatsApp-style stack)
+          isLead && (groupedWithPrev ? "rounded-tl-md" : ""),
+          isLead && (groupedWithNext ? "rounded-bl-md" : "rounded-bl-md"),
+          !isLead && (groupedWithPrev ? "rounded-tr-md" : ""),
+          !isLead && "rounded-br-md",
         )}
       >
-        {isLead && message.senderName && (
+        {isLead && message.senderName && !groupedWithPrev && (
           <p className={cn(
             "text-[11px] font-semibold mb-1 text-violet-700",
             isMedia && "px-3 pt-1",
@@ -625,7 +630,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
             {message.senderName}
           </p>
         )}
-        {!isLead && (
+        {!isLead && !groupedWithPrev && (
           <p className={cn(
             "text-[10px] font-semibold uppercase tracking-wider mb-1 opacity-80",
             isMedia && "px-3 pt-1",
@@ -707,6 +712,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
           <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{displayContent}</p>
         )}
       </div>
+      {!groupedWithNext && (
       <div className={cn("flex items-center gap-1.5 px-2 flex-wrap", isLead ? "" : "justify-end")}>
         <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
           {isAi ? "IA · " : isAgent ? (sentViaWhatsApp ? "Altivus Turismo · " : `${displayLabel} · `) : ""}
@@ -753,6 +759,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
           </DropdownMenu>
         )}
       </div>
+      )}
     </div>
   );
 };
@@ -2342,17 +2349,36 @@ export default function ServiceCenter() {
 
             {/* Messages */}
             <ScrollArea className="flex-1 px-6 py-5 min-w-0">
-              <div className="space-y-4 max-w-3xl mx-auto min-w-0">
+              <div className="max-w-3xl mx-auto min-w-0">
                 {messagesFetching && msgRows.length === 0 ? (
                   <MessagesSkeleton />
                 ) : (
                   <>
                     {selected.messages.map((m, idx) => {
                       const prev = idx > 0 ? selected.messages[idx - 1] : null;
+                      const next = idx < selected.messages.length - 1 ? selected.messages[idx + 1] : null;
                       const showDate =
                         !prev || !isSameDay(prev.timestamp, m.timestamp);
+                      // Group with previous/next when: same sender, same senderName,
+                      // both non-internal, and within ~2 minutes → hides header/timestamp
+                      const canGroup = (a: Message | null, b: Message | null) => {
+                        if (!a || !b) return false;
+                        if (a.isInternal || b.isInternal) return false;
+                        if (a.sender !== b.sender) return false;
+                        if ((a.senderName || "") !== (b.senderName || "")) return false;
+                        const diff = Math.abs(new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+                        return diff <= 2 * 60 * 1000;
+                      };
+                      const groupedWithPrev = !showDate && canGroup(prev, m);
+                      const groupedWithNext = next && isSameDay(m.timestamp, next.timestamp) && canGroup(m, next);
                       return (
-                        <div key={m.id} className="space-y-4">
+                        <div
+                          key={m.id}
+                          className={cn(
+                            groupedWithPrev ? "mt-0.5" : "mt-4",
+                            showDate && "mt-4",
+                          )}
+                        >
                           {showDate && <DateSeparator timestamp={m.timestamp} />}
                           {m.isInternal ? (
                             <InternalNote message={m} />
@@ -2371,6 +2397,8 @@ export default function ServiceCenter() {
                                 mediaUrl: m.mediaUrl ?? null,
                                 mediaCaption: m.mediaCaption ?? null,
                               })}
+                              groupedWithPrev={groupedWithPrev}
+                              groupedWithNext={!!groupedWithNext}
                             />
                           )}
                           {selected.handoffAfterMessageId === m.id && <HandoffDivider />}
