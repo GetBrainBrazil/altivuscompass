@@ -1985,10 +1985,10 @@ export default function ServiceCenter() {
 
   // Auto-scroll to latest message on new messages or when switching conversations
   useEffect(() => {
-    if (selected) {
-      setTimeout(scrollToBottom, 50);
-    }
-  }, [selected?.messages.length, selectedId]);
+    if (!selected) return;
+    if (initialScrollConvId !== selectedId) return; // skip while first-load scroll hasn't happened yet
+    scrollToBottom("smooth");
+  }, [selected?.messages.length, selectedId, initialScrollConvId]);
 
   return (
     <div className="flex flex-col h-[calc(100vh-3.5rem)] -m-3 sm:-m-4 md:-m-6 lg:-m-8 overflow-hidden bg-background">
