@@ -89,7 +89,7 @@ interface Message {
   content: string;
   timestamp: string; // ISO
   status?: MessageStatus;
-  messageType?: "text" | "image" | "audio" | "video" | "document" | "sticker";
+  messageType?: "text" | "image" | "audio" | "video" | "document" | "sticker" | "location" | "contact" | "other";
   mediaUrl?: string;
   mediaMime?: string;
   mediaCaption?: string;
@@ -1274,10 +1274,13 @@ export default function ServiceCenter() {
         .from("wa_messages")
         .select("*")
         .eq("conversation_id", selectedId!)
-        .order("created_at", { ascending: true })
+        // Busca as MAIS RECENTES. Com ordem crescente + limit(500), conversas
+        // longas ficavam presas nas primeiras 500 mensagens e novos envios do
+        // WhatsApp Web pareciam não refletir na Central.
+        .order("created_at", { ascending: false })
         .limit(500);
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []).reverse();
     },
     refetchInterval: selectedId ? 3000 : false,
     refetchIntervalInBackground: true,
@@ -1342,9 +1345,9 @@ export default function ServiceCenter() {
         id: m.id,
         sender: (m.sender ?? "lead") as MessageSender,
         content:
-          m.message_type === "text"
-            ? (m.content ?? "")
-            : (m.media_caption ?? ""),
+          ["image", "video", "document"].includes(m.message_type)
+            ? (m.media_caption ?? "")
+            : (m.content ?? m.media_caption ?? ""),
         timestamp: m.created_at,
         status: (m.status ?? undefined) as MessageStatus | undefined,
         messageType: m.message_type ?? "text",

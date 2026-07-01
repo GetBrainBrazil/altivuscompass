@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 export interface ForwardableMessage {
   id: string;
-  messageType?: "text" | "image" | "audio" | "video" | "document" | "sticker";
+  messageType?: "text" | "image" | "audio" | "video" | "document" | "sticker" | "location" | "contact" | "other";
   content?: string | null;
   mediaUrl?: string | null;
   mediaCaption?: string | null;
@@ -81,6 +81,8 @@ export function ForwardMessageDialog({
     if (t === "video") return "🎬 Vídeo";
     if (t === "document") return "📄 Documento";
     if (t === "sticker") return "🏷️ Figurinha";
+    if (t === "location") return "📍 Localização";
+    if (t === "contact") return "👤 Contato";
     return (message.content || "").slice(0, 120);
   })();
 

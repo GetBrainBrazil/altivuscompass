@@ -95,10 +95,32 @@ Deno.serve(async (req) => {
        callbackType === 'PlayedCallback' ? 'PLAYED' :
        undefined)
     const hasMessageContent =
-      !!body.text || !!body.image || !!body.audio || !!body.video || !!body.document || !!body.body || !!body.sticker
+      !!body.text ||
+      !!body.image ||
+      !!body.audio ||
+      !!body.video ||
+      !!body.document ||
+      !!body.body ||
+      !!body.sticker ||
+      !!body.location ||
+      !!body.contact ||
+      !!body.contacts ||
+      !!body.reaction ||
+      !!body.message ||
+      !!body.extendedTextMessage ||
+      !!body.buttonsResponseMessage ||
+      !!body.listResponseMessage ||
+      !!body.templateButtonReplyMessage
+    // ReceivedCallback é o webhook de mensagem propriamente dito. Mesmo quando
+    // o tipo ainda não é suportado por nós (ex.: contato/localização/enquete),
+    // ele precisa ser espelhado como `other` em vez de ser tratado como callback
+    // de status só porque termina com "Callback" e traz status RECEIVED.
+    const isReceivedMessageCallback = callbackType === 'ReceivedCallback'
     const looksLikeStatusCallback =
-      (isCallbackType && !hasMessageContent) ||
-      (!!rawStatus && !hasMessageContent)
+      !isReceivedMessageCallback && (
+        (isCallbackType && !hasMessageContent) ||
+        (!!rawStatus && !hasMessageContent)
+      )
 
     if (looksLikeStatusCallback) {
       if (rawStatus) {
