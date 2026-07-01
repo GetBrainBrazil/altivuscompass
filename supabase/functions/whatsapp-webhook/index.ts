@@ -459,6 +459,9 @@ Deno.serve(async (req) => {
     const isStickerMsg = body.sticker != null
     const isLocationMsg = body.location != null
     const isContactMsg = hasContactContent
+    const isCallMsg = !!body.callId || body.type === 'CallReceivedCallback' || body.type === 'CallCallback'
+    const isNotificationMsg = !isTextMsg && (!!body.notification || !!body.notificationParameters)
+    const isReactionMsg = !isTextMsg && !!body.reaction
     if (isContactMsg) {
       console.log('[whatsapp-webhook] Contact payload detected:', JSON.stringify({
         messageId: body.messageId || body.id || null,
