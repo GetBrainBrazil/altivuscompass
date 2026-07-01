@@ -712,6 +712,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
           <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{displayContent}</p>
         )}
       </div>
+      {!groupedWithNext && (
       <div className={cn("flex items-center gap-1.5 px-2 flex-wrap", isLead ? "" : "justify-end")}>
         <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
           {isAi ? "IA · " : isAgent ? (sentViaWhatsApp ? "Altivus Turismo · " : `${displayLabel} · `) : ""}
@@ -758,6 +759,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
           </DropdownMenu>
         )}
       </div>
+      )}
     </div>
   );
 };
