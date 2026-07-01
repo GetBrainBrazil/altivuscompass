@@ -57,10 +57,18 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
       return <Navigate to={fallback} replace />;
     }
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-2">
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <div className="text-center space-y-4 max-w-md">
           <h2 className="text-xl font-display font-semibold text-foreground">Acesso Negado</h2>
-          <p className="text-muted-foreground font-body text-sm">Você não tem permissão para acessar esta página.</p>
+          <p className="text-muted-foreground font-body text-sm">
+            {userRole
+              ? "Você não tem permissão para acessar esta página."
+              : "Não foi possível carregar suas permissões. Faça login novamente para continuar."}
+          </p>
+          <div className="flex items-center justify-center gap-2">
+            <Button variant="outline" onClick={() => window.location.reload()}>Tentar novamente</Button>
+            <Button variant="destructive" onClick={() => signOut("manual")}>Sair</Button>
+          </div>
         </div>
       </div>
     );
