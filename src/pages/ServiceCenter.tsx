@@ -484,9 +484,9 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
   const persistedLabel = parsedText.label || parsedCaption.label;
   const externalSenderName = isAgent ? (message.senderName || null) : null;
   // Sem label inline + sem nome externo conhecido → assumimos envio direto pelo WhatsApp
-  const sentViaWhatsApp = isAgent && !persistedLabel && (!externalSenderName || externalSenderName === "WhatsApp");
+  const sentViaWhatsApp = isAgent && !persistedLabel && (!externalSenderName || externalSenderName === "WhatsApp" || externalSenderName === "Altivus Turismo");
   const displayLabel = isAgent
-    ? (persistedLabel || externalSenderName || (sentViaWhatsApp ? "WhatsApp" : (agentLabel || "Agente")))
+    ? (persistedLabel || (sentViaWhatsApp ? "Altivus Turismo" : (externalSenderName || agentLabel || "Agente")))
     : (agentLabel || "Agente");
   const displayContent = isAgent && mt === "text" ? parsedText.rest : message.content;
   const displayCaption = isAgent && isMedia ? parsedCaption.rest : message.mediaCaption;
