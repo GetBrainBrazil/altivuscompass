@@ -1832,8 +1832,8 @@ export default function Quotes() {
         toast({ title: "Cliente sem telefone", description: "Cadastre um telefone para o cliente antes.", variant: "destructive" });
         return;
       }
-      const { items: qItems, passengers: qPax } = await fetchSummaryDataFor(quote);
-      const summary = buildQuoteSummary(quote, qItems, qPax, clients as any[]);
+      const { quote: freshQuote, items: qItems, passengers: qPax } = await fetchSummaryDataFor(quote);
+      const summary = buildQuoteSummary(freshQuote, qItems, qPax, clients as any[]);
       const url = `https://wa.me/${phone}?text=${encodeURIComponent(summary)}`;
       window.open(url, "_blank", "noopener,noreferrer");
       try { await logHistory(quote.id, "summary_whatsapp_opened", "Resumo aberto no WhatsApp"); } catch {}
