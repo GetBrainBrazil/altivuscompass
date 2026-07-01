@@ -430,10 +430,11 @@ const ConversationCard = ({ conversation, active, onClick, aiGloballyPaused = fa
         <div className="relative shrink-0 self-center">
           <Avatar className="h-11 w-11">
             {conversation.photoUrl && <AvatarImage src={conversation.photoUrl} alt={conversation.leadName} />}
-            <AvatarFallback className="text-xs font-medium bg-muted text-muted-foreground">
-              {getInitials(conversation.leadName)}
+            <AvatarFallback className={cn("text-xs font-medium", conversation.isGroup ? "bg-[#DFE5E7] text-[#667781]" : "bg-muted text-muted-foreground")}>
+              {conversation.isGroup ? <Users className="h-5 w-5" /> : getInitials(conversation.leadName)}
             </AvatarFallback>
           </Avatar>
+
           {hasUnread && (
             <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-amber-500 border-2 border-background" />
           )}
