@@ -12,6 +12,7 @@ const DEFAULT_MAX_CHATS = 250
 const DEFAULT_MAX_MESSAGES_PER_CHAT = 250
 const HARD_MAX_CHATS = 1000
 const HARD_MAX_MESSAGES_PER_CHAT = 1000
+const MULTI_DEVICE_HISTORY_UNAVAILABLE = 'A Z-API não disponibiliza histórico antigo por API em instâncias Multi Device. O Compass só consegue registrar mensagens recebidas pelo webhook após a configuração.'
 
 type ZapiChat = {
   phone?: string
@@ -104,6 +105,7 @@ Deno.serve(async (req) => {
     let skippedMessages = 0
     let syncedChats = 0
     const failures: Array<{ phone: string; error: string }> = []
+    let multiDeviceHistoryUnavailable = false
 
     for (const target of uniqueTargets) {
       try {
@@ -120,9 +122,13 @@ Deno.serve(async (req) => {
         skippedMessages += result.skipped
         syncedChats += 1
       } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        if (/multi device|does not work in multi device|histórico antigo por API/i.test(message)) {
+          multiDeviceHistoryUnavailable = true
+        }
         failures.push({
           phone: target.phone,
-          error: err instanceof Error ? err.message : String(err),
+          error: message,
         })
       }
     }
@@ -132,9 +138,12 @@ Deno.serve(async (req) => {
       syncedChats,
       importedMessages,
       skippedMessages,
+      multiDeviceHistoryUnavailable,
       failures: failures.slice(0, 15),
       failureCount: failures.length,
-      note: 'A Z-API só devolve histórico que ainda está disponível na instância. Em algumas contas Multi Device, mensagens antigas podem existir apenas via webhooks recebidos desde a configuração.',
+      note: multiDeviceHistoryUnavailable
+        ? MULTI_DEVICE_HISTORY_UNAVAILABLE
+        : 'A Z-API só devolve histórico que ainda está disponível na instância.',
     })
   } catch (err) {
     console.error('[whatsapp-history-sync] error', err)
@@ -440,27 +449,21 @@ async function fetchChatMessages(baseUrl: string, headers: Record<string, string
   const qs = new URLSearchParams({ amount: String(amount) })
   if (lastMessageId) qs.set('lastMessageId', lastMessageId)
   const encodedPhone = encodeURIComponent(phone)
-  const urls = [
-    `${baseUrl}/chat-messages/${encodedPhone}?${qs.toString()}`,
-    `${baseUrl}/chats/${encodedPhone}?${qs.toString()}`,
-  ]
-
-  let lastError = ''
-  let emptyOk = false
-  for (const url of urls) {
-    const res = await fetch(url, { method: 'GET', headers })
-    const text = await res.text().catch(() => '')
-    if (!res.ok) {
-      lastError = `${res.status} ${text.slice(0, 300)}`
-      continue
+  const url = `${baseUrl}/chat-messages/${encodedPhone}?${qs.toString()}`
+  const res = await fetch(url, { method: 'GET', headers })
+  const text = await res.text().catch(() => '')
+  if (!res.ok) {
+    const lower = text.toLowerCase()
+    if (lower.includes('does not work in multi device') || lower.includes('multi device')) {
+      throw new Error(MULTI_DEVICE_HISTORY_UNAVAILABLE)
     }
-    const data = safeJson(text)
-    const arr = Array.isArray(data) ? data : (Array.isArray(data?.messages) ? data.messages : [])
-    if (arr.length > 0) return arr
-    emptyOk = true
+    throw new Error(`Z-API não retornou histórico para ${phone}: ${res.status} ${text.slice(0, 300)}`)
   }
-  if (emptyOk) return []
-  throw new Error(`Z-API não retornou histórico para ${phone}: ${lastError || 'sem resposta'}`)
+
+  const data = safeJson(text)
+  if (Array.isArray(data)) return data
+  if (Array.isArray(data?.messages)) return data.messages
+  return []
 }
 
 async function zapiGetArray(url: string, headers: Record<string, string>): Promise<any[]> {
