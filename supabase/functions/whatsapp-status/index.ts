@@ -82,6 +82,19 @@ Deno.serve(async (req) => {
       })
     }
 
+    if (action === 'enable-notify-sent-by-me') {
+      const r = await fetch(`${baseUrl}/update-notify-sent-by-me`, {
+        method: 'PUT',
+        headers: zapiHeaders,
+        body: JSON.stringify({ notifySentByMe: true }),
+      })
+      const data = await r.json().catch(() => ({}))
+      return new Response(JSON.stringify(data), {
+        status: r.ok ? 200 : r.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Default: get status + device info in parallel
     const [statusRes, deviceRes] = await Promise.all([
       fetch(`${baseUrl}/status`, { headers: zapiHeaders }),
