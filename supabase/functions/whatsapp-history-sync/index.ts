@@ -12,7 +12,7 @@ const DEFAULT_MAX_CHATS = 250
 const DEFAULT_MAX_MESSAGES_PER_CHAT = 250
 const HARD_MAX_CHATS = 1000
 const HARD_MAX_MESSAGES_PER_CHAT = 1000
-const MULTI_DEVICE_HISTORY_UNAVAILABLE = 'A Z-API não disponibiliza histórico antigo por API em instâncias Multi Device. O Compass só consegue registrar mensagens recebidas pelo webhook após a configuração.'
+const MULTI_DEVICE_HISTORY_UNAVAILABLE = 'A Z-API bloqueou a busca de histórico antigo por API nesta instância Multi Device. As mensagens antigas que aparecem em alguns contatos já estavam salvas no Compass; para conversas/grupos que não foram capturados antes, só entram novas mensagens recebidas pelo webhook.'
 
 type ZapiChat = {
   phone?: string
