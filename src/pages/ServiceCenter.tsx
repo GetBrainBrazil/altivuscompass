@@ -1112,6 +1112,35 @@ const CRMPanel = ({ conversation }: { conversation: Conversation }) => {
   );
 };
 
+// ============= Messages Skeleton (elegant loading) =============
+function MessagesSkeleton() {
+  return (
+    <div className="space-y-4 max-w-3xl mx-auto min-w-0 py-2">
+      {Array.from({ length: 8 }).map((_, i) => {
+        const isRight = i % 2 === 0;
+        const widthClass = i % 3 === 0 ? "w-3/4" : i % 3 === 1 ? "w-1/2" : "w-2/3";
+        return (
+          <div
+            key={i}
+            className={cn(
+              "flex",
+              isRight ? "justify-end" : "justify-start"
+            )}
+          >
+            <div
+              className={cn(
+                "h-10 rounded-2xl animate-pulse",
+                isRight ? "bg-primary/15 rounded-br-sm" : "bg-muted rounded-bl-sm",
+                widthClass
+              )}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ============= Contact Banner (top of chat) =============
 const formatDateBR = (iso: string) => {
   const d = new Date(iso);
