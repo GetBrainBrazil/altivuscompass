@@ -216,6 +216,55 @@ const formatPhone = (phone: string) => {
   return `+${m[1]} (${m[2]}) ${m[3]}-${m[4]}`;
 };
 
+const getLidMentionKey = (value: unknown): string | null => {
+  if (!value) return null;
+  const raw = String(value);
+  if (!/@lid$/i.test(raw) && !/^\d{10,20}$/.test(raw)) return null;
+  const digits = raw.replace(/\D/g, "");
+  return digits.length >= 10 && digits.length <= 20 ? digits : null;
+};
+
+const getCleanMentionPhone = (value: unknown): string | null => {
+  if (!value) return null;
+  const digits = String(value).replace(/\D/g, "");
+  if (!digits || digits.length < 10 || digits.length > 15 || digits.startsWith("120363")) return null;
+  return digits;
+};
+
+const addMentionReplacement = (map: Map<string, string>, lid: unknown, phone: unknown) => {
+  const key = getLidMentionKey(lid);
+  const cleanPhone = getCleanMentionPhone(phone);
+  if (key && cleanPhone) map.set(key, cleanPhone);
+};
+
+const collectMentionReplacements = (value: unknown, map: Map<string, string>, seen = new WeakSet<object>()) => {
+  if (!value || typeof value !== "object") return;
+  if (seen.has(value)) return;
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectMentionReplacements(item, map, seen));
+    return;
+  }
+
+  const record = value as Record<string, unknown>;
+  addMentionReplacement(
+    map,
+    record.participantLid || record.chatLid || record.lid || record.contactLid || record.mentionedLid || record.id,
+    record.participantPhone || record.phoneNumber || record.phone || record.number || record.waid,
+  );
+
+  Object.values(record).forEach((child) => collectMentionReplacements(child, map, seen));
+};
+
+const normalizeMentionText = (text: string, replacements: Map<string, string>) => {
+  if (!text || replacements.size === 0) return text;
+  return text.replace(/@(\d{10,20})(?!\d)/g, (full, lidDigits) => {
+    const phone = replacements.get(String(lidDigits));
+    return phone ? `@${phone}` : full;
+  });
+};
+
 const getLastMessage = (c: Conversation) => c.messages[c.messages.length - 1];
 
 /**
