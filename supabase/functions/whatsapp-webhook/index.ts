@@ -541,6 +541,11 @@ Deno.serve(async (req) => {
         } catch { content = 'Mensagem (formato não reconhecido)' }
       }
 
+      if (isGroup) {
+        content = await normalizeGroupMentionText(supabase, groupId, content, body)
+        mediaCaption = await normalizeGroupMentionText(supabase, groupId, mediaCaption, body)
+      }
+
       const preview =
         messageType === 'text' ? (content ?? '').slice(0, 200) :
         messageType === 'image' ? '📷 Imagem' :
