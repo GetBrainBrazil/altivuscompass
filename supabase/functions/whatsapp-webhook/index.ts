@@ -271,7 +271,8 @@ Deno.serve(async (req) => {
     // (incluindo contatos compartilhados) sejam disparadas no webhook "Ao receber".
     // Sem essa opção ativa na Z-API, o Compass só vê algumas mensagens fromMe e
     // tipos como contato podem simplesmente não chegar ao webhook.
-    EdgeRuntime.waitUntil(ensureNotifySentByMe(zapiInstanceId, zapiToken, zapiSecurityToken))
+    ;(globalThis as any).EdgeRuntime?.waitUntil?.(ensureNotifySentByMe(zapiInstanceId, zapiToken, zapiSecurityToken)) ??
+      ensureNotifySentByMe(zapiInstanceId, zapiToken, zapiSecurityToken).catch(() => {})
 
     const body = await req.json()
     console.log('Webhook payload:', JSON.stringify(body).substring(0, 2000))
