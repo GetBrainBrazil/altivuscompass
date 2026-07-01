@@ -2213,10 +2213,11 @@ export default function ServiceCenter() {
               <div className="flex items-center gap-3 min-w-0">
                 <Avatar className="h-10 w-10">
                   {selected.photoUrl && <AvatarImage src={selected.photoUrl} alt={selected.leadName} />}
-                  <AvatarFallback className="text-xs font-medium bg-secondary text-secondary-foreground">
-                    {getInitials(selected.leadName)}
+                  <AvatarFallback className={cn("text-xs font-medium", selected.isGroup ? "bg-[#DFE5E7] text-[#667781]" : "bg-secondary text-secondary-foreground")}>
+                    {selected.isGroup ? <Users className="h-5 w-5" /> : getInitials(selected.leadName)}
                   </AvatarFallback>
                 </Avatar>
+
                 <div className="min-w-0">
                   <p className="font-medium text-sm truncate">{selected.leadName}</p>
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
