@@ -228,6 +228,84 @@ function formatSharedContactContent(body: any): string {
   }).join('\n\n')
 }
 
+function lidMentionKey(value: any): string | null {
+  if (!value) return null
+  const raw = String(value)
+  if (!/@lid$/i.test(raw) && !/^\d{10,20}$/.test(raw)) return null
+  const digits = raw.replace(/\D/g, '')
+  return digits.length >= 10 && digits.length <= 20 ? digits : null
+}
+
+function cleanMentionPhone(value: any): string | null {
+  if (!value) return null
+  const digits = String(value).replace(/\D/g, '')
+  if (!digits || digits.length < 10 || digits.length > 15 || digits.startsWith('120363')) return null
+  return digits
+}
+
+function addMentionMapEntry(map: Map<string, string>, lid: any, phone: any) {
+  const key = lidMentionKey(lid)
+  const cleanPhone = cleanMentionPhone(phone)
+  if (key && cleanPhone) map.set(key, cleanPhone)
+}
+
+function collectLidPhoneMappings(value: any, map: Map<string, string>, seen = new WeakSet<object>()) {
+  if (!value || typeof value !== 'object') return
+  if (seen.has(value)) return
+  seen.add(value)
+
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectLidPhoneMappings(item, map, seen))
+    return
+  }
+
+  addMentionMapEntry(
+    map,
+    value.participantLid || value.chatLid || value.lid || value.contactLid || value.mentionedLid || value.id,
+    value.participantPhone || value.phoneNumber || value.phone || value.number || value.waid,
+  )
+
+  for (const child of Object.values(value)) collectLidPhoneMappings(child, map, seen)
+}
+
+async function normalizeGroupMentionText(supabase: any, groupId: string | null, text: string | null, currentPayload?: any): Promise<string | null> {
+  if (!text || !/@\d{10,20}\b/.test(text)) return text
+
+  const mentionMap = new Map<string, string>()
+  collectLidPhoneMappings(currentPayload, mentionMap)
+
+  try {
+    if (groupId) {
+      const { data: groupConvo } = await supabase
+        .from('wa_conversations')
+        .select('id')
+        .eq('group_id', groupId)
+        .maybeSingle()
+
+      if (groupConvo?.id) {
+        const { data: rows } = await supabase
+          .from('wa_messages')
+          .select('sender_phone, raw')
+          .eq('conversation_id', groupConvo.id)
+          .order('created_at', { ascending: false })
+          .limit(1000)
+
+        for (const row of rows ?? []) {
+          addMentionMapEntry(mentionMap, row?.raw?.participantLid, row?.sender_phone || row?.raw?.participantPhone)
+          collectLidPhoneMappings(row?.raw, mentionMap)
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[whatsapp-webhook] Falha ao resolver menções LID:', err instanceof Error ? err.message : err)
+  }
+
+  return text.replace(/@(\d{10,20})(?!\d)/g, (full, lidDigits) => {
+    const phone = mentionMap.get(String(lidDigits))
+    return phone ? `@${phone}` : full
+  })
+}
+
 
 
 
@@ -461,6 +539,11 @@ Deno.serve(async (req) => {
           delete (safe as any).senderPhoto
           content = JSON.stringify(safe).slice(0, 500)
         } catch { content = 'Mensagem (formato não reconhecido)' }
+      }
+
+      if (isGroup) {
+        content = await normalizeGroupMentionText(supabase, groupId, content, body)
+        mediaCaption = await normalizeGroupMentionText(supabase, groupId, mediaCaption, body)
       }
 
       const preview =
