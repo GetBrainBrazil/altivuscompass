@@ -484,9 +484,9 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
   const persistedLabel = parsedText.label || parsedCaption.label;
   const externalSenderName = isAgent ? (message.senderName || null) : null;
   // Sem label inline + sem nome externo conhecido → assumimos envio direto pelo WhatsApp
-  const sentViaWhatsApp = isAgent && !persistedLabel && (!externalSenderName || externalSenderName === "WhatsApp");
+  const sentViaWhatsApp = isAgent && !persistedLabel && (!externalSenderName || externalSenderName === "WhatsApp" || externalSenderName === "Altivus Turismo");
   const displayLabel = isAgent
-    ? (persistedLabel || externalSenderName || (sentViaWhatsApp ? "WhatsApp" : (agentLabel || "Agente")))
+    ? (persistedLabel || (sentViaWhatsApp ? "Altivus Turismo" : (externalSenderName || agentLabel || "Agente")))
     : (agentLabel || "Agente");
   const displayContent = isAgent && mt === "text" ? parsedText.rest : message.content;
   const displayCaption = isAgent && isMedia ? parsedCaption.rest : message.mediaCaption;
@@ -517,7 +517,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
             isMedia && "px-3 pt-1",
             isAi ? "text-[hsl(var(--cream))]" : "text-emerald-50",
           )}>
-            {isAi ? "🤖 IA" : sentViaWhatsApp ? `📱 WhatsApp` : `👤 ${displayLabel}`}
+            {isAi ? "🤖 IA" : sentViaWhatsApp ? `📱 Altivus Turismo` : `👤 ${displayLabel}`}
           </p>
         )}
         {mt === "audio" && message.mediaUrl ? (
@@ -576,7 +576,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
       </div>
       <div className={cn("flex items-center gap-1.5 px-2 flex-wrap", isLead ? "" : "justify-end")}>
         <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-          {isAi ? "IA · " : isAgent ? (sentViaWhatsApp ? "WhatsApp · " : `${displayLabel} · `) : ""}
+          {isAi ? "IA · " : isAgent ? (sentViaWhatsApp ? "Altivus Turismo · " : `${displayLabel} · `) : ""}
           {formatTime(message.timestamp)}
           {!isLead && message.status && <MessageStatusTicks status={message.status} />}
         </span>
