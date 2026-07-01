@@ -17,6 +17,7 @@ async function ensureNotifySentByMe(instanceId: string, token: string, clientTok
 
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 2500)
+  let confirmed = false
   try {
     const res = await fetch(`${ZAPI_BASE_URL}/instances/${instanceId}/token/${token}/update-notify-sent-by-me`, {
       method: 'PUT',
@@ -31,11 +32,13 @@ async function ensureNotifySentByMe(instanceId: string, token: string, clientTok
     if (!res.ok) {
       console.warn('[whatsapp-webhook] Falha ao garantir notifySentByMe:', res.status, txt.slice(0, 300))
     } else {
+      confirmed = true
       console.log('[whatsapp-webhook] notifySentByMe confirmado na Z-API')
     }
   } catch (err) {
     console.warn('[whatsapp-webhook] Não foi possível confirmar notifySentByMe:', err instanceof Error ? err.message : err)
   } finally {
+    if (!confirmed) notifySentByMeEnsuredAt = 0
     clearTimeout(timeout)
   }
 }
@@ -272,8 +275,8 @@ Deno.serve(async (req) => {
     // Sem essa opção ativa na Z-API, o Compass só vê algumas mensagens fromMe e
     // tipos como contato podem simplesmente não chegar ao webhook.
     const notifySentByMePromise = ensureNotifySentByMe(zapiInstanceId, zapiToken, zapiSecurityToken)
-    const waitUntil = (globalThis as any).EdgeRuntime?.waitUntil
-    if (typeof waitUntil === 'function') waitUntil(notifySentByMePromise)
+    const edgeRuntime = (globalThis as any).EdgeRuntime
+    if (typeof edgeRuntime?.waitUntil === 'function') edgeRuntime.waitUntil(notifySentByMePromise)
     else notifySentByMePromise.catch(() => {})
 
     const body = await req.json()
