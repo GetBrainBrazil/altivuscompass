@@ -59,12 +59,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const fetchUserRole = async (userId: string) => {
-    const { data } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .maybeSingle();
-    setRealRole(data?.role ?? null);
+    const attempt = async () => {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .maybeSingle();
+      return { role: (data?.role as string | undefined) ?? null, error };
+    };
+    let { role } = await attempt();
+    if (!role) {
+      // Retry once after a short delay: on cold start the session/JWT may not
+      // have propagated to PostgREST yet, causing RLS to return zero rows.
+      await new Promise((r) => setTimeout(r, 400));
+      role = (await attempt()).role;
+    }
+    // Never overwrite a previously-resolved role with null — a concurrent
+    // race between onAuthStateChange and getSession could otherwise clear
+    // a valid role and lock the user out with "Acesso Negado".
+    setRealRole((prev) => role ?? prev);
     setLoading(false);
   };
 
