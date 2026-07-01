@@ -500,6 +500,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
     : (agentLabel || "Agente");
   const displayContent = isAgent && mt === "text" ? parsedText.rest : message.content;
   const displayCaption = isAgent && isMedia ? parsedCaption.rest : message.mediaCaption;
+  const sharedContact = mt === "contact" ? parseSharedContact(displayContent) : null;
 
   return (
     <div className={cn("flex w-full flex-col gap-1", isLead ? "items-start" : "items-end")}>
@@ -582,14 +583,14 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
           <div className="flex min-w-[220px] items-start gap-3">
             <span className={cn(
               "mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-              isLead ? "bg-muted text-muted-foreground" : "bg-emerald-500 text-white",
+              isLead ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground",
             )}>
               <UserRound className="h-4 w-4" />
             </span>
             <span className="min-w-0 flex-1 space-y-1">
               <span className="block text-xs font-semibold uppercase tracking-wide opacity-75">Contato compartilhado</span>
-              <span className="block truncate font-medium">{parseSharedContact(displayContent).name}</span>
-              {parseSharedContact(displayContent).phones.map((phone) => (
+              <span className="block truncate font-medium">{sharedContact?.name}</span>
+              {sharedContact?.phones.map((phone) => (
                 <span key={phone} className="flex items-center gap-1.5 text-xs opacity-80">
                   <Phone className="h-3 w-3" />
                   {phone}
