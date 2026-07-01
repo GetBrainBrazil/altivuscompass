@@ -1399,12 +1399,21 @@ export default function ServiceCenter() {
       const imported = Number((data as any)?.importedMessages ?? 0);
       const chats = Number((data as any)?.syncedChats ?? 0);
       const failures = Number((data as any)?.failureCount ?? 0);
-      toast.success(
-        failures > 0
-          ? `Sincronização concluída: ${imported} mensagens novas em ${chats} conversas. ${failures} conversas não retornaram histórico.`
-          : `Sincronização concluída: ${imported} mensagens novas em ${chats} conversas.`,
-        { id: toastId },
-      );
+      const multiDeviceUnavailable = Boolean((data as any)?.multiDeviceHistoryUnavailable);
+      const note = String((data as any)?.note || "");
+      if (multiDeviceUnavailable) {
+        toast.warning(
+          note || "A Z-API não disponibiliza histórico antigo por API em instâncias Multi Device. As próximas mensagens serão registradas pelo webhook.",
+          { id: toastId, duration: 9000 },
+        );
+      } else {
+        toast.success(
+          failures > 0
+            ? `Sincronização concluída: ${imported} mensagens novas em ${chats} conversas. ${failures} conversas não retornaram histórico.`
+            : `Sincronização concluída: ${imported} mensagens novas em ${chats} conversas.`,
+          { id: toastId },
+        );
+      }
       qc.invalidateQueries({ queryKey: ["wa_conversations"] });
       if (selectedId) qc.invalidateQueries({ queryKey: ["wa_messages", selectedId] });
     } catch (e: any) {
