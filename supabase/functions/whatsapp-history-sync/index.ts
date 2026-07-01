@@ -16,6 +16,8 @@ const HARD_MAX_MESSAGES_PER_CHAT = 1000
 type ZapiChat = {
   phone?: string
   name?: string
+  vname?: string
+  short?: string
   lastMessageTime?: string | number
   isGroup?: boolean | string
   profileThumbnail?: string
@@ -162,6 +164,26 @@ async function fetchAllTargets(baseUrl: string, headers: Record<string, string>,
       if (targets.length >= maxChats) break
     }
     if (groups.length < pageSize) break
+  }
+
+  // Em instâncias Multi Device o /chats pode retornar apenas LID; /contacts
+  // traz o número real ativo e ajuda a evitar conversas duplicadas por @lid.
+  for (let page = 1; targets.length < maxChats; page++) {
+    const contacts = await zapiGetArray(`${baseUrl}/contacts?page=${page}&pageSize=${pageSize}`, headers).catch(() => [])
+    if (contacts.length === 0) break
+    for (const contact of contacts as ZapiChat[]) {
+      const phone = normalizeChatPhone(contact?.phone)
+      if (!phone || isLidIdentifier(phone)) continue
+      targets.push({
+        phone,
+        name: contact?.name || contact?.vname || contact?.short || null,
+        isGroup: false,
+        groupId: null,
+        profilePhotoUrl: contact?.profileThumbnail ?? null,
+      })
+      if (targets.length >= maxChats) break
+    }
+    if (contacts.length < pageSize) break
   }
 
   for (let page = 1; targets.length < maxChats; page++) {
