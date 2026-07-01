@@ -1801,8 +1801,8 @@ export default function Quotes() {
 
   const handleCopySummary = async (quote: Quote) => {
     try {
-      const { items: qItems, passengers: qPax } = await fetchSummaryDataFor(quote);
-      const summary = buildQuoteSummary(quote, qItems, qPax, clients as any[]);
+      const { quote: freshQuote, items: qItems, passengers: qPax } = await fetchSummaryDataFor(quote);
+      const summary = buildQuoteSummary(freshQuote, qItems, qPax, clients as any[]);
       let copied = false;
       if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
         try {
