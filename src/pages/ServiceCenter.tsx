@@ -1438,7 +1438,7 @@ export default function ServiceCenter() {
   }, [contactsMeta]);
 
   // ===== Carrega mensagens da conversa selecionada =====
-  const { data: msgRows = [] } = useQuery({
+  const { data: msgRows = [], isFetching: messagesFetching } = useQuery({
     queryKey: ["wa_messages", selectedId],
     enabled: !!selectedId,
     queryFn: async () => {
