@@ -517,7 +517,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
             isMedia && "px-3 pt-1",
             isAi ? "text-[hsl(var(--cream))]" : "text-emerald-50",
           )}>
-            {isAi ? "🤖 IA" : sentViaWhatsApp ? `📱 WhatsApp` : `👤 ${displayLabel}`}
+            {isAi ? "🤖 IA" : sentViaWhatsApp ? `📱 Altivus Turismo` : `👤 ${displayLabel}`}
           </p>
         )}
         {mt === "audio" && message.mediaUrl ? (
