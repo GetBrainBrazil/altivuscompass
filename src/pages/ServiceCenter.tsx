@@ -1274,10 +1274,13 @@ export default function ServiceCenter() {
         .from("wa_messages")
         .select("*")
         .eq("conversation_id", selectedId!)
-        .order("created_at", { ascending: true })
+        // Busca as MAIS RECENTES. Com ordem crescente + limit(500), conversas
+        // longas ficavam presas nas primeiras 500 mensagens e novos envios do
+        // WhatsApp Web pareciam não refletir na Central.
+        .order("created_at", { ascending: false })
         .limit(500);
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []).reverse();
     },
     refetchInterval: selectedId ? 3000 : false,
     refetchIntervalInBackground: true,
