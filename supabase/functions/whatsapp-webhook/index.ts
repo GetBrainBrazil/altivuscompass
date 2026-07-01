@@ -267,6 +267,12 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceRoleKey)
 
+    // Garante automaticamente que mensagens enviadas pelo WhatsApp Web/celular
+    // (incluindo contatos compartilhados) sejam disparadas no webhook "Ao receber".
+    // Sem essa opção ativa na Z-API, o Compass só vê algumas mensagens fromMe e
+    // tipos como contato podem simplesmente não chegar ao webhook.
+    EdgeRuntime.waitUntil(ensureNotifySentByMe(zapiInstanceId, zapiToken, zapiSecurityToken))
+
     const body = await req.json()
     console.log('Webhook payload:', JSON.stringify(body).substring(0, 2000))
 
