@@ -534,14 +534,25 @@ Deno.serve(async (req) => {
         messageType = 'contact'
         content = formatSharedContactContent(body)
       }
+      else if (isCallMsg) {
+        messageType = 'call'
+        content = '📞 Chamada de voz/vídeo'
+      }
+      else if (isReactionMsg) {
+        messageType = 'reaction'
+        content = `${body.reaction?.value || '❤️'} (reação)`
+      }
+      else if (isNotificationMsg) {
+        // Sistema: entrou no grupo, mudou assunto, etc. Não espelhamos ruído no chat.
+        return new Response(JSON.stringify({ status: 'ignored', reason: 'system_notification' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
       else {
-        // Unknown type — preserve a readable preview so the UI never shows just "Mensagem"
+        // Tipo desconhecido — mostra rótulo amigável em vez de dump JSON
         messageType = 'other'
-        try {
-          const safe = { ...body }
-          delete (safe as any).senderPhoto
-          content = JSON.stringify(safe).slice(0, 500)
-        } catch { content = 'Mensagem (formato não reconhecido)' }
+        content = 'Mensagem não suportada'
+        console.log('[whatsapp-webhook] Unknown message type, keys:', Object.keys(body || {}))
       }
 
       if (isGroup) {
