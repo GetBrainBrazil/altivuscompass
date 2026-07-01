@@ -18,6 +18,9 @@ verify_jwt = false
 [functions.whatsapp-webhook]
 verify_jwt = false
 
+[functions.whatsapp-history-sync]
+verify_jwt = true
+
 [functions.whatsapp-status]
 verify_jwt = false
 
