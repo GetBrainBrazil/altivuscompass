@@ -2334,7 +2334,7 @@ export default function ServiceCenter() {
             {/* Messages */}
             <ScrollArea className="flex-1 px-6 py-5 min-w-0">
               <div className="space-y-4 max-w-3xl mx-auto min-w-0">
-                {messagesFetching && selected.messages.length === 0 ? (
+                {messagesFetching && msgRows.length === 0 ? (
                   <MessagesSkeleton />
                 ) : (
                   <>
