@@ -612,12 +612,17 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
           "max-w-[75%] rounded-3xl text-sm leading-relaxed shadow-sm overflow-hidden",
           !isMedia && "px-5 py-3",
           isMedia && "p-2",
-          isLead && "bg-white text-foreground rounded-bl-md border border-border/40",
-          isAi && "bg-[hsl(var(--navy))] text-[hsl(var(--cream))] rounded-br-md",
-          isAgent && "bg-emerald-600 text-white rounded-br-md",
+          isLead && "bg-white text-foreground border border-border/40",
+          isAi && "bg-[hsl(var(--navy))] text-[hsl(var(--cream))]",
+          isAgent && "bg-emerald-600 text-white",
+          // Corner rounding compact when grouped (WhatsApp-style stack)
+          isLead && (groupedWithPrev ? "rounded-tl-md" : ""),
+          isLead && (groupedWithNext ? "rounded-bl-md" : "rounded-bl-md"),
+          !isLead && (groupedWithPrev ? "rounded-tr-md" : ""),
+          !isLead && "rounded-br-md",
         )}
       >
-        {isLead && message.senderName && (
+        {isLead && message.senderName && !groupedWithPrev && (
           <p className={cn(
             "text-[11px] font-semibold mb-1 text-violet-700",
             isMedia && "px-3 pt-1",
@@ -625,7 +630,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
             {message.senderName}
           </p>
         )}
-        {!isLead && (
+        {!isLead && !groupedWithPrev && (
           <p className={cn(
             "text-[10px] font-semibold uppercase tracking-wider mb-1 opacity-80",
             isMedia && "px-3 pt-1",
