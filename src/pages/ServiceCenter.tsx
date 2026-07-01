@@ -42,7 +42,7 @@ import { ClientSidePanel } from "@/components/service-center/ClientSidePanel";
 import { MessageLinkDialog } from "@/components/service-center/MessageLinkDialog";
 import { ForwardMessageDialog, type ForwardableMessage, type ForwardTarget } from "@/components/service-center/ForwardMessageDialog";
 import { ImageLightbox } from "@/components/service-center/ImageLightbox";
-import { Plus, Info, Bot, Check, CheckCheck, Clock, Mic, Square, Trash2, Loader2, Link2, MoreVertical, Pencil, Paperclip, Forward } from "lucide-react";
+import { Plus, Info, Bot, Check, CheckCheck, Clock, Mic, Square, Trash2, Loader2, Link2, MoreVertical, Pencil, Paperclip, Forward, RefreshCw } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -1252,6 +1252,7 @@ export default function ServiceCenter() {
   const [newMsgOpen, setNewMsgOpen] = useState(false);
   const [linkDialogMessages, setLinkDialogMessages] = useState<string[]>([]);
   const [forwardMessage, setForwardMessage] = useState<ForwardableMessage | null>(null);
+  const [syncingHistory, setSyncingHistory] = useState<"all" | "selected" | null>(null);
 
   // Apelido/nome do atendente logado (para exibir nas mensagens enviadas)
   const { data: myProfile } = useQuery({
@@ -1345,6 +1346,44 @@ export default function ServiceCenter() {
     setPendingAgentToggle(null);
   };
 
+  const handleSyncHistory = async (scope: "all" | "selected" = "all") => {
+    if (syncingHistory) return;
+    if (scope === "selected" && !selectedId) return;
+
+    setSyncingHistory(scope);
+    const toastId = toast.loading(
+      scope === "selected"
+        ? "Buscando histórico desta conversa na instância..."
+        : "Buscando histórico de contatos e grupos na instância...",
+    );
+
+    try {
+      const { data, error } = await supabase.functions.invoke("whatsapp-history-sync", {
+        body: scope === "selected"
+          ? { conversationId: selectedId, maxMessagesPerChat: 500 }
+          : { maxChats: 500, maxMessagesPerChat: 300 },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+
+      const imported = Number((data as any)?.importedMessages ?? 0);
+      const chats = Number((data as any)?.syncedChats ?? 0);
+      const failures = Number((data as any)?.failureCount ?? 0);
+      toast.success(
+        failures > 0
+          ? `Sincronização concluída: ${imported} mensagens novas em ${chats} conversas. ${failures} conversas não retornaram histórico.`
+          : `Sincronização concluída: ${imported} mensagens novas em ${chats} conversas.`,
+        { id: toastId },
+      );
+      qc.invalidateQueries({ queryKey: ["wa_conversations"] });
+      if (selectedId) qc.invalidateQueries({ queryKey: ["wa_messages", selectedId] });
+    } catch (e: any) {
+      toast.error(e?.message || "Não foi possível sincronizar o histórico", { id: toastId });
+    } finally {
+      setSyncingHistory(null);
+    }
+  };
+
   // ===== Carrega conversas reais do WhatsApp (Z-API) =====
   const { data: convoRows = [], isLoading: isLoadingConvos } = useQuery({
     queryKey: ["wa_conversations"],
@@ -1407,10 +1446,10 @@ export default function ServiceCenter() {
         .select("*")
         .eq("conversation_id", selectedId!)
         // Busca as MAIS RECENTES. Com ordem crescente + limit(500), conversas
-        // longas ficavam presas nas primeiras 500 mensagens e novos envios do
+        // longas ficavam presas nas primeiras mensagens e novos envios do
         // WhatsApp Web pareciam não refletir na Central.
         .order("created_at", { ascending: false })
-        .limit(500);
+        .limit(1000);
       if (error) throw error;
       return (data ?? []).reverse();
     },
@@ -2029,14 +2068,27 @@ export default function ServiceCenter() {
         <div className="p-4 border-b space-y-3">
           <div className="flex items-center justify-between gap-2">
             <h1 className="text-lg font-semibold truncate">Atendimento</h1>
-            <Button
-              size="sm"
-              onClick={() => setNewMsgOpen(true)}
-              className="h-8 gap-1.5 shrink-0 bg-[hsl(var(--navy))] text-[hsl(var(--cream))] hover:bg-[hsl(var(--navy))]/90"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Nova
-            </Button>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleSyncHistory("all")}
+                disabled={!!syncingHistory}
+                className="h-8 gap-1.5"
+                title="Recuperar mensagens recentes disponíveis na instância, incluindo grupos"
+              >
+                <RefreshCw className={cn("h-3.5 w-3.5", syncingHistory === "all" && "animate-spin")} />
+                Sincronizar
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => setNewMsgOpen(true)}
+                className="h-8 gap-1.5 bg-[hsl(var(--navy))] text-[hsl(var(--cream))] hover:bg-[hsl(var(--navy))]/90"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Nova
+              </Button>
+            </div>
           </div>
           <Popover open={nicknameOpen} onOpenChange={setNicknameOpen}>
             <PopoverTrigger asChild>
@@ -2173,6 +2225,17 @@ export default function ServiceCenter() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleSyncHistory("selected")}
+                  disabled={!!syncingHistory}
+                  className="gap-2 shadow-sm"
+                  title="Recuperar mensagens anteriores desta conversa disponíveis na instância"
+                >
+                  <RefreshCw className={cn("h-4 w-4", syncingHistory === "selected" && "animate-spin")} />
+                  Histórico
+                </Button>
                 {!aiGloballyPaused && (
                   <Button
                     size="sm"
