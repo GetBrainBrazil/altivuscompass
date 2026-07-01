@@ -576,7 +576,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
       </div>
       <div className={cn("flex items-center gap-1.5 px-2 flex-wrap", isLead ? "" : "justify-end")}>
         <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-          {isAi ? "IA · " : isAgent ? (sentViaWhatsApp ? "WhatsApp · " : `${displayLabel} · `) : ""}
+          {isAi ? "IA · " : isAgent ? (sentViaWhatsApp ? "Altivus Turismo · " : `${displayLabel} · `) : ""}
           {formatTime(message.timestamp)}
           {!isLead && message.status && <MessageStatusTicks status={message.status} />}
         </span>
