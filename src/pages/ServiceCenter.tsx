@@ -2334,38 +2334,43 @@ export default function ServiceCenter() {
             {/* Messages */}
             <ScrollArea className="flex-1 px-6 py-5 min-w-0">
               <div className="space-y-4 max-w-3xl mx-auto min-w-0">
-                {selected.messages.map((m, idx) => {
-                  const prev = idx > 0 ? selected.messages[idx - 1] : null;
-                  const showDate =
-                    !prev || !isSameDay(prev.timestamp, m.timestamp);
-                  return (
-                    <div key={m.id} className="space-y-4">
-                      {showDate && <DateSeparator timestamp={m.timestamp} />}
-                      {m.isInternal ? (
-                        <InternalNote message={m} />
-                      ) : (
-                        <ChatBubble
-                          message={m}
-                          agentLabel={myAgentLabel}
-                          linkedQuotes={linksByMessage.get(m.id)}
-                          onLinkClick={() => setLinkDialogMessages([m.id])}
-                          onOpenQuote={(qid) => navigate(`/quotes?id=${qid}`)}
-                          onImageClick={(url, caption) => setLightbox({ url, caption })}
-                          onForward={() => setForwardMessage({
-                            id: m.id,
-                            messageType: m.messageType,
-                            content: m.content,
-                            mediaUrl: m.mediaUrl ?? null,
-                            mediaCaption: m.mediaCaption ?? null,
-                          })}
-                        />
-                      )}
-                      {selected.handoffAfterMessageId === m.id && <HandoffDivider />}
-                    </div>
-                  );
-                })}
-                <div ref={messagesEndRef} />
-
+                {messagesFetching && selected.messages.length === 0 ? (
+                  <MessagesSkeleton />
+                ) : (
+                  <>
+                    {selected.messages.map((m, idx) => {
+                      const prev = idx > 0 ? selected.messages[idx - 1] : null;
+                      const showDate =
+                        !prev || !isSameDay(prev.timestamp, m.timestamp);
+                      return (
+                        <div key={m.id} className="space-y-4">
+                          {showDate && <DateSeparator timestamp={m.timestamp} />}
+                          {m.isInternal ? (
+                            <InternalNote message={m} />
+                          ) : (
+                            <ChatBubble
+                              message={m}
+                              agentLabel={myAgentLabel}
+                              linkedQuotes={linksByMessage.get(m.id)}
+                              onLinkClick={() => setLinkDialogMessages([m.id])}
+                              onOpenQuote={(qid) => navigate(`/quotes?id=${qid}`)}
+                              onImageClick={(url, caption) => setLightbox({ url, caption })}
+                              onForward={() => setForwardMessage({
+                                id: m.id,
+                                messageType: m.messageType,
+                                content: m.content,
+                                mediaUrl: m.mediaUrl ?? null,
+                                mediaCaption: m.mediaCaption ?? null,
+                              })}
+                            />
+                          )}
+                          {selected.handoffAfterMessageId === m.id && <HandoffDivider />}
+                        </div>
+                      );
+                    })}
+                    <div ref={messagesEndRef} />
+                  </>
+                )}
               </div>
             </ScrollArea>
 
