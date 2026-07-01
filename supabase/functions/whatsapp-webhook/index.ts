@@ -7,6 +7,39 @@ const corsHeaders = {
 
 const ZAPI_BASE_URL = 'https://api.z-api.io'
 
+let notifySentByMeEnsuredAt = 0
+const NOTIFY_SENT_BY_ME_REFRESH_MS = 6 * 60 * 60 * 1000
+
+async function ensureNotifySentByMe(instanceId: string, token: string, clientToken: string) {
+  const now = Date.now()
+  if (now - notifySentByMeEnsuredAt < NOTIFY_SENT_BY_ME_REFRESH_MS) return
+  notifySentByMeEnsuredAt = now
+
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 2500)
+  try {
+    const res = await fetch(`${ZAPI_BASE_URL}/instances/${instanceId}/token/${token}/update-notify-sent-by-me`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Client-Token': clientToken,
+      },
+      body: JSON.stringify({ notifySentByMe: true }),
+      signal: controller.signal,
+    })
+    const txt = await res.text().catch(() => '')
+    if (!res.ok) {
+      console.warn('[whatsapp-webhook] Falha ao garantir notifySentByMe:', res.status, txt.slice(0, 300))
+    } else {
+      console.log('[whatsapp-webhook] notifySentByMe confirmado na Z-API')
+    }
+  } catch (err) {
+    console.warn('[whatsapp-webhook] Não foi possível confirmar notifySentByMe:', err instanceof Error ? err.message : err)
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
 /**
  * Formata um número de WhatsApp (E.164 sem '+', ex.: "5511999990000") como
  * placeholder humano para o campo "Nome do cliente" enquanto a IA ainda não
@@ -76,7 +109,7 @@ function contactPayloads(body: any): any[] {
     const keyText = keys.join('|')
     const hasName = !!(value.displayName || value.name || value.fullName || value.formattedName || value.notifyName || value.verifiedName)
     const hasPhone = !!(value.phone || value.number || value.phoneNumber || value.phoneNumbers || value.phones || value.waid || value.id)
-    return hasVcard(value) || (/contact|vcard/i.test(keyText) && (hasName || hasPhone || hasVcard(value))) || (hasName && hasPhone)
+    return hasVcard(value) || (/contact|vcard|contactsArrayMessage|contactMessage/i.test(keyText) && (hasName || hasPhone || hasVcard(value))) || (hasName && hasPhone)
   }
 
   const visit = (value: any, keyHint = '') => {
@@ -93,7 +126,7 @@ function contactPayloads(body: any): any[] {
     if (isContactLikeObject(value) && /contact|vcard/i.test(keyHint)) push(value)
 
     for (const [key, child] of Object.entries(value)) {
-      if (/^(contact|contacts|contactMessage|contactsArrayMessage|vCard|vcard|vCardString|vcardString|contactVcard|contactArray|contactsArray)$/i.test(key)) {
+      if (/^(contact|contacts|contactMessage|contactsArrayMessage|vCard|vcard|vCardString|vcardString|contactVcard|contactArray|contactsArray|sharedContact|sharedContacts|contactCard|contactCards)$/i.test(key)) {
         if (child && typeof child === 'object' && !Array.isArray(child) && 'contacts' in (child as any)) {
           push((child as any).contacts)
         } else {
@@ -161,9 +194,27 @@ function isOfficialZapiContact(body: any): boolean {
 }
 
 function formatSharedContactContent(body: any): string {
-  const contacts = contactPayloads(body)
+  const normalizedContacts = contactPayloads(body)
     .map(normalizeContactPayload)
     .filter(Boolean) as { name: string | null; phones: string[]; vcard: string | null }[]
+
+  const unique = new Map<string, { name: string | null; phones: string[]; vcard: string | null }>()
+  for (const c of normalizedContacts) {
+    const phoneKey = c.phones.map((p) => p.replace(/\D/g, '')).filter(Boolean).sort().join(',')
+    const key = phoneKey || (c.name || '').toLowerCase() || (c.vcard || '').slice(0, 120)
+    if (!key) continue
+    const prev = unique.get(key)
+    if (!prev) unique.set(key, c)
+    else {
+      unique.set(key, {
+        name: prev.name || c.name,
+        phones: Array.from(new Set([...(prev.phones || []), ...(c.phones || [])])),
+        vcard: prev.vcard || c.vcard,
+      })
+    }
+  }
+
+  const contacts = Array.from(unique.values())
 
   if (contacts.length === 0) return 'Contato compartilhado'
 
