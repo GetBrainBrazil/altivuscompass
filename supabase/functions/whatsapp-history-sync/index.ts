@@ -446,24 +446,45 @@ function normalizeMessage(raw: any, target: SyncTarget): NormalizedMessage | nul
 }
 
 async function fetchChatMessages(baseUrl: string, headers: Record<string, string>, phone: string, amount: number, lastMessageId: string | null): Promise<any[]> {
-  const qs = new URLSearchParams({ amount: String(amount) })
-  if (lastMessageId) qs.set('lastMessageId', lastMessageId)
-  const encodedPhone = encodeURIComponent(phone)
-  const url = `${baseUrl}/chat-messages/${encodedPhone}?${qs.toString()}`
-  const res = await fetch(url, { method: 'GET', headers })
-  const text = await res.text().catch(() => '')
-  if (!res.ok) {
+  // Z-API espera o identificador do grupo apenas com dígitos (ex.: 120363...),
+  // sem os sufixos internos "-group" ou "@g.us" que usamos no banco/UI.
+  const cleaned = sanitizeChatIdForZapi(phone)
+  const candidates = new Set<string>([cleaned])
+  // Fallback: alguns endpoints aceitam o formato completo @g.us para grupos.
+  if (isGroupPhone(phone)) candidates.add(`${cleaned}@g.us`)
+
+  const errors: string[] = []
+  for (const candidate of candidates) {
+    const qs = new URLSearchParams({ amount: String(amount) })
+    if (lastMessageId) qs.set('lastMessageId', lastMessageId)
+    const url = `${baseUrl}/chat-messages/${encodeURIComponent(candidate)}?${qs.toString()}`
+    const res = await fetch(url, { method: 'GET', headers })
+    const text = await res.text().catch(() => '')
+    if (res.ok) {
+      const data = safeJson(text)
+      if (Array.isArray(data)) return data
+      if (Array.isArray(data?.messages)) return data.messages
+      return []
+    }
     const lower = text.toLowerCase()
-    if (lower.includes('does not work in multi device') || lower.includes('multi device')) {
+    // A Z-API só devolve "does not work in multi device" quando é limitação real
+    // da instância. Outros erros (ex.: 404 por formato de ID errado) não devem
+    // ser classificados como Multi Device — tentamos o próximo formato.
+    if (lower.includes('does not work in multi device')) {
       throw new Error(MULTI_DEVICE_HISTORY_UNAVAILABLE)
     }
-    throw new Error(`Z-API não retornou histórico para ${phone}: ${res.status} ${text.slice(0, 300)}`)
+    errors.push(`(${candidate}) ${res.status} ${text.slice(0, 200)}`)
   }
+  throw new Error(`Z-API não retornou histórico para ${phone}: ${errors.join(' | ')}`)
+}
 
-  const data = safeJson(text)
-  if (Array.isArray(data)) return data
-  if (Array.isArray(data?.messages)) return data.messages
-  return []
+function sanitizeChatIdForZapi(phone: string): string {
+  const trimmed = String(phone || '').trim()
+  // Remove sufixos internos e devolve só os dígitos, mantendo compatibilidade
+  // tanto para grupos (120363...) quanto para contatos normais.
+  const withoutSuffix = trimmed.replace(/-group$/i, '').replace(/@g\.us$/i, '').replace(/@c\.us$/i, '').replace(/@s\.whatsapp\.net$/i, '').replace(/@lid$/i, '')
+  const digits = withoutSuffix.replace(/\D/g, '')
+  return digits || withoutSuffix
 }
 
 async function zapiGetArray(url: string, headers: Record<string, string>): Promise<any[]> {
