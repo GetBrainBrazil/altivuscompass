@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Resolve agent display label (nickname → full_name → "Atendente").
+    // Resolve agent display label (full_name → nickname → "Atendente").
     // Embedded into outgoing text so the historic record never changes
     // even if the user later updates their nickname.
     let agentLabel = 'Atendente'
@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
         .eq('user_id', user.id)
         .maybeSingle()
       const p = profile as { nickname?: string | null; full_name?: string | null } | null
-      const candidate = (p?.nickname?.trim() || p?.full_name?.trim() || '').trim()
+      const candidate = (p?.full_name?.trim() || p?.nickname?.trim() || '').trim()
       if (candidate) agentLabel = candidate
     } catch (_) { /* ignore — fallback to "Atendente" */ }
 
