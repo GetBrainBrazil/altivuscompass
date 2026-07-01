@@ -219,6 +219,27 @@ Deno.serve(async (req) => {
         })
     }
 
+    // Detecta falha real da Z-API: HTTP != 2xx ou payload com erro / sem messageId em ações de envio
+    const sendableActionsCheck = ['send-text', 'send-image', 'send-document', 'send-link', 'send-audio']
+    const isSendable = sendableActionsCheck.includes(action)
+    const rawErr = result && (result.error ?? result.message ?? result.value)
+    const zapiErrorMessage = typeof rawErr === 'string' && rawErr.trim() ? rawErr.trim() : null
+    const hasMessageId = !!(result && (result.messageId || result.id || result.zaapId))
+    const zapiFailed = !response.ok || (isSendable && !hasMessageId) || !!zapiErrorMessage
+
+    if (zapiFailed && isSendable) {
+      console.error('[send-whatsapp] Z-API rejeitou envio:', { status: response.status, result })
+      return new Response(
+        JSON.stringify({
+          error: zapiErrorMessage || `Z-API recusou o envio (HTTP ${response.status}). Verifique se o número existe e se a instância do WhatsApp está conectada.`,
+          zapi: result,
+        }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
+    }
+
+
+
     // Log the action if quote_id is provided
     if (quote_id && (action === 'send-text' || action === 'send-link' || action === 'send-image')) {
       const { data: profile } = await supabase
