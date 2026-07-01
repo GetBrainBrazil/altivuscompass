@@ -1112,6 +1112,35 @@ const CRMPanel = ({ conversation }: { conversation: Conversation }) => {
   );
 };
 
+// ============= Messages Skeleton (elegant loading) =============
+function MessagesSkeleton() {
+  return (
+    <div className="space-y-4 max-w-3xl mx-auto min-w-0 py-2">
+      {Array.from({ length: 8 }).map((_, i) => {
+        const isRight = i % 2 === 0;
+        const widthClass = i % 3 === 0 ? "w-3/4" : i % 3 === 1 ? "w-1/2" : "w-2/3";
+        return (
+          <div
+            key={i}
+            className={cn(
+              "flex",
+              isRight ? "justify-end" : "justify-start"
+            )}
+          >
+            <div
+              className={cn(
+                "h-10 rounded-2xl animate-pulse",
+                isRight ? "bg-primary/15 rounded-br-sm" : "bg-muted rounded-bl-sm",
+                widthClass
+              )}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ============= Contact Banner (top of chat) =============
 const formatDateBR = (iso: string) => {
   const d = new Date(iso);
@@ -1438,7 +1467,7 @@ export default function ServiceCenter() {
   }, [contactsMeta]);
 
   // ===== Carrega mensagens da conversa selecionada =====
-  const { data: msgRows = [] } = useQuery({
+  const { data: msgRows = [], isFetching: messagesFetching } = useQuery({
     queryKey: ["wa_messages", selectedId],
     enabled: !!selectedId,
     queryFn: async () => {
@@ -1646,9 +1675,21 @@ export default function ServiceCenter() {
 
   // Ref para auto-scroll no chat
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+    messagesEndRef.current?.scrollIntoView({ behavior, block: "end" });
   };
+
+  // Scroll inicial instantâneo ao abrir conversa (evita "pulo" do topo)
+  const [initialScrollConvId, setInitialScrollConvId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!selectedId || messagesFetching || msgRows.length === 0) return;
+    if (initialScrollConvId === selectedId) return;
+    setInitialScrollConvId(selectedId);
+    // Defer para garantir que o DOM já renderizou
+    requestAnimationFrame(() => {
+      scrollToBottom("auto");
+    });
+  }, [selectedId, messagesFetching, msgRows.length, initialScrollConvId]);
 
   const handleSend = async () => {
     if (!selectedId || !draft.trim() || sending) return;
@@ -1944,10 +1985,10 @@ export default function ServiceCenter() {
 
   // Auto-scroll to latest message on new messages or when switching conversations
   useEffect(() => {
-    if (selected) {
-      setTimeout(scrollToBottom, 50);
-    }
-  }, [selected?.messages.length, selectedId]);
+    if (!selected) return;
+    if (initialScrollConvId !== selectedId) return; // skip while first-load scroll hasn't happened yet
+    scrollToBottom("smooth");
+  }, [selected?.messages.length, selectedId, initialScrollConvId]);
 
   return (
     <div className="flex flex-col h-[calc(100vh-3.5rem)] -m-3 sm:-m-4 md:-m-6 lg:-m-8 overflow-hidden bg-background">
@@ -2293,38 +2334,43 @@ export default function ServiceCenter() {
             {/* Messages */}
             <ScrollArea className="flex-1 px-6 py-5 min-w-0">
               <div className="space-y-4 max-w-3xl mx-auto min-w-0">
-                {selected.messages.map((m, idx) => {
-                  const prev = idx > 0 ? selected.messages[idx - 1] : null;
-                  const showDate =
-                    !prev || !isSameDay(prev.timestamp, m.timestamp);
-                  return (
-                    <div key={m.id} className="space-y-4">
-                      {showDate && <DateSeparator timestamp={m.timestamp} />}
-                      {m.isInternal ? (
-                        <InternalNote message={m} />
-                      ) : (
-                        <ChatBubble
-                          message={m}
-                          agentLabel={myAgentLabel}
-                          linkedQuotes={linksByMessage.get(m.id)}
-                          onLinkClick={() => setLinkDialogMessages([m.id])}
-                          onOpenQuote={(qid) => navigate(`/quotes?id=${qid}`)}
-                          onImageClick={(url, caption) => setLightbox({ url, caption })}
-                          onForward={() => setForwardMessage({
-                            id: m.id,
-                            messageType: m.messageType,
-                            content: m.content,
-                            mediaUrl: m.mediaUrl ?? null,
-                            mediaCaption: m.mediaCaption ?? null,
-                          })}
-                        />
-                      )}
-                      {selected.handoffAfterMessageId === m.id && <HandoffDivider />}
-                    </div>
-                  );
-                })}
-                <div ref={messagesEndRef} />
-
+                {messagesFetching && msgRows.length === 0 ? (
+                  <MessagesSkeleton />
+                ) : (
+                  <>
+                    {selected.messages.map((m, idx) => {
+                      const prev = idx > 0 ? selected.messages[idx - 1] : null;
+                      const showDate =
+                        !prev || !isSameDay(prev.timestamp, m.timestamp);
+                      return (
+                        <div key={m.id} className="space-y-4">
+                          {showDate && <DateSeparator timestamp={m.timestamp} />}
+                          {m.isInternal ? (
+                            <InternalNote message={m} />
+                          ) : (
+                            <ChatBubble
+                              message={m}
+                              agentLabel={myAgentLabel}
+                              linkedQuotes={linksByMessage.get(m.id)}
+                              onLinkClick={() => setLinkDialogMessages([m.id])}
+                              onOpenQuote={(qid) => navigate(`/quotes?id=${qid}`)}
+                              onImageClick={(url, caption) => setLightbox({ url, caption })}
+                              onForward={() => setForwardMessage({
+                                id: m.id,
+                                messageType: m.messageType,
+                                content: m.content,
+                                mediaUrl: m.mediaUrl ?? null,
+                                mediaCaption: m.mediaCaption ?? null,
+                              })}
+                            />
+                          )}
+                          {selected.handoffAfterMessageId === m.id && <HandoffDivider />}
+                        </div>
+                      );
+                    })}
+                    <div ref={messagesEndRef} />
+                  </>
+                )}
               </div>
             </ScrollArea>
 
