@@ -580,7 +580,7 @@ const extractRawSharedContact = (raw?: any): { name: string; phones: string[] } 
   return first ? { name: first.name || "Contato compartilhado", phones: first.phones } : null;
 };
 
-const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuote, onImageClick, onForward }: ChatBubbleProps) => {
+const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuote, onImageClick, onForward, groupedWithPrev = false, groupedWithNext = false }: ChatBubbleProps & { groupedWithPrev?: boolean; groupedWithNext?: boolean }) => {
   const isLead = message.sender === "lead";
   const isAgent = message.sender === "agent";
   const isAi = message.sender === "ai";
