@@ -151,6 +151,15 @@ function normalizeContactPayload(payload: any): { name: string | null; phones: s
   return { name: name ? String(name).trim() : null, phones: Array.from(phones), vcard: vcard ? String(vcard) : null }
 }
 
+function isOfficialZapiContact(body: any): boolean {
+  return !!(
+    body?.contact?.vCard ||
+    body?.contact?.vcard ||
+    body?.contact?.displayName ||
+    body?.contact?.phones?.length
+  )
+}
+
 function formatSharedContactContent(body: any): string {
   const contacts = contactPayloads(body)
     .map(normalizeContactPayload)
@@ -222,7 +231,8 @@ Deno.serve(async (req) => {
        callbackType === 'ReadReceiptCallback' ? 'READ' :
        callbackType === 'PlayedCallback' ? 'PLAYED' :
        undefined)
-    const hasContactContent = contactPayloads(body).length > 0
+    const contactCandidates = contactPayloads(body)
+    const hasContactContent = contactCandidates.length > 0 || isOfficialZapiContact(body)
     const hasMessageContent =
       !!body.text ||
       !!body.image ||
@@ -308,6 +318,16 @@ Deno.serve(async (req) => {
     const isStickerMsg = body.sticker != null
     const isLocationMsg = body.location != null
     const isContactMsg = hasContactContent
+    if (isContactMsg) {
+      console.log('[whatsapp-webhook] Contact payload detected:', JSON.stringify({
+        messageId: body.messageId || body.id || null,
+        phone: body.phone || body.from || null,
+        fromMe: body.fromMe === true,
+        keys: Object.keys(body || {}),
+        contactKeys: body.contact && typeof body.contact === 'object' ? Object.keys(body.contact) : null,
+        candidates: contactCandidates.length,
+      }))
+    }
     const rawSenderName = body.senderName || body.chatName || ''
     // Em mensagens fromMe o Z-API devolve o nome da própria agência como
     // senderName. Também ignoramos qualquer string que pareça ser o nome da
