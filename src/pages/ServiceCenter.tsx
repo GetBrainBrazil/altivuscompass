@@ -1473,19 +1473,28 @@ export default function ServiceCenter() {
   // ===== Mapeia para a estrutura visual existente =====
   const conversations: Conversation[] = useMemo(() => {
     return convoRows.map((c: any) => {
+      const mentionReplacements = new Map<string, string>();
+      if (selectedId === c.id) {
+        (msgRows as any[]).forEach((m: any) => {
+          addMentionReplacement(mentionReplacements, m.raw?.participantLid, m.sender_phone || m.raw?.participantPhone);
+          collectMentionReplacements(m.raw, mentionReplacements);
+        });
+      }
       const msgs: Message[] = (selectedId === c.id ? msgRows : []).map((m: any) => ({
         id: m.id,
         sender: (m.sender ?? "lead") as MessageSender,
-        content:
+        content: normalizeMentionText(
           ["image", "video", "document"].includes(m.message_type)
             ? (m.media_caption ?? "")
             : (m.content ?? m.media_caption ?? ""),
+          mentionReplacements,
+        ),
         timestamp: m.created_at,
         status: (m.status ?? undefined) as MessageStatus | undefined,
         messageType: m.message_type ?? "text",
         mediaUrl: m.media_url ?? undefined,
         mediaMime: m.media_mime ?? undefined,
-        mediaCaption: m.media_caption ?? undefined,
+        mediaCaption: m.media_caption ? normalizeMentionText(m.media_caption, mentionReplacements) : undefined,
         isInternal: !!m.is_internal,
         senderName: m.sender_name ?? undefined,
         senderPhone: m.sender_phone ?? undefined,
