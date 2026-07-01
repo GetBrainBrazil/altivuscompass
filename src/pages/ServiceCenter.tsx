@@ -1403,7 +1403,7 @@ export default function ServiceCenter() {
       const note = String((data as any)?.note || "");
       if (multiDeviceUnavailable) {
         toast.warning(
-          note || "A Z-API não disponibiliza histórico antigo por API em instâncias Multi Device. As próximas mensagens serão registradas pelo webhook.",
+          note || "A Z-API bloqueou a busca de histórico antigo por API nesta instância Multi Device. O que já aparece em alguns contatos estava salvo no Compass; conversas/grupos sem histórico anterior passam a receber apenas novas mensagens pelo webhook.",
           { id: toastId, duration: 9000 },
         );
       } else {
