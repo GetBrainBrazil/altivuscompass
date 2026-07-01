@@ -37,6 +37,94 @@ function isAgencyName(name: string | null | undefined): boolean {
   return AGENCY_NAME_RES.some((re) => re.test(n))
 }
 
+function extractVcardName(vcard: string): string | null {
+  const fn = vcard.match(/^FN:(.+)$/im)?.[1]?.trim()
+  if (fn) return fn
+  const n = vcard.match(/^N:([^;\n]+)/im)?.[1]?.trim()
+  return n || null
+}
+
+function extractVcardPhones(vcard: string): string[] {
+  const phones = new Set<string>()
+  for (const match of vcard.matchAll(/waid=(\d+)/gi)) phones.add(match[1])
+  for (const match of vcard.matchAll(/^TEL[^:\n]*:(.+)$/gim)) {
+    const digits = String(match[1] || '').replace(/\D/g, '')
+    if (digits) phones.add(digits)
+  }
+  return Array.from(phones)
+}
+
+function contactPayloads(body: any): any[] {
+  const payloads: any[] = []
+  const push = (value: any) => {
+    if (!value) return
+    if (Array.isArray(value)) value.forEach(push)
+    else payloads.push(value)
+  }
+
+  push(body.contact)
+  push(body.contacts)
+  push(body.contactMessage)
+  push(body.message?.contactMessage)
+  push(body.contactsArrayMessage?.contacts)
+  push(body.message?.contactsArrayMessage?.contacts)
+  push(body.contactsArrayMessage)
+  push(body.message?.contactsArrayMessage)
+  push(body.vCard || body.vcard)
+
+  return payloads.filter(Boolean)
+}
+
+function normalizeContactPayload(payload: any): { name: string | null; phones: string[]; vcard: string | null } | null {
+  if (!payload) return null
+  const vcard = typeof payload === 'string'
+    ? payload
+    : (payload.vCard || payload.vcard || payload.vCardString || payload.vcardString || payload.contactVcard || null)
+
+  const phones = new Set<string>()
+  const addPhone = (value: any) => {
+    if (!value) return
+    if (Array.isArray(value)) return value.forEach(addPhone)
+    if (typeof value === 'object') {
+      addPhone(value.phone || value.number || value.waid || value.id || value.value)
+      return
+    }
+    const digits = String(value).replace(/\D/g, '')
+    if (digits) phones.add(digits)
+  }
+
+  if (typeof payload === 'object') {
+    addPhone(payload.phones)
+    addPhone(payload.phoneNumbers)
+    addPhone(payload.phoneNumber)
+    addPhone(payload.phone)
+    addPhone(payload.number)
+    addPhone(payload.waid)
+  }
+  if (vcard) extractVcardPhones(String(vcard)).forEach((p) => phones.add(p))
+
+  const name = typeof payload === 'object'
+    ? (payload.displayName || payload.name || payload.fullName || payload.formattedName || payload.notifyName || extractVcardName(String(vcard || '')) || null)
+    : extractVcardName(String(vcard || ''))
+
+  if (!name && phones.size === 0 && !vcard) return null
+  return { name: name ? String(name).trim() : null, phones: Array.from(phones), vcard: vcard ? String(vcard) : null }
+}
+
+function formatSharedContactContent(body: any): string {
+  const contacts = contactPayloads(body)
+    .map(normalizeContactPayload)
+    .filter(Boolean) as { name: string | null; phones: string[]; vcard: string | null }[]
+
+  if (contacts.length === 0) return 'Contato compartilhado'
+
+  return contacts.map((c, idx) => {
+    const title = c.name || (contacts.length > 1 ? `Contato ${idx + 1}` : 'Contato compartilhado')
+    const lines = [title, ...c.phones.map((p) => `+${p}`)]
+    return lines.join('\n')
+  }).join('\n\n')
+}
+
 
 
 
@@ -94,6 +182,7 @@ Deno.serve(async (req) => {
        callbackType === 'ReadReceiptCallback' ? 'READ' :
        callbackType === 'PlayedCallback' ? 'PLAYED' :
        undefined)
+    const hasContactContent = contactPayloads(body).length > 0
     const hasMessageContent =
       !!body.text ||
       !!body.image ||
@@ -103,8 +192,7 @@ Deno.serve(async (req) => {
       !!body.body ||
       !!body.sticker ||
       !!body.location ||
-      !!body.contact ||
-      !!body.contacts ||
+      hasContactContent ||
       !!body.reaction ||
       !!body.message ||
       !!body.extendedTextMessage ||
@@ -179,7 +267,7 @@ Deno.serve(async (req) => {
     const isVideoMsg = body.video != null
     const isStickerMsg = body.sticker != null
     const isLocationMsg = body.location != null
-    const isContactMsg = body.contact != null || body.contacts != null
+    const isContactMsg = hasContactContent
     const rawSenderName = body.senderName || body.chatName || ''
     // Em mensagens fromMe o Z-API devolve o nome da própria agência como
     // senderName. Também ignoramos qualquer string que pareça ser o nome da
@@ -240,8 +328,7 @@ Deno.serve(async (req) => {
       else if (isLocationMsg) { messageType = 'location'; content = JSON.stringify(body.location) }
       else if (isContactMsg) {
         messageType = 'contact'
-        const c = body.contact || (Array.isArray(body.contacts) ? body.contacts[0] : null)
-        content = c ? (c.displayName || c.name || c.vcard || JSON.stringify(c)) : 'Contato compartilhado'
+        content = formatSharedContactContent(body)
       }
       else {
         // Unknown type — preserve a readable preview so the UI never shows just "Mensagem"
@@ -261,7 +348,7 @@ Deno.serve(async (req) => {
         messageType === 'document' ? '📄 Documento' :
         messageType === 'sticker' ? '🌟 Figurinha' :
         messageType === 'location' ? '📍 Localização' :
-        messageType === 'contact' ? '👤 Contato' :
+        messageType === 'contact' ? `👤 ${((content ?? '').split('\n')[0] || 'Contato compartilhado').slice(0, 80)}` :
         (content ?? '').slice(0, 200) || 'Mensagem'
 
       // ====== Garantir contato/lead/cliente ANTES da pausa global ======

@@ -468,6 +468,16 @@ const extractAgentLabel = (text?: string | null): { label: string | null; rest: 
   return { label: null, rest: t };
 };
 
+const parseSharedContact = (content?: string | null) => {
+  const lines = (content || "Contato compartilhado")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const phoneLines = lines.filter((line) => /^\+?\d[\d\s().-]{5,}$/.test(line));
+  const name = lines.find((line) => !phoneLines.includes(line)) || "Contato compartilhado";
+  return { name, phones: phoneLines };
+};
+
 const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuote, onImageClick, onForward }: ChatBubbleProps) => {
   const isLead = message.sender === "lead";
   const isAgent = message.sender === "agent";
@@ -490,6 +500,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
     : (agentLabel || "Agente");
   const displayContent = isAgent && mt === "text" ? parsedText.rest : message.content;
   const displayCaption = isAgent && isMedia ? parsedCaption.rest : message.mediaCaption;
+  const sharedContact = mt === "contact" ? parseSharedContact(displayContent) : null;
 
   return (
     <div className={cn("flex w-full flex-col gap-1", isLead ? "items-start" : "items-end")}>
@@ -568,6 +579,25 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
             <FileText className="h-4 w-4 shrink-0" />
             <span className="truncate">{displayCaption || "Documento"}</span>
           </a>
+        ) : mt === "contact" ? (
+          <div className="flex min-w-[220px] items-start gap-3">
+            <span className={cn(
+              "mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+              isLead ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground",
+            )}>
+              <UserRound className="h-4 w-4" />
+            </span>
+            <span className="min-w-0 flex-1 space-y-1">
+              <span className="block text-xs font-semibold uppercase tracking-wide opacity-75">Contato compartilhado</span>
+              <span className="block truncate font-medium">{sharedContact?.name}</span>
+              {sharedContact?.phones.map((phone) => (
+                <span key={phone} className="flex items-center gap-1.5 text-xs opacity-80">
+                  <Phone className="h-3 w-3" />
+                  {phone}
+                </span>
+              ))}
+            </span>
+          </div>
         ) : mt === "sticker" && message.mediaUrl ? (
           <img src={message.mediaUrl} alt="sticker" className="h-32 w-32 object-contain" />
         ) : (
