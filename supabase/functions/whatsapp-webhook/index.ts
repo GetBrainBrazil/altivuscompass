@@ -319,19 +319,37 @@ Deno.serve(async (req) => {
           if (priorMsg?.conversation_id) resolvedConvoId = priorMsg.conversation_id as string
         }
 
-        // 2) Phone veio como @lid → procura conversa existente pelo chat_lid.
+        // 2) Procura conversa existente por chat_lid OU pelo próprio phone==LID.
+        //    Cobre: (a) inbound com phone real + body.chatLid encontra conv
+        //    antiga criada com phone=@lid; (b) outbound onde Z-API devolve
+        //    phone=@lid encontra a conv real cujo chat_lid guarda o mesmo @lid.
         if (!resolvedConvoId && chatLidRaw) {
           const { data: byLid } = await supabase
             .from('wa_conversations')
-            .select('id')
-            .eq('chat_lid', chatLidRaw)
+            .select('id, phone')
+            .or(`chat_lid.eq.${chatLidRaw},phone.eq.${chatLidRaw}`)
+            .order('phone', { ascending: true }) // dígitos vêm antes de "@lid"
+            .limit(1)
             .maybeSingle()
           if (byLid?.id) resolvedConvoId = byLid.id as string
+        }
+
+        // 3) Fallback: phone real explícito.
+        if (!resolvedConvoId && !phoneIsLid) {
+          const { data: byPhone } = await supabase
+            .from('wa_conversations')
+            .select('id')
+            .eq('phone', phone)
+            .maybeSingle()
+          if (byPhone?.id) resolvedConvoId = byPhone.id as string
         }
 
         if (resolvedConvoId) {
           const updatePayload: Record<string, unknown> = { ...baseConvo }
           if (chatLidRaw) updatePayload.chat_lid = chatLidRaw
+          // Se a conv antiga foi criada com phone=@lid e agora chegou o
+          // telefone real, promove para o número real (evita duplicidade).
+          if (!phoneIsLid && phone) updatePayload.phone = phone
           if (trustedDisplayName) updatePayload.contact_name = trustedDisplayName
           if (senderPhotoUrl) updatePayload.profile_photo_url = senderPhotoUrl
           const { data, error } = await supabase
