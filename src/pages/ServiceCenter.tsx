@@ -98,6 +98,7 @@ interface Message {
   senderName?: string;
   /** Em conversas de grupo: telefone do participante que enviou. */
   senderPhone?: string;
+  raw?: any;
 }
 
 type ConversationStatus = "ai" | "human";
@@ -478,6 +479,57 @@ const parseSharedContact = (content?: string | null) => {
   return { name, phones: phoneLines };
 };
 
+const extractRawSharedContact = (raw?: any): { name: string; phones: string[] } | null => {
+  const seen = new WeakSet<object>();
+  const contacts: { name?: string; phones: string[] }[] = [];
+
+  const addPhone = (phones: Set<string>, value: any) => {
+    if (!value) return;
+    if (Array.isArray(value)) return value.forEach((v) => addPhone(phones, v));
+    if (typeof value === "object") {
+      addPhone(phones, value.phone || value.number || value.phoneNumber || value.waid || value.id || value.value);
+      return;
+    }
+    const digits = String(value).replace(/\D/g, "");
+    if (digits.length >= 8) phones.add(`+${digits}`);
+  };
+
+  const parseVcard = (vcard: string) => {
+    const phones = new Set<string>();
+    for (const match of vcard.matchAll(/waid=(\d+)/gi)) phones.add(`+${match[1]}`);
+    for (const match of vcard.matchAll(/^TEL[^:\n]*:(.+)$/gim)) addPhone(phones, match[1]);
+    const name = vcard.match(/^FN:(.+)$/im)?.[1]?.trim() || vcard.match(/^N:([^;\n]+)/im)?.[1]?.trim();
+    contacts.push({ name, phones: Array.from(phones) });
+  };
+
+  const visit = (value: any, keyHint = "") => {
+    if (!value) return;
+    if (typeof value === "string") {
+      if (/vcard/i.test(keyHint) || /BEGIN:VCARD|^FN:|\nFN:|\nTEL/i.test(value)) parseVcard(value);
+      return;
+    }
+    if (Array.isArray(value)) return value.forEach((item) => visit(item, keyHint));
+    if (typeof value !== "object") return;
+    if (seen.has(value)) return;
+    seen.add(value);
+
+    const vcard = value.vCard || value.vcard || value.vCardString || value.vcardString || value.contactVcard;
+    const name = value.displayName || value.name || value.fullName || value.formattedName || value.notifyName || value.verifiedName;
+    const phones = new Set<string>();
+    addPhone(phones, value.phones || value.phoneNumbers || value.phoneNumber || value.phone || value.number || value.waid);
+    if (vcard) parseVcard(String(vcard));
+    if (/contact|vcard/i.test(keyHint) && (name || phones.size > 0)) {
+      contacts.push({ name: name ? String(name).trim() : undefined, phones: Array.from(phones) });
+    }
+
+    Object.entries(value).forEach(([key, child]) => visit(child, key));
+  };
+
+  visit(raw);
+  const first = contacts.find((c) => c.name || c.phones.length > 0);
+  return first ? { name: first.name || "Contato compartilhado", phones: first.phones } : null;
+};
+
 const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuote, onImageClick, onForward }: ChatBubbleProps) => {
   const isLead = message.sender === "lead";
   const isAgent = message.sender === "agent";
@@ -500,7 +552,8 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
     : (agentLabel || "Agente");
   const displayContent = isAgent && mt === "text" ? parsedText.rest : message.content;
   const displayCaption = isAgent && isMedia ? parsedCaption.rest : message.mediaCaption;
-  const sharedContact = mt === "contact" ? parseSharedContact(displayContent) : null;
+  const rawSharedContact = mt === "other" ? extractRawSharedContact(message.raw) : null;
+  const sharedContact = mt === "contact" ? parseSharedContact(displayContent) : rawSharedContact;
 
   return (
     <div className={cn("flex w-full flex-col gap-1", isLead ? "items-start" : "items-end")}>
@@ -579,7 +632,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
             <FileText className="h-4 w-4 shrink-0" />
             <span className="truncate">{displayCaption || "Documento"}</span>
           </a>
-        ) : mt === "contact" ? (
+        ) : sharedContact ? (
           <div className="flex min-w-[220px] items-start gap-3">
             <span className={cn(
               "mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
@@ -1387,6 +1440,7 @@ export default function ServiceCenter() {
         isInternal: !!m.is_internal,
         senderName: m.sender_name ?? undefined,
         senderPhone: m.sender_phone ?? undefined,
+        raw: m.raw ?? undefined,
       }));
       // Se não há nenhuma mensagem carregada, cria uma "fake" só para preview
       const fallbackMsg: Message = {

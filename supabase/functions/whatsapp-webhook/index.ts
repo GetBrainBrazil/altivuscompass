@@ -56,23 +56,63 @@ function extractVcardPhones(vcard: string): string[] {
 
 function contactPayloads(body: any): any[] {
   const payloads: any[] = []
+  const seen = new WeakSet<object>()
+
   const push = (value: any) => {
     if (!value) return
-    if (Array.isArray(value)) value.forEach(push)
-    else payloads.push(value)
+    if (Array.isArray(value)) return value.forEach(push)
+    payloads.push(value)
   }
 
-  push(body.contact)
-  push(body.contacts)
-  push(body.contactMessage)
-  push(body.message?.contactMessage)
-  push(body.contactsArrayMessage?.contacts)
-  push(body.message?.contactsArrayMessage?.contacts)
-  push(body.contactsArrayMessage)
-  push(body.message?.contactsArrayMessage)
-  push(body.vCard || body.vcard)
+  const hasVcard = (value: any): boolean => {
+    if (typeof value === 'string') return /BEGIN:VCARD|\bVCARD\b|^FN:|\nFN:|\nTEL/i.test(value)
+    if (!value || typeof value !== 'object') return false
+    return !!(value.vCard || value.vcard || value.vCardString || value.vcardString || value.contactVcard || value.vcardStringRaw)
+  }
 
-  return payloads.filter(Boolean)
+  const isContactLikeObject = (value: any): boolean => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+    const keys = Object.keys(value)
+    const keyText = keys.join('|')
+    const hasName = !!(value.displayName || value.name || value.fullName || value.formattedName || value.notifyName || value.verifiedName)
+    const hasPhone = !!(value.phone || value.number || value.phoneNumber || value.phoneNumbers || value.phones || value.waid || value.id)
+    return hasVcard(value) || (/contact|vcard/i.test(keyText) && (hasName || hasPhone || hasVcard(value))) || (hasName && hasPhone)
+  }
+
+  const visit = (value: any, keyHint = '') => {
+    if (!value) return
+    if (typeof value === 'string') {
+      if (/vcard/i.test(keyHint) || hasVcard(value)) push(value)
+      return
+    }
+    if (Array.isArray(value)) return value.forEach((item) => visit(item, keyHint))
+    if (typeof value !== 'object') return
+    if (seen.has(value)) return
+    seen.add(value)
+
+    if (isContactLikeObject(value) && /contact|vcard/i.test(keyHint)) push(value)
+
+    for (const [key, child] of Object.entries(value)) {
+      if (/^(contact|contacts|contactMessage|contactsArrayMessage|vCard|vcard|vCardString|vcardString|contactVcard|contactArray|contactsArray)$/i.test(key)) {
+        if (child && typeof child === 'object' && !Array.isArray(child) && 'contacts' in (child as any)) {
+          push((child as any).contacts)
+        } else {
+          push(child)
+        }
+      }
+      visit(child, key)
+    }
+  }
+
+  visit(body)
+
+  // Remove duplicados por conteúdo para evitar renderizar o mesmo vCard duas vezes.
+  const unique = new Map<string, any>()
+  for (const p of payloads.filter(Boolean)) {
+    const key = typeof p === 'string' ? p : JSON.stringify(p)
+    unique.set(key, p)
+  }
+  return Array.from(unique.values())
 }
 
 function normalizeContactPayload(payload: any): { name: string | null; phones: string[]; vcard: string | null } | null {
@@ -104,7 +144,7 @@ function normalizeContactPayload(payload: any): { name: string | null; phones: s
   if (vcard) extractVcardPhones(String(vcard)).forEach((p) => phones.add(p))
 
   const name = typeof payload === 'object'
-    ? (payload.displayName || payload.name || payload.fullName || payload.formattedName || payload.notifyName || extractVcardName(String(vcard || '')) || null)
+    ? (payload.displayName || payload.name || payload.fullName || payload.formattedName || payload.notifyName || payload.verifiedName || extractVcardName(String(vcard || '')) || null)
     : extractVcardName(String(vcard || ''))
 
   if (!name && phones.size === 0 && !vcard) return null
@@ -397,9 +437,15 @@ Deno.serve(async (req) => {
           groupConvoPayload.group_subject = groupSubject
           groupConvoPayload.contact_name = groupSubject
         }
-        const { data, error } = await supabase
+        const { data: existingGroup } = await supabase
           .from('wa_conversations')
-          .upsert(groupConvoPayload, { onConflict: 'group_id' })
+          .select('id')
+          .eq('group_id', groupId)
+          .maybeSingle()
+        const query = existingGroup?.id
+          ? supabase.from('wa_conversations').update(groupConvoPayload).eq('id', existingGroup.id)
+          : supabase.from('wa_conversations').upsert(groupConvoPayload, { onConflict: 'phone' })
+        const { data, error } = await query
           .select('id, unread_count')
           .single()
         convo = data as any
