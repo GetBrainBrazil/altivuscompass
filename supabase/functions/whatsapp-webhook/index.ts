@@ -417,10 +417,11 @@ Deno.serve(async (req) => {
             status: isFromMe ? 'sent' : 'received',
             sender_phone: isGroup ? (participantPhone || null) : null,
             // Em grupos: nome do remetente real; fora de grupos, se for fromMe
-            // sem casar com nenhuma mensagem enviada pela Central, marca como
-            // "WhatsApp" para a UI mostrar explicitamente que foi enviada direto
-            // pelo app/celular (e não por um atendente logado no Compass).
-            sender_name: isGroup ? (senderName || null) : (isFromMe ? 'WhatsApp' : null),
+            // sem casar com nenhuma mensagem enviada pela Central (dedup por
+            // zapi_message_id), foi enviada direto pelo WhatsApp Web/celular —
+            // marca como "Altivus Turismo" (identidade da agência) em vez do
+            // push name do contato salvo no celular do cliente.
+            sender_name: isGroup ? (senderName || null) : (isFromMe ? 'Altivus Turismo' : null),
             raw: body,
           })
           if (msgErr) console.error('wa_messages insert error:', msgErr.message)
