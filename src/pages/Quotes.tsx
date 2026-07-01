@@ -1764,11 +1764,11 @@ export default function Quotes() {
 
   // ----- WhatsApp summary helpers (productivity) -----
   const fetchSummaryDataFor = async (quote: Quote) => {
-    if (editingQuote && editingQuote.id === quote.id) {
-      const pax = (clientPassengers as any[]).filter((p: any) => selectedPassengers.includes(p.id));
-      return { items, passengers: pax };
-    }
-    const [{ data: itemsData }, { data: paxLink }] = await Promise.all([
+    // Sempre buscar o snapshot mais recente da cotação no banco para evitar dados
+    // desatualizados no cache local de outros usuários (ex.: título/destino alterados
+    // por outro colaborador em outra sessão).
+    const [{ data: freshQuote }, { data: itemsData }, { data: paxLink }] = await Promise.all([
+      supabase.from("quotes").select("*").eq("id", quote.id).maybeSingle(),
       supabase.from("quote_items").select("*").eq("quote_id", quote.id).order("sort_order"),
       supabase.from("quote_passengers").select("passenger_id").eq("quote_id", quote.id),
     ]);
@@ -1778,7 +1778,8 @@ export default function Quotes() {
       const { data: paxData } = await supabase.from("passengers").select("id, full_name").in("id", ids);
       pax = paxData ?? [];
     }
-    return { items: (itemsData ?? []) as any[], passengers: pax };
+    const mergedQuote = { ...(quote as any), ...((freshQuote as any) ?? {}) };
+    return { quote: mergedQuote, items: (itemsData ?? []) as any[], passengers: pax };
   };
 
   const fallbackCopyToClipboard = (text: string): boolean => {
@@ -1800,8 +1801,8 @@ export default function Quotes() {
 
   const handleCopySummary = async (quote: Quote) => {
     try {
-      const { items: qItems, passengers: qPax } = await fetchSummaryDataFor(quote);
-      const summary = buildQuoteSummary(quote, qItems, qPax, clients as any[]);
+      const { quote: freshQuote, items: qItems, passengers: qPax } = await fetchSummaryDataFor(quote);
+      const summary = buildQuoteSummary(freshQuote, qItems, qPax, clients as any[]);
       let copied = false;
       if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
         try {
@@ -1831,8 +1832,8 @@ export default function Quotes() {
         toast({ title: "Cliente sem telefone", description: "Cadastre um telefone para o cliente antes.", variant: "destructive" });
         return;
       }
-      const { items: qItems, passengers: qPax } = await fetchSummaryDataFor(quote);
-      const summary = buildQuoteSummary(quote, qItems, qPax, clients as any[]);
+      const { quote: freshQuote, items: qItems, passengers: qPax } = await fetchSummaryDataFor(quote);
+      const summary = buildQuoteSummary(freshQuote, qItems, qPax, clients as any[]);
       const url = `https://wa.me/${phone}?text=${encodeURIComponent(summary)}`;
       window.open(url, "_blank", "noopener,noreferrer");
       try { await logHistory(quote.id, "summary_whatsapp_opened", "Resumo aberto no WhatsApp"); } catch {}
