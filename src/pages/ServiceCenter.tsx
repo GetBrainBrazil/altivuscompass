@@ -89,7 +89,7 @@ interface Message {
   content: string;
   timestamp: string; // ISO
   status?: MessageStatus;
-  messageType?: "text" | "image" | "audio" | "video" | "document" | "sticker";
+  messageType?: "text" | "image" | "audio" | "video" | "document" | "sticker" | "location" | "contact" | "other";
   mediaUrl?: string;
   mediaMime?: string;
   mediaCaption?: string;
@@ -1342,9 +1342,9 @@ export default function ServiceCenter() {
         id: m.id,
         sender: (m.sender ?? "lead") as MessageSender,
         content:
-          m.message_type === "text"
-            ? (m.content ?? "")
-            : (m.media_caption ?? ""),
+          ["image", "video", "document"].includes(m.message_type)
+            ? (m.media_caption ?? "")
+            : (m.content ?? m.media_caption ?? ""),
         timestamp: m.created_at,
         status: (m.status ?? undefined) as MessageStatus | undefined,
         messageType: m.message_type ?? "text",
