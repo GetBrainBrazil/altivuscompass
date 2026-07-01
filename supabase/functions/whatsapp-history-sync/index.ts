@@ -12,7 +12,7 @@ const DEFAULT_MAX_CHATS = 250
 const DEFAULT_MAX_MESSAGES_PER_CHAT = 250
 const HARD_MAX_CHATS = 1000
 const HARD_MAX_MESSAGES_PER_CHAT = 1000
-const MULTI_DEVICE_HISTORY_UNAVAILABLE = 'A Z-API não disponibiliza histórico antigo por API em instâncias Multi Device. O Compass só consegue registrar mensagens recebidas pelo webhook após a configuração.'
+const MULTI_DEVICE_HISTORY_UNAVAILABLE = 'A Z-API bloqueou a busca de histórico antigo por API nesta instância Multi Device. As mensagens antigas que aparecem em alguns contatos já estavam salvas no Compass; para conversas/grupos que não foram capturados antes, só entram novas mensagens recebidas pelo webhook.'
 
 type ZapiChat = {
   phone?: string
@@ -467,13 +467,14 @@ async function fetchChatMessages(baseUrl: string, headers: Record<string, string
       return []
     }
     const lower = text.toLowerCase()
-    // A Z-API só devolve "does not work in multi device" quando é limitação real
-    // da instância. Outros erros (ex.: 404 por formato de ID errado) não devem
-    // ser classificados como Multi Device — tentamos o próximo formato.
-    if (lower.includes('does not work in multi device')) {
-      throw new Error(MULTI_DEVICE_HISTORY_UNAVAILABLE)
-    }
+    // Em grupos a Z-API pode responder "does not work in multi device" para o
+    // ID numérico, mas aceitar o mesmo grupo no formato @g.us. Não interrompemos
+    // no primeiro erro; testamos todos os formatos antes de classificar como
+    // limitação real de Multi Device.
     errors.push(`(${candidate}) ${res.status} ${text.slice(0, 200)}`)
+  }
+  if (errors.length > 0 && errors.every((entry) => /does not work in multi device/i.test(entry))) {
+    throw new Error(MULTI_DEVICE_HISTORY_UNAVAILABLE)
   }
   throw new Error(`Z-API não retornou histórico para ${phone}: ${errors.join(' | ')}`)
 }
