@@ -7,6 +7,22 @@ const corsHeaders = {
 
 const ZAPI_BASE_URL = 'https://api.z-api.io'
 
+function normalizeGroupPhoneForZapi(value: unknown): string | null {
+  const raw = String(value ?? '').trim()
+  if (!raw) return null
+
+  const withoutSuffix = raw
+    .replace(/-group$/i, '')
+    .replace(/@g\.us$/i, '')
+    .replace(/@c\.us$/i, '')
+    .replace(/@s\.whatsapp\.net$/i, '')
+    .replace(/@lid$/i, '')
+
+  const digits = withoutSuffix.replace(/\D/g, '')
+  const groupId = digits || withoutSuffix
+  return groupId ? `${groupId}-group` : null
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -75,8 +91,12 @@ Deno.serve(async (req) => {
     const outgoingText = (message ?? '').toString()
     const outgoingCaption = (image_url || document_url) ? ((message ?? '').toString()) : (message ?? null)
 
-    // Clean phone number - remove non-digits
+    // Clean phone number - remove non-digits. Groups must keep the Z-API
+    // "-group" suffix; sending only digits makes Z-API reject as normal phone.
     const cleanPhone = phone.replace(/\D/g, '')
+    const zapiPhone = isGroupSend
+      ? normalizeGroupPhoneForZapi(group_id || phone) || cleanPhone
+      : cleanPhone
 
     const zapiHeaders = {
       'Content-Type': 'application/json',
@@ -100,7 +120,7 @@ Deno.serve(async (req) => {
           method: 'POST',
           headers: zapiHeaders,
           body: JSON.stringify({
-            phone: cleanPhone,
+            phone: zapiPhone,
             message: outgoingText,
           }),
         })
@@ -119,7 +139,7 @@ Deno.serve(async (req) => {
           method: 'POST',
           headers: zapiHeaders,
           body: JSON.stringify({
-            phone: cleanPhone,
+            phone: zapiPhone,
             image: image_url,
             caption: outgoingCaption || '',
           }),
@@ -139,7 +159,7 @@ Deno.serve(async (req) => {
           method: 'POST',
           headers: zapiHeaders,
           body: JSON.stringify({
-            phone: cleanPhone,
+            phone: zapiPhone,
             document: document_url,
             fileName: document_name || 'documento.pdf',
             caption: outgoingCaption || '',
@@ -160,7 +180,7 @@ Deno.serve(async (req) => {
           method: 'POST',
           headers: zapiHeaders,
           body: JSON.stringify({
-            phone: cleanPhone,
+            phone: zapiPhone,
             audio: audio_url,
             viewOnce: false,
             waveform: true,
@@ -182,7 +202,7 @@ Deno.serve(async (req) => {
           method: 'POST',
           headers: zapiHeaders,
           body: JSON.stringify({
-            phone: cleanPhone,
+            phone: zapiPhone,
             message: outgoingText,
             image: image_url || '',
             linkUrl: body.link_url || '',
@@ -313,7 +333,7 @@ Deno.serve(async (req) => {
         let convo: { id: string } | null = null
 
         if (isGroupSend) {
-          const gid = (group_id || cleanPhone) as string
+          const gid = (normalizeGroupPhoneForZapi(group_id || phone) || cleanPhone) as string
           const groupPayload: Record<string, unknown> = {
             phone: gid,
             group_id: gid,
