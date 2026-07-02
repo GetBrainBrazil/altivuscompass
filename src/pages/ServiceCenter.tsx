@@ -2699,6 +2699,25 @@ export default function ServiceCenter() {
                 </div>
               ) : (
                 <>
+                  {replyTo && (
+                    <div className="max-w-3xl mx-auto mb-2 flex items-start gap-2 rounded-lg border-l-4 border-emerald-500 bg-emerald-50/70 px-3 py-2">
+                      <Reply className="h-3.5 w-3.5 mt-0.5 text-emerald-700 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-semibold text-emerald-800">
+                          Respondendo{replyTo.senderName ? ` a ${replyTo.senderName}` : ""}
+                        </p>
+                        <p className="text-xs text-emerald-900/80 truncate">{replyTo.preview}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setReplyTo(null)}
+                        className="text-emerald-700 hover:text-emerald-900"
+                        title="Cancelar resposta"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
                   <div className="flex items-center gap-3 max-w-3xl mx-auto">
                     <input
                       ref={fileInputRef}
