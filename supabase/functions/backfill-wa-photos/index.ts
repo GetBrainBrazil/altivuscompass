@@ -56,7 +56,6 @@ Deno.serve(async (req) => {
               { headers },
             );
             data = await resp.json().catch(() => ({}));
-            console.log('group-picture', cand, JSON.stringify(data).slice(0, 400));
             if (data?.link || data?.imgUrl || data?.url) break;
           }
           link = data?.link || data?.imgUrl || data?.url || null;
