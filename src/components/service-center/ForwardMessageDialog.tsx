@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 export interface ForwardableMessage {
   id: string;
-  messageType?: "text" | "image" | "audio" | "video" | "document" | "sticker" | "location" | "contact" | "other";
+  messageType?: "text" | "image" | "audio" | "video" | "document" | "sticker" | "location" | "contact" | "reaction" | "other";
   content?: string | null;
   mediaUrl?: string | null;
   mediaCaption?: string | null;
