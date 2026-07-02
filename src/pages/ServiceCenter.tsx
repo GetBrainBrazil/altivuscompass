@@ -1569,7 +1569,7 @@ export default function ServiceCenter() {
           collectMentionReplacements(m.raw, mentionReplacements);
         });
       }
-      const msgs: Message[] = (selectedId === c.id ? msgRows : []).map((m: any) => ({
+      const rawMsgs: Message[] = (selectedId === c.id ? msgRows : []).map((m: any) => ({
         id: m.id,
         sender: (m.sender ?? "lead") as MessageSender,
         content: normalizeMentionText(
@@ -1587,8 +1587,42 @@ export default function ServiceCenter() {
         isInternal: !!m.is_internal,
         senderName: m.sender_name ?? undefined,
         senderPhone: m.sender_phone ?? undefined,
+        zapiMessageId: m.zapi_message_id ?? undefined,
         raw: m.raw ?? undefined,
       }));
+
+      // Extrai reações e anexa como badge na mensagem-alvo (padrão WhatsApp).
+      // Reações permanecem como linha de wa_messages para histórico, mas
+      // deixam de ser renderizadas como bolha própria.
+      const reactionMap = new Map<string, { emoji: string; from: MessageSender; senderName?: string }[]>();
+      for (const rm of rawMsgs) {
+        if (rm.messageType !== "reaction") continue;
+        const r = rm.raw?.reaction ?? {};
+        const targetId: string | undefined =
+          r?.referencedMessage?.messageId ||
+          r?.referencedMessage?.id ||
+          r?.messageId ||
+          r?.msgId ||
+          r?.reactedTo?.messageId ||
+          undefined;
+        const emojiRaw: string =
+          r?.value ||
+          (typeof rm.content === "string" ? rm.content.replace(/\s*\(reação\)\s*$/i, "").trim() : "") ||
+          "❤️";
+        // Reação vazia ("") no Z-API significa reação removida.
+        if (!targetId || !emojiRaw) continue;
+        const arr = reactionMap.get(targetId) ?? [];
+        arr.push({ emoji: emojiRaw, from: rm.sender, senderName: rm.senderName });
+        reactionMap.set(targetId, arr);
+      }
+
+      const msgs: Message[] = rawMsgs
+        .filter((rm) => rm.messageType !== "reaction")
+        .map((rm) => {
+          if (!rm.zapiMessageId) return rm;
+          const rx = reactionMap.get(rm.zapiMessageId);
+          return rx && rx.length > 0 ? { ...rm, reactions: rx } : rm;
+        });
       // Se não há nenhuma mensagem carregada, cria uma "fake" só para preview
       const fallbackMsg: Message = {
         id: `${c.id}-last`,
