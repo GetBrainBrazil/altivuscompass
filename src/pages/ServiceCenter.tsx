@@ -42,7 +42,7 @@ import { ClientSidePanel } from "@/components/service-center/ClientSidePanel";
 import { MessageLinkDialog } from "@/components/service-center/MessageLinkDialog";
 import { ForwardMessageDialog, type ForwardableMessage, type ForwardTarget } from "@/components/service-center/ForwardMessageDialog";
 import { ImageLightbox } from "@/components/service-center/ImageLightbox";
-import { Plus, Info, Bot, Check, CheckCheck, Clock, Mic, Square, Trash2, Loader2, Link2, MoreVertical, Pencil, Paperclip, Forward, RefreshCw } from "lucide-react";
+import { Plus, Info, Bot, Check, CheckCheck, Clock, Mic, Square, Trash2, Loader2, Link2, MoreVertical, Pencil, Paperclip, Forward, RefreshCw, Reply, Copy, Smile, Pin, Star, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -102,6 +102,12 @@ interface Message {
   zapiMessageId?: string;
   /** Reações do WhatsApp anexadas a esta mensagem (renderizadas como badge flutuante). */
   reactions?: { emoji: string; from: MessageSender; senderName?: string }[];
+  /** Preview da mensagem citada (Responder). */
+  replyToPreview?: string | null;
+  replyToZapiId?: string | null;
+  isPinned?: boolean;
+  isStarred?: boolean;
+  deletedAt?: string | null;
   raw?: any;
 }
 
@@ -513,6 +519,13 @@ interface ChatBubbleProps {
   onOpenQuote?: (id: string) => void;
   onImageClick?: (url: string, caption?: string | null) => void;
   onForward?: () => void;
+  onReply?: () => void;
+  onCopy?: () => void;
+  onReact?: (emoji: string) => void;
+  onPinToggle?: () => void;
+  onStarToggle?: () => void;
+  onDelete?: () => void;
+  onInfo?: () => void;
 }
 
 const AGENT_LABEL_RE = /^\*([^\n*]{1,60})\*\n?/;
@@ -584,7 +597,9 @@ const extractRawSharedContact = (raw?: any): { name: string; phones: string[] } 
   return first ? { name: first.name || "Contato compartilhado", phones: first.phones } : null;
 };
 
-const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuote, onImageClick, onForward, groupedWithPrev = false, groupedWithNext = false }: ChatBubbleProps & { groupedWithPrev?: boolean; groupedWithNext?: boolean }) => {
+const QUICK_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
+
+const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuote, onImageClick, onForward, onReply, onCopy, onReact, onPinToggle, onStarToggle, onDelete, onInfo, groupedWithPrev = false, groupedWithNext = false }: ChatBubbleProps & { groupedWithPrev?: boolean; groupedWithNext?: boolean }) => {
   const isLead = message.sender === "lead";
   const isAgent = message.sender === "agent";
   const isAi = message.sender === "ai";
@@ -644,7 +659,19 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
             {isAi ? "🤖 IA" : sentViaWhatsApp ? `📱 Altivus Turismo` : `👤 ${displayLabel}`}
           </p>
         )}
-        {mt === "audio" && message.mediaUrl ? (
+        {message.replyToPreview && (
+          <div className={cn(
+            "mb-2 border-l-4 pl-2 py-1 pr-2 rounded text-[11px] leading-snug",
+            isLead ? "border-emerald-500 bg-emerald-50/70 text-emerald-900" : "border-white/50 bg-white/10",
+            isMedia && "mx-3 mt-2",
+          )}>
+            <p className="font-semibold text-[10px] opacity-80 mb-0.5">↩ Resposta</p>
+            <p className="line-clamp-2 whitespace-pre-wrap [overflow-wrap:anywhere]">{message.replyToPreview}</p>
+          </div>
+        )}
+        {message.deletedAt ? (
+          <p className="italic opacity-70 flex items-center gap-1.5"><Trash2 className="h-3.5 w-3.5" /> Mensagem apagada</p>
+        ) : mt === "audio" && message.mediaUrl ? (
           <audio
             controls
             src={message.mediaUrl}
@@ -737,6 +764,16 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
       </div>
       {!groupedWithNext && (
       <div className={cn("flex items-center gap-1.5 px-2 flex-wrap", isLead ? "" : "justify-end")}>
+        {message.isPinned && (
+          <span className="inline-flex items-center gap-0.5 text-[10px] text-amber-700" title="Fixada">
+            <Pin className="h-2.5 w-2.5" />
+          </span>
+        )}
+        {message.isStarred && (
+          <span className="inline-flex items-center gap-0.5 text-[10px] text-yellow-500" title="Favorita">
+            <Star className="h-2.5 w-2.5 fill-current" />
+          </span>
+        )}
         <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
           {isAi ? "IA · " : isAgent ? (sentViaWhatsApp ? "Altivus Turismo · " : `${displayLabel} · `) : ""}
           {formatTime(message.timestamp)}
@@ -754,7 +791,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
             {q.title || q.destination || "Cotação"}
           </button>
         ))}
-        {(onLinkClick || onForward) && (
+        {!message.deletedAt && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -765,17 +802,68 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
                 <MoreVertical className="h-3 w-3" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align={isLead ? "start" : "end"}>
+            <DropdownMenuContent align={isLead ? "start" : "end"} className="w-56 p-1">
+              {onReact && (
+                <div className="flex items-center justify-around px-1 py-1.5 mb-1 border-b border-border/60">
+                  {QUICK_REACTIONS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => onReact(emoji)}
+                      className="text-lg leading-none hover:scale-125 transition-transform p-1"
+                      title={`Reagir com ${emoji}`}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {onInfo && (
+                <DropdownMenuItem onClick={onInfo}>
+                  <Info className="h-3.5 w-3.5 mr-2" />
+                  Dados da mensagem
+                </DropdownMenuItem>
+              )}
+              {onReply && (
+                <DropdownMenuItem onClick={onReply}>
+                  <Reply className="h-3.5 w-3.5 mr-2" />
+                  Responder
+                </DropdownMenuItem>
+              )}
+              {onCopy && (
+                <DropdownMenuItem onClick={onCopy}>
+                  <Copy className="h-3.5 w-3.5 mr-2" />
+                  Copiar
+                </DropdownMenuItem>
+              )}
               {onForward && (
                 <DropdownMenuItem onClick={onForward}>
                   <Forward className="h-3.5 w-3.5 mr-2" />
-                  Encaminhar…
+                  Encaminhar
+                </DropdownMenuItem>
+              )}
+              {onPinToggle && (
+                <DropdownMenuItem onClick={onPinToggle}>
+                  <Pin className="h-3.5 w-3.5 mr-2" />
+                  {message.isPinned ? "Desafixar" : "Fixar"}
+                </DropdownMenuItem>
+              )}
+              {onStarToggle && (
+                <DropdownMenuItem onClick={onStarToggle}>
+                  <Star className={cn("h-3.5 w-3.5 mr-2", message.isStarred && "fill-yellow-400 text-yellow-500")} />
+                  {message.isStarred ? "Remover dos favoritos" : "Favoritar"}
                 </DropdownMenuItem>
               )}
               {onLinkClick && (
                 <DropdownMenuItem onClick={onLinkClick}>
                   <Link2 className="h-3.5 w-3.5 mr-2" />
-                  Vincular a cotação…
+                  Vincular a cotação
+                </DropdownMenuItem>
+              )}
+              {onDelete && (
+                <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+                  <Trash2 className="h-3.5 w-3.5 mr-2" />
+                  Apagar
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -1312,6 +1400,9 @@ export default function ServiceCenter() {
   const [newMsgOpen, setNewMsgOpen] = useState(false);
   const [linkDialogMessages, setLinkDialogMessages] = useState<string[]>([]);
   const [forwardMessage, setForwardMessage] = useState<ForwardableMessage | null>(null);
+  const [replyTo, setReplyTo] = useState<{ id: string; zapiMessageId: string; preview: string; senderName?: string } | null>(null);
+  const [messageInfo, setMessageInfo] = useState<Message | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<Message | null>(null);
   const [syncingHistory, setSyncingHistory] = useState<"all" | "selected" | null>(null);
 
   // Apelido/nome do atendente logado (para exibir nas mensagens enviadas)
@@ -1607,6 +1698,11 @@ export default function ServiceCenter() {
         senderName: m.sender_name ?? undefined,
         senderPhone: m.sender_phone ?? undefined,
         zapiMessageId: m.zapi_message_id ?? undefined,
+        replyToPreview: m.reply_to_preview ?? undefined,
+        replyToZapiId: m.reply_to_zapi_id ?? undefined,
+        isPinned: !!m.is_pinned,
+        isStarred: !!m.is_starred,
+        deletedAt: m.deleted_at ?? null,
         raw: m.raw ?? undefined,
       }));
 
@@ -1781,11 +1877,14 @@ export default function ServiceCenter() {
           message: draft.trim(),
           is_group: !!convo.is_group,
           group_id: convo.group_id ?? undefined,
+          reply_to_message_id: replyTo?.zapiMessageId,
+          reply_to_preview: replyTo?.preview,
         },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       setDraft("");
+      setReplyTo(null);
       scrollToBottom();
       qc.invalidateQueries({ queryKey: ["wa_messages", selectedId] });
       qc.invalidateQueries({ queryKey: ["wa_conversations"] });
@@ -1793,6 +1892,105 @@ export default function ServiceCenter() {
       toast.error(err?.message || "Falha ao enviar mensagem");
     } finally {
       setSending(false);
+    }
+  };
+
+  // ===== Ações contextuais de mensagem (WhatsApp-like) =====
+  const messagePreview = (m: Message): string => {
+    if (m.messageType === "image") return `📷 ${m.mediaCaption || "Imagem"}`;
+    if (m.messageType === "video") return `🎥 ${m.mediaCaption || "Vídeo"}`;
+    if (m.messageType === "audio") return "🎤 Áudio";
+    if (m.messageType === "document") return `📄 ${m.mediaCaption || "Documento"}`;
+    if (m.messageType === "sticker") return "🌟 Figurinha";
+    return (m.content || m.mediaCaption || "").slice(0, 120);
+  };
+
+  const handleReply = (m: Message) => {
+    if (!m.zapiMessageId) {
+      toast.error("Não é possível responder esta mensagem (sem ID do WhatsApp).");
+      return;
+    }
+    setReplyTo({ id: m.id, zapiMessageId: m.zapiMessageId, preview: messagePreview(m), senderName: m.senderName });
+  };
+
+  const handleCopy = async (m: Message) => {
+    const text = m.content || m.mediaCaption || m.mediaUrl || "";
+    if (!text) { toast.error("Nada para copiar."); return; }
+    try { await navigator.clipboard.writeText(text); toast.success("Copiado."); }
+    catch { toast.error("Falha ao copiar."); }
+  };
+
+  const handleReact = async (m: Message, emoji: string) => {
+    if (!selectedId) return;
+    const convo = convoRows.find((c: any) => c.id === selectedId);
+    if (!convo?.phone || !m.zapiMessageId) { toast.error("Não é possível reagir a esta mensagem."); return; }
+    try {
+      const { data, error } = await supabase.functions.invoke("send-whatsapp", {
+        body: {
+          action: "send-reaction",
+          phone: convo.phone,
+          reply_to_message_id: m.zapiMessageId,
+          reaction: emoji,
+          is_group: !!convo.is_group,
+          group_id: convo.group_id ?? undefined,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      qc.invalidateQueries({ queryKey: ["wa_messages", selectedId] });
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao reagir");
+    }
+  };
+
+  const handlePinToggle = async (m: Message) => {
+    const next = !m.isPinned;
+    const { error } = await supabase.from("wa_messages").update({
+      is_pinned: next, pinned_at: next ? new Date().toISOString() : null,
+    }).eq("id", m.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(next ? "Mensagem fixada." : "Mensagem desafixada.");
+    qc.invalidateQueries({ queryKey: ["wa_messages", selectedId] });
+  };
+
+  const handleStarToggle = async (m: Message) => {
+    const next = !m.isStarred;
+    const { error } = await supabase.from("wa_messages").update({
+      is_starred: next, starred_at: next ? new Date().toISOString() : null,
+    }).eq("id", m.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(next ? "Adicionada aos favoritos." : "Removida dos favoritos.");
+    qc.invalidateQueries({ queryKey: ["wa_messages", selectedId] });
+  };
+
+  const handleDelete = async (m: Message) => {
+    if (!selectedId) return;
+    const convo = convoRows.find((c: any) => c.id === selectedId);
+    const isOwn = m.sender !== "lead";
+    try {
+      // Só tenta apagar no WhatsApp se for nossa e tiver zapi id
+      if (isOwn && m.zapiMessageId && convo?.phone) {
+        await supabase.functions.invoke("send-whatsapp", {
+          body: {
+            action: "delete-message",
+            phone: convo.phone,
+            reply_to_message_id: m.zapiMessageId,
+            owner: true,
+            is_group: !!convo.is_group,
+            group_id: convo.group_id ?? undefined,
+          },
+        });
+      }
+      const { error } = await supabase.from("wa_messages").update({
+        deleted_at: new Date().toISOString(),
+      }).eq("id", m.id);
+      if (error) throw error;
+      toast.success("Mensagem apagada.");
+      qc.invalidateQueries({ queryKey: ["wa_messages", selectedId] });
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao apagar mensagem");
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
@@ -2455,6 +2653,13 @@ export default function ServiceCenter() {
                                 mediaUrl: m.mediaUrl ?? null,
                                 mediaCaption: m.mediaCaption ?? null,
                               })}
+                              onReply={() => handleReply(m)}
+                              onCopy={() => handleCopy(m)}
+                              onReact={(emoji) => handleReact(m, emoji)}
+                              onPinToggle={() => handlePinToggle(m)}
+                              onStarToggle={() => handleStarToggle(m)}
+                              onDelete={() => setDeleteConfirm(m)}
+                              onInfo={() => setMessageInfo(m)}
                               groupedWithPrev={groupedWithPrev}
                               groupedWithNext={!!groupedWithNext}
                             />
