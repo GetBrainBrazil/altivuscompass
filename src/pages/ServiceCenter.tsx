@@ -89,7 +89,7 @@ interface Message {
   content: string;
   timestamp: string; // ISO
   status?: MessageStatus;
-  messageType?: "text" | "image" | "audio" | "video" | "document" | "sticker" | "location" | "contact" | "other";
+  messageType?: "text" | "image" | "audio" | "video" | "document" | "sticker" | "location" | "contact" | "reaction" | "other";
   mediaUrl?: string;
   mediaMime?: string;
   mediaCaption?: string;
@@ -98,6 +98,10 @@ interface Message {
   senderName?: string;
   /** Em conversas de grupo: telefone do participante que enviou. */
   senderPhone?: string;
+  /** ID original da mensagem no WhatsApp (para agrupar reações). */
+  zapiMessageId?: string;
+  /** Reações do WhatsApp anexadas a esta mensagem (renderizadas como badge flutuante). */
+  reactions?: { emoji: string; from: MessageSender; senderName?: string }[];
   raw?: any;
 }
 
@@ -607,6 +611,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
 
   return (
     <div className={cn("flex w-full flex-col gap-1", isLead ? "items-start" : "items-end")}>
+      <div className={cn("relative", (message.reactions && message.reactions.length > 0) && "pb-3")}>
       <div
         className={cn(
           "max-w-[75%] rounded-3xl text-sm leading-relaxed shadow-sm overflow-hidden",
@@ -711,6 +716,25 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
         ) : (
           <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{displayContent}</p>
         )}
+      </div>
+      {message.reactions && message.reactions.length > 0 && (
+        <div
+          className={cn(
+            "absolute -bottom-1 z-10 flex items-center gap-0.5 rounded-full border border-border/60 bg-white px-1.5 py-0.5 shadow-sm",
+            isLead ? "left-3" : "right-3",
+          )}
+          title={message.reactions.map((r) => r.emoji).join(" ")}
+        >
+          {Array.from(new Set(message.reactions.map((r) => r.emoji))).map((emoji) => (
+            <span key={emoji} className="text-[13px] leading-none">{emoji}</span>
+          ))}
+          {message.reactions.length > 1 && (
+            <span className="ml-0.5 text-[10px] font-medium text-muted-foreground">
+              {message.reactions.length}
+            </span>
+          )}
+        </div>
+      )}
       </div>
       {!groupedWithNext && (
       <div className={cn("flex items-center gap-1.5 px-2 flex-wrap", isLead ? "" : "justify-end")}>
@@ -1565,7 +1589,7 @@ export default function ServiceCenter() {
           collectMentionReplacements(m.raw, mentionReplacements);
         });
       }
-      const msgs: Message[] = (selectedId === c.id ? msgRows : []).map((m: any) => ({
+      const rawMsgs: Message[] = (selectedId === c.id ? msgRows : []).map((m: any) => ({
         id: m.id,
         sender: (m.sender ?? "lead") as MessageSender,
         content: normalizeMentionText(
@@ -1583,8 +1607,42 @@ export default function ServiceCenter() {
         isInternal: !!m.is_internal,
         senderName: m.sender_name ?? undefined,
         senderPhone: m.sender_phone ?? undefined,
+        zapiMessageId: m.zapi_message_id ?? undefined,
         raw: m.raw ?? undefined,
       }));
+
+      // Extrai reações e anexa como badge na mensagem-alvo (padrão WhatsApp).
+      // Reações permanecem como linha de wa_messages para histórico, mas
+      // deixam de ser renderizadas como bolha própria.
+      const reactionMap = new Map<string, { emoji: string; from: MessageSender; senderName?: string }[]>();
+      for (const rm of rawMsgs) {
+        if (rm.messageType !== "reaction") continue;
+        const r = rm.raw?.reaction ?? {};
+        const targetId: string | undefined =
+          r?.referencedMessage?.messageId ||
+          r?.referencedMessage?.id ||
+          r?.messageId ||
+          r?.msgId ||
+          r?.reactedTo?.messageId ||
+          undefined;
+        const emojiRaw: string =
+          r?.value ||
+          (typeof rm.content === "string" ? rm.content.replace(/\s*\(reação\)\s*$/i, "").trim() : "") ||
+          "❤️";
+        // Reação vazia ("") no Z-API significa reação removida.
+        if (!targetId || !emojiRaw) continue;
+        const arr = reactionMap.get(targetId) ?? [];
+        arr.push({ emoji: emojiRaw, from: rm.sender, senderName: rm.senderName });
+        reactionMap.set(targetId, arr);
+      }
+
+      const msgs: Message[] = rawMsgs
+        .filter((rm) => rm.messageType !== "reaction")
+        .map((rm) => {
+          if (!rm.zapiMessageId) return rm;
+          const rx = reactionMap.get(rm.zapiMessageId);
+          return rx && rx.length > 0 ? { ...rm, reactions: rx } : rm;
+        });
       // Se não há nenhuma mensagem carregada, cria uma "fake" só para preview
       const fallbackMsg: Message = {
         id: `${c.id}-last`,
