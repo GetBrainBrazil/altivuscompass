@@ -2892,15 +2892,26 @@ export default function ServiceCenter() {
           <AlertDialogHeader>
             <AlertDialogTitle>Apagar mensagem?</AlertDialogTitle>
             <AlertDialogDescription>
-              {deleteConfirm?.sender === "lead"
-                ? "Esta mensagem será removida apenas da Central. Ela continuará visível no WhatsApp do contato."
-                : "A mensagem será apagada para todos no WhatsApp e removida da Central."}
+              {deleteConfirm?.sender !== "lead" && deleteConfirm?.zapiMessageId
+                ? "Escolha se deseja apagar apenas para você (só na Central) ou para todos no WhatsApp."
+                : "Esta mensagem será removida apenas da Central. Ela continuará visível no WhatsApp do contato."}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => deleteConfirm && handleDelete(deleteConfirm)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Apagar
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="mt-0">Cancelar</AlertDialogCancel>
+            {deleteConfirm?.sender !== "lead" && deleteConfirm?.zapiMessageId && (
+              <AlertDialogAction
+                onClick={() => deleteConfirm && handleDelete(deleteConfirm, "everyone")}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Apagar para todos
+              </AlertDialogAction>
+            )}
+            <AlertDialogAction
+              onClick={() => deleteConfirm && handleDelete(deleteConfirm, "me")}
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            >
+              Apagar para mim
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
