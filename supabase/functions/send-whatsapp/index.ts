@@ -62,6 +62,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json()
     const { action, phone, message, quote_id, image_url, document_url, document_name, contact_name, audio_url, is_group, group_id } = body
+    const replyToMessageId: string | null = (body.reply_to_message_id ?? body.messageId ?? null) as string | null
     const isGroupSend = is_group === true || !!group_id
 
     if (!phone) {
@@ -122,9 +123,44 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             phone: zapiPhone,
             message: outgoingText,
+            ...(replyToMessageId ? { messageId: replyToMessageId } : {}),
           }),
         })
         result = await response.json()
+        break
+      }
+
+      case 'send-reaction': {
+        if (!replyToMessageId) {
+          return new Response(JSON.stringify({ error: 'messageId é obrigatório' }), {
+            status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
+        }
+        const emoji = (body.reaction ?? '').toString()
+        response = await fetch(`${baseUrl}/send-reaction`, {
+          method: 'POST',
+          headers: zapiHeaders,
+          body: JSON.stringify({
+            phone: zapiPhone,
+            messageId: replyToMessageId,
+            reaction: emoji,
+            delete: !emoji,
+          }),
+        })
+        result = await response.json()
+        break
+      }
+
+      case 'delete-message': {
+        if (!replyToMessageId) {
+          return new Response(JSON.stringify({ error: 'messageId é obrigatório' }), {
+            status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
+        }
+        const owner = body.owner === false ? 'false' : 'true'
+        const url = `${baseUrl}/messages?phone=${encodeURIComponent(zapiPhone)}&messageId=${encodeURIComponent(replyToMessageId)}&owner=${owner}`
+        response = await fetch(url, { method: 'DELETE', headers: zapiHeaders })
+        result = await response.json().catch(() => ({}))
         break
       }
 
@@ -383,6 +419,8 @@ Deno.serve(async (req) => {
             media_caption: mediaCaption,
             zapi_message_id: result?.messageId || result?.id || null,
             status: 'sent',
+            reply_to_zapi_id: replyToMessageId,
+            reply_to_preview: (body.reply_to_preview ?? null) as string | null,
             raw: { action, payload: body, response: result },
           })
 

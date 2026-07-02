@@ -5285,17 +5285,24 @@ export type Database = {
           content: string | null
           conversation_id: string
           created_at: string
+          deleted_at: string | null
           direction: string
           id: string
           is_internal: boolean
+          is_pinned: boolean
+          is_starred: boolean
           media_caption: string | null
           media_mime: string | null
           media_url: string | null
           message_type: string
+          pinned_at: string | null
           raw: Json | null
+          reply_to_preview: string | null
+          reply_to_zapi_id: string | null
           sender: string
           sender_name: string | null
           sender_phone: string | null
+          starred_at: string | null
           status: string
           zapi_message_id: string | null
         }
@@ -5303,17 +5310,24 @@ export type Database = {
           content?: string | null
           conversation_id: string
           created_at?: string
+          deleted_at?: string | null
           direction: string
           id?: string
           is_internal?: boolean
+          is_pinned?: boolean
+          is_starred?: boolean
           media_caption?: string | null
           media_mime?: string | null
           media_url?: string | null
           message_type?: string
+          pinned_at?: string | null
           raw?: Json | null
+          reply_to_preview?: string | null
+          reply_to_zapi_id?: string | null
           sender: string
           sender_name?: string | null
           sender_phone?: string | null
+          starred_at?: string | null
           status?: string
           zapi_message_id?: string | null
         }
@@ -5321,17 +5335,24 @@ export type Database = {
           content?: string | null
           conversation_id?: string
           created_at?: string
+          deleted_at?: string | null
           direction?: string
           id?: string
           is_internal?: boolean
+          is_pinned?: boolean
+          is_starred?: boolean
           media_caption?: string | null
           media_mime?: string | null
           media_url?: string | null
           message_type?: string
+          pinned_at?: string | null
           raw?: Json | null
+          reply_to_preview?: string | null
+          reply_to_zapi_id?: string | null
           sender?: string
           sender_name?: string | null
           sender_phone?: string | null
+          starred_at?: string | null
           status?: string
           zapi_message_id?: string | null
         }
