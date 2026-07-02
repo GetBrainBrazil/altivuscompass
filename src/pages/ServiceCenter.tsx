@@ -1941,13 +1941,12 @@ export default function ServiceCenter() {
     qc.invalidateQueries({ queryKey: ["wa_messages", selectedId] });
   };
 
-  const handleDelete = async (m: Message) => {
+  const handleDelete = async (m: Message, scope: "me" | "everyone" = "me") => {
     if (!selectedId) return;
     const convo = convoRows.find((c: any) => c.id === selectedId);
     const isOwn = m.sender !== "lead";
     try {
-      // Só tenta apagar no WhatsApp se for nossa e tiver zapi id
-      if (isOwn && m.zapiMessageId && convo?.phone) {
+      if (scope === "everyone" && isOwn && m.zapiMessageId && convo?.phone) {
         await supabase.functions.invoke("send-whatsapp", {
           body: {
             action: "delete-message",
@@ -1963,7 +1962,7 @@ export default function ServiceCenter() {
         deleted_at: new Date().toISOString(),
       }).eq("id", m.id);
       if (error) throw error;
-      toast.success("Mensagem apagada.");
+      toast.success(scope === "everyone" ? "Mensagem apagada para todos." : "Mensagem apagada para você.");
       qc.invalidateQueries({ queryKey: ["wa_messages", selectedId] });
     } catch (err: any) {
       toast.error(err?.message || "Falha ao apagar mensagem");
