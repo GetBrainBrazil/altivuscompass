@@ -514,6 +514,10 @@ Deno.serve(async (req) => {
     const isFromMe = body.fromMe === true
     // Foto de perfil do remetente (Z-API envia em senderPhoto/photo)
     const senderPhotoUrl: string | null = (!isFromMe && (body.senderPhoto || body.photo || body.profilePicUrl)) || null
+    // Foto do grupo (Z-API pode enviar em chatPhoto/groupPhoto/photo quando isGroup)
+    const groupPhotoUrl: string | null = isGroup
+      ? (body.chatPhoto || body.groupPhoto || body.groupPicture || body.photo || null)
+      : null
 
     // ===== Espelha mensagem (recebida OU enviada) na Central de Atendimento =====
     try {
@@ -616,6 +620,9 @@ Deno.serve(async (req) => {
         if (groupSubject) {
           groupConvoPayload.group_subject = groupSubject
           groupConvoPayload.contact_name = groupSubject
+        }
+        if (groupPhotoUrl && typeof groupPhotoUrl === 'string' && groupPhotoUrl.startsWith('http')) {
+          groupConvoPayload.profile_photo_url = groupPhotoUrl
         }
         const { data: existingGroup } = await supabase
           .from('wa_conversations')
