@@ -2875,6 +2875,60 @@ export default function ServiceCenter() {
         url={lightbox?.url ?? null}
         caption={lightbox?.caption ?? null}
       />
+
+      <Dialog open={!!messageInfo} onOpenChange={(o) => { if (!o) setMessageInfo(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Dados da mensagem</DialogTitle>
+            <DialogDescription>Detalhes técnicos e status desta mensagem.</DialogDescription>
+          </DialogHeader>
+          {messageInfo && (
+            <div className="space-y-2 text-sm">
+              <div className="grid grid-cols-[110px,1fr] gap-2">
+                <span className="text-muted-foreground">Enviado</span>
+                <span className="font-medium">{new Date(messageInfo.timestamp).toLocaleString("pt-BR")}</span>
+                <span className="text-muted-foreground">Remetente</span>
+                <span className="font-medium">
+                  {messageInfo.sender === "lead" ? messageInfo.senderName || "Contato" : messageInfo.sender === "ai" ? "IA" : messageInfo.senderName || "Atendente"}
+                </span>
+                <span className="text-muted-foreground">Tipo</span>
+                <span className="font-medium capitalize">{messageInfo.messageType || "text"}</span>
+                {messageInfo.status && (<>
+                  <span className="text-muted-foreground">Status</span>
+                  <span className="font-medium capitalize">{messageInfo.status}</span>
+                </>)}
+                {messageInfo.zapiMessageId && (<>
+                  <span className="text-muted-foreground">ID WhatsApp</span>
+                  <span className="font-mono text-[11px] break-all">{messageInfo.zapiMessageId}</span>
+                </>)}
+                {messageInfo.reactions && messageInfo.reactions.length > 0 && (<>
+                  <span className="text-muted-foreground">Reações</span>
+                  <span>{messageInfo.reactions.map((r) => r.emoji).join(" ")}</span>
+                </>)}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(o) => { if (!o) setDeleteConfirm(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar mensagem?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteConfirm?.sender === "lead"
+                ? "Esta mensagem será removida apenas da Central. Ela continuará visível no WhatsApp do contato."
+                : "A mensagem será apagada para todos no WhatsApp e removida da Central."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteConfirm && handleDelete(deleteConfirm)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Apagar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
