@@ -89,7 +89,7 @@ interface Message {
   content: string;
   timestamp: string; // ISO
   status?: MessageStatus;
-  messageType?: "text" | "image" | "audio" | "video" | "document" | "sticker" | "location" | "contact" | "other";
+  messageType?: "text" | "image" | "audio" | "video" | "document" | "sticker" | "location" | "contact" | "reaction" | "other";
   mediaUrl?: string;
   mediaMime?: string;
   mediaCaption?: string;
@@ -98,6 +98,10 @@ interface Message {
   senderName?: string;
   /** Em conversas de grupo: telefone do participante que enviou. */
   senderPhone?: string;
+  /** ID original da mensagem no WhatsApp (para agrupar reações). */
+  zapiMessageId?: string;
+  /** Reações do WhatsApp anexadas a esta mensagem (renderizadas como badge flutuante). */
+  reactions?: { emoji: string; from: MessageSender; senderName?: string }[];
   raw?: any;
 }
 
