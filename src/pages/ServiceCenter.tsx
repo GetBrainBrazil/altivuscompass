@@ -1615,8 +1615,9 @@ export default function ServiceCenter() {
       // Reações permanecem como linha de wa_messages para histórico, mas
       // deixam de ser renderizadas como bolha própria.
       const reactionMap = new Map<string, { emoji: string; from: MessageSender; senderName?: string }[]>();
+      const isReactionMsg = (rm: Message) => rm.messageType === "reaction" || !!rm.raw?.reaction;
       for (const rm of rawMsgs) {
-        if (rm.messageType !== "reaction") continue;
+        if (!isReactionMsg(rm)) continue;
         const r = rm.raw?.reaction ?? {};
         const targetId: string | undefined =
           r?.referencedMessage?.messageId ||
@@ -1628,7 +1629,7 @@ export default function ServiceCenter() {
         const emojiRaw: string =
           r?.value ||
           (typeof rm.content === "string" ? rm.content.replace(/\s*\(reação\)\s*$/i, "").trim() : "") ||
-          "❤️";
+          "";
         // Reação vazia ("") no Z-API significa reação removida.
         if (!targetId || !emojiRaw) continue;
         const arr = reactionMap.get(targetId) ?? [];
@@ -1637,7 +1638,7 @@ export default function ServiceCenter() {
       }
 
       const msgs: Message[] = rawMsgs
-        .filter((rm) => rm.messageType !== "reaction")
+        .filter((rm) => !isReactionMsg(rm))
         .map((rm) => {
           if (!rm.zapiMessageId) return rm;
           const rx = reactionMap.get(rm.zapiMessageId);
