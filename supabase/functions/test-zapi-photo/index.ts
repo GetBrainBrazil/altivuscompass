@@ -3,16 +3,26 @@ Deno.serve(async () => {
   const tok = Deno.env.get('ZAPI_TOKEN');
   const ct = Deno.env.get('ZAPI_SECURITY_TOKEN');
   const headers: any = ct ? { 'Client-Token': ct } : {};
-  const tests = [
-    '6781937954913@lid',
-    '6781937954913',
-    '207941026214103@lid',
-    '120363429660275719-group',
-    '120363429660275719@g.us',
-    '120363404533413681-group',
-    '5521999055492',
-    '5521964447436',
+  const gid = '120363404533413681-group';
+  const gidBare = '120363404533413681';
+  const endpoints = [
+    `/group-picture/${gid}`,
+    `/group-picture/${gidBare}`,
+    `/group-photo/${gid}`,
+    `/groups/${gid}/photo`,
+    `/groups/${gid}`,
+    `/chats/${gid}/photo`,
+    `/profile-picture?phone=${gidBare}@g.us`,
+    `/profile-picture?phone=${gidBare}`,
   ];
+  const inst2 = inst, tok2 = tok;
+  const results2: any = {};
+  for (const e of endpoints) {
+    const r = await fetch(`https://api.z-api.io/instances/${inst2}/token/${tok2}${e}`, { headers });
+    results2[e] = { status: r.status, body: await r.json().catch(() => ({})) };
+  }
+  return new Response(JSON.stringify(results2, null, 2), { headers: { 'Content-Type': 'application/json' } });
+  const tests: string[] = [];
   const results: any = {};
   for (const p of tests) {
     const r1 = await fetch(`https://api.z-api.io/instances/${inst}/token/${tok}/profile-picture?phone=${encodeURIComponent(p)}`, { headers });
