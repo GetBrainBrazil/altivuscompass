@@ -720,7 +720,7 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
       {message.reactions && message.reactions.length > 0 && (
         <div
           className={cn(
-            "absolute -bottom-1 right-3 z-10 flex items-center gap-0.5 rounded-full border border-border/60 bg-white px-1.5 py-0.5 shadow-sm",
+            "absolute -bottom-2 right-2 z-10 flex items-center gap-0.5 rounded-full border border-border/60 bg-white px-1.5 py-0.5 shadow-sm",
           )}
           title={message.reactions.map((r) => r.emoji).join(" ")}
         >
