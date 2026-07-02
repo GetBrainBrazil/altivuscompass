@@ -1941,13 +1941,12 @@ export default function ServiceCenter() {
     qc.invalidateQueries({ queryKey: ["wa_messages", selectedId] });
   };
 
-  const handleDelete = async (m: Message) => {
+  const handleDelete = async (m: Message, scope: "me" | "everyone" = "me") => {
     if (!selectedId) return;
     const convo = convoRows.find((c: any) => c.id === selectedId);
     const isOwn = m.sender !== "lead";
     try {
-      // Só tenta apagar no WhatsApp se for nossa e tiver zapi id
-      if (isOwn && m.zapiMessageId && convo?.phone) {
+      if (scope === "everyone" && isOwn && m.zapiMessageId && convo?.phone) {
         await supabase.functions.invoke("send-whatsapp", {
           body: {
             action: "delete-message",
@@ -1963,7 +1962,7 @@ export default function ServiceCenter() {
         deleted_at: new Date().toISOString(),
       }).eq("id", m.id);
       if (error) throw error;
-      toast.success("Mensagem apagada.");
+      toast.success(scope === "everyone" ? "Mensagem apagada para todos." : "Mensagem apagada para você.");
       qc.invalidateQueries({ queryKey: ["wa_messages", selectedId] });
     } catch (err: any) {
       toast.error(err?.message || "Falha ao apagar mensagem");
@@ -2893,15 +2892,26 @@ export default function ServiceCenter() {
           <AlertDialogHeader>
             <AlertDialogTitle>Apagar mensagem?</AlertDialogTitle>
             <AlertDialogDescription>
-              {deleteConfirm?.sender === "lead"
-                ? "Esta mensagem será removida apenas da Central. Ela continuará visível no WhatsApp do contato."
-                : "A mensagem será apagada para todos no WhatsApp e removida da Central."}
+              {deleteConfirm?.sender !== "lead" && deleteConfirm?.zapiMessageId
+                ? "Escolha se deseja apagar apenas para você (só na Central) ou para todos no WhatsApp."
+                : "Esta mensagem será removida apenas da Central. Ela continuará visível no WhatsApp do contato."}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => deleteConfirm && handleDelete(deleteConfirm)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Apagar
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="mt-0">Cancelar</AlertDialogCancel>
+            {deleteConfirm?.sender !== "lead" && deleteConfirm?.zapiMessageId && (
+              <AlertDialogAction
+                onClick={() => deleteConfirm && handleDelete(deleteConfirm, "everyone")}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Apagar para todos
+              </AlertDialogAction>
+            )}
+            <AlertDialogAction
+              onClick={() => deleteConfirm && handleDelete(deleteConfirm, "me")}
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            >
+              Apagar para mim
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
