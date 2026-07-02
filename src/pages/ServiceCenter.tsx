@@ -717,6 +717,25 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
           <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{displayContent}</p>
         )}
       </div>
+      {message.reactions && message.reactions.length > 0 && (
+        <div
+          className={cn(
+            "absolute -bottom-1 z-10 flex items-center gap-0.5 rounded-full border border-border/60 bg-white px-1.5 py-0.5 shadow-sm",
+            isLead ? "left-3" : "right-3",
+          )}
+          title={message.reactions.map((r) => r.emoji).join(" ")}
+        >
+          {Array.from(new Set(message.reactions.map((r) => r.emoji))).map((emoji) => (
+            <span key={emoji} className="text-[13px] leading-none">{emoji}</span>
+          ))}
+          {message.reactions.length > 1 && (
+            <span className="ml-0.5 text-[10px] font-medium text-muted-foreground">
+              {message.reactions.length}
+            </span>
+          )}
+        </div>
+      )}
+      </div>
       {!groupedWithNext && (
       <div className={cn("flex items-center gap-1.5 px-2 flex-wrap", isLead ? "" : "justify-end")}>
         <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
