@@ -625,253 +625,230 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
   const rawSharedContact = mt === "other" ? extractRawSharedContact(message.raw) : null;
   const sharedContact = mt === "contact" ? parseSharedContact(displayContent) : rawSharedContact;
 
+  const fromMe = !isLead;
+  const hasReactions = !!(message.reactions && message.reactions.length > 0);
+  const showHeaderLabel =
+    !groupedWithPrev &&
+    ((isLead && !!message.senderName) || (fromMe && (isAi || isAgent)));
+  const headerLabelText = isLead
+    ? (message.senderName || "")
+    : (isAi ? "🤖 IA" : (sentViaWhatsApp ? "📱 Altivus Turismo" : `👤 ${displayLabel}`));
+  const headerLabelColor = isLead
+    ? "text-violet-700"
+    : (isAi ? "text-[hsl(var(--primary-strong))]" : "text-emerald-700");
+
+  // WhatsApp-style corners: sharp on the "tail" side of the first bubble of a group.
+  const bubbleRadius = fromMe
+    ? (groupedWithPrev ? "10px 10px 2px 10px" : "10px 2px 2px 10px")
+    : (groupedWithPrev ? "10px 10px 10px 10px" : "2px 10px 10px 10px");
+  const bubbleBg = fromMe
+    ? (isAi ? "#E7F0FF" : "#D9FDD3")
+    : "#FFFFFF";
+
   return (
-    <div className={cn("flex w-full flex-col gap-1", isLead ? "items-start" : "items-end")}>
-      <div className={cn("relative inline-block max-w-[75%]", (message.reactions && message.reactions.length > 0) && "pb-3")}>
-      <div
-        className={cn(
-          "rounded-3xl text-sm leading-relaxed shadow-sm overflow-hidden",
-          !isMedia && "px-5 py-3",
-          isMedia && "p-2",
-          isLead && "bg-white text-foreground border border-border/40",
-          isAi && "bg-[hsl(var(--navy))] text-[hsl(var(--cream))]",
-          isAgent && "bg-emerald-600 text-white",
-          // Corner rounding compact when grouped (WhatsApp-style stack)
-          isLead && (groupedWithPrev ? "rounded-tl-md" : ""),
-          isLead && (groupedWithNext ? "rounded-bl-md" : "rounded-bl-md"),
-          !isLead && (groupedWithPrev ? "rounded-tr-md" : ""),
-          !isLead && "rounded-br-md",
-        )}
-      >
-        {isLead && message.senderName && !groupedWithPrev && (
-          <p className={cn(
-            "text-[11px] font-semibold mb-1 text-violet-700",
-            isMedia && "px-3 pt-1",
-          )}>
-            {message.senderName}
-          </p>
-        )}
-        {!isLead && !groupedWithPrev && (
-          <p className={cn(
-            "text-[10px] font-semibold uppercase tracking-wider mb-1 opacity-80",
-            isMedia && "px-3 pt-1",
-            isAi ? "text-[hsl(var(--cream))]" : "text-emerald-50",
-          )}>
-            {isAi ? "🤖 IA" : sentViaWhatsApp ? `📱 Altivus Turismo` : `👤 ${displayLabel}`}
-          </p>
-        )}
-        {message.replyToPreview && (
-          <div className={cn(
-            "mb-2 border-l-4 pl-2 py-1 pr-2 rounded text-[11px] leading-snug",
-            isLead ? "border-emerald-500 bg-emerald-50/70 text-emerald-900" : "border-white/50 bg-white/10",
-            isMedia && "mx-3 mt-2",
-          )}>
-            <p className="font-semibold text-[10px] opacity-80 mb-0.5">↩ Resposta</p>
-            <p className="line-clamp-2 whitespace-pre-wrap [overflow-wrap:anywhere]">{message.replyToPreview}</p>
-          </div>
-        )}
-        {message.deletedAt ? (
-          <p className="italic opacity-70 flex items-center gap-1.5"><Trash2 className="h-3.5 w-3.5" /> Mensagem apagada</p>
-        ) : mt === "audio" && message.mediaUrl ? (
-          <audio
-            controls
-            src={message.mediaUrl}
-            className="w-full max-w-[240px]"
-            preload="metadata"
-          />
-        ) : mt === "image" && message.mediaUrl ? (
-          <div className="space-y-1">
-            <button
-              type="button"
-              onClick={() => onImageClick?.(message.mediaUrl!, message.mediaCaption)}
-              className="block w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-2xl overflow-hidden"
-              title="Ampliar imagem"
-            >
-              <img
-                src={message.mediaUrl}
-                alt={message.mediaCaption || "Imagem"}
-                className="rounded-2xl max-h-[280px] w-auto object-cover cursor-zoom-in"
-                loading="lazy"
-              />
-            </button>
-            {displayCaption && (
-              <p className={cn("whitespace-pre-wrap [overflow-wrap:anywhere] px-3 pb-1", isLead ? "" : "")}>
-                {displayCaption}
-              </p>
-            )}
-          </div>
-        ) : mt === "video" && message.mediaUrl ? (
-          <div className="space-y-1">
-            <video controls src={message.mediaUrl} className="rounded-2xl max-h-[280px] w-auto" preload="metadata" />
-            {displayCaption && (
-              <p className="whitespace-pre-wrap [overflow-wrap:anywhere] px-3 pb-1">{displayCaption}</p>
-            )}
-          </div>
-        ) : mt === "document" && message.mediaUrl ? (
-          <a
-            href={message.mediaUrl}
-            target="_blank"
-            rel="noreferrer"
-            className={cn(
-              "flex items-center gap-2 px-3 py-2 rounded-xl underline-offset-2 hover:underline",
-              isLead ? "text-foreground" : "text-current"
-            )}
-          >
-            <FileText className="h-4 w-4 shrink-0" />
-            <span className="truncate">{displayCaption || "Documento"}</span>
-          </a>
-        ) : sharedContact ? (
-          <div className="flex min-w-[220px] items-start gap-3">
-            <span className={cn(
-              "mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-              isLead ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground",
-            )}>
-              <UserRound className="h-4 w-4" />
-            </span>
-            <span className="min-w-0 flex-1 space-y-1">
-              <span className="block text-xs font-semibold uppercase tracking-wide opacity-75">Contato compartilhado</span>
-              <span className="block truncate font-medium">{sharedContact?.name}</span>
-              {sharedContact?.phones.map((phone) => (
-                <span key={phone} className="flex items-center gap-1.5 text-xs opacity-80">
-                  <Phone className="h-3 w-3" />
-                  {phone}
-                </span>
-              ))}
-            </span>
-          </div>
-        ) : mt === "sticker" && message.mediaUrl ? (
-          <img src={message.mediaUrl} alt="sticker" className="h-32 w-32 object-contain" />
-        ) : (
-          <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{displayContent}</p>
-        )}
-      </div>
-      {message.reactions && message.reactions.length > 0 && (
+    <div className={cn("group/msg flex w-full", isLead ? "justify-start" : "justify-end")}>
+      <div className="relative max-w-[85%] sm:max-w-[68%]">
         <div
           className={cn(
-            "absolute -bottom-2 right-2 z-10 flex items-center gap-0.5 rounded-full border border-border/60 bg-white px-1.5 py-0.5 shadow-sm",
+            "relative px-2.5 py-1.5 shadow-sm text-foreground",
+            isLead && "border border-border/40",
+            hasReactions && "mb-2",
           )}
-          title={message.reactions.map((r) => r.emoji).join(" ")}
+          style={{ backgroundColor: bubbleBg, borderRadius: bubbleRadius }}
         >
-          {Array.from(new Set(message.reactions.map((r) => r.emoji))).map((emoji) => (
-            <span key={emoji} className="text-[13px] leading-none">{emoji}</span>
-          ))}
-          {message.reactions.length > 1 && (
-            <span className="ml-0.5 text-[10px] font-medium text-muted-foreground">
-              {message.reactions.length}
-            </span>
+          {showHeaderLabel && (
+            <div className={cn("text-[10.5px] font-medium leading-none mb-1", headerLabelColor)}>
+              {headerLabelText}
+            </div>
+          )}
+
+          {message.replyToPreview && (
+            <div className={cn(
+              "mb-1.5 border-l-[3px] pl-2 py-1 pr-2 rounded text-[11.5px] leading-snug",
+              fromMe ? "border-emerald-600 bg-black/5" : "border-violet-500 bg-black/5",
+            )}>
+              <p className="font-semibold text-[10px] opacity-70 mb-0.5">↩ Resposta</p>
+              <p className="line-clamp-2 whitespace-pre-wrap [overflow-wrap:anywhere]">{message.replyToPreview}</p>
+            </div>
+          )}
+
+          <div className="text-[13.5px] leading-[1.35] break-words [overflow-wrap:anywhere]">
+            {message.deletedAt ? (
+              <p className="italic opacity-60 flex items-center gap-1.5"><Trash2 className="h-3.5 w-3.5" /> Mensagem apagada</p>
+            ) : mt === "audio" && message.mediaUrl ? (
+              <audio controls src={message.mediaUrl} className="w-full max-w-[240px]" preload="metadata" />
+            ) : mt === "image" && message.mediaUrl ? (
+              <div className="space-y-1 -mx-1 -mt-1">
+                <button
+                  type="button"
+                  onClick={() => onImageClick?.(message.mediaUrl!, message.mediaCaption)}
+                  className="block w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md overflow-hidden"
+                  title="Ampliar imagem"
+                >
+                  <img
+                    src={message.mediaUrl}
+                    alt={message.mediaCaption || "Imagem"}
+                    className="rounded-md max-h-[280px] w-auto object-cover cursor-zoom-in"
+                    loading="lazy"
+                  />
+                </button>
+                {displayCaption && (
+                  <p className="whitespace-pre-wrap [overflow-wrap:anywhere] px-1 pt-1">{displayCaption}</p>
+                )}
+              </div>
+            ) : mt === "video" && message.mediaUrl ? (
+              <div className="space-y-1 -mx-1 -mt-1">
+                <video controls src={message.mediaUrl} className="rounded-md max-h-[280px] w-auto" preload="metadata" />
+                {displayCaption && (
+                  <p className="whitespace-pre-wrap [overflow-wrap:anywhere] px-1 pt-1">{displayCaption}</p>
+                )}
+              </div>
+            ) : mt === "document" && message.mediaUrl ? (
+              <a
+                href={message.mediaUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 px-1 py-1 underline-offset-2 hover:underline"
+              >
+                <FileText className="h-4 w-4 shrink-0 opacity-70" />
+                <span className="truncate">{displayCaption || "Documento"}</span>
+              </a>
+            ) : sharedContact ? (
+              <div className="flex min-w-[200px] items-start gap-2.5">
+                <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black/10">
+                  <UserRound className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1 space-y-0.5">
+                  <span className="block text-[10px] font-semibold uppercase tracking-wide opacity-60">Contato</span>
+                  <span className="block truncate font-medium">{sharedContact?.name}</span>
+                  {sharedContact?.phones.map((phone) => (
+                    <span key={phone} className="flex items-center gap-1.5 text-[11.5px] opacity-75">
+                      <Phone className="h-3 w-3" />
+                      {phone}
+                    </span>
+                  ))}
+                </span>
+              </div>
+            ) : mt === "sticker" && message.mediaUrl ? (
+              <img src={message.mediaUrl} alt="sticker" className="h-32 w-32 object-contain" />
+            ) : (
+              <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{displayContent}</p>
+            )}
+          </div>
+
+          {/* Timestamp + ticks — dentro da bolha, canto inferior direito, WhatsApp-style */}
+          <div className="flex items-center justify-end gap-1 mt-0.5 -mb-0.5">
+            {message.isPinned && <Pin className="h-2.5 w-2.5 text-amber-600" />}
+            {message.isStarred && <Star className="h-2.5 w-2.5 text-yellow-500 fill-current" />}
+            <span className="text-[10px] text-black/45 tabular-nums">{formatTime(message.timestamp)}</span>
+            {fromMe && message.status && <MessageStatusTicks status={message.status} />}
+          </div>
+
+          {/* Dropdown de ações — aparece no hover, canto superior da bolha */}
+          {!message.deletedAt && (
+            <div className={cn(
+              "absolute top-1 opacity-0 group-hover/msg:opacity-100 transition-opacity",
+              fromMe ? "left-1" : "right-1",
+            )}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm shadow-sm text-muted-foreground hover:bg-white"
+                    title="Mais ações"
+                  >
+                    <MoreVertical className="h-3 w-3" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align={fromMe ? "start" : "end"} className="w-56 p-1">
+                  {onReact && (
+                    <div className="flex items-center justify-around px-1 py-1.5 mb-1 border-b border-border/60">
+                      {QUICK_REACTIONS.map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => onReact(emoji)}
+                          className="text-lg leading-none hover:scale-125 transition-transform p-1"
+                          title={`Reagir com ${emoji}`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {onInfo && (
+                    <DropdownMenuItem onClick={onInfo}><Info className="h-3.5 w-3.5 mr-2" />Dados da mensagem</DropdownMenuItem>
+                  )}
+                  {onReply && (
+                    <DropdownMenuItem onClick={onReply}><Reply className="h-3.5 w-3.5 mr-2" />Responder</DropdownMenuItem>
+                  )}
+                  {onCopy && (
+                    <DropdownMenuItem onClick={onCopy}><Copy className="h-3.5 w-3.5 mr-2" />Copiar</DropdownMenuItem>
+                  )}
+                  {onForward && (
+                    <DropdownMenuItem onClick={onForward}><Forward className="h-3.5 w-3.5 mr-2" />Encaminhar</DropdownMenuItem>
+                  )}
+                  {onPinToggle && (
+                    <DropdownMenuItem onClick={onPinToggle}><Pin className="h-3.5 w-3.5 mr-2" />{message.isPinned ? "Desafixar" : "Fixar"}</DropdownMenuItem>
+                  )}
+                  {onStarToggle && (
+                    <DropdownMenuItem onClick={onStarToggle}>
+                      <Star className={cn("h-3.5 w-3.5 mr-2", message.isStarred && "fill-yellow-400 text-yellow-500")} />
+                      {message.isStarred ? "Remover dos favoritos" : "Favoritar"}
+                    </DropdownMenuItem>
+                  )}
+                  {onLinkClick && (
+                    <DropdownMenuItem onClick={onLinkClick}><Link2 className="h-3.5 w-3.5 mr-2" />Vincular a cotação</DropdownMenuItem>
+                  )}
+                  {onDelete && (
+                    <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+                      <Trash2 className="h-3.5 w-3.5 mr-2" />Apagar
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
+
+          {/* Reações — badge ancorado à borda inferior direita da bolha */}
+          {hasReactions && (
+            <div
+              className={cn(
+                "absolute -bottom-2.5 z-10 flex items-center gap-0.5 rounded-full border border-border/60 bg-white px-1.5 py-0.5 shadow-sm",
+                fromMe ? "right-2" : "left-2",
+              )}
+              title={message.reactions!.map((r) => r.emoji).join(" ")}
+            >
+              {Array.from(new Set(message.reactions!.map((r) => r.emoji))).map((emoji) => (
+                <span key={emoji} className="text-[13px] leading-none">{emoji}</span>
+              ))}
+              {message.reactions!.length > 1 && (
+                <span className="ml-0.5 text-[10px] font-medium text-muted-foreground">
+                  {message.reactions!.length}
+                </span>
+              )}
+            </div>
           )}
         </div>
-      )}
-      </div>
-      {!groupedWithNext && (
-      <div className={cn("flex items-center gap-1.5 px-2 flex-wrap", isLead ? "" : "justify-end")}>
-        {message.isPinned && (
-          <span className="inline-flex items-center gap-0.5 text-[10px] text-amber-700" title="Fixada">
-            <Pin className="h-2.5 w-2.5" />
-          </span>
-        )}
-        {message.isStarred && (
-          <span className="inline-flex items-center gap-0.5 text-[10px] text-yellow-500" title="Favorita">
-            <Star className="h-2.5 w-2.5 fill-current" />
-          </span>
-        )}
-        <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-          {isAi ? "IA · " : isAgent ? (sentViaWhatsApp ? "Altivus Turismo · " : `${displayLabel} · `) : ""}
-          {formatTime(message.timestamp)}
-          {!isLead && message.status && <MessageStatusTicks status={message.status} />}
-        </span>
-        {linkedQuotes && linkedQuotes.length > 0 && linkedQuotes.map((q) => (
-          <button
-            key={q.id}
-            type="button"
-            onClick={() => onOpenQuote?.(q.id)}
-            className="inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 text-[10px] hover:bg-blue-100"
-            title="Abrir cotação vinculada"
-          >
-            <Link2 className="h-2.5 w-2.5" />
-            {q.title || q.destination || "Cotação"}
-          </button>
-        ))}
-        {!message.deletedAt && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+
+        {/* Cotações vinculadas — abaixo da bolha, discretas */}
+        {linkedQuotes && linkedQuotes.length > 0 && !groupedWithNext && (
+          <div className={cn("mt-1 flex flex-wrap gap-1", fromMe ? "justify-end" : "justify-start")}>
+            {linkedQuotes.map((q) => (
               <button
+                key={q.id}
                 type="button"
-                className="inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted/60"
-                title="Mais ações"
+                onClick={() => onOpenQuote?.(q.id)}
+                className="inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 text-[10px] hover:bg-blue-100"
+                title="Abrir cotação vinculada"
               >
-                <MoreVertical className="h-3 w-3" />
+                <Link2 className="h-2.5 w-2.5" />
+                {q.title || q.destination || "Cotação"}
               </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align={isLead ? "start" : "end"} className="w-56 p-1">
-              {onReact && (
-                <div className="flex items-center justify-around px-1 py-1.5 mb-1 border-b border-border/60">
-                  {QUICK_REACTIONS.map((emoji) => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      onClick={() => onReact(emoji)}
-                      className="text-lg leading-none hover:scale-125 transition-transform p-1"
-                      title={`Reagir com ${emoji}`}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              )}
-              {onInfo && (
-                <DropdownMenuItem onClick={onInfo}>
-                  <Info className="h-3.5 w-3.5 mr-2" />
-                  Dados da mensagem
-                </DropdownMenuItem>
-              )}
-              {onReply && (
-                <DropdownMenuItem onClick={onReply}>
-                  <Reply className="h-3.5 w-3.5 mr-2" />
-                  Responder
-                </DropdownMenuItem>
-              )}
-              {onCopy && (
-                <DropdownMenuItem onClick={onCopy}>
-                  <Copy className="h-3.5 w-3.5 mr-2" />
-                  Copiar
-                </DropdownMenuItem>
-              )}
-              {onForward && (
-                <DropdownMenuItem onClick={onForward}>
-                  <Forward className="h-3.5 w-3.5 mr-2" />
-                  Encaminhar
-                </DropdownMenuItem>
-              )}
-              {onPinToggle && (
-                <DropdownMenuItem onClick={onPinToggle}>
-                  <Pin className="h-3.5 w-3.5 mr-2" />
-                  {message.isPinned ? "Desafixar" : "Fixar"}
-                </DropdownMenuItem>
-              )}
-              {onStarToggle && (
-                <DropdownMenuItem onClick={onStarToggle}>
-                  <Star className={cn("h-3.5 w-3.5 mr-2", message.isStarred && "fill-yellow-400 text-yellow-500")} />
-                  {message.isStarred ? "Remover dos favoritos" : "Favoritar"}
-                </DropdownMenuItem>
-              )}
-              {onLinkClick && (
-                <DropdownMenuItem onClick={onLinkClick}>
-                  <Link2 className="h-3.5 w-3.5 mr-2" />
-                  Vincular a cotação
-                </DropdownMenuItem>
-              )}
-              {onDelete && (
-                <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
-                  <Trash2 className="h-3.5 w-3.5 mr-2" />
-                  Apagar
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            ))}
+          </div>
         )}
       </div>
-      )}
     </div>
   );
 };
