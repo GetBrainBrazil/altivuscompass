@@ -611,10 +611,10 @@ const ChatBubble = ({ message, agentLabel, linkedQuotes, onLinkClick, onOpenQuot
 
   return (
     <div className={cn("flex w-full flex-col gap-1", isLead ? "items-start" : "items-end")}>
-      <div className={cn("relative w-fit max-w-[75%]", (message.reactions && message.reactions.length > 0) && "pb-3")}>
+      <div className={cn("relative inline-block max-w-[75%]", (message.reactions && message.reactions.length > 0) && "pb-3")}>
       <div
         className={cn(
-          "max-w-[75%] rounded-3xl text-sm leading-relaxed shadow-sm overflow-hidden",
+          "rounded-3xl text-sm leading-relaxed shadow-sm overflow-hidden",
           !isMedia && "px-5 py-3",
           isMedia && "p-2",
           isLead && "bg-white text-foreground border border-border/40",
