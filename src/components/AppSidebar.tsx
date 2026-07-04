@@ -55,9 +55,6 @@ const navItems: NavItem[] = [
     subItems: [
       { title: "Pipeline", url: "/pipeline" },
       { title: "Dashboard CRM", url: "/crm/dashboard" },
-      { title: "Cotações (legado)", url: "/quotes" },
-      { title: "Vendas (legado)", url: "/sales" },
-      { title: "Pós-Venda (legado)", url: "/crm/ops?tab=ops" },
     ],
   },
   { title: "Roteiros", url: "/itineraries", group: 2, icon: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3V7z" /><path d="M9 4v13" /><path d="M15 7v13" /></svg> },
