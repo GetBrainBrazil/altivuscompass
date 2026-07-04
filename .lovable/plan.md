@@ -28,7 +28,7 @@ Cotação             Emissão                     Pós-venda
                     proof_sent
 ```
 
-**Situações (paralelas à etapa, badge no card):** `lost`, `paused`, `on_hold_client`, `contested`, `returned_flag`. Uma delas pode conviver com qualquer etapa (ex.: card em `negotiation` marcado como `lost` fica no Kanban riscado até ser arquivado).
+**Situações (paralelas à etapa, badge no card):** `lost`, `paused`, `on_hold_client`, `returned_flag`. Uma delas pode conviver com qualquer etapa (ex.: card em `negotiation` marcado como `lost` fica no Kanban riscado até ser arquivado). `contested` **NÃO** é situação do card — vive só na linha da fatura (ver Fase 4).
 
 **Retrocesso:** menu "Reabrir etapa" volta ao anterior; se a etapa reaberta já gerou lançamentos financeiros, o sistema pergunta: manter / cancelar / marcar para estorno. Nunca apaga silenciosamente.
 
