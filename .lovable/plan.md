@@ -9,6 +9,8 @@ Ajustes desta versão em relação ao v1:
 - Item contestado ao sair da contestação **vai para a próxima fatura**; alternativamente pode ser **cancelado com justificativa**.
 - Card do negócio ganha **coluna lateral direita** igual à de tarefas (Interações + Tarefas + Histórico). Tarefas criadas no card do negócio ficam vinculadas ao negócio; renomeia "Cotação Vinculada" → **"Negócio Vinculado"** no card de tarefas.
 - Nova exigência: **histórico completo de movimentações** entre etapas para medir tempo/etapa mesmo com retrocessos.
+- **Contestação vive só no Financeiro** (`/finance/billing` → detalhe da fatura). O card comercial exibe apenas aviso somente-leitura ("Item X contestado na fatura #N") na aba Financeiro. Situação `contested` **sai** da lista de badges do card.
+- **Multi-serviços na mesma viagem** vira nova **Fase 7 (Viagens)**: entidade `trips` agrupa vários deals do mesmo cliente/datas; cada card mantém ciclo próprio. Não bloqueia as fases 1–6.
 
 ---
 
