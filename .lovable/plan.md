@@ -186,6 +186,28 @@ Espelha exatamente o layout da tela de Tarefa (`/tasks/:id`) referenciada na ima
 
 ---
 
+## Fase 7 — Viagens (agrupador multi-cards)
+
+Cenário: um cliente pede voos + hotéis (card A, vai pra pós-venda); depois pede um hotel extra (card B); depois um aluguel de carro (card C). Todos são a mesma viagem, mas cada card tem seu próprio ciclo financeiro/emissão.
+
+**Nova tabela `trips`:**
+
+```text
+id | client_id | title | destination | start_date | end_date | status | created_by
+```
+
+- `deals.trip_id` (FK opcional, nullable). Card sem viagem = viagem "avulsa" (comportamento atual).
+- Ao criar um novo card para um cliente que já tem card ativo com **datas sobrepostas**, o sistema pergunta: "Vincular à Viagem #TR-YYYY-NNN existente ou criar viagem nova?".
+- Vinculação/desvinculação manual disponível no card.
+- Nova aba na ficha do cliente: **Viagens** — lista `trips` com os cards agrupados.
+- No card do negócio: bloco "Faz parte da Viagem #TR-…" com link para os cards irmãos.
+- Financeiro **não muda**: cada card gera suas próprias `financial_transactions`; a fatura mensal consolida naturalmente.
+- Comprovantes podem ser enviados por card ou consolidados pela viagem (botão opcional "Enviar todos os vouchers da viagem").
+
+Fase totalmente aditiva — não altera fases 1–6.
+
+---
+
 ## Fora deste plano
 
 - Integração real com gateway de boleto (aguarda escolha).
@@ -201,7 +223,8 @@ Espelha exatamente o layout da tela de Tarefa (`/tasks/:id`) referenciada na ima
 2. **Fase 6** (card de negócio como tarefa) — melhora UX imediata, independente das demais.
 3. **Fase 2** (catálogo/fornecedor obrigatórios) — pode ir em paralelo.
 4. **Fase 3** (emissão → AR/AP).
-5. **Fase 4** (faturamento contratual).
+5. **Fase 4** (faturamento contratual — inclui contestação).
 6. **Fase 5** (email tracking).
+7. **Fase 7** (viagens agrupadoras) — pode entrar depois da Fase 3 se houver demanda.
 
 Aprovando, começo pela Fase 1 e sigo entregando fase por fase para você validar cada uma.
