@@ -7,12 +7,13 @@ com 3 zonas visuais (Cotação | Emissão | Pós-venda), lendo/escrevendo em `de
 Telas antigas permanecem no ar durante a validação e migração; serão removidas
 em passo final.
 
-**Status atual (Fase 1 — parcial):**
+**Status atual (Fase 1 — promovida):**
 - ✅ `deals` + `deal_stage_history` + trigger existem.
 - ✅ `src/lib/deal-stages.ts` define enum canônico de etapas/situações.
 - ✅ `useDealStageHistory` hook criado.
-- ✅ Nova tela `/pipeline` publicada em paralelo (link no menu: "CRM > Pipeline (novo)").
-- ⏳ A validar visualmente com o usuário antes de dar sequência à migração de dados.
+- ✅ `/pipeline` promovida a visão primária do CRM (sidebar: Pipeline no topo). Cotações/Vendas/Pós-Venda antigas seguem acessíveis marcadas como **"(legado)"** durante a transição.
+- ℹ️ Dados já unificados: `quotes` e `sales` sincronizam automaticamente para `deals` via triggers `trg_fn_sync_quote_to_deal` / `trg_fn_sync_sale_to_deal` — não requer backfill.
+- ⏭️ Próximo: Fase 6 (drawer/detalhe unificado do negócio) para fazer os cards do Pipeline abrirem sem depender das telas legadas.
 
 
 
