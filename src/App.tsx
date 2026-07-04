@@ -51,6 +51,8 @@ import LeadDetail from "./pages/LeadDetail";
 import LeadNew from "./pages/LeadNew";
 import LeadConvert from "./pages/LeadConvert";
 import OpsNew from "./pages/OpsNew";
+import Pipeline from "./pages/Pipeline";
+
 
 import AIAgentEdit from "./pages/AIAgentEdit";
 import Vault from "./pages/Vault";
@@ -154,6 +156,7 @@ const App = () => (
             <Route path="/crm" element={<ProtectedRoute><AppLayout><CRMDashboard /></AppLayout></ProtectedRoute>} />
             <Route path="/crm/dashboard" element={<ProtectedRoute><AppLayout><CRMDashboard /></AppLayout></ProtectedRoute>} />
 
+            <Route path="/pipeline" element={<ProtectedRoute><AppLayout><Pipeline /></AppLayout></ProtectedRoute>} />
             <Route path="/crm/ops" element={<ProtectedRoute><AppLayout><CRM /></AppLayout></ProtectedRoute>} />
             <Route path="/crm/sales" element={<ProtectedRoute><AppLayout><CRM /></AppLayout></ProtectedRoute>} />
             <Route path="/crm/lead/new" element={<ProtectedRoute><AppLayout><LeadNew /></AppLayout></ProtectedRoute>} />
