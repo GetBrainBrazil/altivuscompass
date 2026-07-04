@@ -1,5 +1,20 @@
 
-# Plano v2 — Fluxo comercial + financeiro Altivus
+# Plano v3 — Fluxo comercial + financeiro Altivus
+
+**Decisão arquitetural (aprovada):** Opção B — Kanban unificado. As 3 telas
+(Cotações, Vendas, Pós-Venda) serão substituídas por uma única tela `/pipeline`
+com 3 zonas visuais (Cotação | Emissão | Pós-venda), lendo/escrevendo em `deals`.
+Telas antigas permanecem no ar durante a validação e migração; serão removidas
+em passo final.
+
+**Status atual (Fase 1 — parcial):**
+- ✅ `deals` + `deal_stage_history` + trigger existem.
+- ✅ `src/lib/deal-stages.ts` define enum canônico de etapas/situações.
+- ✅ `useDealStageHistory` hook criado.
+- ✅ Nova tela `/pipeline` publicada em paralelo (link no menu: "CRM > Pipeline (novo)").
+- ⏳ A validar visualmente com o usuário antes de dar sequência à migração de dados.
+
+
 
 Ajustes desta versão em relação ao v1:
 - `lost` sai como etapa e vira **situação do card** (badge), aplicável em qualquer etapa.
