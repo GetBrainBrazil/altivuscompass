@@ -9,6 +9,8 @@ Ajustes desta versão em relação ao v1:
 - Item contestado ao sair da contestação **vai para a próxima fatura**; alternativamente pode ser **cancelado com justificativa**.
 - Card do negócio ganha **coluna lateral direita** igual à de tarefas (Interações + Tarefas + Histórico). Tarefas criadas no card do negócio ficam vinculadas ao negócio; renomeia "Cotação Vinculada" → **"Negócio Vinculado"** no card de tarefas.
 - Nova exigência: **histórico completo de movimentações** entre etapas para medir tempo/etapa mesmo com retrocessos.
+- **Contestação vive só no Financeiro** (`/finance/billing` → detalhe da fatura). O card comercial exibe apenas aviso somente-leitura ("Item X contestado na fatura #N") na aba Financeiro. Situação `contested` **sai** da lista de badges do card.
+- **Multi-serviços na mesma viagem** vira nova **Fase 7 (Viagens)**: entidade `trips` agrupa vários deals do mesmo cliente/datas; cada card mantém ciclo próprio. Não bloqueia as fases 1–6.
 
 ---
 
@@ -26,7 +28,7 @@ Cotação             Emissão                     Pós-venda
                     proof_sent
 ```
 
-**Situações (paralelas à etapa, badge no card):** `lost`, `paused`, `on_hold_client`, `contested`, `returned_flag`. Uma delas pode conviver com qualquer etapa (ex.: card em `negotiation` marcado como `lost` fica no Kanban riscado até ser arquivado).
+**Situações (paralelas à etapa, badge no card):** `lost`, `paused`, `on_hold_client`, `returned_flag`. Uma delas pode conviver com qualquer etapa (ex.: card em `negotiation` marcado como `lost` fica no Kanban riscado até ser arquivado). `contested` **NÃO** é situação do card — vive só na linha da fatura (ver Fase 4).
 
 **Retrocesso:** menu "Reabrir etapa" volta ao anterior; se a etapa reaberta já gerou lançamentos financeiros, o sistema pergunta: manter / cancelar / marcar para estorno. Nunca apaga silenciosamente.
 
@@ -184,6 +186,28 @@ Espelha exatamente o layout da tela de Tarefa (`/tasks/:id`) referenciada na ima
 
 ---
 
+## Fase 7 — Viagens (agrupador multi-cards)
+
+Cenário: um cliente pede voos + hotéis (card A, vai pra pós-venda); depois pede um hotel extra (card B); depois um aluguel de carro (card C). Todos são a mesma viagem, mas cada card tem seu próprio ciclo financeiro/emissão.
+
+**Nova tabela `trips`:**
+
+```text
+id | client_id | title | destination | start_date | end_date | status | created_by
+```
+
+- `deals.trip_id` (FK opcional, nullable). Card sem viagem = viagem "avulsa" (comportamento atual).
+- Ao criar um novo card para um cliente que já tem card ativo com **datas sobrepostas**, o sistema pergunta: "Vincular à Viagem #TR-YYYY-NNN existente ou criar viagem nova?".
+- Vinculação/desvinculação manual disponível no card.
+- Nova aba na ficha do cliente: **Viagens** — lista `trips` com os cards agrupados.
+- No card do negócio: bloco "Faz parte da Viagem #TR-…" com link para os cards irmãos.
+- Financeiro **não muda**: cada card gera suas próprias `financial_transactions`; a fatura mensal consolida naturalmente.
+- Comprovantes podem ser enviados por card ou consolidados pela viagem (botão opcional "Enviar todos os vouchers da viagem").
+
+Fase totalmente aditiva — não altera fases 1–6.
+
+---
+
 ## Fora deste plano
 
 - Integração real com gateway de boleto (aguarda escolha).
@@ -199,7 +223,8 @@ Espelha exatamente o layout da tela de Tarefa (`/tasks/:id`) referenciada na ima
 2. **Fase 6** (card de negócio como tarefa) — melhora UX imediata, independente das demais.
 3. **Fase 2** (catálogo/fornecedor obrigatórios) — pode ir em paralelo.
 4. **Fase 3** (emissão → AR/AP).
-5. **Fase 4** (faturamento contratual).
+5. **Fase 4** (faturamento contratual — inclui contestação).
 6. **Fase 5** (email tracking).
+7. **Fase 7** (viagens agrupadoras) — pode entrar depois da Fase 3 se houver demanda.
 
 Aprovando, começo pela Fase 1 e sigo entregando fase por fase para você validar cada uma.
