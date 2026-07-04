@@ -1686,6 +1686,75 @@ export type Database = {
         }
         Relationships: []
       }
+      deal_stage_history: {
+        Row: {
+          created_at: string
+          deal_id: string
+          duration_seconds: number | null
+          entered_at: string
+          exited_at: string | null
+          from_phase: Database["public"]["Enums"]["deal_phase"] | null
+          from_stage: string | null
+          id: string
+          metadata: Json
+          moved_by: string | null
+          moved_by_name: string | null
+          phase: Database["public"]["Enums"]["deal_phase"]
+          reason: string | null
+          source: string
+          stage: string
+        }
+        Insert: {
+          created_at?: string
+          deal_id: string
+          duration_seconds?: number | null
+          entered_at?: string
+          exited_at?: string | null
+          from_phase?: Database["public"]["Enums"]["deal_phase"] | null
+          from_stage?: string | null
+          id?: string
+          metadata?: Json
+          moved_by?: string | null
+          moved_by_name?: string | null
+          phase: Database["public"]["Enums"]["deal_phase"]
+          reason?: string | null
+          source?: string
+          stage: string
+        }
+        Update: {
+          created_at?: string
+          deal_id?: string
+          duration_seconds?: number | null
+          entered_at?: string
+          exited_at?: string | null
+          from_phase?: Database["public"]["Enums"]["deal_phase"] | null
+          from_stage?: string | null
+          id?: string
+          metadata?: Json
+          moved_by?: string | null
+          moved_by_name?: string | null
+          phase?: Database["public"]["Enums"]["deal_phase"]
+          reason?: string | null
+          source?: string
+          stage?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_stage_history_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_stage_history_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "v_deal_totals"
+            referencedColumns: ["deal_id"]
+          },
+        ]
+      }
       deal_templates: {
         Row: {
           company: Database["public"]["Enums"]["company_brand"]
@@ -1748,14 +1817,17 @@ export type Database = {
           internal_notes: string | null
           lead_id: string | null
           lead_source: string | null
+          lost_at: string | null
           lost_reason_code: string | null
           lost_reason_text: string | null
           notes: string | null
           other_info: string | null
+          paused_at: string | null
           payment_terms: string | null
           phase: Database["public"]["Enums"]["deal_phase"]
           price_breakdown: Json | null
           quote_validity: string | null
+          situation: string[]
           source_quote_id: string | null
           source_sale_id: string | null
           stage: string
@@ -1794,14 +1866,17 @@ export type Database = {
           internal_notes?: string | null
           lead_id?: string | null
           lead_source?: string | null
+          lost_at?: string | null
           lost_reason_code?: string | null
           lost_reason_text?: string | null
           notes?: string | null
           other_info?: string | null
+          paused_at?: string | null
           payment_terms?: string | null
           phase?: Database["public"]["Enums"]["deal_phase"]
           price_breakdown?: Json | null
           quote_validity?: string | null
+          situation?: string[]
           source_quote_id?: string | null
           source_sale_id?: string | null
           stage: string
@@ -1840,14 +1915,17 @@ export type Database = {
           internal_notes?: string | null
           lead_id?: string | null
           lead_source?: string | null
+          lost_at?: string | null
           lost_reason_code?: string | null
           lost_reason_text?: string | null
           notes?: string | null
           other_info?: string | null
+          paused_at?: string | null
           payment_terms?: string | null
           phase?: Database["public"]["Enums"]["deal_phase"]
           price_breakdown?: Json | null
           quote_validity?: string | null
+          situation?: string[]
           source_quote_id?: string | null
           source_sale_id?: string | null
           stage?: string
@@ -5404,6 +5482,35 @@ export type Database = {
       }
     }
     Views: {
+      deal_stage_metrics: {
+        Row: {
+          deal_id: string | null
+          first_entered_at: string | null
+          is_current: boolean | null
+          last_entered_at: string | null
+          last_exited_at: string | null
+          passages: number | null
+          phase: Database["public"]["Enums"]["deal_phase"] | null
+          stage: string | null
+          total_seconds: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_stage_history_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_stage_history_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "v_deal_totals"
+            referencedColumns: ["deal_id"]
+          },
+        ]
+      }
       profiles_basic: {
         Row: {
           avatar_url: string | null
