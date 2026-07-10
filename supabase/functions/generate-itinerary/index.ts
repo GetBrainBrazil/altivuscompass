@@ -171,7 +171,8 @@ Gere o roteiro completo com todos os dias. Cada dia deve iniciar no hotel e term
           { role: "user", content: userPrompt },
         ],
         temperature: 0.7,
-        max_tokens: 32000,
+        max_tokens: 16384,
+        response_format: { type: "json_object" },
       }),
     });
 
