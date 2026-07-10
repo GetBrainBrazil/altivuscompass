@@ -317,7 +317,7 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')!
+    const lovableApiKey = Deno.env.get('OPENAI_API_KEY')!
     const zapiInstanceId = Deno.env.get('ZAPI_INSTANCE_ID')!
     const zapiToken = Deno.env.get('ZAPI_TOKEN')!
     const zapiSecurityToken = Deno.env.get('ZAPI_SECURITY_TOKEN')!
@@ -1252,14 +1252,14 @@ Não inclua o JSON se ainda estiver coletando informações.`
   }
 
   try {
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'gpt-4o-mini',
         messages: aiMessages,
       }),
     })
@@ -1836,11 +1836,11 @@ Responda em PT-BR usando exatamente este formato em markdown (≤120 palavras):
 **🎯 Próximo passo sugerido**
 <1-2 frases objetivas do que fazer agora ao assumir>`
 
-          const sumRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          const sumRes = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${lovableApiKey}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              model: 'google/gemini-2.5-flash',
+              model: 'gpt-4o-mini',
               messages: [{ role: 'user', content: sumPrompt }],
             }),
           })
@@ -2059,14 +2059,14 @@ Regras do JSON:
   }
 
   try {
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'gpt-4o-mini',
         messages: aiMessages,
       }),
     })
