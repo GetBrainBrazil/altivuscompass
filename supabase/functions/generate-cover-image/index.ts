@@ -13,69 +13,55 @@ serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured");
 
     const { destination, quoteId } = await req.json();
     if (!destination) throw new Error("Destination is required");
 
     const prompt = `A stunning, professional travel photography of ${destination}. Beautiful landscape, cinematic lighting, vivid colors, high resolution, travel magazine cover quality. No text, no watermarks, no people close-up.`;
 
-    // Generate image using Lovable AI with Gemini image model
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // Generate image via OpenAI Images API (gpt-image-1)
+    const aiResponse = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-pro-image-preview",
-        messages: [{ role: "user", content: prompt }],
-        modalities: ["image", "text"],
+        model: "gpt-image-1",
+        prompt,
+        size: "1536x1024",
+        quality: "medium",
+        n: 1,
       }),
     });
 
     if (!aiResponse.ok) {
-      if (aiResponse.status === 429) {
-        return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns instantes." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos insuficientes. Adicione créditos ao workspace." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
       const errText = await aiResponse.text();
-      console.error("AI gateway error:", aiResponse.status, errText);
-      throw new Error("Falha ao gerar imagem");
+      console.error("OpenAI image error:", aiResponse.status, errText);
+      if (aiResponse.status === 429) {
+        return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em instantes." }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (aiResponse.status === 401) {
+        return new Response(JSON.stringify({ error: "Chave OpenAI inválida ou não configurada." }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ error: "Falha ao gerar imagem", details: errText }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const aiData = await aiResponse.json();
-    console.log("AI response structure:", JSON.stringify(Object.keys(aiData)));
-    console.log("First choice keys:", JSON.stringify(aiData.choices?.[0]?.message ? Object.keys(aiData.choices[0].message) : "no message"));
-    
-    // Try multiple response formats
-    let imageBase64 = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    
-    // Alternative: check content parts for inline_data
-    if (!imageBase64 && aiData.choices?.[0]?.message?.content) {
-      const content = aiData.choices[0].message.content;
-      if (Array.isArray(content)) {
-        const imagePart = content.find((p: any) => p.type === "image_url" || p.inline_data || p.image_url);
-        if (imagePart?.image_url?.url) imageBase64 = imagePart.image_url.url;
-        else if (imagePart?.inline_data?.data) imageBase64 = `data:${imagePart.inline_data.mime_type || "image/png"};base64,${imagePart.inline_data.data}`;
-      }
-    }
-    
-    console.log("Image found:", !!imageBase64, imageBase64 ? imageBase64.substring(0, 50) : "none");
-
-    if (!imageBase64) {
-      console.error("Full AI response:", JSON.stringify(aiData).substring(0, 2000));
+    const b64 = aiData?.data?.[0]?.b64_json;
+    if (!b64) {
+      console.error("Sem imagem na resposta:", JSON.stringify(aiData).substring(0, 500));
       throw new Error("Nenhuma imagem foi gerada");
     }
+    const imageBase64 = `data:image/png;base64,${b64}`;
 
     // If quoteId provided, upload to storage
     if (quoteId) {
@@ -83,9 +69,7 @@ serve(async (req) => {
       const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-      // Convert base64 to binary
-      const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
-      const binaryData = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+      const binaryData = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 
       const path = `${quoteId}/cover-ai.png`;
       const { error: uploadError } = await supabaseAdmin.storage
@@ -108,7 +92,6 @@ serve(async (req) => {
       );
     }
 
-    // Return base64 if no quoteId
     return new Response(
       JSON.stringify({ base64: imageBase64 }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
