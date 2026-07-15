@@ -150,76 +150,35 @@ export default function PublicQuote() {
     fetchQuote();
   }, [id]);
 
-  // Fetch hotel photos from Google Places JS API
+  // Fetch hotel photos via Places API (New) through our edge function
   useEffect(() => {
     if (!data) return;
     const hotelItems = data.items.filter((i: any) => i.item_type === "hotel" && i.title);
     if (hotelItems.length === 0) return;
 
     const fetchPhotos = async () => {
-      try {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const res = await fetch(`${supabaseUrl}/functions/v1/get-maps-key`);
-        const json = await res.json();
-        const apiKey = json?.key;
-        if (!apiKey) return;
-
-        // Load Google Maps JS API if not loaded
-        if (!(window as any).google?.maps?.places) {
-          await new Promise<void>((resolve, reject) => {
-            const s = document.createElement("script");
-            s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-            s.async = true;
-            s.onload = () => resolve();
-            s.onerror = () => reject();
-            document.head.appendChild(s);
-          });
-        }
-
-        const mapDiv = document.createElement("div");
-        const service = new (window as any).google.maps.places.PlacesService(mapDiv);
-
-        const photos: Record<string, string> = {};
-        for (const item of hotelItems) {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const photos: Record<string, string> = {};
+      await Promise.all(
+        hotelItems.map(async (item: any) => {
           try {
             const details = (item.details ?? {}) as any;
             const address = details.address ? String(details.address) : "";
-            const query = address
-              ? `${item.title} ${address}`
-              : `${item.title} hotel`;
-            await new Promise<void>((resolve) => {
-              service.findPlaceFromQuery(
-                { query, fields: ["photos", "place_id"] },
-                (results: any, status: any) => {
-                  if (status === "OK" && results?.[0]?.photos?.[0]) {
-                    photos[item.title] = results[0].photos[0].getUrl({ maxWidth: 400, maxHeight: 300 });
-                    resolve();
-                    return;
-                  }
-                  // Fallback: try title only if address-based search failed
-                  if (address) {
-                    service.findPlaceFromQuery(
-                      { query: `${item.title} hotel`, fields: ["photos", "place_id"] },
-                      (results2: any, status2: any) => {
-                        if (status2 === "OK" && results2?.[0]?.photos?.[0]) {
-                          photos[item.title] = results2[0].photos[0].getUrl({ maxWidth: 400, maxHeight: 300 });
-                        }
-                        resolve();
-                      }
-                    );
-                  } else {
-                    resolve();
-                  }
-                }
-              );
-            });
+            const query = address ? `${item.title} ${address}` : `${item.title} hotel`;
+            const fallback = `${item.title} hotel`;
+            const url = `${supabaseUrl}/functions/v1/get-hotel-photo?query=${encodeURIComponent(query)}&fallback=${encodeURIComponent(fallback)}&maxWidth=600`;
+            const res = await fetch(url);
+            if (!res.ok) return;
+            const json = await res.json();
+            if (json?.photoUri) photos[item.title] = json.photoUri;
           } catch {}
-        }
-        setHotelPhotos(photos);
-      } catch {}
+        }),
+      );
+      setHotelPhotos(photos);
     };
     fetchPhotos();
   }, [data]);
+
 
   const translateContent = useCallback(async (targetLang: QuoteLang) => {
     if (!data || targetLang === "pt") {
