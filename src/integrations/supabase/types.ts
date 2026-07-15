@@ -2392,6 +2392,27 @@ export type Database = {
           },
         ]
       }
+      hotel_photo_cache: {
+        Row: {
+          created_at: string
+          photo_url: string
+          query_key: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          photo_url: string
+          query_key: string
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          photo_url?: string
+          query_key?: string
+          source?: string
+        }
+        Relationships: []
+      }
       itineraries: {
         Row: {
           ai_status: string | null
