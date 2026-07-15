@@ -805,15 +805,28 @@ export default function PublicQuote() {
                                 {d.hotel_details && (
                                   <p className="pq-fs-xs sm:text-xs text-gray-600 font-body">{d.hotel_details}</p>
                                 )}
-                                {d.reservation_number && (
-                                  <p className="pq-fs-xs sm:text-xs font-body">
-                                    <span className="text-gray-500">Nº da reserva / check-in:</span>{" "}
-                                    <span className="font-medium text-gray-700">{d.reservation_number}</span>
-                                  </p>
-                                )}
-                                {description && (
-                                  <p className="pq-fs-xs sm:text-xs text-gray-500 font-body italic">{description}</p>
-                                )}
+                                {(() => {
+                                  const looksLikeCode = (s?: string | null) =>
+                                    !!s && /^[A-Z0-9][A-Z0-9\-\/]{3,24}$/i.test(s.trim()) && !/\s/.test(s.trim());
+                                  const reservationCode =
+                                    d.reservation_number ||
+                                    (looksLikeCode(description) ? description : null);
+                                  const extraDescription =
+                                    description && description !== reservationCode ? description : null;
+                                  return (
+                                    <>
+                                      {reservationCode && (
+                                        <p className="pq-fs-xs sm:text-xs font-body">
+                                          <span className="text-gray-500">Nº da reserva / check-in:</span>{" "}
+                                          <span className="font-medium text-gray-700">{reservationCode}</span>
+                                        </p>
+                                      )}
+                                      {extraDescription && (
+                                        <p className="pq-fs-xs sm:text-xs text-gray-500 font-body italic">{extraDescription}</p>
+                                      )}
+                                    </>
+                                  );
+                                })()}
                                 {Array.isArray(item.public_attachments) && item.public_attachments.length > 0 && (
                                   <div className="flex flex-wrap gap-1.5 pt-1">
                                     {item.public_attachments.map((att: any) => (
