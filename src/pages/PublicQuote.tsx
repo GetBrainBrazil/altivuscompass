@@ -182,14 +182,34 @@ export default function PublicQuote() {
         const photos: Record<string, string> = {};
         for (const item of hotelItems) {
           try {
+            const details = (item.details ?? {}) as any;
+            const address = details.address ? String(details.address) : "";
+            const query = address
+              ? `${item.title} ${address}`
+              : `${item.title} hotel`;
             await new Promise<void>((resolve) => {
               service.findPlaceFromQuery(
-                { query: `${item.title} hotel`, fields: ["photos", "place_id"] },
+                { query, fields: ["photos", "place_id"] },
                 (results: any, status: any) => {
                   if (status === "OK" && results?.[0]?.photos?.[0]) {
                     photos[item.title] = results[0].photos[0].getUrl({ maxWidth: 400, maxHeight: 300 });
+                    resolve();
+                    return;
                   }
-                  resolve();
+                  // Fallback: try title only if address-based search failed
+                  if (address) {
+                    service.findPlaceFromQuery(
+                      { query: `${item.title} hotel`, fields: ["photos", "place_id"] },
+                      (results2: any, status2: any) => {
+                        if (status2 === "OK" && results2?.[0]?.photos?.[0]) {
+                          photos[item.title] = results2[0].photos[0].getUrl({ maxWidth: 400, maxHeight: 300 });
+                        }
+                        resolve();
+                      }
+                    );
+                  } else {
+                    resolve();
+                  }
                 }
               );
             });
