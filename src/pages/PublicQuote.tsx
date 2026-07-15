@@ -801,9 +801,15 @@ export default function PublicQuote() {
                                   </div>
                                 )}
 
-                                {/* Details (room type, etc.) & Description */}
+                                {/* Details (room type, etc.) & Reservation number */}
                                 {d.hotel_details && (
                                   <p className="pq-fs-xs sm:text-xs text-gray-600 font-body">{d.hotel_details}</p>
+                                )}
+                                {d.reservation_number && (
+                                  <p className="pq-fs-xs sm:text-xs font-body">
+                                    <span className="text-gray-500">Nº da reserva / check-in:</span>{" "}
+                                    <span className="font-medium text-gray-700">{d.reservation_number}</span>
+                                  </p>
                                 )}
                                 {description && (
                                   <p className="pq-fs-xs sm:text-xs text-gray-500 font-body italic">{description}</p>

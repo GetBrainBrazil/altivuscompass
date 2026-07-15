@@ -3100,8 +3100,14 @@ export default function Quotes() {
                                 <Input type="time" value={d.checkout_time || ""} onChange={(e) => updateDetail("checkout_time", e.target.value)} className="h-8 text-xs" />
                               </div>
                               <div className="space-y-0.5">
-                                <Label className="text-[11px] font-body">Descrição</Label>
-                                <Input value={item.description} onChange={(e) => updateItem(globalIdx, { description: e.target.value })} placeholder="Informações adicionais" className="h-8 text-xs" />
+                                <Label className="text-[11px] font-body">Nº da reserva / check-in</Label>
+                                <Input value={d.reservation_number || ""} onChange={(e) => updateDetail("reservation_number", e.target.value)} placeholder="Ex: 1527691" className="h-8 text-xs" />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 gap-2">
+                              <div className="space-y-0.5">
+                                <Label className="text-[11px] font-body">Descrição / Observações</Label>
+                                <Input value={item.description} onChange={(e) => updateItem(globalIdx, { description: e.target.value })} placeholder="Informações adicionais sobre a hospedagem" className="h-8 text-xs" />
                               </div>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
