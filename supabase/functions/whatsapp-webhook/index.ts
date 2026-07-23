@@ -709,7 +709,19 @@ Deno.serve(async (req) => {
             ...contactLink,
           }
           if (chatLidRaw) convoUpsert.chat_lid = chatLidRaw
-          if (trustedDisplayName) convoUpsert.contact_name = trustedDisplayName
+          // Nome amigável: prioriza displayName confiável, senão pushname do
+          // Z-API. Em conversas @lid (privacidade do WhatsApp) sempre garante
+          // um rótulo — "WhatsApp ****<4 dígitos>" — para não exibir o LID cru.
+          let nameForNew: string | null = trustedDisplayName || null
+          if (!nameForNew && senderName && !isAgencyName(senderName)) {
+            nameForNew = senderName.trim()
+          }
+          if (!nameForNew && phoneIsLid) {
+            const lidDigits = String(phone).replace(/\D/g, '')
+            const tail = lidDigits.slice(-4) || '????'
+            nameForNew = `WhatsApp ****${tail}`
+          }
+          if (nameForNew) convoUpsert.contact_name = nameForNew
           if (senderPhotoUrl) convoUpsert.profile_photo_url = senderPhotoUrl
           const { data, error } = await supabase
             .from('wa_conversations')
