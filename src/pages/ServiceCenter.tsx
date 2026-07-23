@@ -209,6 +209,10 @@ const formatConversationTime = (iso: string) => {
 // Formata telefone para exibição (BR: +55 (21) 99999-9999). Para outros países,
 // devolve "+<digits>" agrupado.
 const formatPhoneDisplay = (raw: string): string => {
+  // Em contas WhatsApp Multi Device, a API pode devolver apenas o identificador
+  // privado LID. Ele representa uma conversa válida, mas não é um telefone e não
+  // deve ser exibido ao atendente como se fosse um número internacional.
+  if (/@lid$/i.test(raw || "")) return "Contato do WhatsApp";
   const digits = (raw || "").replace(/\D/g, "");
   if (!digits) return raw || "";
   if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) {
@@ -1532,19 +1536,10 @@ export default function ServiceCenter() {
         .order("last_message_at", { ascending: false, nullsFirst: false })
         .limit(200);
       if (error) throw error;
-      // Filtra "LIDs" do WhatsApp (identificadores internos que não são
-      // números reais — costumam terminar em @lid ou ser puramente numéricos
-      // com 14+ dígitos sem prefixo de país válido). A Central deve refletir
-      // apenas os números reais ativos na instância.
-      const isLidPhone = (p: string | null | undefined) => {
-        if (!p) return false;
-        if (p.includes("@lid")) return true;
-        const digits = p.replace(/\D/g, "");
-        // Telefones reais (E.164) têm no máx. 15 dígitos, mas em prática
-        // BR/EU ficam entre 10 e 13. LIDs do WhatsApp são 14-15 dígitos.
-        return /^\d+$/.test(p) && digits.length >= 14;
-      };
-      return (data ?? []).filter((c: any) => !(isLidPhone(c.phone) && !c.is_group));
+      // Não ocultar conversas @lid: no WhatsApp Multi Device esse identificador
+      // privado pode ser a única referência devolvida para um contato legítimo.
+      // Ocultá-lo fazia a conversa existir no banco, mas sumir para toda a equipe.
+      return data ?? [];
     },
     refetchInterval: 5000,
     refetchIntervalInBackground: true,

@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
 
     for (const target of uniqueTargets) {
       try {
-        if (!target.phone || (isLidIdentifier(target.phone) && !target.isGroup)) continue
+        if (!target.phone) continue
         const result = await syncTargetMessages({
           supabase,
           baseUrl,
@@ -450,6 +450,10 @@ async function fetchChatMessages(baseUrl: string, headers: Record<string, string
   // sem os sufixos internos "-group" ou "@g.us" que usamos no banco/UI.
   const cleaned = sanitizeChatIdForZapi(phone)
   const candidates = new Set<string>([cleaned])
+  // Contatos Multi Device podem existir apenas como LID. Nesse caso, testar
+  // também o identificador completo; remover o sufixo e usar só os dígitos
+  // fazia a sincronização ignorar justamente as conversas mais novas.
+  if (isLidIdentifier(phone)) candidates.add(String(phone).trim())
   // Fallback: alguns endpoints aceitam o formato completo @g.us para grupos.
   if (isGroupPhone(phone)) candidates.add(`${cleaned}@g.us`)
 
