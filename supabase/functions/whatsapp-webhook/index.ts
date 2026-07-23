@@ -640,14 +640,17 @@ Deno.serve(async (req) => {
       } else {
         // === LID handling ===
         // Z-API pode entregar `phone` como um identificador @lid (privacidade do
-        // WhatsApp). Para não duplicar conversas (real-phone X lid), tentamos
-        // resolver para uma conversa já existente antes de fazer upsert por `phone`.
+        // WhatsApp). Para não duplicar conversas (real-phone X lid), resolvemos
+        // para uma conversa já existente antes de fazer upsert por `phone`,
+        // sempre priorizando o telefone real sobre o @lid.
         const chatLidRaw: string | null =
           (body.chatLid && typeof body.chatLid === 'string' ? body.chatLid : null) ||
           (typeof phone === 'string' && /@lid$/i.test(phone) ? phone : null)
         const phoneIsLid = typeof phone === 'string' && /@lid$/i.test(phone)
 
         let resolvedConvoId: string | null = null
+        let realPhoneConvId: string | null = null
+        let lidConvId: string | null = null
 
         // 1) Outbound recém-enviado pela Central: a send-whatsapp já gravou a
         //    wa_message com zapi_message_id e a conversation_id correta. Reusar.
@@ -661,23 +664,54 @@ Deno.serve(async (req) => {
           if (priorMsg?.conversation_id) resolvedConvoId = priorMsg.conversation_id as string
         }
 
-        // 2) Procura conversa existente por chat_lid OU pelo próprio phone==LID.
-        //    Cobre: (a) inbound com phone real + body.chatLid encontra conv
-        //    antiga criada com phone=@lid; (b) outbound onde Z-API devolve
-        //    phone=@lid encontra a conv real cujo chat_lid guarda o mesmo @lid.
-        if (!resolvedConvoId && chatLidRaw) {
+        // 2) Sempre buscamos as duas possíveis conversas separadamente, para
+        //    tomar decisão determinística (nunca depender de ordenação alfabética).
+        if (!phoneIsLid && phone) {
+          const { data: byRealPhone } = await supabase
+            .from('wa_conversations')
+            .select('id')
+            .eq('phone', phone)
+            .maybeSingle()
+          if (byRealPhone?.id) realPhoneConvId = byRealPhone.id as string
+        }
+        if (chatLidRaw) {
           const { data: byLid } = await supabase
             .from('wa_conversations')
-            .select('id, phone')
+            .select('id')
             .or(`chat_lid.eq.${chatLidRaw},phone.eq.${chatLidRaw}`)
-            .order('phone', { ascending: true }) // dígitos vêm antes de "@lid"
             .limit(1)
             .maybeSingle()
-          if (byLid?.id) resolvedConvoId = byLid.id as string
+          if (byLid?.id) lidConvId = byLid.id as string
         }
 
-        // 3) Fallback: phone real explícito.
-        if (!resolvedConvoId && !phoneIsLid) {
+        // 3) Merge automático quando as duas existem e apontam para a mesma
+        //    pessoa: mescla mensagens/estado na conv do telefone real e apaga a @lid.
+        if (
+          realPhoneConvId &&
+          lidConvId &&
+          realPhoneConvId !== lidConvId
+        ) {
+          try {
+            await supabase
+              .from('wa_messages')
+              .update({ conversation_id: realPhoneConvId })
+              .eq('conversation_id', lidConvId)
+            await supabase
+              .from('wa_conversations')
+              .delete()
+              .eq('id', lidConvId)
+          } catch (mergeErr) {
+            console.error('wa_conversations merge (@lid -> real) falhou:', (mergeErr as any)?.message)
+          }
+          lidConvId = null
+        }
+
+        if (!resolvedConvoId) {
+          resolvedConvoId = realPhoneConvId || lidConvId
+        }
+
+        // 4) Fallback: procura por phone (quando phone == @lid e não achou nada acima).
+        if (!resolvedConvoId && phoneIsLid) {
           const { data: byPhone } = await supabase
             .from('wa_conversations')
             .select('id')
@@ -690,8 +724,26 @@ Deno.serve(async (req) => {
           const updatePayload: Record<string, unknown> = { ...baseConvo }
           if (chatLidRaw) updatePayload.chat_lid = chatLidRaw
           // Se a conv antiga foi criada com phone=@lid e agora chegou o
-          // telefone real, promove para o número real (evita duplicidade).
-          if (!phoneIsLid && phone) updatePayload.phone = phone
+          // telefone real, só promove para o número real quando NÃO há colisão
+          // com outra conversa já usando esse phone. (O merge acima já cobriu
+          // o caso comum; aqui é defensivo.)
+          if (!phoneIsLid && phone) {
+            const { data: existingConv } = await supabase
+              .from('wa_conversations')
+              .select('id, phone, contact_name')
+              .eq('id', resolvedConvoId)
+              .maybeSingle()
+            const currentPhone = (existingConv?.phone || '').toString()
+            if (/@lid$/i.test(currentPhone) && currentPhone !== phone) {
+              const { data: collision } = await supabase
+                .from('wa_conversations')
+                .select('id')
+                .eq('phone', phone)
+                .neq('id', resolvedConvoId)
+                .maybeSingle()
+              if (!collision?.id) updatePayload.phone = phone
+            }
+          }
           if (trustedDisplayName) {
             updatePayload.contact_name = trustedDisplayName
           } else {
@@ -755,7 +807,24 @@ Deno.serve(async (req) => {
           convo = data as any
           convoErr = error as any
         }
-        // Suppress unused-var warning for phoneIsLid in environments that check it.
+
+        // Rede de segurança: se o update/upsert falhou, tenta recuperar a
+        // conv por phone ou chat_lid para não perder o insert de wa_messages.
+        if (convoErr && !convo) {
+          const recoverKey = phone || chatLidRaw
+          if (recoverKey) {
+            const { data: recovered } = await supabase
+              .from('wa_conversations')
+              .select('id, unread_count')
+              .or(`phone.eq.${recoverKey}${chatLidRaw ? `,chat_lid.eq.${chatLidRaw}` : ''}`)
+              .limit(1)
+              .maybeSingle()
+            if (recovered?.id) {
+              convo = recovered as any
+              convoErr = null
+            }
+          }
+        }
         void phoneIsLid
       }
 
