@@ -692,7 +692,31 @@ Deno.serve(async (req) => {
           // Se a conv antiga foi criada com phone=@lid e agora chegou o
           // telefone real, promove para o número real (evita duplicidade).
           if (!phoneIsLid && phone) updatePayload.phone = phone
-          if (trustedDisplayName) updatePayload.contact_name = trustedDisplayName
+          if (trustedDisplayName) {
+            updatePayload.contact_name = trustedDisplayName
+          } else {
+            // Se a conversa existente ainda não tem nome (ou tem o LID cru),
+            // aproveita o pushname que chegou agora para dar um rótulo amigável.
+            const { data: existingConv } = await supabase
+              .from('wa_conversations')
+              .select('contact_name, phone')
+              .eq('id', resolvedConvoId)
+              .maybeSingle()
+            const currentName = (existingConv?.contact_name || '').trim()
+            const looksLikeLid = !currentName ||
+              /@lid$/i.test(currentName) ||
+              currentName === existingConv?.phone
+            if (looksLikeLid) {
+              let fallbackName: string | null = null
+              if (senderName && !isAgencyName(senderName)) fallbackName = senderName.trim()
+              if (!fallbackName && phoneIsLid) {
+                const lidDigits = String(phone).replace(/\D/g, '')
+                const tail = lidDigits.slice(-4) || '????'
+                fallbackName = `WhatsApp ****${tail}`
+              }
+              if (fallbackName) updatePayload.contact_name = fallbackName
+            }
+          }
           if (senderPhotoUrl) updatePayload.profile_photo_url = senderPhotoUrl
           const { data, error } = await supabase
             .from('wa_conversations')
@@ -709,7 +733,19 @@ Deno.serve(async (req) => {
             ...contactLink,
           }
           if (chatLidRaw) convoUpsert.chat_lid = chatLidRaw
-          if (trustedDisplayName) convoUpsert.contact_name = trustedDisplayName
+          // Nome amigável: prioriza displayName confiável, senão pushname do
+          // Z-API. Em conversas @lid (privacidade do WhatsApp) sempre garante
+          // um rótulo — "WhatsApp ****<4 dígitos>" — para não exibir o LID cru.
+          let nameForNew: string | null = trustedDisplayName || null
+          if (!nameForNew && senderName && !isAgencyName(senderName)) {
+            nameForNew = senderName.trim()
+          }
+          if (!nameForNew && phoneIsLid) {
+            const lidDigits = String(phone).replace(/\D/g, '')
+            const tail = lidDigits.slice(-4) || '????'
+            nameForNew = `WhatsApp ****${tail}`
+          }
+          if (nameForNew) convoUpsert.contact_name = nameForNew
           if (senderPhotoUrl) convoUpsert.profile_photo_url = senderPhotoUrl
           const { data, error } = await supabase
             .from('wa_conversations')
