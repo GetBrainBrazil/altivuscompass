@@ -1712,12 +1712,16 @@ export default function ServiceCenter() {
           const rx = reactionMap.get(rm.zapiMessageId);
           return rx && rx.length > 0 ? { ...rm, reactions: rx } : rm;
         });
-      // Se não há nenhuma mensagem carregada, cria uma "fake" só para preview
+      // Se não há nenhuma mensagem carregada, cria uma "fake" só para preview.
+      // IMPORTANTE: nunca usar `updated_at` aqui — rotinas de backfill (fotos,
+      // nomes, status) bumpam esse campo e faziam prospects sem mensagem alguma
+      // pularem para o topo da lista com o horário "agora", quebrando a ordem
+      // cronológica de chegada e escondendo grupos que realmente conversaram.
       const fallbackMsg: Message = {
         id: `${c.id}-last`,
         sender: (c.last_message_from ?? "lead") as MessageSender,
         content: c.last_message_text ?? "",
-        timestamp: c.last_message_at ?? c.updated_at ?? c.created_at,
+        timestamp: c.last_message_at ?? c.created_at,
       };
       const isGroup = !!c.is_group;
       const meta = c.contact_id ? contactMetaById.get(c.contact_id) : null;
